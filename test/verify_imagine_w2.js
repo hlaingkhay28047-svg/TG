@@ -65,11 +65,11 @@ report("A3) each tool's frame line: Describe, Architecture, ID Photo, both Produ
   /PRODUCT LOCK/.test(byId.product.keep) && /PRODUCT LOCK/.test(byId.productbg.keep) && /STRUCTURE LOCK/.test(byId.architecture.keep) &&
   /hairline/.test(byId.idphoto.keep) && /change only what the edit describes/.test(byId.describe.keep) && (!HAS_CT || (/TONE LOCK/.test(byId.colortone.keep) && /change ONLY the colour grade/.test(byId.colortone.keep) && /plastic or waxy skin/.test(byId.colortone.avoid))) &&
   /\(tool\.keep \|\| D\.frame\.keep\)/.test(mod) && /\(tool\.avoid \|\| D\.frame\.avoid\)/.test(mod) &&
-  /\(tool\.keep \|\| D\.frame\.keep\)/.test(PANEL_JS) && PANEL_JS.indexOf('"id":"outfit"') >= 0, frame);
+  /\(tool\.keep \|\| D\.frame\.keep\)/.test(PANEL_JS) && /\(tool\.real \|\| D\.frame\.real\)/.test(PANEL_JS) && /BEAUTY RETOUCH/.test(byId.outfit.real ? byId.outfit.basePrompt : "") && PANEL_JS.indexOf('"id":"outfit"') >= 0, frame);
 
 const bases = JOBS.filter(j => /^base-/.test(j.name)), thumbs = JOBS.filter(j => /^th-/.test(j.name));
 const badBase = bases.filter(j => { const id = j.name.slice(5); return PERSON.indexOf(id) >= 0 ? !(Array.isArray(j.refs) && j.refs.length === 2 && /\/edit$/.test(j.apiPath)) : OBJECT.indexOf(id) >= 0 ? !(!j.refs && /text-to-image$/.test(j.apiPath) && !/reference/i.test(j.prompt)) : true; });
-const badThumb = thumbs.filter(j => { const id = j.name.split("-")[1], t = byId[id]; return !t || j.baseFrom !== "base-" + id || !GEAR.test(j.prompt) || (t.keep && j.prompt.indexOf(t.keep) < 0) || (t.avoid && j.prompt.indexOf(t.avoid) < 0) || (!t.keep && j.prompt.indexOf(DATA.frame.keep) < 0); });
+const badThumb = thumbs.filter(j => { const id = j.name.split("-")[1], t = byId[id]; return !t || j.baseFrom !== "base-" + id || !GEAR.test(j.prompt) || (t.keep && j.prompt.indexOf(t.keep) < 0) || (t.avoid && j.prompt.indexOf(t.avoid) < 0) || (t.real && j.prompt.indexOf(t.real) < 0) || (!t.real && j.prompt.indexOf(DATA.frame.real) < 0) || (!t.keep && j.prompt.indexOf(DATA.frame.keep) < 0); });
 report("A4) the lane's W2 jobs: " + NW2 + " bases — the person tools as identity edits from the two brand-model references, the three object tools as text-to-image with no reference — and " + THUMBS + " thumbnails that build on their base and end with their tool's own frame lines and the gear rule",
   bases.length === NW2 && thumbs.length === THUMBS && !badBase.length && !badThumb.length, { badBase: badBase.map(j => j.name), badThumb: badThumb.slice(0, 5).map(j => j.name) });
 
@@ -112,7 +112,7 @@ report("A6) WHATS_NEW carries the 6.30.0 Imagine row with a title and a line in 
       const F = IMAGINE_DATA.frame, T = Object.fromEntries(IMAGINE_DATA.tools.map(t => [t.id, t]));
       const out = { cards: [...document.querySelectorAll("#pgImagine .im-card")].map(c => c.getAttribute("data-tool")) };
       const po = IMAGINE.prompt("outfit", "sequinParty", ""), pp = IMAGINE.prompt("product", "darkLuxury", ""), pb = IMAGINE.prompt("background", "cafe", ""), pd = IMAGINE.prompt("describe", "", "make the sky pink"), pa = IMAGINE.prompt("architecture", "nightLights", "");
-      out.outfit = po.indexOf(T.outfit.keep) >= 0 && po.indexOf(F.keep) < 0 && po.indexOf(T.outfit.avoid) >= 0 && po.indexOf(F.avoid) < 0 && /silver sequin/i.test(po) && /NO STUDIO GEAR/.test(po);
+      out.outfit = po.indexOf(T.outfit.keep) >= 0 && po.indexOf(F.keep) < 0 && po.indexOf(T.outfit.avoid) >= 0 && po.indexOf(F.avoid) < 0 && po.indexOf(T.outfit.real) >= 0 && po.indexOf(F.real) < 0 && /BEAUTY RETOUCH/.test(po) && /silver sequin/i.test(po) && /NO STUDIO GEAR/.test(po);
       out.product = pp.indexOf(T.product.keep) >= 0 && pp.indexOf(F.keep) < 0 && /PRODUCT LOCK/.test(pp) && /REALISM/.test(pp) && /TASK GUARD/.test(pp);
       out.background = pb.indexOf(F.keep) >= 0 && pb.indexOf(F.avoid) >= 0;
       out.describe = pd.indexOf(T.describe.keep) >= 0 && /make the sky pink/.test(pd) && pd.indexOf(F.keep) < 0;
