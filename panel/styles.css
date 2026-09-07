@@ -1299,16 +1299,6 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 #pageAiTools .dash-stat span { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.4; }
 #pageAiTools .dash-stat .dash-stat-link { cursor: pointer; border-radius: 12px; }
 
-/* ---- the Photoshop-panel band (app .dash-promo p{14px;lh1.75;mb12}, .btn
-   inline-flex gap 6, the ✕ chip at 10/10 with min-height 44) ---- */
-#pageAiTools .dash-promo { position: relative; }
-#pageAiTools .dash-promo p { display: block; margin: 0 0 12px; font-size: 14px; line-height: 1.75; color: var(--text); }
-#pageAiTools .dash-promo .btn { line-height: 1.7; }
-#pageAiTools .dash-promo .btn .btn-in { align-items: center; }
-#pageAiTools .dash-promo .btn .btn-in .ic-s { top: 0; margin-right: 6px; }
-#pageAiTools .dash-promo .promo-x { position: absolute; top: 10px; right: 10px; min-height: 44px; padding: 2px 10px;
-  border-radius: 22px; line-height: normal; }
-
 /* ---- Workflows / Video: the app's two-column card grid, measured against
    docs/app/index.html (.wfgrid grid 1fr 1fr, gap 8px; .wfmini padding 10,
    border line-soft, radius 11, flex column gap 4; .wfv 3:2; .wf-need pill;

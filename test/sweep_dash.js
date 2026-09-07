@@ -119,14 +119,12 @@ function check(ok, label, detail) {
   check(teaser.count >= 8 && teaser.count <= 10 && teaser.srcsOk && teaser.contained && teaser.after === "pgLib",
     "Library teaser: 8-10 real Featured thumbnails, scroll contained, View More opens pgLib", teaser);
 
-  /* promo band present with the in-app Account Center acquisition route */
-  const promo = await page.evaluate(() => {
-    const a = document.getElementById("dashPromoGo");
-    return { txt: (document.getElementById("dashPromoP").textContent || "").length > 10,
-      href: a.getAttribute("href"), target: a.getAttribute("target"), rel: a.getAttribute("rel") };
-  });
-  check(promo.txt && promo.href === "?panel=download" && promo.target === null && promo.rel === null,
-    "promo band: copy + pill routing to the Account Center in the same tab", promo);
+  /* 6.33.1 ONE PLACE — no promo band and no Panel-download door on Home any more */
+  const promo = await page.evaluate(() => ({
+    band: !!document.getElementById("dashPromo"), doors: document.querySelectorAll("a[data-panel-intent]").length,
+    dest: Array.from(document.querySelectorAll("#pgDash .unified-actions .btn")).map(b => b.textContent.trim()) }));
+  check(!promo.band && promo.doors === 0 && promo.dest.join("|") === "AI Tools|Account & license|Tutorials",
+    "6.33.1 one place: Home carries no promo band and no Panel-download door — three destinations only", promo);
 
   /* ---- 3) Setup via header gear ---- */
   const gear = await page.evaluate(() => {

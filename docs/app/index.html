@@ -1474,8 +1474,6 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 .dash-stat-link:hover,.dash-stat-link:focus-visible{background:rgba(217,164,65,.1)}
 .dash-stat-link:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
 .dash-stat-link:active{transform:scale(.96)}
-.dash-promo p{font-size:var(--fs-md);line-height:1.75;margin-bottom:var(--sp-3)}
-.dash-promo .btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 @media (min-width:768px){.dash-grid{grid-template-columns:repeat(4,1fr)}}
 /* v6.9.0 — on a monitor the four Home tiles become six across; declared HERE,
    after the 768px rule, because on equal specificity the later rule wins */
@@ -2462,7 +2460,6 @@ html.splashing #splash{display:flex}
       <button class="btn btn-gold" type="button" data-unified-page="pgWf">AI Tools</button>
       <button class="btn" type="button" data-unified-page="pgAccount">Account &amp; license</button>
       <button class="btn" type="button" data-unified-page="pgTutorials">Tutorials</button>
-      <a class="btn" href="?panel=download" data-panel-intent>Photoshop Panel download</a>
     </div>
   </section>
   <section class="card" id="dashCont" style="display:none">
@@ -2506,11 +2503,8 @@ html.splashing #splash{display:flex}
     <div><b id="stMeituCount"></b><span>Retouch A Controls</span></div>
     <div><b id="stEvotoCount"></b><span>Retouch B Pro</span></div>
   </div>
-  <section class="card dash-promo" id="dashPromo">
-    <h2 id="dashPromoH2"></h2>
-    <p id="dashPromoP"></p>
-    <a class="btn" id="dashPromoGo" href="?panel=download"></a>
-  </section>
+  <!-- 6.33.1 — the Photoshop-panel promo band that closed this page is gone (owner: ONE download place,
+       Setup ▸ Account ▸ Photoshop Panel; Home carries no door to it). -->
 </div><!-- /pgDash -->
 
 <div class="page" id="pgAccount">
@@ -2543,12 +2537,10 @@ html.splashing #splash{display:flex}
     <h2>Secure Photoshop Panel</h2>
     <p class="mut" id="unifiedDownloadNote">Approved account, active license, download permission and the registered Computer are required.</p>
     <div class="unified-actions">
-      <!-- 6.28.1 wave — ONE REQUESTER (owner decision, 2026-09-06). This page reports the account,
+      <!-- 6.33.1 — ONE PLACE (owner, 2026-09-07: "တစ်နေရာပဲ ထားပေးပါ"). This page reports the account,
            the license and the registered devices; the Panel itself is downloaded from the Account
-           card's Photoshop Panel group on Home and nowhere else. This is a door to it (the same
-           in-place intent the dashboard and Tutorials links use), not a second place that asks
-           the API for the file. -->
-      <a class="btn btn-gold" id="unifiedDownload" href="?panel=download" data-panel-intent>Get the Panel — Account → Photoshop Panel</a>
+           card's Photoshop Panel group under Setup and nowhere else. The door button that sat here
+           since 6.28.1 — like the ones on Home and Tutorials — is gone; the note above names the place. -->
       <button class="btn" id="unifiedOpenSetup" type="button">Login, password &amp; payments</button>
       <button class="btn" id="unifiedLogout" type="button">Logout</button>
     </div>
@@ -2561,7 +2553,7 @@ html.splashing #splash{display:flex}
   <section class="tutorial-grid" aria-label="Tutorial topics">
     <article class="tutorial-card"><span class="chip on">01</span><h2>Dashboard &amp; AI Tools</h2><p>Choose Workflows, Edit or Media Lab. Add only your own provider key in Setup; HNK never stores it as your account password.</p><button class="btn" type="button" data-tutorial-page="pgDash">Open Dashboard</button></article>
     <article class="tutorial-card"><span class="chip on">02</span><h2>Phone + Computer</h2><p>Use one Phone and one Computer. Your Computer slot is shared by the Web App and Photoshop Panel.</p><button class="btn" type="button" data-tutorial-page="pgAccount">Check devices</button></article>
-    <article class="tutorial-card"><span class="chip on">03</span><h2>Install the Panel</h2><p>Request a temporary download, install it in Photoshop, then just sign in — the panel registers this computer by itself.</p><a class="btn btn-gold" href="?panel=download" data-panel-intent>Secure Panel download</a></article>
+    <article class="tutorial-card"><span class="chip on">03</span><h2>Install the Panel</h2><p>Under Setup ▸ Account, open the Photoshop Panel group and press its button — the one place the Panel is downloaded from. Install it in Photoshop, then just sign in — the panel registers this computer by itself.</p><button class="btn" type="button" data-tutorial-page="pgHome">Open Setup</button></article>
   </section>
 </div><!-- /pgTutorials -->
 
@@ -2727,10 +2719,11 @@ html.splashing #splash{display:flex}
       </div>
     </div>
 
-    <!-- The installer is an Account Center entitlement, not a public-site
-         download. It starts hidden and accRender() reveals it only after the
-         same active-plan check that opens the paid web app. The shipped panel
-         still performs its own account check after installation. -->
+    <!-- THE ONE PLACE (6.33.1, owner decision): the Panel is downloaded from this group and nowhere
+         else in the app — Home, Tutorials and Account Center carry no download button. It starts
+         hidden and accRender() reveals it only after the same active-plan check that opens the paid
+         web app; the ?panel=download deep link opens it in place. The shipped panel still performs
+         its own account check after installation. -->
     <div class="grp hide" id="accGrpPanel">
       <button class="grp-h" id="accGrpPanelH" aria-expanded="false" aria-controls="accGrpPanelBody"><span class="car"><svg class="ic-car" aria-hidden="true" focusable="false"><use href="#i-caret"/></svg></span><span id="accGrpPanelT"></span></button>
       <div class="grp-b" id="accGrpPanelBody">
@@ -5253,6 +5246,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.33.1", kind:"page", ref:"pgHome",
+    t:{my:"Photoshop Panel download — တစ်နေရာတည်း: Setup ▸ အကောင့် ▸ Photoshop Panel · Home · Tutorials · Account Center က download ခလုတ်တွေ ဖြုတ်လိုက်ပြီ",en:"Photoshop Panel download — one place only: Setup ▸ Account ▸ Photoshop Panel · the download buttons on Home, Tutorials and Account Center are gone",shn:"Photoshop Panel download — တီႈလဵဝ်: Setup ▸ ဢၵွင်ႉ ▸ Photoshop Panel · ပုမ်ႇ download ၼိူဝ် Home · Tutorials · Account Center ဢဝ်ဢွၵ်ႇယဝ်ႉ",kac:"Photoshop Panel download — shara langai sha: Setup ▸ Account ▸ Photoshop Panel · Home · Tutorials · Account Center na download button ni shaw kau sai",th:"ดาวน์โหลด Photoshop Panel — ที่เดียว: Setup ▸ บัญชี ▸ Photoshop Panel · ปุ่มดาวน์โหลดใน Home · Tutorials · Account Center ถูกนำออก",zh:"Photoshop Panel 下载——只在一处：Setup ▸ 账户 ▸ Photoshop Panel · Home、Tutorials 与 Account Center 上的下载按钮已移除",vi:"Tải Photoshop Panel — chỉ một nơi: Setup ▸ Tài khoản ▸ Photoshop Panel · các nút tải trên Home, Tutorials và Account Center đã bỏ",id:"Unduh Photoshop Panel — satu tempat saja: Setup ▸ Akun ▸ Photoshop Panel · tombol unduh di Home, Tutorials dan Account Center dihapus",ms:"Muat turun Photoshop Panel — satu tempat sahaja: Setup ▸ Akaun ▸ Photoshop Panel · butang muat turun di Home, Tutorials dan Account Center dibuang"},
+    s:{my:"Sign-in · Premium plan · register ထားတဲ့ computer ရှိရင် အဲ့အုပ်စုထဲ ရွှေခလုတ် ပေါ်တယ်။ နှိပ်ရင် ၅ မိနစ် တစ်ခါသုံး link ထုတ်ပေးပြီး ccx ဆင်းတယ်။ Panel ထဲ Setup ကလည်း ဒီနေရာကိုပဲ ဖွင့်ပေးတယ်။",en:"Signed in, on an active plan and on the registered computer, the gold button appears in that group; pressing it issues a five-minute one-time link and the .ccx downloads. The panel's own Setup button opens this same place.",shn:"ၶဝ်ႈ sign-in · plan · ၶွမ်း register ယဝ်ႉ ပုမ်ႇၶမ်းဢွၵ်ႇမႃးၼႂ်းၸုမ်းၼၼ်ႉ; ၼဵၵ်းသေ link 5 မိၼိတ်ႉ ဢွၵ်ႇမႃး, ccx လူတ်းလူင်း။ Panel Setup ၵေႃႈပိုတ်ႇတီႈၼႆႈ။",kac:"Sign-in · plan · register computer nga yang dai grup hta ja button pru ai; dip yang 5 minute link langai pru na ccx download. Panel Setup mung ndai shara hpe hpaw ya ai.",th:"เมื่อลงชื่อเข้าใช้ มีแพ็กเกจใช้งาน และอยู่บนคอมพิวเตอร์ที่ลงทะเบียน ปุ่มสีทองจะปรากฏในกลุ่มนั้น กดแล้วได้ลิงก์ใช้ครั้งเดียว 5 นาที และไฟล์ ccx จะดาวน์โหลด ปุ่ม Setup ในแผงก็เปิดที่เดียวกันนี้",zh:"登录、套餐有效且在已注册的电脑上时，该组内会出现金色按钮；点击即签发 5 分钟一次性链接并下载 ccx。面板自己的 Setup 按钮也打开同一处。",vi:"Đã đăng nhập, có gói còn hạn và trên máy tính đã đăng ký thì nút vàng hiện trong nhóm đó; nhấn là cấp link dùng một lần 5 phút và tải ccx. Nút Setup trong panel cũng mở đúng nơi này.",id:"Saat masuk, paket aktif dan di komputer terdaftar, tombol emas muncul di grup itu; menekannya mengeluarkan tautan sekali pakai 5 menit dan ccx terunduh. Tombol Setup di panel juga membuka tempat yang sama.",ms:"Apabila log masuk, pelan aktif dan di komputer berdaftar, butang emas muncul dalam kumpulan itu; menekannya mengeluarkan pautan sekali guna 5 minit dan ccx dimuat turun. Butang Setup dalam panel juga membuka tempat yang sama."} },
   { v:"6.33.0", kind:"page", ref:"pgImagine",
     t:{my:"Imagine W4 — tool ၅ ခု ထပ်တိုး: ဆံပင် · မိတ်ကပ် (14) · ကိုယ်ခန္ဓာ ပုံစံ (10) · ကောင်းကင် ပြောင်း (12) · စာသား · ဆိုင်းဘုတ် ပြင် (brush + ကိုယ့်စာ) (8) · Batch Imagine recipe (8) — template 52 အသစ်၊ tool 22 ခု / template 284",en:"Imagine W4 — five more tools: Hair & Makeup (14) · Body Shape (10) · Sky Replace (12) · Text & Sign Edit with a brush and your own words (8) · Batch Imagine recipes (8) — 52 new templates, twenty-two tools / 284 templates",shn:"Imagine W4 — ၶိူင်ႈမိုဝ်း 5 ဢၼ်ထႅင်ႈ: ၶူၼ်ႁူဝ် · မိတ်ႉၵပ်ႉ (14) · ႁၢင်ႈတူဝ် (10) · လႅၵ်ႈၾႃႉ (12) · မႄးလိၵ်ႈ · ပၢႆႉ (8) · Batch Imagine recipe (8) — template 52 မႂ်ႇ, ၶိူင်ႈမိုဝ်း 22 / template 284",kac:"Imagine W4 — tool 5 grai: Kara · makeup (14) · Hkum hkrang (10) · Lamu galai (12) · Laika · sign galai (8) · Batch Imagine recipe (8) — template nnan 52, tool 22 / template 284",th:"Imagine W4 — เพิ่มอีก 5 เครื่องมือ: ผม & แต่งหน้า (14) · รูปร่าง (10) · เปลี่ยนท้องฟ้า (12) · แก้ข้อความ & ป้าย ด้วยแปรงและคำของคุณ (8) · สูตร Batch Imagine (8) — เทมเพลตใหม่ 52 รวม 22 เครื่องมือ / 284 เทมเพลต",zh:"Imagine W4 — 新增五个工具：发型与妆容（14）· 身形（10）· 换天空（12）· 文字与招牌编辑（画笔 + 你的文字）（8）· 批量 Imagine 配方（8）——新增 52 个模板，共二十二个工具 / 284 个模板",vi:"Imagine W4 — thêm 5 công cụ: Tóc & Makeup (14) · Dáng người (10) · Thay bầu trời (12) · Sửa chữ & bảng hiệu với cọ và chữ của bạn (8) · Công thức Batch Imagine (8) — 52 mẫu mới, 22 công cụ / 284 mẫu",id:"Imagine W4 — 5 alat baru: Rambut & Makeup (14) · Bentuk tubuh (10) · Ganti langit (12) · Edit teks & papan dengan kuas dan kata-katamu (8) · Resep Batch Imagine (8) — 52 templat baru, 22 alat / 284 templat",ms:"Imagine W4 — 5 alat baharu: Rambut & Mekap (14) · Bentuk badan (10) · Tukar langit (12) · Edit teks & papan tanda dengan berus dan kata anda (8) · Resipi Batch Imagine (8) — 52 templat baharu, 22 alat / 284 templat"},
     s:{my:"Text & Sign Edit မှာ ✎ template ရွေးပြီး ဖော်ပြချက်ထဲ စာ ရိုက်ရင် ဆိုင်းဘုတ် / အင်္ကျီပေါ် အဲ့စာ အတိအက် ရေးပေးတယ်၊ brush နဲ့ နေရာ ပြလို့ရ။ Batch Imagine က recipe တစ်ခု (tool ၃ ခု ဆက်တိုက်) ကို ပုံ ၁၁ ပုံအထိ Apply တစ်ချက်နဲ့ လုပ်ပေးတယ်။ Panel မှာလည်း တူတူ။",en:"In Text & Sign Edit a ✎ template writes the words you type in Describe onto the sign or shirt, spelled exactly, and the brush can mark where. Batch Imagine runs a recipe — three tools in a row — on up to eleven photos with one Apply. The panel carries the same page.",shn:"Text & Sign Edit: လိူၵ်ႈ ✎ template သေ တႅမ်ႈလိၵ်ႈတီႈ Describe — တႅမ်ႈၼိူဝ်ပၢႆႉ / သိူဝ်ႈ။ Batch Imagine: recipe (ၶိူင်ႈမိုဝ်း 3) ၼိူဝ်ၶႅပ်း 11 ပွၵ်ႈလဵဝ်။ Panel ၵေႃႈမိူၼ်ၵၼ်။",kac:"Text & Sign Edit: ✎ template lata na Describe kaw ga ka — sign / palawng ntsa ka ya. Batch Imagine: recipe (tool 3) sumla 11 kalang. Panel mung maren.",th:"ใน Text & Sign Edit เทมเพลต ✎ จะเขียนข้อความที่พิมพ์ในช่องอธิบายลงบนป้ายหรือเสื้อให้ถูกต้องทุกตัว และใช้แปรงระบายบอกตำแหน่งได้ Batch Imagine รันสูตร — 3 เครื่องมือต่อกัน — กับรูปสูงสุด 11 รูปด้วย Apply ครั้งเดียว แผง Photoshop มีหน้าเดียวกัน",zh:"在文字与招牌编辑中，✎ 模板会把你在描述框输入的文字准确写到招牌或衣服上，画笔可标出位置。批量 Imagine 用一个配方——三个工具依次运行——一键处理最多 11 张照片。Photoshop 面板同页。",vi:"Trong Sửa chữ & bảng hiệu, mẫu ✎ viết đúng chữ bạn gõ ở Mô tả lên bảng hiệu hay áo, cọ có thể chỉ chỗ. Batch Imagine chạy một công thức — ba công cụ nối tiếp — trên tối đa 11 ảnh với một lần Áp dụng. Panel có trang tương tự.",id:"Di Edit teks & papan, templat ✎ menulis kata yang kamu ketik di Deskripsi ke papan atau kaus dengan ejaan tepat, dan kuas bisa menandai tempatnya. Batch Imagine menjalankan resep — tiga alat berurutan — pada hingga 11 foto dengan sekali Terapkan. Panel punya halaman yang sama.",ms:"Dalam Edit teks & papan tanda, templat ✎ menulis kata yang anda taip di Perihal pada papan tanda atau baju dengan ejaan tepat, dan berus boleh menanda tempatnya. Batch Imagine menjalankan resipi — tiga alat berturutan — pada hingga 11 foto dengan sekali Guna. Panel ada halaman yang sama."} },
@@ -23752,31 +23748,8 @@ function renderDashStatic(){
   });
   setIcnText($("dashLibMore"),"i-arrow",L9({my:"နောက်ထပ်ကြည့်မယ်",en:"View More",shn:"တူၺ်းထႅင်ႈ",kac:"Grau yu u",th:"ดูเพิ่มเติม",zh:"查看更多",vi:"Xem thêm",id:"Lihat lainnya",ms:"Lihat lagi"}),{after:true});
   $("dashLibMore").onclick=function(){ switchPage("pgLib"); };
-  /* promo band: Photoshop-panel cross-sell (blueprint C14).
-     v4.41: dismissible — a phone-only owner shouldn't carry a desktop ad
-     in the bottom slot forever. */
-  try{
-    if(localStorage.getItem("hnk_ws_promo_hide")==="1") $("dashPromo").style.display="none";
-    else if(!$("dashPromoX")){
-      var px=el("button","chip","✕");
-      px.id="dashPromoX";
-      px.setAttribute("aria-label","Dismiss");
-      px.style.cssText="position:absolute;top:10px;right:10px;min-height:44px;padding:2px 10px";
-      $("dashPromo").style.position="relative";
-      px.onclick=function(){
-        try{ localStorage.setItem("hnk_ws_promo_hide","1"); }catch(e){}
-        $("dashPromo").style.display="none";
-      };
-      $("dashPromo").appendChild(px);
-    }
-  }catch(e){}
-  $("dashPromoH2").textContent="Photoshop Panel";
-  $("dashPromoP").textContent=L9({my:"Photoshop ထဲမှာလည်း — Layer + Mask နဲ့ ပြန်လာမယ်၊ မူရင်းပုံ မပျက်ဘူး။",en:"Also in Photoshop — results come back as Layer + Mask, your original stays untouched.",shn:"ၼႂ်း Photoshop ၵေႃႈ — ၽွၼ်းလႆႈပွၵ်ႈမႃးပဵၼ် Layer + Mask၊ ၶႅပ်းႁၢင်ႈမူႇလဢမ်ႇလု။",kac:"Photoshop hta mung — result gaw Layer + Mask hku bai wa ai, na a shawng sumla n hten ai.",th:"ใน Photoshop ก็ได้ — ผลลัพธ์กลับมาเป็น Layer + Mask ต้นฉบับไม่ถูกแตะต้อง",zh:"Photoshop 中同样可用 — 结果以 Layer + Mask 返回，原图不受影响。",vi:"Cũng có trong Photoshop — kết quả trả về dạng Layer + Mask, ảnh gốc không bị ảnh hưởng.",id:"Juga di Photoshop — hasil kembali sebagai Layer + Mask, foto asli tetap utuh.",ms:"Juga dalam Photoshop — hasil kembali sebagai Layer + Mask, foto asal kekal."});
-  setIcnText($("dashPromoGo"),"i-arrow",L9({my:"Panel ရယူမယ်",en:"Get the Panel",shn:"ဢဝ် Panel",kac:"Panel la u",th:"รับ Panel",zh:"获取 Panel",vi:"Tải Panel",id:"Dapatkan Panel",ms:"Dapatkan Panel"}));
-  $("dashPromoGo").onclick=function(ev){
-    if (ev) ev.preventDefault();
-    accPanelIntentStart();
-  };
+  /* 6.33.1 — ONE PLACE: the Photoshop-panel promo band (blueprint C14, dismissible since v4.41) is gone;
+     the Panel is downloaded under Setup ▸ Account ▸ Photoshop Panel and Home carries no door to it. */
 }
 function renderDashCont(){
   var card=$("dashCont");
@@ -25663,7 +25636,7 @@ function unifiedRender(){
   $("unifiedEnrollPhone").hidden = current !== "phone" || !!devices.phone;
   $("unifiedEnrollComputer").hidden = current !== "computer" || !!devices.computer;
   $("unifiedDownloadNote").textContent = unifiedCanDownload()
-    ? "Verified. Get the Panel from the Account card's Photoshop Panel group — the one place that creates the temporary link."
+    ? "Verified. Download the Panel under Setup ▸ Account ▸ Photoshop Panel — the one place in the app that creates the temporary link."
     : "Download requires Active account + license, download permission and this registered Computer.";
   var legacyPanel = $("accGrpPanel");
   if (legacyPanel){
@@ -25715,6 +25688,7 @@ async function unifiedEnroll(kind){
 async function accRequestPanelDownload(ev){
   if (ev && ev.preventDefault) ev.preventDefault();
   if (!unifiedCanDownload()){
+    toast("Panel download is not authorized for this account or Computer.","err");
     accSetInline("unifiedStatus","Panel download is not authorized for this account or Computer.","err");
     try { switchPage("pgAccount"); } catch(e){}
     return;
@@ -25727,17 +25701,17 @@ async function accRequestPanelDownload(ev){
     if(location.protocol!=="file:"&&u.origin!==location.origin) throw new Error("The server returned an invalid delivery address");
     var a=document.createElement("a"); a.href=u.href; a.hidden=true; a.rel="noopener"; document.body.appendChild(a); a.click(); a.remove();
     accSetInline("unifiedStatus","Temporary Panel delivery created. It expires " + unifiedDate(b.expires_at) + ".","ok");
-  }catch(e){ accSetInline("unifiedStatus",friendlyError(e),"err"); }
+    toast("Temporary Panel delivery created — the .ccx is downloading.","ok");
+  }catch(e){ accSetInline("unifiedStatus",friendlyError(e),"err"); toast(friendlyError(e),"err"); }
 }
 function unifiedWire(){
   document.querySelectorAll("[data-unified-page],[data-tutorial-page]").forEach(function(b){ b.addEventListener("click",function(){ switchPage(b.getAttribute("data-unified-page")||b.getAttribute("data-tutorial-page")); }); });
   var ep=$("unifiedEnrollPhone"); if(ep) ep.onclick=function(){ unifiedEnroll("phone"); };
   var ec=$("unifiedEnrollComputer"); if(ec) ec.onclick=function(){ unifiedEnroll("computer"); };
-  /* v6.28.0 — ONE DOOR: the dashboard and tutorial "Photoshop Panel download" links no longer
-     leave for the website's /download/ route (which now forwards back here). They open the
-     account card's Panel group in place — the same intent the ?panel=download deep link and
-     the Home promo button use — so the temporary delivery is created on this page only. */
-  document.querySelectorAll("a[data-panel-intent]").forEach(function(a){ a.addEventListener("click",function(ev){ if(ev&&ev.preventDefault) ev.preventDefault(); accPanelIntentStart(); }); });
+  /* v6.33.1 — ONE PLACE (owner: "တစ်နေရာပဲ ထားပေးပါ"). The Panel is downloaded from the Account
+     card's Photoshop Panel group under Setup and nowhere else: the Home, Tutorials and Account
+     Center door buttons of 6.28.x are gone. The ?panel=download deep link (the website's old
+     /download/ route and the panel's own button both land on it) still opens that group in place. */
   var ad=$("accPanelDownload"); if(ad) ad.addEventListener("click",accRequestPanelDownload);
   var os=$("unifiedOpenSetup"); if(os) os.onclick=function(){ switchPage("pgHome"); accOpenGrp("accGrpAuth"); };
   var lo=$("unifiedLogout"); if(lo) lo.onclick=function(){ accLogout(); };
@@ -26476,7 +26450,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.33.0";
+var APP_VER="6.33.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

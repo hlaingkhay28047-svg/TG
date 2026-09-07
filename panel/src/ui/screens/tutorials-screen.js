@@ -17,9 +17,10 @@
 var _CJS = (typeof module !== "undefined" && module.exports);
 var dom = _CJS ? require("../dom") : globalThis.HNK.dom;
 
-/* [number, title, body, button label, panel page key | "update"] — the app's
-   own three tutorial-card actions: Open Dashboard, Check devices, Secure
-   Panel download. */
+/* [number, title, body, button label, panel page key] — the app's own three
+   tutorial-card actions: Open Dashboard, Check devices, Open Setup (6.102.1:
+   the third card no longer downloads — one place, the Account card's
+   Photoshop Panel group under Setup, on both surfaces). */
 var LESSONS = [
   ["01", "Dashboard & AI Tools",
     "Choose Workflows, Edit or Media Lab. Add only your own provider key in Setup; HNK never stores it as your account password.",
@@ -28,8 +29,8 @@ var LESSONS = [
     "Use one Phone and one Computer. Your Computer slot is shared by the Web App and Photoshop Panel.",
     "Check devices", "setup"],
   ["03", "Install the Panel",
-    "Request a temporary download, install it in Photoshop, then just sign in — the panel registers this computer by itself.",
-    "Secure Panel download", "update"]
+    "Under Setup ▸ Account, open the Photoshop Panel group and press its button — the one place the Panel is downloaded from. Install it in Photoshop, then just sign in — the panel registers this computer by itself.",
+    "Open Setup", "setup"]
 ];
 
 function render(root, deps) {
@@ -45,9 +46,8 @@ function render(root, deps) {
 
   var grid = dom.el(doc, "div", { class: "tutorial-grid" });
   LESSONS.forEach(function (l) {
-    var go = dom.el(doc, "button", { class: l[4] === "update" ? "btn btn-gold" : "btn", text: l[3] });
+    var go = dom.el(doc, "button", { class: "btn", text: l[3] });
     dom.on(go, "click", function () {
-      if (l[4] === "update") { if (deps.onGetUpdate) deps.onGetUpdate(); return; }
       if (l[4] === "home") { if (deps.onPage) deps.onPage("aitools"); return; }
       if (deps.onPage) deps.onPage(l[4]);
     });
