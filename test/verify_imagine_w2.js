@@ -111,7 +111,7 @@ report("A6) WHATS_NEW carries the 6.30.0 Imagine row with a title and a line in 
     const B = await page.evaluate(async () => {
       const F = IMAGINE_DATA.frame, T = Object.fromEntries(IMAGINE_DATA.tools.map(t => [t.id, t]));
       const out = { cards: [...document.querySelectorAll("#pgImagine .im-card")].map(c => c.getAttribute("data-tool")) };
-      const po = IMAGINE.prompt("outfit", "aoDai", ""), pp = IMAGINE.prompt("product", "darkLuxury", ""), pb = IMAGINE.prompt("background", "cafe", ""), pd = IMAGINE.prompt("describe", "", "make the sky pink"), pa = IMAGINE.prompt("architecture", "nightLights", "");
+      const po = IMAGINE.prompt("outfit", "sequinParty", ""), pp = IMAGINE.prompt("product", "darkLuxury", ""), pb = IMAGINE.prompt("background", "cafe", ""), pd = IMAGINE.prompt("describe", "", "make the sky pink"), pa = IMAGINE.prompt("architecture", "nightLights", "");
       out.outfit = po.indexOf(T.outfit.keep) >= 0 && po.indexOf(F.keep) < 0 && po.indexOf(T.outfit.avoid) >= 0 && po.indexOf(F.avoid) < 0 && /ao dai/i.test(po) && /NO STUDIO GEAR/.test(po);
       out.product = pp.indexOf(T.product.keep) >= 0 && pp.indexOf(F.keep) < 0 && /PRODUCT LOCK/.test(pp) && /REALISM/.test(pp) && /TASK GUARD/.test(pp);
       out.background = pb.indexOf(F.keep) >= 0 && pb.indexOf(F.avoid) >= 0;
@@ -119,7 +119,7 @@ report("A6) WHATS_NEW carries the 6.30.0 Imagine row with a title and a line in 
       out.architecture = /STRUCTURE LOCK/.test(pa) && pa.indexOf(F.keep) < 0;
       IMAGINE.openTool("outfit"); await new Promise(r => setTimeout(r, 120));
       out.outfitTiles = document.querySelectorAll("#imTpls .im-tpl").length;
-      const img = document.querySelector('#imTpls .im-tpl[data-preset="aoDai"] .im-tpl-im img'); out.aoDaiSrc = img ? img.getAttribute("src") : "";
+      const img = document.querySelector('#imTpls .im-tpl[data-preset="sequinParty"] .im-tpl-im img'); out.sqSrc = img ? img.getAttribute("src") : "";
       out.title = document.querySelector(".im-tooltitle").textContent.trim(); out.wantTitle = T.outfit.name[LANG] || T.outfit.name.en;
       IMAGINE.goHub(); await new Promise(r => setTimeout(r, 80));
       IMAGINE.openTool("architecture"); await new Promise(r => setTimeout(r, 120));
@@ -145,8 +145,8 @@ report("A6) WHATS_NEW carries the 6.30.0 Imagine row with a title and a line in 
       B.cards.join(",") === ORDER.join(",") && B.outfitCard, B);
     report("B2) the prompt the page would send honours the tool's own lines — Outfit: its clothing-only lock and its AVOID (no shared identity lock), Product: PRODUCT LOCK, Architecture: STRUCTURE LOCK, Describe (your own words, no template): its lock — while Background keeps the shared frame",
       B.outfit && B.product && B.background && B.describe && B.architecture, B);
-    report("B3) Outfit opens with 15 tiles (Ao Dai's tile is its own thumbnail), Architecture with 15, the tool title in the page's language",
-      B.outfitTiles === 15 && /\/th\/outfit-aoDai\.jpg$/.test(B.aoDaiSrc) && B.archTiles === 15 && B.title === B.wantTitle, B);
+    report("B3) Outfit opens with 15 tiles (the Sequin Party tile is its own thumbnail), Architecture with 15, the tool title in the page's language",
+      B.outfitTiles === 15 && /\/th\/outfit-sequinParty\.jpg$/.test(B.sqSrc) && B.archTiles === 15 && B.title === B.wantTitle, B);
     if (HAS_CT) report("B5) Color Tone + Skin opens with 28 preset cards: the first tile shows its own thumbnail, five painted swatch dots (#1F2F4A first) and the mood line in the page's language at 10px; the prompt for Violet Porcelain names the look under the TONE LOCK, the signature skin finish and the gear rule",
       B.ctTiles === 28 && /\/th\/colortone-rusticBlueGrace\.jpg$/.test(B.ctSrc) && B.ctDots.length === 5 && B.ctDots[0] === "rgb(31, 47, 74)" && B.ctSub === B.ctWantSub && Math.abs(B.ctSubPx - 10) < 0.6 && B.ctPrompt,
       { tiles: B.ctTiles, dots: B.ctDots, sub: B.ctSub, want: B.ctWantSub, px: B.ctSubPx, src: B.ctSrc, prompt: B.ctPrompt });
