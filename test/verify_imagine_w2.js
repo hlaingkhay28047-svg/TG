@@ -31,10 +31,8 @@ const HAS_CT = DATA.tools.some(t => t.id === "colortone");   /* Color Tone + Ski
 const W2 = { describe: 12, architecture: 15, idphoto: 12, product: 12, productbg: 15, background: 15, outfit: 15 }; if (HAS_CT) W2.colortone = 28;
 /* 6.32.0 — W3 (Restore · Upscale · Face Clarity · Object Remove · Object Add) follows W2 in the roster; verify_imagine_w3.js pins it, this file only counts it */
 const W3 = { restore: 12, upscale: 8, faceclear: 12, objremove: 10, objadd: 12 };
-/* 6.33.0 — W4 (Hair & Makeup · Body Shape · Sky Replace · Text & Sign Edit · Batch Imagine) follows W3; verify_imagine_w4.js pins it, this file only counts it */
-const W4 = { hairmakeup: 14, bodyshape: 10, sky: 12, textedit: 8, batch: 8 };
-const ORDER = ["lighting", "portrait", "surface", "weather"].concat(Object.keys(W2)).concat(Object.keys(W3)).concat(Object.keys(W4));
-const NW2 = Object.keys(W2).length, THUMBS = Object.values(W2).reduce((a, b) => a + b, 0), TOTAL = 54 + THUMBS + Object.values(W3).reduce((a, b) => a + b, 0) + Object.values(W4).reduce((a, b) => a + b, 0), WORD = { 11: "eleven", 12: "twelve", 16: "sixteen", 17: "seventeen", 22: "twenty-two" }[ORDER.length];
+const ORDER = ["lighting", "portrait", "surface", "weather"].concat(Object.keys(W2)).concat(Object.keys(W3));
+const NW2 = Object.keys(W2).length, THUMBS = Object.values(W2).reduce((a, b) => a + b, 0), TOTAL = 54 + THUMBS + Object.values(W3).reduce((a, b) => a + b, 0), WORD = { 11: "eleven", 12: "twelve", 16: "sixteen", 17: "seventeen" }[ORDER.length];
 const PERSON = ["describe", "idphoto", "background", "outfit"].concat(HAS_CT ? ["colortone"] : []), OBJECT = ["architecture", "product", "productbg"];
 const GEAR = /NO STUDIO GEAR IN THE FRAME/;
 const ART = path.join(ROOT, "docs/app/lib/wf/imagine"), PART = path.join(ROOT, "panel/icons/imagine");
@@ -94,8 +92,7 @@ report("A7) Color Tone + Skin: 28 preset cards — five hex swatches each (named
   CT.presets.length === 28 && !ctBad.length && CT.ic === "i-palette" && CT.cardPreset === undefined && /signature skin finish/.test(CT.basePrompt) && /never plastic, waxy or a white mask/.test(CT.basePrompt) &&
   !!ctBase && /UNGRADED/.test(ctBase.prompt) && /flat low-contrast tonal curve/.test(ctBase.prompt) &&
   /im-tpl-sw/.test(mod) && /im-tpl-sub/.test(mod) && /im-tpl-sw/.test(PANEL_JS) && /\.im-tpl-sw span\{display:block;width:10px;height:10px;border-radius:50%/.test(APP) && /\.im-tpl-sub\{font-size:10px/.test(APP) &&
-  /* 6.33.0 — Batch Imagine's recipes carry their step line as `sub` (no swatches); every other tool still has neither */
-  DATA.tools.filter(t => t.id !== "colortone" && t.id !== "batch").every(t => t.presets.every(p => !p.sw && !p.sub)) && (!byId.batch || byId.batch.presets.every(p => !p.sw && all9(p.sub))),
+  DATA.tools.filter(t => t.id !== "colortone").every(t => t.presets.every(p => !p.sw && !p.sub)),
   { n: CT.presets.length, bad: ctBad.slice(0, 3).map(p => p.id), base: !!ctBase });
 } else console.log("INFO — A7) Color Tone + Skin is held back: no colortone tool, no swatch presets expected");
 

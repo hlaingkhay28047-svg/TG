@@ -32,16 +32,16 @@ const all9 = o => !!o && LANGS.every(l => typeof o[l] === "string" && o[l].trim(
 /* ---------------- A) source ---------------- */
 const mod = lifter.between(APP, lifter.M0, lifter.M1, "module");
 const DATA = (() => { const a = mod.indexOf("var IMAGINE_DATA = ") + "var IMAGINE_DATA = ".length, b = mod.indexOf(";\nvar IMAGINE = (function(){", a); return new Function("return " + mod.slice(a, b))(); })();   /* the data block, as the page sees it */
-const COUNTS = { lighting: 12, portrait: 15, surface: 15, weather: 12, describe: 12, architecture: 15, idphoto: 12, product: 12, productbg: 15, background: 15, outfit: 15, colortone: 28, restore: 12, upscale: 8, faceclear: 12, objremove: 10, objadd: 12, hairmakeup: 14, bodyshape: 10, sky: 12, textedit: 8, batch: 8 };   /* 6.33.0 — the roster is twenty-two (W4 joined: Hair & Makeup · Body Shape · Sky Replace · Text & Sign Edit · Batch Imagine); the W1 four stay first */
+const COUNTS = { lighting: 12, portrait: 15, surface: 15, weather: 12, describe: 12, architecture: 15, idphoto: 12, product: 12, productbg: 15, background: 15, outfit: 15, colortone: 28, restore: 12, upscale: 8, faceclear: 12, objremove: 10, objadd: 12 };   /* 6.32.0 — the roster is seventeen (W3 joined: Restore · Upscale · Face Clarity · Object Remove · Object Add); the W1 four stay first */
 report("A1) the page is registered after Freeform and the Edit roster carries it (6 pages)",
   /\["pgCreate","i-pen","Freeform"\],\n\s*\["pgImagine","i-wand","Imagine"\]/.test(APP) &&
   /pages:\["pgCreate","pgImagine","pgMeitu","pgEvoto","pgRetouch","pgPath"\]/.test(APP) &&
   /<div class="page" id="pgImagine">/.test(APP) && /<div id="imRoot"><\/div>/.test(APP) &&
   /<input type="file" id="imFile" accept="image\/\*" multiple/.test(APP) && /id="phImagine"/.test(APP) &&
   /\["phImagine","ph_imagine"\]/.test(APP) && (APP.match(/\n  ph_imagine:\{/g) || []).length === 2, null);
-report("A2) twenty-two tools, 284 templates, every string in the studio's nine languages, the prompt frame present",
-  DATA.tools.length === 22 && DATA.tools.every(t => COUNTS[t.id] === t.presets.length && all9(t.name) && all9(t.sum) && /\{P\}/.test(t.basePrompt) && t.presets.every(p => all9(p.name) && p.p.length > 20)) &&
-  DATA.tools.reduce((n, t) => n + t.presets.length, 0) === 284 && Object.keys(DATA.ui).length >= 30 && Object.keys(DATA.ui).every(k => all9(DATA.ui[k])) &&
+report("A2) seventeen tools, 232 templates, every string in the studio's nine languages, the prompt frame present",
+  DATA.tools.length === 17 && DATA.tools.every(t => COUNTS[t.id] === t.presets.length && all9(t.name) && all9(t.sum) && /\{P\}/.test(t.basePrompt) && t.presets.every(p => all9(p.name) && p.p.length > 20)) &&
+  DATA.tools.reduce((n, t) => n + t.presets.length, 0) === 232 && Object.keys(DATA.ui).length >= 30 && Object.keys(DATA.ui).every(k => all9(DATA.ui[k])) &&
   /IDENTITY LOCK/.test(DATA.frame.keep) && /REALISM/.test(DATA.frame.real) && /AVOID/.test(DATA.frame.avoid) && /TASK GUARD/.test(DATA.frame.guard),
   { tools: DATA.tools.map(t => t.id + ":" + t.presets.length), ui: Object.keys(DATA.ui).length });
 /* every model the picker offers exists on BOTH surfaces — no invented apiPath, no panel-only id */
@@ -164,11 +164,11 @@ const MOCK = `(function(){
     on: /\bon\b/.test(document.getElementById("pgImagine").className), cards: [...document.querySelectorAll("#pgImagine .im-card")].map(c => c.getAttribute("data-tool")),
     subtabs: [...document.querySelectorAll("#subtabbar .subtab")].map(b => b.textContent.trim()), active: (document.querySelector("#subtabbar .subtab.on") || {}).textContent,
     h2: (document.querySelector("#pgImagine .im-hub h2") || {}).textContent, head: document.getElementById("phImagine").textContent }));
-  report("B1) ?page=pgImagine opens the hub: twenty-two cards in roster order, Edit shows six subtabs with Imagine active, the headline is painted",
+  report("B1) ?page=pgImagine opens the hub: seventeen cards in roster order, Edit shows six subtabs with Imagine active, the headline is painted",
     hub.on && hub.cards.join(",") === Object.keys(COUNTS).join(",") && hub.subtabs.length === 6 && /Imagine/.test(hub.active || "") && /IMAGINE/.test(hub.h2 || "") && hub.head.length > 8, hub);
   /* the strings are the module's own, in the current language (my by default) */
   const strs = await page.evaluate(() => ({ h2: document.querySelector("#pgImagine .im-hub h2").textContent.trim(), want: IMAGINE_DATA.ui.hub_h2[LANG], chips: [...document.querySelectorAll("#pgImagine .im-tplcount")].map(c => c.textContent), lang: LANG }));
-  report("B2) the hub reads in the app's language and every card names its template count", strs.h2 === strs.want && strs.chips.length === 22 && strs.chips.every(c => /12|15|28|8|10|14/.test(c)), strs);
+  report("B2) the hub reads in the app's language and every card names its template count", strs.h2 === strs.want && strs.chips.length === 17 && strs.chips.every(c => /12|15|28|8|10/.test(c)), strs);
   /* 6.29.1 wave — the card picture is a real Before | After compare, dragged on the picture, and a tap still opens the tool */
   const hubCmp = await page.evaluate(async () => {
     const cards = [...document.querySelectorAll("#pgImagine .im-card")];
@@ -204,7 +204,7 @@ const MOCK = `(function(){
         empty: !!document.getElementById("imAddBig"), hasApply: !!document.getElementById("imApply"), models: document.querySelectorAll("#imModel option").length, size: [...document.querySelectorAll("#imSize option")].map(o => o.textContent).join("/") };
       document.getElementById("imBack").click();
       await new Promise(r => setTimeout(r, 60));
-      out[t.id].backToHub = document.querySelectorAll("#pgImagine .im-card").length === 22 && IMAGINE.state.tool === null;
+      out[t.id].backToHub = document.querySelectorAll("#pgImagine .im-card").length === 17 && IMAGINE.state.tool === null;
     }
     return out;
   });
@@ -389,7 +389,7 @@ const MOCK = `(function(){
     globalThis.HNK.imagine.goHub();
     return out;
   });
-  report("C1) the panel opens Edit · Imagine on the same module: twenty-two cards, six subtabs, the hub headline in the panel's language, <img> icons (no inline svg), div buttons (no native <button>), Surface's 15 tiles as plain icons/imagine/th/ pictures (no ?v= inside the CCX), Model + Size",
+  report("C1) the panel opens Edit · Imagine on the same module: seventeen cards, six subtabs, the hub headline in the panel's language, <img> icons (no inline svg), div buttons (no native <button>), Surface's 15 tiles as plain icons/imagine/th/ pictures (no ?v= inside the CCX), Model + Size",
     pan.on && pan.cards.join(",") === Object.keys(COUNTS).join(",") && pan.subtabs.length === 6 && pan.h2 === pan.want && pan.head && pan.icons > 0 && pan.svg === 0 && pan.tiles === 15 && /^icons\/imagine\/th\/surface-[A-Za-z]+\.jpg$/.test(pan.tileSrc) && pan.roleBtns > 0 && pan.nativeBtns === 0 && pan.size === "1K/2K/4K" && pan.models >= 6, pan);
   report("C2) the panel raised no error while it built the page", perrs.length === 0, perrs.slice(0, 3));
   await browser.close();

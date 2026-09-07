@@ -42,8 +42,7 @@ report("A1) every tool carries a refPrompt that names IMAGE 1 (the photo) and IM
   { tools: DATA.tools.length, bad: badRef.map(t => t.id), ui: Object.keys(DATA.ui).filter(k => /^ref_|err_ref/.test(k)) });
 
 const aspects = { lighting: /LIGHTING/, portrait: /SCENE/, surface: /SURFACE/, weather: /WEATHER and SEASON/, describe: /LOOK/, architecture: /ARCHITECTURAL STYLE/, idphoto: /ID photograph/, product: /STUDIO LOOK/, productbg: /BACKDROP/, background: /BACKGROUND/, outfit: /OUTFIT/, colortone: /COLOUR TONE and SKIN FINISH/,
-  restore: /CONDITION and FINISH/, upscale: /DETAIL LEVEL and SHARPNESS/, faceclear: /CLARITY and SKIN FINISH/, objremove: /KIND OF OBJECT/, objadd: /OBJECT shown/,   /* 6.32.0 — the W3 five */
-  hairmakeup: /HAIR and MAKEUP/, bodyshape: /PROPORTIONS and POSTURE/, sky: /SKY of IMAGE 1/, textedit: /TYPOGRAPHIC STYLE/, batch: /overall FINISH/ };   /* 6.33.0 — the W4 five */
+  restore: /CONDITION and FINISH/, upscale: /DETAIL LEVEL and SHARPNESS/, faceclear: /CLARITY and SKIN FINISH/, objremove: /KIND OF OBJECT/, objadd: /OBJECT shown/ };   /* 6.32.0 — the W3 five */
 report("A2) each tool's transfer line copies its OWN aspect — light, scene, surface, weather + season, look, architectural style, ID background + outfit, studio look, backdrop, background, outfit, tone + skin, restored condition, detail level, face clarity, the kind of object to remove, the object to add",
   DATA.tools.every(t => aspects[t.id] && aspects[t.id].test(t.refPrompt)), DATA.tools.filter(t => !(aspects[t.id] && aspects[t.id].test(t.refPrompt))).map(t => t.id));
 
