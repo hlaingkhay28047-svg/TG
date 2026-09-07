@@ -1,0 +1,79 @@
+{
+ "note": "Reference Scenes 6.32.3 proof, second run — the same two generated brand-model inputs as run #59 (IMAGE 1 a seated red-velvet studio portrait with a tulle veil bow; IMAGE 2 a misty forest that CONTAINS a person), this time on the app's first-listed image model Nano Banana 2 (rhart-image-n-g31-flash/image-to-image) and on Nano Banana Pro (rhart-image-n-pro/edit): the exact 6.32.2 prompt vs the exact 6.32.3 prompt on each (run #59 showed Qwen 3.0 Pro handles even the bare sentence; the owner's IMAGE-2-returned failure must come from another model). Images go as [IMAGE 1, IMAGE 2] exactly as the app sends them.",
+ "jobs": [
+  {
+   "name": "rsf2-subject",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Create a three-quarter-length photograph of the HNK model from the references (the same face, fair luminous porcelain skin, long dark wavy hair, soft natural glam), early twenties, seated on a deep-red velvet drape in a dark-red studio set, wearing a pale-blue and white flowing hanfu-style robe with wide sleeves, a long white pearl necklace, a large white tulle bow with a long soft veil at the back of her head, eyes lowered softly, hands resting in her lap, a few dark-red roses beside her on the velvet, soft frontal studio light, the whole figure inside the frame with a little room above her head, VERTICAL 2:3 framing, photoreal, no text, no captions, no watermark, no logo."
+  },
+  {
+   "name": "rsf2-scene",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes, no dark knees or elbows), soft glam, a clean cool-toned colour grade (neutral-cool whites and greys, no orange or yellow cast on her skin), delicate and pretty. Change everything else as described. Create a photograph of the HNK model from the references sitting cross-legged on a mossy forest floor in a misty dark-green forest: a plain teal-blue hanfu robe with wide sleeves, long loose dark hair, low white mist drifting over moss-covered rocks, scattered pale-pink blossoms on the moss, deep shadowy foliage behind her, soft diffused daylight, a medium-wide framing with the forest filling the frame around her, VERTICAL 2:3 framing, photoreal, no text, no captions, no watermark, no logo."
+  },
+  {
+   "name": "rsf2-old-nb2",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "refsFrom": [
+    "rsf2-subject"
+   ],
+   "baseFrom": "rsf2-scene",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "Reference scenes from image 2 keep image 1 subject frame and composition and scenes follow the subject compose\nREAL PHOTOGRAPH: the finished frame must read as a photograph taken with a real camera — real skin texture with pores and fine hair, real fabric weave, real depth of field and lens falloff; no illustration, no 3D render, no waxy or plastic surfaces, no AI sheen, no over-smoothed faces.\nSKIN TONE TRUTH: keep every person's own natural skin tone exactly as photographed — relight it, never recolour it: no whitening, no bleaching, no tanning, no orange, grey or pink cast, no change of undertone; light and shadow may follow the new scene, but the colour under that light stays this person's real complexion, and face, neck, ears, hands and body all stay the one tone they started as.\n\nAVOID: changed face, changed identity, different person, changed pose, re-posed, changed hands, changed outfit, IMAGE 2's person, IMAGE 2's pose, re-cropped, reframed, zoomed, changed aspect ratio, moved subject, rescaled subject, cut-out edges, halo, floating subject, missing contact shadow, mismatched light direction, watermark, text."
+  },
+  {
+   "name": "rsf2-new-nb2",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "refsFrom": [
+    "rsf2-subject"
+   ],
+   "baseFrom": "rsf2-scene",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "Reference scenes from image 2 keep image 1 subject frame and composition and scenes follow the subject compose\n\nINPUT ROLES:\n- IMAGE 1 is the ONLY edit target and the ONLY person in the result. The person — face, hair, skin, outfit, hands, pose and expression — the camera angle, the crop, the subject's size and position in the frame and the frame ratio all come from IMAGE 1 and never change.\n- IMAGE 2 is a SCENE REFERENCE ONLY. Take from it the place — background, ground, walls, furniture, foliage, flowers, props, textures, depth, light direction and colour mood — and rebuild that place around the IMAGE 1 subject at IMAGE 1's camera height, viewing angle and frame ratio, extended wherever IMAGE 1's frame reaches past what IMAGE 2 shows. Never copy its person, its pose, its framing or its crop, and never copy any text, logo, signature or watermark on it.\n\nRESULT: one believable photograph of IMAGE 1's person, in IMAGE 1's pose, at IMAGE 1's framing, seated or standing inside IMAGE 2's scene — with true ground contact, a real contact shadow, and IMAGE 2's light and colour falling on the subject. Never return IMAGE 2 itself, and never put IMAGE 2's person in the frame.\nREAL PHOTOGRAPH: the finished frame must read as a photograph taken with a real camera — real skin texture with pores and fine hair, real fabric weave, real depth of field and lens falloff; no illustration, no 3D render, no waxy or plastic surfaces, no AI sheen, no over-smoothed faces.\nSKIN TONE TRUTH: keep every person's own natural skin tone exactly as photographed — relight it, never recolour it: no whitening, no bleaching, no tanning, no orange, grey or pink cast, no change of undertone; light and shadow may follow the new scene, but the colour under that light stays this person's real complexion, and face, neck, ears, hands and body all stay the one tone they started as.\n\nAVOID: changed face, changed identity, different person, changed pose, re-posed, changed hands, changed outfit, IMAGE 2's person, IMAGE 2's pose, re-cropped, reframed, zoomed, changed aspect ratio, moved subject, rescaled subject, cut-out edges, halo, floating subject, missing contact shadow, mismatched light direction, watermark, text, IMAGE 2 returned as the result, IMAGE 2's person kept, a second person, logo, signature, social handle, reference watermark."
+  },
+  {
+   "name": "rsf2-old-nbpro",
+   "apiPath": "rhart-image-n-pro/edit",
+   "refsFrom": [
+    "rsf2-subject"
+   ],
+   "baseFrom": "rsf2-scene",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "Reference scenes from image 2 keep image 1 subject frame and composition and scenes follow the subject compose\nREAL PHOTOGRAPH: the finished frame must read as a photograph taken with a real camera — real skin texture with pores and fine hair, real fabric weave, real depth of field and lens falloff; no illustration, no 3D render, no waxy or plastic surfaces, no AI sheen, no over-smoothed faces.\nSKIN TONE TRUTH: keep every person's own natural skin tone exactly as photographed — relight it, never recolour it: no whitening, no bleaching, no tanning, no orange, grey or pink cast, no change of undertone; light and shadow may follow the new scene, but the colour under that light stays this person's real complexion, and face, neck, ears, hands and body all stay the one tone they started as.\n\nAVOID: changed face, changed identity, different person, changed pose, re-posed, changed hands, changed outfit, IMAGE 2's person, IMAGE 2's pose, re-cropped, reframed, zoomed, changed aspect ratio, moved subject, rescaled subject, cut-out edges, halo, floating subject, missing contact shadow, mismatched light direction, watermark, text."
+  },
+  {
+   "name": "rsf2-new-nbpro",
+   "apiPath": "rhart-image-n-pro/edit",
+   "refsFrom": [
+    "rsf2-subject"
+   ],
+   "baseFrom": "rsf2-scene",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "Reference scenes from image 2 keep image 1 subject frame and composition and scenes follow the subject compose\n\nINPUT ROLES:\n- IMAGE 1 is the ONLY edit target and the ONLY person in the result. The person — face, hair, skin, outfit, hands, pose and expression — the camera angle, the crop, the subject's size and position in the frame and the frame ratio all come from IMAGE 1 and never change.\n- IMAGE 2 is a SCENE REFERENCE ONLY. Take from it the place — background, ground, walls, furniture, foliage, flowers, props, textures, depth, light direction and colour mood — and rebuild that place around the IMAGE 1 subject at IMAGE 1's camera height, viewing angle and frame ratio, extended wherever IMAGE 1's frame reaches past what IMAGE 2 shows. Never copy its person, its pose, its framing or its crop, and never copy any text, logo, signature or watermark on it.\n\nRESULT: one believable photograph of IMAGE 1's person, in IMAGE 1's pose, at IMAGE 1's framing, seated or standing inside IMAGE 2's scene — with true ground contact, a real contact shadow, and IMAGE 2's light and colour falling on the subject. Never return IMAGE 2 itself, and never put IMAGE 2's person in the frame.\nREAL PHOTOGRAPH: the finished frame must read as a photograph taken with a real camera — real skin texture with pores and fine hair, real fabric weave, real depth of field and lens falloff; no illustration, no 3D render, no waxy or plastic surfaces, no AI sheen, no over-smoothed faces.\nSKIN TONE TRUTH: keep every person's own natural skin tone exactly as photographed — relight it, never recolour it: no whitening, no bleaching, no tanning, no orange, grey or pink cast, no change of undertone; light and shadow may follow the new scene, but the colour under that light stays this person's real complexion, and face, neck, ears, hands and body all stay the one tone they started as.\n\nAVOID: changed face, changed identity, different person, changed pose, re-posed, changed hands, changed outfit, IMAGE 2's person, IMAGE 2's pose, re-cropped, reframed, zoomed, changed aspect ratio, moved subject, rescaled subject, cut-out edges, halo, floating subject, missing contact shadow, mismatched light direction, watermark, text, IMAGE 2 returned as the result, IMAGE 2's person kept, a second person, logo, signature, social handle, reference watermark."
+  }
+ ]
+}
