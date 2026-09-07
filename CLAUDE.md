@@ -49,3 +49,10 @@ get green, and never expose or commit API keys or tokens.
 - `docs/app/index.html` is one large file; a CCX is inspectable client-side code.
   `panel/manifest.json`, `panel/release-manifest.json`, and
   `panel-version.json` must agree, while the binary remains outside Git.
+- Brand model (owner, 2026-09-07): every generated person in the studio's own
+  art — cards, template thumbnails, hero stills and clips — is the Freeform
+  hero's model, reference `tools/art_ref/hnk-model.jpg` (a synthetic character;
+  lineage in its README). Never a real person's likeness.
+- Replacing a file under `docs/app/lib/` in place needs a `LIB_ART_REV` bump,
+  a `LIB_PURGES` entry and the fixture record — `/lib/` is cache-first and never
+  revalidated (6.29.1 shipped new thumbnails without it and phones kept the old).

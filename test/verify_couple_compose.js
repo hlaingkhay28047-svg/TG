@@ -95,7 +95,10 @@ const sz = bytes ? jpegSize(bytes) : null;
 report("D) the card picture is 960x640", !!sz && sz.w === 960 && sz.h === 640, sz);
 const rev = (APP.match(/var LIB_ART_REV = \{[\s\S]*?\n\};/) || [])[0] || "";
 const swEntry = SW.indexOf('{ tag: "' + TAG + '", re: new RegExp("/lib/wf/cards5/(couple-compose)\\\\.jpg$") }') >= 0;
-const swLast = SW.lastIndexOf('{ tag: "./__lib-purge') === SW.lastIndexOf('{ tag: "' + TAG + '"');
+/* 6.29.2 — "newest" means the newest entry that MATCHES this card, not the last line of the list: later
+   releases add entries for other files (Imagine's art), and the rule that keeps a returning device right
+   is verify_lib_purge_complete's E — the last matching entry must be this one. */
+const swLast = (() => { const vm = require("vm"), box = vm.createContext({}); vm.runInContext(SW.match(/var LIB_PURGES = \[[\s\S]*?\n\];/)[0] + "; globalThis.__P = LIB_PURGES;", box); const m = box.__P.filter(p => p.re.test("/app/lib/wf/cards5/couple-compose.jpg")); return m.length > 0 && m[m.length - 1].tag === TAG; })();
 const fixRow = FIX.files.find(f => f.path === "docs/app/lib/wf/cards5/couple-compose.jpg");
 const sha = bytes ? crypto.createHash("sha256").update(bytes).digest("hex") : "";
 report("D2) replaced under its own name: LIB_ART_REV lists it at 2, sw.js carries its own purge entry as the newest, the fixture records the shipped bytes under that tag, and sweep_v469 restates the entry",

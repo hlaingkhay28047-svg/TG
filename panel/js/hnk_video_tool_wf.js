@@ -250,7 +250,29 @@ var LIB_ART_REV = {
   "lib/vid/vt-headswap.jpg": 2,
   "lib/wf/cards5/look-golden-grecian.jpg": 2, "lib/wf/cards5/studio-look-copy.jpg": 2,
   /* 6.17.0 — Couple Compose redrawn for its three-input redesign, under its own name */
-  "lib/wf/cards5/couple-compose.jpg": 2
+  "lib/wf/cards5/couple-compose.jpg": 2,
+  /* 6.29.2 — Imagine re-shot on the brand model under its own names: the page banner, the four card pairs and the 54 template thumbnails.
+     6.29.1 had ALREADY replaced the thumbnails and the banner in place without a revision — the owner opened the templates and saw
+     the 6.29.0 library pictures, exactly the failure this map exists for. Every one of them now rides ?v=2. */
+  "lib/banners/banner-imagine.jpg": 2,
+  "lib/wf/imagine/card-lighting-before.jpg": 2, "lib/wf/imagine/card-lighting-after.jpg": 2,
+  "lib/wf/imagine/card-portrait-before.jpg": 2, "lib/wf/imagine/card-portrait-after.jpg": 2,
+  "lib/wf/imagine/card-surface-before.jpg": 2, "lib/wf/imagine/card-surface-after.jpg": 2,
+  "lib/wf/imagine/card-weather-before.jpg": 2, "lib/wf/imagine/card-weather-after.jpg": 2,
+  "lib/wf/imagine/th/lighting-window.jpg": 2, "lib/wf/imagine/th/lighting-warmWindow.jpg": 2, "lib/wf/imagine/th/lighting-brightGlow.jpg": 2, "lib/wf/imagine/th/lighting-warm.jpg": 2,
+  "lib/wf/imagine/th/lighting-harshSun.jpg": 2, "lib/wf/imagine/th/lighting-goldenSun.jpg": 2, "lib/wf/imagine/th/lighting-sunRays.jpg": 2, "lib/wf/imagine/th/lighting-afternoon.jpg": 2,
+  "lib/wf/imagine/th/lighting-windowStreaks.jpg": 2, "lib/wf/imagine/th/lighting-leafDapple.jpg": 2, "lib/wf/imagine/th/lighting-soft.jpg": 2, "lib/wf/imagine/th/lighting-goldRim.jpg": 2,
+  "lib/wf/imagine/th/portrait-winterStreet.jpg": 2, "lib/wf/imagine/th/portrait-softGarden.jpg": 2, "lib/wf/imagine/th/portrait-flowerGarden.jpg": 2, "lib/wf/imagine/th/portrait-wildflowerField.jpg": 2,
+  "lib/wf/imagine/th/portrait-countryField.jpg": 2, "lib/wf/imagine/th/portrait-riceField.jpg": 2, "lib/wf/imagine/th/portrait-goldenHill.jpg": 2, "lib/wf/imagine/th/portrait-autumnPark.jpg": 2,
+  "lib/wf/imagine/th/portrait-beach.jpg": 2, "lib/wf/imagine/th/portrait-sunsetSea.jpg": 2, "lib/wf/imagine/th/portrait-morningSun.jpg": 2, "lib/wf/imagine/th/portrait-mistyDawn.jpg": 2,
+  "lib/wf/imagine/th/portrait-goldenWind.jpg": 2, "lib/wf/imagine/th/portrait-goldenSunset.jpg": 2, "lib/wf/imagine/th/portrait-blueTwilight.jpg": 2,
+  "lib/wf/imagine/th/surface-grass.jpg": 2, "lib/wf/imagine/th/surface-naturalGrass.jpg": 2, "lib/wf/imagine/th/surface-meadowGrass.jpg": 2, "lib/wf/imagine/th/surface-wildGrass.jpg": 2,
+  "lib/wf/imagine/th/surface-dryGrass.jpg": 2, "lib/wf/imagine/th/surface-greenFlowerField.jpg": 2, "lib/wf/imagine/th/surface-whiteFlowers.jpg": 2, "lib/wf/imagine/th/surface-naturalFlowers.jpg": 2,
+  "lib/wf/imagine/th/surface-wildflowers.jpg": 2, "lib/wf/imagine/th/surface-goldenSand.jpg": 2, "lib/wf/imagine/th/surface-whiteSand.jpg": 2, "lib/wf/imagine/th/surface-blueLake.jpg": 2,
+  "lib/wf/imagine/th/surface-stillWater.jpg": 2, "lib/wf/imagine/th/surface-pebbles.jpg": 2, "lib/wf/imagine/th/surface-deepBlueSea.jpg": 2,
+  "lib/wf/imagine/th/weather-snowfall.jpg": 2, "lib/wf/imagine/th/weather-lightRain.jpg": 2, "lib/wf/imagine/th/weather-heavyRain.jpg": 2, "lib/wf/imagine/th/weather-fogMist.jpg": 2,
+  "lib/wf/imagine/th/weather-goldenHaze.jpg": 2, "lib/wf/imagine/th/weather-overcast.jpg": 2, "lib/wf/imagine/th/weather-stormClouds.jpg": 2, "lib/wf/imagine/th/weather-rainbow.jpg": 2,
+  "lib/wf/imagine/th/weather-blueHour.jpg": 2, "lib/wf/imagine/th/weather-clearSunny.jpg": 2, "lib/wf/imagine/th/weather-autumnLeaves.jpg": 2, "lib/wf/imagine/th/weather-blossomPetals.jpg": 2
 };
 function libArt(p){
   var k=String(p||"").replace(/^\.?\//, "").split("?")[0];

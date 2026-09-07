@@ -69,10 +69,11 @@ const wantFiles = DATA.tools.flatMap(t => [t.before, t.after]).concat(DATA.tools
 const missingArt = wantFiles.filter(f => !fs.existsSync(path.join(ART, f)) || fs.statSync(path.join(ART, f)).size < 4000);
 const driftArt = wantFiles.filter(f => !fs.existsSync(path.join(PART, f)) || !fs.readFileSync(path.join(ART, f)).equals(fs.readFileSync(path.join(PART, f))));
 const cardShapes = DATA.tools.map(t => { const b = fs.existsSync(path.join(ART, t.before)) && jpegSize(path.join(ART, t.before)), a = fs.existsSync(path.join(ART, t.after)) && jpegSize(path.join(ART, t.after)); return { id: t.id, b, a, ok: !!(b && a && b.w === a.w && b.h === a.h && Math.abs(b.w / b.h - 2 / 3) < 0.01 && b.w >= 600) }; });
+const thShapes = DATA.tools.flatMap(t => t.presets.map(p => { const f = path.join(ART, "th/" + t.id + "-" + p.id + ".jpg"); const sz = fs.existsSync(f) && jpegSize(f); return { f: t.id + "-" + p.id, sz, ok: !!(sz && Math.abs(sz.w / sz.h - 2 / 3) < 0.01 && sz.w >= 400) }; }));   /* 6.29.2 — the tile shows the whole 2:3 picture */
 const staleCards = DATA.tools.filter(t => fs.existsSync(path.join(ART, "card-" + t.id + ".jpg")) || fs.existsSync(path.join(PART, "card-" + t.id + ".jpg"))).map(t => t.id);
-report("A6) card Before | After pairs (4 × 2, each pair one 2:3 size — nothing cropped) + template thumbnails (54) + the page banner exist, the old composite cards are gone, and the panel carries the same bytes",
-  !missingArt.length && !driftArt.length && cardShapes.every(c => c.ok) && !staleCards.length && fs.existsSync(path.join(ROOT, "docs/app/lib/banners/banner-imagine.jpg")) && fs.existsSync(path.join(ROOT, "panel/icons/banners/banner-imagine.jpg")),
-  { missingArt: missingArt.slice(0, 5), driftArt: driftArt.slice(0, 5), files: wantFiles.length, cardShapes: cardShapes.filter(c => !c.ok), staleCards });
+report("A6) card Before | After pairs (4 × 2, each pair one 2:3 size — nothing cropped) + template thumbnails (54, each the whole 2:3 picture, ≥400 wide) + the page banner exist, the old composite cards are gone, and the panel carries the same bytes",
+  !missingArt.length && !driftArt.length && cardShapes.every(c => c.ok) && thShapes.every(c => c.ok) && !staleCards.length && fs.existsSync(path.join(ROOT, "docs/app/lib/banners/banner-imagine.jpg")) && fs.existsSync(path.join(ROOT, "panel/icons/banners/banner-imagine.jpg")),
+  { missingArt: missingArt.slice(0, 5), driftArt: driftArt.slice(0, 5), files: wantFiles.length, cardShapes: cardShapes.filter(c => !c.ok), thShapes: thShapes.filter(c => !c.ok).slice(0, 5), staleCards });
 const MOTION = path.join(ROOT, "docs/app/lib/banners/motion");
 report("A6b) the Imagine hero has its motion clip pair (mp4 + webm, 0.3–4 MB each) and it is announced in PH_MOTION_CLIPS, the README and the v441 sweep",
   ["mp4", "webm"].every(e => fs.existsSync(path.join(MOTION, "banner-imagine." + e)) && fs.statSync(path.join(MOTION, "banner-imagine." + e)).size > 300000 && fs.statSync(path.join(MOTION, "banner-imagine." + e)).size < 4000000) &&
@@ -90,6 +91,27 @@ report("A8) the panel registers the page (Edit · Imagine, after Freeform), boot
   /callImageAPI\(o\.modelId, parts, \{ size: String\(o\.size \|\| ""\)\.toUpperCase\(\) \}, o\.signal\)/.test(PANEL_MAIN) && /await placeResultToPS\(\);/.test(PANEL_MAIN) &&
   /<div class="page apg" id="pageImagine">/.test(PANEL_HTML) && /<script src="js\/hnk_imagine\.js"><\/script>/.test(PANEL_HTML) &&
   PANEL_HTML.indexOf('src="js/hnk_imagine.js"') > PANEL_HTML.indexOf('src="js/hnk_whats_new.js"') && PANEL_HTML.indexOf('src="js/hnk_imagine.js"') < PANEL_HTML.indexOf('src="main.js"'), null);
+/* 6.29.2 wave — art replaced under its own name is served under a NEW URL. /lib/ is cache-first and never revalidated
+   (verify_lib_art_rev.js); 6.29.1 replaced the thumbnails and the banner in place without a revision and the owner kept seeing
+   the 6.29.0 pictures. Every Imagine picture now carries a LIB_ART_REV token, the host paints through libArt, the worker clears
+   the old copies and the fixture records the shipped bytes. */
+const REV = new Function(APP.match(/var LIB_ART_REV = \{[\s\S]*?\n\};/)[0] + "; return LIB_ART_REV;")();
+const IMAGINE_ART = ["lib/banners/banner-imagine.jpg"].concat(DATA.tools.flatMap(t => ["lib/wf/imagine/" + t.before, "lib/wf/imagine/" + t.after])).concat(DATA.tools.flatMap(t => t.presets.map(p => "lib/wf/imagine/th/" + t.id + "-" + p.id + ".jpg")));
+const SW_SRC = fs.readFileSync(path.join(ROOT, "docs/app/sw.js"), "utf8"), FIXTURE = JSON.parse(fs.readFileSync(path.join(ROOT, "test/fixtures/lib-replacements.json"), "utf8"));
+const IM_TAG = "./__lib-purge-v6-29-2-imagine";
+report("A11) every Imagine picture replaced in place (banner + 8 cards + 54 thumbnails) carries a LIB_ART_REV revision ≥ 2, the app host paints thumbs and cards through libArt, the hero still carries its ?v= token, the worker clears the old copies under one new tag and the fixture records all 63 with their shipped bytes",
+  IMAGINE_ART.length === 63 && IMAGINE_ART.every(k => Number.isInteger(REV[k]) && REV[k] >= 2) &&
+  /asset: function\(kind, file\)\{ return libArt\(\(kind==="thumb" \? "lib\/wf\/imagine\/th\/" : "lib\/wf\/imagine\/"\) \+ file\); \}/.test(APP) &&
+  /<img src="lib\/banners\/banner-imagine\.jpg\?v=\d+" alt=""/.test(APP) && SW_SRC.indexOf('{ tag: "' + IM_TAG + '"') >= 0 &&
+  IMAGINE_ART.every(k => FIXTURE.files.some(f => f.path === "docs/app/" + k && f.tag === IM_TAG && f.sha256 === require("crypto").createHash("sha256").update(fs.readFileSync(path.join(ROOT, "docs/app", k))).digest("hex"))),
+  { missingRev: IMAGINE_ART.filter(k => !(Number.isInteger(REV[k]) && REV[k] >= 2)).slice(0, 5), notRecorded: IMAGINE_ART.filter(k => !FIXTURE.files.some(f => f.path === "docs/app/" + k && f.tag === IM_TAG)).slice(0, 5) });
+/* 6.29.2 — NO GEAR IN THE FRAME, for Imagine too (verify_no_gear_in_frame.js tells the story for the relight workflow). A Bright Glow
+   thumbnail grew a softbox in run #11; the shared AVOID frame every Imagine prompt ends with now forbids photographic equipment, and
+   the Lighting tool's own prompt says it again. Asserted on the words, on the data the page ships. */
+report("A12) every Imagine prompt ends with the no-studio-gear rule (the shared AVOID frame names softboxes, light stands, reflectors, lamps) and the Lighting tool's prompt repeats it",
+  /NO STUDIO GEAR IN THE FRAME/.test(DATA.frame.avoid) && /softbox/i.test(DATA.frame.avoid) && /light stand/i.test(DATA.frame.avoid) && /reflector/i.test(DATA.frame.avoid) &&
+  /No light stands, softboxes, reflectors, lamps or any studio equipment may appear/.test(DATA.tools.find(t => t.id === "lighting").basePrompt) &&
+  /AVOID\.test\(|frame\.avoid/.test(mod), { avoid: DATA.frame.avoid.slice(-120) });
 report("A9) CI runs this test", /PORT=8931 node test\/verify_imagine_w1\.js/.test(CI), null);
 report("A10) the module is ES5 and UXP-safe (no arrow functions / template literals / let / const, no CSS grid, no inline svg of its own)",
   !/=>/.test(mod) && !/`/.test(mod) && !/\b(let|const)\s/.test(mod) && !/innerHTML\s*=/.test(mod) &&
@@ -184,6 +206,20 @@ const MOCK = `(function(){
   });
   report("B3) each card opens its tool view (12 · 15 · 15 · 12 templates, Templates tab, empty stage with Add photos, Model + Size), and ← Imagine returns to the hub",
     ["lighting", "portrait", "surface", "weather"].every(id => tools[id].tiles === COUNTS[id] && tools[id].empty && tools[id].hasApply && tools[id].models >= 6 && tools[id].size === "1K/2K/4K" && tools[id].backToHub && tools[id].tab === "tpl"), tools);
+  /* 6.29.2 — the template tile is the whole 2:3 picture and lifts under a finger */
+  const tile = await page.evaluate(async () => {
+    IMAGINE.openTool("lighting"); await new Promise(r => setTimeout(r, 80));
+    const tl = document.querySelector('#imTpls .im-tpl[data-preset="window"]'), box = tl && tl.querySelector(".im-tpl-im"), img = box && box.querySelector("img");
+    if (img && !img.complete) await new Promise(r => { img.onload = img.onerror = r; setTimeout(r, 5000); });
+    const rb = box ? box.getBoundingClientRect() : { width: 1, height: 0 };
+    const out = { img: !!img, src: img && img.getAttribute("src"), lazy: !!img && img.loading === "lazy", boxRatio: rb.height / rb.width, natRatio: img && img.naturalWidth ? img.naturalHeight / img.naturalWidth : 0, transition: getComputedStyle(tl).transitionProperty };
+    tl.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1 })); out.lifted = tl.classList.contains("lift");
+    tl.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1 })); await new Promise(r => setTimeout(r, 300)); out.unlifted = !tl.classList.contains("lift");
+    out.stillUnpicked = !IMAGINE.state.preset.lighting;
+    IMAGINE.goHub(); await new Promise(r => setTimeout(r, 40)); return out;
+  });
+  report("B3b) a template tile is the whole 2:3 picture — a lazy <img> in a 2:3 box, served under its ?v= URL — and it lifts under a finger (lift on pointerdown, gone after release, transform transitions); a press alone picks nothing",
+    tile.img && tile.lazy && /\/th\/lighting-window\.jpg\?v=\d+$/.test(tile.src) && Math.abs(tile.boxRatio - 1.5) < 0.03 && Math.abs(tile.natRatio - 1.5) < 0.02 && /transform/.test(tile.transition) && tile.lifted && tile.unlifted && tile.stillUnpicked, tile);
   /* photos in, template picked, mocked Apply */
   const flow = await page.evaluate(async (pngs) => {
     IMAGINE.openTool("lighting");
@@ -344,13 +380,13 @@ const MOCK = `(function(){
       subtabs: [...document.querySelectorAll("#subtabs .subtab")].map(b => b.textContent.trim()), h2: document.querySelector("#pageImagine .im-hub h2").textContent.trim(), want: globalThis.HNK.imagineData.ui.hub_h2[state.lang] || globalThis.HNK.imagineData.ui.hub_h2.en,
       head: document.getElementById("phImagine").textContent.trim().length > 8, icons: document.querySelectorAll("#pageImagine img.ic-s").length, svg: document.querySelectorAll("#pageImagine svg").length };
     globalThis.HNK.imagine.openTool("surface"); await new Promise(r => setTimeout(r, 120));
-    out.tiles = document.querySelectorAll("#pageImagine #imTpls .im-tpl").length; out.roleBtns = document.querySelectorAll('#pageImagine [role="button"].btn').length; out.nativeBtns = document.querySelectorAll("#pageImagine button").length;
+    out.tiles = document.querySelectorAll("#pageImagine #imTpls .im-tpl").length; out.tileSrc = (document.querySelector("#pageImagine #imTpls .im-tpl .im-tpl-im img") || { getAttribute: function () { return ""; } }).getAttribute("src"); out.roleBtns = document.querySelectorAll('#pageImagine [role="button"].btn').length; out.nativeBtns = document.querySelectorAll("#pageImagine button").length;
     out.size = [...document.querySelectorAll("#pageImagine #imSize option")].map(o => o.textContent).join("/"); out.models = document.querySelectorAll("#pageImagine #imModel option").length;
     globalThis.HNK.imagine.goHub();
     return out;
   });
-  report("C1) the panel opens Edit · Imagine on the same module: four cards, six subtabs, the hub headline in the panel's language, <img> icons (no inline svg), div buttons (no native <button>), Surface's 15 tiles, Model + Size",
-    pan.on && pan.cards.join(",") === "lighting,portrait,surface,weather" && pan.subtabs.length === 6 && pan.h2 === pan.want && pan.head && pan.icons > 0 && pan.svg === 0 && pan.tiles === 15 && pan.roleBtns > 0 && pan.nativeBtns === 0 && pan.size === "1K/2K/4K" && pan.models >= 6, pan);
+  report("C1) the panel opens Edit · Imagine on the same module: four cards, six subtabs, the hub headline in the panel's language, <img> icons (no inline svg), div buttons (no native <button>), Surface's 15 tiles as plain icons/imagine/th/ pictures (no ?v= inside the CCX), Model + Size",
+    pan.on && pan.cards.join(",") === "lighting,portrait,surface,weather" && pan.subtabs.length === 6 && pan.h2 === pan.want && pan.head && pan.icons > 0 && pan.svg === 0 && pan.tiles === 15 && /^icons\/imagine\/th\/surface-[A-Za-z]+\.jpg$/.test(pan.tileSrc) && pan.roleBtns > 0 && pan.nativeBtns === 0 && pan.size === "1K/2K/4K" && pan.models >= 6, pan);
   report("C2) the panel raised no error while it built the page", perrs.length === 0, perrs.slice(0, 3));
   await browser.close();
   await new Promise(r => server.close(r));

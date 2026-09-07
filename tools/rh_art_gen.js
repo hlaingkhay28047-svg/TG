@@ -16,6 +16,8 @@
    jobs.json: { "jobs": [ { "name": "light-01", "apiPath": "rhart-image-n-g31-flash/image-to-image",
                             "base": "docs/app/lib/st-sample.jpg" | null, "prompt": "…",
                             "ratio": "1:1" | "", "resolution": "1k" | "2k", "extra": { … body fields … } } ] }
+   Optional per job (6.29.2 wave): "refs": ["tools/art_ref/a.jpg", …] — reference pictures uploaded once each and sent
+   as imageUrls (before the base, if any) for identity-preserving edits that need more than one view of the same person.
    Optional per job (6.29.1 wave): "baseFrom": "<other job name>" — that job's OWN output is the base
    (a generated photo feeds the edits in the same run; such jobs run in a second pass), "imageParam":
    "imageUrl" — the single-image field name for endpoints that take one (image-to-video), "duration": "5"
@@ -77,7 +79,7 @@ async function poll(tid, maxMs) {
   }
   throw new Error("timeout");
 }
-function bodyFor(job, imageUrl) {
+function bodyFor(job, imageUrl, refUrls) {
   const ap = job.apiPath;
   const body = Object.assign({}, job.extra || {});
   if (/^rhart-image\//.test(ap)) { /* the flat node-graph shape (v6.26.0) */
@@ -86,7 +88,8 @@ function bodyFor(job, imageUrl) {
     return body;
   }
   body.prompt = job.prompt;
-  if (imageUrl) { if (job.imageParam) body[job.imageParam] = imageUrl; else body.imageUrls = [imageUrl]; }
+  const urls = (refUrls || []).concat(imageUrl ? [imageUrl] : []);
+  if (urls.length) { if (job.imageParam) body[job.imageParam] = urls[urls.length - 1]; else body.imageUrls = urls; }
   if (job.ratio) body.aspectRatio = job.ratio;
   if (job.resolution) body.resolution = job.resolution;
   if (job.duration) body.duration = job.durInt ? Number(job.duration) : String(job.duration);   /* the app's rhGenerateVideo rule */
@@ -99,7 +102,9 @@ async function runJob(job) {
     if (!dep) throw new Error("baseFrom " + job.baseFrom + " did not produce a picture");
     imageUrl = await upload("job:" + job.baseFrom + "." + dep.ext, dep.buf);
   } else if (job.base) imageUrl = await upload(job.base);
-  const tid = await submit(job.apiPath, bodyFor(job, imageUrl));
+  const refUrls = [];
+  for (const r of (job.refs || [])) refUrls.push(await upload(r));
+  const tid = await submit(job.apiPath, bodyFor(job, imageUrl, refUrls));
   const fin = await poll(tid, job.maxMs);
   const res = (fin.results || []).find(x => x && x.url);
   if (!res) throw new Error("no result " + JSON.stringify(fin).slice(0, 200));

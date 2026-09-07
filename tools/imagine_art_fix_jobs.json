@@ -1,0 +1,25 @@
+{
+ "note": "6.29.2 follow-up to run #11: the two jobs it could not deliver, rebuilt on committed inputs — the Bright Glow thumbnail (a softbox had appeared; the lighting prompt now forbids gear) on the finished Lighting base, and the hero clip (kling-v2.6-pro refused the run's body: sound is required) on the committed hero still.",
+ "jobs": [
+  {
+   "name": "th-lighting-brightGlow",
+   "apiPath": "rhart-image-n-g31-flash/image-to-image",
+   "prompt": "Relight this photograph. Change ONLY the lighting on the scene and the subject: bright airy high-key light — luminous glowing highlights on skin and hair, lifted shadows, a clean fresh feel without blowing out detail. Keep every object, the background and the composition where they are; the new light must fall on the existing geometry with correct shadows, highlights, reflections and colour temperature, as if the photo had been taken under that light. No light stands, softboxes, reflectors, lamps or any studio equipment may appear in the picture.\n\nIDENTITY LOCK: this is the same photograph of the same person — keep the face, expression, skin tone, hair, body, pose, clothing and framing exactly as they are; do not beautify, slim, age or restyle anyone.\nREALISM: a photograph, not a render — natural skin texture, true lens optics, no plastic smoothing, no painterly or CGI look.\nAVOID: a different person or face, a changed pose or outfit, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "",
+   "resolution": "1k",
+   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg"
+  },
+  {
+   "name": "banner-imagine-motion",
+   "apiPath": "kling-v2.6-pro/image-to-video",
+   "imageParam": "imageUrl",
+   "duration": "5",
+   "extra": {
+    "sound": "false"
+   },
+   "maxMs": 1200000,
+   "prompt": "Lively but faithful cinemagraph, slow gentle push-in. HER FACE STAYS EXACTLY THE SAME — no morphing, no change of identity; her head stays in place, she only blinks and her smile widens a little. The silver-white light ribbon flows outward from her fingertips across the frame, and as it sweeps the grey studio on the left blooms into the cool blue-hour meadow — soft cool light and colour spreading along the ribbon's edge. White petals and silver sparkles drift in a soft breeze, her hair and the straps of her dress sway gently. Photoreal, smooth, seamless, no text, no captions, no watermark.",
+   "base": "tools/art_ref/imagine-hero-still.jpg"
+  }
+ ]
+}
