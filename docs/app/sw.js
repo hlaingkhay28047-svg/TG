@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-29-3";
+var CACHE = "hnk-web-studio-v6-30-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -247,7 +247,13 @@ var LIB_PURGES = [
      6.29.3 — the hero's motion clip pair is named here too: those clips never enter LIB_CACHE (the fetch handler
      leaves /lib/banners/motion/ to the browser), so there is nothing for this entry to purge for them — they are
      listed so the fixture can record the replacement, and LIB_ART_REV's token is what actually repairs them. */
-  { tag: "./__lib-purge-v6-29-2-imagine", re: new RegExp("/lib/((wf/imagine/(th/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners/banner-imagine)\\.jpg|banners/motion/banner-imagine\\.(mp4|webm))$") }
+  { tag: "./__lib-purge-v6-29-2-imagine", re: new RegExp("/lib/((wf/imagine/(th/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners/banner-imagine)\\.jpg|banners/motion/banner-imagine\\.(mp4|webm))$") },
+  /* 6.30.0 — Portrait Scene's card after and its Golden Rice Field thumbnail, re-shot with a pose lock (the owner saw the
+     6.29.2 result change her pose and add sunglasses). Two files, rev 3 in LIB_ART_REV; this clears the rev-2 copies. */
+  { tag: "./__lib-purge-v6-30-0-portrait-card", re: new RegExp("/lib/wf/imagine/(card-portrait-after|th/portrait-riceField)\\.jpg$") },
+  /* 6.30.0 — the four W1 tools re-shot (short modern fashion, the house beauty retouch): 8 cards + 54 thumbnails replaced in place,
+     rev 3 (Portrait's after and Golden Rice Field rev 4). This clears the rev-2/rev-3 copies; the hero still and its clips stay. */
+  { tag: "./__lib-purge-v6-30-0-imagine-w1-beauty", re: new RegExp("/lib/wf/imagine/(card-(lighting|portrait|surface|weather)-(before|after)|th/(lighting|portrait|surface|weather)-[A-Za-z0-9]+)\\.jpg$") }
 ];
 
 /* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair

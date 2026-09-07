@@ -161,7 +161,13 @@ const DECLARED = [
   /* 6.29.2 — Imagine's banner, card pairs and template thumbnails re-shot on the brand model under their own names;
      LIB_ART_REV hands each a new URL, this clears the old (the folder holds nothing else). */
   { tag: "./__lib-purge-v6-29-2-imagine",
-    re: /\/lib\/((wf\/imagine\/(th\/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners\/banner-imagine)\.jpg|banners\/motion\/banner-imagine\.(mp4|webm))$/ }
+    re: /\/lib\/((wf\/imagine\/(th\/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners\/banner-imagine)\.jpg|banners\/motion\/banner-imagine\.(mp4|webm))$/ },
+  /* 6.30.0 — Portrait Scene's card after + Golden Rice Field thumbnail re-shot with a pose lock; rev 3, the rev-2 copies cleared. */
+  { tag: "./__lib-purge-v6-30-0-portrait-card",
+    re: /\/lib\/wf\/imagine\/(card-portrait-after|th\/portrait-riceField)\.jpg$/ },
+  /* 6.30.0 — the four W1 tools re-shot (short modern fashion + the house beauty retouch): 62 files, rev 3 / rev 4. */
+  { tag: "./__lib-purge-v6-30-0-imagine-w1-beauty",
+    re: /\/lib\/wf\/imagine\/(card-(lighting|portrait|surface|weather)-(before|after)|th\/(lighting|portrait|surface|weather)-[A-Za-z0-9]+)\.jpg$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",

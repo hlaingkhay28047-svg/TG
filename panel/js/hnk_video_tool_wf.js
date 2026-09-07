@@ -254,28 +254,30 @@ var LIB_ART_REV = {
   /* 6.29.2 — Imagine re-shot on the brand model under its own names: the page banner, the four card pairs and the 54 template thumbnails.
      6.29.1 had ALREADY replaced the thumbnails and the banner in place without a revision — the owner opened the templates and saw
      the 6.29.0 library pictures, exactly the failure this map exists for. Every one of them now rides ?v=2. */
+  /* 6.30.0 — Portrait Scene's card after and its Golden Rice Field thumbnail re-shot with a pose lock (the 6.29.2 result dropped the raised arm and added sunglasses): ?v=3 */
+  /* 6.30.0 — Imagine W1 re-shot as short modern fashion with the house beauty retouch (owner): the 62 W1 cards and thumbnails ?v=3, Portrait's after and Golden Rice Field ?v=4 */
   "lib/banners/banner-imagine.jpg": 2,
   /* 6.29.3 — and its motion clip pair: the clips skip the worker cache but not the browser's HTTP cache, and 6.29.2 had
      replaced them in place; a device that played the 6.29.1 clip kept it under the hero until this token */
   "lib/banners/motion/banner-imagine.mp4": 2, "lib/banners/motion/banner-imagine.webm": 2,
-  "lib/wf/imagine/card-lighting-before.jpg": 2, "lib/wf/imagine/card-lighting-after.jpg": 2,
-  "lib/wf/imagine/card-portrait-before.jpg": 2, "lib/wf/imagine/card-portrait-after.jpg": 2,
-  "lib/wf/imagine/card-surface-before.jpg": 2, "lib/wf/imagine/card-surface-after.jpg": 2,
-  "lib/wf/imagine/card-weather-before.jpg": 2, "lib/wf/imagine/card-weather-after.jpg": 2,
-  "lib/wf/imagine/th/lighting-window.jpg": 2, "lib/wf/imagine/th/lighting-warmWindow.jpg": 2, "lib/wf/imagine/th/lighting-brightGlow.jpg": 2, "lib/wf/imagine/th/lighting-warm.jpg": 2,
-  "lib/wf/imagine/th/lighting-harshSun.jpg": 2, "lib/wf/imagine/th/lighting-goldenSun.jpg": 2, "lib/wf/imagine/th/lighting-sunRays.jpg": 2, "lib/wf/imagine/th/lighting-afternoon.jpg": 2,
-  "lib/wf/imagine/th/lighting-windowStreaks.jpg": 2, "lib/wf/imagine/th/lighting-leafDapple.jpg": 2, "lib/wf/imagine/th/lighting-soft.jpg": 2, "lib/wf/imagine/th/lighting-goldRim.jpg": 2,
-  "lib/wf/imagine/th/portrait-winterStreet.jpg": 2, "lib/wf/imagine/th/portrait-softGarden.jpg": 2, "lib/wf/imagine/th/portrait-flowerGarden.jpg": 2, "lib/wf/imagine/th/portrait-wildflowerField.jpg": 2,
-  "lib/wf/imagine/th/portrait-countryField.jpg": 2, "lib/wf/imagine/th/portrait-riceField.jpg": 2, "lib/wf/imagine/th/portrait-goldenHill.jpg": 2, "lib/wf/imagine/th/portrait-autumnPark.jpg": 2,
-  "lib/wf/imagine/th/portrait-beach.jpg": 2, "lib/wf/imagine/th/portrait-sunsetSea.jpg": 2, "lib/wf/imagine/th/portrait-morningSun.jpg": 2, "lib/wf/imagine/th/portrait-mistyDawn.jpg": 2,
-  "lib/wf/imagine/th/portrait-goldenWind.jpg": 2, "lib/wf/imagine/th/portrait-goldenSunset.jpg": 2, "lib/wf/imagine/th/portrait-blueTwilight.jpg": 2,
-  "lib/wf/imagine/th/surface-grass.jpg": 2, "lib/wf/imagine/th/surface-naturalGrass.jpg": 2, "lib/wf/imagine/th/surface-meadowGrass.jpg": 2, "lib/wf/imagine/th/surface-wildGrass.jpg": 2,
-  "lib/wf/imagine/th/surface-dryGrass.jpg": 2, "lib/wf/imagine/th/surface-greenFlowerField.jpg": 2, "lib/wf/imagine/th/surface-whiteFlowers.jpg": 2, "lib/wf/imagine/th/surface-naturalFlowers.jpg": 2,
-  "lib/wf/imagine/th/surface-wildflowers.jpg": 2, "lib/wf/imagine/th/surface-goldenSand.jpg": 2, "lib/wf/imagine/th/surface-whiteSand.jpg": 2, "lib/wf/imagine/th/surface-blueLake.jpg": 2,
-  "lib/wf/imagine/th/surface-stillWater.jpg": 2, "lib/wf/imagine/th/surface-pebbles.jpg": 2, "lib/wf/imagine/th/surface-deepBlueSea.jpg": 2,
-  "lib/wf/imagine/th/weather-snowfall.jpg": 2, "lib/wf/imagine/th/weather-lightRain.jpg": 2, "lib/wf/imagine/th/weather-heavyRain.jpg": 2, "lib/wf/imagine/th/weather-fogMist.jpg": 2,
-  "lib/wf/imagine/th/weather-goldenHaze.jpg": 2, "lib/wf/imagine/th/weather-overcast.jpg": 2, "lib/wf/imagine/th/weather-stormClouds.jpg": 2, "lib/wf/imagine/th/weather-rainbow.jpg": 2,
-  "lib/wf/imagine/th/weather-blueHour.jpg": 2, "lib/wf/imagine/th/weather-clearSunny.jpg": 2, "lib/wf/imagine/th/weather-autumnLeaves.jpg": 2, "lib/wf/imagine/th/weather-blossomPetals.jpg": 2
+  "lib/wf/imagine/card-lighting-before.jpg": 3, "lib/wf/imagine/card-lighting-after.jpg": 3,
+  "lib/wf/imagine/card-portrait-before.jpg": 3, "lib/wf/imagine/card-portrait-after.jpg": 4,
+  "lib/wf/imagine/card-surface-before.jpg": 3, "lib/wf/imagine/card-surface-after.jpg": 3,
+  "lib/wf/imagine/card-weather-before.jpg": 3, "lib/wf/imagine/card-weather-after.jpg": 3,
+  "lib/wf/imagine/th/lighting-window.jpg": 3, "lib/wf/imagine/th/lighting-warmWindow.jpg": 3, "lib/wf/imagine/th/lighting-brightGlow.jpg": 3, "lib/wf/imagine/th/lighting-warm.jpg": 3,
+  "lib/wf/imagine/th/lighting-harshSun.jpg": 3, "lib/wf/imagine/th/lighting-goldenSun.jpg": 3, "lib/wf/imagine/th/lighting-sunRays.jpg": 3, "lib/wf/imagine/th/lighting-afternoon.jpg": 3,
+  "lib/wf/imagine/th/lighting-windowStreaks.jpg": 3, "lib/wf/imagine/th/lighting-leafDapple.jpg": 3, "lib/wf/imagine/th/lighting-soft.jpg": 3, "lib/wf/imagine/th/lighting-goldRim.jpg": 3,
+  "lib/wf/imagine/th/portrait-winterStreet.jpg": 3, "lib/wf/imagine/th/portrait-softGarden.jpg": 3, "lib/wf/imagine/th/portrait-flowerGarden.jpg": 3, "lib/wf/imagine/th/portrait-wildflowerField.jpg": 3,
+  "lib/wf/imagine/th/portrait-countryField.jpg": 3, "lib/wf/imagine/th/portrait-riceField.jpg": 4, "lib/wf/imagine/th/portrait-goldenHill.jpg": 3, "lib/wf/imagine/th/portrait-autumnPark.jpg": 3,
+  "lib/wf/imagine/th/portrait-beach.jpg": 3, "lib/wf/imagine/th/portrait-sunsetSea.jpg": 3, "lib/wf/imagine/th/portrait-morningSun.jpg": 3, "lib/wf/imagine/th/portrait-mistyDawn.jpg": 3,
+  "lib/wf/imagine/th/portrait-goldenWind.jpg": 3, "lib/wf/imagine/th/portrait-goldenSunset.jpg": 3, "lib/wf/imagine/th/portrait-blueTwilight.jpg": 3,
+  "lib/wf/imagine/th/surface-grass.jpg": 3, "lib/wf/imagine/th/surface-naturalGrass.jpg": 3, "lib/wf/imagine/th/surface-meadowGrass.jpg": 3, "lib/wf/imagine/th/surface-wildGrass.jpg": 3,
+  "lib/wf/imagine/th/surface-dryGrass.jpg": 3, "lib/wf/imagine/th/surface-greenFlowerField.jpg": 3, "lib/wf/imagine/th/surface-whiteFlowers.jpg": 3, "lib/wf/imagine/th/surface-naturalFlowers.jpg": 3,
+  "lib/wf/imagine/th/surface-wildflowers.jpg": 3, "lib/wf/imagine/th/surface-goldenSand.jpg": 3, "lib/wf/imagine/th/surface-whiteSand.jpg": 3, "lib/wf/imagine/th/surface-blueLake.jpg": 3,
+  "lib/wf/imagine/th/surface-stillWater.jpg": 3, "lib/wf/imagine/th/surface-pebbles.jpg": 3, "lib/wf/imagine/th/surface-deepBlueSea.jpg": 3,
+  "lib/wf/imagine/th/weather-snowfall.jpg": 3, "lib/wf/imagine/th/weather-lightRain.jpg": 3, "lib/wf/imagine/th/weather-heavyRain.jpg": 3, "lib/wf/imagine/th/weather-fogMist.jpg": 3,
+  "lib/wf/imagine/th/weather-goldenHaze.jpg": 3, "lib/wf/imagine/th/weather-overcast.jpg": 3, "lib/wf/imagine/th/weather-stormClouds.jpg": 3, "lib/wf/imagine/th/weather-rainbow.jpg": 3,
+  "lib/wf/imagine/th/weather-blueHour.jpg": 3, "lib/wf/imagine/th/weather-clearSunny.jpg": 3, "lib/wf/imagine/th/weather-autumnLeaves.jpg": 3, "lib/wf/imagine/th/weather-blossomPetals.jpg": 3
 };
 function libArt(p){
   var k=String(p||"").replace(/^\.?\//, "").split("?")[0];

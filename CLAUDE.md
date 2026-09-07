@@ -57,3 +57,8 @@ get green, and never expose or commit API keys or tokens.
   a `LIB_PURGES` entry and the fixture record — `/lib/` is cache-first and never
   revalidated (6.29.1 shipped new thumbnails without it and phones kept the old).
   Motion clips too: they skip the worker cache but not the browser's (6.29.2).
+- Owner-supplied reference packs (other studios' photographs, watermarks removed,
+  real people) are look direction only — tone, skin, light, mood, palette in
+  words. Never commit, upload or publish the photographs themselves, and never
+  copy a photograph pose-for-pose; the studio's own art is generated on the brand
+  model and never takes a lingerie / boudoir direction.
