@@ -1,5 +1,5 @@
 {
- "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed — these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set — re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign — pinned to __lib-purge-v6-17-0-couple-compose. 6.29.2: Imagine's banner, four card pairs and 54 template thumbnails re-shot on the brand model under their own names (6.29.1 had replaced the thumbnails and the banner in place with no entry) — pinned to __lib-purge-v6-29-2-imagine. 6.29.3: the Imagine hero's motion clip pair (mp4 + webm), replaced in place in 6.29.2 — recorded under the same tag; the clips skip LIB_CACHE, the URL token (LIB_ART_REV) is the repair. 6.30.0: Portrait Scene's card after and its Golden Rice Field thumbnail re-shot with a pose lock (rev 3) — pinned to __lib-purge-v6-30-0-portrait-card; a replaced path keeps one record, the newest. 6.30.0: the four Imagine W1 tools re-shot as short modern fashion with the house beauty retouch — 62 files pinned to __lib-purge-v6-30-0-imagine-w1-beauty (rev 3; Portrait's after and Golden Rice Field rev 4).",
+ "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed — these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set — re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign — pinned to __lib-purge-v6-17-0-couple-compose. 6.29.2: Imagine's banner, four card pairs and 54 template thumbnails re-shot on the brand model under their own names (6.29.1 had replaced the thumbnails and the banner in place with no entry) — pinned to __lib-purge-v6-29-2-imagine. 6.29.3: the Imagine hero's motion clip pair (mp4 + webm), replaced in place in 6.29.2 — recorded under the same tag; the clips skip LIB_CACHE, the URL token (LIB_ART_REV) is the repair. 6.30.0: Portrait Scene's card after and its Golden Rice Field thumbnail re-shot with a pose lock (rev 3) — pinned to __lib-purge-v6-30-0-portrait-card; a replaced path keeps one record, the newest. 6.30.0: the four Imagine W1 tools re-shot as short modern fashion with the house beauty retouch — 62 files pinned to __lib-purge-v6-30-0-imagine-w1-beauty (rev 3; Portrait's after and Golden Rice Field rev 4). 6.31.0: the Lighting tool re-shot front-facing on Qwen — 14 files pinned to __lib-purge-v6-31-0-lighting-card (rev 4).",
  "files": [
   {
    "path": "docs/app/lib/vid/vt-charSwap.jpg",
@@ -80,76 +80,6 @@
    "path": "docs/app/lib/banners/motion/banner-imagine.webm",
    "sha256": "c64121396eb9d6eea689c0aa7b287e6abee9cc09e85ea09e84304c823e1f06eb",
    "tag": "./__lib-purge-v6-29-2-imagine"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/card-lighting-before.jpg",
-   "sha256": "b3c62764227fb7e1361c388b56bfa847999d936d5cec3345e8fa657db3fedd3f",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/card-lighting-after.jpg",
-   "sha256": "eb0605768f47cdf984d54c8e3b0511c13d7d6fa5a8934ae5b5ddd8bafaa05c73",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-window.jpg",
-   "sha256": "544322c2e693d9aa3ae450d3cc3716a3e09f5be7332839d40c0518153b457bac",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-warmWindow.jpg",
-   "sha256": "ddc15838246f4c605502e40bc8b4511bc188765e698537b0ad9173a3973235e5",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-brightGlow.jpg",
-   "sha256": "47e7c595ae354e5c7ba5ceebe1f07422d984267d5f9edfa647fb4d8b8a38f739",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-warm.jpg",
-   "sha256": "436da7d9b4737f372d334b02056b8bb1893aa3cdbe931b09f0b4e339478ab4a1",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-harshSun.jpg",
-   "sha256": "9c3f2880375e1696124c3c2b51154f623228a442ce9f1572d32fe2ecd2f585ba",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-goldenSun.jpg",
-   "sha256": "273bc010ecfbf20a46636ff95753486c93930f60d1ee5c09f11d24cab81af056",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-sunRays.jpg",
-   "sha256": "af25cc7dcf70a7bb38e160589a9185c13c46d3daea2dd6a76d418cb121200c8e",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-afternoon.jpg",
-   "sha256": "0378a6edab381c422f52000eeb851fd43b691b076b3e3e75f6dc0d14eefccd93",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-windowStreaks.jpg",
-   "sha256": "d0e33bf01ac1f3f5553809f76445df4a87e47479c8a8becf17bf5d0b4c8839ae",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-leafDapple.jpg",
-   "sha256": "c1b4a6230829ab7967902b4efedb64f581e424760945f6de39e07fc78f47a1ea",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-soft.jpg",
-   "sha256": "907f2ee31016e69687b231d47d7fba9cd72e49adfe11e8ed4be6c83eba91aead",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
-  },
-  {
-   "path": "docs/app/lib/wf/imagine/th/lighting-goldRim.jpg",
-   "sha256": "a6fc4de5e01103a695490ed3ba8f2b5539175eebd8e8c0f6c5bd9dcd1765af47",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
   },
   {
    "path": "docs/app/lib/wf/imagine/card-portrait-before.jpg",
@@ -390,6 +320,76 @@
    "path": "docs/app/lib/wf/imagine/th/weather-blossomPetals.jpg",
    "sha256": "591bec4abc886fe403a616a8d279b6e546a8ffc1c5dab91afa988841608502d8",
    "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-lighting-before.jpg",
+   "sha256": "4724f486523604ab4467320ec5e40c405a5161bd8708e5bf644c56f7469d55fe",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/card-lighting-after.jpg",
+   "sha256": "2a2bcc682150052cb50fcc3198bf8a637ca8d155ab2afe0cf066313f1bd92f2d",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-window.jpg",
+   "sha256": "c977f368f5331f466c004e32d3358c263e1b83d06dd158242b55941c9448277b",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-warmWindow.jpg",
+   "sha256": "40d6e97ef0335b121e926e21dd651b08c62409e2a4d519b0b9141806224e0b54",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-brightGlow.jpg",
+   "sha256": "a0cbcf28092df975ff912cfa1d810e542af6ecbfc3e31361e9f514e9005360cf",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-warm.jpg",
+   "sha256": "f71912e3b0089d87fcdd510326a6708cccf11d4cc9eb97e8bc454c9dfc4fc80d",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-harshSun.jpg",
+   "sha256": "53ed42a74d978f98f6c636ec1bdcb6f828e41548a1da289a603f6944fd5c206b",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-goldenSun.jpg",
+   "sha256": "941a1c0976f6251ad7ad7d0a26b22231cb14aa7c194dc242edd73c326da57b25",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-sunRays.jpg",
+   "sha256": "7675756c1dc49b6b937204c08cd6feb4bba2206e22b4c951cc9f07a99362a43d",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-afternoon.jpg",
+   "sha256": "d9548384a2fd7460d74ec5e208e085612062c32af0d0ee316f19cc65b6bc3159",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-windowStreaks.jpg",
+   "sha256": "2c8893345f9e0002a1c64f260d62fae8d7d98f8f0a21f27c9eb87f30fa5c3cf6",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-leafDapple.jpg",
+   "sha256": "d90269ab64643035107e126a351da91bc3b961534717e17caf2e21349071b0a2",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-soft.jpg",
+   "sha256": "bc8c4e77c7c95f285da9ba4ee0b7c0c55bd9c603fa3975bbe0534d4071c3a921",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/lighting-goldRim.jpg",
+   "sha256": "1b3dc59a10a6321549f33844ad91c966b0a961874f057c1d3e06ec0c9e8929e5",
+   "tag": "./__lib-purge-v6-31-0-lighting-card"
   }
  ]
 }

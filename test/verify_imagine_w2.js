@@ -68,8 +68,8 @@ report("A3) each tool's frame line: Describe, Architecture, ID Photo, both Produ
   /\(tool\.keep \|\| D\.frame\.keep\)/.test(PANEL_JS) && /\(tool\.real \|\| D\.frame\.real\)/.test(PANEL_JS) && /BEAUTY RETOUCH/.test(byId.outfit.real ? byId.outfit.basePrompt : "") && PANEL_JS.indexOf('"id":"outfit"') >= 0, frame);
 
 const bases = JOBS.filter(j => /^base-/.test(j.name)), thumbs = JOBS.filter(j => /^th-/.test(j.name));
-const badBase = bases.filter(j => { const id = j.name.slice(5); return PERSON.indexOf(id) >= 0 ? !(Array.isArray(j.refs) && j.refs.length === 2 && /\/edit$/.test(j.apiPath)) : OBJECT.indexOf(id) >= 0 ? !(!j.refs && /text-to-image$/.test(j.apiPath) && !/reference/i.test(j.prompt)) : true; });
-const badThumb = thumbs.filter(j => { const id = j.name.split("-")[1], t = byId[id]; return !t || j.baseFrom !== "base-" + id || !GEAR.test(j.prompt) || (t.keep && j.prompt.indexOf(t.keep) < 0) || (t.avoid && j.prompt.indexOf(t.avoid) < 0) || (t.real && j.prompt.indexOf(t.real) < 0) || (!t.real && j.prompt.indexOf(DATA.frame.real) < 0) || (!t.keep && j.prompt.indexOf(DATA.frame.keep) < 0); });
+const badBase = bases.filter(j => { const id = j.name.slice(5); return PERSON.indexOf(id) >= 0 ? !(Array.isArray(j.refs) && j.refs.length === 2 && /edit$/.test(j.apiPath)) : OBJECT.indexOf(id) >= 0 ? !(!j.refs && /text-to-image(-pro)?$/.test(j.apiPath) && !/reference/i.test(j.prompt)) : true; });
+const badThumb = thumbs.filter(j => { const id = j.name.split("-")[1], t = byId[id]; if (!t) return true; if (id === "colortone") return !(Array.isArray(j.refs) && j.refs.length === 2 && !j.baseFrom && GEAR.test(j.prompt) && /Recreate this photograph on the HNK model/.test(j.prompt));   /* 6.31.0 — Color Tone's looks are recreated from the references (no base, no template frame), the gear rule on each */ return j.baseFrom !== "base-" + id || !GEAR.test(j.prompt) || (t.keep && j.prompt.indexOf(t.keep) < 0) || (t.avoid && j.prompt.indexOf(t.avoid) < 0) || (t.real && j.prompt.indexOf(t.real) < 0) || (!t.real && j.prompt.indexOf(DATA.frame.real) < 0) || (!t.keep && j.prompt.indexOf(DATA.frame.keep) < 0); });
 report("A4) the lane's W2 jobs: " + NW2 + " bases — the person tools as identity edits from the two brand-model references, the three object tools as text-to-image with no reference — and " + THUMBS + " thumbnails that build on their base and end with their tool's own frame lines and the gear rule",
   bases.length === NW2 && thumbs.length === THUMBS && !badBase.length && !badThumb.length, { badBase: badBase.map(j => j.name), badThumb: badThumb.slice(0, 5).map(j => j.name) });
 
@@ -118,16 +118,16 @@ report("A6) WHATS_NEW carries the 6.30.0 Imagine row with a title and a line in 
       out.describe = pd.indexOf(T.describe.keep) >= 0 && /make the sky pink/.test(pd) && pd.indexOf(F.keep) < 0;
       out.architecture = /STRUCTURE LOCK/.test(pa) && pa.indexOf(F.keep) < 0;
       IMAGINE.openTool("outfit"); await new Promise(r => setTimeout(r, 120));
-      out.outfitTiles = document.querySelectorAll("#imTpls .im-tpl").length;
+      out.outfitTiles = document.querySelectorAll("#imTpls .im-tpl:not(.im-ref)").length;
       const img = document.querySelector('#imTpls .im-tpl[data-preset="sequinParty"] .im-tpl-im img'); out.sqSrc = img ? img.getAttribute("src") : "";
       out.title = document.querySelector(".im-tooltitle").textContent.trim(); out.wantTitle = T.outfit.name[LANG] || T.outfit.name.en;
       IMAGINE.goHub(); await new Promise(r => setTimeout(r, 80));
       IMAGINE.openTool("architecture"); await new Promise(r => setTimeout(r, 120));
-      out.archTiles = document.querySelectorAll("#imTpls .im-tpl").length;
+      out.archTiles = document.querySelectorAll("#imTpls .im-tpl:not(.im-ref)").length;
       IMAGINE.goHub(); await new Promise(r => setTimeout(r, 80));
       if (T.colortone) {
       IMAGINE.openTool("colortone"); await new Promise(r => setTimeout(r, 120));
-      out.ctTiles = document.querySelectorAll("#imTpls .im-tpl").length;
+      out.ctTiles = document.querySelectorAll("#imTpls .im-tpl:not(.im-ref)").length;
       const ft = document.querySelector('#imTpls .im-tpl[data-preset="rusticBlueGrace"]');
       out.ctDots = ft ? Array.from(ft.querySelectorAll(".im-tpl-sw span")).map(d => getComputedStyle(d).backgroundColor) : [];
       out.ctSub = ft ? (ft.querySelector(".im-tpl-sub") || {}).textContent : ""; out.ctWantSub = T.colortone.presets[0].sub[LANG] || T.colortone.presets[0].sub.en;

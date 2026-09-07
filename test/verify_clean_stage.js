@@ -156,7 +156,14 @@ const RAIL = ["stHold", "stSplit", "stPin", "stZoomTgl", "stZones", "stUndoB", "
   report("E) scrolled past the enter band the compact stage shows exactly Before · A|B · Reset · ⌄ (no presets), the exit band is measured (≥120 and above the old constant for this taller stage), the back-to-top FAB stays hidden on the studio page, and the top scroll restores the full stage",
     cp.compact && typeof cp.enterMs === "number" && JSON.stringify(cp.vis) === JSON.stringify(["stHold", "stSplit", "stReset", "stStageMin"]) && cp.presetsHidden && typeof cp.band === "number" && cp.band >= 120 && cp.fabHidden && typeof cp.exitMs === "number" && cp.backFull, cp);
 
-  /* F) phone GENERATE bar */
+  /* F) phone GENERATE bar.
+     Timing (6.31.0, cross-engine runs #2 / #30 / #33 read genFull:false on WebKit): a label change re-triggers the
+     button's 180 ms `chipin` entrance (transform scale .85 → 1), and getBoundingClientRect includes the transform —
+     at the animation's first frame the button reads exactly 0.85 of its row, under the 0.9 line, while its layout
+     width is the full row all along (diag on Chromium: 0.85 read before any frame, 1.0 after the animation's
+     `finished`). WebKit under the studio's render load can hold that first frame past a fixed 250 ms read, so the
+     read waits for the button's animations to finish (capped at two seconds) and reports the layout width beside
+     the geometry it still asserts. */
   const gb = await page.evaluate(async () => {
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     const bar = document.getElementById("stGenBar"), more = document.getElementById("stGenMore"), chips = document.getElementById("stPendChips"), gen = document.getElementById("btnStGen");
@@ -168,12 +175,15 @@ const RAIL = ["stHold", "stSplit", "stPin", "stZoomTgl", "stZones", "stUndoB", "
     const topRight = mr.top - br.top < 14 && br.right - mr.right < 14;
     more.click(); await sleep(250);
     const open = bar.classList.contains("open"), chipsShown = getComputedStyle(chips).display !== "none", chipN = chips.querySelectorAll(".chip").length;
+    const anims = gen.getAnimations ? gen.getAnimations() : [], t0 = performance.now();
+    await Promise.race([Promise.all(anims.map(a => a.finished.catch(() => {}))), sleep(2000)]);
+    const settleMs = Math.round(performance.now() - t0), animsLeft = gen.getAnimations ? gen.getAnimations().length : 0;
     const row = gen.parentNode.getBoundingClientRect(), gr = gen.getBoundingClientRect();
-    const genFull = gr.width >= row.width * 0.9, clearShown = getComputedStyle(document.getElementById("stClearAi")).display !== "none";
+    const genFull = gr.width >= row.width * 0.9, genLayoutW = gen.offsetWidth, rowW = Math.round(row.width), clearShown = getComputedStyle(document.getElementById("stClearAi")).display !== "none";
     more.click(); await sleep(150);
     const closed = !bar.classList.contains("open") && getComputedStyle(chips).display === "none";
     svSet("mu_ueDark", 0); stRenderPend();
-    return { emptyHidden, shown, chipsFolded, topRight, open, chipsShown, chipN, genFull, clearShown, closed };
+    return { emptyHidden, shown, chipsFolded, topRight, open, chipsShown, chipN, genFull, genLayoutW, rowW, settleMs, animsLeft, clearShown, closed };
   });
   report("F) phone GENERATE bar: no ▾ with an empty queue; a queued edit shows ▾ top-right with the chips folded; open shows the chips + Clear AI with GENERATE on its own full-width row; closed folds them again",
     gb.emptyHidden && gb.shown && gb.chipsFolded && gb.topRight && gb.open && gb.chipsShown && gb.chipN >= 1 && gb.genFull && gb.clearShown && gb.closed, gb);

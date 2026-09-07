@@ -32,16 +32,16 @@ const all9 = o => !!o && LANGS.every(l => typeof o[l] === "string" && o[l].trim(
 /* ---------------- A) source ---------------- */
 const mod = lifter.between(APP, lifter.M0, lifter.M1, "module");
 const DATA = (() => { const a = mod.indexOf("var IMAGINE_DATA = ") + "var IMAGINE_DATA = ".length, b = mod.indexOf(";\nvar IMAGINE = (function(){", a); return new Function("return " + mod.slice(a, b))(); })();   /* the data block, as the page sees it */
-const COUNTS = { lighting: 12, portrait: 15, surface: 15, weather: 12, describe: 12, architecture: 15, idphoto: 12, product: 12, productbg: 15, background: 15, outfit: 15 };   /* 6.30.0 — the roster grew to eleven; the W1 four stay first */
+const COUNTS = { lighting: 12, portrait: 15, surface: 15, weather: 12, describe: 12, architecture: 15, idphoto: 12, product: 12, productbg: 15, background: 15, outfit: 15, colortone: 28 };   /* 6.31.0 — the roster is twelve (Color Tone + Skin joined); the W1 four stay first */
 report("A1) the page is registered after Freeform and the Edit roster carries it (6 pages)",
   /\["pgCreate","i-pen","Freeform"\],\n\s*\["pgImagine","i-wand","Imagine"\]/.test(APP) &&
   /pages:\["pgCreate","pgImagine","pgMeitu","pgEvoto","pgRetouch","pgPath"\]/.test(APP) &&
   /<div class="page" id="pgImagine">/.test(APP) && /<div id="imRoot"><\/div>/.test(APP) &&
   /<input type="file" id="imFile" accept="image\/\*" multiple/.test(APP) && /id="phImagine"/.test(APP) &&
   /\["phImagine","ph_imagine"\]/.test(APP) && (APP.match(/\n  ph_imagine:\{/g) || []).length === 2, null);
-report("A2) eleven tools, 150 templates, every string in the studio's nine languages, the prompt frame present",
-  DATA.tools.length === 11 && DATA.tools.every(t => COUNTS[t.id] === t.presets.length && all9(t.name) && all9(t.sum) && /\{P\}/.test(t.basePrompt) && t.presets.every(p => all9(p.name) && p.p.length > 20)) &&
-  DATA.tools.reduce((n, t) => n + t.presets.length, 0) === 150 && Object.keys(DATA.ui).length >= 30 && Object.keys(DATA.ui).every(k => all9(DATA.ui[k])) &&
+report("A2) twelve tools, 178 templates, every string in the studio's nine languages, the prompt frame present",
+  DATA.tools.length === 12 && DATA.tools.every(t => COUNTS[t.id] === t.presets.length && all9(t.name) && all9(t.sum) && /\{P\}/.test(t.basePrompt) && t.presets.every(p => all9(p.name) && p.p.length > 20)) &&
+  DATA.tools.reduce((n, t) => n + t.presets.length, 0) === 178 && Object.keys(DATA.ui).length >= 30 && Object.keys(DATA.ui).every(k => all9(DATA.ui[k])) &&
   /IDENTITY LOCK/.test(DATA.frame.keep) && /REALISM/.test(DATA.frame.real) && /AVOID/.test(DATA.frame.avoid) && /TASK GUARD/.test(DATA.frame.guard),
   { tools: DATA.tools.map(t => t.id + ":" + t.presets.length), ui: Object.keys(DATA.ui).length });
 /* every model the picker offers exists on BOTH surfaces — no invented apiPath, no panel-only id */
@@ -51,7 +51,7 @@ const missingPanel = DATA.models.filter(m => RH_CFG.indexOf('"' + m.id + '"') < 
 report("A3) the eight models exist in the app's RH_MODELS and in the panel's runninghub-config (no invented endpoints)",
   DATA.models.length === 8 && !missingApp.length && !missingPanel.length, { missingApp, missingPanel });
 report("A4) the app host: nativePick over the add buttons, rhGenerateOne on the chosen model, the Gallery with the original as Before, switchPage repaints on entry",
-  /nativePick\(btn, "imFile"\)/.test(APP) && /rhGenerateOne\(state\.rhKey, cfg\.apiPath, o\.prompt, "", \[o\.dataUrl\], rhV2Resolution\(o\.size\), cfg/.test(APP) &&
+  /nativePick\(btn, inputId\|\|"imFile"\)/.test(APP) && /rhGenerateOne\(state\.rhKey, cfg\.apiPath, o\.prompt, "", o\.refDataUrl \? \[o\.dataUrl, o\.refDataUrl\] : \[o\.dataUrl\], rhV2Resolution\(o\.size\), cfg/.test(APP) &&   /* 6.31.0 — the Reference Card's own input and the two-picture call */
   /page:"pgImagine", before: m \? \{ mime:m\[1\], b64:m\[2\] \} : null/.test(APP) && /IMAGINE\.init\(host, \$\("imRoot"\)\)/.test(APP) &&
   /if\(id==="pgImagine" && typeof imagineOnEnter==="function"\)/.test(APP) && (APP.match(/\/\* ---- IMAGINE_HOST ---- \*\//g) || []).length === 1, null);
 report("A5) What's New announces it (kind page → pgImagine, nine languages)",
@@ -107,7 +107,7 @@ report("A11) every Imagine file replaced in place (banner + its clip pair + 8 ca
   IMAGINE_ART.every(k => FIXTURE.files.some(f => f.path === "docs/app/" + k)) && IMAGINE_ART.filter(k => FIXTURE.files.some(f => f.path === "docs/app/" + k && f.tag === IM_TAG)).length === 3 /* 6.30.0: the hero still + its two clips; the 62 W1 pictures moved to the W1 beauty tag */ &&
   /* 6.30.0 — a path may be replaced again (Portrait Scene's after, rev 3): the NEWEST record for each path carries the shipped bytes and its tag is declared in the worker */
   IMAGINE_ART.every(k => { const recs = FIXTURE.files.filter(f => f.path === "docs/app/" + k), n = recs[recs.length - 1]; return !!n && n.sha256 === require("crypto").createHash("sha256").update(fs.readFileSync(path.join(ROOT, "docs/app", k))).digest("hex") && SW_SRC.indexOf('{ tag: "' + n.tag + '"') >= 0; }) &&
-  REV["lib/wf/imagine/card-portrait-after.jpg"] === 4 && REV["lib/wf/imagine/th/portrait-riceField.jpg"] === 4 && SW_SRC.indexOf('{ tag: "./__lib-purge-v6-30-0-portrait-card"') >= 0 && SW_SRC.indexOf('{ tag: "./__lib-purge-v6-30-0-imagine-w1-beauty"') >= 0 && W1_TOOLS.every(t => REV["lib/wf/imagine/" + t.before] === 3 && REV["lib/wf/imagine/" + t.after] >= 3),
+  REV["lib/wf/imagine/card-portrait-after.jpg"] === 4 && REV["lib/wf/imagine/th/portrait-riceField.jpg"] === 4 && SW_SRC.indexOf('{ tag: "./__lib-purge-v6-30-0-portrait-card"') >= 0 && SW_SRC.indexOf('{ tag: "./__lib-purge-v6-30-0-imagine-w1-beauty"') >= 0 && W1_TOOLS.every(t => REV["lib/wf/imagine/" + t.before] >= 3 && REV["lib/wf/imagine/" + t.after] >= 3) && REV["lib/wf/imagine/card-lighting-before.jpg"] === 4 && SW_SRC.indexOf('{ tag: "./__lib-purge-v6-31-0-lighting-card"') >= 0,   /* 6.31.0 — Lighting re-shot again, rev 4 */
   { missingRev: IMAGINE_ART.filter(k => !(Number.isInteger(REV[k]) && REV[k] >= 2)).slice(0, 5), notRecorded: IMAGINE_ART.filter(k => !FIXTURE.files.some(f => f.path === "docs/app/" + k)).slice(0, 5), stale: IMAGINE_ART.filter(k => { const recs = FIXTURE.files.filter(f => f.path === "docs/app/" + k), n = recs[recs.length - 1]; return !n || n.sha256 !== require("crypto").createHash("sha256").update(fs.readFileSync(path.join(ROOT, "docs/app", k))).digest("hex"); }).slice(0, 5) });
 /* 6.29.2 — NO GEAR IN THE FRAME, for Imagine too (verify_no_gear_in_frame.js tells the story for the relight workflow). A Bright Glow
    thumbnail grew a softbox in run #11; the shared AVOID frame every Imagine prompt ends with now forbids photographic equipment, and
@@ -164,11 +164,11 @@ const MOCK = `(function(){
     on: /\bon\b/.test(document.getElementById("pgImagine").className), cards: [...document.querySelectorAll("#pgImagine .im-card")].map(c => c.getAttribute("data-tool")),
     subtabs: [...document.querySelectorAll("#subtabbar .subtab")].map(b => b.textContent.trim()), active: (document.querySelector("#subtabbar .subtab.on") || {}).textContent,
     h2: (document.querySelector("#pgImagine .im-hub h2") || {}).textContent, head: document.getElementById("phImagine").textContent }));
-  report("B1) ?page=pgImagine opens the hub: eleven cards in roster order, Edit shows six subtabs with Imagine active, the headline is painted",
+  report("B1) ?page=pgImagine opens the hub: twelve cards in roster order, Edit shows six subtabs with Imagine active, the headline is painted",
     hub.on && hub.cards.join(",") === Object.keys(COUNTS).join(",") && hub.subtabs.length === 6 && /Imagine/.test(hub.active || "") && /IMAGINE/.test(hub.h2 || "") && hub.head.length > 8, hub);
   /* the strings are the module's own, in the current language (my by default) */
   const strs = await page.evaluate(() => ({ h2: document.querySelector("#pgImagine .im-hub h2").textContent.trim(), want: IMAGINE_DATA.ui.hub_h2[LANG], chips: [...document.querySelectorAll("#pgImagine .im-tplcount")].map(c => c.textContent), lang: LANG }));
-  report("B2) the hub reads in the app's language and every card names its template count", strs.h2 === strs.want && strs.chips.length === 11 && strs.chips.every(c => /12|15/.test(c)), strs);
+  report("B2) the hub reads in the app's language and every card names its template count", strs.h2 === strs.want && strs.chips.length === 12 && strs.chips.every(c => /12|15|28/.test(c)), strs);
   /* 6.29.1 wave — the card picture is a real Before | After compare, dragged on the picture, and a tap still opens the tool */
   const hubCmp = await page.evaluate(async () => {
     const cards = [...document.querySelectorAll("#pgImagine .im-card")];
@@ -200,11 +200,11 @@ const MOCK = `(function(){
     for (const t of IMAGINE_DATA.tools) {
       document.querySelector('#pgImagine .im-card[data-tool="' + t.id + '"] .im-open').click();
       await new Promise(r => setTimeout(r, 60));
-      out[t.id] = { tiles: document.querySelectorAll("#imTpls .im-tpl").length, title: document.querySelector(".im-tooltitle").textContent.trim(), tab: document.querySelector(".im-tab.on").getAttribute("data-tab"), restored: IMAGINE.state.tool,
+      out[t.id] = { tiles: document.querySelectorAll("#imTpls .im-tpl:not(.im-ref)").length, title: document.querySelector(".im-tooltitle").textContent.trim(), tab: document.querySelector(".im-tab.on").getAttribute("data-tab"), restored: IMAGINE.state.tool,
         empty: !!document.getElementById("imAddBig"), hasApply: !!document.getElementById("imApply"), models: document.querySelectorAll("#imModel option").length, size: [...document.querySelectorAll("#imSize option")].map(o => o.textContent).join("/") };
       document.getElementById("imBack").click();
       await new Promise(r => setTimeout(r, 60));
-      out[t.id].backToHub = document.querySelectorAll("#pgImagine .im-card").length === 11 && IMAGINE.state.tool === null;
+      out[t.id].backToHub = document.querySelectorAll("#pgImagine .im-card").length === 12 && IMAGINE.state.tool === null;
     }
     return out;
   });
@@ -338,7 +338,7 @@ const MOCK = `(function(){
   report("B13) ✕ removes one photo, Clear all empties the strip back to the Add photos stage", rm.one === 1 && rm.none === 0 && rm.empty && rm.noAll, rm);
   /* restore + nine languages */
   await open("");
-  const restored = await page.evaluate(() => ({ page: curPage, tool: IMAGINE.state.tool, preset: IMAGINE.state.preset.lighting, model: IMAGINE.state.model, size: IMAGINE.state.size, desc: IMAGINE.state.desc.lighting, tiles: document.querySelectorAll("#imTpls .im-tpl").length, on: (document.querySelector("#imTpls .im-tpl.on") || {}).getAttribute && document.querySelector("#imTpls .im-tpl.on").getAttribute("data-preset") }));
+  const restored = await page.evaluate(() => ({ page: curPage, tool: IMAGINE.state.tool, preset: IMAGINE.state.preset.lighting, model: IMAGINE.state.model, size: IMAGINE.state.size, desc: IMAGINE.state.desc.lighting, tiles: document.querySelectorAll("#imTpls .im-tpl:not(.im-ref)").length, on: (document.querySelector("#imTpls .im-tpl.on") || {}).getAttribute && document.querySelector("#imTpls .im-tpl.on").getAttribute("data-preset") }));
   report("B14) a reload lands back on Imagine → Lighting with the template, model, size and description remembered (photos are the session's)",
     restored.page === "pgImagine" && restored.tool === "lighting" && restored.preset === "window" && restored.model === "nano-banana-pro" && restored.size === "2k" && restored.desc === "warm shop lights at night" && restored.tiles === 12 && restored.on === "window", restored);
   const langs = {};
@@ -384,12 +384,12 @@ const MOCK = `(function(){
       subtabs: [...document.querySelectorAll("#subtabs .subtab")].map(b => b.textContent.trim()), h2: document.querySelector("#pageImagine .im-hub h2").textContent.trim(), want: globalThis.HNK.imagineData.ui.hub_h2[state.lang] || globalThis.HNK.imagineData.ui.hub_h2.en,
       head: document.getElementById("phImagine").textContent.trim().length > 8, icons: document.querySelectorAll("#pageImagine img.ic-s").length, svg: document.querySelectorAll("#pageImagine svg").length };
     globalThis.HNK.imagine.openTool("surface"); await new Promise(r => setTimeout(r, 120));
-    out.tiles = document.querySelectorAll("#pageImagine #imTpls .im-tpl").length; out.tileSrc = (document.querySelector("#pageImagine #imTpls .im-tpl .im-tpl-im img") || { getAttribute: function () { return ""; } }).getAttribute("src"); out.roleBtns = document.querySelectorAll('#pageImagine [role="button"].btn').length; out.nativeBtns = document.querySelectorAll("#pageImagine button").length;
+    out.tiles = document.querySelectorAll("#pageImagine #imTpls .im-tpl:not(.im-ref)").length; out.tileSrc = (document.querySelector("#pageImagine #imTpls .im-tpl .im-tpl-im img") || { getAttribute: function () { return ""; } }).getAttribute("src"); out.roleBtns = document.querySelectorAll('#pageImagine [role="button"].btn').length; out.nativeBtns = document.querySelectorAll("#pageImagine button").length;
     out.size = [...document.querySelectorAll("#pageImagine #imSize option")].map(o => o.textContent).join("/"); out.models = document.querySelectorAll("#pageImagine #imModel option").length;
     globalThis.HNK.imagine.goHub();
     return out;
   });
-  report("C1) the panel opens Edit · Imagine on the same module: eleven cards, six subtabs, the hub headline in the panel's language, <img> icons (no inline svg), div buttons (no native <button>), Surface's 15 tiles as plain icons/imagine/th/ pictures (no ?v= inside the CCX), Model + Size",
+  report("C1) the panel opens Edit · Imagine on the same module: twelve cards, six subtabs, the hub headline in the panel's language, <img> icons (no inline svg), div buttons (no native <button>), Surface's 15 tiles as plain icons/imagine/th/ pictures (no ?v= inside the CCX), Model + Size",
     pan.on && pan.cards.join(",") === Object.keys(COUNTS).join(",") && pan.subtabs.length === 6 && pan.h2 === pan.want && pan.head && pan.icons > 0 && pan.svg === 0 && pan.tiles === 15 && /^icons\/imagine\/th\/surface-[A-Za-z]+\.jpg$/.test(pan.tileSrc) && pan.roleBtns > 0 && pan.nativeBtns === 0 && pan.size === "1K/2K/4K" && pan.models >= 6, pan);
   report("C2) the panel raised no error while it built the page", perrs.length === 0, perrs.slice(0, 3));
   await browser.close();
