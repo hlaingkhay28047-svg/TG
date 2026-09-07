@@ -96,13 +96,13 @@ report("A8) the panel registers the page (Edit · Imagine, after Freeform), boot
    the 6.29.0 pictures. Every Imagine picture now carries a LIB_ART_REV token, the host paints through libArt, the worker clears
    the old copies and the fixture records the shipped bytes. */
 const REV = new Function(APP.match(/var LIB_ART_REV = \{[\s\S]*?\n\};/)[0] + "; return LIB_ART_REV;")();
-const IMAGINE_ART = ["lib/banners/banner-imagine.jpg"].concat(DATA.tools.flatMap(t => ["lib/wf/imagine/" + t.before, "lib/wf/imagine/" + t.after])).concat(DATA.tools.flatMap(t => t.presets.map(p => "lib/wf/imagine/th/" + t.id + "-" + p.id + ".jpg")));
+const IMAGINE_ART = ["lib/banners/banner-imagine.jpg", "lib/banners/motion/banner-imagine.mp4", "lib/banners/motion/banner-imagine.webm"].concat(DATA.tools.flatMap(t => ["lib/wf/imagine/" + t.before, "lib/wf/imagine/" + t.after])).concat(DATA.tools.flatMap(t => t.presets.map(p => "lib/wf/imagine/th/" + t.id + "-" + p.id + ".jpg")));
 const SW_SRC = fs.readFileSync(path.join(ROOT, "docs/app/sw.js"), "utf8"), FIXTURE = JSON.parse(fs.readFileSync(path.join(ROOT, "test/fixtures/lib-replacements.json"), "utf8"));
 const IM_TAG = "./__lib-purge-v6-29-2-imagine";
-report("A11) every Imagine picture replaced in place (banner + 8 cards + 54 thumbnails) carries a LIB_ART_REV revision ≥ 2, the app host paints thumbs and cards through libArt, the hero still carries its ?v= token, the worker clears the old copies under one new tag and the fixture records all 63 with their shipped bytes",
-  IMAGINE_ART.length === 63 && IMAGINE_ART.every(k => Number.isInteger(REV[k]) && REV[k] >= 2) &&
+report("A11) every Imagine file replaced in place (banner + its clip pair + 8 cards + 54 thumbnails) carries a LIB_ART_REV revision ≥ 2, the app host paints thumbs and cards through libArt, the hero still and the motion clips carry their ?v= token, the worker clears the old copies under one new tag and the fixture records all 65 with their shipped bytes",
+  IMAGINE_ART.length === 65 && IMAGINE_ART.every(k => Number.isInteger(REV[k]) && REV[k] >= 2) &&
   /asset: function\(kind, file\)\{ return libArt\(\(kind==="thumb" \? "lib\/wf\/imagine\/th\/" : "lib\/wf\/imagine\/"\) \+ file\); \}/.test(APP) &&
-  /<img src="lib\/banners\/banner-imagine\.jpg\?v=\d+" alt=""/.test(APP) && SW_SRC.indexOf('{ tag: "' + IM_TAG + '"') >= 0 &&
+  /<img src="lib\/banners\/banner-imagine\.jpg\?v=\d+" alt=""/.test(APP) && /v\.src=libArt\("lib\/banners\/motion\/"\+m\[1\]\+phExt\)/.test(APP) && SW_SRC.indexOf('{ tag: "' + IM_TAG + '"') >= 0 &&
   IMAGINE_ART.every(k => FIXTURE.files.some(f => f.path === "docs/app/" + k && f.tag === IM_TAG && f.sha256 === require("crypto").createHash("sha256").update(fs.readFileSync(path.join(ROOT, "docs/app", k))).digest("hex"))),
   { missingRev: IMAGINE_ART.filter(k => !(Number.isInteger(REV[k]) && REV[k] >= 2)).slice(0, 5), notRecorded: IMAGINE_ART.filter(k => !FIXTURE.files.some(f => f.path === "docs/app/" + k && f.tag === IM_TAG)).slice(0, 5) });
 /* 6.29.2 — NO GEAR IN THE FRAME, for Imagine too (verify_no_gear_in_frame.js tells the story for the relight workflow). A Bright Glow
@@ -183,13 +183,13 @@ const MOCK = `(function(){
     const opened = IMAGINE.state.tool; IMAGINE.goHub(); await new Promise(x => setTimeout(x, 40));
     const kept = document.querySelector('#pgImagine .im-card[data-tool="lighting"] .im-cmp-top').style.width;
     const cs = getComputedStyle(document.querySelector("#pgImagine .im-card")); const hover = /transform/.test(cs.transitionProperty || "") || /transform/.test(cs.transition || "");
-    const motion = { listed: PH_MOTION_CLIPS.indexOf("banner-imagine") >= 0, video: !!document.querySelector("#pgImagine .page-hero video.ph-motion") };
+    const motion = { listed: PH_MOTION_CLIPS.indexOf("banner-imagine") >= 0, video: !!document.querySelector("#pgImagine .page-hero video.ph-motion"), videoSrc: (document.querySelector("#pgImagine .page-hero video.ph-motion") || { getAttribute: function () { return ""; } }).getAttribute("src") || "" };
     return { shape, lifted, afterDrag, unlifted, opened, kept, hover, motion };
   });
   report("B2b) every hub card is a Before | After compare (after as the picture, before clipped on top, knob, two labels, 50% start); a drag moves the line to ~72%, keeps the hub, and the split is remembered",
     hubCmp.shape.every(x => x.base && x.top && x.knob && x.labels === 2 && x.w0 === "50%") && hubCmp.afterDrag.w === "72%" && hubCmp.afterDrag.line === "72%" && hubCmp.afterDrag.split === 72 && hubCmp.afterDrag.stillHub && hubCmp.kept === "72%", hubCmp);
-  report("B2c) the card lifts under a finger (lift class on pointerdown, gone after release; hover transitions transform), a plain tap on the picture opens that tool, and the hero carries its motion clip",
-    hubCmp.lifted && hubCmp.unlifted && hubCmp.opened === "portrait" && hubCmp.hover && hubCmp.motion.listed && hubCmp.motion.video, { lifted: hubCmp.lifted, unlifted: hubCmp.unlifted, opened: hubCmp.opened, hover: hubCmp.hover, motion: hubCmp.motion });
+  report("B2c) the card lifts under a finger (lift class on pointerdown, gone after release; hover transitions transform), a plain tap on the picture opens that tool, and the hero carries its motion clip under its ?v= URL",
+    hubCmp.lifted && hubCmp.unlifted && hubCmp.opened === "portrait" && hubCmp.hover && hubCmp.motion.listed && hubCmp.motion.video && /banner-imagine\.(mp4|webm)\?v=\d+$/.test(hubCmp.motion.videoSrc), { lifted: hubCmp.lifted, unlifted: hubCmp.unlifted, opened: hubCmp.opened, hover: hubCmp.hover, motion: hubCmp.motion });
   /* open each tool: tile count, back to hub */
   const tools = await page.evaluate(async () => {
     const out = {};

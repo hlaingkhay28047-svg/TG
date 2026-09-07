@@ -161,7 +161,7 @@ const DECLARED = [
   /* 6.29.2 — Imagine's banner, card pairs and template thumbnails re-shot on the brand model under their own names;
      LIB_ART_REV hands each a new URL, this clears the old (the folder holds nothing else). */
   { tag: "./__lib-purge-v6-29-2-imagine",
-    re: /\/lib\/(wf\/imagine\/(th\/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners\/banner-imagine)\.jpg$/ }
+    re: /\/lib\/((wf\/imagine\/(th\/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners\/banner-imagine)\.jpg|banners\/motion\/banner-imagine\.(mp4|webm))$/ }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));
 report("D0) this test's copy of the purge list matches the worker's, entry for entry",

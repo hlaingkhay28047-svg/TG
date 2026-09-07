@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-29-2";
+var CACHE = "hnk-web-studio-v6-29-3";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -243,8 +243,11 @@ var LIB_PURGES = [
      names. THE SAME BUG AGAIN, ONE RELEASE LATER: 6.29.1 had already replaced the thumbnails and the banner in place with
      neither a revision nor an entry here, and the owner opened the templates on the very release that changed them and saw
      the 6.29.0 library pictures. LIB_ART_REV now hands every one of these a new URL; this entry clears the copies the old
-     URLs left behind. Named by folder-and-pattern rather than 63 filenames: /lib/wf/imagine/ holds nothing else. */
-  { tag: "./__lib-purge-v6-29-2-imagine", re: new RegExp("/lib/(wf/imagine/(th/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners/banner-imagine)\\.jpg$") }
+     URLs left behind. Named by folder-and-pattern rather than 63 filenames: /lib/wf/imagine/ holds nothing else.
+     6.29.3 — the hero's motion clip pair is named here too: those clips never enter LIB_CACHE (the fetch handler
+     leaves /lib/banners/motion/ to the browser), so there is nothing for this entry to purge for them — they are
+     listed so the fixture can record the replacement, and LIB_ART_REV's token is what actually repairs them. */
+  { tag: "./__lib-purge-v6-29-2-imagine", re: new RegExp("/lib/((wf/imagine/(th/[a-z]+-[A-Za-z0-9]+|card-[a-z]+-(before|after))|banners/banner-imagine)\\.jpg|banners/motion/banner-imagine\\.(mp4|webm))$") }
 ];
 
 /* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair

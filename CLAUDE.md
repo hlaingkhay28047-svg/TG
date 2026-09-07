@@ -56,3 +56,4 @@ get green, and never expose or commit API keys or tokens.
 - Replacing a file under `docs/app/lib/` in place needs a `LIB_ART_REV` bump,
   a `LIB_PURGES` entry and the fixture record — `/lib/` is cache-first and never
   revalidated (6.29.1 shipped new thumbnails without it and phones kept the old).
+  Motion clips too: they skip the worker cache but not the browser's (6.29.2).
