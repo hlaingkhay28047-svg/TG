@@ -112,7 +112,7 @@ report("A6) WHATS_NEW carries the 6.30.0 Imagine row with a title and a line in 
       const F = IMAGINE_DATA.frame, T = Object.fromEntries(IMAGINE_DATA.tools.map(t => [t.id, t]));
       const out = { cards: [...document.querySelectorAll("#pgImagine .im-card")].map(c => c.getAttribute("data-tool")) };
       const po = IMAGINE.prompt("outfit", "sequinParty", ""), pp = IMAGINE.prompt("product", "darkLuxury", ""), pb = IMAGINE.prompt("background", "cafe", ""), pd = IMAGINE.prompt("describe", "", "make the sky pink"), pa = IMAGINE.prompt("architecture", "nightLights", "");
-      out.outfit = po.indexOf(T.outfit.keep) >= 0 && po.indexOf(F.keep) < 0 && po.indexOf(T.outfit.avoid) >= 0 && po.indexOf(F.avoid) < 0 && /ao dai/i.test(po) && /NO STUDIO GEAR/.test(po);
+      out.outfit = po.indexOf(T.outfit.keep) >= 0 && po.indexOf(F.keep) < 0 && po.indexOf(T.outfit.avoid) >= 0 && po.indexOf(F.avoid) < 0 && /silver sequin/i.test(po) && /NO STUDIO GEAR/.test(po);
       out.product = pp.indexOf(T.product.keep) >= 0 && pp.indexOf(F.keep) < 0 && /PRODUCT LOCK/.test(pp) && /REALISM/.test(pp) && /TASK GUARD/.test(pp);
       out.background = pb.indexOf(F.keep) >= 0 && pb.indexOf(F.avoid) >= 0;
       out.describe = pd.indexOf(T.describe.keep) >= 0 && /make the sky pink/.test(pd) && pd.indexOf(F.keep) < 0;
