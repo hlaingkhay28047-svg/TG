@@ -128,6 +128,19 @@ eligible students.
 
 ## Acceptance record
 
+- **v6.102.0** — owner go-ahead 2026-09-07. The artifact built in the release
+  session (`HNK_Ai_Panel_v6.102.0.ccx`, SHA-256
+  `8f8331c3a162281054d17b79f3e694b865cebeec8237b6f65554f6782e35b027`,
+  20,392,367 bytes — the Imagine W4 wave: twenty-two Imagine tools with their
+  card and template pictures inside the package) was handed to the owner
+  directly, the release state was laid out (6.75.2 the last published
+  release, everything after it built and pinned but unpublished, only v6.25.2
+  formally accepted), and the owner answered "ok" to publishing it. The
+  publish lane (run #58, from main `03bea97`) rebuilt the artifact from the
+  reviewed source, matched the tracked pins, mirrored it to the private Space
+  and enabled it as latest; minimum supported stays 6.24.0. UXP Developer Tool
+  version, Photoshop/OS versions and the in-Photoshop checklist results were
+  not reported for this build — record them here when the owner runs them.
 - **v6.25.2** — accepted 2026-08-28. Tester: the owner, in real Photoshop on
   Windows (Creative Cloud CCX install; the div-button gate build). Artifact
   `HNK_Ai_Panel_v6.25.2.ccx`, SHA-256
