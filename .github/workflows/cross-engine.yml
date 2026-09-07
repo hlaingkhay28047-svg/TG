@@ -79,8 +79,13 @@ jobs:
           # later while the studio's hi-res preview tier is still rendering (diag run #17), and the test
           # read a fixed 350 ms after scrolling. The test now waits for the reaction (the exit fires
           # within ~50 ms once the thread is idle, 16/16 cycles). Its second finding — the GENERATE
-          # button not filling its row with the queue open — has not reproduced since the 6.27.0
-          # service-worker block (runs #14–#17); the diag measured the same flex geometry as Chromium.
+          # button reading narrower than its row with the queue open (runs #2, #30 on main, #33) —
+          # was the same race on a different clock: the label change re-triggers the button's 180 ms
+          # `chipin` entrance (transform scale .85 → 1), getBoundingClientRect includes the transform,
+          # and a WebKit render stall left that animation at its first frame (0.85 of the row, under
+          # F's 0.9 line) when the fixed 250 ms read came; the layout width was the full row all along
+          # (6.31.0 diag: 0.85 before the first frame, 1.0 after getAnimations().finished). F now
+          # waits for the button's animations to finish before measuring — same geometry, same line.
           if [ "$HNK_ENGINE" = "webkit" ]; then
             LIST="${TESTS:-verify_tabbar_reachable verify_clean_stage verify_native_pick verify_slot_whole_photo verify_freeform_slots verify_desktop_fill sweep_v492_gridfit sweep_v528_safearea sweep_v533_a11y}"
           else
