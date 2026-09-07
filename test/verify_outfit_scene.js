@@ -18,8 +18,8 @@
  * scene, retouches skin without recolouring it, and keeps IMAGE 3's pose, frame
  * ratio and composition — with WHO WEARS WHAT stated per card; the four sit in
  * Background & Scene after Couple Compose and in WF_LOCK_NONE; nine-language
- * summaries and four-step guides in both languages; the counts move to 193 /
- * 200 on app, landing and the panel's Home; the wizard shows "Combine" only on
+ * summaries and four-step guides in both languages; the counts move to 194 /
+ * 201 on app, landing and the panel's Home; the wizard shows "Combine" only on
  * a board slot; composeBoard lays two pictures side by side and four two-by-two;
  * the panel's lifted catalog carries the same four records; What's New says so;
  * CI runs this.
@@ -128,11 +128,11 @@ report("C4) Couple's steps tell the student to combine HER photo first, then HIS
   /pick HER outfit photo first, then HIS/.test(APP) && /မိန်းကလေးဝတ်စုံပုံ အရင်၊ ယောက်ျားလေးဝတ်စုံပုံ နောက်/.test(APP), null);
 
 /* ---- D) counts ---- */
-report("D) the app, the landing and the panel's Home all count 193 Smart Workflows and 200 One-Tap",
-  lib.workflows.filter(x => IDS.indexOf(x.id) >= 0).length === 4 && APP.indexOf("Smart Workflow 193") >= 0 && APP.indexOf("Smart Workflow 189") < 0 && APP.indexOf("One-Tap 200") >= 0 &&
-  (LANDING.match(/Smart Workflow 193/g) || []).length >= 30 && /data-count="wf">193</.test(LANDING) && /data-count="tap">200</.test(LANDING) && LANDING.indexOf("One-Tap 196") < 0 &&
-  /stat\(200, "One-Tap Workflows"\)/.test(PANEL_HOME),
-  { n: lib.workflows.filter(x => IDS.indexOf(x.id) >= 0).length, app193: APP.indexOf("Smart Workflow 193") >= 0, landing193: (LANDING.match(/Smart Workflow 193/g) || []).length, panelHome: /stat\(200,/.test(PANEL_HOME) });
+report("D) the app, the landing and the panel's Home all count 194 Smart Workflows and 201 One-Tap",
+  lib.workflows.filter(x => IDS.indexOf(x.id) >= 0).length === 4 && APP.indexOf("Smart Workflow 194") >= 0 && APP.indexOf("Smart Workflow 189") < 0 && APP.indexOf("One-Tap 201") >= 0 &&
+  (LANDING.match(/Smart Workflow 194/g) || []).length >= 30 && /data-count="wf">194</.test(LANDING) && /data-count="tap">201</.test(LANDING) && LANDING.indexOf("One-Tap 196") < 0 &&
+  /stat\(201, "One-Tap Workflows"\)/.test(PANEL_HOME),
+  { n: lib.workflows.filter(x => IDS.indexOf(x.id) >= 0).length, app194: APP.indexOf("Smart Workflow 194") >= 0, landing194: (LANDING.match(/Smart Workflow 194/g) || []).length, panelHome: /stat\(200,/.test(PANEL_HOME) });
 
 /* ---- E) the board helper in the source ---- */
 report("E) the wizard owns a multi-file board input, a composeBoard that lays two or three side by side and four two-by-two, and a Combine button only on a board slot",
@@ -195,7 +195,7 @@ report("E) the wizard owns a multi-file board input, a composeBoard that lays tw
   });
   const bgCat = cat.categories.find(c => c.category === "Background & Scene" || c.t === "Background & Scene");
   report("I) the panel's lifted catalog carries all four in Background & Scene with the app's prompts, AVOID lists and inputs",
-    pGaps.length === 0 && !!bgCat && IDS.every(id => bgCat.items.some(x => x.id === id)) && items.length === 193,
+    pGaps.length === 0 && !!bgCat && IDS.every(id => bgCat.items.some(x => x.id === id)) && items.length === 194,
     { pGaps, total: items.length, bg: !!bgCat });
 
   /* ---- J) What's New, CI ---- */
