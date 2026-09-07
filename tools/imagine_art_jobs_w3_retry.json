@@ -1,0 +1,14 @@
+{
+ "note": "Imagine W3 run C (6.32.0) — the one Object Remove thumbnail that timed out in run A (th-objremove-shadows, RunningHub 1006), redone image-to-image on the committed card-objremove-before.jpg.",
+ "jobs": [
+  {
+   "name": "th-objremove-shadows",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "prompt": "Remove from this photograph exactly the following and rebuild what was behind it: the stray shadows cast by people or objects outside the frame, restoring the evenly lit ground and wall as if nothing stood there. Reconstruct the background, floor, wall, sky or scenery behind the removed element with matching texture, perspective, light, shadows and grain, so no trace, smudge or blur remains; everything else stays exactly as it is.\n\nIDENTITY LOCK: the same photograph of the same person — the face, body, pose, clothing and framing stay exactly; only the removed element and the area it covered change. FILL LOCK: what is rebuilt behind the removed element continues the real background — the same wall, floor, sky, foliage or scenery, the same perspective and light.\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, no painterly or CGI look.\nAVOID: a different person or face, blur, smudges or a visible patch where the element was, new objects, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people, a changed crop. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps, C-stands, backdrop stands or any photographic equipment may be drawn into the picture — light itself is welcome, the equipment that makes it never is.\nTASK GUARD: return exactly one finished photograph and nothing else — no text, no captions, no UI, no watermark; keep the original aspect ratio and resolution feel.",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "base": "docs/app/lib/wf/imagine/card-objremove-before.jpg"
+  }
+ ]
+}
