@@ -825,3 +825,7 @@ jobs:
       # 6.29.0 wave — Imagine: the hub and its four one-tap tools, drawn by one module on the app AND the panel
       - name: Run Imagine W1 sweep (hub, templates, mocked Apply, nine languages, panel lift in sync)
         run: PORT=8931 node test/verify_imagine_w1.js
+
+      # 6.30.0 wave — Imagine W2: seven more tools on the same shell, each with its own frame line, brand-model art
+      - name: Run Imagine W2 sweep (seven more tools, per-tool KEEP/AVOID, icons on both surfaces, art, What's New)
+        run: PORT=8931 node test/verify_imagine_w2.js
