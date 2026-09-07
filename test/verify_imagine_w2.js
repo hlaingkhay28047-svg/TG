@@ -29,8 +29,10 @@ const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = o => !!o && LANGS.every(l => typeof o[l] === "string" && o[l].length > 0);
 const HAS_CT = DATA.tools.some(t => t.id === "colortone");   /* Color Tone + Skin: held back */
 const W2 = { describe: 12, architecture: 15, idphoto: 12, product: 12, productbg: 15, background: 15, outfit: 15 }; if (HAS_CT) W2.colortone = 28;
-const ORDER = ["lighting", "portrait", "surface", "weather"].concat(Object.keys(W2));
-const NW2 = Object.keys(W2).length, THUMBS = Object.values(W2).reduce((a, b) => a + b, 0), TOTAL = 54 + THUMBS, WORD = { 11: "eleven", 12: "twelve" }[ORDER.length];
+/* 6.32.0 — W3 (Restore · Upscale · Face Clarity · Object Remove · Object Add) follows W2 in the roster; verify_imagine_w3.js pins it, this file only counts it */
+const W3 = { restore: 12, upscale: 8, faceclear: 12, objremove: 10, objadd: 12 };
+const ORDER = ["lighting", "portrait", "surface", "weather"].concat(Object.keys(W2)).concat(Object.keys(W3));
+const NW2 = Object.keys(W2).length, THUMBS = Object.values(W2).reduce((a, b) => a + b, 0), TOTAL = 54 + THUMBS + Object.values(W3).reduce((a, b) => a + b, 0), WORD = { 11: "eleven", 12: "twelve", 16: "sixteen", 17: "seventeen" }[ORDER.length];
 const PERSON = ["describe", "idphoto", "background", "outfit"].concat(HAS_CT ? ["colortone"] : []), OBJECT = ["architecture", "product", "productbg"];
 const GEAR = /NO STUDIO GEAR IN THE FRAME/;
 const ART = path.join(ROOT, "docs/app/lib/wf/imagine"), PART = path.join(ROOT, "panel/icons/imagine");
