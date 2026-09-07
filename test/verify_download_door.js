@@ -1,5 +1,11 @@
 /* v6.28.0 — ONE DOWNLOAD DOOR.
 
+   v6.33.1 — ONE PLACE (owner, 2026-09-07: "အရမ်းရှုပ်နေတယ် တစ်နေရာပဲထားပေးပါ UI မှာ"): the Home,
+   Tutorials and Account Center door buttons of 6.28.x are gone too. The Account card's Photoshop
+   Panel group under Setup is the only place in the app that shows a download button; the
+   ?panel=download deep link (landing forwarder, panel button) still opens it in place, and the
+   panel's Home and Tutorials mirror the app.
+
    Owner decision (2026-09-06): the Photoshop Panel is downloaded from the web
    app's Account → Photoshop Panel group and nowhere else. The unified API had
    issued its one-time, five-minute delivery to a signed-in WEB session only
@@ -66,27 +72,38 @@ report("A3) the forwarder's CSP allows nothing but its own hashed stylesheet",
 report("A4) panel-version.json stays where the panel's update probe reads it",
   exists("docs/download/panel-version.json") && PANEL.includes("/download/panel-version.json"));
 
-/* ---- B) the web app's doors ---- */
-const intentDoors = (APP.match(/<a class="btn(?: btn-gold)?"(?: id="[^"]+")? href="\?panel=download" data-panel-intent>/g) || []).length;
-report("B) every in-app door is the account card's own intent: no link leaves for ../download/, the dashboard, Tutorials and Account Center links carry the intent, the account-card button keeps ?panel=download as its no-script fallback",
-  !APP.includes('href="../download/"') && intentDoors === 3 &&
+/* ---- B) the web app's ONE place ---- */
+const intentDoors = (APP.match(/data-panel-intent/g) || []).length;
+report("B) 6.33.1 ONE PLACE: no door link anywhere — Home, Tutorials and Account Center carry no download button or promo band; the Account card's Panel button keeps ?panel=download as its no-script fallback; Tutorials card 03 opens Setup",
+  !APP.includes('href="../download/"') && intentDoors === 0 &&
+  !APP.includes('id="unifiedDownload"') && !APP.includes('id="dashPromo"') && !APP.includes('id="dashPromoGo"') &&
+  !APP.includes(">Photoshop Panel download<") && !APP.includes("Secure Panel download") &&
   APP.includes('<a class="btn btn-gold grow" id="accPanelDownload" href="?panel=download" style="text-align:center"></a>') &&
+  APP.includes('<button class="btn" type="button" data-tutorial-page="pgHome">Open Setup</button>') &&
   !APP.includes("Open secure download area"), { intentDoors });
-report("B2) unifiedWire opens the intent in place for those links (no reload) and binds exactly ONE control to the request — the Account card's Panel button (v6.28.1)",
-  APP.includes('document.querySelectorAll("a[data-panel-intent]").forEach(function(a){ a.addEventListener("click",function(ev){ if(ev&&ev.preventDefault) ev.preventDefault(); accPanelIntentStart(); }); });') &&
+report("B2) unifiedWire binds exactly ONE control to the request — the Account card's Panel button — and wires no door links",
+  !APP.includes('querySelectorAll("a[data-panel-intent]")') &&
   !APP.includes('dl.onclick=accRequestPanelDownload') && APP.includes('ad.addEventListener("click",accRequestPanelDownload)') &&
   (APP.match(/accRequestPanelDownload/g) || []).length === 2);
-report("B2b) the Account Center's Panel section is a door, not a requester: a link carrying the intent, no disabled-button state, a note that names the one place",
-  APP.includes('<a class="btn btn-gold" id="unifiedDownload" href="?panel=download" data-panel-intent>Get the Panel — Account → Photoshop Panel</a>') &&
-  !/\$\("unifiedDownload"\)\.disabled/.test(APP) && APP.includes("Get the Panel from the Account card's Photoshop Panel group"));
+report("B2b) the Account Center reports; it does not download: no button, and its note names the one place",
+  APP.includes('id="unifiedDownloadNote"') && APP.includes("Download the Panel under Setup ▸ Account ▸ Photoshop Panel"));
 const requester = (APP.match(/async function accRequestPanelDownload\(ev\)\{[\s\S]*?\n\}/) || [""])[0];
 report("B3) the request itself is unchanged: POST /v1/downloads/panel from the account card, same-origin delivery address, no device id round-trip",
   requester.includes('accFetch("/v1/downloads/panel",{method:"POST"') && requester.includes("u.origin!==location.origin") &&
   !/computer_installation_id|installation_hash/.test(requester));
 report("B4) What's New names the one door (my + en)",
   /\{ v:"6\.28\.0", kind:"page", ref:"pgHome",\n\s+t:\{my:"[^"]*Web App[^"]*",en:"[^"]*one place[^"]*Web App/.test(APP));
+report("B5) What's New 6.33.1 sits newest and names the one place (my + en)",
+  /var WHATS_NEW = \[\n\s+\{ v:"6\.33\.1", kind:"page", ref:"pgHome",\n\s+t:\{my:"[^"]*တစ်နေရာတည်း[^"]*",en:"[^"]*one place only: Setup ▸ Account ▸ Photoshop Panel/.test(APP));
+report("B6) the one button answers where it was pressed: a toast on refusal, on success and on failure",
+  (requester.match(/toast\(/g) || []).length === 3 && requester.includes('toast("Temporary Panel delivery created'));
 
 /* ---- C) the panel and the server ---- */
+const HOME = read("panel/src/ui/screens/home-screen.js");
+const TUT = read("panel/src/ui/screens/tutorials-screen.js");
+report("C0) the panel's Home and Tutorials mirror the app: no download destination button, no promo band, card 03 opens Setup",
+  !HOME.includes('destBtn("Photoshop Panel download"') && !HOME.includes('id: "dashPromo"') && !HOME.includes("L_PROMO") &&
+  !TUT.includes('"update"') && TUT.includes('"Open Setup", "setup"') && !read("panel/styles.css").includes("dash-promo"));
 const getUpdate = (PANEL.match(/async function panelGetUpdate\(\) \{[\s\S]*?\n\}/) || [""])[0];
 report("C) the panel's button opens the web app's door and never asks the API for the file",
   getUpdate.includes('await openUrl(APP_URL + "?panel=download");') && getUpdate.includes('sl("upd_web")') &&
@@ -139,31 +156,29 @@ async function armPage(page, errs) {
   await page.addInitScript(() => { try { localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1"); } catch (e) {} });
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(2200);
-  const door = async (which) => page.evaluate((which) => {
-    window.__mark = (window.__mark || 0) + 1;
+  const one = await page.evaluate(() => ({
+    doors: document.querySelectorAll("a[data-panel-intent], #unifiedDownload, #dashPromo, #dashPromoGo").length,
+    dest: Array.from(document.querySelectorAll("#pgDash .unified-actions .btn")).map(b => b.textContent.trim()),
+    tut: Array.from(document.querySelectorAll("#pgTutorials .tutorial-card .btn")).map(b => b.textContent.trim()),
+    requesters: document.querySelectorAll("#accPanelDownload").length }));
+  report("D) 6.33.1 ONE PLACE in the DOM: no door link, no promo band, no Account Center button; Home keeps three destinations, Tutorials card 03 says Open Setup, exactly one download button exists",
+    one.doors === 0 && one.dest.join("|") === "AI Tools|Account & license|Tutorials" && one.tut.join("|") === "Open Dashboard|Check devices|Open Setup" && one.requesters === 1, one);
+  const d1 = await page.evaluate(() => {
     _panelDownloadIntent = false; _panelDownloadStage = "";
-    const links = Array.from(document.querySelectorAll("a[data-panel-intent]"));
-    const a = which === "dash" ? links[0] : (which === "tut" ? links[1] : links[2]);
-    if (!a) return { missing: true };
     const href0 = location.href;
-    a.click();
+    accPanelIntentStart();   /* what the ?panel=download deep link, the landing forwarder and the panel's button run */
     return new Promise(res => setTimeout(() => res({
-      mark: window.__mark, sameUrl: location.href === href0, stage: _panelDownloadStage, intent: _panelDownloadIntent,
+      sameUrl: location.href === href0, stage: _panelDownloadStage, intent: _panelDownloadIntent,
       panelOpen: document.getElementById("accGrpPanel").classList.contains("open"),
       focused: document.activeElement && document.activeElement.id, home: document.getElementById("pgHome").classList.contains("on"),
       canDownload: unifiedCanDownload() }), 700));
-  }, which);
-  const d1 = await door("dash");
-  report("D) the dashboard's Photoshop Panel download link opens the account card's Panel group in place — no reload, intent consumed, button focused",
-    d1.mark === 1 && d1.sameUrl && d1.stage === "done" && d1.intent === false && d1.panelOpen && d1.focused === "accPanelDownload" && d1.home && d1.canDownload, d1);
+  });
+  report("D2) the ?panel=download intent still opens the one place — Setup's Account card, Panel group open, button focused, no reload",
+    d1.sameUrl && d1.stage === "done" && d1.intent === false && d1.panelOpen && d1.focused === "accPanelDownload" && d1.home && d1.canDownload, d1);
   await page.evaluate(() => switchPage("pgTutorials")); await page.waitForTimeout(200);
-  const d2 = await door("tut");
-  report("D2) the Tutorials card's link does the same from another page",
-    d2.mark === 2 && d2.sameUrl && d2.stage === "done" && d2.panelOpen && d2.focused === "accPanelDownload" && d2.home, d2);
-  await page.evaluate(() => switchPage("pgAccount")); await page.waitForTimeout(200);
-  const d2b = await door("acc");
-  report("D2b) the Account Center's Panel button is a door too: it opens the Account card's Panel group in place and hands the request to that one button",
-    d2b.mark === 3 && d2b.sameUrl && d2b.stage === "done" && d2b.panelOpen && d2b.focused === "accPanelDownload" && d2b.home, d2b);
+  const d2 = await page.evaluate(() => { document.querySelector('#pgTutorials [data-tutorial-page="pgHome"]').click();
+    return new Promise(res => setTimeout(() => res({ home: document.getElementById("pgHome").classList.contains("on"), page: curPage }), 300)); });
+  report("D2b) Tutorials card 03's Open Setup lands on the Setup page, where the one place lives", d2.home && d2.page === "pgHome", d2);
   await page.evaluate(() => document.getElementById("accPanelDownload").click());
   await page.waitForTimeout(900);
   report("D3) the account-card button posts to /v1/downloads/panel and fetches the issued one-time address — the door still delivers",

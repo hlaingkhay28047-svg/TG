@@ -114,8 +114,6 @@ var CITY_MY = { "Yangon": "ရန်ကုန်", "Rangoon": "ရန်ကု�
 
 var L_LIB_H2 = { my: "Library ထဲက Look များ", en: "Looks from the Library", shn: "Look ၼႂ်း Library", kac: "Library kaw na look ni", th: "ลุคจาก Library", zh: "来自 Library 的风格", vi: "Các look từ Library", id: "Gaya dari Library", ms: "Gaya dari Library" };
 var L_LIB_MORE = { my: "နောက်ထပ်ကြည့်မယ်", en: "View More", shn: "တူၺ်းထႅင်ႈ", kac: "Grau yu u", th: "ดูเพิ่มเติม", zh: "查看更多", vi: "Xem thêm", id: "Lihat lainnya", ms: "Lihat lagi" };
-var L_PROMO_P = { my: "Photoshop ထဲမှာလည်း — Layer + Mask နဲ့ ပြန်လာမယ်၊ မူရင်းပုံ မပျက်ဘူး။", en: "Also in Photoshop — results come back as Layer + Mask, your original stays untouched.", shn: "ၼႂ်း Photoshop ၵေႃႈ — ၽွၼ်းလႆႈပွၵ်ႈမႃးပဵၼ် Layer + Mask၊ ၶႅပ်းႁၢင်ႈမူႇလဢမ်ႇလု။", kac: "Photoshop hta mung — result gaw Layer + Mask hku bai wa ai, na a shawng sumla n hten ai.", th: "ใน Photoshop ก็ได้ — ผลลัพธ์กลับมาเป็น Layer + Mask ต้นฉบับไม่ถูกแตะต้อง", zh: "Photoshop 中同样可用 — 结果以 Layer + Mask 返回，原图不受影响。", vi: "Cũng có trong Photoshop — kết quả trả về dạng Layer + Mask, ảnh gốc không bị ảnh hưởng.", id: "Juga di Photoshop — hasil kembali sebagai Layer + Mask, foto asli tetap utuh.", ms: "Juga dalam Photoshop — hasil kembali sebagai Layer + Mask, foto asal kekal." };
-var L_PROMO_GO = { my: "Panel ရယူမယ်", en: "Get the Panel", shn: "ဢဝ် Panel", kac: "Panel la u", th: "รับ Panel", zh: "获取 Panel", vi: "Tải Panel", id: "Dapatkan Panel", ms: "Dapatkan Panel" };
 
 /* The app's setIcnText(): an icon and a label on one baseline row. main.js
    owns the panel's own copy, but this screen can render before main.js has
@@ -363,10 +361,11 @@ function render(root, deps) {
   renderNews();
 
   /* ---- 2. the destinations card (the app's "Student Web App") ----
-     The app prints this heading and its four buttons in English in every
-     locale, so they are copied as written. "Photoshop Panel download" is the
-     app's route to the .ccx; inside the panel that is the in-panel update
-     fetch of the same release feeds, so it points there. */
+     The app prints this heading and its three buttons in English in every
+     locale, so they are copied as written. 6.102.1: the fourth button,
+     "Photoshop Panel download", is gone on both surfaces — the Panel is
+     downloaded from the Account card's Photoshop Panel group under Setup
+     and nowhere else (owner: one place). */
   var destCard = dom.el(doc, "div", { class: "card" });
   destCard.appendChild(dom.el(doc, "h2", { text: "Student Web App" }));
   var acts = dom.el(doc, "div", { class: "unified-actions" });
@@ -378,7 +377,6 @@ function render(root, deps) {
   destBtn("AI Tools", "btn btn-gold", function () { if (deps.onPage) deps.onPage("wf"); });
   destBtn("Account & license", "btn", function () { if (deps.onPage) deps.onPage("setup"); });
   destBtn("Tutorials", "btn", function () { if (deps.onNavigate) deps.onNavigate("tutorials"); });
-  destBtn("Photoshop Panel download", "btn", function () { if (deps.onGetUpdate) deps.onGetUpdate(); });
   destCard.appendChild(acts);
   root.appendChild(destCard);
 
@@ -499,38 +497,8 @@ function render(root, deps) {
   stat(213, "Retouch B Pro", "evoto");
   root.appendChild(stats);
 
-  /* ---- 7. the Photoshop-panel band (the app's .dash-promo) ----
-     Dismissible, like the app's: the app remembers the ✕ in localStorage,
-     which UXP does not reliably provide, so the panel remembers it in the
-     AI Tools settings file it already writes. The button sits in a flex row
-     because the app's is inline-flex (shrink-wrapped) and UXP has no inline
-     boxes — the row is invisible, the button's box is the app's. */
-  var promoHidden = false;
-  try {
-    var sv = globalThis.HNK && globalThis.HNK.aiToolsSettings;
-    promoHidden = !!(sv && sv.get && sv.get().promoHidden);
-  } catch (e) { }
-  if (!promoHidden) {
-    var promo = dom.el(doc, "div", { class: "card dash-promo", id: "dashPromo" });
-    promo.appendChild(dom.el(doc, "h2", { id: "dashPromoH2", text: "Photoshop Panel" }));
-    promo.appendChild(dom.el(doc, "p", { id: "dashPromoP", text: l9(L_PROMO_P) }));
-    var goRow = dom.el(doc, "div", { class: "btn-row" });
-    var go = dom.el(doc, "button", { class: "btn", id: "dashPromoGo" });
-    go.appendChild(iconRow(doc, "i-arrow", "cream", l9(L_PROMO_GO), false));
-    dom.on(go, "click", function () { if (deps.onGetUpdate) deps.onGetUpdate(); });
-    goRow.appendChild(go);
-    promo.appendChild(goRow);
-    var x = dom.el(doc, "button", { class: "chip promo-x", text: "✕", attrs: { "aria-label": "Dismiss" } });
-    dom.on(x, "click", function () {
-      try {
-        var sv2 = globalThis.HNK && globalThis.HNK.aiToolsSettings;
-        if (sv2 && sv2.set) sv2.set({ promoHidden: true });
-      } catch (e) { }
-      try { root.removeChild(promo); } catch (e) { }
-    });
-    promo.appendChild(x);
-    root.appendChild(promo);
-  }
+  /* 6.102.1 — the Photoshop-panel band (the app's .dash-promo) is gone on both surfaces: one download
+     place, the Account card's Photoshop Panel group under Setup. */
 
   return root;
 }

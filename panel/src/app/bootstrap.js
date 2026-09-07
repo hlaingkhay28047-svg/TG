@@ -236,9 +236,11 @@ function create(opts) {
     rh: rh,
     onGenerate: handleGenerate,
     /* v6.49.0 — the app's Home is a router. Its six picture cards and its
-       destination buttons leave for other PANEL PAGES, and its Panel-download
-       button is the in-panel release fetch; both live in main.js and reach
-       this stack through the HNK.panelNav bridge it publishes. */
+       destination buttons leave for other PANEL PAGES; both live in main.js
+       and reach this stack through the HNK.panelNav bridge it publishes.
+       6.102.1: Home and Tutorials carry no Panel-download button any more
+       (one place — the Account card's Photoshop Panel group under Setup);
+       onGetUpdate stays wired for that bridge. */
     onPage: function (key) {
       try {
         var nav = globalThis.HNK && globalThis.HNK.panelNav;

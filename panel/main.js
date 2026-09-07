@@ -6234,7 +6234,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.102.0";
+const PANEL_VERSION = "6.102.1";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7275,9 +7275,10 @@ function applyI18n() {
     g.HNK.studioKeyVerified = function () { return !!(state && state.rhKey); };
     /* v6.49.0 — the AI Tools screens are the app's Home and Workflows now,
        and the app's Home routes to OTHER PAGES: its six picture cards open
-       Retouch, Workflows, Freeform, Media Lab, Path and Gallery, and its
-       "Photoshop Panel download" button is the release fetch. Those live in
-       main.js, so the sub-app reaches them through this bridge rather than
+       Retouch, Workflows, Freeform, Media Lab, Path and Gallery (its
+       "Photoshop Panel download" button went in 6.102.1 — one download
+       place, the Account card's Panel group). Those live in main.js, so
+       the sub-app reaches them through this bridge rather than
        reaching into the module scope. */
     g.HNK.panelNav = {
       switchPage: function (key) { try { switchPage(key); saveSettings(); } catch (e) { } },
