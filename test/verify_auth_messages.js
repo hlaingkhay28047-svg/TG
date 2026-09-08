@@ -124,6 +124,13 @@ SERVER_ERRORS.push({ status: 503, message: "Server busy", code: "auth_busy" });
     && /429|rate_limited/.test(gateBlock) && /503|auth_busy/.test(gateBlock),
     gateBlock.slice(0, 300));
 
+  const noteAt = panelSrc.indexOf("function gateHttpNote(status, body)");
+  const noteFn = noteAt >= 0 ? panelSrc.slice(noteAt, panelSrc.indexOf("\n}\n", noteAt) + 3) : "";
+  const signIn = panelSrc.slice(panelSrc.indexOf("async function gateSignIn"), panelSrc.indexOf("async function gateOpenSite"));
+  report("D1b) 6.102.2 — a refused sign-in also names the HTTP status and the server's code, so a support screenshot tells the real reason, and never echoes the credential",
+    /gateHttpNote\(r\.status, body\)/.test(signIn) && /gateHttpNote\(r\.status, \{ code: "no_session_in_reply" \}\)/.test(signIn) &&
+    /return " \(HTTP " \+ status/.test(noteFn) && /b\.error_code \|\| b\.code \|\| b\.error/.test(noteFn) && !/password|\bpw\b|email/.test(noteFn),
+    { noteFn: noteFn.slice(0, 200) });
   const waitCount = (panelSrc.match(/gate_wait:/g) || []).length;
   const busyCount = (panelSrc.match(/gate_busy:/g) || []).length;
   report("D2) and it can say them in all nine languages, like every other gate label",

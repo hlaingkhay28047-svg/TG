@@ -6886,6 +6886,16 @@ function retiredOfflinePath() {
   gateErr(gateT("gate_offline"));
 }
 
+/* v6.102.2 — " (HTTP 400 · invalid_grant)": the status and the server's code field, nothing else
+   from the body, so the line stays short and never echoes a credential. */
+function gateHttpNote(status, body) {
+  let code = "";
+  try {
+    const b = body && typeof body === "object" ? body : {};
+    code = String(b.error_code || b.code || b.error || "").slice(0, 40);
+  } catch (e) { code = ""; }
+  return " (HTTP " + status + (code && !/^\d+$/.test(code) ? " · " + code : "") + ")";
+}
 async function gateSignIn() {
   if (gateS.busy) return;
   const em = ((gateEl("gateEmail") || {}).value || "").trim();
@@ -6903,15 +6913,19 @@ async function gateSignIn() {
        accFriendly() has always mapped these; the panel now reads the same
        codes (server/lib/auth.js) and says the same three things. */
     if (!r.ok) {
-      let code = "";
-      try { code = JSON.stringify(await r.clone().json()); } catch (e) { }
+      let code = "", body = null;
+      try { body = await r.clone().json(); code = JSON.stringify(body); } catch (e) { }
       const key = (r.status === 429 || /rate_limited|Too many/i.test(code)) ? "gate_wait"
         : (r.status === 503 || /auth_busy/i.test(code)) ? "gate_busy"
         : "gate_bad";
-      gateErr(gateT(key)); gateBusy(false); return;
+      /* v6.102.2 — the refusal names the HTTP status and the server's own code (owner, 2026-09-08:
+         the panel said "wrong email or password" while the same password opened the web app on the
+         same computer, and nothing on screen said what the server had really answered). The web
+         app's accFriendly reads the same fields; a support screenshot now carries the real reason. */
+      gateErr(gateT(key) + (key === "gate_bad" ? gateHttpNote(r.status, body) : "")); gateBusy(false); return;
     }
     const j = await r.json();
-    if (!gateSaveSess(j)) { gateErr(gateT("gate_bad")); gateBusy(false); return; }
+    if (!gateSaveSess(j)) { gateErr(gateT("gate_bad") + gateHttpNote(r.status, { code: "no_session_in_reply" })); gateBusy(false); return; }
     const p = gateEl("gatePass"); if (p) p.value = "";
     gateS.run++;                 /* whatever was in flight is about another account */
     await gateCheck();
