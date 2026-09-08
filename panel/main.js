@@ -362,11 +362,16 @@ const FF_L = {
   retouch: { my: "ဒီပုံကို Retouch လုပ်မယ်", en: "Retouch this", shn: "Retouch ႁဵတ်းဢၼ်ၼႆႉ", kac: "Ndai hpe retouch galaw u", th: "รีทัชรูปนี้", zh: "修饰这张", vi: "Retouch ảnh này", id: "Retouch foto ini", ms: "Retouch foto ini" },
   path: { my: "Path batch ထဲ ထည့်မယ်", en: "Add to Path batch", shn: "သႂ်ႇၶဝ်ႈ Path batch", kac: "Path batch de bang u", th: "เพิ่มเข้าชุด Path", zh: "添加到 Path 批处理", vi: "Thêm vào lô Path", id: "Tambah ke batch Path", ms: "Tambah ke kumpulan Path" },
   engine: { my: "Model စာရင်း/api စီမံရန် — Setup ဖွင့်မယ်", en: "Manage models/api — open Setup", shn: "ၸတ်းၵၢၼ် model — ပိုတ်ႇ Setup", kac: "Model ni hpe up hkang — Setup hpaw u", th: "จัดการโมเดล — เปิด Setup", zh: "管理模型 — 打开 Setup", vi: "Quản lý model — mở Setup", id: "Kelola model — buka Setup", ms: "Urus model — buka Setup" },
-  where: { my: "ဘယ်ကယူမလဲ", en: "Where from?" },
-  srcLayer: { my: "Photoshop layer ကယူမယ်", en: "Use the selected Photoshop layer" },
-  srcFile: { my: "ဖုန်းထဲက ပုံတင်မယ်", en: "Upload from this device" },
-  srcLib: { my: "Library look ထဲက ယူမယ်", en: "Pick a Library look" },
-  srcLast: { my: "နောက်ဆုံးရလဒ်ကို သုံးမယ်", en: "Use the last result" },
+  /* v6.107.2 — the source sheet speaks all nine languages now. It used to
+     carry Burmese and English only, which was survivable while one page
+     opened it; it is now the door on every image slot in the panel, and a
+     Shan or Kachin student meeting "Where from?" in English at the moment
+     they add their photo is the one place that must not be half-translated. */
+  where: { my: "ဘယ်ကယူမလဲ", en: "Where from?", shn: "ဢဝ်တီႈလႂ်?", kac: "Gara kaw na?", th: "เอามาจากไหน?", zh: "从哪里获取？", vi: "Lấy từ đâu?", id: "Ambil dari mana?", ms: "Ambil dari mana?" },
+  srcLayer: { my: "Photoshop layer ကယူမယ်", en: "Use the selected Photoshop layer", shn: "ၸႂ်ႉ Photoshop layer ဢၼ်လိူၵ်ႈဝႆႉ", kac: "Photoshop layer lata da ai hpe lang u", th: "ใช้เลเยอร์ Photoshop ที่เลือกไว้", zh: "使用选中的 Photoshop 图层", vi: "Dùng layer Photoshop đang chọn", id: "Pakai layer Photoshop yang dipilih", ms: "Guna lapisan Photoshop yang dipilih" },
+  srcFile: { my: "ဖုန်းထဲက ပုံတင်မယ်", en: "Upload from this device", shn: "ဢဝ်ၶႅပ်းႁၢင်ႈ ၼႂ်းၶိူင်ႈၼႆႉ", kac: "Ndai jak kaw na sumla la u", th: "อัปโหลดจากเครื่องนี้", zh: "从本机上传", vi: "Tải lên từ máy này", id: "Unggah dari perangkat ini", ms: "Muat naik dari peranti ini" },
+  srcLib: { my: "Library look ထဲက ယူမယ်", en: "Pick a Library look", shn: "လိူၵ်ႈ Library look", kac: "Library look langai lata u", th: "เลือกลุคจาก Library", zh: "从 Library 选择", vi: "Chọn look từ Library", id: "Pilih look dari Library", ms: "Pilih look dari Library" },
+  srcLast: { my: "နောက်ဆုံးရလဒ်ကို သုံးမယ်", en: "Use the last result", shn: "ၸႂ်ႉၽွၼ်းလႆႈလိုၼ်းသုတ်း", kac: "Lachyum hpang jahtum hpe lang u", th: "ใช้ผลลัพธ์ล่าสุด", zh: "使用最近的结果", vi: "Dùng kết quả gần nhất", id: "Pakai hasil terakhir", ms: "Guna hasil terakhir" },
   resultTo: { my: "ရလဒ် → IMAGE {n} ✓", en: "Result → IMAGE {n} ✓" },
   min: { my: " မိနစ်", en: " min", shn: " မိၼိတ်ႉ", kac: " minit", th: " นาที", zh: " 分钟", vi: " phút", id: " mnt", ms: " min" },
   credits: { my: " · RH credit သုံးမယ်", en: " · uses RH credits", shn: " · ၸႂ်ႉ RH credit", kac: " · RH credit lang na", th: " · ใช้เครดิต RH", zh: " · 消耗 RH 额度", vi: " · dùng credit RH", id: " · pakai kredit RH", ms: " · guna kredit RH" },
@@ -6334,7 +6339,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.107.1";
+const PANEL_VERSION = "6.108.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9758,7 +9763,26 @@ function ptSync() {
 }
 
 /* ---- the panel's own ingest: UXP's multi-file dialog ---- */
-async function ptAdd() {
+/* v6.107.2 — the batch can start from the open layer.
+   A studio retouching one photograph in Photoshop had to export it to disk
+   before the Batch page would take it; the sheet offers the layer first and
+   the multi-file picker exactly as before. */
+function ptAdd() {
+  if (PT.busy) return;
+  photoSheet(ptT("pt_add") || ff9(FF_L.where), {
+    onLayer: async function () {
+      if (PT.photos.length >= PT_MAX) return;
+      const e = await layerPhotoCapture();
+      if (!e) return;
+      PT.photos.push({ id: "p" + (++PT.seq), name: e.name,
+        srcDataUrl: e._url, status: "queued", lookOverride: null, outB64: null, outMime: "", doneSrc: "", file: null });
+      ptSync();
+      setStatus(ptT("pt_n").replace("{N}", String(PT.photos.length)), "ok");
+    },
+    onFile: ptAddFiles
+  });
+}
+async function ptAddFiles() {
   if (PT.busy) return;
   try {
     const uxp = require("uxp");
@@ -11272,9 +11296,22 @@ function bindTalk() {
   const sel = $("tkModel");
   if (sel) sel.addEventListener("change", renderTk);
   const ip = $("btnTkImgPick");
-  if (ip) ip.addEventListener("click", async function () {
-    try { const f = await pickFile(["jpg", "jpeg", "png", "webp"]); if (f) TK.img = f; renderTk(); }
-    catch (e) { setStatus(friendlyErr(e), "err"); }
+  /* v6.107.2 — the photograph that will speak can be the open layer */
+  if (ip) ip.addEventListener("click", function () {
+    photoSheet(ff9(TK_L.pickImg), {
+      onLayer: async function () {
+        const e = await layerPhotoCapture();
+        if (e) { TK.img = e; renderTk(); setStatus(t("st_ref_layer_added"), "ok"); }
+      },
+      onFile: async function () {
+        try { const f = await pickFile(["jpg", "jpeg", "png", "webp"]); if (f) TK.img = f; renderTk(); }
+        catch (e) { setStatus(friendlyErr(e), "err"); }
+      },
+      onLast: function () {
+        TK.img = layerPhotoEntry({ b64: state.resultB64, mime: state.resultMime || "image/png", label: "result" });
+        renderTk();
+      }
+    });
   });
   const ap = $("btnTkAudPick");
   if (ap) ap.addEventListener("click", async function () {
@@ -11978,9 +12015,22 @@ function bindVideo() {
       catch (e) { setStatus(friendlyErr(e), "err"); }
     });
     const vti = $("btnVtImgPick");
-    if (vti) vti.addEventListener("click", async function () {
-      try { const f = await pickFile(["jpg", "jpeg", "png", "webp"]); if (f) VT.img = f; renderVt(); }
-      catch (e) { setStatus(friendlyErr(e), "err"); }
+    /* v6.107.2 — the tool's reference photo can be the open layer */
+    if (vti) vti.addEventListener("click", function () {
+      photoSheet(ff9(VT_L.pickImg), {
+        onLayer: async function () {
+          const e = await layerPhotoCapture();
+          if (e) { VT.img = e; renderVt(); setStatus(t("st_ref_layer_added"), "ok"); }
+        },
+        onFile: async function () {
+          try { const f = await pickFile(["jpg", "jpeg", "png", "webp"]); if (f) VT.img = f; renderVt(); }
+          catch (e) { setStatus(friendlyErr(e), "err"); }
+        },
+        onLast: function () {
+          VT.img = layerPhotoEntry({ b64: state.resultB64, mime: state.resultMime || "image/png", label: "result" });
+          renderVt();
+        }
+      });
     });
     const vfc = $("btnVtFileClear");
     if (vfc) vfc.addEventListener("click", function () { VT.video = null; renderVt(); });
@@ -13135,10 +13185,19 @@ globalThis.HNK.libBridge = {
   b64: function (buf) { return bufToB64(buf); },
   magicOk: function (b64) { return imgMagicOk(b64); }
 };
+/* v6.107.2 — TWO SHAPES OF PICTURE, one thumbnail.
+   The reference slots hold a capture, {mime, b64}. The Talk and Video-tool
+   photo slots hold whatever their picker produced: a UXP file entry, which
+   carries a data: URL on _url once it has been read and has no mime/b64 at
+   all. The video wizard called this with the latter (ffThumb(VT.img)) and so
+   painted url("data:undefined;base64,undefined") — an empty box where the
+   student had just put their photo. Both shapes draw now. */
 function ffThumb(r) {
   const im = document.createElement("div");
   im.className = "im";
-  im.style.backgroundImage = 'url("data:' + r.mime + ";base64," + r.b64 + '")';
+  const url = (r && r.b64) ? ("data:" + (r.mime || "image/png") + ";base64," + r.b64)
+    : (r && r._url) ? r._url : "";
+  if (url) im.style.backgroundImage = 'url("' + url + '")';
   return im;
 }
 function ffPressable(node, fn) {
@@ -13265,6 +13324,80 @@ function renderRefs() {
    panel's sources are Photoshop's — the selected layer, a file, a Library
    look, the last result. */
 function ffSheetClose() { const old = $("ffSheet"); if (old && old.parentNode) old.parentNode.removeChild(old); }
+
+/* ============================================================
+   v6.107.2 — THE ACTIVE LAYER, ON EVERY IMAGE SLOT.
+
+   The panel runs inside Photoshop, where the student's photo is almost never
+   a file on disk — it is the layer already open in front of them. The
+   reference slots have known that since 6.27.0: tapping one opens a sheet
+   whose first line is "Use the selected Photoshop layer".
+
+   Four image inputs never got that sheet and went straight to a file picker,
+   so in those places the open document was unreachable and the student had to
+   export a JPEG first, inside Photoshop, to give Photoshop a photo:
+
+     · TALK          the photograph that will speak      (btnTkImgPick)
+     · VIDEO → VIDEO the reference photo for the tool     (btnVtImgPick)
+     · Edit ▸ IMAGINE the photo every template works on   (imagineHost.pickWire)
+     · Batch (Path)   the photos of a batch run           (ptAdd)
+
+   photoSheet is the same door for all of them. It takes callbacks rather than
+   a slot index (ffSrcSheet writes ff slots; these four each keep their photo
+   somewhere else), and it offers the file path each surface already had, so
+   nothing that worked before changes.
+   ============================================================ */
+function photoSheet(title, opts) {
+  ffSheetClose();
+  const bd = document.createElement("div"); bd.id = "ffSheet"; bd.className = "ff-sheet";
+  const card = document.createElement("div"); card.className = "card";
+  const h = document.createElement("div"); h.className = "subh";
+  h.textContent = title + " — " + ff9(FF_L.where);
+  card.appendChild(h);
+  function opt(label, fn) {
+    if (!fn) return;
+    const b = document.createElement("div");
+    b.className = "btn"; b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+    b.textContent = label;
+    b.addEventListener("click", function () { ffSheetClose(); fn(); });
+    card.appendChild(b);
+  }
+  opt(ff9(FF_L.srcLayer), opts.onLayer);
+  opt(ff9(FF_L.srcFile), opts.onFile);
+  if (opts.onLast && state.resultB64) opt(ff9(FF_L.srcLast), opts.onLast);
+  bd.addEventListener("click", function (ev) { if (ev.target === bd) ffSheetClose(); });
+  bd.appendChild(card);
+  document.body.appendChild(bd);
+}
+
+/* A captured layer, in every shape the panel's photo slots read: {mime, b64}
+   for ffThumb, _url for vtThumbFor and for the submit paths (which do
+   `entry._url || await fileToDataUrl(entry)` — with _url already set, the
+   file reader they would otherwise reach for is never called, which is the
+   point: there is no file). */
+function layerPhotoEntry(cap) {
+  const mime = cap.mime || "image/png";
+  const b64 = cap.b64 || "";
+  const bytes = Math.floor(b64.length * 3 / 4);
+  return {
+    name: (cap.label || "layer") + (mime === "image/png" ? ".png" : ".jpg"),
+    mime: mime, b64: b64,
+    _url: "data:" + mime + ";base64," + b64,
+    _size: bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + " MB"
+      : bytes >= 1024 ? Math.round(bytes / 1024) + " KB" : bytes + " B",
+    _fromLayer: true
+  };
+}
+/* captures the active layer and hands back a slot entry, or null with the
+   reason already on the status line */
+async function layerPhotoCapture() {
+  if (state.busy) return null;
+  try {
+    const cap = await captureLayerB64(1536);
+    if (!imgMagicOk(cap.b64)) { setStatus(t("st_img_bad"), "err"); return null; }
+    return layerPhotoEntry(cap);
+  } catch (e) { setStatus(friendlyErr(e), "err"); return null; }
+}
 function ffSrcSheet(slot) {
   ffSheetClose();
   const bd = document.createElement("div"); bd.id = "ffSheet"; bd.className = "ff-sheet";
@@ -16192,8 +16325,12 @@ function imagineHost() {
     icon: function (name) { return ffIcon(name, "cream"); },
     button: function (cls) { return mkBtn(cls); },
     asset: function (kind, file) { return (kind === "thumb" ? "icons/imagine/th/" : "icons/imagine/") + file; },
+    /* v6.107.2 — Imagine's photo can be the open layer.
+       The Imagine module is shared with the web app and must stay identical
+       on both; a browser has no Photoshop layer, so the choice belongs here,
+       in the panel's own host adapter, where it costs the module nothing. */
     pickWire: function (btn, onFiles) {
-      btn.addEventListener("click", async function () {
+      const fromFiles = async function () {
         try {
           const picked = await fsp.getFileForOpening({ allowMultiple: true, types: REF_LIB_TYPES });
           const arr = picked ? (Array.isArray(picked) ? picked : [picked]) : [];
@@ -16206,6 +16343,15 @@ function imagineHost() {
           }
           if (out.length) onFiles(out);
         } catch (e) { setStatus(friendlyErr(e), "err"); }
+      };
+      btn.addEventListener("click", function () {
+        photoSheet(ff9(FF_L.where), {
+          onLayer: async function () {
+            const e = await layerPhotoCapture();
+            if (e) { onFiles([{ dataUrl: e._url, name: e.name }]); setStatus(t("st_ref_layer_added"), "ok"); }
+          },
+          onFile: fromFiles
+        });
       });
     },
     hasModel: function (id) { return !!ffModelById(id); },
