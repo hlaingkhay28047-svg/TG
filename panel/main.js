@@ -579,6 +579,7 @@ const I18N = {
     gate_days: "{D} days left",
     gate_grace: "Offline — {D} days of offline use left",
     gate_open_fail: "Could not open the browser. Address: {U}",
+    gate_forgot: "Forgot password?",
     app_title: "HNK Photoshop Ai Panel (Students)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "Show",
@@ -1213,6 +1214,7 @@ const I18N = {
     gate_days: "{D} ရက် ကျန်",
     gate_grace: "အင်တာနက် မရှိ — အော့ဖ်လိုင်း {D} ရက် ကျန်ပါသေးတယ်",
     gate_open_fail: "browser ဖွင့်လို့ မရပါ။ လိပ်စာ — {U}",
+    gate_forgot: "စကားဝှက် မေ့နေလား?",
     app_title: "HNK Photoshop Ai Panel (\u1000\u103b\u1031\u102c\u1004\u103a\u1038\u101e\u102c\u1038\u1019\u103b\u102c\u1038)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "\u1015\u103c",
@@ -1847,6 +1849,7 @@ const I18N = {
     gate_days: "ၵိုတ်း {D} ဝၼ်း",
     gate_grace: "ဢမ်ႇမီးဢိၼ်ႇထႃႇၼႅတ်ႉ — ၸႂ်ႉလႆႈထႅင်ႈ {D} ဝၼ်း",
     gate_open_fail: "ပိုတ်ႇ browser ဢမ်ႇလႆႈ။ လိင်ႉ — {U}",
+    gate_forgot: "လိုမ်းၶေႃႈလပ်ႉႁႃႉ?",
     app_title: "HNK Photoshop Ai Panel (\u101c\u102f\u1075\u103a\u1088\u1081\u1035\u107c\u103a\u1038)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "\u107c\u1084",
@@ -2479,6 +2482,7 @@ const I18N = {
     gate_days: "{D} ya ngam ai",
     gate_grace: "Internet n nga ai — {D} ya lang lu ai",
     gate_open_fail: "Browser hpaw n lu ai. Address: {U}",
+    gate_forgot: "Password malap kau sai i?",
     app_title: "HNK Photoshop Ai Panel (Sharin ma ni)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "Madun",
@@ -3111,6 +3115,7 @@ const I18N = {
     gate_days: "เหลือ {D} วัน",
     gate_grace: "ออฟไลน์ — ใช้งานแบบออฟไลน์ได้อีก {D} วัน",
     gate_open_fail: "เปิดเบราว์เซอร์ไม่ได้ ที่อยู่: {U}",
+    gate_forgot: "ลืมรหัสผ่าน?",
     app_title: "HNK Ai Panel (\u0e19\u0e31\u0e01\u0e40\u0e23\u0e35\u0e22\u0e19)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "\u0e41\u0e2a\u0e14\u0e07",
@@ -3743,6 +3748,7 @@ const I18N = {
     gate_days: "剩余 {D} 天",
     gate_grace: "离线 — 还可离线使用 {D} 天",
     gate_open_fail: "无法打开浏览器。网址：{U}",
+    gate_forgot: "忘记密码？",
     app_title: "HNK Ai \u9762\u677f\uff08\u5b66\u751f\u7248\uff09",
     sec_api: "RunningHub Enterprise \u5bc6\u94a5",
     btn_show: "\u663e\u793a",
@@ -4375,6 +4381,7 @@ const I18N = {
     gate_days: "còn {D} ngày",
     gate_grace: "Ngoại tuyến — còn dùng ngoại tuyến được {D} ngày",
     gate_open_fail: "Không mở được trình duyệt. Địa chỉ: {U}",
+    gate_forgot: "Quên mật khẩu?",
     app_title: "HNK Photoshop Ai Panel (H\u1ecdc vi\u00ean)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "Hi\u1ec7n",
@@ -5007,6 +5014,7 @@ const I18N = {
     gate_days: "sisa {D} hari",
     gate_grace: "Offline — sisa {D} hari pemakaian offline",
     gate_open_fail: "Tidak bisa membuka browser. Alamat: {U}",
+    gate_forgot: "Lupa kata sandi?",
     app_title: "HNK Photoshop Ai Panel (Pelajar)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "Tampilkan",
@@ -5639,6 +5647,7 @@ const I18N = {
     gate_days: "tinggal {D} hari",
     gate_grace: "Luar talian — tinggal {D} hari penggunaan luar talian",
     gate_open_fail: "Tidak dapat membuka pelayar. Alamat: {U}",
+    gate_forgot: "Lupa kata laluan?",
     app_title: "HNK Photoshop Ai Panel (Pelajar)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "Papar",
@@ -6234,7 +6243,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.102.2";
+const PANEL_VERSION = "6.102.3";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6333,7 +6342,15 @@ function gateEl(id) { try { return document.getElementById(id); } catch (e) { re
    gateApplyWidgetStyles below), so this helper can never take the gate down. */
 function gateTxt(id, s) { const el = gateEl(id); if (el) el.textContent = s || ""; }
 function gateT(k) { try { return t(k); } catch (e) { return k; } }
-function gateErr(s) { gateTxt("gateErr", s); }
+/* v6.102.3 — the line is a banner while it has text and takes no room while
+   empty: two single-class states (no compound selector, per the UXP cascade
+   rule this gate follows). textContent first, so a class that fails to apply
+   still leaves the message readable. */
+function gateErr(s) {
+  gateTxt("gateErr", s);
+  const el = gateEl("gateErr");
+  if (el) { try { el.className = s ? "gate-err-on" : "gate-err"; } catch (e) { } }
+}
 
 function gateHeaders(tok, json) {
   const h = { "Accept": "application/json" };
@@ -6500,10 +6517,17 @@ function gateTexts() {
   gateTxt("gateBuy", gateT("gate_buy"));
   gateTxt("gateRetry", gateT("gate_retry"));
   gateTxt("gateSignOut", gateT("gate_signout"));
+  /* v6.102.3 — the field names moved from placeholder to a label above each
+     field (they stay readable once the student has typed); the placeholders
+     now show the shape of what goes in. The kicker names the surface and the
+     version from PANEL_VERSION, so no version is ever typed into index.html. */
+  gateTxt("gateEmailLbl", gateT("gate_email_ph"));
+  gateTxt("gatePassLbl", gateT("gate_pass_ph"));
   const em = gateEl("gateEmail"), pw = gateEl("gatePass");
-  if (em) em.placeholder = gateT("gate_email_ph");
-  if (pw) pw.placeholder = gateT("gate_pass_ph");
-  gateTxt("gateForgot", "စကားဝှက် မေ့နေလား? · Forgot password?");
+  if (em) em.placeholder = "name@example.com";
+  if (pw) pw.placeholder = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
+  gateTxt("gateForgot", gateT("gate_forgot"));
+  gateTxt("gateKicker", "Photoshop Panel \u00b7 v" + PANEL_VERSION);
 }
 function gateShow(view) {
   gateS.view = view;
@@ -6976,7 +7000,8 @@ function gateApplyWidgetStyles() {
   paint("gateSignIn", { backgroundColor: "#e7c470", backgroundImage: "none", color: "#161b22", border: "1px solid #c79a3c", fontWeight: "700" });
   /* gateBuy is deliberately absent here — gatePaintPrimary below owns it,
      because its emphasis depends on the view and this function runs once. */
-  paint("gateForgot", { backgroundColor: "transparent", color: "#9ab", border: "none", fontSize: "11px", textAlign: "center", marginTop: "4px" });
+  /* v6.102.3 — the forgot link rides the password label's row, right-aligned, in the muted gold */
+  paint("gateForgot", { backgroundColor: "transparent", color: "#d4b46a", border: "none", fontSize: "11px", fontWeight: "600", textAlign: "right", marginTop: "0", cursor: "pointer" });
   paint("gateRetry", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
   paint("gateSignOut", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", fontWeight: "600" });
   /* v6.47.0 — THE WHOLE BOX, not just its colours. The owner's Photoshop
@@ -6991,13 +7016,13 @@ function gateApplyWidgetStyles() {
      the stylesheet's own attempt standing — the paint() helper swallows it. */
   const field = {
     backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b",
-    borderRadius: "9px", padding: "10px 12px", fontSize: "13px",
+    borderRadius: "10px", padding: "11px 12px", fontSize: "13px",
     boxShadow: "none", outline: "none"
   };
   paint("gateEmail", field);
   paint("gatePass", field);
-  paint("gatePassEye", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", borderRadius: "9px", boxShadow: "none", outline: "none", cursor: "pointer" });
-  paint("gateLang", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b", borderRadius: "7px", boxShadow: "none", outline: "none" });
+  paint("gatePassEye", { backgroundColor: "#1c2530", backgroundImage: "none", color: "#e6edf3", border: "1px solid #45536b", borderRadius: "10px", boxShadow: "none", outline: "none", cursor: "pointer" });
+  paint("gateLang", { backgroundColor: "#0d1014", color: "#e6edf3", border: "1px solid #45536b", borderRadius: "8px", boxShadow: "none", outline: "none" });
   gatePaintPrimary();
 }
 
@@ -7050,6 +7075,17 @@ function gateWire() {
       if (ev && (ev.key === "Enter" || ev.keyCode === 13)) { ev.preventDefault(); gateSignIn(); }
     });
   }
+  /* v6.102.3 — a focus ring the field can actually show: gateApplyWidgetStyles
+     paints the frame inline (the one layer UXP honours), which would outrank
+     the stylesheet's :focus colour, so the gold frame is painted from the
+     focus event itself and the grey one put back on blur. */
+  const ring = function (id) {
+    const f = gateEl(id);
+    if (!f || !f.addEventListener) return;
+    f.addEventListener("focus", function () { try { f.style.borderColor = "#c79a3c"; } catch (e) { } });
+    f.addEventListener("blur", function () { try { f.style.borderColor = "#45536b"; } catch (e) { } });
+  };
+  ring("gateEmail"); ring("gatePass");
   /* v6.27.1 — owner's in-Photoshop acceptance: UXP paints type="password"
      with NO visible dots on some hosts (the keystrokes register, the field
      just looks empty). The eye flips the field to plain text and back — the

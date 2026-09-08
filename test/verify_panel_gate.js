@@ -43,6 +43,34 @@ report("A7) the gate identity square can carry the member photo within web-app b
   indexHtml.includes('id="gateLogoImg"') && indexHtml.includes('id="gateLogoTxt"') &&
   mainJs.includes("data:image\\/(jpeg|png|webp);base64") &&
   /GATE_AVA_MAX\s*=\s*98304/.test(mainJs), {});
+/* v6.102.3 — the redesign from the owner's photo of this screen, pinned as
+   structure: header row + gold hairline, labelled fields with the forgot link
+   on the password label's row, the error banner DIRECTLY under Sign in and
+   before the divider, Check again + Sign out on one row, the language picker
+   in a footer row, the kicker filled from PANEL_VERSION, the forgot label in
+   all nine languages, and the gate's own stylesheet still free of the
+   selectors and widgets this renderer does not draw. */
+const gateMarkup = indexHtml.slice(indexHtml.indexOf('<div id="hnkGate"'), indexHtml.indexOf('<div class="app" id="app">'));
+const gateMarkupCode = gateMarkup.replace(/<!--[\s\S]*?-->/g, "");
+const at = s => gateMarkup.indexOf(s);
+const gateStyle = (indexHtml.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || "";
+const gateStyleCode = gateStyle.replace(/\/\*[\s\S]*?\*\//g, "");
+report("A8) 6.102.3 gate layout — header row, labelled fields, banner under Sign in, one secondary row, footer picker",
+  ["gate-head", "gate-rule", "gate-head-txt", "gate-kicker", "gate-lbl-row", "gate-row", "gate-foot"].every(c => gateMarkup.includes('class="' + c + '"')) &&
+  ['id="gateKicker"', 'id="gateEmailLbl"', 'id="gatePassLbl"'].every(id => gateMarkup.includes(id)) &&
+  at('id="gateEmailLbl"') < at('id="gateEmail" class="gate-f"') &&
+  at('id="gatePassLbl"') < at('id="gateForgot"') && at('id="gateForgot"') < at('id="gatePass" class="gate-f"') &&
+  at('id="gateSignIn"') < at('id="gateErr"') && at('id="gateErr"') < at('class="gate-hr"') && at('class="gate-hr"') < at('id="gateLocked">') &&
+  /<div class="gate-row">\s*<div id="gateRetry"[^>]*><\/div>\s*<div id="gateSignOut"[^>]*><\/div>\s*<\/div>/.test(gateMarkup) &&
+  /<div class="gate-foot">\s*<div class="gate-foot-l">[^<]+<\/div>\s*<select id="gateLang"/.test(gateMarkup) &&
+  !/v\d+\.\d+\.\d+/.test(gateMarkupCode) &&
+  /gateTxt\("gateKicker", "Photoshop Panel \\u00b7 v" \+ PANEL_VERSION\)/.test(mainJs) &&
+  /gateTxt\("gateEmailLbl", gateT\("gate_email_ph"\)\)/.test(mainJs) && /gateTxt\("gatePassLbl", gateT\("gate_pass_ph"\)\)/.test(mainJs) &&
+  /gateTxt\("gateForgot", gateT\("gate_forgot"\)\)/.test(mainJs) && (mainJs.match(/gate_forgot: "/g) || []).length === 9 &&
+  /el\.className = s \? "gate-err-on" : "gate-err"/.test(mainJs) &&
+  /\.gate-err\{display:none\}/.test(gateStyleCode) && /\.gate-err-on\{display:block/.test(gateStyleCode) &&
+  !/::|:not\(|~|\*|\binset\b|display:grid|position:sticky|object-fit/.test(gateStyleCode) && !/<button\b/.test(gateMarkup),
+  { markup: gateMarkup.length, style: gateStyleCode.length });
 
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".svg": "image/svg+xml",
@@ -181,6 +209,11 @@ async function run(browser, cfg) {
     lockedRow: getComputedStyle(document.getElementById("gateLocked")).display !== "none",
     avaShown: getComputedStyle(document.getElementById("gateLogoImg")).display !== "none",
     error: (document.getElementById("gateErr").textContent || "").trim(),
+    errShown: getComputedStyle(document.getElementById("gateErr")).display !== "none",
+    errClass: document.getElementById("gateErr").className,
+    kicker: (document.getElementById("gateKicker").textContent || "").trim(),
+    emailLbl: (document.getElementById("gateEmailLbl").textContent || "").trim(),
+    forgot: (document.getElementById("gateForgot").textContent || "").trim(),
     lockedMsg: (document.getElementById("gateLockedMsg").textContent || "").trim(),
     password: document.getElementById("gatePass").value,
     validateCalls: window.__validateCalls,
@@ -203,6 +236,11 @@ async function run(browser, cfg) {
     result.state.loginRow && result.state.lockedRow && result.state.lockedMsg === "", result.state);
   report("B3) signed out, the identity square shows the HNK mark — never a stale member photo",
     !result.state.avaShown, result.state);
+  const panelVersion = (mainJs.match(/const PANEL_VERSION = "([^"]+)"/) || [])[1] || "";
+  report("B4) 6.102.3 — the empty error line takes no room, the fields are labelled, the kicker names the panel version",
+    !result.state.errShown && result.state.errClass === "gate-err" && result.state.error === "" &&
+    result.state.emailLbl !== "" && result.state.forgot !== "" &&
+    panelVersion !== "" && result.state.kicker === "Photoshop Panel · v" + panelVersion, result.state);
   await result.page.close();
 
   result = await run(browser, { settings: saved });
@@ -224,6 +262,8 @@ async function run(browser, cfg) {
     result.state.view === "locked" && !result.state.hidden && result.state.app === "none", result.state);
   report("D2) the denied card keeps sign-in visible and explains the lock",
     result.state.loginRow && result.state.lockedRow && result.state.lockedMsg !== "", result.state);
+  report("D3) 6.102.3 — the lock's reason is shown as the banner",
+    result.state.errShown && result.state.errClass === "gate-err-on" && result.state.error !== "", result.state);
   await result.page.close();
 
   result = await run(browser, { settings: saved, enrollStatus: 409 });
@@ -247,7 +287,21 @@ async function run(browser, cfg) {
   /* 2026-08-30 owner instruction: no pairing code. Sign-in registers the
      device directly; the enroll body must NOT carry a pairing_code field. */
   result = await run(browser, { settings: {}, goodPass: "correct-horse" });
+  /* v6.102.3 — a refused sign-in paints the banner right under the button; the
+     next attempt clears it before the request leaves. */
   await result.page.fill("#gateEmail", "student@example.com");
+  await result.page.fill("#gatePass", "wrong-horse");
+  await result.page.click("#gateSignIn");
+  await result.page.waitForFunction(() => (document.getElementById("gateErr").textContent || "") !== "", null, { timeout: 10000 }).catch(() => {});
+  const refused = await result.page.evaluate(() => ({
+    view: gateS.view,
+    shown: getComputedStyle(document.getElementById("gateErr")).display !== "none",
+    cls: document.getElementById("gateErr").className,
+    text: document.getElementById("gateErr").textContent || "",
+    afterSignIn: document.getElementById("gateErr").previousElementSibling === document.getElementById("gateLogin")
+  }));
+  report("H0) 6.102.3 — a wrong password shows the banner under Sign in with the server's status",
+    refused.view === "login" && refused.shown && refused.cls === "gate-err-on" && /HTTP 400/.test(refused.text) && refused.afterSignIn, refused);
   await result.page.fill("#gatePass", "correct-horse");
   await result.page.click("#gateSignIn");
   await result.page.waitForFunction(() => gateS.view === "open", null, { timeout: 30000 }).catch(() => {});

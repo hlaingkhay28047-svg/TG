@@ -18,46 +18,65 @@
        `[disabled]` selectors, none of which the panel uses. It all worked
        perfectly in the Chromium the test drives, and would have shrunk the
        wall to a floating box in the corner of a Photoshop panel with the app
-       live behind it. Checks A4 and A5 in verify_panel_gate.js now derive the
-       allowed property and selector sets from styles.css itself, so the
-       browser is no longer the authority on what the renderer accepts. -->
+       live behind it. verify_panel_gate.js pins the structure (A8 for the
+       6.102.3 layout) and drives the real file in a browser, so the browser
+       is not the only authority on what the renderer accepts: every property
+       below is one the panel's own stylesheet already ships to Photoshop. -->
   <style>
+    /* v6.102.3 — the card centres when the panel is tall enough and starts at
+       the top (scrolling) when it is not: a column flex box whose child
+       carries margin:auto, which absorbs only POSITIVE free space. The old
+       align-items:center clipped the card's head on a short panel. */
     #hnkGate{position:fixed;left:0;right:0;top:0;bottom:0;z-index:9999;
-      display:flex;align-items:center;justify-content:center;background:#0d1014;
-      padding:18px;overflow-y:auto}
+      display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+      background:#0d1014;padding:18px;overflow-y:auto}
     #hnkGate.off{display:none}
-    #hnkGate .gate-card{box-sizing:border-box;width:100%;max-width:340px;
-      background:#161b22;border:1px solid #2a323d;border-radius:14px;
-      padding:22px 20px;color:#e6edf3;text-align:center}
-    #hnkGate .gate-logo{width:52px;height:52px;margin:0 auto 12px;border-radius:13px;
+    #hnkGate .gate-card{box-sizing:border-box;width:100%;max-width:352px;margin:auto;
+      background:#161b22;border:1px solid #2a323d;border-radius:16px;
+      padding:20px 20px 16px;color:#e6edf3;text-align:left}
+    /* header row: identity square, title, "Photoshop Panel · vX" kicker, then
+       the app's gold hairline under them (the web app's .nav, in miniature). */
+    #hnkGate .gate-head{display:flex;flex-direction:row;align-items:center;margin:0 0 12px}
+    #hnkGate .gate-logo{flex:0 0 auto;width:46px;height:46px;margin:0 12px 0 0;border-radius:12px;
       background:linear-gradient(135deg,#f4d488,#c79a3c);color:#161b22;font-weight:800;
-      font-size:18px;line-height:52px;letter-spacing:.5px;overflow:hidden}
+      font-size:16px;line-height:46px;letter-spacing:.5px;overflow:hidden;text-align:center}
     /* v6.27.0 — the member's own profile photo (saved on the website) fills
        the identity square once known; the HNK mark is the fallback. The
        website stores a 256px SQUARE center-crop, so plain width/height is
        distortion-free — no object-fit, which UXP does not support. */
-    #hnkGate .gate-logo img{display:none;width:52px;height:52px;border-radius:13px}
-    #hnkGate .gate-h{font-size:15px;font-weight:700;margin:0 0 6px}
-    #hnkGate .gate-sub{font-size:12px;line-height:1.65;color:#9aa7b4;margin:0 0 15px}
-    #hnkGate .gate-f{box-sizing:border-box;display:block;width:100%;margin:0 0 9px;
-      padding:10px 12px;border-radius:9px;border:1px solid #2a323d;background:#0d1014;
+    #hnkGate .gate-logo img{display:none;width:46px;height:46px;border-radius:12px}
+    #hnkGate .gate-head-txt{flex:1 1 auto;min-width:0}
+    #hnkGate .gate-h{font-size:16px;font-weight:700;margin:0 0 3px;line-height:1.25}
+    #hnkGate .gate-kicker{font-size:11px;line-height:1.4;color:#9aa7b4;letter-spacing:.3px}
+    #hnkGate .gate-rule{height:2px;background-color:#c79a3c;border-radius:2px;margin:0 0 12px;opacity:.85}
+    #hnkGate .gate-sub{font-size:12px;line-height:1.6;color:#9aa7b4;margin:0 0 14px;min-height:1px}
+    /* labelled fields: the label above, the forgot link on the password
+       label's row — the shape every sign-in form the student already knows. */
+    #hnkGate .gate-lbl{font-size:11px;font-weight:600;line-height:1.4;color:#9aa7b4;letter-spacing:.4px;
+      text-transform:uppercase;margin:0 0 6px;text-align:left}
+    #hnkGate .gate-lbl-row{display:flex;flex-direction:row;align-items:center;margin:0 0 6px}
+    #hnkGate .gate-lbl-row .gate-lbl{flex:1 1 auto;min-width:0;margin:0}
+    #hnkGate #gateForgot{flex:0 0 auto;font-size:11px;line-height:1.4;color:#d4b46a;cursor:pointer;text-align:right}
+    #hnkGate .gate-f{box-sizing:border-box;display:block;width:100%;margin:0 0 12px;
+      padding:11px 12px;border-radius:10px;border:1px solid #2a323d;background:#0d1014;
       color:#e6edf3;font-size:13px}
     /* v6.27.1 — password row: field + eye toggle side by side. Flex with
        longhand properties only (the UXP cascade rule this gate already
        follows); the eye is a div-button like every other gate control. */
-    #hnkGate .gate-pw-row{display:flex;flex-direction:row;align-items:stretch;margin:0 0 9px}
+    #hnkGate .gate-pw-row{display:flex;flex-direction:row;align-items:stretch;margin:0 0 14px}
     #hnkGate .gate-pw-row .gate-f{flex:1 1 auto;min-width:0;margin:0}
     #hnkGate .gate-eye{box-sizing:border-box;flex:0 0 auto;margin-left:8px;padding:10px 12px;
-      border-radius:9px;border:1px solid #2a323d;background-color:#1c2530;background-image:none;
+      border-radius:10px;border:1px solid #2a323d;background-color:#1c2530;background-image:none;
       color:#e6edf3;font-size:13px;line-height:1.35;cursor:pointer;text-align:center}
     /* v6.25.3 — the gate's buttons are DIVs, not <button>: UXP paints div
        text with full CSS fidelity, while its button widget dropped the label
        on every build the owner tested (blank gold and grey rectangles).
        Longhand backgrounds only, centered label, no widget chrome to fight. */
     #hnkGate .gate-b{box-sizing:border-box;display:block;width:100%;margin:0 0 8px;
-      padding:11px 12px;border-radius:9px;border:1px solid #c79a3c;
+      padding:12px 12px;border-radius:10px;border:1px solid #c79a3c;
       background-color:#e7c470;background-image:none;color:#161b22;font-size:13px;
       font-weight:700;cursor:pointer;text-align:center;line-height:1.35}
+    #hnkGate #gateSignIn{margin:0}
     #hnkGate .gate-busy{opacity:.55;cursor:default;pointer-events:none}
     /* v6.25.1 — longhands only, and no `background:none` anywhere: UXP's
        cascade on button widgets is unreliable with shorthands and
@@ -66,8 +85,21 @@
        gateApplyWidgetStyles in main.js repeats it as inline styles, the one
        layer every UXP build honors. */
     #hnkGate .gate-b2{background-color:#1c2530;background-image:none;border:1px solid #45536b;color:#e6edf3;font-weight:600}
-    #hnkGate .gate-msg{font-size:12px;line-height:1.7;margin:0 0 13px;color:#c9d3de;text-align:left}
-    #hnkGate .gate-err{font-size:12px;line-height:1.6;margin:9px 0 0;color:#ff8b8b;min-height:1px}
+    /* v6.102.3 — Check again and Sign out share one row: three stacked grey
+       slabs under the gold one was the clutter in the owner's photo. The
+       wrapper carries the layout, because gateBusy rewrites the buttons' own
+       class list on every state change. */
+    #hnkGate .gate-row{display:flex;flex-direction:row;align-items:stretch;margin:0}
+    #hnkGate .gate-row .gate-b{flex:1 1 0;min-width:0;margin:0}
+    #hnkGate #gateSignOut{margin-left:8px}
+    #hnkGate .gate-msg{font-size:12px;line-height:1.7;margin:0 0 10px;color:#c9d3de;text-align:left}
+    /* v6.102.3 — the error is a banner directly under Sign in (and above the
+       account actions when the lock is the message), and it takes no room
+       while empty. Two SINGLE-class states, switched by gateErr in main.js:
+       gate-err (hidden) and gate-err-on (shown) — no compound selector. */
+    #hnkGate .gate-err{display:none}
+    #hnkGate .gate-err-on{display:block;box-sizing:border-box;margin:10px 0 0;padding:9px 11px;border-radius:9px;
+      border:1px solid #6b2f36;background-color:#2a1a1e;color:#ffb3b3;font-size:12px;line-height:1.55;text-align:left}
     /* v6.47.0 — the secondary block is fenced off from the primary action.
        In the owner's Photoshop screenshot Sign In and Open website were two
        identical gold slabs one above the other, so nothing said which one
@@ -75,12 +107,14 @@
        ONLY in the locked view, where it really is the way out, and this rule
        draws the line the eye stops at. A bordered div — no pseudo-elements,
        which this renderer does not draw. */
-    #hnkGate .gate-hr{margin:14px 0 12px;border-top:1px solid #2a323d}
-    /* Full width, like every control above it: the auto-margin version sat as
-       a narrow chip under a column of full-width buttons and read as a stray
-       widget rather than the language control. */
-    #hnkGate .gate-lang{box-sizing:border-box;display:block;width:100%;margin:0;padding:7px 9px;
-      font-size:11px;border-radius:7px;border:1px solid #2a323d;background:#0d1014;color:#9aa7b4}
+    #hnkGate .gate-hr{margin:16px 0 10px;border-top:1px solid #2a323d}
+    /* footer row: the site on the left, the language picker on the right —
+       a row of its own, so the select reads as a control and not as a stray
+       chip under a column of buttons. */
+    #hnkGate .gate-foot{display:flex;flex-direction:row;align-items:center;margin:14px 0 0}
+    #hnkGate .gate-foot-l{flex:1 1 0;min-width:0;font-size:11px;line-height:1.4;color:#6f7d8c;text-align:left}
+    #hnkGate .gate-lang{box-sizing:border-box;display:block;flex:1 1 0;min-width:0;margin:0 0 0 10px;padding:7px 9px;
+      font-size:11px;border-radius:8px;border:1px solid #2a323d;background:#0d1014;color:#9aa7b4}
     .topbar-plan{margin-left:6px;opacity:.9}
   </style>
 </head>
@@ -94,14 +128,35 @@
      input and button paints in every state, so a mid-check screenshot never
      looks like a broken half-empty dialog. State changes only the message
      strings and the busy dimming; gateShow in main.js no longer hides the
-     login or locked groups. -->
+     login or locked groups.
+
+     v6.102.3 — redesigned from the owner's photo of this screen: header row
+     with the gold hairline, labelled fields with the forgot link on the
+     password label's row, the error as a banner right under Sign in, Check
+     again + Sign out on one row, and a footer row that carries the language
+     picker. Same ids, same handlers, same fail-closed contract. -->
 <div id="hnkGate" role="dialog" aria-modal="true" aria-labelledby="gateH">
   <div class="gate-card">
-    <div class="gate-logo"><span id="gateLogoTxt">HNK</span><img id="gateLogoImg" alt="" aria-hidden="true"></div>
-    <div class="gate-h" id="gateH">HNK Create Studio</div>
+    <!-- v6.102.3 — header row + gold hairline: the web app's .nav in miniature.
+         The kicker is filled by gateTexts from PANEL_VERSION, never typed here. -->
+    <div class="gate-head">
+      <div class="gate-logo"><span id="gateLogoTxt">HNK</span><img id="gateLogoImg" alt="" aria-hidden="true"></div>
+      <div class="gate-head-txt">
+        <div class="gate-h" id="gateH">HNK Create Studio</div>
+        <div class="gate-kicker" id="gateKicker"></div>
+      </div>
+    </div>
+    <div class="gate-rule"></div>
     <div class="gate-sub" id="gateSub"></div>
     <div id="gateLogin">
+      <div class="gate-lbl" id="gateEmailLbl"></div>
       <input id="gateEmail" class="gate-f" type="text" spellcheck="false" autocomplete="off" />
+      <!-- the reset flow lives on the website's login card — the gate only
+           links, from the password label's own row -->
+      <div class="gate-lbl-row">
+        <div class="gate-lbl" id="gatePassLbl"></div>
+        <div id="gateForgot" role="button" tabindex="0"></div>
+      </div>
       <!-- v6.27.1 — UXP renders type="password" without visible dots on some
            Photoshop builds (typing registers, nothing paints). The eye flips
            the field to plain text — the same input.type toggle the Setup key
@@ -112,17 +167,24 @@
         <div id="gatePassEye" class="gate-eye" role="button" tabindex="0" aria-label="Show password" aria-pressed="false">&#128065;</div>
       </div>
       <div id="gateSignIn" class="gate-b" role="button" tabindex="0"></div>
-      <div id="gateForgot" role="button" tabindex="0"></div>
     </div>
+    <!-- v6.102.3 — the one error line sits right under Sign in, and above the
+         account actions when the lock itself is the message; hidden while
+         empty (gateErr switches gate-err / gate-err-on). -->
+    <div class="gate-err" id="gateErr" role="alert"></div>
     <div class="gate-hr"></div>
     <div id="gateLocked">
       <div class="gate-msg" id="gateLockedMsg"></div>
       <div id="gateBuy" class="gate-b" role="button" tabindex="0"></div>
-      <div id="gateRetry" class="gate-b gate-b2" role="button" tabindex="0"></div>
-      <div id="gateSignOut" class="gate-b gate-b2" role="button" tabindex="0"></div>
+      <div class="gate-row">
+        <div id="gateRetry" class="gate-b gate-b2" role="button" tabindex="0"></div>
+        <div id="gateSignOut" class="gate-b gate-b2" role="button" tabindex="0"></div>
+      </div>
     </div>
-    <div class="gate-err" id="gateErr" role="alert"></div>
-    <select id="gateLang" class="gate-lang" title="Language"></select>
+    <div class="gate-foot">
+      <div class="gate-foot-l">hnkaistudio.com</div>
+      <select id="gateLang" class="gate-lang" title="Language"></select>
+    </div>
   </div>
 </div>
 
@@ -144,7 +206,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.102.2</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.102.3</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -1397,7 +1459,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.102.2</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.102.3</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
