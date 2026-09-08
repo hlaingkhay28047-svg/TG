@@ -849,3 +849,7 @@ jobs:
       # 6.33.2 / panel 6.102.2 — the panel sign-in probe lane (live sign-in / refresh / entitlement / logout from a runner, throwaway account)
       - name: Run sign-in probe lane contract (dispatch-only, masked password, token-free records, mirrors the panel's request shapes)
         run: PORT=8931 node test/verify_login_probe_lane.js
+
+      # 6.34.0 — the session is kept fresh (both surfaces rotate the token before it is spent, not after a 401)
+      - name: Run session freshness contract (student app driven in a browser + the admin's own rule)
+        run: PORT=8931 node test/verify_session_freshness.js
