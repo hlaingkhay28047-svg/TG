@@ -1640,6 +1640,29 @@ alter table public.device_history add constraint device_history_event_type_check
 create index if not exists device_history_user_time_idx
   on public.device_history (user_id, created_at desc);
 
+-- v6.37.0 — the teacher's private note about a student.
+--
+-- WHY THIS IS ITS OWN TABLE AND NOT A COLUMN ON profiles, which is where it
+-- obviously belongs. profiles carries two policies for the student themselves:
+--
+--     profiles_select_own ... authenticated may SELECT their own row
+--     profiles_update_own ... authenticated may UPDATE their own row
+--
+-- Postgres row-level security is row-level. Neither policy can exclude one
+-- column, and the table-wide `grant select, insert, update on public.profiles
+-- to authenticated` above cannot be narrowed by a column-level revoke. So a
+-- note stored on profiles would be readable BY THE STUDENT IT IS ABOUT, and
+-- writable by them — a teacher's "still chasing the September payment" handed
+-- to the person it concerns, and erasable by them. Here `authenticated` holds
+-- no grant at all and the only policy is the service context, so the note is
+-- reachable exactly through the admin API that writes it.
+create table if not exists public.student_notes (
+  user_id    uuid primary key references public.hnk_auth_users (id) on delete cascade,
+  note       text not null,
+  updated_by uuid references public.hnk_auth_users (id) on delete set null,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.admin_mfa (
   user_id          uuid primary key references public.hnk_auth_users (id) on delete cascade,
   encrypted_secret text not null,
@@ -1846,8 +1869,8 @@ revoke all on public.roles, public.user_roles, public.licenses,
   public.app_permissions, public.device_slots, public.device_installations,
   public.sessions, public.login_history, public.download_history,
   public.admin_audit_logs, public.panel_versions, public.device_pairing_codes,
-  public.device_history, public.admin_mfa, public.auth_attempts, public.panel_artifacts,
-  public.panel_artifact_chunks from public;
+  public.device_history, public.student_notes, public.admin_mfa, public.auth_attempts,
+  public.panel_artifacts, public.panel_artifact_chunks from public;
 
 alter table public.roles enable row level security;
 alter table public.user_roles enable row level security;
@@ -1862,6 +1885,7 @@ alter table public.admin_audit_logs enable row level security;
 alter table public.panel_versions enable row level security;
 alter table public.device_pairing_codes enable row level security;
 alter table public.device_history enable row level security;
+alter table public.student_notes enable row level security;
 alter table public.admin_mfa enable row level security;
 alter table public.auth_attempts enable row level security;
 alter table public.panel_artifacts enable row level security;
@@ -1880,6 +1904,7 @@ alter table public.admin_audit_logs force row level security;
 alter table public.panel_versions force row level security;
 alter table public.device_pairing_codes force row level security;
 alter table public.device_history force row level security;
+alter table public.student_notes force row level security;
 alter table public.admin_mfa force row level security;
 alter table public.auth_attempts force row level security;
 alter table public.panel_artifacts force row level security;
@@ -1944,6 +1969,9 @@ create policy device_pairing_codes_service_all on public.device_pairing_codes fo
   using (public.hnk_request_role() = 'service_role')
   with check (public.hnk_request_role() = 'service_role');
 create policy device_history_service_all on public.device_history for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy student_notes_service_all on public.student_notes for all to public
   using (public.hnk_request_role() = 'service_role')
   with check (public.hnk_request_role() = 'service_role');
 create policy admin_mfa_service_all on public.admin_mfa for all to public

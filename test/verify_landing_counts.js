@@ -86,9 +86,17 @@ function toAscii(s) {
 const panelVersion = JSON.parse(fs.readFileSync(path.join(ROOT, "docs", "download", "panel-version.json"), "utf8")).v;
 const panelRelease = JSON.parse(fs.readFileSync(path.join(ROOT, "panel", "release-manifest.json"), "utf8"));
 if (panelRelease.version !== panelVersion) throw new Error("panel release metadata/version endpoint drift");
-const registry = fs.readFileSync(path.join(ROOT, "panel", "src", "workflows", "workflow-registry.js"), "utf8");
-const wfBlock = (registry.match(/var\s+WORKFLOWS\s*=\s*\[([\s\S]*?)\n\];/) || [])[1] || "";
-const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"]+)"/g)].map(m => ({ id: m[1], title: m[2] }));
+/* v6.37.0 — RUN the registry instead of reading its source.
+   This used to regex the `var WORKFLOWS = [...]` literal, which holds the nine
+   hand-built definitions and nothing else. But since v6.27.0 the registry WRAPS
+   the app's whole catalog around those nine, so what the panel actually offers
+   is registry.list() — 194 workflows in 13 categories. Reading the literal made
+   this suite certify "the panel has 9 Smart Workflows" on a landing page that
+   was understating the product by 185, and it would have gone on doing so
+   forever: the number it compared against was never the number the panel has.
+   A test that reads a source file can only ever confirm what that file says. */
+const panelWorkflows = require(path.join(ROOT, "panel", "src", "workflows", "workflow-registry.js"))
+  .list().map(w => ({ id: w.id, title: w.title }));
 
 (async () => {
   const browser = seed.withPremium(await chromium.launch());
@@ -130,8 +138,9 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
     staleFb.length === 0, staleFb);
 
   /* ---- E) the panel is self-describing too ---- */
-  report("E) tracked panel source defines a readable workflow registry",
-    panelWorkflows.length >= 5, { version: panelVersion, count: panelWorkflows.length });
+  report("E) the panel registry answers with the workflows it actually offers",
+    panelWorkflows.length >= 100 && panelWorkflows.every(w => w.id && w.title),
+    { version: panelVersion, count: panelWorkflows.length });
 
   /* ---- C/D) every labelled number on the landing ----
 
@@ -212,11 +221,13 @@ const panelWorkflows = [...wfBlock.matchAll(/\bid:\s*"([^"]+)",\s*title:\s*"([^"
   /* ---- F) the panel's workflow names ---- */
   const landingWf = [...LANDING.matchAll(/"wf\.(\d+)"\s*:\s*\{\s*"my"\s*:\s*"([^"]*)"/g)].map(x => x[2]);
   const panelTitles = panelWorkflows.map(w => w.title);
-  const missing = panelTitles.filter(t => landingWf.indexOf(t) < 0);
+  /* The page names a SELECTION of the 194 — it is a landing page, not a
+     catalog — so the property that matters is that every name on it is a
+     workflow the panel really has. An invented one still fails. */
   const extra = landingWf.filter(t => panelTitles.indexOf(t) < 0);
-  report("F) the landing lists exactly the workflows tracked panel source defines",
-    landingWf.length === panelTitles.length && missing.length === 0 && extra.length === 0,
-    { landing: landingWf.length, panel: panelTitles.length, missing, extra });
+  report("F) every workflow the landing names by title exists in the panel registry",
+    landingWf.length > 0 && extra.length === 0,
+    { landing: landingWf.length, panel: panelTitles.length, invented: extra });
 
   /* ---- H) the advertised test count, derived from the workflow that runs them ----
      The claim is spelled 27 different ways -- "907 tests", "テスト907件",

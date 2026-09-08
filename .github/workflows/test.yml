@@ -861,3 +861,9 @@ jobs:
       # 6.36.0 — the skin smoothing is edge-aware (a guided filter, not a Gaussian behind a threshold)
       - name: Run edge-aware smoothing contract (the filter run against the Gaussian it replaces)
         run: PORT=8931 node test/verify_edge_aware_smoothing.js
+
+      # 6.37.0 — the admin can fix a student's record and review in bulk; the
+      # teacher's private note lives in a table the student holds no grant on,
+      # and check C proves that against a live scratch database.
+      - name: Run admin record + bulk review contract (private note isolation proven on a real database)
+        run: node test/verify_admin_record_and_bulk.js

@@ -34,6 +34,10 @@ const REQUIRED_APPLICATION_TABLES = Object.freeze([
   "roles","user_roles","licenses","app_permissions","device_slots","device_installations",
   "sessions","login_history","download_history","admin_audit_logs","panel_versions",
   "device_pairing_codes","device_history","admin_mfa","auth_attempts","panel_artifacts","panel_artifact_chunks",
+  /* v6.37.0 — student_notes holds the teacher's private note about a student.
+     It is listed here for the same reason as the rest: this check is what makes
+     a table without FORCE RLS fail the migration rather than ship open. */
+  "student_notes",
 ]);
 const REQUIRED_PLATFORM_TABLES = Object.freeze([
   "hnk_auth_users","hnk_auth_refresh_tokens","hnk_storage_buckets","hnk_storage_objects",
