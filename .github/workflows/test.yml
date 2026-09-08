@@ -857,3 +857,7 @@ jobs:
       # 6.35.0 — the student releases their own Computer slot (web session only, seven-day cooldown, recorded)
       - name: Run device self-release contract (policy executed, only that slot's sessions end, nine languages)
         run: PORT=8931 node test/verify_device_self_release.js
+
+      # 6.36.0 — the skin smoothing is edge-aware (a guided filter, not a Gaussian behind a threshold)
+      - name: Run edge-aware smoothing contract (the filter run against the Gaussian it replaces)
+        run: PORT=8931 node test/verify_edge_aware_smoothing.js
