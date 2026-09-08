@@ -126,8 +126,63 @@ Only after repository checks, artifact verification, private upload, Adobe
 acceptance, and server-side release enablement may the download be exposed to
 eligible students.
 
+## What an install actually needs
+
+Measured against `panel/manifest.json`, the gate in `panel/main.js` and the
+server's own decision code, 2026-09-08 (panel 6.108.0). Everything below is a
+hard requirement: miss one and the panel either never loads or loads locked.
+
+On the machine:
+
+1. **Photoshop 24.2 or newer** — `host.minVersion` is `24.2.0` and the manifest
+   is `manifestVersion 5`. Older hosts do not load the plugin at all.
+2. **Creative Cloud desktop**, which is what a double-clicked `.ccx` opens.
+3. **Photoshop closed while installing over an existing copy** — a UXP package
+   folder is read-only while its plugin runs and Photoshop does not hot-swap
+   plugin code (see v6.48.0 below).
+4. The plugin's declared permissions accepted on first launch (network, full
+   local file system, clipboard, `launchProcess` for https).
+5. Reachable network for `hnkaistudio.com`, the API host
+   `hnk-ai-tools-3-s4nnu.ondigitalocean.app` and `runninghub.ai` — a firewall
+   or VPN that blocks any of them leaves the gate on `gate_service_down`.
+6. An open document with a layer selected for the Active-layer sources
+   (`layerPhotoCapture`); without one the sheet reports rather than throws.
+
+On the account, checked on every launch and every protected operation through
+`/v1/devices/enroll` + `/v1/panel/validate` (`evaluateAuthorization`, in order):
+account `active`, a license whose window contains now, `permissions.panel`,
+one free **computer** slot (one active panel installation per account), and a
+panel version the server has a release row for. Generation additionally needs
+the studio's RunningHub Enterprise key saved in Setup — the panel ships without
+one and refuses with `st_nokey`.
+
+That last version requirement is the one that is easy to get wrong: see
+v6.108.0 immediately below.
+
 ## Acceptance record
 
+- **v6.108.0** — published as latest by panel-release run #68 from main
+  `208c9cc`. The lane rebuilt the artifact from the reviewed source and matched
+  the tracked pins byte for byte (SHA-256
+  `0475cbb4de8660c671fbcfdef5422f93caf4507b82b82c7736b4cf70b9a8823e`,
+  20,438,780 bytes), mirrored it into the private Space and enabled it;
+  minimum supported stays 6.24.0 and 6.107.0 stays enabled, so an install that
+  has not updated keeps working. The in-Photoshop checklist has NOT been run on
+  this build, so `adobe_acceptance` stays `pending`.
+  Recorded here because answering the owner's question — what does a .ccx need
+  in Photoshop — exposed a defect in what this session had told him: **an
+  unpublished build installs and then locks at sign-in.** `entitlements.js`
+  builds the version state as `enabled: !!installed && installed.enabled ===
+  true`, so a build with no `panel_versions` row evaluates as
+  `enabled === false` and `evaluatePanelVersion` answers `version_blocked`.
+  6.107.1 and 6.108.0 were both in exactly that state while the 6.38.1 report
+  said the handed-over .ccx could simply be installed, "the same thing either
+  way". It was not the same thing. Publishing is part of shipping a panel
+  build, not an optional step after it, and a handed-over .ccx is only usable
+  once its version is enabled on the cluster.
+  The lane had been reported as undispatchable from this session; that was the
+  CLI token's `actions=read` scope, not a guard in the lane — runs #67
+  (inspect) and #68 (publish) both dispatched and succeeded.
 - **v6.107.0** — installed, launched and signed in on the owner's Windows
   Photoshop (published as latest by panel-release run #66). Photographs of the
   build: the Workflows page now draws every card's art (the remote-art fix
