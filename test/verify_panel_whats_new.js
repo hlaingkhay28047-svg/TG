@@ -157,6 +157,31 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     report("B3) the rows say what the app's rows say",
       home.titles.length > 0 && home.titles.every(t => t && t.length > 3), home.titles);
 
+    /* v6.108.1 — the card has a CEILING, and it is measured, not asserted from
+       the CSS. Unclamped (.nw-t and .nw-s carried neither line-height nor
+       max-height) the three-row card came to 2,495px at 360x960 and 2,740px at
+       the manifest's own 340x920, from one Burmese subtitle 617px tall: three
+       screens of changelog between a student and the studio. Three rows of two
+       lines each cannot reach half a screen, and three rows drawn from the same
+       template cannot differ in height. */
+    const box = await page.evaluate(() => {
+      const card = document.getElementById("hnkDashNew");
+      const H = el => Math.round(el.getBoundingClientRect().height);
+      const rows = [...document.querySelectorAll("#hnkDashNew .nw-row")].map(H);
+      const lines = [...document.querySelectorAll("#hnkDashNew .nw-t, #hnkDashNew .nw-s")].map(el => {
+        const lh = parseFloat(getComputedStyle(el).lineHeight);
+        return { fits: el.scrollHeight - el.clientHeight <= 2,
+          lines: lh > 0 ? el.clientHeight / lh : -1 };
+      });
+      return { card: card ? H(card) : -1, rows, viewport: window.innerHeight,
+        clamped: lines.filter(l => !l.fits).length,
+        offBoundary: lines.filter(l => !l.fits && Math.abs(l.lines - Math.round(l.lines)) > 0.08).length };
+    });
+    report("B4) the news card keeps its ceiling — three even rows, under half a screen, and a clamp that cuts between lines",
+      box.card > 0 && box.card < box.viewport / 2 &&
+      box.rows.length === 3 && Math.max(...box.rows) - Math.min(...box.rows) <= 2 &&
+      Math.max(...box.rows) <= 130 && box.offBoundary === 0, box);
+
     /* the ribbon on the Workflows page */
     await page.evaluate(() => { try { switchPage("wf"); } catch (e) { } });
     await page.waitForTimeout(900);
@@ -174,6 +199,26 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     report("C) every unread workflow wears the NEW ribbon in the panel too, and only those",
       wf.marked.slice().sort().join(",") === wf.want.slice().sort().join(",") &&
       wf.ribbons === wf.want.length, wf);
+
+    /* v6.108.1 — the workflow card's own ceiling, guarded. The app clamps .t
+       and .s with -webkit-line-clamp, which cuts BETWEEN line boxes; UXP has
+       no line-clamp, so the panel emulates it with max-height, and a
+       max-height that is not an exact multiple of the line-height would cut
+       THROUGH a line. Today's values (2.9em/1.45, 3em/1.5) are exact, which is
+       why the reported clipping was NOT reproduced here — this pins that
+       property so an em nudged by hand cannot quietly break it. */
+    const clamp = await page.evaluate(() => {
+      const boxes = [...document.querySelectorAll(".wfmini .t, .wfmini .s")].map(el => {
+        const lh = parseFloat(getComputedStyle(el).lineHeight);
+        return { cut: el.scrollHeight - el.clientHeight > 2, lines: lh > 0 ? el.clientHeight / lh : -1 };
+      });
+      const cut = boxes.filter(b => b.cut);
+      return { boxes: boxes.length, cut: cut.length,
+        offBoundary: cut.filter(b => Math.abs(b.lines - Math.round(b.lines)) > 0.08).length,
+        lines: [...new Set(cut.map(b => Math.round(b.lines * 100) / 100))].slice(0, 6) };
+    });
+    report("C2) every clamped workflow-card line box cuts between lines, never through one",
+      clamp.boxes > 0 && clamp.offBoundary === 0, clamp);
 
     /* v6.78.1 — DISMISSING BY HAND, the way a student does it. The × used to
        remove its own row and nothing else: main.js never wires deps.onRefresh,

@@ -830,8 +830,16 @@ input[type="range"] { min-width: 0; }
 .nw-wrap{display:flex;flex-direction:row;align-items:stretch;margin-top:8px}
 .nw-row{display:flex;flex-direction:row;align-items:center;flex:1;text-align:left;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px;padding:10px;color:var(--cream);min-height:44px}
 .nw-tx{flex:1}
-.nw-t{font-weight:800;font-size:12.5px}
-.nw-s{font-size:11px;color:var(--muted);margin-top:2px}
+/* v6.108.1 — the two lines a row is allowed. Measured in the harness at the
+   manifest's own docked width: with no ceiling at all the three-row card came
+   to 2,495px at 360x960 and 2,740px at 340x920 — three screens of changelog
+   over the studio, from ONE subtitle 617px tall. The workflow cards have had
+   this ceiling since v6.51.0; the news rows never got it. UXP has no
+   -webkit-line-clamp (see the PATH block below), so the ceiling is a
+   max-height that is an exact multiple of the line-height — two lines, cut
+   between line boxes, the same two the app now clamps to. */
+.nw-t{font-weight:800;font-size:12.5px;line-height:1.6;max-height:3.2em;overflow:hidden}
+.nw-s{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.6;max-height:3.2em;overflow:hidden}
 .nw-tag{color:#1a1408;background:var(--gold);border-radius:999px;padding:3px 7px;font-size:9.5px;font-weight:900}
 .nw-x{min-width:36px;min-height:36px;margin-left:8px;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
 .wf-new{position:absolute;top:8px;right:8px;background:var(--gold);color:#1a1408;border-radius:999px;padding:2px 8px;font-size:9.5px;font-weight:900}
@@ -1326,6 +1334,14 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .wfmini .wf-need { position: absolute; left: 4px; bottom: 4px; padding: 2px 8px;
   border: 1px solid var(--line); border-radius: 999px;
   background-color: rgba(11, 13, 20, .78); color: var(--text); font-size: 10px; line-height: normal; }
+/* The ceiling is TWO LINES and max-height is an exact multiple of line-height
+   (2.9em / 1.45 and 3em / 1.5), so the cut lands between line boxes exactly as
+   the app's -webkit-line-clamp does — UXP has no line-clamp (see the PATH
+   block below). Measured again in v6.108.1 against the report of clipped
+   subtitles: fourteen boxes are clamped here, every one of them on a whole
+   number of lines, and a Burmese line's ink measured 12px inside a 16.7px box
+   at 1.45. Nothing is being cut through, so nothing here changed;
+   verify_panel_whats_new C2 keeps the multiple honest. */
 .wfmini .t { display: block; margin-top: 4px; min-height: 2.5em; max-height: 2.9em; font-size: 12.5px; font-weight: 800;
   line-height: 1.45; overflow: hidden; }
 .wfmini .s { display: block; margin-top: 4px; margin-bottom: 4px; max-height: 3em; font-size: 11.5px; color: var(--muted);
