@@ -24791,6 +24791,13 @@ function accSetInline(id, msg, cls){
   e.className = "status" + (cls ? " " + cls : "");
 }
 function accEmailOk(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(e || "")); }
+/* v6.33.5 — an address never contains whitespace, and a pasted one arrives carrying
+   it: a trailing space, a non-breaking space out of a chat message, a zero-width
+   character out of a web page. trim() alone left those inside, so accEmailOk then
+   refused a perfectly correct address as "not valid" — and the Photoshop panel,
+   which had no such check, sent it on and was told "Invalid login credentials"
+   (fixed there in 6.102.4). Both surfaces now clean the field the same way. */
+function accCleanEmail(v){ return String(v == null ? "" : v).replace(/[\s\u00a0\u200b\u200c\u200d\ufeff]+/g, ""); }
 function accFmtDate(iso){
   try {
     return new Date(iso).toLocaleDateString(LANG === "my" ? "my-MM" : LANG,
@@ -24800,7 +24807,7 @@ function accFmtDate(iso){
 
 /* ---------------- §2.2 sign up ---------------- */
 async function accSignup(){
-  var em = $("accEmail2").value.trim(), pw = $("accPass2").value;
+  var em = accCleanEmail($("accEmail2").value), pw = $("accPass2").value;
   if (!accEmailOk(em)){ setSt("stAcc", t("acc_email_bad"), "err"); $("accEmail2").focus(); return; }
   if (pw.length < 6){ setSt("stAcc", t("acc_pass_short"), "err"); $("accPass2").focus(); return; }
   var btn = $("btnAccSignup"); accBusy(btn, true); setSt("stAcc", "");
@@ -24845,7 +24852,7 @@ async function accSignup(){
 
 /* ---------------- §2.3 log in ---------------- */
 async function accLogin(){
-  var em = $("accEmail").value.trim(), pw = $("accPass").value;
+  var em = accCleanEmail($("accEmail").value), pw = $("accPass").value;
   if (!accEmailOk(em)){ setSt("stAcc", t("acc_email_bad"), "err"); $("accEmail").focus(); return; }
   if (pw.length < 6){ setSt("stAcc", t("acc_pass_short"), "err"); $("accPass").focus(); return; }
   var btn = $("btnAccLogin"); accBusy(btn, true); setSt("stAcc", "");
@@ -24914,7 +24921,7 @@ async function accChangePass(){
 
 /* ---------------- §2.7 forgot password ---------------- */
 async function accForgot(){
-  var em = $("accEmail").value.trim();
+  var em = accCleanEmail($("accEmail").value);
   if (!accEmailOk(em)){ setSt("stAcc", t("acc_email_bad"), "err"); $("accEmail").focus(); return; }
   var btn = $("btnAccForgot"); accBusy(btn, true); setSt("stAcc", "");
   try {
@@ -26470,7 +26477,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.33.4";
+var APP_VER="6.33.5";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

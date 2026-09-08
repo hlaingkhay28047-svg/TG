@@ -53,20 +53,40 @@ report("B3) it speaks the panel's shapes and the web app's beside them — gateH
 const urls = [...S.matchAll(/(PANEL_HOST|WEB_HOST) \+ ([A-Z_]+|"[^"]+")/g)].map(m => m[2]);
 report("B4) every request goes to one of the two studio hosts and only to the auth token / signup / logout routes and the entitlement read — nothing else",
   /const PANEL_HOST = "https:\/\/hnk-ai-tools-3-s4nnu\.ondigitalocean\.app";/.test(S) && /const WEB_HOST = "https:\/\/hnkaistudio\.com";/.test(S) &&
-  urls.length >= 9 && urls.every(u => ["TOKEN", "REFRESH", '"/api/auth/v1/signup"', '"/api/auth/v1/logout"', '"/api/v1/me/entitlement"'].includes(u)) &&
+  urls.length >= 11 && urls.every(u => ["TOKEN", "REFRESH", '"/api/auth/v1/signup"', '"/api/auth/v1/logout"',
+    '"/api/v1/me/entitlement"', '"/api/v1/devices/enroll"', '"/api/v1/panel/validate"'].includes(u)) &&
   !/https?:\/\/(?!hnk-ai-tools-3-s4nnu\.ondigitalocean\.app|hnkaistudio\.com)[a-z0-9.-]+/i.test(S.replace(/\/\*[\s\S]*?\*\//g, "")), { urls });
 report("B5) tokens never reach a record or a line: a body is reduced to booleans, sanitize() withholds any token/password/secret key, and the JSON dump carries the records only",
   /has_access: !!\(j && j\.access_token\), has_refresh: !!\(j && j\.refresh_token\), user_id: !!\(j && j\.user && j\.user\.id\)/.test(S) &&
   /if \(\/token\|password\|secret\/i\.test\(k\)\) \{ out\[k\] = "<withheld>"; continue; \}/.test(S) &&
   !/^(?!.*add-mask).*console\.log\(.*\b(access_token|refresh_token|PASSWORD)\b/m.test(S.replace(/\/\*[\s\S]*?\*\//g, "")) &&
-  /JSON\.stringify\(sanitize\(\{ account: en\.json\.account, allowed: en\.json\.allowed, reasons: en\.json\.reasons \}\)\)/.test(S) &&
+  /JSON\.stringify\(sanitize\(\{ account: en\.json\.account, allowed: en\.json\.allowed, reasons: en\.json\.reasons, panel: en\.json\.panel \}\)\)/.test(S) &&
   /results\.map\(r => Object\.assign\(\{\}, r, \{ expect: undefined \}\)\)/.test(S), null);
 report("B6) the walk is the panel's: sign-in on both hosts, refresh, entitlement, logout, the refresh after logout must be refused, a wrong password and an unknown address must both be 400 invalid_grant; the verdict is the exit code",
   /call\(2, "sign-in PANEL shape · DO host"/.test(S) && /call\(3, "sign-in PANEL shape · web host"/.test(S) && /call\(4, "sign-in WEB shape · web host"/.test(S) &&
-  /call\(5, "refresh PANEL shape · DO host"/.test(S) && /call\(6, "entitlement PANEL bearer · DO host"/.test(S) && /call\(7, "logout PANEL bearer · DO host"/.test(S) &&
-  /call\(8, "refresh after logout · must fail"[\s\S]*?s => s === 400 \|\| s === 401\)/.test(S) &&
-  /call\(9, "wrong password PANEL shape"[\s\S]*?isInvalidGrant\)/.test(S) && /call\(10, "unknown address PANEL shape"[\s\S]*?isInvalidGrant\)/.test(S) &&
+  /call\(5, "refresh PANEL shape · DO host"/.test(S) && /call\(6, "entitlement PANEL bearer · DO host"/.test(S) && /call\(10, "logout PANEL bearer · DO host"/.test(S) &&
+  /call\(11, "refresh after logout · must fail"[\s\S]*?s => s === 400 \|\| s === 401\)/.test(S) &&
+  /call\(12, "wrong password PANEL shape"[\s\S]*?isInvalidGrant\)/.test(S) && /call\(13, "unknown address PANEL shape"[\s\S]*?isInvalidGrant\)/.test(S) &&
   /const isInvalidGrant = \(s, c\) => s === 400 && \/invalid_grant\/\.test\(c\);/.test(S) && /process\.exit\(failed\.length \? 1 : 0\);/.test(S), null);
+
+/* v6.33.5 — the guard added after 2026-09-08. A .ccx built from a tree whose release is
+   not published on the cluster signs in and then locks (version_blocked, server/lib/
+   entitlements.js), and until now nothing on this side said so: the owner found it by
+   installing three builds that could never have worked. A pending probe account is denied
+   at the ACCOUNT check long before the version check, so the gate cannot be proven by a
+   refusal — the lane asks the live server which version it calls latest and compares it
+   with the version this tree ships. */
+report("B7) the walk reaches the panel's own two calls, and the version this tree ships is checked against the version the cluster serves",
+  /call\(7, "enroll PANEL bearer · DO host"[\s\S]*?notVersionVerdict\)/.test(S) &&
+  /call\(8, "validate PANEL bearer · DO host"[\s\S]*?panel_version: TREE_VERSION[\s\S]*?notVersionVerdict\)/.test(S) &&
+  /const VERSION_VERDICT = \/version_blocked\|invalid_version\|update_required\//.test(S) &&
+  /const TREE_VERSION = String\(\(require\("\.\.\/panel\/release-manifest\.json"\) \|\| \{\}\)\.version \|\| ""\);/.test(S) &&
+  /note\(9, "released version = this tree", !!liveLatest && !!TREE_VERSION && liveLatest === TREE_VERSION,/.test(S) &&
+  /THE PANEL RELEASE IS NOT PUBLISHED\./.test(S), null);
+/* The installation id is invented per run and is never a real one. */
+report("B8) the computer it registers is a throwaway named by the run, never a student's installation",
+  /const INSTALL_ID = "probe-" \+ crypto\.randomBytes\(8\)\.toString\("hex"\);/.test(S) &&
+  (S.match(/installation_id: INSTALL_ID/g) || []).length === 2, null);
 
 /* ---- C) the sources it mirrors ---- */
 report("C) the panel still signs in the way the script assumes — gateHeaders, client_kind:\"panel\", the DigitalOcean API host — and the web app still signs in from its own origin with apikey anon",
