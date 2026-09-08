@@ -580,6 +580,14 @@ const I18N = {
     gate_grace: "Offline — {D} days of offline use left",
     gate_open_fail: "Could not open the browser. Address: {U}",
     gate_forgot: "Forgot password?",
+    gate_session_ended: "Your session has ended — sign in again.",
+    gate_acct_off: "This account is closed (suspended, banned or rejected) — ask your teacher.",
+    gate_confirm: "This address is not confirmed yet — open the email we sent.",
+    gate_gone: "This account no longer exists — ask your teacher.",
+    gate_server: "The server had a problem — wait a moment and press Log in again.",
+    gate_service_down: "The licence service cannot be reached — check your internet, then press Check again.",
+    gate_no_lease: "The licence server returned no valid panel lease — press Check again.",
+    gate_sent_as: "Sent as {E} · {N} characters",
     app_title: "HNK Photoshop Ai Panel (Students)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "Show",
@@ -1215,6 +1223,14 @@ const I18N = {
     gate_grace: "အင်တာနက် မရှိ — အော့ဖ်လိုင်း {D} ရက် ကျန်ပါသေးတယ်",
     gate_open_fail: "browser ဖွင့်လို့ မရပါ။ လိပ်စာ — {U}",
     gate_forgot: "စကားဝှက် မေ့နေလား?",
+    gate_session_ended: "သင့် session ကုန်သွားပါပြီ — ပြန်ဝင်ပါ။ (စကားဝှက် မှားလို့ မဟုတ်ပါ)",
+    gate_acct_off: "ဒီအကောင့်ကို ပိတ်ထားပါတယ် — ဆရာ့ကို ဆက်သွယ်ပါ။",
+    gate_confirm: "အီးမေးလ်ကို အတည်မပြုရသေးပါ — ပို့ထားတဲ့ စာကို ဖွင့်ပါ။",
+    gate_gone: "ဒီအကောင့် မရှိတော့ပါ — ဆရာ့ကို ဆက်သွယ်ပါ။",
+    gate_server: "server မှာ ပြဿနာ ဖြစ်နေပါတယ် — ခဏနေပြီး ပြန်နှိပ်ပါ။ (စကားဝှက် မှားလို့ မဟုတ်ပါ)",
+    gate_service_down: "လိုင်စင် server ကို မဆက်သွယ်နိုင်ပါ — အင်တာနက် စစ်ပြီး ပြန်စစ်ရန် နှိပ်ပါ။",
+    gate_no_lease: "server က panel lease မှန်မှန် မပြန်ပါ — ပြန်စစ်ရန် နှိပ်ပါ။",
+    gate_sent_as: "ပို့လိုက်တာ — {E} · {N} လုံး",
     app_title: "HNK Photoshop Ai Panel (\u1000\u103b\u1031\u102c\u1004\u103a\u1038\u101e\u102c\u1038\u1019\u103b\u102c\u1038)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "\u1015\u103c",
@@ -1850,6 +1866,14 @@ const I18N = {
     gate_grace: "ဢမ်ႇမီးဢိၼ်ႇထႃႇၼႅတ်ႉ — ၸႂ်ႉလႆႈထႅင်ႈ {D} ဝၼ်း",
     gate_open_fail: "ပိုတ်ႇ browser ဢမ်ႇလႆႈ။ လိင်ႉ — {U}",
     gate_forgot: "လိုမ်းၶေႃႈလပ်ႉႁႃႉ?",
+    gate_session_ended: "ငဝ်းလၢႆးၶဝ်ႈသူ သဵင်ႈယဝ်ႉ — ၶဝ်ႈၶိုၼ်း။",
+    gate_acct_off: "ဢၶွင်ႉၼႆႉ ထုၵ်ႇပိၵ်ႉဝႆႉ — ၵပ်းသိုပ်ႇ ၶူးသွၼ်။",
+    gate_confirm: "ဢီးမေးလ် ဢမ်ႇပႆႇယိုၼ်ယၼ် — ပိုတ်ႇလိၵ်ႈ ဢၼ်သူင်ႇဝႆႉ။",
+    gate_gone: "ဢၶွင်ႉၼႆႉ ဢမ်ႇမီးယဝ်ႉ — ၵပ်းသိုပ်ႇ ၶူးသွၼ်။",
+    gate_server: "ၶိူင်ႈမေႃႈ မီးပၼ်ႁႃ — ပႂ်ႉၵမ်းလဵဝ်သေ ၼဵၵ်းထႅင်ႈ။",
+    gate_service_down: "ၵပ်းသိုပ်ႇ license server ဢမ်ႇလႆႈ — ၵူတ်ႇထတ်း ဢိၼ်ႇထႃႇၼႅတ်ႉသေ ၼဵၵ်းၶိုၼ်း။",
+    gate_no_lease: "server ဢမ်ႇပၼ် panel lease — ၼဵၵ်းၵူတ်ႇထတ်းၶိုၼ်း။",
+    gate_sent_as: "သူင်ႇ — {E} · {N} တူဝ်",
     app_title: "HNK Photoshop Ai Panel (\u101c\u102f\u1075\u103a\u1088\u1081\u1035\u107c\u103a\u1038)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "\u107c\u1084",
@@ -2483,6 +2507,14 @@ const I18N = {
     gate_grace: "Internet n nga ai — {D} ya lang lu ai",
     gate_open_fail: "Browser hpaw n lu ai. Address: {U}",
     gate_forgot: "Password malap kau sai i?",
+    gate_session_ended: "Na a session htum sai — bai shang u.",
+    gate_acct_off: "Ndai account hpe pat da ai — sara hpe san u.",
+    gate_confirm: "Ndai email hpe n sha dat shi ai — anhte sa dat ai laika hpe hpaw u.",
+    gate_gone: "Ndai account n nga sai — sara hpe san u.",
+    gate_server: "Server hta jam jau nga ai — kachyi mi la nna bai dip u.",
+    gate_service_down: "License server hte matut n lu ai — internet hpe yu nna bai dip u.",
+    gate_no_lease: "Server panel lease n jaw ai — bai dip u.",
+    gate_sent_as: "Sa dat ai — {E} · {N} letter",
     app_title: "HNK Photoshop Ai Panel (Sharin ma ni)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "Madun",
@@ -3116,6 +3148,14 @@ const I18N = {
     gate_grace: "ออฟไลน์ — ใช้งานแบบออฟไลน์ได้อีก {D} วัน",
     gate_open_fail: "เปิดเบราว์เซอร์ไม่ได้ ที่อยู่: {U}",
     gate_forgot: "ลืมรหัสผ่าน?",
+    gate_session_ended: "เซสชันหมดอายุแล้ว — เข้าสู่ระบบอีกครั้ง",
+    gate_acct_off: "บัญชีนี้ถูกปิด — ติดต่อครูผู้สอน",
+    gate_confirm: "อีเมลนี้ยังไม่ได้ยืนยัน — เปิดอีเมลที่เราส่งให้",
+    gate_gone: "ไม่มีบัญชีนี้แล้ว — ติดต่อครูผู้สอน",
+    gate_server: "เซิร์ฟเวอร์มีปัญหา — รอสักครู่แล้วลองใหม่",
+    gate_service_down: "ติดต่อเซิร์ฟเวอร์ลิขสิทธิ์ไม่ได้ — ตรวจอินเทอร์เน็ตแล้วกดตรวจอีกครั้ง",
+    gate_no_lease: "เซิร์ฟเวอร์ไม่ได้ให้สิทธิ์ใช้งานแผง — กดตรวจอีกครั้ง",
+    gate_sent_as: "ส่งเป็น {E} · {N} ตัวอักษร",
     app_title: "HNK Ai Panel (\u0e19\u0e31\u0e01\u0e40\u0e23\u0e35\u0e22\u0e19)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "\u0e41\u0e2a\u0e14\u0e07",
@@ -3749,6 +3789,14 @@ const I18N = {
     gate_grace: "离线 — 还可离线使用 {D} 天",
     gate_open_fail: "无法打开浏览器。网址：{U}",
     gate_forgot: "忘记密码？",
+    gate_session_ended: "登录状态已过期 — 请重新登录。",
+    gate_acct_off: "该账户已被关闭 — 请联系老师。",
+    gate_confirm: "该邮箱尚未验证 — 请打开我们发送的邮件。",
+    gate_gone: "该账户已不存在 — 请联系老师。",
+    gate_server: "服务器出现问题 — 请稍候再试。",
+    gate_service_down: "无法连接授权服务器 — 请检查网络后再次点击检查。",
+    gate_no_lease: "服务器未返回有效的面板授权 — 请再次点击检查。",
+    gate_sent_as: "已发送 {E} · {N} 个字符",
     app_title: "HNK Ai \u9762\u677f\uff08\u5b66\u751f\u7248\uff09",
     sec_api: "RunningHub Enterprise \u5bc6\u94a5",
     btn_show: "\u663e\u793a",
@@ -4382,6 +4430,14 @@ const I18N = {
     gate_grace: "Ngoại tuyến — còn dùng ngoại tuyến được {D} ngày",
     gate_open_fail: "Không mở được trình duyệt. Địa chỉ: {U}",
     gate_forgot: "Quên mật khẩu?",
+    gate_session_ended: "Phiên đăng nhập đã hết — hãy đăng nhập lại.",
+    gate_acct_off: "Tài khoản này đã bị khoá — hãy liên hệ giáo viên.",
+    gate_confirm: "Địa chỉ này chưa được xác nhận — hãy mở email chúng tôi đã gửi.",
+    gate_gone: "Tài khoản này không còn tồn tại — hãy liên hệ giáo viên.",
+    gate_server: "Máy chủ gặp sự cố — hãy chờ một lát rồi thử lại.",
+    gate_service_down: "Không kết nối được máy chủ bản quyền — kiểm tra mạng rồi bấm Kiểm tra lại.",
+    gate_no_lease: "Máy chủ không cấp quyền dùng bảng — bấm Kiểm tra lại.",
+    gate_sent_as: "Đã gửi {E} · {N} ký tự",
     app_title: "HNK Photoshop Ai Panel (H\u1ecdc vi\u00ean)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "Hi\u1ec7n",
@@ -5015,6 +5071,14 @@ const I18N = {
     gate_grace: "Offline — sisa {D} hari pemakaian offline",
     gate_open_fail: "Tidak bisa membuka browser. Alamat: {U}",
     gate_forgot: "Lupa kata sandi?",
+    gate_session_ended: "Sesi Anda berakhir — masuk lagi.",
+    gate_acct_off: "Akun ini ditutup — hubungi guru.",
+    gate_confirm: "Alamat ini belum dikonfirmasi — buka email yang kami kirim.",
+    gate_gone: "Akun ini sudah tidak ada — hubungi guru.",
+    gate_server: "Server bermasalah — tunggu sebentar lalu coba lagi.",
+    gate_service_down: "Tidak dapat menghubungi server lisensi — periksa internet lalu tekan Periksa lagi.",
+    gate_no_lease: "Server tidak memberi lisensi panel — tekan Periksa lagi.",
+    gate_sent_as: "Dikirim sebagai {E} · {N} karakter",
     app_title: "HNK Photoshop Ai Panel (Pelajar)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "Tampilkan",
@@ -5648,6 +5712,14 @@ const I18N = {
     gate_grace: "Luar talian — tinggal {D} hari penggunaan luar talian",
     gate_open_fail: "Tidak dapat membuka pelayar. Alamat: {U}",
     gate_forgot: "Lupa kata laluan?",
+    gate_session_ended: "Sesi anda tamat — log masuk semula.",
+    gate_acct_off: "Akaun ini ditutup — hubungi guru.",
+    gate_confirm: "Alamat ini belum disahkan — buka e-mel yang kami hantar.",
+    gate_gone: "Akaun ini sudah tiada — hubungi guru.",
+    gate_server: "Pelayan bermasalah — tunggu sebentar dan cuba lagi.",
+    gate_service_down: "Tidak dapat menghubungi pelayan lesen — semak internet dan tekan Semak semula.",
+    gate_no_lease: "Pelayan tidak memberi lesen panel — tekan Semak semula.",
+    gate_sent_as: "Dihantar sebagai {E} · {N} aksara",
     app_title: "HNK Photoshop Ai Panel (Pelajar)",
     sec_api: "RunningHub Enterprise Key",
     btn_show: "Papar",
@@ -6243,7 +6315,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.102.3";
+const PANEL_VERSION = "6.102.4";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6774,7 +6846,7 @@ async function gateRegisterDevice() {
     gateS.enrolled = true;
     return { ok: true, body: j };
   } catch (e) {
-    return { ok: false, status: 0, body: { message: "License service is unavailable" } };
+    return { ok: false, status: 0, body: { message: gateT("gate_service_down") } };
   }
 }
 
@@ -6796,14 +6868,31 @@ const GATE_REASON_MY = {
      a taken computer slot. Name the real cause: nothing is wrong with the
      account, this copy simply is not published yet. */
   version_blocked: "ဒီ panel ဗားရှင်းကို server မှာ မထုတ်ပြန်ရသေးပါ — အကောင့်နဲ့ မသက်ဆိုင်ပါ။ ဆရာ့ကို ပြောပြီး ဒီဗားရှင်းကို ထုတ်ပြန်ခိုင်းပါ ဒါမှမဟုတ် website ကနေ တရားဝင်ဗားရှင်းကို ပြန်သွင်းပါ",
-  invalid_version: "ဒီ panel ဗားရှင်းကို server က မသိပါ — website ကနေ တရားဝင်ဗားရှင်းကို ပြန်သွင်းပါ"
+  invalid_version: "ဒီ panel ဗားရှင်းကို server က မသိပါ — website ကနေ တရားဝင်ဗားရှင်းကို ပြန်သွင်းပါ",
+  /* v6.102.4 — the other NINE verdicts this server sends reached the card as its
+     English "Access denied" (server/lib/authorization.js REASONS; fail() puts the
+     reason in `error`). A locked panel now always names its own cause. */
+  update_required: "ဒီ panel ဗားရှင်း အဟောင်း ဖြစ်နေပါပြီ — website ကနေ အသစ်ကို ယူပြီး ပြန်သွင်းပါ (Update Required)",
+  pending: "အကောင့်ကို ဆရာက အတည် မပြုရသေးပါ — အတည်ပြုပြီးမှ panel ဝင်လို့ ရပါမယ်",
+  not_active: "အကောင့် အသုံးပြုခွင့် မဖွင့်ရသေးပါ — ဆရာ့ကို ဆက်သွယ်ပါ",
+  suspended: "အကောင့်ကို ခဏ ရပ်ဆိုင်းထားပါတယ် — ဆရာ့ကို ဆက်သွယ်ပါ",
+  banned: "အကောင့်ကို ပိတ်ထားပါတယ် — ဆရာ့ကို ဆက်သွယ်ပါ",
+  rejected: "အကောင့်ကို ငြင်းပယ်ထားပါတယ် — ဆရာ့ကို ဆက်သွယ်ပါ",
+  license_missing: "လိုင်စင် မရှိသေးပါ — website မှာ ဝယ်ပြီး ပြန်စစ်ပါ",
+  license_revoked: "လိုင်စင်ကို ရုပ်သိမ်းထားပါတယ် — ဆရာ့ကို ဆက်သွယ်ပါ",
+  license_not_started: "လိုင်စင် စတင်ရက် မရောက်သေးပါ — ရက်ရောက်မှ ဝင်လို့ ရပါမယ်",
+  license_expired: "လိုင်စင် သက်တမ်း ကုန်သွားပါပြီ — website မှာ သက်တမ်းတိုးပြီး ပြန်စစ်ပါ",
+  panel_disabled: "ဒီအကောင့်အတွက် Photoshop Panel ခွင့် မဖွင့်ထားပါ — ဆရာ့ကို ဖွင့်ပေးဖို့ ပြောပါ",
+  web_disabled: "ဒီအကောင့်အတွက် Web App ခွင့် မဖွင့်ထားပါ — ဆရာ့ကို ပြောပါ",
+  download_disabled: "ဒီအကောင့်အတွက် Panel download ခွင့် မဖွင့်ထားပါ — ဆရာ့ကို ပြောပါ",
+  device_required: "ဒီ computer ကို အကောင့်နဲ့ ချိတ်ရဦးမယ် — \"ပြန်စစ်ရန်\" နှိပ်ပါ"
 };
 function gateResponseMessage(j, status) {
-  if (status === 426 || (j && j.code === "UPDATE_REQUIRED")) return "Update Required";
+  if (status === 426 || (j && j.code === "UPDATE_REQUIRED")) return GATE_REASON_MY.update_required;
   const reason = j && (j.error || j.code);
   if (reason && GATE_REASON_MY[reason]) return GATE_REASON_MY[reason];
   return String((j && (j.message || j.msg || j.error)) ||
-    (status ? ("Access denied (HTTP " + status + ")") : "License service is unavailable"));
+    (status ? (gateT("gate_server") + " (HTTP " + status + ")") : gateT("gate_service_down")));
 }
 
 function gateLeaseExpiry(j) {
@@ -6846,7 +6935,7 @@ async function gateValidate(force) {
     const expires = gateLeaseExpiry(j);
     if (!lease || !expires || expires <= Date.now()) {
       gateS.lease = ""; gateS.leaseExp = 0;
-      gateShow("locked"); gateErr("License server returned no valid panel lease");
+      gateShow("locked"); gateErr(gateT("gate_no_lease"));
       return false;
     }
     gateS.lease = lease;
@@ -6860,7 +6949,7 @@ async function gateValidate(force) {
     return true;
   } catch (e) {
     gateS.lease = ""; gateS.leaseExp = 0;
-    gateShow("locked"); gateErr("License service is unavailable");
+    gateShow("locked"); gateErr(gateT("gate_service_down"));
     return false;
   }
 }
@@ -6886,9 +6975,14 @@ async function gateCheck() {
   const rf = await gateRefresh(ticket);
   if (gateStale(ticket)) return;
   if (rf !== true) {
+    /* v6.102.4 — THE MESSAGE IN THE OWNER'S PHOTOGRAPH. This path runs at launch,
+       against the session remembered on disk, before anybody has typed anything —
+       and it said "Wrong email or password". A remembered session that the server
+       has rotated away, revoked or expired is not a wrong password, and telling a
+       student it is sends them to change a password that was always correct. */
     if (rf === "dead") gateForget();
     gateShow(rf === "dead" ? "login" : "locked");
-    gateErr(rf === "dead" ? gateT("gate_bad") : "License service is unavailable");
+    gateErr(gateT(rf === "dead" ? "gate_session_ended" : "gate_service_down"));
     return;
   }
   /* v6.27.0 — the profiles row (photo, name, plan, device limit) rides
@@ -6912,6 +7006,36 @@ function retiredOfflinePath() {
   gateErr(gateT("gate_offline"));
 }
 
+/* v6.102.4 — WHICH refusal this is. Until now everything that was not 429 or 503 —
+   a suspended account (403), an unconfirmed address (400 email_not_confirmed), a
+   deleted account (404), every 5xx — was shown as "Wrong email or password", so the
+   one screen a student can act on lied about four different causes. The web app's
+   accFriendly has always read these codes (server/lib/auth.js); the panel now reads
+   the same ones and says the same things. Only a real credential refusal keeps
+   gate_bad. */
+function gateSignInKey(status, body) {
+  let code = "";
+  try {
+    const b = body && typeof body === "object" ? body : {};
+    code = String(b.error_code || b.code || b.error || b.message || b.msg || "");
+  } catch (e) { code = ""; }
+  if (status === 429 || /rate_limited|Too many/i.test(code)) return "gate_wait";
+  if (status === 503 || /auth_busy/i.test(code)) return "gate_busy";
+  if (status === 403 || /^account_|Account is /i.test(code)) return "gate_acct_off";
+  if (/email_not_confirmed|Email not confirmed/i.test(code)) return "gate_confirm";
+  if (status === 404 || /not_found|User not found/i.test(code)) return "gate_gone";
+  if (status >= 500 || status === 0) return "gate_server";
+  if (status === 400 || status === 401 || status === 422) return "gate_bad";
+  return "gate_server";
+}
+/* The address exactly as it left the panel, and how many characters the password
+   field held — never the password itself. An invisible character in a pasted
+   address, or a keystroke the UXP field silently dropped, is visible here and
+   nowhere else. */
+function gateSentAs(email, pw) {
+  return gateT("gate_sent_as").replace("{E}", String(email || ""))
+    .replace("{N}", String(String(pw || "").length));
+}
 /* v6.102.2 — " (HTTP 400 · invalid_grant)": the status and the server's code field, nothing else
    from the body, so the line stays short and never echoes a credential. */
 function gateHttpNote(status, body) {
@@ -6924,7 +7048,12 @@ function gateHttpNote(status, body) {
 }
 async function gateSignIn() {
   if (gateS.busy) return;
-  const em = ((gateEl("gateEmail") || {}).value || "").trim();
+  /* v6.102.4 — an address never contains whitespace, and a pasted one arrives
+     carrying it: a trailing space, a non-breaking space out of a chat message, a
+     zero-width character out of a web page. Each one made the server answer
+     "Invalid login credentials" for a perfectly correct address. */
+  const em = ((gateEl("gateEmail") || {}).value || "")
+    .replace(/[\s\u00a0\u200b\u200c\u200d\ufeff]+/g, "");
   const pw = (gateEl("gatePass") || {}).value || "";
   if (!em || !pw) { gateErr(gateT("gate_need")); return; }
   gateBusy(true); gateErr("");
@@ -6939,19 +7068,21 @@ async function gateSignIn() {
        accFriendly() has always mapped these; the panel now reads the same
        codes (server/lib/auth.js) and says the same three things. */
     if (!r.ok) {
-      let code = "", body = null;
-      try { body = await r.clone().json(); code = JSON.stringify(body); } catch (e) { }
-      const key = (r.status === 429 || /rate_limited|Too many/i.test(code)) ? "gate_wait"
-        : (r.status === 503 || /auth_busy/i.test(code)) ? "gate_busy"
-        : "gate_bad";
+      let body = null;
+      try { body = await r.clone().json(); } catch (e) { }
+      const key = gateSignInKey(r.status, body);
       /* v6.102.2 — the refusal names the HTTP status and the server's own code (owner, 2026-09-08:
          the panel said "wrong email or password" while the same password opened the web app on the
          same computer, and nothing on screen said what the server had really answered). The web
-         app's accFriendly reads the same fields; a support screenshot now carries the real reason. */
-      gateErr(gateT(key) + (key === "gate_bad" ? gateHttpNote(r.status, body) : "")); gateBusy(false); return;
+         app's accFriendly reads the same fields; a support screenshot now carries the real reason.
+         v6.102.4 — and when the server really did refuse the credential, the line also carries the
+         address as it was sent and the length of what was typed, so a stray character is visible. */
+      gateErr(gateT(key) + gateHttpNote(r.status, body) +
+        (key === "gate_bad" ? " · " + gateSentAs(em, pw) : ""));
+      gateBusy(false); return;
     }
     const j = await r.json();
-    if (!gateSaveSess(j)) { gateErr(gateT("gate_bad") + gateHttpNote(r.status, { code: "no_session_in_reply" })); gateBusy(false); return; }
+    if (!gateSaveSess(j)) { gateErr(gateT("gate_server") + gateHttpNote(r.status, { code: "no_session_in_reply" })); gateBusy(false); return; }
     const p = gateEl("gatePass"); if (p) p.value = "";
     gateS.run++;                 /* whatever was in flight is about another account */
     await gateCheck();
@@ -7134,7 +7265,7 @@ function gateWire() {
 function gateHeartbeat() {
   if (!gateS.sess || gateS.busy || gateS.view === "login") return;
   gateValidate(true).catch(function () {
-    gateShow("locked"); gateErr("License service is unavailable");
+    gateShow("locked"); gateErr(gateT("gate_service_down"));
   });
 }
 
