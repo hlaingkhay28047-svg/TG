@@ -6234,7 +6234,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.102.1";
+const PANEL_VERSION = "6.102.2";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6299,7 +6299,9 @@ async function checkPanelUpdate(doc) {
    offline API, or a revoked lease leaves the panel locked rather than open.
    ========================================================================== */
 const GATE_API_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/api";
-const GATE_BUY_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/";
+/* v6.102.2 — the website button opens the official public origin (5.50.3 made hnkaistudio.com the one address
+   students know); the DigitalOcean default host is the API's address, not the studio's. */
+const GATE_BUY_URL = "https://hnkaistudio.com/app/";
 const GATE_TIMEOUT = 20000;
 const GATE_DAY = 86400000;
 const GATE_LEASE_REFRESH_MS = 180000;
@@ -6886,6 +6888,16 @@ function retiredOfflinePath() {
   gateErr(gateT("gate_offline"));
 }
 
+/* v6.102.2 — " (HTTP 400 · invalid_grant)": the status and the server's code field, nothing else
+   from the body, so the line stays short and never echoes a credential. */
+function gateHttpNote(status, body) {
+  let code = "";
+  try {
+    const b = body && typeof body === "object" ? body : {};
+    code = String(b.error_code || b.code || b.error || "").slice(0, 40);
+  } catch (e) { code = ""; }
+  return " (HTTP " + status + (code && !/^\d+$/.test(code) ? " · " + code : "") + ")";
+}
 async function gateSignIn() {
   if (gateS.busy) return;
   const em = ((gateEl("gateEmail") || {}).value || "").trim();
@@ -6903,15 +6915,19 @@ async function gateSignIn() {
        accFriendly() has always mapped these; the panel now reads the same
        codes (server/lib/auth.js) and says the same three things. */
     if (!r.ok) {
-      let code = "";
-      try { code = JSON.stringify(await r.clone().json()); } catch (e) { }
+      let code = "", body = null;
+      try { body = await r.clone().json(); code = JSON.stringify(body); } catch (e) { }
       const key = (r.status === 429 || /rate_limited|Too many/i.test(code)) ? "gate_wait"
         : (r.status === 503 || /auth_busy/i.test(code)) ? "gate_busy"
         : "gate_bad";
-      gateErr(gateT(key)); gateBusy(false); return;
+      /* v6.102.2 — the refusal names the HTTP status and the server's own code (owner, 2026-09-08:
+         the panel said "wrong email or password" while the same password opened the web app on the
+         same computer, and nothing on screen said what the server had really answered). The web
+         app's accFriendly reads the same fields; a support screenshot now carries the real reason. */
+      gateErr(gateT(key) + (key === "gate_bad" ? gateHttpNote(r.status, body) : "")); gateBusy(false); return;
     }
     const j = await r.json();
-    if (!gateSaveSess(j)) { gateErr(gateT("gate_bad")); gateBusy(false); return; }
+    if (!gateSaveSess(j)) { gateErr(gateT("gate_bad") + gateHttpNote(r.status, { code: "no_session_in_reply" })); gateBusy(false); return; }
     const p = gateEl("gatePass"); if (p) p.value = "";
     gateS.run++;                 /* whatever was in flight is about another account */
     await gateCheck();

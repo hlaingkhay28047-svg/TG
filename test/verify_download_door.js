@@ -6,6 +6,10 @@
    ?panel=download deep link (landing forwarder, panel button) still opens it in place, and the
    panel's Home and Tutorials mirror the app.
 
+   v6.33.2 — the Account Center's PANEL DOWNLOAD / PHOTOSHOP PANEL tiles say "Computer only" on a phone
+   whose administrator granted both permissions (the server denies computer-only capabilities with
+   device_mismatch there); OFF is reserved for a permission the administrator really switched off.
+
    Owner decision (2026-09-06): the Photoshop Panel is downloaded from the web
    app's Account → Photoshop Panel group and nowhere else. The unified API had
    issued its one-time, five-minute delivery to a signed-in WEB session only
@@ -93,10 +97,16 @@ report("B3) the request itself is unchanged: POST /v1/downloads/panel from the a
   !/computer_installation_id|installation_hash/.test(requester));
 report("B4) What's New names the one door (my + en)",
   /\{ v:"6\.28\.0", kind:"page", ref:"pgHome",\n\s+t:\{my:"[^"]*Web App[^"]*",en:"[^"]*one place[^"]*Web App/.test(APP));
-report("B5) What's New 6.33.1 sits newest and names the one place (my + en)",
-  /var WHATS_NEW = \[\n\s+\{ v:"6\.33\.1", kind:"page", ref:"pgHome",\n\s+t:\{my:"[^"]*တစ်နေရာတည်း[^"]*",en:"[^"]*one place only: Setup ▸ Account ▸ Photoshop Panel/.test(APP));
+report("B5) What's New 6.33.1 names the one place (my + en); verify_whats_new owns the newest-first rule",
+  /\{ v:"6\.33\.1", kind:"page", ref:"pgHome",\n\s+t:\{my:"[^"]*တစ်နေရာတည်း[^"]*",en:"[^"]*one place only: Setup ▸ Account ▸ Photoshop Panel/.test(APP));
+report("B5b) What's New 6.33.2 tells a phone why its tiles say Computer only (my + en)",
+  /\{ v:"6\.33\.2", kind:"page", ref:"pgAccount",\n\s+t:\{my:"[^\n]*?Computer only[^\n]*?",en:"[^\n]*?read \\"Computer only\\" instead of \\"OFF\\"/.test(APP));
 report("B6) the one button answers where it was pressed: a toast on refusal, on success and on failure",
   (requester.match(/toast\(/g) || []).length === 3 && requester.includes('toast("Temporary Panel delivery created'));
+
+report("B7) the tile helper exists and knows the three words",
+  APP.includes("function unifiedPermTile(granted, allowedHere, reason){") && APP.includes('return unifiedComputerOnly(reason) ? "Computer only" : "OFF";') &&
+  APP.includes('reason === "device_mismatch" || reason === "device_required"'));
 
 /* ---- C) the panel and the server ---- */
 const HOME = read("panel/src/ui/screens/home-screen.js");
@@ -202,6 +212,40 @@ async function armPage(page, errs) {
       landed && f.stage === "done" && f.panelOpen && f.focused === "accPanelDownload", f);
     await ctx2.close();
   } finally { try { srv.kill(); } catch (e) {} }
+
+  /* ---- G) 6.33.2 — a phone with every permission granted ---- */
+  function phoneEntitlement() {
+    const e = premiumEntitlement();
+    e.devices.phone = { id: "dev-fixture-phone", label: "Android · Chrome", installed_at: "2026-09-01T00:00:00Z" };
+    e.devices.computer = { id: "dev-fixture-pc", label: "Windows · Chrome", installed_at: "2026-09-01T00:00:00Z" };
+    e.permissions = { web_app: true, ccx_download: true, photoshop_panel: true };
+    e.allowed = { web_app: true, ccx_download: false, panel: false };
+    e.reasons = { web_app: "allowed", ccx_download: "device_mismatch", panel: "device_mismatch" };
+    return e;
+  }
+  const ctx3 = await browser.newContext({ viewport: { width: 412, height: 900 } });
+  const p3 = await ctx3.newPage(); p3.on("pageerror", e => errs.push(String(e).slice(0, 200)));
+  await p3.route("**/api/v1/me/entitlement", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(phoneEntitlement()) }));
+  await p3.addInitScript(() => { try { localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1"); } catch (e) {} });
+  await p3.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+  await p3.waitForTimeout(2200);
+  const g = await p3.evaluate(() => {
+    switchPage("pgAccount");
+    const t = id => document.getElementById(id).textContent.trim();
+    const before = { web: t("unifiedWebPermission"), dl: t("unifiedDownloadPermission"), panel: t("unifiedPanelPermission"), note: t("unifiedDownloadNote"),
+      can: unifiedCanDownload(), grpHidden: document.getElementById("accGrpPanel").classList.contains("hide") };
+    unified.entitlement.permissions.ccx_download = false; unified.entitlement.reasons.ccx_download = "download_disabled"; unifiedRender();
+    const off = { dl: t("unifiedDownloadPermission"), note: t("unifiedDownloadNote") };
+    unified.entitlement.permissions.ccx_download = true; unified.entitlement.reasons.ccx_download = "allowed"; unified.entitlement.allowed.ccx_download = true;
+    unified.entitlement.allowed.panel = true; unified.entitlement.reasons.panel = "allowed"; unifiedRender();
+    const on = { dl: t("unifiedDownloadPermission"), panel: t("unifiedPanelPermission"), can: unifiedCanDownload() };
+    return { before, off, on };
+  });
+  report("G) a phone with every permission granted reads Computer only (not OFF) for the download and the Panel, WEB APP stays ON, the download stays refused and the group hidden, and the note says where to download",
+    g.before.web === "ON" && g.before.dl === "Computer only" && g.before.panel === "Computer only" && !g.before.can && g.before.grpHidden && /registered Computer only/.test(g.before.note), g.before);
+  report("G2) a permission the administrator really switched off still reads OFF, and one allowed on this device reads ON",
+    g.off.dl === "OFF" && /Download requires/.test(g.off.note) && g.on.dl === "ON" && g.on.panel === "ON" && g.on.can === true, { off: g.off, on: g.on });
+  await ctx3.close();
 
   report("F) no page error while the doors were driven", errs.length === 0, errs);
   await browser.close();

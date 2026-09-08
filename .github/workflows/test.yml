@@ -845,3 +845,7 @@ jobs:
       # 6.33.0 wave — Imagine W4: Hair & Makeup · Body Shape · Sky Replace · Text & Sign Edit (brush + typed words) · Batch Imagine (recipes)
       - name: Run Imagine W4 sweep (five more tools, typed-words templates, recipe chains on both surfaces, art, the chain-aware art runner, What's New)
         run: PORT=8931 node test/verify_imagine_w4.js
+
+      # 6.33.2 / panel 6.102.2 — the panel sign-in probe lane (live sign-in / refresh / entitlement / logout from a runner, throwaway account)
+      - name: Run sign-in probe lane contract (dispatch-only, masked password, token-free records, mirrors the panel's request shapes)
+        run: PORT=8931 node test/verify_login_probe_lane.js
