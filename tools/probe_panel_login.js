@@ -9,10 +9,21 @@
      4  sign-in           web shape        hnkaistudio.com       accHeaders (apikey anon), {email,password}
      5  refresh           PANEL shape      DigitalOcean host     grant_type=refresh_token
      6  entitlement       PANEL bearer     DigitalOcean host     GET /v1/me/entitlement (pending account → denials, that is expected)
-     7  logout            PANEL bearer     DigitalOcean host     POST /auth/v1/logout {refresh_token}
-     8  refresh after 7   PANEL shape      DigitalOcean host     must be refused
-     9  wrong password    PANEL shape      DigitalOcean host     must be 400 invalid_grant — the "(HTTP 400 · invalid_grant)" line
-    10  unknown address   PANEL shape      DigitalOcean host     must be 400 invalid_grant
+     7  enroll            PANEL bearer     DigitalOcean host     POST /v1/devices/enroll  — the panel's own gateRegisterDevice body
+     8  validate          PANEL bearer     DigitalOcean host     POST /v1/panel/validate  — with the version THIS TREE ships
+     9  released version  (comparison)                           the cluster's latest_version must equal panel/release-manifest.json
+    10  logout            PANEL bearer     DigitalOcean host     POST /auth/v1/logout {refresh_token}
+    11  refresh after 10  PANEL shape      DigitalOcean host     must be refused
+    12  wrong password    PANEL shape      DigitalOcean host     must be 400 invalid_grant — the "(HTTP 400 · invalid_grant)" line
+    13  unknown address   PANEL shape      DigitalOcean host     must be 400 invalid_grant
+
+   Steps 7-9 exist because of 2026-09-08. A build the cluster has no release row for is
+   refused by /v1/panel/validate with version_blocked, so a .ccx handed over before its
+   release is published signs in and then locks — and nothing on this side said so. A
+   pending probe account is denied at the account check long before the version check,
+   so the version gate cannot be proven by a refusal; step 9 proves it directly instead,
+   by asking the live server which version it calls latest and comparing that with the
+   version this tree ships.
 
    The password is generated here and masked before anything else prints. A 200 body
    is reduced to booleans (has_access / has_refresh / user_id) before it is recorded. */
@@ -78,6 +89,18 @@ function line(rec) {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const isSession = (s, c, j) => s === 200 && !!(j && j.access_token && j.refresh_token && j.user && j.user.id);
 const isInvalidGrant = (s, c) => s === 400 && /invalid_grant/.test(c);
+/* An authorization refusal is expected for a pending probe account (pending, license_missing,
+   device_required …). A VERSION verdict is not: it would mean the live server does not accept
+   the build this tree ships. */
+const VERSION_VERDICT = /version_blocked|invalid_version|update_required/;
+const notVersionVerdict = (s, c) => (s === 200) || (s >= 400 && s < 500 && !VERSION_VERDICT.test(c));
+/* a row that is a measurement rather than a request */
+function note(step, name, ok, code) {
+  const rec = { step, name, url: "(comparison)", status: 0, code: String(code).slice(0, 60), ms: 0, ok: !!ok };
+  results.push(rec); console.log(line(rec)); return rec;
+}
+const TREE_VERSION = String((require("../panel/release-manifest.json") || {}).version || "");
+const INSTALL_ID = "probe-" + crypto.randomBytes(8).toString("hex");
 
 (async () => {
   console.log("probe account: " + EMAIL + "  (password: generated on this runner, masked, never printed)");
@@ -106,7 +129,7 @@ const isInvalidGrant = (s, c) => s === 400 && /invalid_grant/.test(c);
     confirmRequired ? (s, c) => s === 400 && /email_not_confirmed/.test(c) : isSession);
   await sleep(1500);
 
-  let access = "", refresh = "";
+  let access = "", refresh = "", entitlementBody = null;
   if (p1.json && p1.json.access_token) { access = p1.json.access_token; refresh = p1.json.refresh_token || ""; }
   if (access) {
     /* 5 — refresh, panel shape (panel/main.js gateRefresh) */
@@ -117,32 +140,59 @@ const isInvalidGrant = (s, c) => s === 400 && /invalid_grant/.test(c);
     /* 6 — entitlement with the panel's bearer: a pending account is DENIED here, by design */
     const en = await call(6, "entitlement PANEL bearer · DO host", PANEL_HOST + "/api/v1/me/entitlement",
       { method: "GET", headers: panelHeaders(access, false) }, (s, c, j) => s === 200 && !!(j && j.account && j.allowed));
-    if (en.json && en.json.account) console.log("      entitlement: " + JSON.stringify(sanitize({ account: en.json.account, allowed: en.json.allowed, reasons: en.json.reasons })));
+    entitlementBody = en.json;
+    if (en.json && en.json.account) console.log("      entitlement: " + JSON.stringify(sanitize({ account: en.json.account, allowed: en.json.allowed, reasons: en.json.reasons, panel: en.json.panel })));
     await sleep(1200);
-    /* 7 — logout, panel bearer */
-    await call(7, "logout PANEL bearer · DO host", PANEL_HOST + "/api/auth/v1/logout",
+    /* 7 — the panel registers this computer (panel/main.js gateRegisterDevice). A pending
+       account is refused here by the ACCOUNT check; what must never come back is a version
+       verdict, which would mean the server does not accept this build at all. */
+    await call(7, "enroll PANEL bearer · DO host", PANEL_HOST + "/api/v1/devices/enroll",
+      { method: "POST", headers: panelHeaders(access, true),
+        body: JSON.stringify({ installation_id: INSTALL_ID, device_type: "computer", channel: "panel", label: "probe" }) },
+      notVersionVerdict);
+    await sleep(1200);
+    /* 8 — the lease call the panel makes before every protected operation, carrying the
+       version THIS TREE ships (panel/main.js gateValidate). Same rule as step 7. */
+    await call(8, "validate PANEL bearer · DO host", PANEL_HOST + "/api/v1/panel/validate",
+      { method: "POST", headers: panelHeaders(access, true),
+        body: JSON.stringify({ installation_id: INSTALL_ID, panel_version: TREE_VERSION }) },
+      notVersionVerdict);
+    await sleep(1200);
+    /* 9 — THE GUARD. The cluster's own answer for which build is current, against the build
+       this commit ships. They must be the same, or every .ccx built from this tree is one the
+       server will refuse with version_blocked once a real account gets that far. */
+    const liveLatest = String((entitlementBody && entitlementBody.panel && entitlementBody.panel.latest_version) || "");
+    note(9, "released version = this tree", !!liveLatest && !!TREE_VERSION && liveLatest === TREE_VERSION,
+      "tree=" + (TREE_VERSION || "?") + " live=" + (liveLatest || "?"));
+    if (liveLatest && TREE_VERSION && liveLatest !== TREE_VERSION) {
+      console.log("      THE PANEL RELEASE IS NOT PUBLISHED. This tree ships " + TREE_VERSION + " but the cluster still calls " +
+        liveLatest + " the latest release, so a .ccx built here signs in and then locks (version_blocked). Run the panel-release lane (publish).");
+    }
+    await sleep(1200);
+    /* 10 — logout, panel bearer */
+    await call(10, "logout PANEL bearer · DO host", PANEL_HOST + "/api/auth/v1/logout",
       { method: "POST", headers: panelHeaders(access, true), body: JSON.stringify({ refresh_token: refresh }) }, s => s === 200 || s === 204);
     await sleep(1200);
-    /* 8 — the refresh token must be dead now */
-    await call(8, "refresh after logout · must fail", PANEL_HOST + REFRESH,
+    /* 11 — the refresh token must be dead now */
+    await call(11, "refresh after logout · must fail", PANEL_HOST + REFRESH,
       { method: "POST", headers: panelHeaders(null, true), body: JSON.stringify({ refresh_token: refresh, client_kind: "panel" }) }, s => s === 400 || s === 401);
     await sleep(1200);
   } else {
-    console.log("      (no session from step 2 — steps 5-8 skipped)");
+    console.log("      (no session from step 2 — steps 5-11 skipped)");
   }
-  /* 9 — the refusal a wrong password earns: the line the 6.102.2 panel prints is "(HTTP 400 · invalid_grant)" */
-  await call(9, "wrong password PANEL shape", PANEL_HOST + TOKEN,
+  /* 12 — the refusal a wrong password earns: the line the 6.102.2 panel prints is "(HTTP 400 · invalid_grant)" */
+  await call(12, "wrong password PANEL shape", PANEL_HOST + TOKEN,
     { method: "POST", headers: panelHeaders(null, true), body: JSON.stringify({ email: EMAIL, password: PASSWORD + "x", client_kind: "panel" }) }, isInvalidGrant);
   await sleep(1500);
-  /* 10 — an unknown address earns the same answer (no account enumeration) */
-  await call(10, "unknown address PANEL shape", PANEL_HOST + TOKEN,
+  /* 13 — an unknown address earns the same answer (no account enumeration) */
+  await call(13, "unknown address PANEL shape", PANEL_HOST + TOKEN,
     { method: "POST", headers: panelHeaders(null, true), body: JSON.stringify({ email: "panel-probe-nobody-" + RUN + "@hnkaistudio.com", password: PASSWORD, client_kind: "panel" }) }, isInvalidGrant);
 
   const failed = results.filter(r => !r.ok);
   const verdict = failed.length ? "FAIL (" + failed.length + " unexpected)" : "PASS — the panel's sign-in, refresh, entitlement and logout all answer as designed on the live server";
   console.log("\n" + verdict);
   console.log("===LOGIN-PROBE-JSON-BEGIN===");
-  console.log(JSON.stringify({ run: RUN, account: EMAIL, confirm_required: confirmRequired, results: results.map(r => Object.assign({}, r, { expect: undefined })) }, null, 1));
+  console.log(JSON.stringify({ run: RUN, account: EMAIL, tree_version: TREE_VERSION, confirm_required: confirmRequired, results: results.map(r => Object.assign({}, r, { expect: undefined })) }, null, 1));
   console.log("===LOGIN-PROBE-JSON-END===");
   try {
     if (process.env.GITHUB_STEP_SUMMARY) {
