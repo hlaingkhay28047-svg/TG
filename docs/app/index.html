@@ -2527,10 +2527,10 @@ html.splashing #splash{display:flex}
   </section>
   <section class="card">
     <h2>Registered devices</h2>
-    <p class="mut">Device replacement is protected. Students cannot reset a registered slot; an HNK administrator must approve the reset.</p>
+    <p class="mut">You can release your own Computer slot once every 7 days, and every release is recorded. The Phone slot is still reset by an HNK administrator.</p>
     <div class="unified-devices">
       <article class="unified-device"><h3>Phone · Web App</h3><p id="unifiedPhone">Checking this Phone slot…</p><button class="btn" id="unifiedEnrollPhone" type="button">Register this Phone</button></article>
-      <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button><p class="mut" style="margin-top:6px;font-size:12px">ဒီ computer က တစ်ခါ register ဖြစ်ပြီးရင် အလိုအလျောက် မှတ်ထားပါတယ် — Photoshop panel လည်း sign-in တစ်ခါတည်းနဲ့ ဝင်လို့ရပါပြီ။ စက် ထပ်တိုးချင်ရင် ဆရာ့ကို ပြောပါ။</p></article>
+      <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button><button class="btn" id="unifiedReleaseComputer" type="button" hidden>Release this Computer</button><p class="mut" style="margin-top:6px;font-size:12px">ဒီ computer က တစ်ခါ register ဖြစ်ပြီးရင် အလိုအလျောက် မှတ်ထားပါတယ် — Photoshop panel လည်း sign-in တစ်ခါတည်းနဲ့ ဝင်လို့ရပါပြီ။ စက်အသစ် ပြောင်းလိုက်ရင် အပေါ်က “Computer နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်လိုက်ပါ — ၇ ရက်ကို တစ်ကြိမ် ကိုယ်တိုင် လုပ်လို့ရပါတယ်။ စက် အရေအတွက် ထပ်တိုးချင်တာကတော့ ဆရာ့ကို ပြောပါ။</p></article>
     </div>
   </section>
   <section class="card">
@@ -4467,6 +4467,7 @@ var TR_V430={
   dev_removed:{my:"စက်ကို ဖယ်ရှားပြီးပါပြီ ✓",en:"Device removed ✓",shn:"ဢဝ်ၶိူင်ႈဢွၵ်ႇယဝ်ႉ ✓",kac:"Device shale kau ngut sai ✓",th:"นำอุปกรณ์ออกแล้ว ✓",zh:"设备已移除 ✓",vi:"Đã gỡ thiết bị ✓",id:"Perangkat dihapus ✓",ms:"Peranti telah dibuang ✓"},
   dev_remove_confirm:{my:"ဒီစက်ကို ဖယ်ရှားမလား? အဲဒီစက်မှာ နောက်တစ်ကြိမ် ပြန်ဝင်ရပါမယ်",en:"Remove this device? It will have to log in again.",shn:"ဢဝ်ၶိူင်ႈဢၼ်ၼႆႉဢွၵ်ႇႁႃႉ? ၶိူင်ႈၼၼ်ႉ တေလႆႈၶဝ်ႈၶိုၼ်းထႅင်ႈ။",kac:"Ndai device hpe shale kau na i? Dai device gaw bai shang ra na re.",th:"นำอุปกรณ์นี้ออกหรือไม่? อุปกรณ์นั้นต้องเข้าสู่ระบบใหม่",zh:"要移除此设备吗？该设备需要重新登录。",vi:"Gỡ thiết bị này? Thiết bị đó sẽ phải đăng nhập lại.",id:"Hapus perangkat ini? Perangkat itu harus masuk lagi.",ms:"Buang peranti ini? Peranti itu perlu log masuk semula."},
   dev_limit:{my:"စက် ကန့်သတ်ချက် ပြည့်နေပါပြီ — သင့်အကောင့်မှာ စက် {M} လုံးပဲ သုံးခွင့် ရှိပါတယ်။ အောက်က စာရင်းထဲက မသုံးတော့တဲ့ စက်တစ်လုံးကို ဖယ်ရှားပါ၊ ဒါမှမဟုတ် စက် ထပ်တိုးဖို့ ဝယ်ပါ",en:"Device limit reached — your account allows {M} devices. Remove an old device from the list below, or buy an extra device slot.",shn:"ၶိူင်ႈတဵမ်ယဝ်ႉ — ဢၶွင်ႉသူ ၸႂ်ႉလႆႈၶိူင်ႈ {M} လုၵ်ႈၵူၺ်း။ ဢဝ်ၶိူင်ႈၵဝ်ႇဢၼ်ဢမ်ႇၸႂ်ႉယဝ်ႉ ၼႂ်းသဵၼ်ႈမၢႆတႂ်ႈၼႆႉဢွၵ်ႇ ဢမ်ႇၼၼ် သိုဝ်ႉၶိူင်ႈထႅမ်ထႅင်ႈ။",kac:"Device tup sai — na a account gaw device {M} sha lang lu ai. Npu na list kaw na device dingga langai hpe shale kau u, n rai yang device shara langai mari u.",th:"ถึงขีดจำกัดอุปกรณ์แล้ว — บัญชีของคุณใช้ได้ {M} เครื่อง นำเครื่องเก่าออกจากรายการด้านล่าง หรือซื้อสล็อตอุปกรณ์เพิ่ม",zh:"设备数量已满 — 你的账户最多 {M} 台设备。请在下方列表移除旧设备，或购买额外设备名额。",vi:"Đã đạt giới hạn thiết bị — tài khoản của bạn cho phép {M} thiết bị. Hãy gỡ một thiết bị cũ trong danh sách bên dưới, hoặc mua thêm một suất thiết bị.",id:"Batas perangkat tercapai — akun Anda mengizinkan {M} perangkat. Hapus perangkat lama dari daftar di bawah, atau beli slot perangkat tambahan.",ms:"Had peranti telah dicapai — akaun anda membenarkan {M} peranti. Buang peranti lama daripada senarai di bawah, atau beli slot peranti tambahan."},
+  dev_admin_only:{my:"Admin သာ ဖယ်ပေးနိုင်",en:"Admin reset only",shn:"Admin ၵူၺ်း ဢဝ်ဢွၵ်ႇလႆႈ",kac:"Admin sha shale kau lu ai",th:"ผู้ดูแลระบบเท่านั้นที่รีเซ็ตได้",zh:"仅管理员可重置",vi:"Chỉ quản trị viên đặt lại được",id:"Hanya admin yang bisa mereset",ms:"Hanya pentadbir boleh set semula"},
   dev_none:{my:"စက် တစ်လုံးမှ မမှတ်ပုံတင်ရသေးပါ",en:"No devices registered yet",shn:"ပႆႇမီးၶိူင်ႈဢၼ်ႁဵတ်းမၢႆၾၢင်ဝႆႉ",kac:"Device langai mung n mahtai da shi ai",th:"ยังไม่มีอุปกรณ์ที่ลงทะเบียน",zh:"尚未注册任何设备",vi:"Chưa có thiết bị nào được đăng ký",id:"Belum ada perangkat terdaftar",ms:"Belum ada peranti didaftarkan"},
   gate_h:{my:"Premium အင်္ဂါရပ်",en:"Premium feature",shn:"ၽၢင်ႁၢင်ႈ Premium",kac:"Premium a atsam",th:"ฟีเจอร์ Premium",zh:"Premium 功能",vi:"Tính năng Premium",id:"Fitur Premium",ms:"Ciri Premium"},
   gate_p:{my:"ဒီအင်္ဂါရပ်ကို သုံးဖို့ Premium လိုအပ်ပါတယ်",en:"This feature needs Premium",shn:"ဢၼ်ၼႆႉ လူဝ်ႇ Premium",kac:"Ndai atsam gaw Premium ra ai",th:"ฟีเจอร์นี้ต้องใช้ Premium",zh:"此功能需要 Premium",vi:"Tính năng này cần Premium",id:"Fitur ini memerlukan Premium",ms:"Ciri ini memerlukan Premium"},
@@ -5246,6 +5247,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.35.0", kind:"page", ref:"pgAccount",
+    t:{my:"စက်အသစ် ပြောင်းရင် ဆရာ့ကို မစောင့်တော့ဘူး — Computer နေရာကို ကိုယ်တိုင် ပြန်လွှတ်ပြီး စက်အသစ်ကို ချက်ချင်း မှတ်ပုံတင်လို့ရပြီ (၇ ရက် တစ်ကြိမ်)",en:"A new computer no longer waits for the teacher — release your own Computer slot and register the new machine straight away (once every 7 days)",shn:"ၶိူင်ႈမႂ်ႇ ဢမ်ႇလူဝ်ႇပႂ်ႉ — ဢဝ်ၶိူင်ႈ Computer ဢွၵ်ႇႁင်းၵူၺ်း ယဝ်ႉၵေႃႈ ႁဵတ်းမၢႆၾၢင် ၶိူင်ႈမႂ်ႇလႆႈ (7 ဝၼ်း ၼိုင်ႈပွၵ်ႈ)",kac:"Computer nnan gaw sara hpe n la nga sai — Computer shara hpe nang nan shale kau nna, machine nnan hpe kalang ta mahtai da lu sai (7 ya hta kalang mi)",th:"เครื่องใหม่ไม่ต้องรอครูอีกต่อไป — ปลดสล็อตคอมพิวเตอร์ของคุณเองแล้วลงทะเบียนเครื่องใหม่ได้ทันที (7 วันต่อครั้ง)",zh:"换新电脑不用再等老师——自己释放电脑名额，立刻注册新机器（每 7 天一次）",vi:"Máy mới không còn phải chờ giáo viên — tự giải phóng suất Máy tính của bạn và đăng ký máy mới ngay (7 ngày một lần)",id:"Komputer baru tidak perlu menunggu guru lagi — lepaskan slot Komputer Anda sendiri dan daftarkan mesin baru seketika (sekali tiap 7 hari)",ms:"Komputer baharu tidak perlu menunggu cikgu lagi — lepaskan slot Komputer anda sendiri dan daftarkan mesin baharu serta-merta (sekali setiap 7 hari)"},
+    s:{my:"အရင်က Computer နေရာကို ဆရာပဲ Reset လုပ်ပေးလို့ရတယ် — စက်ပျက်လို့ အသစ်ဝယ်ရင်၊ Windows ပြန်တင်ရင် ဆရာ အားတဲ့အချိန်ကို စောင့်နေရတယ်။ ခုတော့ hnkaistudio.com ➜ Account ထဲက “Computer နေရာ ပြန်လွှတ်မယ်” ကို ကိုယ်တိုင် နှိပ်လိုက်ရုံပါပဲ — အရင်စက်က Web App နဲ့ Photoshop Panel ကနေ ထွက်သွားပြီး၊ စက်အသစ်ကို ချက်ချင်း မှတ်ပုံတင်လို့ရပါတယ်။ ၇ ရက်ကို တစ်ကြိမ်၊ ဖြစ်တိုင်း မှတ်တမ်းတင်ထားပါတယ်။ ဖုန်း နေရာကတော့ ဆရာသာ Reset လုပ်ပေးနိုင်ပါတယ်။ Photoshop panel ရဲ့ “နေရာပြည့်နေပါတယ်” စာသားကလည်း ဒီခလုတ်ကို ညွှန်ပြပါပြီ။",en:"Until now only an administrator could reset the Computer slot, so a broken laptop, a new machine or a Windows reinstall meant waiting for the teacher to be awake. Now the student presses “Release this Computer” themselves, on hnkaistudio.com ▸ Account: the old machine is signed out of the Web App and the Photoshop Panel, and the new one can be registered straight away. Once every seven days, and every release is recorded. The Phone slot is still the administrator's. The panel's own “slot taken” message now points at the button instead of at the teacher.",shn:"ၵွၼ်ႇ Admin ၵူၺ်း ဢဝ်ဢွၵ်ႇလႆႈ — ၶိူင်ႈလူႉ ဢမ်ႇၼၼ် လႅၵ်ႈၶိူင်ႈမႂ်ႇ တေလႆႈပႂ်ႉ။ ယၢမ်းလဵဝ် hnkaistudio.com ➜ Account တီႈ “ဢဝ်ၶိူင်ႈ Computer ဢွၵ်ႇ” ၼဵၵ်းႁင်းၵူၺ်းလႆႈ — ၶိူင်ႈၵဝ်ႇ ဢွၵ်ႇၵႂႃႇတီႈ Web App လႄႈ Photoshop Panel၊ ယဝ်ႉၵေႃႈ ႁဵတ်းမၢႆၾၢင် ၶိူင်ႈမႂ်ႇလႆႈယဝ်ႉ။ 7 ဝၼ်း ၼိုင်ႈပွၵ်ႈ။",kac:"Moi gaw Admin sha Computer shara hpe shale kau lu ai, dai majaw machine hten yang, nnan mari yang, Windows bai bang yang sara hpe la ra ai. Ya gaw hnkaistudio.com ▸ Account kaw “Computer shara hpe shale kau” hpe nang nan dip lu sai — machine dingga gaw Web App hte Photoshop Panel kaw na pru mat na, machine nnan hpe kalang ta mahtai da lu sai. 7 ya hta kalang mi, shale kau ai lam yawng ka da ai. Phone shara gaw Admin a lam sha re.",th:"ก่อนหน้านี้มีเพียงผู้ดูแลระบบที่รีเซ็ตสล็อตคอมพิวเตอร์ได้ เครื่องเสีย เครื่องใหม่ หรือลง Windows ใหม่จึงต้องรอครู ตอนนี้กด “ปลดสล็อตคอมพิวเตอร์นี้” ได้เองที่ hnkaistudio.com ▸ Account เครื่องเก่าจะหลุดจาก Web App และ Photoshop Panel แล้วลงทะเบียนเครื่องใหม่ได้ทันที ทำได้ 7 วันต่อครั้ง และมีบันทึกทุกครั้ง สล็อตโทรศัพท์ยังเป็นของผู้ดูแลระบบ ข้อความ “สล็อตเต็ม” ในแผงก็ชี้มาที่ปุ่มนี้แล้ว",zh:"以前只有管理员能重置电脑名额，笔记本坏了、换新机、重装 Windows 都得等老师。现在学生可以自己在 hnkaistudio.com ▸ Account 点“释放这台电脑名额”：旧机器会退出网页版和 Photoshop 面板，新机器立刻就能注册。每 7 天一次，每次释放都有记录。手机名额仍归管理员。面板的“名额已被占用”提示现在也指向这个按钮，而不是老师。",vi:"Trước đây chỉ quản trị viên mới đặt lại được suất Máy tính, nên máy hỏng, máy mới hay cài lại Windows đều phải chờ giáo viên. Giờ học viên tự nhấn “Giải phóng suất Máy tính” tại hnkaistudio.com ▸ Account: máy cũ bị đăng xuất khỏi Web App và Photoshop Panel, máy mới đăng ký được ngay. Mỗi 7 ngày một lần, và mọi lần đều được ghi lại. Suất Điện thoại vẫn thuộc quản trị viên. Thông báo “suất đã bị chiếm” trong panel nay chỉ tới nút này.",id:"Dulu hanya admin yang bisa mereset slot Komputer, sehingga laptop rusak, mesin baru, atau instal ulang Windows berarti menunggu guru. Kini siswa menekan sendiri “Lepaskan slot Komputer” di hnkaistudio.com ▸ Account: mesin lama keluar dari Web App dan Photoshop Panel, dan mesin baru langsung bisa didaftarkan. Sekali tiap tujuh hari, dan setiap pelepasan tercatat. Slot Ponsel tetap milik admin. Pesan “slot terpakai” di panel kini menunjuk tombol itu, bukan guru.",ms:"Dahulu hanya pentadbir boleh menetapkan semula slot Komputer, jadi komputer riba rosak, mesin baharu atau pemasangan semula Windows bermakna menunggu cikgu. Kini pelajar menekan sendiri “Lepaskan slot Komputer” di hnkaistudio.com ▸ Account: mesin lama dilog keluar daripada Web App dan Photoshop Panel, dan mesin baharu boleh didaftarkan serta-merta. Sekali setiap tujuh hari, dan setiap pelepasan direkodkan. Slot Telefon kekal milik pentadbir. Mesej “slot penuh” dalam panel kini menunjuk butang itu, bukan cikgu."} },
   { v:"6.34.0", kind:"page", ref:"pgAccount",
     t:{my:"အကောင့် ဆက်ဝင်နေတယ် — token ကုန်ခါနီးမှာ app က ကြိုပြီး အသစ်လဲပေးတယ်: အလုပ်လုပ်နေရင်း “session ကုန်သွားပါပြီ” ထွက်တာ မရှိတော့ဘူး",en:"You stay signed in — the app renews the session before it expires instead of after the server refuses it, so nothing interrupts you mid-task",shn:"ၶဝ်ႈဝႆႉတိၵ်းတိၵ်း — token ႁိမ်းသဵင်ႈ app လႅၵ်ႈမႂ်ႇပၼ်ၵွၼ်ႇ, ဢမ်ႇထုၵ်ႇတတ်းၵၢင်ႈၵၢၼ်",kac:"Shang da ai hku nga — token htum wa na shaloi app shawng nnan galai ya ai, bungli kaang e n hkring ai",th:"คุณยังคงลงชื่อเข้าใช้อยู่ — แอปต่ออายุเซสชันก่อนหมดอายุ แทนที่จะรอให้เซิร์ฟเวอร์ปฏิเสธ จึงไม่มีอะไรมาขัดจังหวะกลางงาน",zh:"保持登录状态——应用会在令牌过期前提前续期，而不是等服务器拒绝之后，工作中途不再被打断",vi:"Bạn luôn ở trạng thái đăng nhập — ứng dụng gia hạn phiên trước khi hết hạn thay vì đợi máy chủ từ chối, nên không có gì làm gián đoạn giữa chừng",id:"Anda tetap masuk — aplikasi memperbarui sesi sebelum kedaluwarsa, bukan setelah server menolak, jadi tidak ada yang memutus pekerjaan di tengah jalan",ms:"Anda kekal log masuk — apl memperbaharui sesi sebelum tamat tempoh, bukan selepas pelayan menolak, jadi tiada apa yang mengganggu kerja di pertengahan"},
     s:{my:"အရင်က token ကုန်ပြီး server က ငြင်းမှ အသစ်လဲတာ — အဲ့ဒီအငြင်းက ကောင်းကောင်းရှိတဲ့ အကောင့်ကို အလုပ်လုပ်နေရင်း ထွက်ခိုင်းနိုင်တယ်။ ခု မကုန်ခင် ၅ မိနစ်အလိုမှာ ကြိုလဲတယ် — request မတိုင်ခင် · tab ပြန်ဖွင့်ချိန် · အင်တာနက် ပြန်ရချိန်။ Admin မှာလည်း တူတူ။ အင်တာနက် မရတာကတော့ ဘယ်တော့မှ ထွက်ခိုင်းတာ မဟုတ်ပါ။",en:"Until now a token was replaced only after the server had refused it, and that refusal could sign a perfectly good account out mid-task. It is renewed five minutes before it expires — on the way into a request, when the tab comes back, and when the network returns. The admin does the same. A server that simply cannot be reached still never signs anybody out.",shn:"ၵွၼ်ႇ token သဵင်ႈယဝ်ႉ server ထဵင်သေၸင်ႇလႅၵ်ႈ — ၽွင်ႈပွၵ်ႈ ဢွၵ်ႇပၼ် “session သဵင်ႈ”။ ယၢမ်းလဵဝ် လႅၵ်ႈၵွၼ်ႇ 5 မိၼိတ်ႉ — ၵွၼ်ႇသူင်ႇ request · ပွၵ်ႈမႃး tab · ဢိၼ်ႇထႃႇၼႅတ်ႉပွၵ်ႈမႃး။ Admin ၵေႃႈမိူၼ်ၵၼ်။",kac:"Moi gaw token htum na server n hkap ai hpang sha galai ai — dai majaw kaja ai account mung bungli kaang e pru mat lu ai. Ya gaw htum na 5 minute shawng galai sai — request n sa shi yang · tab bai du yang · internet bai du yang. Admin mung maren.",th:"เมื่อก่อนโทเคนถูกเปลี่ยนหลังเซิร์ฟเวอร์ปฏิเสธแล้วเท่านั้น และการปฏิเสธนั้นอาจทำให้บัญชีที่ปกติดีหลุดออกกลางงาน ตอนนี้ต่ออายุก่อนหมดอายุ 5 นาที — ก่อนส่งคำขอ เมื่อกลับมาที่แท็บ และเมื่อเน็ตกลับมา แผงผู้ดูแลก็ทำเช่นเดียวกัน ส่วนเซิร์ฟเวอร์ที่ติดต่อไม่ได้จะไม่ทำให้ใครหลุดออก",zh:"以前令牌只在服务器拒绝之后才更换，而那次拒绝可能让一个完全正常的账户在工作中途被登出。现在会在过期前 5 分钟续期——请求发出前、回到标签页时、网络恢复时。管理端同样如此。服务器连不上仍然永远不会让任何人被登出。",vi:"Trước đây token chỉ được thay sau khi máy chủ từ chối, và lần từ chối đó có thể đăng xuất một tài khoản hoàn toàn bình thường giữa chừng. Giờ nó được gia hạn 5 phút trước khi hết hạn — trước khi gửi yêu cầu, khi quay lại tab, và khi mạng trở lại. Trang quản trị cũng vậy. Máy chủ không kết nối được vẫn không bao giờ đăng xuất ai.",id:"Dulu token hanya diganti setelah server menolaknya, dan penolakan itu bisa mengeluarkan akun yang baik-baik saja di tengah pekerjaan. Kini diperbarui 5 menit sebelum kedaluwarsa — sebelum permintaan dikirim, saat tab kembali, dan saat jaringan pulih. Halaman admin melakukan hal sama. Server yang tak terjangkau tetap tidak pernah mengeluarkan siapa pun.",ms:"Dahulu token hanya diganti selepas pelayan menolaknya, dan penolakan itu boleh mengeluarkan akaun yang baik daripada kerja di pertengahan. Kini ia diperbaharui 5 minit sebelum tamat tempoh — sebelum permintaan dihantar, apabila tab kembali, dan apabila rangkaian pulih. Halaman admin sama. Pelayan yang tidak dapat dihubungi tetap tidak pernah mengeluarkan sesiapa."} },
@@ -25156,7 +25160,7 @@ function accIsDeviceLimit(status, body){
    language — the registry in sweep_v477_upgrades.js exists for the three Tai
    packs with no reader and nothing else — and inventing twenty translations
    to explain a case the device list already shows, with the other machine
-   right there badged "Admin reset only", would ship wrong words to real
+   right there badged dev_admin_only, would ship wrong words to real
    customers to save a scroll. The false instruction to buy another slot is
    what had to go, and it is gone. */
 function accDevLimitMsg(){
@@ -25582,7 +25586,7 @@ function accRenderDevices(){
     if (isMe){ var pill = el("span","dv-me"); pill.textContent = t("dev_this"); li.appendChild(pill); }
     /* Device replacement is an audited administrator action. The student can
        inspect both slots here but cannot silently free one from the client. */
-    if (!isMe){ var locked = el("span","dv-me"); locked.textContent = "Admin reset only"; li.appendChild(locked); }
+    if (!isMe){ var locked = el("span","dv-me"); locked.textContent = t("dev_admin_only"); li.appendChild(locked); }
     ul.appendChild(li);
   });
 }
@@ -25712,6 +25716,12 @@ function unifiedRender(){
   var current = unifiedDeviceType();
   $("unifiedEnrollPhone").hidden = current !== "phone" || !!devices.phone;
   $("unifiedEnrollComputer").hidden = current !== "computer" || !!devices.computer;
+  /* v6.35.0 — the release control exists only while there IS a Computer to
+     release, and it is shown on a phone too: a student whose laptop died
+     reaches for the machine they still have, and the slot they are freeing is
+     not the one they are standing on. */
+  var relBtn = $("unifiedReleaseComputer");
+  if (relBtn){ relBtn.hidden = !devices.computer; relBtn.textContent = L9(REL_TXT.btn); }
   $("unifiedDownloadNote").textContent = unifiedCanDownload()
     ? "Verified. Download the Panel under Setup ▸ Account ▸ Photoshop Panel — the one place in the app that creates the temporary link."
     : (p.ccx_download === true && unifiedComputerOnly(rs.ccx_download)
@@ -25750,12 +25760,64 @@ async function unifiedRefresh(force){
   })();
   return unified.inFlight;
 }
+/* v6.35.0 — self-release copy in nine languages. It lives here rather than in
+   TR because this page writes its own copy in place; L9 falls back exactly the
+   way t() does. */
+var REL_TXT = {
+  btn: {my:"Computer နေရာ ပြန်လွှတ်မယ်",en:"Release this Computer",shn:"ဢဝ်ၶိူင်ႈ Computer ဢွၵ်ႇ",kac:"Computer shara hpe shale kau",th:"ปลดสล็อตคอมพิวเตอร์นี้",zh:"释放这台电脑名额",vi:"Giải phóng suất Máy tính",id:"Lepaskan slot Komputer",ms:"Lepaskan slot Komputer"},
+  q: {my:"Computer နေရာကို ပြန်လွှတ်မလား? အရင် မှတ်ပုံတင်ထားတဲ့ စက်က Web App နဲ့ Photoshop Panel ကနေ ထွက်သွားပါမယ် — ပြီးရင် စက်အသစ်ကို ချက်ချင်း မှတ်ပုံတင်လို့ရပါတယ်။ ၇ ရက်ကို တစ်ကြိမ်ပဲ လုပ်လို့ရပါတယ်။",en:"Release the registered Computer? That machine will be signed out of the Web App and the Photoshop Panel, and you can register a new one straight away. You can do this once every 7 days.",shn:"ဢဝ်ၶိူင်ႈ Computer ဢၼ်ႁဵတ်းမၢႆၾၢင်ဝႆႉ ဢွၵ်ႇႁႃႉ? ၶိူင်ႈၼၼ်ႉ တေဢွၵ်ႇၵႂႃႇတီႈ Web App လႄႈ Photoshop Panel၊ ယဝ်ႉၵေႃႈ ႁဵတ်းမၢႆၾၢင် ၶိူင်ႈမႂ်ႇလႆႈယဝ်ႉ။ 7 ဝၼ်း ၼိုင်ႈပွၵ်ႈၵူၺ်း။",kac:"Mahtai da ai Computer shara hpe shale kau na i? Dai machine gaw Web App hte Photoshop Panel kaw na pru mat na re, dai hpang nnan langai hpe mahtai da lu sai. 7 ya hta kalang mi galaw lu ai.",th:"ปลดคอมพิวเตอร์ที่ลงทะเบียนไว้หรือไม่? เครื่องนั้นจะหลุดจาก Web App และ Photoshop Panel แล้วคุณลงทะเบียนเครื่องใหม่ได้ทันที ทำได้ 7 วันต่อครั้ง",zh:"要释放已注册的电脑吗？那台机器会退出网页版和 Photoshop 面板，你可以立即注册新的一台。每 7 天可以做一次。",vi:"Giải phóng Máy tính đã đăng ký? Máy đó sẽ bị đăng xuất khỏi Web App và Photoshop Panel, và bạn có thể đăng ký máy mới ngay. Mỗi 7 ngày được một lần.",id:"Lepaskan Komputer yang terdaftar? Mesin itu akan keluar dari Web App dan Photoshop Panel, dan Anda bisa mendaftarkan yang baru seketika. Bisa dilakukan sekali tiap 7 hari.",ms:"Lepaskan Komputer yang didaftarkan? Mesin itu akan log keluar daripada Web App dan Photoshop Panel, dan anda boleh mendaftarkan yang baharu serta-merta. Boleh dilakukan sekali setiap 7 hari."},
+  busy: {my:"Computer နေရာ ပြန်လွှတ်နေပါတယ်…",en:"Releasing the Computer slot…",shn:"ဢဝ်ၶိူင်ႈ Computer ဢွၵ်ႇယူႇ…",kac:"Computer shara hpe shale kau nga ai…",th:"กำลังปลดสล็อตคอมพิวเตอร์…",zh:"正在释放电脑名额…",vi:"Đang giải phóng suất Máy tính…",id:"Melepaskan slot Komputer…",ms:"Melepaskan slot Komputer…"},
+  ok: {my:"Computer နေရာ လွတ်သွားပါပြီ ✓ — ဒီစက်ကို အခု မှတ်ပုံတင်လို့ရပါပြီ",en:"Computer slot released ✓ — you can register this computer now",shn:"ဢဝ်ၶိူင်ႈ Computer ဢွၵ်ႇယဝ်ႉ ✓ — ႁဵတ်းမၢႆၾၢင် ၶိူင်ႈဢၼ်ၼႆႉလႆႈယဝ်ႉ",kac:"Computer shara shale kau ngut sai ✓ — ya ndai computer hpe mahtai da lu sai",th:"ปลดสล็อตคอมพิวเตอร์แล้ว ✓ — ลงทะเบียนเครื่องนี้ได้เลย",zh:"电脑名额已释放 ✓ — 现在可以注册这台电脑",vi:"Đã giải phóng suất Máy tính ✓ — bạn có thể đăng ký máy này ngay",id:"Slot Komputer dilepaskan ✓ — Anda bisa mendaftarkan komputer ini sekarang",ms:"Slot Komputer dilepaskan ✓ — anda boleh mendaftarkan komputer ini sekarang"},
+  wait: {my:"၇ ရက်အတွင်း တစ်ကြိမ် ပြန်လွှတ်ပြီးပါပြီ — {D} မှာ ထပ်လုပ်လို့ရပါမယ်",en:"You already released a Computer in the last 7 days — you can do it again on {D}",shn:"ၼႂ်း 7 ဝၼ်း ဢဝ်ဢွၵ်ႇယဝ်ႉ ၼိုင်ႈပွၵ်ႈ — {D} ႁဵတ်းလႆႈထႅင်ႈ",kac:"7 ya hta kalang mi shale kau sai — {D} hta bai galaw lu ai",th:"คุณปลดคอมพิวเตอร์ไปแล้วใน 7 วันที่ผ่านมา — ทำได้อีกครั้งวันที่ {D}",zh:"你在过去 7 天内已经释放过一次 — {D} 可以再次操作",vi:"Bạn đã giải phóng một Máy tính trong 7 ngày qua — có thể làm lại vào {D}",id:"Anda sudah melepaskan Komputer dalam 7 hari terakhir — bisa lagi pada {D}",ms:"Anda sudah melepaskan Komputer dalam 7 hari lepas — boleh lagi pada {D}"},
+  none: {my:"ပြန်လွှတ်စရာ မှတ်ပုံတင်ထားတဲ့ Computer မရှိပါ",en:"There is no registered Computer to release",shn:"ဢမ်ႇမီးၶိူင်ႈ Computer ဢၼ်ႁဵတ်းမၢႆၾၢင်ဝႆႉ",kac:"Mahtai da ai Computer shara n nga ai",th:"ไม่มีคอมพิวเตอร์ที่ลงทะเบียนให้ปลด",zh:"没有已注册的电脑可释放",vi:"Không có Máy tính nào đã đăng ký để giải phóng",id:"Tidak ada Komputer terdaftar untuk dilepaskan",ms:"Tiada Komputer berdaftar untuk dilepaskan"},
+  taken: {my:"ဒီအကောင့်ရဲ့ Computer နေရာကို တခြားစက်တစ်လုံးက ယူထားပါတယ် — “Computer နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်ပါ",en:"Another machine holds this account's Computer slot — press “Release this Computer”",shn:"Computer ၼႆႉ တဵမ်ယဝ်ႉ — ၼဵၵ်း “ဢဝ်ၶိူင်ႈ Computer ဢွၵ်ႇ” တီႈတႂ်ႈၼႆႉ",kac:"Ndai account a Computer shara gaw tup sai — npu na “Computer shara hpe shale kau” hpe dip u",th:"มีเครื่องอื่นถือสล็อตคอมพิวเตอร์ของบัญชีนี้อยู่ — กด “ปลดสล็อตคอมพิวเตอร์นี้”",zh:"另一台机器占用了本账户的电脑名额 — 请点击“释放这台电脑名额”",vi:"Một máy khác đang giữ suất Máy tính của tài khoản này — nhấn “Giải phóng suất Máy tính”",id:"Mesin lain memegang slot Komputer akun ini — tekan “Lepaskan slot Komputer”",ms:"Mesin lain memegang slot Komputer akaun ini — tekan “Lepaskan slot Komputer”"}
+};
+/* v6.35.0 — the release itself. The confirm is not decoration: this press signs
+   another machine out of Photoshop, and the student gets one of these a week. */
+async function unifiedRelease(){
+  if (!acc.sess) return;
+  if (!confirm(L9(REL_TXT.q))) return;
+  var btn = $("unifiedReleaseComputer");
+  if (btn) btn.disabled = true;
+  accSetInline("unifiedStatus", L9(REL_TXT.busy));
+  try {
+    var r = await accFetch("/v1/devices/release", {method:"POST",body:JSON.stringify({slot_type:"computer"})});
+    var b = await accJson(r);
+    if (!r.ok){
+      var code = String((b && (b.error || b.code)) || "");
+      if (r.status === 429 || code === "release_cooldown"){
+        var when = b && b.details && b.details.next_allowed_at;
+        accSetInline("unifiedStatus", L9(REL_TXT.wait).replace("{D}", when ? accFmtDate(when) : "\u2014"), "err");
+        return;
+      }
+      if (r.status === 409 || code === "slot_not_registered"){
+        accSetInline("unifiedStatus", L9(REL_TXT.none), "err"); return;
+      }
+      throw new Error((b && (b.message || b.msg)) || code || "Release was not authorized");
+    }
+    await unifiedRefresh(true);
+    accSetInline("unifiedStatus", L9(REL_TXT.ok), "ok");
+    try { toast(L9(REL_TXT.ok), "ok"); } catch(e){}
+  } catch(e){ accSetInline("unifiedStatus", friendlyError(e), "err"); }
+  finally { if (btn) btn.disabled = false; }
+}
+
 async function unifiedEnroll(kind){
   if (!acc.sess || kind !== unifiedDeviceType()) return;
   accSetInline("unifiedStatus","Registering this " + unifiedPretty(kind) + "…");
   try {
     var r = await accFetch("/v1/devices/enroll", {method:"POST",body:JSON.stringify({installation_id:deviceId(),device_type:kind,channel:"web",label:deviceLabel()})});
-    if (!r.ok){ var b={}; try{b=await r.json();}catch(e){} throw new Error(b.message||b.msg||b.error||"Device registration was not authorized"); }
+    if (!r.ok){
+      var b={}; try{b=await r.json();}catch(e){}
+      /* v6.35.0 — computer_slot_occupied used to arrive as the server's bare
+         reason and end the conversation. Its fix is now one button along, so
+         say which button. */
+      var rc = String((b && (b.error||b.code||b.reason)) || "");
+      if (/computer_slot_occupied|panel_slot_occupied/.test(rc)){
+        accSetInline("unifiedStatus", L9(REL_TXT.taken), "err"); return;
+      }
+      throw new Error(b.message||b.msg||b.error||"Device registration was not authorized");
+    }
     await unifiedRefresh(true); accSetInline("unifiedStatus",unifiedPretty(kind)+" registered.","ok");
   } catch(e){ accSetInline("unifiedStatus",friendlyError(e),"err"); }
 }
@@ -25787,6 +25849,7 @@ function unifiedWire(){
   document.querySelectorAll("[data-unified-page],[data-tutorial-page]").forEach(function(b){ b.addEventListener("click",function(){ switchPage(b.getAttribute("data-unified-page")||b.getAttribute("data-tutorial-page")); }); });
   var ep=$("unifiedEnrollPhone"); if(ep) ep.onclick=function(){ unifiedEnroll("phone"); };
   var ec=$("unifiedEnrollComputer"); if(ec) ec.onclick=function(){ unifiedEnroll("computer"); };
+  var rlc=$("unifiedReleaseComputer"); if(rlc) rlc.onclick=function(){ unifiedRelease(); };
   /* v6.33.1 — ONE PLACE (owner: "တစ်နေရာပဲ ထားပေးပါ"). The Panel is downloaded from the Account
      card's Photoshop Panel group under Setup and nowhere else: the Home, Tutorials and Account
      Center door buttons of 6.28.x are gone. The ?panel=download deep link (the website's old
@@ -26529,7 +26592,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.34.0";
+var APP_VER="6.35.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
