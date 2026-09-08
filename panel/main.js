@@ -6299,7 +6299,9 @@ async function checkPanelUpdate(doc) {
    offline API, or a revoked lease leaves the panel locked rather than open.
    ========================================================================== */
 const GATE_API_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/api";
-const GATE_BUY_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/";
+/* v6.102.2 — the website button opens the official public origin (5.50.3 made hnkaistudio.com the one address
+   students know); the DigitalOcean default host is the API's address, not the studio's. */
+const GATE_BUY_URL = "https://hnkaistudio.com/app/";
 const GATE_TIMEOUT = 20000;
 const GATE_DAY = 86400000;
 const GATE_LEASE_REFRESH_MS = 180000;
