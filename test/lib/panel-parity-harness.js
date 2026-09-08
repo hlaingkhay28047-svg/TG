@@ -78,6 +78,15 @@ const COLLECT = `(function(sel){
   (function walk(e) {
     var cs = getComputedStyle(e);
     if (cs.display === "none" || cs.visibility === "hidden") return;
+    /* v6.107.0 — a subtree the panel marks as its own is not compared. The one
+       holder is Setup's SELF-TEST card: the panel reporting on ITSELF (module
+       counts, renderer probes, picture tallies, the first errors with file and
+       line), added because a defect that only appears in Photoshop leaves no
+       other evidence. A web page has nothing to report of that kind, so there
+       is no app counterpart to match — and the attribute keeps that exemption
+       explicit and greppable rather than a growing list of literal strings
+       whose values change with the machine. */
+    if (e.getAttribute && e.getAttribute("data-panel-only")) return;
     /* A button label that wraps is ONE label. The app lets inline flow wrap it
        and the text stays a single node; UXP centres a flex row, so main.js
        (fitBtnIn) splits the label into .icn-l1 + .icn-rest to put the icon on

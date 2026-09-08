@@ -180,6 +180,29 @@ function dropOnce(list, drop) {
   });
   return out;
 }
+/* v6.107.0 — PATTERNS, for a panel-only line the panel generates rather than
+   writes, so no literal list could name it. Same contract as PANEL_ONLY: each
+   entry says what it drops and why the student sees no difference. */
+const PANEL_ONLY_RE = {
+  /* The video model picker groups by family. The web app spells a group as
+     <optgroup label="Kling (12)">, whose label is an ATTRIBUTE and therefore
+     contributes no text node here. The panel drew the same groups as real
+     <optgroup>s until 6.107.0 — and it was the only picker of the twenty that
+     did, with 41 groups and zero direct <option> children. In the owner's
+     Photoshop that picker was empty: Chromium flattens a group when it reads
+     .options, a renderer that reads only direct children reads nothing. The
+     families are now disabled header rows, which every renderer draws, so the
+     panel carries one text node per family that the app expresses in an
+     attribute. Same grouping, same order, same models. */
+  video: [/^— .+ \(\d+\) —$/]
+};
+function dropPatterns(list, res) {
+  if (!res || !res.length) return list;
+  return list.filter(function (s) {
+    for (let i = 0; i < res.length; i++) if (res[i].test(s)) return false;
+    return true;
+  });
+}
 function rewrite(list) {
   return list.map(function (s) {
     let v = s;
@@ -270,7 +293,7 @@ function rewrite(list) {
         sd.length === 0, sd.slice(0, 4).join(" | "));
 
       const want = rewrite(dropOnce(a, APP_ONLY[p.key] || []));
-      const got = rewrite(dropOnce(b, PANEL_ONLY[p.key] || []));
+      const got = rewrite(dropPatterns(dropOnce(b, PANEL_ONLY[p.key] || []), PANEL_ONLY_RE[p.key]));
       let i = 0;
       while (i < want.length && i < got.length && want[i] === got[i]) i++;
       report(`${p.label} shows the web app's strings, all ${want.length} of them, in order`,

@@ -104,14 +104,26 @@ const FLATTEN = () => {
   /* the panel's own files, plus the web app's asset tree under /__app/ — the
      panel's ORIGIN, so the Library's cross-origin plate fetches are not
      refused by a rule Photoshop does not apply */
+  /* v6.107.0 — the art counters live out here because the panel now reaches
+     the licensed host TWO ways and both must count. Card art used to be
+     <img src="https://…">, which page.route sees; since 6.107.0 every remote
+     picture is fetched and painted as a data: URL (HNK.remoteArt), the path
+     the Library has used since 6.47.1, because in the owner's Photoshop a
+     remote <img> drew nothing and raised no error at all. A fetch is rewritten
+     onto this origin by the init script below and never reaches page.route, so
+     counting only there read zero while every picture on screen was correct. */
+  let servedFromApp = 0;
+  const notInApp = [];
   const server = http.createServer((req, res) => {
     let rel = decodeURIComponent(req.url.split("?")[0]).replace(/^\/+/, "") || "index.html";
-    let base = PANEL;
-    if (rel.indexOf("__app/") === 0) { base = APP_DIR; rel = rel.slice(6); }
+    let base = PANEL, fromApp = false;
+    if (rel.indexOf("__app/") === 0) { base = APP_DIR; rel = rel.slice(6); fromApp = true; }
     const abs = path.resolve(base, rel);
     if (!abs.startsWith(base + path.sep) || !fs.existsSync(abs) || fs.statSync(abs).isDirectory()) {
+      if (fromApp && notInApp.indexOf(rel) < 0) notInApp.push(rel);
       res.writeHead(404); res.end(); return;
     }
+    if (fromApp) servedFromApp++;
     res.writeHead(200, { "Content-Type": MIME[path.extname(abs).toLowerCase()] || "application/octet-stream",
       "Cache-Control": "no-store" });
     res.end(fs.readFileSync(abs));
@@ -119,8 +131,6 @@ const FLATTEN = () => {
   await new Promise(r => server.listen(0, "127.0.0.1", r));
   const port = server.address().port;
   const browser = await chromium.launch();
-  const notInApp = [];
-  let servedFromApp = 0;
   try {
     const page = await browser.newPage({ viewport: { width: 420, height: 760 } });
     const errs = [];

@@ -455,7 +455,18 @@ function render(root, deps) {
     var im2 = doc.createElement("img");
     im2.loading = "eager";
     im2.alt = it.t || "";
-    im2.src = APP_ASSETS + "ui/" + fid + ".jpg";
+    /* v6.107.0 — the licensed host's bytes come through HNK.remoteArt
+       (fetch → data: URL). A remote <img src> drew nothing in the owner's
+       Photoshop and reported no error at all; the Library's fetch path has
+       painted the same host's plates on the same build since 6.47.1. A tile
+       whose bytes never arrive leaves the strip rather than sitting blank. */
+    (function (node) {
+      var ra = (typeof module !== "undefined" && module.exports)
+        ? require("../remote-art") : (globalThis.HNK && globalThis.HNK.remoteArt);
+      var url = APP_ASSETS + "ui/" + fid + ".jpg";
+      if (ra) ra.paint(node, url, function () { try { node.parentNode.removeChild(node); } catch (e) { } });
+      else node.src = url;
+    })(im2);
     strip.appendChild(im2);
   });
   libCard.appendChild(strip);

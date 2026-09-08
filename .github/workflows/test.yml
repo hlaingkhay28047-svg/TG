@@ -867,3 +867,10 @@ jobs:
       # and check C proves that against a live scratch database.
       - name: Run admin record + bulk review contract (private note isolation proven on a real database)
         run: node test/verify_admin_record_and_bulk.js
+
+      # 6.38.0 — the three structural differences between what the owner's
+      # Photoshop drew and what it left blank. A browser cannot reproduce the
+      # defects, so this pins the shapes that caused them: no remote <img>, no
+      # <optgroup>, and a label splitter that refuses an incredible measurement.
+      - name: Run panel renderer-safety contract (no remote img, no optgroup, guarded splitter, self-test card)
+        run: node test/verify_panel_renderer_safety.js

@@ -21,15 +21,28 @@
 
 /* v6.27.0 — webapp-parity art cards (same treatment as the home screen):
    each workflow shows its own bundled catalog card whole, as an <img> at
-   its intrinsic 3:2 — the repo's proven UXP-safe image fit. */
+   its intrinsic 3:2 — the repo's proven UXP-safe image fit.
+   v6.107.0 — the bytes now arrive through HNK.remoteArt (fetch → data: URL).
+   In the owner's Photoshop a remote <img src> drew nothing AND fired no error,
+   so the removal below never ran and the card kept an empty box; a fetch
+   fails out loud, and the Library has painted data: URLs here since 6.47.1. */
+function artLoader() {
+  return _CJS ? require("../remote-art") : (globalThis.HNK && globalThis.HNK.remoteArt);
+}
+function setArt(im, url, onFail) {
+  var ra = artLoader();
+  if (ra) ra.paint(im, url, onFail);
+  else { im.onerror = onFail || null; im.src = url; }
+}
 function hnkArtCard(doc, visual) {
   if (!visual) return null;
   var art = doc.createElement("div");
   art.className = "hnk-cardart";
   var im = doc.createElement("img");
-  /* remote catalog art (licensed host) falls back to a text card offline */
-  im.onerror = function () { try { art.parentNode && art.parentNode.removeChild(art); } catch (e) { } };
-  im.src = visual; im.alt = "";
+  im.alt = "";
+  setArt(im, visual, function () {
+    try { art.parentNode && art.parentNode.removeChild(art); } catch (e) { }
+  });
   art.appendChild(im);
   return art;
 }
@@ -207,8 +220,7 @@ function create(deps) {
          waits for a scroll event that never arrives stays black (v6.47.1) */
       im.loading = "eager";
       im.alt = wf.title || "";
-      im.onerror = function () { try { box.className = "wfv wfv-noart"; box.removeChild(im); } catch (e) { } };
-      im.src = wf.visual;
+      setArt(im, wf.visual, function () { try { box.className = "wfv wfv-noart"; box.removeChild(im); } catch (e) { } });
       box.appendChild(im);
     } else box.className = "wfv wfv-noart";
     if (wf.badge) {
@@ -360,8 +372,10 @@ function create(deps) {
           var th = dom.el(doc, "span", { class: "chip-th" });
           var im = doc.createElement("img");
           im.alt = ""; im.loading = "eager";
-          im.onerror = function () { try { ch.removeChild(th); } catch (e) { } };
-          im.src = wf.visual;
+          /* the favourites chip thumbnail — the same licensed host, so the same
+             loader; a remote <img> here would be blank in Photoshop exactly as
+             the cards were, and just as silently */
+          setArt(im, wf.visual, function () { try { ch.removeChild(th); } catch (e) { } });
           th.appendChild(im);
           ch.appendChild(th);
         }
