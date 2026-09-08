@@ -853,3 +853,7 @@ jobs:
       # 6.34.0 — the session is kept fresh (both surfaces rotate the token before it is spent, not after a 401)
       - name: Run session freshness contract (student app driven in a browser + the admin's own rule)
         run: PORT=8931 node test/verify_session_freshness.js
+
+      # 6.35.0 — the student releases their own Computer slot (web session only, seven-day cooldown, recorded)
+      - name: Run device self-release contract (policy executed, only that slot's sessions end, nine languages)
+        run: PORT=8931 node test/verify_device_self_release.js

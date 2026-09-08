@@ -239,4 +239,42 @@ function createPgDeviceRepository(client) {
   };
 }
 
-module.exports = { sha256, createDeviceRegistry, createPgDeviceRepository };
+/* v6.35.0 — SELF-RELEASE OF THE COMPUTER SLOT.
+   The whole permission question is decided here, in one pure function with no
+   database and no clock of its own, so a test can execute every branch instead
+   of reading the route and hoping. Three things decide it: the session must be
+   a web session (a panel that has just been refused the slot must not be able
+   to take it from the machine holding it), the slot must be the Computer one
+   (the Phone slot is not what blocks a new machine, and stays with the
+   administrator), and the student must not have done this in the last seven
+   days. The cooldown is what keeps a released slot a repair rather than a way
+   to run one licence around a classroom. */
+const SELF_RELEASE_COOLDOWN_DAYS = 7;
+const SELF_RELEASE_COOLDOWN_MS = SELF_RELEASE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+function selfReleaseTime(value) {
+  if (value === null || value === undefined || value === "") return 0;
+  if (value instanceof Date) { const t = value.getTime(); return Number.isFinite(t) ? t : 0; }
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  const parsed = Date.parse(String(value));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+function evaluateSelfRelease(input) {
+  const o = input || {};
+  const now = selfReleaseTime(o.now) || Date.now();
+  if (String(o.clientType || "") !== "web") {
+    return { allowed: false, code: "web_session_required", nextAllowedAt: null };
+  }
+  if (String(o.slotType || "") !== "computer") {
+    return { allowed: false, code: "slot_not_releasable", nextAllowedAt: null };
+  }
+  const last = selfReleaseTime(o.lastSelfReleaseAt);
+  if (last > 0 && now < last + SELF_RELEASE_COOLDOWN_MS) {
+    return { allowed: false, code: "release_cooldown",
+      nextAllowedAt: new Date(last + SELF_RELEASE_COOLDOWN_MS).toISOString() };
+  }
+  return { allowed: true, code: "allowed",
+    nextAllowedAt: new Date(now + SELF_RELEASE_COOLDOWN_MS).toISOString() };
+}
+
+module.exports = { sha256, createDeviceRegistry, createPgDeviceRepository,
+  evaluateSelfRelease, SELF_RELEASE_COOLDOWN_DAYS };

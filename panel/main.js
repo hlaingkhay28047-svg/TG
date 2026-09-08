@@ -6315,7 +6315,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.103.0";
+const PANEL_VERSION = "6.104.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6858,8 +6858,8 @@ async function gateRegisterDevice() {
    same day the owner removed the pairing-code step entirely, so only the
    slot reasons remain. */
 const GATE_REASON_MY = {
-  panel_slot_occupied: "ဒီအကောင့်မှာ Photoshop panel တစ်ခု ချိတ်ပြီးသားပါ — စက်ပြောင်း/ပြန်သွင်းထားရင် ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
-  computer_slot_occupied: "ဒီအကောင့်ရဲ့ computer နေရာ ပြည့်နေပါတယ် — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
+  panel_slot_occupied: "ဒီအကောင့်မှာ Photoshop panel တစ်ခု ချိတ်ပြီးသားပါ — hnkaistudio.com ကို ဖွင့်ပြီး Account မှာ “Computer နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်ပါ (၇ ရက်တစ်ကြိမ်)၊ ပြီးရင် ဒီစက်နဲ့ ပြန်ဝင်ပါ",
+  computer_slot_occupied: "ဒီအကောင့်ရဲ့ computer နေရာ ပြည့်နေပါတယ် — hnkaistudio.com ကို ဖွင့်ပြီး Account မှာ “Computer နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်ပါ (၇ ရက်တစ်ကြိမ်)",
   device_mismatch: "ဒီစက်က ဒီအကောင့်နဲ့ ချိတ်ထားတာ မဟုတ်ပါ — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
   /* v6.47.0 — the server refuses a build it has no release row for, which is
      right: an unpublished .ccx must not be trusted. But it said only "Access

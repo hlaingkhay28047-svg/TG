@@ -10,6 +10,7 @@ const {
   requireSecret,hashInstallationId,deviceRegistry,loadEntitlementState,
   authorizeState,publicEntitlement,listDeviceSlots,
 } = require("./entitlements");
+const { createPgDeviceRepository, evaluateSelfRelease } = require("./devices");
 const { createDownloadTokenService,createDownloadStreamLifecycle,createPgDownloadRepository } = require("./panel-download");
 const { createPanelLeaseService } = require("./panel-lease");
 const { readyArtifactForRelease,materializeArtifact } = require("./panel-artifacts");
@@ -211,6 +212,58 @@ async function enrollDevice(identity, body, context) {
        String(body.label||"").slice(0,200)||null,JSON.stringify({slot_type:deviceType})]);
     return {status:200,body:{ok:true,device:{slot_id:installation.rows[0].slot_id,
       slot_type:installation.rows[0].slot_type,channel},reason:"allowed"}};
+  });
+}
+
+/* v6.35.0 — the student releases their own Computer slot. evaluateSelfRelease
+   (server/lib/devices.js) owns the permission; this function owns the effects,
+   and there are exactly three: the slot is reset, the sessions bound to THAT
+   slot end, and the release is written into device_history under the student's
+   own name. It reuses the existing 'reset' event_type with details.self=true
+   rather than adding one, so the device_history CHECK constraint — and with it
+   the deploy's schema fingerprint — is untouched.
+
+   Two differences from the administrator's Reset Computer, both deliberate:
+   the account's refresh tokens are NOT deleted (that would sign the student
+   out of the browser they are standing in, on a control they just pressed),
+   and the requesting session is excluded from the revoke so the page they are
+   looking at survives to show them the result. */
+async function releaseDevice(identity, body) {
+  const slotType = String(body.slot_type || "computer");
+  return asService(async client => {
+    const previous = await client.query(
+      `select created_at from public.device_history
+        where user_id=$1 and event_type='reset' and actor_user_id=$1
+          and details->>'self'='true' and details->>'slot_type'=$2
+        order by created_at desc limit 1`, [identity.uid,slotType]);
+    const verdict = evaluateSelfRelease({
+      clientType: identity.clientType, slotType,
+      lastSelfReleaseAt: previous.rows.length ? previous.rows[0].created_at : null,
+    });
+    if (!verdict.allowed) {
+      if (verdict.code === "release_cooldown") {
+        throw new ApiError(429,"You have already released a Computer this week","release_cooldown",
+          {next_allowed_at:verdict.nextAllowedAt,cooldown_days:7});
+      }
+      if (verdict.code === "web_session_required") {
+        throw new ApiError(403,"Release the Computer from the Web App on a signed-in browser","web_session_required");
+      }
+      throw new ApiError(400,"Only the Computer slot can be released from here","slot_not_releasable");
+    }
+    const count = await createPgDeviceRepository(client).resetSlot(identity.uid,slotType,new Date().toISOString());
+    if (!count) throw new ApiError(409,"There is no registered Computer to release","slot_not_registered");
+    await client.query(
+      `update public.sessions set revoked_at=now(),revoked_reason=$3
+        where user_id=$1 and id<>$4 and device_installation_id in
+          (select i.id from public.device_installations i join public.device_slots s on s.id=i.slot_id
+            where s.user_id=$1 and s.slot_type=$2)
+        and revoked_at is null`, [identity.uid,slotType,"self_release_"+slotType,identity.sessionId]);
+    await client.query(
+      `insert into public.device_history (user_id,actor_user_id,event_type,client_type,details)
+       values ($1,$1,'reset','web',$2::jsonb)`,
+      [identity.uid,JSON.stringify({slot_type:slotType,count,self:true})]);
+    return {status:200,body:{ok:true,released:count,slot_type:slotType,
+      next_allowed_at:verdict.nextAllowedAt,reason:"allowed"}};
   });
 }
 
@@ -455,6 +508,7 @@ async function handle(input) {
   requireIdentity(identity);
   if (pathname==="/v1/me/entitlement"&&method==="GET") return meEntitlement(identity,input.params);
   if (pathname==="/v1/devices/enroll"&&method==="POST") return enrollDevice(identity,body,context);
+  if (pathname==="/v1/devices/release"&&method==="POST") return releaseDevice(identity,body);
   if (pathname==="/v1/panel/pair"&&method==="POST") return panelPair(identity,body,context);
   if (pathname==="/v1/panel/validate"&&method==="POST") return panelValidate(identity,body);
   if (pathname==="/v1/downloads/panel"&&method==="POST") return issueDownload(identity,body,context);

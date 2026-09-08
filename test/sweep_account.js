@@ -719,9 +719,13 @@ const SB_FIX = {
      six states the account server can report that the app previously had no
      word for — acc_too_many_login, acc_too_many, acc_busy, acc_pass_long,
      acc_revoked and acc_gone, each of which used to reach a student as
-     "can't reach the account server" — so the pin moves to 66. */
-  report("16 i18n zero-miss: TR_V430 holds exactly 66 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
-    c16.total === 66 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
+     "can't reach the account server" — so the pin moves to 66. 6.35.0 adds
+     dev_admin_only, the device list's badge, which shipped as a hardcoded
+     English "Admin reset only" in a nine-language app until the student could
+     release their own Computer slot and the list had to say who could not — so
+     the pin moves to 67. */
+  report("16 i18n zero-miss: TR_V430 holds exactly 67 keys, every one carries all 9 language codes as own non-empty properties, t() resolves each to something other than the key itself in every language, placeholders survive every translation, and no value carries an emoji",
+    c16.total === 67 && c16.missing.length === 0 && c16.unresolved.length === 0 &&
     c16.emojis.length === 0 && c16.badPlace.length === 0,
     JSON.stringify({ total: c16.total, missing: c16.missing.length, unresolved: c16.unresolved.length,
                      emoji: c16.emojis, placeholderDrift: c16.badPlace }));
