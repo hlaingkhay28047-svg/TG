@@ -1922,7 +1922,8 @@ begin
          'roles','user_roles','licenses','app_permissions','device_slots',
          'device_installations','sessions','login_history','download_history',
          'admin_audit_logs','panel_versions','device_pairing_codes',
-         'device_history','admin_mfa','auth_attempts','panel_artifacts','panel_artifact_chunks'
+         'device_history','student_notes','admin_mfa','auth_attempts',
+         'panel_artifacts','panel_artifact_chunks'
        ]::text[])
   loop
     execute format('drop policy if exists %I on %I.%I',
