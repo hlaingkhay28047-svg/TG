@@ -128,6 +128,26 @@ eligible students.
 
 ## Acceptance record
 
+- **v6.107.0** — installed, launched and signed in on the owner's Windows
+  Photoshop (published as latest by panel-release run #66). Photographs of the
+  build: the Workflows page now draws every card's art (the remote-art fix
+  proven end to end); the Setup ▸ SELF-TEST card rendered and measured the
+  renderer — `optgroup: flattens` (so the 6.107.0 picker change addressed a
+  cause that was not the cause), `line boxes: unavailable`
+  (`document.createRange` is absent, which is why the label splitter must not
+  trust it), `SVG in img` draws, `Pictures 10 ok · 0 failed`, `Errors: none`.
+  The host version was still NOT captured: `app.version` came back empty on
+  that build, so the card read only `win32`; 6.107.1 reads `require("uxp").host`.
+  Still failing, and pre-dating this build: Media Lab ▸ Video with its
+  JavaScript-written labels unpainted, its shelf empty and its three picker
+  faces blank — everything after one throw during page wiring, which
+  `safe()` had caught and logged where no photograph could see it, while the
+  unguarded `bindDiag()` sequence let that one throw skip the Gallery and
+  Talk binds too. 6.107.1 guards every wiring stage individually and the
+  SELF-TEST card now reports the failed stage with its message, file and
+  line (`test/verify_panel_renderer_safety.js` F/G, fault-injected).
+  `adobe_acceptance` stays `pending` until the checklist passes on a build
+  whose Video page is whole.
 - **v6.106.0** — the FIRST build the owner ran through every page in real
   Photoshop (Windows; installed from the web app's own download button).
   Install, launch and sign-in all passed. Three renderer defects were found,

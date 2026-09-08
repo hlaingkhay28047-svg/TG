@@ -63,9 +63,19 @@ const notePanel = (PANEL.match(/const RH_DOWN_NOTE = (\{[^\n]*?\});\n/) || [])[1
 const enOf = s => (s.match(/en:\s*"([^"]+)"/) || [])[1];
 report("C) the panel's RH_DOWN_NOTE speaks the same nine languages, word for word in English",
   noteKeys(notePanel).length === 9 && enOf(notePanel) === enOf(noteApp) && !!enOf(noteApp), { app: enOf(noteApp), panel: enOf(notePanel) });
+/* v6.107.1 — the panel greys a down model through optOff rather than by writing
+   option.disabled directly. Same meaning, and one dependency less: the property
+   is attempted, and the attribute plus a data flag carry the grey where a
+   renderer refuses it (the video model picker is the ONLY surface in the panel
+   that ever wrote option.disabled, and it is the one the owner photographed
+   empty). So this pin now demands BOTH call sites and the fallback itself —
+   more than the literal it replaces — while D below still opens the picker and
+   proves the seven really are disabled. */
 report("C2) the panel's picker greys a down model, its options painter falls back and repaints, and vidGenerate refuses",
   PANEL.includes('const o = mkOption(m.id, m.down ? vidDownLabel(m) : (m.label || m.id));') &&
-  PANEL.includes('if (m.down) { o.disabled = true; o.setAttribute("data-down", m.down); }') &&
+  PANEL.includes('if (m.down) { optOff(o); o.setAttribute("data-down", m.down); }') &&
+  PANEL.includes('if (d && d.down) { optOff(o); const lab = vidDownLabel(d);') &&
+  /function optOff\(o\) \{[\s\S]*?try \{ o\.disabled = true; \} catch \(e\) \{ \}[\s\S]*?o\.setAttribute\("disabled", "disabled"\)[\s\S]*?o\.setAttribute\("data-off", "1"\)/.test(PANEL) &&
   PANEL.includes('if (raw && raw.down) { const up = vidFirstUp(); if (up) { sel0.value = up.id;') &&
   PANEL.includes('vidPaintDownOptions(sel0);') &&
   PANEL.includes('if (m.down) { setStatus((m.label || m.id) + " \\u2014 " + ff9(RH_DOWN_NOTE), "err"); return; }'));
