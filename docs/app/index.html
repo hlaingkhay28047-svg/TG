@@ -24633,6 +24633,13 @@ async function accFetch(path, opts, o){
       return fetch(SB_URL + path, init);
     };
     var tok = o.anon ? null : (acc.sess && acc.sess.access);
+    /* v6.34.0 — rotate first if this token is about to die, so the call carries a
+       live credential instead of earning a 401 and being sent twice. An anonymous
+       call needs no token, and a retry has already been through this. */
+    if (!o.anon && !o._retried && accNeedsRefresh()){
+      await accKeepFresh();
+      tok = acc.sess && acc.sess.access;
+    }
     var r = await run(tok);
     if (r.status === 401 && !o.anon && !o._retried && acc.sess && acc.sess.refresh){
       var ok = await accRefreshOnce();
@@ -24699,6 +24706,48 @@ function accRefreshOnce(){
   })();
   return _accRefreshing;
 }
+
+/* v6.34.0 — KEEP THE SESSION FRESH, DO NOT REPAIR IT AFTER IT BREAKS.
+   Until now the only thing that rotated a token was a 401: the app sent a spent
+   credential, the server refused it, and the request was replayed. That is a
+   wasted round trip on every call after the hour mark, and — because a refresh
+   that answers 400 signs the student out — it is also the moment a perfectly
+   good account is told its session expired, in the middle of whatever they were
+   doing. The token now rotates BEFORE it is spent: on the way into a request,
+   when the tab comes back to the front, and when the network returns. The 401
+   path stays exactly as it is; it is the net, no longer the plan. */
+var ACC_FRESH_MARGIN = 300;      /* seconds of life below which a token is treated as spent */
+var ACC_FRESH_TICK = 60000;      /* how often a visible tab looks at the clock (no network unless due) */
+function accTokenLeft(){
+  var e = acc.sess && acc.sess.exp;
+  return e ? (Number(e) - Math.floor(Date.now() / 1000)) : 0;
+}
+function accNeedsRefresh(){
+  return !!(acc.sess && acc.sess.refresh && acc.sess.access && accTokenLeft() <= ACC_FRESH_MARGIN);
+}
+/* Answers accRefreshOnce's own three verdicts and adds nothing: a "dead" here is
+   the same verdict the 401 path acts on, and "offline" must never sign anybody
+   out (§7.2 — the subway rule). */
+function accKeepFresh(){
+  if (!accNeedsRefresh()) return Promise.resolve(true);
+  return accRefreshOnce().then(function(ok){
+    if (ok === "dead") accSignOutLocal("expired");
+    return ok;
+  }).catch(function(){ return "offline"; });
+}
+(function accFreshWire(){
+  try {
+    /* the three moments a token is found spent: coming back to the tab, coming
+       back to the network, and simply sitting still long enough */
+    document.addEventListener("visibilitychange", function(){
+      if (document.visibilityState === "visible") accKeepFresh();
+    });
+    window.addEventListener("online", function(){ accKeepFresh(); });
+    setInterval(function(){
+      if (document.visibilityState === "visible") accKeepFresh();
+    }, ACC_FRESH_TICK);
+  } catch(e){}
+})();
 
 async function accJson(r){ try { return await r.json(); } catch(e){ return null; } }
 
@@ -26477,7 +26526,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.33.5";
+var APP_VER="6.34.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

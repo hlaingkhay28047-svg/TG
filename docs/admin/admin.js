@@ -399,9 +399,44 @@
     finally { if (refreshInFlight === request) refreshInFlight = null; }
   }
 
+  /* v6.34.0 — the same rule as the student app: rotate before the token is spent.
+     The admin refreshed only when the server refused a request, so every call after
+     the hour mark cost two round trips and any of them could end in "your secure
+     admin session expired" for a session that had a perfectly good refresh token. */
+  const ADMIN_FRESH_MARGIN_MS = 300000;
+  const ADMIN_FRESH_TICK_MS = 60000;
+  function sessionExpiresAtMs() {
+    const raw = readSession().expires_at;
+    if (raw === null || raw === undefined || raw === "") return 0;
+    if (typeof raw === "number") return raw > 1e12 ? raw : raw * 1000;
+    const asNumber = Number(raw);
+    if (Number.isFinite(asNumber) && String(raw).trim() !== "") return asNumber > 1e12 ? asNumber : asNumber * 1000;
+    const parsed = Date.parse(raw);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  function sessionNearExpiry() {
+    const at = sessionExpiresAtMs();
+    return at > 0 && (at - Date.now()) <= ADMIN_FRESH_MARGIN_MS;
+  }
+  async function keepSessionFresh() {
+    if (!refreshToken() || !sessionNearExpiry()) return true;
+    return await refreshSession();
+  }
+  try {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") keepSessionFresh();
+    });
+    window.addEventListener("online", () => { keepSessionFresh(); });
+    setInterval(() => {
+      if (document.visibilityState === "visible") keepSessionFresh();
+    }, ADMIN_FRESH_TICK_MS);
+  } catch (_) {}
+
   async function api(path, options = {}, retried = false) {
     const headers = new Headers(options.headers || {});
     headers.set("Accept", "application/json");
+    /* v6.34.0 — rotate first if this token is about to die (see keepSessionFresh) */
+    if (!retried && accessToken() && sessionNearExpiry()) await keepSessionFresh();
     const token = accessToken();
     if (token) headers.set("Authorization", `Bearer ${token}`);
     if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
