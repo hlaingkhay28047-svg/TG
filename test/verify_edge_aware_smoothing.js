@@ -24,6 +24,9 @@
    B) it keeps a hard edge that a Gaussian of the same radius destroys — measured, both printed
    C) it removes the noise a Gaussian removes (it is a smoother, not a no-op)
    D) it is well-formed everywhere: bounded, no NaN, and it converges to the input as eps -> 0
+   E) the same photograph smoothed by the same amount at two frame sizes — the isolated form
+      of what sweep_v471 caught end to end, where a fixed 4-pixel decimation made a phone's
+      preview 1.38x stronger than the file the student would receive
    F) the sources say the same thing, including the worker's function list, which is the one
       that fails silently: a missing name there throws inside the worker and quietly drops
       every render onto the synchronous path
@@ -33,16 +36,20 @@
    standalone before this file was written, on the same 128x128 step at radius 6:
 
        Smoothing   eps        edge kept: guided / gaussian    flat grain removed
-          25       0.00202          97.6%  /  51.0%                  99.8%
-          50       0.00490          94.6%  /  50.9%                  99.9%
-         100       0.01440          86.4%  /  51.0%                  99.9%
+          25       0.00202          98.2%  /  51.0%                  90.2%
+          50       0.00490          96.0%  /  51.0%                  97.2%
+         100       0.01440          89.9%  /  51.0%                  99.2%
 
    and with eps at zero the filter returns the photograph exactly (max per-pixel
    delta 0). The bars here sit below the worst of those with room for the browser's
    own blur to differ from the reference. Timing at a real 1280x854 preview buffer:
-   59-95 ms at quarter scale against 327-426 ms without the subsampling, which is
-   why the fast variant is the one that ships — a live drag cannot afford the
-   textbook one. */
+   75-86 ms on the decimated guide against 327-426 ms without it, which is why the
+   fast variant is the one that ships — a live drag cannot afford the textbook one.
+
+   (Those figures were re-measured after the frame-relative fix below. The first
+   cut decimated by a fixed four pixels and read 97.6 / 94.6 / 86.4 on the same
+   step: it kept LESS of the edge, because on a 128px frame four pixels is a
+   large part of the picture and its guide could no longer see the edge.) */
 "use strict";
 
 const { chromium } = require("playwright-core");
@@ -162,6 +169,29 @@ function report(name, ok, detail) {
     }
     out.form = { outOfRange: bad, epsZeroMaxDelta: maxDelta, alpha: gStep[3] };
 
+    /* ---- E) the filter is defined in FRAMES, not in pixels ----
+       The first cut of this decimated its guide by a fixed 4 pixels, and
+       sweep_v471 caught what that does end to end: a phone's 896px preview
+       came out 1.38x more smoothed than the file the student receives, because
+       4 pixels of a small buffer swallow far more of the picture than 4 pixels
+       of a delivery. Here the same defect is isolated from the pipeline. The
+       picture is a ripple whose PERIOD IS A FRACTION OF THE FRAME (W/16) — so
+       the small frame and the large frame show the same photograph, one just
+       sampled more finely — and the radius is the same fraction of each frame,
+       which is exactly what rs does in the app. Nothing is resampled, so the
+       only thing that can move the answer is the filter itself. */
+    const amp = (Wp) => {
+      const img = mk(Wp, Wp, (x) => { const v = 128 + 40 * Math.sin(2 * Math.PI * x / (Wp / 16)); return [v, v, v]; });
+      const g = stGuidedRGB(img, Wp, Wp, Wp / 40, EPS);
+      const q = Math.round(Wp / 8);
+      return Math.sqrt(bandVar(g, Wp, q, Wp - q, q, Wp - q) / bandVar(img, Wp, q, Wp - q, q, Wp - q));
+    };
+    const small = amp(192), large = amp(768);
+    out.scale = {
+      keptSmall: +(100 * small).toFixed(1), keptLarge: +(100 * large).toFixed(1),
+      ratio: +(small / large).toFixed(3)
+    };
+
     return out;
   });
 
@@ -181,6 +211,9 @@ function report(name, ok, detail) {
       + R.flat.dropPct + "%", R.flat.dropPct >= 45, R.flat);
     report("D) every output byte is in range, the alpha is opaque, and with eps at zero the filter returns the photograph",
       R.form.outOfRange === 0 && R.form.alpha === 255 && R.form.epsZeroMaxDelta <= 2, R.form);
+    report("E) the same photograph at 192px and at 768px is smoothed by the same amount"
+      + "  [kept: " + R.scale.keptSmall + "% at 192, " + R.scale.keptLarge + "% at 768]",
+      Math.abs(R.scale.ratio - 1) <= 0.08, R.scale);
   } else {
     report("B) a hard edge survives the guided filter", false, "stGuidedRGB missing");
   }
@@ -190,8 +223,19 @@ function report(name, ok, detail) {
   /* ---- F) the sources ---- */
   const APPSRC = fs.readFileSync(path.join(ROOT, "docs/app/index.html"), "utf8");
   report("F) the Smoothing control calls the guided filter with an eps the slider moves, and the old Gaussian call is gone",
-    /var blurS = t2\.smooth>0\n\s*\? stGuidedRGB\(d,W,H,Math\.max\(2,Math\.round\(\(2\+t2\.smooth\/100\*4\)\*rs\)\),\n\s*Math\.pow\(0\.02\+t2\.smooth\/100\*0\.10,2\)\)\n\s*: null;/.test(APPSRC) &&
+    /var blurS = t2\.smooth>0\n\s*\? stGuidedRGB\(d,W,H,Math\.max\(2,\(2\+t2\.smooth\/100\*4\)\*rs\),\n\s*Math\.pow\(0\.02\+t2\.smooth\/100\*0\.10,2\)\)\n\s*: null;/.test(APPSRC) &&
     !/blurS = t2\.smooth>0 \? stBlurData/.test(APPSRC), null);
+  /* F1 and F1b are the source half of E — they name the two things that made the
+     phone preview smooth 1.38x harder than the delivery, so neither can come back
+     as a tidy-up. The radius reaches the filter unrounded because it is spent in
+     decimated cells, where it is close to 1 and a whole-pixel rounding is a fifth
+     of the effect. */
+  report("F1) the guided filter's grid is a fraction of the frame, never a fixed count of pixels",
+    /var S=Math\.max\(1,Math\.max\(W,H\)\/320\);/.test(APPSRC) &&
+    /var sr=Math\.max\(0\.5,r\/S\);/.test(APPSRC) &&
+    !/\bvar S=4;/.test(APPSRC), null);
+  report("F1b) the box mean carries a fractional radius, so that grid radius is not rounded either",
+    /var k=Math\.floor\(r\), f=r-k, span=2\*k\+1\+2\*f;/.test(APPSRC), null);
   report("F2) the luma cliff is gone from the blend — no |pixel - result| <= 30 gate in front of the smoothing",
     !/var dl=Math\.abs\(lum-\(0\.299\*blurS\[p\]/.test(APPSRC) &&
     !/dl<=30/.test(APPSRC), null);
