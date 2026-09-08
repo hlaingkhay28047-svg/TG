@@ -10068,12 +10068,45 @@ function vidFirstUp() {
   for (let i = 0; i < list.length; i++) if (!list[i].down) return list[i];
   return list[0] || null;
 }
+/* v6.107.1 — MARK AN OPTION UNSELECTABLE WITHOUT DEPENDING ON option.disabled.
+
+   The evidence points here. Of the panel's twenty pickers, `option.disabled`
+   is written in exactly three places and all three belong to the video model
+   picker: the family header rows, the greyed down models here, and the same
+   two inside vidFillModels. Text→Img and Freeform — the two pickers the owner
+   confirmed FULL on the same Photoshop that showed this one empty — never
+   touch it. The down-model line has been there since 6.97.2, so it predates
+   6.106.0, where the picker was already empty.
+
+   That is the same shape of argument that found the remote <img>: the one
+   structural thing the broken surface does that every working surface does
+   not. And the panel has met a hostile `disabled` setter before — btnOff has
+   wrapped it in a try/catch for that reason.
+
+   So the property is attempted, never depended on: the attribute and a data
+   flag carry the same meaning, and optIsOff reads whichever survived. If this
+   renderer refuses the property, the picker still fills with all 188 models
+   and only the grey is lost; if it refuses all three, the header rows become
+   selectable rows that read "— Family (n) —" and vidPaintOptions falls back
+   to a real model. Neither failure is an empty box. */
+function optOff(o) {
+  if (!o) return;
+  try { o.disabled = true; } catch (e) { }
+  try { if (o.setAttribute) o.setAttribute("disabled", "disabled"); } catch (e) { }
+  try { if (o.setAttribute) o.setAttribute("data-off", "1"); } catch (e) { }
+}
+function optIsOff(o) {
+  if (!o) return false;
+  try { if (o.disabled) return true; } catch (e) { }
+  try { if (o.getAttribute && o.getAttribute("data-off")) return true; } catch (e) { }
+  return false;
+}
 function vidPaintDownOptions(sel) {
   const V = (globalThis.HNK && globalThis.HNK.runninghubVideo) || null;
   if (!sel || !V) return;
   for (let i = 0; i < sel.options.length; i++) {
     const o = sel.options[i], d = V.get(o.value);
-    if (d && d.down) { o.disabled = true; const lab = vidDownLabel(d); o.text = lab; o.textContent = lab; o.setAttribute("data-down", d.down); }
+    if (d && d.down) { optOff(o); const lab = vidDownLabel(d); o.text = lab; o.textContent = lab; o.setAttribute("data-down", d.down); }
   }
 }
 function vidNeedNote(m) {
@@ -10163,12 +10196,12 @@ function vidFillModels(sel, list) {
   fams.forEach(function (f) {
     const lab = f + " (" + byFam[f].length + ")";
     const head = mkOption("", "— " + lab + " —");
-    head.disabled = true;
+    optOff(head);                              /* v6.107.1 — never depends on option.disabled */
     head.setAttribute("data-fam-head", "1");
     sel.appendChild(head);
     byFam[f].forEach(function (m) {
       const o = mkOption(m.id, m.down ? vidDownLabel(m) : (m.label || m.id));
-      if (m.down) { o.disabled = true; o.setAttribute("data-down", m.down); }   /* v6.97.2 — greyed, still listed */
+      if (m.down) { optOff(o); o.setAttribute("data-down", m.down); }   /* v6.97.2 — greyed, still listed */
       o.setAttribute("data-fam", lab);
       sel.appendChild(o);
     });
@@ -10180,7 +10213,10 @@ function vidFillModels(sel, list) {
 }
 function vidFirstSelectable(sel) {
   const opts = sel.options || [];
-  for (let i = 0; i < opts.length; i++) if (!opts[i].disabled && opts[i].value) return opts[i].value;
+  /* v6.107.1 — optIsOff, not .disabled: on a renderer that refused the
+     property the header rows carry only the attribute, and a picker that
+     landed on "— Family (n) —" would submit an empty model id. */
+  for (let i = 0; i < opts.length; i++) if (!optIsOff(opts[i]) && opts[i].value) return opts[i].value;
   return "";
 }
 /* app iconFor(selVidModel): a brand tile when the family has one, else the
