@@ -2,7 +2,7 @@
 
 const crypto = require("crypto");
 const path = require("path");
-const { authorizeAdminAction } = require("./admin");
+const { authorizeAdminAction, evaluateRecordUpdate } = require("./admin");
 const { createPgSessionRepository } = require("./session");
 const { createPgDeviceRepository } = require("./devices");
 const { ApiError } = require("./api-error");
@@ -306,8 +306,16 @@ async function studentDetail(client, identity, userId) {
        from public.device_slots s left join public.device_installations i on i.slot_id=s.id
       where s.user_id=$1 group by s.id order by s.slot_type`, [userId]);
   const student=normalizeStudent(profile.rows[0],devices.rows);
+  /* v6.37.0 — the teacher's private note. It lives in its own table because
+     `authenticated` holds no grant there; see the student_notes comment in
+     schema.sql for why a column on profiles would hand the note to the
+     student it is about. Only this admin path ever reads it. */
+  const noteRow = await client.query(
+    "select note,updated_at from public.student_notes where user_id=$1",[userId]);
   return {
     student,
+    admin_note: noteRow.rows.length ? noteRow.rows[0].note : "",
+    admin_note_updated_at: noteRow.rows.length ? noteRow.rows[0].updated_at : null,
     account:student.account,
     license:student.license,
     permissions:student.permissions,
@@ -393,6 +401,7 @@ async function studentAction(client, identity, userId, body, context) {
     if (mutationClaim.replayed) return mutationClaim.result;
   }
   let resetType = null;
+  let recordChanges = null;
   let passwordReset = false;
   let passwordResetEmail = null;
 
@@ -470,6 +479,28 @@ async function studentAction(client, identity, userId, body, context) {
     await client.query(
       `insert into public.device_history (user_id,actor_user_id,event_type,details)
        values ($1,$2,'limit',$3::jsonb)`, [userId,identity.uid,JSON.stringify({allowed_devices:n})]);
+  } else if (requested === "update_record") {
+    /* Fixing a name and keeping a note are the two things an admin could not do
+       at all before this: account_status and allowed_devices were the whole of
+       a writable student. The rules live in evaluateRecordUpdate, which is pure
+       so the test executes every branch rather than reading this route. */
+    const verdict = evaluateRecordUpdate(body);
+    if (!verdict.ok) throw new ApiError(verdict.status,verdict.message,verdict.code,verdict.details);
+    recordChanges = verdict.changes;
+    if (Object.prototype.hasOwnProperty.call(recordChanges,"name")) {
+      await client.query("update public.profiles set name=$2 where id=$1",[userId,recordChanges.name]);
+    }
+    if (Object.prototype.hasOwnProperty.call(recordChanges,"adminNote")) {
+      if (recordChanges.adminNote) {
+        await client.query(
+          `insert into public.student_notes (user_id,note,updated_by,updated_at)
+           values ($1,$2,$3,now()) on conflict (user_id) do update
+           set note=excluded.note,updated_by=excluded.updated_by,updated_at=now()`,
+          [userId,recordChanges.adminNote,identity.uid]);
+      } else {
+        await client.query("delete from public.student_notes where user_id=$1",[userId]);
+      }
+    }
   } else if (requested === "password_reset") {
     passwordReset = true;
     const user = await client.query("select email from public.hnk_auth_users where id=$1",[userId]);
@@ -483,6 +514,11 @@ async function studentAction(client, identity, userId, body, context) {
     permission:body.permission || null,enabled:typeof body.enabled === "boolean" ? body.enabled : null,
     reset_type:resetType,
     allowed_devices:requested === "set_devices" ? Number(body.allowed_devices) : null,
+    /* The audit records WHAT was edited, never the note's text: admin_audit_logs
+       is a wider read than the note itself, and copying it there would undo the
+       table boundary this feature was built on. */
+    record_fields:recordChanges ? Object.keys(recordChanges).sort() : null,
+    record_name:recordChanges && recordChanges.name ? recordChanges.name : null,
   };
   const result={ ok:true,action:requested,student_id:userId,passwordReset,passwordResetEmail };
   if (mutationClaim) await completeAdminMutation(client,mutationClaim,details,result);

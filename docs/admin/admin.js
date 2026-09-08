@@ -56,6 +56,23 @@
      choice is one tap and persists per device. */
   const LANG_KEY = "hnk_admin_lang_v1";
   const MY = {
+    /* v6.37.0 — bulk review + the student record */
+    "bk.approve": "ရွေးထားသူများ အတည်ပြု",
+    "bk.reject": "ရွေးထားသူများ ငြင်းပယ်",
+    "bk.clear": "ရွေးချယ်မှု ဖျက်",
+    "bk.selected": "ယောက် ရွေးထားသည်",
+    "bk.students": "ယောက်",
+    "bk.auditNote": "တစ်ယောက်ချင်းစီကို admin မှတ်တမ်းမှာ သီးခြား ရေးမှတ်ပါတယ်။",
+    "bk.done": "ပြီးပြီ",
+    "bk.failedN": "မအောင်မြင်",
+    "bk.approved1": "အတည်ပြုပြီးပါပြီ။",
+    "dl.record": "ကျောင်းသား မှတ်တမ်း",
+    "dl.name": "နာမည်",
+    "dl.note": "သီးသန့် မှတ်စု (ကျောင်းသား မမြင်ရပါ)",
+    "dl.saveRecord": "မှတ်တမ်း သိမ်း",
+    "dl.recordSaved": "မှတ်တမ်း သိမ်းပြီးပါပြီ။",
+    "dl.recordFailed": "မှတ်တမ်း မသိမ်းနိုင်ပါ။",
+    "dl.noteSaved": "မှတ်စု သိမ်းချိန်",
     "skip": "Admin အကြောင်းအရာသို့ ကျော်သွားရန်",
     "gate.checking": "Admin ဝင်ခွင့် စစ်နေသည်…",
     "gate.checkingSub": "ဒီ session ကို HNK နဲ့ လုံခြုံစွာ အတည်ပြုနေပါတယ်။",
@@ -276,7 +293,11 @@
   }
   const pageSize = 20;
   const state = { studentPage: 1, historyPage: 1, studentTotal: 0, historyTotal: 0,
-    selected: null, loading: false, artifactFile: null, artifactBusy: false };
+    selected: null, loading: false, artifactFile: null, artifactBusy: false,
+    /* v6.37.0 — bulk review. picked holds student ids; pageStudents is what the
+       current page actually rendered, so "select all" means "all of these" and
+       never a filter the admin cannot see. */
+    picked: new Set(), pageStudents: [], bulkBusy: false };
   let refreshInFlight = null;
   let sessionGeneration = 0;
   const $ = selector => document.querySelector(selector);
@@ -757,20 +778,77 @@
     return node("button", { className: compact ? "button" : "text-button", type: "button", text: t("dl.viewDetails", "View details"), dataset: { studentId: id } });
   }
 
+  function studentIdOf(item) { return item.id || item.user_id || item.student_id; }
+
+  /* v6.37.0 — one tap on a pending row, no dialog trip. The row's own Approve
+     is the same audited action the dialog sends; what changes is that a teacher
+     clearing a morning's signups no longer opens and closes twenty dialogs. */
+  function rowApprove(item) {
+    if (String(studentStatus(item)).toLowerCase() !== "pending") return [];
+    const button = node("button", { className: "button primary compact", type: "button",
+      text: t("act.approve", "Approve") });
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        state.selected = item;
+        await runAction("approve", {}, false);
+        notify(t("bk.approved1", "Approved."));
+        await Promise.all([loadStudents(), loadDashboard(false)]);
+      } catch (_) { button.disabled = false; }
+    });
+    return [button];
+  }
+
+  function pickBox(item) {
+    const id = studentIdOf(item);
+    const box = node("input", { type: "checkbox", checked: state.picked.has(id),
+      "aria-label": `Select ${item.name || item.email || "student"}` });
+    box.addEventListener("change", () => {
+      if (box.checked) state.picked.add(id); else state.picked.delete(id);
+      renderBulkBar();
+    });
+    return box;
+  }
+
+  function renderBulkBar() {
+    const bar = $("#bulkBar");
+    if (!bar) return;
+    const n = state.picked.size;
+    bar.hidden = n === 0;
+    const label = $("#bulkCount");
+    if (label) label.textContent = `${n} ${t("bk.selected", "selected")}`;
+    const all = $("#pickAll");
+    if (all) {
+      const ids = state.pageStudents.map(studentIdOf);
+      const on = ids.filter(id => state.picked.has(id)).length;
+      all.checked = ids.length > 0 && on === ids.length;
+      all.indeterminate = on > 0 && on < ids.length;
+    }
+    ["#bulkApprove", "#bulkReject", "#bulkClear"].forEach(sel => {
+      const b = $(sel); if (b) b.disabled = state.bulkBusy;
+    });
+  }
+
   function renderStudents(body) {
     const students = normalizeList(body, ["students", "items", "data"]);
     state.studentTotal = count(body, "total", "count") || students.length;
+    state.pageStudents = students;
+    /* a selection may not outlive the rows it was made on — paging or
+       re-filtering drops any id the admin can no longer see */
+    const visible = new Set(students.map(studentIdOf));
+    [...state.picked].forEach(id => { if (!visible.has(id)) state.picked.delete(id); });
     const rows = students.map(item => {
       const expiry = item.license_expires_at || item.expires_at || (item.license && item.license.expires_at);
-      return node("tr", {}, [node("td", {}, person(item)), node("td", {}, statusPill(studentStatus(item))), node("td", {}, [statusPill(studentLicense(item)), node("small", { text: expiry ? ` ${formatDate(expiry, true)}` : "" })]), node("td", { text: deviceSummary(item) }), node("td", { text: formatDate(item.last_active_at) }), node("td", {}, detailButton(item))]);
+      return node("tr", {}, [node("td", { className: "pick-col" }, [pickBox(item)]), node("td", {}, person(item)), node("td", {}, statusPill(studentStatus(item))), node("td", {}, [statusPill(studentLicense(item)), node("small", { text: expiry ? ` ${formatDate(expiry, true)}` : "" })]), node("td", { text: deviceSummary(item) }), node("td", { text: formatDate(item.last_active_at) }), node("td", {}, [...rowApprove(item), detailButton(item)])]);
     });
     const cards = students.map(item => node("article", { className: "student-card" }, [
       node("div", { className: "student-card-top" }, [node("div", {}, person(item)), statusPill(studentStatus(item))]),
       node("div", { className: "student-card-meta" }, [statusPill(studentLicense(item)), node("span", { className: "status-pill", text: deviceSummary(item) })]),
-      detailButton(item, true),
+      node("div", { className: "student-card-actions" }, [...rowApprove(item), detailButton(item, true)]),
     ]));
     $("#studentRows").replaceChildren(...rows);
     $("#studentCards").replaceChildren(...cards);
+    renderBulkBar();
     $("#studentsEmpty").hidden = students.length > 0;
     $("#studentsPage").textContent = `${t("pg.page", "Page")} ${state.studentPage}`;
     $("#studentsPrev").disabled = state.studentPage <= 1;
@@ -986,6 +1064,19 @@
     const limitInput = $("#deviceLimit");
     if (limitInput) limitInput.value = item.allowed_devices != null ? String(item.allowed_devices) : "2";
 
+    /* v6.37.0 — the record editor is filled from the server's answer, so a save
+       that the server normalised (spaces collapsed, a stray control character
+       dropped) shows the admin what was actually stored. */
+    const nameField = $("#recordName");
+    if (nameField) nameField.value = item.name || item.full_name || "";
+    const noteField = $("#recordNote");
+    if (noteField) noteField.value = (body && typeof body.admin_note === "string") ? body.admin_note : "";
+    const recordHint = $("#recordHint");
+    if (recordHint) {
+      const at = body && body.admin_note_updated_at;
+      recordHint.textContent = at ? `${t("dl.noteSaved", "Note saved")} ${formatDate(at)}` : "";
+    }
+
     const events = normalizeList({ events: item.history }, ["events"]);
     $("#studentHistory").replaceChildren(...events.slice(0, 6).map(event => node("div", { className: "history-item" }, [node("time", { text: formatDate(event.created_at || event.time) }), node("b", { text: eventLabel(event) }), node("span", { text: prettyDetail(event.detail || event.message) || prettyDevice(event.device_name) || "—" })])));
     if (!events.length) $("#studentHistory").append(node("p", { className: "empty", text: t("dl.noHistory", "No recent history.") }));
@@ -1047,6 +1138,67 @@
       }
     } else if (mutation) clearMutation(mutation);
     return body;
+  }
+
+  /* v6.37.0 — the bulk run.
+     Each student still goes through the SAME per-student endpoint, one request
+     at a time: every approval stays individually audited under the admin's
+     name, which is the property the audit trail exists for, and a batch
+     endpoint would have traded that away for speed the teacher does not need.
+     What the admin gets back is the honest tally — approving a row that is
+     already active fails with 409 and is reported, not hidden. */
+  async function runBulk(action, label) {
+    const ids = state.pageStudents.map(studentIdOf).filter(id => state.picked.has(id));
+    if (!ids.length || state.bulkBusy) return;
+    const approved = await confirmAction(
+      `${label} ${ids.length} ${t("bk.students", "students")}? ` +
+      t("bk.auditNote", "Each one is written to the admin audit history separately."),
+      action === "reject");
+    if (!approved) return;
+    state.bulkBusy = true; renderBulkBar();
+    let ok = 0; const failed = [];
+    for (const id of ids) {
+      const item = state.pageStudents.find(s2 => studentIdOf(s2) === id);
+      try {
+        await api(`${API.students}/${encodeURIComponent(id)}/actions`,
+          { method: "POST", body: JSON.stringify({ action }) });
+        ok++;
+      } catch (error) {
+        const who = (item && (item.name || item.email)) || id;
+        const why = (error && error.body && error.body.code) || (error && error.status) || "failed";
+        failed.push(`${who} (${why})`);
+      }
+    }
+    state.picked.clear();
+    state.bulkBusy = false;
+    /* the tally names what did not work, and for whom — a silent partial run is
+       the one outcome a teacher cannot recover from */
+    notify(failed.length
+      ? `${ok} ${t("bk.done", "done")} · ${failed.length} ${t("bk.failedN", "failed")}: ${failed.slice(0, 4).join(", ")}${failed.length > 4 ? "…" : ""}`
+      : `${ok} ${t("bk.done", "done")}.`, failed.length ? "warn" : "ok");
+    try { await Promise.all([loadStudents(), loadDashboard(false)]); }
+    catch (error) { handleError(error, "Refreshed data could not be loaded."); }
+  }
+
+  /* v6.37.0 — the student RECORD. The name is what every list and every audit
+     line reads, and the note is the teacher's own memory ("paid by KBZ on
+     3 Sep"). The note is stored in student_notes, a table the student holds no
+     grant on, so it never travels to the person it is about. */
+  async function saveRecord() {
+    const nameField = $("#recordName"), noteField = $("#recordNote"), hint = $("#recordHint");
+    const button = $("#recordSave");
+    if (!nameField || !button) return;
+    button.disabled = true;
+    if (hint) hint.textContent = "";
+    try {
+      const body = await runAction("update_record",
+        { name: nameField.value, admin_note: noteField ? noteField.value : "" }, false);
+      notify((body && body.message) || t("dl.recordSaved", "Record saved."));
+      const id = selectedId();
+      if (id) await Promise.all([openStudent(id, false), loadStudents()]);
+    } catch (error) {
+      if (hint) hint.textContent = (error && error.message) || t("dl.recordFailed", "Could not save the record.");
+    } finally { button.disabled = false; }
   }
 
   async function openStudent(id, open = true) {
@@ -1308,6 +1460,27 @@
   }
 
   function bind() {
+    /* v6.37.0 — bulk review + the record editor */
+    const pickAll = $("#pickAll");
+    if (pickAll) pickAll.addEventListener("change", () => {
+      state.pageStudents.forEach(item => {
+        const id = studentIdOf(item);
+        if (pickAll.checked) state.picked.add(id); else state.picked.delete(id);
+      });
+      renderStudents({ students: state.pageStudents, total: state.studentTotal });
+    });
+    const bulkApprove = $("#bulkApprove");
+    if (bulkApprove) bulkApprove.addEventListener("click", () => runBulk("approve", t("act.approve", "Approve")));
+    const bulkReject = $("#bulkReject");
+    if (bulkReject) bulkReject.addEventListener("click", () => runBulk("reject", t("act.reject", "Reject")));
+    const bulkClear = $("#bulkClear");
+    if (bulkClear) bulkClear.addEventListener("click", () => {
+      state.picked.clear();
+      renderStudents({ students: state.pageStudents, total: state.studentTotal });
+    });
+    const recordSave = $("#recordSave");
+    if (recordSave) recordSave.addEventListener("click", saveRecord);
+
     $("#adminLoginForm").addEventListener("submit", submitAdminLogin);
     $("#clearAdmin").addEventListener("click", () => signOutAdmin("Sign in with another administrator account."));
     $("#adminSignOut").addEventListener("click", () => signOutAdmin());

@@ -217,3 +217,22 @@ td.cell-time{white-space:nowrap}
 .person-lines small{color:var(--muted)}
 #growthCard{align-self:start}
 .dialog-avatar{flex:0 0 auto;margin-right:12px}.dialog-avatar .avatar{width:46px;height:46px;border-radius:14px;font-size:1.05rem}
+
+/* v6.37.0 — bulk review and the student record editor.
+   The bulk bar only exists while something is selected, so the list is
+   unchanged for the admin who is not doing a batch. */
+.bulk-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px;
+  padding:10px 14px;border-radius:12px;border:1px solid var(--line,#2a2a30);
+  background:var(--surface-2,rgba(255,255,255,.04))}
+.bulk-bar #bulkCount{font-weight:600}
+.bulk-bar .button{padding:6px 14px}
+.pick-col{width:36px;text-align:center}
+.pick-col input{width:18px;height:18px;accent-color:var(--gold,#e7bb66);cursor:pointer}
+.student-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.record-fields{display:grid;gap:12px;margin-bottom:12px}
+.record-fields label{display:grid;gap:6px}
+.record-fields textarea{resize:vertical;min-height:72px;font:inherit;
+  padding:10px 12px;border-radius:10px;border:1px solid var(--line,#2a2a30);
+  background:var(--surface-2,rgba(255,255,255,.04));color:inherit}
+.record-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+@media (max-width:640px){.pick-col{width:30px}}
