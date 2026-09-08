@@ -1,0 +1,54 @@
+# Sign in and out against the LIVE server exactly as the Photoshop panel does (panel 6.102.2).
+#
+# WHY A WORKFLOW: the maintenance container has no egress to hnkaistudio.com or to
+# the DigitalOcean host the panel talks to, and the owner asked for the sign-in
+# itself to be exercised, not reasoned about ("မင်းကိုယ်တိုင် အဝင်ထွက် လုပ်ပြီး
+# စမ်းကြည့်", 2026-09-08). So the walk is made from a GitHub runner.
+#
+# WHAT IT DOES: tools/probe_panel_login.js creates ONE throwaway student account
+# (panel-probe-<run id>@hnkaistudio.com; the password is random, generated on the
+# runner and masked before anything else prints), then walks the panel's exact
+# request shapes (panel/main.js gateHeaders / gateSignIn / gateRefresh / logout):
+# sign-in on the panel's host and on the web app's host, the web app's own shape
+# beside them, refresh, entitlement, logout, the refresh after logout, and the two
+# refusals a student can meet — a wrong password and an unknown address.
+#
+# WHAT IT NEVER DOES: it never touches a real student's account, never prints the
+# password or a token (statuses, server codes and booleans only, in the job summary
+# and between ===LOGIN-PROBE-JSON-BEGIN=== / ===LOGIN-PROBE-JSON-END===), and the
+# account it leaves behind is 'pending' with no license — reject it in /admin.
+name: Probe panel sign-in (live, throwaway account)
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type LOGIN to run'
+        required: true
+  # GitHub lists a workflow_dispatch workflow only once a push event has
+  # carried it (fetch-docs.yml / probe-video-models.yml use the same trick), so
+  # this push trigger exists purely to register the lane from the work branch:
+  # it fires for this file alone, and the job's confirm gate makes that run a no-op.
+  push:
+    branches: [claude/hnk-studio-deployment-pr292-www53j]
+    paths: [".github/workflows/probe-panel-login.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: probe-panel-login
+  cancel-in-progress: false
+jobs:
+  probe:
+    if: ${{ inputs.confirm == 'LOGIN' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Sign in and out as the panel does (throwaway account, password masked)
+        run: |
+          set -euo pipefail   # deliberately NO set -x: nothing here may echo commands
+          node tools/probe_panel_login.js
