@@ -117,8 +117,11 @@ SERVER_ERRORS.push({ status: 503, message: "Server busy", code: "auth_busy" });
 
   /* ---- D: the panel's gate says the same three things ---- */
   const panelSrc = fs.readFileSync(path.join(__dirname, "..", "panel", "main.js"), "utf8");
-  const gateBlock = panelSrc.slice(panelSrc.indexOf("async function gateSignIn"),
-    panelSrc.indexOf("async function gateSignIn") + 1600);
+  /* v6.102.4 — the three-way mapping moved out of gateSignIn into gateSignInKey,
+     which D4 below EXECUTES; this slice starts there so the window still covers
+     the code that decides, not just the code that prints. */
+  const gateBlock = panelSrc.slice(panelSrc.indexOf("function gateSignInKey(status, body)"),
+    panelSrc.indexOf("async function gateOpenSite"));
   report("D) the panel's sign-in reads the server's code instead of blaming the password for everything",
     /gate_wait/.test(gateBlock) && /gate_busy/.test(gateBlock)
     && /429|rate_limited/.test(gateBlock) && /503|auth_busy/.test(gateBlock),
@@ -131,6 +134,67 @@ SERVER_ERRORS.push({ status: 503, message: "Server busy", code: "auth_busy" });
     /gateHttpNote\(r\.status, body\)/.test(signIn) && /gateHttpNote\(r\.status, \{ code: "no_session_in_reply" \}\)/.test(signIn) &&
     /return " \(HTTP " \+ status/.test(noteFn) && /b\.error_code \|\| b\.code \|\| b\.error/.test(noteFn) && !/password|\bpw\b|email/.test(noteFn),
     { noteFn: noteFn.slice(0, 200) });
+  /* v6.102.4 — RUN the mapping, do not pattern-match it. Every one of these rows
+     used to answer "Wrong email or password": a closed account, an unconfirmed
+     address, a deleted account and every server fault. The function is lifted out
+     of the panel source and executed against the shapes server/lib/auth.js and
+     server/index.js really send. */
+  const keyFn = (function () {
+    const from = panelSrc.indexOf("function gateSignInKey(status, body)");
+    const to = panelSrc.indexOf("function gateSentAs(");
+    const src = panelSrc.slice(from, to);
+    // eslint-disable-next-line no-new-func
+    return new Function(src + "\nreturn gateSignInKey;")();
+  })();
+  const CASES = [
+    [429, { error: "rate_limited", message: "Too many login attempts. Try again later." }, "gate_wait"],
+    [503, { error: "auth_busy", message: "Server is busy" }, "gate_busy"],
+    [400, { error: "invalid_grant", message: "Invalid login credentials" }, "gate_bad"],
+    [400, { error: "email_not_confirmed", message: "Email not confirmed" }, "gate_confirm"],
+    [403, { error: "account_suspended", message: "Account is suspended" }, "gate_acct_off"],
+    [403, { error: "account_banned", message: "Account is banned" }, "gate_acct_off"],
+    [403, { error: "account_rejected", message: "Account is rejected" }, "gate_acct_off"],
+    [404, { error: "not_found", message: "User not found" }, "gate_gone"],
+    [500, { error: "internal_error", message: "Internal error" }, "gate_server"],
+    [502, {}, "gate_server"],
+    [504, null, "gate_server"],
+  ];
+  const wrong = CASES.filter(row => keyFn(row[0], row[1]) !== row[2])
+    .map(row => row[0] + " " + JSON.stringify(row[1]) + " -> " + keyFn(row[0], row[1]) + " (want " + row[2] + ")");
+  report("D4) 6.102.4 — the panel reads WHICH refusal it received; only a credential refusal says the password is wrong",
+    wrong.length === 0, wrong);
+  const badOnly = CASES.filter(row => keyFn(row[0], row[1]) === "gate_bad").length;
+  report("D4b) and exactly one of those eleven server answers maps to the wrong-password line",
+    badOnly === 1, { badOnly });
+
+  /* v6.102.4 — the message in the owner's photograph (2026-09-08). gateCheck runs at
+     launch against the session remembered on disk; when the server had rotated that
+     refresh token away it said "Wrong email or password" before anybody had typed
+     anything at all. */
+  const checkBlock = panelSrc.slice(panelSrc.indexOf("async function gateCheck()"),
+    panelSrc.indexOf("function retiredOfflinePath"));
+  report("D5) 6.102.4 — a remembered session that the server no longer honours is not reported as a wrong password",
+    /gateT\(rf === "dead" \? "gate_session_ended" : "gate_service_down"\)/.test(checkBlock) &&
+    !/gate_bad/.test(checkBlock), checkBlock.slice(0, 400));
+
+  const NEW_KEYS = ["gate_session_ended","gate_acct_off","gate_confirm","gate_gone",
+    "gate_server","gate_service_down","gate_no_lease","gate_sent_as"];
+  const missing = NEW_KEYS.filter(k => (panelSrc.match(new RegExp(k + ": \"", "g")) || []).length !== 9);
+  report("D6) and every one of them exists in all nine languages, like every other gate label",
+    missing.length === 0, missing);
+  /* A nine-language panel had four refusal lines that could only ever appear in
+     English, two of them on the locked card the customer is meant to act on. */
+  const stranded = ["License service is unavailable", "License server returned no valid panel lease",
+    "Access denied (HTTP "].filter(text => panelSrc.includes(text));
+  report("D7) no refusal reaches the gate as untranslatable English",
+    stranded.length === 0, stranded);
+  /* The diagnostic line carries the address and a COUNT — never the credential. */
+  const sentAs = panelSrc.slice(panelSrc.indexOf("function gateSentAs("),
+    panelSrc.indexOf("function gateSentAs(") + 320);
+  report("D8) the credential itself is never put on screen — only its length",
+    /\{N\}", String\(String\(pw \|\| ""\)\.length\)\)/.test(sentAs) &&
+    !/\{P\}|replace\("\{N\}", pw\)/.test(sentAs), sentAs.slice(0, 200));
+
   const waitCount = (panelSrc.match(/gate_wait:/g) || []).length;
   const busyCount = (panelSrc.match(/gate_busy:/g) || []).length;
   report("D2) and it can say them in all nine languages, like every other gate label",

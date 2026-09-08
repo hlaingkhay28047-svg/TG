@@ -256,6 +256,16 @@ async function run(browser, cfg) {
     avaAfter === true, { avaAfter });
   await result.page.close();
 
+  /* v6.102.4 — launch with a remembered session the server has rotated away. The
+     card must come back to the login view saying the SESSION ended: this ran before
+     the customer typed anything, and it used to accuse their password. */
+  result = await run(browser, { settings: saved, refreshOk: false });
+  allErrors.push(...result.errors);
+  report("C3) 6.102.4 — a dead remembered session returns to sign-in without blaming the password",
+    result.state.view === "login" && result.state.errShown &&
+    /session/i.test(result.state.error) && !/password/i.test(result.state.error), result.state);
+  await result.page.close();
+
   result = await run(browser, { settings: saved, validateStatus: 403 });
   allErrors.push(...result.errors);
   report("D) suspended/disabled/expired server verdict stays locked",
