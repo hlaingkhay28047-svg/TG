@@ -128,6 +128,23 @@ eligible students.
 
 ## Acceptance record
 
+- **v6.106.0** — the FIRST build the owner ran through every page in real
+  Photoshop (Windows; installed from the web app's own download button).
+  Install, launch and sign-in all passed. Three renderer defects were found,
+  and they are why 6.107.0 exists:
+  the workflow card art was blank on every card whose picture is remote (the
+  two cards whose art ships inside the plugin drew normally, and the Library —
+  which fetches the same remote host's bytes and paints a data: URL — drew all
+  of its plates); the video model picker was empty; some button labels had
+  lost their text. The identical build driven in a browser under UXP-shaped
+  stubs walks all fourteen pages with zero page errors and every list full
+  (188 video models, 37 video tools, 194 workflows, 49 text-to-image models),
+  so none of it was reproducible away from the renderer. The three structural
+  differences are fixed in 6.107.0 and pinned by
+  `test/verify_panel_renderer_safety.js`. The Photoshop and UXP Developer Tool
+  versions were still not reported for this build — 6.107.0's Setup ▸ SELF-TEST
+  card now reads the host version itself, so the next photograph of that card
+  supplies them. `adobe_acceptance` stays `pending`.
 - **v6.102.0** — owner go-ahead 2026-09-07. The artifact built in the release
   session (`HNK_Ai_Panel_v6.102.0.ccx`, SHA-256
   `8f8331c3a162281054d17b79f3e694b865cebeec8237b6f65554f6782e35b027`,

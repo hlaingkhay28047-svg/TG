@@ -290,6 +290,13 @@ function fitBtnIn(host) {
   let lines = 0;
   for (let i = 0; rects && i < rects.length; i++) if (rects[i].width > 0.5) lines++;
   if (lines < 2) return;
+  /* v6.107.0 — only split when the measurement is CREDIBLE. Range.getClientRects
+     is meant to answer with line boxes, but a renderer that answers with one box
+     per glyph makes every label look like it wraps, and the cut loop below then
+     ends line one after a single character — the shape of the overlapping Home
+     text in the owner's Photoshop. Real line boxes are few; one per character is
+     not a wrap, it is a different contract, and the single row is left alone. */
+  if (lines > Math.max(3, txt.length / 4)) return;
   /* the first offset whose range already spans two line boxes ends line one */
   let cut = 0;
   for (let k = 1; k <= txt.length; k++) {
@@ -6315,7 +6322,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.106.0";
+const PANEL_VERSION = "6.107.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8889,6 +8896,131 @@ async function panelGetUpdate() {
   }
 }
 
+/* ---------------- SELF-TEST (v6.107.0) ----------------
+   The panel reporting on itself, because nothing else could.
+
+   6.106.0 in the owner's Photoshop: blank workflow card art, an empty video
+   model picker, labels missing their text. The identical build driven in a
+   browser with UXP's require/uxp/photoshop stubbed walks all fourteen pages
+   with ZERO page errors, 188 video models, 37 video tools, 194 workflows and
+   every picker face painted — so the failures live in the renderer and a
+   browser cannot see them. Screenshots of a blank box carry no cause.
+
+   These rows do. Everything below is read at the moment the card is drawn,
+   from the running panel: which modules answered, how long each list is, what
+   the renderer's own answers are to three probes, how the remote pictures
+   actually went, and the first errors with their file and line. It is one
+   photograph, and it is the difference between a fix and a guess. */
+const ST_L = {
+  h:      { my: "SELF-TEST", en: "SELF-TEST", shn: "SELF-TEST", kac: "SELF-TEST", th: "SELF-TEST", zh: "自检", vi: "SELF-TEST", id: "SELF-TEST", ms: "SELF-TEST" },
+  note:   { my: "တစ်ခုခု မှားနေရင် ဒီ card ကို ဓာတ်ပုံရိုက်ပြီး ပို့ပါ — ဘာကျန်နေလဲ ချက်ချင်းသိရမယ်", en: "If something looks wrong, photograph this card and send it — it names what is missing", shn: "သင်ႇသင်ႇၽိတ်းၸိုင် ထၢႆႇၶႅပ်း card ၼႆႉသေ သူင်ႇမႃး", kac: "Shut ai lam nga yang ndai card hpe sumla la nna jaw u", th: "ถ้ามีอะไรผิดปกติ ถ่ายรูปการ์ดนี้แล้วส่งมา", zh: "如果哪里不对，拍下这张卡片发来", vi: "Nếu có gì sai, chụp thẻ này và gửi đi", id: "Jika ada yang salah, foto kartu ini dan kirimkan", ms: "Jika ada yang tidak kena, ambil gambar kad ini dan hantar" },
+  run:    { my: "ပြန်စစ်မယ်", en: "Run again", shn: "ၵူတ်ႇထတ်းထႅင်ႈ", kac: "Bai yu u", th: "ตรวจอีกครั้ง", zh: "重新检查", vi: "Kiểm tra lại", id: "Periksa lagi", ms: "Semak semula" },
+  copy:   { my: "စာသား ကူးမယ်", en: "Copy as text", shn: "ၶူတ်ႉပဵၼ်တူဝ်လိၵ်ႈ", kac: "Laika hku kaw u", th: "คัดลอกเป็นข้อความ", zh: "复制为文本", vi: "Sao chép dạng văn bản", id: "Salin sebagai teks", ms: "Salin sebagai teks" },
+  copied: { my: "ကူးပြီးပါပြီ — chat ထဲ paste လုပ်ပြီး ပို့လိုက်ပါ", en: "Copied — paste it into chat", shn: "ၶူတ်ႉယဝ်ႉ", kac: "Kaw sai", th: "คัดลอกแล้ว", zh: "已复制", vi: "Đã sao chép", id: "Tersalin", ms: "Disalin" },
+  copyErr:{ my: "ကူး၍မရပါ — ဓာတ်ပုံရိုက်ပြီး ပို့ပါ", en: "Couldn't copy — send a photo instead", shn: "ၶူတ်ႉဢမ်ႇလႆႈ", kac: "N mai kaw ai", th: "คัดลอกไม่ได้", zh: "无法复制", vi: "Không sao chép được", id: "Tidak dapat menyalin", ms: "Tidak dapat menyalin" },
+  clean:  { my: "အားလုံး ကောင်းပါတယ်", en: "Everything answered", shn: "ၶဝ်ႈၸႂ်တင်းမူတ်း", kac: "Yawng hkrak ai", th: "ทุกอย่างปกติ", zh: "一切正常", vi: "Mọi thứ đều ổn", id: "Semua baik", ms: "Semua baik" }
+};
+/* every row: [label, value, level]. Absent or zero where something is expected
+   is what makes a row red — the card is useless if it flatters the panel. */
+function selfTestRows() {
+  const H = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK : {};
+  const rows = [];
+  const lvl = function (ok) { return ok ? "ok" : "err"; };
+  const count = function (v) {
+    if (Array.isArray(v)) return v.length;
+    if (v && typeof v === "object") return Object.keys(v).length;
+    return 0;
+  };
+
+  rows.push({ label: "Panel", detail: "v" + PANEL_VERSION, level: "ok" });
+  /* the host's own version — the acceptance record needs exactly this and it
+     has been one message away for weeks */
+  let host = "";
+  try { host = String((app && app.version) || ""); } catch (e) { host = ""; }
+  try {
+    const osm = require("os");
+    if (osm && typeof osm.platform === "function") host += (host ? " · " : "") + osm.platform();
+  } catch (e) { }
+  rows.push({ label: "Photoshop", detail: host || "—", level: host ? "ok" : "warn" });
+
+  /* --- what this renderer does, measured, not assumed --- */
+  const st = H.selfTest || null;
+  const caps = st && typeof st.capabilities === "function" ? st.capabilities() : {};
+  rows.push({ label: "optgroup", detail: caps.optgroup === undefined ? "—" : (caps.optgroup ? "flattens" : "NOT read"),
+    level: caps.optgroup === undefined ? "pend" : (caps.optgroup ? "ok" : "warn") });
+  rows.push({ label: "line boxes", detail: caps.rangeRects === undefined ? "—" :
+    (caps.rangeLineBoxes ? "yes (" + caps.rangeRects + ")" : "per glyph (" + caps.rangeRects + ")"),
+    level: caps.rangeRects === undefined ? "pend" : (caps.rangeLineBoxes ? "ok" : "warn") });
+  rows.push({ label: "SVG in img", detail: caps.svgImg || "—",
+    level: caps.svgImg === "yes" ? "ok" : (caps.svgImg === "no" ? "err" : "pend") });
+
+  /* --- the lists the pages are built from --- */
+  const V = H.runninghubVideo || null;
+  const nVid = V ? V.models().length : 0;
+  const nTool = V ? V.tools().length : 0;
+  const nTalk = (V && V.talkModels) ? V.talkModels().length : 0;
+  const nWf = (H.workflowRegistry && typeof H.workflowRegistry.list === "function") ? H.workflowRegistry.list().length : 0;
+  const nT2i = count(H.t2iModels);
+  const nLib = (H.LIB_WF && H.LIB_WF.items) ? H.LIB_WF.items.length : 0;
+  rows.push({ label: "Video model",   detail: String(nVid),  level: lvl(nVid > 0) });
+  rows.push({ label: "Video tool",    detail: String(nTool), level: lvl(nTool > 0) });
+  rows.push({ label: "Talk model",    detail: String(nTalk), level: lvl(nTalk > 0) });
+  rows.push({ label: "Smart Workflow", detail: String(nWf),  level: lvl(nWf > 0) });
+  rows.push({ label: "Text→Img",      detail: String(nT2i),  level: lvl(nT2i > 0) });
+  rows.push({ label: "Library",       detail: String(nLib),  level: lvl(nLib > 0) });
+
+  /* --- the pictures, which is where 6.106.0 went wrong --- */
+  const ra = H.remoteArt || null;
+  if (ra) {
+    const s = ra.stats();
+    rows.push({ label: "Pictures", detail: s.ok + " ok · " + s.failed + " failed · " + s.pending + " waiting",
+      level: s.failed > 0 ? "warn" : (s.ok > 0 ? "ok" : "pend") });
+    if (s.lastError) rows.push({ label: "Last picture", detail: s.lastError, level: "err" });
+  } else {
+    rows.push({ label: "Pictures", detail: "loader absent", level: "err" });
+  }
+
+  /* --- and anything that threw --- */
+  const errs = st && typeof st.errors === "function" ? st.errors() : [];
+  rows.push({ label: "Errors", detail: errs.length ? String(errs.length) : ff9(ST_L.clean),
+    level: errs.length ? "err" : "ok" });
+  for (let i = 0; i < errs.length && i < 6; i++) {
+    const e = errs[i];
+    const where = e.file ? (e.file + (e.line ? ":" + e.line : "")) : "";
+    rows.push({ label: where || e.kind, detail: e.message + (e.count > 1 ? " ×" + e.count : ""), level: "err" });
+  }
+  return rows;
+}
+function renderSelfTest() {
+  const h = $("selfTestH2");
+  if (h) {
+    /* the heading keeps its gold icon; only the words are replaced */
+    while (h.childNodes.length > 1) h.removeChild(h.lastChild);
+    h.appendChild(document.createTextNode(ff9(ST_L.h)));
+  }
+  const note = $("selfTestNote"); if (note) note.textContent = ff9(ST_L.note);
+  setIcnText($("btnSelfTest"), "i-retry", "cream", ff9(ST_L.run));
+  setIcnText($("btnSelfTestCopy"), "i-doc", "cream", ff9(ST_L.copy));
+  renderRows("selfTestRows", selfTestRows());
+}
+function selfTestText() {
+  const rows = selfTestRows();
+  const out = ["HNK panel self-test"];
+  for (let i = 0; i < rows.length; i++) out.push(rows[i].label + ": " + rows[i].detail);
+  return out.join("\n");
+}
+async function selfTestCopy() {
+  const txt = selfTestText();
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(txt);
+    else if (navigator.clipboard && navigator.clipboard.setContent) await navigator.clipboard.setContent({ "text/plain": txt });
+    else throw new Error("no clipboard");
+    stSet("stSelfTest", ff9(ST_L.copied), "ok");
+  } catch (e) {
+    stSet("stSelfTest", ff9(ST_L.copyErr), "err");
+  }
+}
+
 /* ---------------- PLATFORMS · SHARE · ABOUT statics ---------------- */
 function setupApplyStatics() {
   const platH2 = $("platH2"); if (platH2) platH2.textContent = sl("plat_h2");
@@ -8908,6 +9040,7 @@ function setupApplyStatics() {
   const pr = $("aboutPrivacy"); if (pr) pr.textContent = sl("about_privacy");
   const tm = $("aboutTerms"); if (tm) tm.textContent = sl("about_terms");
   const ch = $("aboutContactH"); if (ch) ch.textContent = sl("about_contact");
+  renderSelfTest();   /* v6.107.0 — read fresh on every repaint; a stale self-test is worse than none */
   setIcnText($("dataH2"), "i-stack", "gold", sl("data_h"), "ic-h2");
   setIcnText($("btnExportData"), "i-download", "cream", sl("data_export"));
   setIcnText($("btnImportData"), "i-restore", "cream", sl("data_import"));
@@ -8984,6 +9117,8 @@ function bindSetup() {
   const cpy = $("btnCopyLink"); if (cpy) cpy.addEventListener("click", function () { shareCopy(); });
   const cu = $("btnCheckUpdate"); if (cu) cu.addEventListener("click", function () { aboutCheckUpdate(); });
   const hr = $("btnHardRefresh"); if (hr) hr.addEventListener("click", function () { aboutHardRefresh(); });
+  const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { renderSelfTest(); });
+  const stc = $("btnSelfTestCopy"); if (stc) stc.addEventListener("click", function () { selfTestCopy(); });
   const about = $("cardAbout");
   if (about) {
     const links = about.querySelectorAll("[data-href]");
@@ -9893,14 +10028,29 @@ function vidHueOf(s) {
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return h % 360;
 }
-/* the app groups the picker by family in <optgroup>s labelled "Fam (n)";
-   UXP's select may not know optgroup, so the family also rides data-fam */
+/* the app groups the picker by family; the family rides data-fam so the tile
+   beside the picker can brand it without walking back up the DOM */
 function vidFamOf(opt) {
   if (!opt) return "HNK";
   const p = opt.parentElement;
   const og = (p && p.tagName === "OPTGROUP") ? (p.label || "") : "";
   return (og || opt.getAttribute("data-fam") || "HNK").replace(/\s*\(\d+\)\s*$/, "");
 }
+/* v6.107.0 — FLAT, with a disabled header row per family.
+
+   This was the panel's ONLY picker whose <option>s all sat inside an
+   <optgroup>: measured on 6.106.0, #vidModel held 41 groups and ZERO direct
+   option children, while all nineteen other selects hold their options
+   directly. It is also the one picker the owner photographed empty in
+   Photoshop. The old guard asked `typeof HTMLOptGroupElement !== "undefined"`,
+   which only says the constructor exists — never that this renderer's
+   <select> walks INTO a group for its options. Chromium flattens (the walk
+   reads 188 options); a renderer that reads only its direct children reads
+   none, and draws an empty box.
+
+   A disabled "— Family (n) —" option carries the same grouping in any
+   renderer, costs one row per family, and cannot be chosen. The family still
+   rides data-fam, so vidFamOf and the brand tile are unchanged. */
 function vidFillModels(sel, list) {
   while (sel.firstChild) sel.removeChild(sel.firstChild);
   const fams = [], byFam = {};
@@ -9909,22 +10059,28 @@ function vidFillModels(sel, list) {
     if (!byFam[f]) { byFam[f] = []; fams.push(f); }
     byFam[f].push(m);
   });
-  const hasOg = (typeof HTMLOptGroupElement !== "undefined");
   fams.forEach(function (f) {
     const lab = f + " (" + byFam[f].length + ")";
-    let host = sel;
-    if (hasOg) {
-      host = document.createElement("optgroup");
-      host.label = lab;
-      sel.appendChild(host);
-    }
+    const head = mkOption("", "— " + lab + " —");
+    head.disabled = true;
+    head.setAttribute("data-fam-head", "1");
+    sel.appendChild(head);
     byFam[f].forEach(function (m) {
       const o = mkOption(m.id, m.down ? vidDownLabel(m) : (m.label || m.id));
       if (m.down) { o.disabled = true; o.setAttribute("data-down", m.down); }   /* v6.97.2 — greyed, still listed */
       o.setAttribute("data-fam", lab);
-      host.appendChild(o);
+      sel.appendChild(o);
     });
   });
+  /* a header row is disabled but is still option 0, so a renderer that selects
+     the first option would leave the picker showing "— Family (n) —" and the
+     value empty. Land on the first real model instead. */
+  if (!sel.value) { const first = vidFirstSelectable(sel); if (first) { try { sel.value = first; } catch (e) { } } }
+}
+function vidFirstSelectable(sel) {
+  const opts = sel.options || [];
+  for (let i = 0; i < opts.length; i++) if (!opts[i].disabled && opts[i].value) return opts[i].value;
+  return "";
 }
 /* app iconFor(selVidModel): a brand tile when the family has one, else the
    family's initial on a hue the family name hashes to */
@@ -10038,6 +10194,21 @@ function vidPaintOptions() {
    the resolution and duration lists and would wipe a value written before it.
    ============================================================ */
 const VID_ART_BASE = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/";
+/* v6.107.0 — every remote picture goes through HNK.remoteArt (fetch → data:
+   URL), the path the Library has used on this renderer since 6.47.1. The
+   owner's 6.106.0 Photoshop drew the two cards whose art ships inside the
+   plugin and left every remote one as an empty box — and fired NO error, so
+   the im.onerror fallbacks below never ran. A fetch fails out loud, so the
+   fallback finally happens and the Setup self-test can count it. */
+function vidArtSrc(w) {
+  const W = globalThis.HNK && globalThis.HNK.videoToolWorkflows;
+  return VID_ART_BASE + ((W && typeof W.libArt === "function") ? W.libArt(w.art) : w.art);
+}
+function pnlArt(im, url, onFail) {
+  const ra = globalThis.HNK && globalThis.HNK.remoteArt;
+  if (ra) ra.paint(im, url, onFail);
+  else { im.onerror = onFail || null; im.src = url; }
+}
 /* the app's own three card labels for this shelf, its nine-language maps
    carried verbatim (the panel's I18N table stays untouched) */
 /* v6.21.0 — the badge follows the card's model, as the app's does: an array image
@@ -10132,15 +10303,12 @@ function vidWfCard(w) {
   const im = document.createElement("img");
   im.loading = "eager";
   im.alt = P ? stripIcn(P.tr(w.label)) : "";
-  im.onerror = function () {
-    im.onerror = null;
-    v.className = "wfv wfv-noart";
-    try { v.removeChild(im); } catch (e) { }
-  };
   /* v6.7.4 — a replaced picture carries its own revision, so neither the
      panel's HTTP cache nor a proxy can serve last month's card */
-  im.src = VID_ART_BASE + (function(){ var W=globalThis.HNK && globalThis.HNK.videoToolWorkflows;
-    return (W && typeof W.libArt==="function") ? W.libArt(w.art) : w.art; })();
+  pnlArt(im, vidArtSrc(w), function () {
+    v.className = "wfv wfv-noart";
+    try { v.removeChild(im); } catch (e) { }
+  });
   v.appendChild(im);
   const need = document.createElement("span");
   need.className = "wf-need";
@@ -10479,15 +10647,12 @@ function vtWfCard(w) {
   const im = document.createElement("img");
   im.loading = "eager";
   im.alt = P ? stripIcn(P.tr(w.label)) : "";
-  im.onerror = function () {
-    im.onerror = null;
-    v.className = "wfv wfv-noart";
-    try { v.removeChild(im); } catch (e) { }
-  };
   /* v6.7.4 — a replaced picture carries its own revision, so neither the
      panel's HTTP cache nor a proxy can serve last month's card */
-  im.src = VID_ART_BASE + (function(){ var W=globalThis.HNK && globalThis.HNK.videoToolWorkflows;
-    return (W && typeof W.libArt==="function") ? W.libArt(w.art) : w.art; })();
+  pnlArt(im, vidArtSrc(w), function () {
+    v.className = "wfv wfv-noart";
+    try { v.removeChild(im); } catch (e) { }
+  });
   v.appendChild(im);
   const need = document.createElement("span");
   need.className = "wf-need";
@@ -10605,8 +10770,7 @@ function renderVWiz() {
   if (vwiz.step === 1) {
     if (vwizInputsOk()) { const fast = mkBtn("btn wiz-fast", ""); setIcnText(fast, "i-bolt", "cream", vwizL("fast")); ffPressable(fast, function () { goStep(3); }); body.appendChild(fast); }
     const im = document.createElement("img"); im.className = "wiz-visual";
-    im.src = VID_ART_BASE + (function () { const W = globalThis.HNK && globalThis.HNK.videoToolWorkflows; return (W && typeof W.libArt === "function") ? W.libArt(w.art) : w.art; })();
-    im.onerror = function () { im.onerror = null; if (im.parentNode) im.parentNode.removeChild(im); };
+    pnlArt(im, vidArtSrc(w), function () { if (im.parentNode) im.parentNode.removeChild(im); });
     body.appendChild(im);
     const s = el("s", deckP ? stripIcn(deckP.tr(w.summary)) : ""); s.style.margin = "10px 0 2px"; body.appendChild(s);
     const needRow = el("mut", ""); setIcnText(needRow, "i-camera", "cream", vwizNeed()); body.appendChild(needRow);
@@ -17114,7 +17278,7 @@ function switchPage(key) {
   if (key === "prompt") { try { renderLightStage(); } catch (e) { } } /* v6.27.0 — the light stage lives on Edit now */
   if (key === "imagine") { try { imagineEnter(); } catch (e) { hwarn("imagine:", e); } }   /* 6.29.0 wave — paints the hub / tool view on entry */
   /* v6.51.0 — Setup repaints its readiness rows and the data-store line on entry, like the app's showPage */
-  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); } catch (e) { } }
+  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); renderSelfTest(); } catch (e) { } }
   /* the sticky GENERATE follows the page that owns it */
   try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
 }

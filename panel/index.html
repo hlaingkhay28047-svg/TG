@@ -206,7 +206,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.106.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.107.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -466,6 +466,26 @@
           <div role="button" tabindex="0" class="btn" data-href="tel:+959688200680">09688200680</div>
           <div role="button" tabindex="0" class="btn" data-href="tel:+959942113540">09942113540</div>
         </div>
+      </div>
+
+      <!-- v6.107.0 — SELF-TEST. The owner's 6.106.0 Photoshop showed blank card
+           art, an empty video picker and labels that had lost their text; driven
+           in a browser the same build walks all fourteen pages with zero errors
+           and every list full, so nothing about those defects is reproducible
+           away from the renderer. This card is the panel reporting on ITSELF —
+           what loaded, how long each list is, how many pictures arrived, what
+           this renderer can do, and the first errors with file and line. One
+           photograph of it answers what a week of guessing could not. Rows are
+           drawn by renderRows(), the same shape every other Setup card uses. -->
+      <div class="card" id="cardSelfTest" data-panel-only="self-test">
+        <h2 id="selfTestH2"><img class="ic-h2" src="icons/ui/i-bolt-gold.svg" alt=""></h2>
+        <div class="mut" id="selfTestNote"></div>
+        <div id="selfTestRows"></div>
+        <div class="row" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn grow" id="btnSelfTest"></div>
+          <div role="button" tabindex="0" class="btn grow" id="btnSelfTestCopy"></div>
+        </div>
+        <div class="status" id="stSelfTest"></div>
       </div>
     </div>
 
@@ -1459,7 +1479,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.106.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.107.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
@@ -1519,6 +1539,11 @@
 
 </div>
 
+<!-- v6.107.0 — FIRST, on purpose: this installs the error, rejection and
+     resource-load hooks, so an exception thrown by any script below is caught
+     while there is still something to catch. It depends on nothing. -->
+<script src="src/app/panel-selftest.js"></script>
+
 <!-- HNK AI Tools core (dependency order; each module is IIFE-wrapped and
      UXP-safe — publishes to globalThis.HNK, no relative require at runtime) -->
 <script src="js/hnk_wf_catalog_data.js"></script>
@@ -1572,6 +1597,10 @@
 <script src="src/history/preset-service.js"></script>
 <script src="src/app/settings-service.js"></script>
 <!-- HNK AI Tools UI controllers -->
+<!-- v6.107.0 — every REMOTE picture goes through this (fetch → data: URL),
+     the path the Library has drawn on this renderer since 6.47.1. Before the
+     screens that use it. -->
+<script src="src/ui/remote-art.js"></script>
 <script src="src/ui/dom.js"></script>
 <script src="src/ui/progress-strip.js"></script>
 <script src="src/ui/screens/home-screen.js"></script>
