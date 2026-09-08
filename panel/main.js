@@ -35,11 +35,23 @@ const RATIOS = [
    buffer is capped so a long session never grows without bound. */
 const HNK_LOG = [];
 const LOG_CAP = 200;
+/* v6.107.1 — WHERE it threw. Every Error carries a stack in UXP's V8 as in a
+   browser, but the log kept only the message, so a "wire-fail: video" line named
+   the stage and nothing else. The first frame that names a script file is
+   appended as " @ file:line" — the one detail the Setup self-test card needs to
+   turn a photograph of it into a line of code. */
+function errWhere(e) {
+  try {
+    const s = String((e && e.stack) || "");
+    const m = /([\w.-]+\.js):(\d+)(?::(\d+))?/.exec(s);
+    return m ? " @ " + m[1] + ":" + m[2] : "";
+  } catch (x) { return ""; }
+}
 function pushLog(level, argv) {
   let msg = "";
   try {
     msg = Array.prototype.map.call(argv, function (a) {
-      if (a instanceof Error) return (a.message || String(a));
+      if (a instanceof Error) return (a.message || String(a)) + errWhere(a);
       if (a && typeof a === "object") { try { return JSON.stringify(a); } catch (e) { return String(a); } }
       return String(a);
     }).join(" ");
@@ -6322,7 +6334,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.107.0";
+const PANEL_VERSION = "6.107.1";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9009,6 +9021,40 @@ function selfTestRowsInner() {
     rows.push({ label: "Pictures", detail: "loader absent", level: "err" });
   }
 
+  /* --- v6.107.1: what the panel WIRED, and what it caught ---
+     The owner's second photograph: Media Lab ▸ Video with its labels unpainted,
+     its shelf empty and its three picker faces blank — under a card that said
+     "Errors: none". Both were true. The card heard only UNCAUGHT errors; the
+     panel's own safe() had caught the throw, logged it and moved on, and the
+     four pages bound after it were simply never bound. Nothing safe() catches
+     is invisible any more: the stage, the message and the line. */
+  const wnames = Object.keys(WIRED);
+  const wfail = wnames.filter(function (k) { return WIRED[k] !== "ok"; });
+  rows.push({ label: "Wiring", detail: (wnames.length - wfail.length) + " ok · " + wfail.length + " failed",
+    level: wfail.length ? "err" : (wnames.length ? "ok" : "pend") });
+  for (let i = 0; i < wfail.length && i < 6; i++)
+    rows.push({ label: "✗ " + wfail[i], detail: String(WIRED[wfail[i]]).slice(0, 120), level: "err" });
+
+  /* the page the owner photographed, as the DOM holds it right now: the
+     picker's option count, whether its face carries a name, how many shelf
+     cards were built. A data count of 188 says nothing about any of these. */
+  const vm = $("vidModel"), vface = $("vidModelVal"), vshelf = $("vidWfRow");
+  const vOpts = (vm && vm.options) ? vm.options.length : 0;
+  const vFace = vface ? String(vface.textContent || "").trim() : "";
+  const vCards = vshelf ? vshelf.children.length : 0;
+  rows.push({ label: "Video page", detail: vOpts + " opt · face " + (vFace && vFace !== "—" ? "✓" : "—") + " · " + vCards + " cards",
+    level: (vOpts > 0 && vFace && vFace !== "—" && vCards > 0) ? "ok" : "err" });
+
+  /* labels that only JavaScript writes, one per page that has gone blank on
+     a real Photoshop: each must carry text once the panel has booted */
+  const MUST = [["vidWfIntro", "Video"], ["btnTkGen", "Talk"], ["btnCheckUpdate", "Setup"], ["galDl", "Gallery"], ["btnPtRun", "Path"]];
+  const blank = [];
+  for (let i = 0; i < MUST.length; i++) {
+    const el = $(MUST[i][0]);
+    if (el && !String(el.textContent || "").trim()) blank.push(MUST[i][1] + " #" + MUST[i][0]);
+  }
+  rows.push({ label: "Labels", detail: blank.length ? blank.join(", ") : MUST.length + "/" + MUST.length + " ✓", level: blank.length ? "err" : "ok" });
+
   /* --- and anything that threw --- */
   const errs = st && typeof st.errors === "function" ? st.errors() : [];
   rows.push({ label: "Errors", detail: errs.length ? String(errs.length) : ff9(ST_L.clean),
@@ -9018,6 +9064,16 @@ function selfTestRowsInner() {
     const where = e.file ? (e.file + (e.line ? ":" + e.line : "")) : "";
     rows.push({ label: where || e.kind, detail: e.message + (e.count > 1 ? " ×" + e.count : ""), level: "err" });
   }
+  /* the panel's own log, ERR and WARN only, the wire-fail lines left out
+     because the Wiring rows above already carry them with their stage name */
+  const bad = [];
+  for (let i = 0; i < HNK_LOG.length; i++) {
+    const e = HNK_LOG[i];
+    if ((e.level === "ERR" || e.level === "WARN") && String(e.msg).indexOf("wire-fail:") !== 0) bad.push(e);
+  }
+  rows.push({ label: "Panel log", detail: bad.length ? bad.length + " · " + HNK_LOG.length : ff9(ST_L.clean), level: bad.length ? "warn" : "ok" });
+  for (let i = 0; i < bad.length && i < 6; i++)
+    rows.push({ label: bad[i].level + " " + bad[i].ts, detail: String(bad[i].msg).slice(0, 120), level: bad[i].level === "ERR" ? "err" : "warn" });
   return rows;
 }
 function renderSelfTest() {
@@ -9102,68 +9158,77 @@ function wireStaticGrp(grpId, hdrId) {
   });
 }
 /* everything a language switch or a settings reload must repaint */
+/* v6.107.1 — each repaint stands alone (see bindDiag): the card that cannot
+   paint is the only card that stays unpainted, and the self-test names it. */
 function bindSetupRefresh() {
-  accApplyLang();
+  safe("setup:account-lang", accApplyLang);
   const key = $("rhKey"); if (key && key.value !== (state.rhKey || "")) key.value = state.rhKey || "";
-  rhFillModelSel();
-  rhApplyLang();
-  renderSpend();
-  setupApplyStatics();
-  renderAbout();
-  renderSetupStatus();
-  refreshDataStore();
+  safe("setup:rh-models", rhFillModelSel);
+  safe("setup:rh-lang", rhApplyLang);
+  safe("setup:spend", renderSpend);
+  safe("setup:statics", setupApplyStatics);
+  safe("setup:about", renderAbout);
+  safe("setup:readiness", renderSetupStatus);
+  safe("setup:datastore", function () { refreshDataStore(); });
 }
 function bindSetup() {
   /* account */
-  accWire();
-  accBoot();
+  safe("setup:account", function () { accWire(); accBoot(); });
   /* RunningHub key + endpoints */
-  const key = $("rhKey"); if (key) key.value = state.rhKey || "";
-  wireKeyReveal("btnShowRhKey", "rhKey");
-  const sv = $("btnSaveRhKey"); if (sv) sv.addEventListener("click", function () { rhSaveKey(); });
-  if (key) key.addEventListener("keydown", function (e) { if (e && e.key === "Enter") rhSaveKey(); });
-  const del = $("stRhKeyDel"); if (del) del.addEventListener("click", function () { rhRemoveKey(); });
-  rhFillModelSel();
-  const sel = $("rhModelSel");
-  if (sel) {
-    rhLoadFormFor(sel.value);
-    sel.addEventListener("change", function () { rhLoadFormFor(sel.value); rhPaintModelBtn(); });
-  }
-  const q = $("rhQuality"); if (q) q.addEventListener("change", function () { rhPaintQualityBtn(); });
-  const bs = $("btnRhSaveModel"); if (bs) bs.addEventListener("click", function () { rhSaveModel(); });
-  wireStaticGrp("rhGrpAdvanced", "rhAdvH");
-  /* cost & balance */
-  const bR = $("btnMoneyRefresh"); if (bR) bR.addEventListener("click", function () { moneyRefresh(); });
-  const bC = $("btnMoneyCsv"); if (bC) bC.addEventListener("click", function () { moneyCsv(); });
-  const bX = $("btnMoneyClear");
-  if (bX) bX.addEventListener("click", async function () {
-    const ok = await setupConfirm(sl("money_clear") + "?");
-    if (!ok) return;
-    spendClear();
-    stSet("stMoney", sl("money_cleared"), "ok");
-  });
-  wireStaticGrp("moneyGrpRuns", "moneyRunsH");
-  /* data & backup */
-  const ex = $("btnExportData"); if (ex) ex.addEventListener("click", function () { exportData(); });
-  const im = $("btnImportData"); if (im) im.addEventListener("click", function () { importData(); });
-  /* platforms · share · about */
-  wireStaticGrp("platGrpAndroid"); wireStaticGrp("platGrpIos"); wireStaticGrp("platGrpDesktop"); wireStaticGrp("platGrpPs");
-  const site = $("siteLink"); if (site) site.addEventListener("click", function () { openUrl("https://hnkaistudio.com/"); });
-  const shr = $("btnShare"); if (shr) shr.addEventListener("click", function () { shareCopy(); });
-  const cpy = $("btnCopyLink"); if (cpy) cpy.addEventListener("click", function () { shareCopy(); });
-  const cu = $("btnCheckUpdate"); if (cu) cu.addEventListener("click", function () { aboutCheckUpdate(); });
-  const hr = $("btnHardRefresh"); if (hr) hr.addEventListener("click", function () { aboutHardRefresh(); });
-  const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { renderSelfTest(); });
-  const stc = $("btnSelfTestCopy"); if (stc) stc.addEventListener("click", function () { selfTestCopy(); });
-  const about = $("cardAbout");
-  if (about) {
-    const links = about.querySelectorAll("[data-href]");
-    for (let i = 0; i < links.length; i++) {
-      (function (el) {
-        el.addEventListener("click", function () { openUrl(el.getAttribute("data-href")); });
-      })(links[i]);
+  safe("setup:runninghub", function () {
+    const key = $("rhKey"); if (key) key.value = state.rhKey || "";
+    wireKeyReveal("btnShowRhKey", "rhKey");
+    const sv = $("btnSaveRhKey"); if (sv) sv.addEventListener("click", function () { rhSaveKey(); });
+    if (key) key.addEventListener("keydown", function (e) { if (e && e.key === "Enter") rhSaveKey(); });
+    const del = $("stRhKeyDel"); if (del) del.addEventListener("click", function () { rhRemoveKey(); });
+    rhFillModelSel();
+    const sel = $("rhModelSel");
+    if (sel) {
+      rhLoadFormFor(sel.value);
+      sel.addEventListener("change", function () { rhLoadFormFor(sel.value); rhPaintModelBtn(); });
     }
-  }
+    const q = $("rhQuality"); if (q) q.addEventListener("change", function () { rhPaintQualityBtn(); });
+    const bs = $("btnRhSaveModel"); if (bs) bs.addEventListener("click", function () { rhSaveModel(); });
+    wireStaticGrp("rhGrpAdvanced", "rhAdvH");
+  });
+  /* cost & balance */
+  safe("setup:money", function () {
+    const bR = $("btnMoneyRefresh"); if (bR) bR.addEventListener("click", function () { moneyRefresh(); });
+    const bC = $("btnMoneyCsv"); if (bC) bC.addEventListener("click", function () { moneyCsv(); });
+    const bX = $("btnMoneyClear");
+    if (bX) bX.addEventListener("click", async function () {
+      const ok = await setupConfirm(sl("money_clear") + "?");
+      if (!ok) return;
+      spendClear();
+      stSet("stMoney", sl("money_cleared"), "ok");
+    });
+    wireStaticGrp("moneyGrpRuns", "moneyRunsH");
+  });
+  /* data & backup */
+  safe("setup:data", function () {
+    const ex = $("btnExportData"); if (ex) ex.addEventListener("click", function () { exportData(); });
+    const im = $("btnImportData"); if (im) im.addEventListener("click", function () { importData(); });
+  });
+  /* platforms · share · about */
+  safe("setup:about-wire", function () {
+    wireStaticGrp("platGrpAndroid"); wireStaticGrp("platGrpIos"); wireStaticGrp("platGrpDesktop"); wireStaticGrp("platGrpPs");
+    const site = $("siteLink"); if (site) site.addEventListener("click", function () { openUrl("https://hnkaistudio.com/"); });
+    const shr = $("btnShare"); if (shr) shr.addEventListener("click", function () { shareCopy(); });
+    const cpy = $("btnCopyLink"); if (cpy) cpy.addEventListener("click", function () { shareCopy(); });
+    const cu = $("btnCheckUpdate"); if (cu) cu.addEventListener("click", function () { aboutCheckUpdate(); });
+    const hr = $("btnHardRefresh"); if (hr) hr.addEventListener("click", function () { aboutHardRefresh(); });
+    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { renderSelfTest(); });
+    const stc = $("btnSelfTestCopy"); if (stc) stc.addEventListener("click", function () { selfTestCopy(); });
+    const about = $("cardAbout");
+    if (about) {
+      const links = about.querySelectorAll("[data-href]");
+      for (let i = 0; i < links.length; i++) {
+        (function (el) {
+          el.addEventListener("click", function () { openUrl(el.getAttribute("data-href")); });
+        })(links[i]);
+      }
+    }
+  });
   /* first paint + the language-switch repaint */
   bindSetupRefresh();
   REFRESHERS.push(function () { try { bindSetupRefresh(); } catch (e) { } });
@@ -11757,133 +11822,164 @@ function galPaintLabels() {
   galPaintPick();
 }
 
+/* v6.107.1 — IN STAGES, each guarded. The owner's Photoshop showed this page
+   with its labels unpainted (#vidWfIntro empty), its shelf empty and its three
+   picker faces blank: everything after the first throw. Which statement threw
+   is what the self-test card now reports; and whichever it is, the stages
+   after it paint anyway. */
 function bindVideo() {
   const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
   const sel = $("vidModel");
-  if (sel && V) {
-    /* v6.51.0 — the app's family-grouped picker, painted onto the IC tile */
-    vidFillModels(sel, V.models());
-    sel.addEventListener("change", vidPaintOptions);
-    sel.addEventListener("change", function () { renderRefs(); });   /* v6.21.0 — the strip's slot count follows the model */
-  }
-  /* the app's five video buttons: generate, cancel, retry, download, open */
-  const run = $("btnVidRun"); if (run) run.addEventListener("click", vidGenerate);
-  const cancel = $("btnVidCancel");
-  if (cancel) cancel.addEventListener("click", function () { if (vidRun.abort) vidRun.abort.abort(); });
-  const retry = $("btnVidRetry");
-  if (retry) retry.addEventListener("click", function () {
-    if (vidRun.busy) return;
-    retry.style.display = "none";
-    vidGenerate();
+  safe("video:models", function () {
+    if (sel && V) {
+      /* v6.51.0 — the app's family-grouped picker, painted onto the IC tile */
+      vidFillModels(sel, V.models());
+      sel.addEventListener("change", vidPaintOptions);
+      sel.addEventListener("change", function () { renderRefs(); });   /* v6.21.0 — the strip's slot count follows the model */
+    }
   });
-  const dl = $("btnVidDl"); if (dl) dl.addEventListener("click", vidDownload);
-  const open = $("btnVidOpen"); if (open) open.addEventListener("click", vidOpen);
-  const box = $("vidPromptP");
-  if (box) box.addEventListener("input", vidPaintPromptCount);
+  /* the app's five video buttons: generate, cancel, retry, download, open */
+  safe("video:buttons", function () {
+    const run = $("btnVidRun"); if (run) run.addEventListener("click", vidGenerate);
+    const cancel = $("btnVidCancel");
+    if (cancel) cancel.addEventListener("click", function () { if (vidRun.abort) vidRun.abort.abort(); });
+    const retry = $("btnVidRetry");
+    if (retry) retry.addEventListener("click", function () {
+      if (vidRun.busy) return;
+      retry.style.display = "none";
+      vidGenerate();
+    });
+    const dl = $("btnVidDl"); if (dl) dl.addEventListener("click", vidDownload);
+    const open = $("btnVidOpen"); if (open) open.addEventListener("click", vidOpen);
+    const box = $("vidPromptP");
+    if (box) box.addEventListener("input", vidPaintPromptCount);
+  });
   /* the app's nine-language copy, repainted on every language change */
-  vidPaintLabels();
-  renderVidWf();
+  safe("video:labels", vidPaintLabels);
+  safe("video:shelf", renderVidWf);
   REFRESHERS.push(function () {
-    try { vidPaintLabels(); vidPaintOptions(); renderVidWf(); } catch (e) { hwarn("video:", e); }
+    try { vidPaintLabels(); } catch (e) { hwarn("video:", e); }
+    try { vidPaintOptions(); } catch (e) { hwarn("video:", e); }
+    try { renderVidWf(); } catch (e) { hwarn("video:", e); }
   });
 
   /* the app labels these 720p / 1080p / 2K / 4K; the values stay the
      endpoint's own lowercase tiers */
-  const vuSel = $("vuRes");
-  if (vuSel) {
-    const tiers = (V && V.upscaleResolutions) || ["1080p"];
-    while (vuSel.firstChild) vuSel.removeChild(vuSel.firstChild);
-    tiers.forEach(function (v) { vuSel.appendChild(mkOption(String(v), String(v).replace(/k$/, "K"))); });
-    try { vuSel.value = "1080p"; } catch (e) { }
-    vuSel.addEventListener("change", vuPaintHsl);
-  }
-  const vp = $("btnVuPickP");
-  if (vp) vp.addEventListener("click", async function () {
-    /* v6.6.3 — the upscaler is one of the MP4-only endpoints. The app has
-       always refused a .mov here and said so; the panel offered one and let
-       the student find out after the submit had been charged. It asks the
-       same lifted table the video-tool picker does, so the two surfaces
-       cannot disagree about what this one endpoint takes. */
-    try {
-      const VC = globalThis.HNK && globalThis.HNK.videoContainers;
-      const ap = (V && V.upscaleApiPath) || "rhart-video/video-upscaler";
-      const types = VC ? VC.containers(ap) : ["mp4"];
-      const f = await pickFile(types);
-      if (f && VC && !VC.accepts(ap, f.name)) { setStatus(ff9(VU_L.format), "err"); return; }
-      if (f) VU.video = f;
-      renderVu();
+  safe("vidup:models", function () {
+    const vuSel = $("vuRes");
+    if (vuSel) {
+      const tiers = (V && V.upscaleResolutions) || ["1080p"];
+      while (vuSel.firstChild) vuSel.removeChild(vuSel.firstChild);
+      tiers.forEach(function (v) { vuSel.appendChild(mkOption(String(v), String(v).replace(/k$/, "K"))); });
+      try { vuSel.value = "1080p"; } catch (e) { }
+      vuSel.addEventListener("change", vuPaintHsl);
     }
-    catch (e) { setStatus(friendlyErr(e), "err"); }
   });
-  const vs = $("btnVuSave");
-  if (vs) vs.addEventListener("click", async function () {
-    try { const f = await pickFolder(); if (f) VU.out = f; renderVu(); }
-    catch (e) { setStatus(friendlyErr(e), "err"); }
+  safe("vidup:buttons", function () {
+    const vp = $("btnVuPickP");
+    if (vp) vp.addEventListener("click", async function () {
+      /* v6.6.3 — the upscaler is one of the MP4-only endpoints. The app has
+         always refused a .mov here and said so; the panel offered one and let
+         the student find out after the submit had been charged. It asks the
+         same lifted table the video-tool picker does, so the two surfaces
+         cannot disagree about what this one endpoint takes. */
+      try {
+        const VC = globalThis.HNK && globalThis.HNK.videoContainers;
+        const ap = (V && V.upscaleApiPath) || "rhart-video/video-upscaler";
+        const types = VC ? VC.containers(ap) : ["mp4"];
+        const f = await pickFile(types);
+        if (f && VC && !VC.accepts(ap, f.name)) { setStatus(ff9(VU_L.format), "err"); return; }
+        if (f) VU.video = f;
+        renderVu();
+      }
+      catch (e) { setStatus(friendlyErr(e), "err"); }
+    });
+    const vs = $("btnVuSave");
+    if (vs) vs.addEventListener("click", async function () {
+      try { const f = await pickFolder(); if (f) VU.out = f; renderVu(); }
+      catch (e) { setStatus(friendlyErr(e), "err"); }
+    });
+    const vr = $("btnVuRun"); if (vr) vr.addEventListener("click", vuRun);
   });
-  const vr = $("btnVuRun"); if (vr) vr.addEventListener("click", vuRun);
 
   /* v6.50.0 — VIDEO TOOLS */
-  const vtSel = $("vtModel");
-  if (vtSel && V && V.tools) {
-    const tl = V.tools();
-    while (vtSel.firstChild) vtSel.removeChild(vtSel.firstChild);
-    for (let i = 0; i < tl.length; i++) vtSel.appendChild(mkOption(tl[i].id, tl[i].label || tl[i].id));
-    vtSel.addEventListener("change", vtPaintOptions);
-  }
-  /* the styled label over each option select is painted from the select's own
-     change, exactly as the app does it — without this a student picks 4K and
-     goes on reading 1080p */
-  ["vtOpt", "vtOpt2"].forEach(function (id) {
-    const s = $(id);
-    if (s) s.addEventListener("change", vuPaintHsl);
-  });
-  const vtp = $("btnVtPick");
-  if (vtp) vtp.addEventListener("click", async function () {
-    /* v6.6.3 — ASK THE TOOL, do not offer everything. This picker used to
-       hand mp4/mov/webm to every endpoint, so a student could choose an
-       iPhone .mov for one of the twenty-three video tools that document MP4
-       only — and find out after the submit had already been charged. The
-       containers come from the app's own lifted table now, per endpoint. */
-    try {
-      const d = vtDef();
-      const VC = globalThis.HNK && globalThis.HNK.videoContainers;
-      const types = (VC && d && d.apiPath) ? VC.containers(d.apiPath) : ["mp4"];
-      const f = await pickFile(types);
-      if (f && VC && d && d.apiPath && !VC.accepts(d.apiPath, f.name)) {
-        setStatus(ff9(VT_L.container).replace("{L}", types.join("/").toUpperCase()), "err");
-        return;
-      }
-      if (f) VT.video = f;
-      renderVt();
+  safe("v2v:models", function () {
+    const vtSel = $("vtModel");
+    if (vtSel && V && V.tools) {
+      const tl = V.tools();
+      while (vtSel.firstChild) vtSel.removeChild(vtSel.firstChild);
+      for (let i = 0; i < tl.length; i++) vtSel.appendChild(mkOption(tl[i].id, tl[i].label || tl[i].id));
+      vtSel.addEventListener("change", vtPaintOptions);
     }
-    catch (e) { setStatus(friendlyErr(e), "err"); }
+    /* the styled label over each option select is painted from the select's own
+       change, exactly as the app does it — without this a student picks 4K and
+       goes on reading 1080p */
+    ["vtOpt", "vtOpt2"].forEach(function (id) {
+      const s = $(id);
+      if (s) s.addEventListener("change", vuPaintHsl);
+    });
   });
-  const vti = $("btnVtImgPick");
-  if (vti) vti.addEventListener("click", async function () {
-    try { const f = await pickFile(["jpg", "jpeg", "png", "webp"]); if (f) VT.img = f; renderVt(); }
-    catch (e) { setStatus(friendlyErr(e), "err"); }
+  safe("v2v:buttons", function () {
+    const vtp = $("btnVtPick");
+    if (vtp) vtp.addEventListener("click", async function () {
+      /* v6.6.3 — ASK THE TOOL, do not offer everything. This picker used to
+         hand mp4/mov/webm to every endpoint, so a student could choose an
+         iPhone .mov for one of the twenty-three video tools that document MP4
+         only — and find out after the submit had already been charged. The
+         containers come from the app's own lifted table now, per endpoint. */
+      try {
+        const d = vtDef();
+        const VC = globalThis.HNK && globalThis.HNK.videoContainers;
+        const types = (VC && d && d.apiPath) ? VC.containers(d.apiPath) : ["mp4"];
+        const f = await pickFile(types);
+        if (f && VC && d && d.apiPath && !VC.accepts(d.apiPath, f.name)) {
+          setStatus(ff9(VT_L.container).replace("{L}", types.join("/").toUpperCase()), "err");
+          return;
+        }
+        if (f) VT.video = f;
+        renderVt();
+      }
+      catch (e) { setStatus(friendlyErr(e), "err"); }
+    });
+    const vti = $("btnVtImgPick");
+    if (vti) vti.addEventListener("click", async function () {
+      try { const f = await pickFile(["jpg", "jpeg", "png", "webp"]); if (f) VT.img = f; renderVt(); }
+      catch (e) { setStatus(friendlyErr(e), "err"); }
+    });
+    const vfc = $("btnVtFileClear");
+    if (vfc) vfc.addEventListener("click", function () { VT.video = null; renderVt(); });
+    const vic = $("btnVtImgClear");
+    if (vic) vic.addEventListener("click", function () { VT.img = null; renderVt(); });
+    const vts = $("btnVtSave");
+    if (vts) vts.addEventListener("click", async function () {
+      try { const f = await pickFolder(); if (f) VT.out = f; renderVt(); }
+      catch (e) { setStatus(friendlyErr(e), "err"); }
+    });
+    const vtr = $("btnVtRun"); if (vtr) vtr.addEventListener("click", vtRun);
   });
-  const vfc = $("btnVtFileClear");
-  if (vfc) vfc.addEventListener("click", function () { VT.video = null; renderVt(); });
-  const vic = $("btnVtImgClear");
-  if (vic) vic.addEventListener("click", function () { VT.img = null; renderVt(); });
-  const vts = $("btnVtSave");
-  if (vts) vts.addEventListener("click", async function () {
-    try { const f = await pickFolder(); if (f) VT.out = f; renderVt(); }
-    catch (e) { setStatus(friendlyErr(e), "err"); }
-  });
-  const vtr = $("btnVtRun"); if (vtr) vtr.addEventListener("click", vtRun);
 
   /* the app's nine-language copy for both halves of this page */
-  vuPaintLabels();
+  safe("vidup:labels", vuPaintLabels);
   REFRESHERS.push(function () { try { vuPaintLabels(); } catch (e) { hwarn("vidup:", e); } });
 
-  vidPaintOptions(); renderVu(); vtPaintOptions();
+  safe("video:paint", vidPaintOptions);
+  safe("vidup:paint", renderVu);
+  safe("v2v:paint", vtPaintOptions);
 }
 
 function bindDiag() {
-  bindSetup();
-  bindPath(); bindVideo(); bindGallery(); bindTalk();
+  /* v6.107.1 — ONE GUARD PER PAGE. These five ran as a single unguarded
+     sequence inside safe("diag"): a throw anywhere in bindSetup skipped the
+     Path, Video, Gallery AND Talk binds, so the owner's Photoshop showed the
+     Video page's model list empty, its faces blank, its shelf empty, Talk's
+     button without a label and Setup's Version buttons bare — five symptoms of
+     one line, and the line itself never named. Each page now fails alone, and
+     the self-test card names which one. */
+  safe("setup", bindSetup);
+  safe("path", bindPath);
+  safe("video", bindVideo);
+  safe("gallery", bindGallery);
+  safe("talk", bindTalk);
 }
 
 /* ============================================================
@@ -17391,8 +17487,21 @@ function openCard(key) {
   }
 }
 
+/* v6.107.1 — every wiring stage leaves a record: "ok", or the message and the
+   line that stopped it. safe() has always swallowed a throw so that one page
+   could not take the panel down; what it swallowed was never shown anywhere a
+   student could see. The owner's Photoshop showed an empty Video page under a
+   self-test card that said "Errors: none" — both true at once, because the
+   card heard only uncaught errors and this function had caught the one that
+   mattered. The card now reads WIRED. A failure is sticky: a later refresh
+   that succeeds does not erase the first boot's answer. */
+const WIRED = {};
 function safe(name, fn) {
-  try { fn(); } catch (e) { herr("wire-fail:", name, e); }
+  try { fn(); if (!WIRED[name]) WIRED[name] = "ok"; }
+  catch (e) {
+    WIRED[name] = ((e && e.message) || String(e)) + errWhere(e);
+    herr("wire-fail:", name, e);
+  }
 }
 
 function installGlobalSafetyNet() {

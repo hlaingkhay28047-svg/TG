@@ -40,6 +40,26 @@
       renderer probes, the module counts, the picture tallies.
 
    E) CI runs this test.
+
+   v6.38.1 / panel 6.107.1 — THE SECOND PHOTOGRAPH. With 6.107.0 installed the
+   owner photographed Media Lab ▸ Video: #vidWfIntro empty, the shelf empty,
+   the three picker faces blank — while the self-test card two pages away read
+   "Errors: none". Both true at once: the card heard only UNCAUGHT errors, and
+   the panel's own safe() had caught the throw, logged it where no student
+   looks, and moved on; and because bindDiag ran its five page binds as one
+   unguarded sequence, one throw had unbound four pages. So:
+
+   F) EVERY WIRING STAGE IS GUARDED AND RECORDED. bindDiag guards each page;
+      bindSetup, bindSetupRefresh and bindVideo guard each stage; safe() writes
+      "ok" or the message AND THE LINE into WIRED; and the card reports Wiring,
+      the Video page as the DOM holds it, the labels that only JavaScript
+      writes, and the panel's own log.
+
+   G) PROVEN BY FAULT INJECTION, not by reading: a second page is loaded with
+      one renderer gap simulated (the option.disabled setter throws, exactly
+      where vidFillModels sets its family headers). The page must still paint
+      its labels, its shelf and its other pages, and the card must name the
+      failing stage with its file and line.
    ============================================================ */
 "use strict";
 const fs = require("fs");
@@ -132,6 +152,49 @@ report("D3) Setup carries the card, and the parity walk is told it is panel-only
   /id="cardSelfTest" data-panel-only="self-test"/.test(INDEX) &&
   /function renderSelfTest\(\)/.test(MAIN) &&
   /renderRows\("selfTestRows", selfTestRows\(\)\)/.test(MAIN), null);
+
+/* F) the guards, in the source */
+report("F1) bindDiag binds its five pages one guard each — a throw in Setup can no longer unbind Video, Gallery and Talk",
+  /function bindDiag\(\) \{[\s\S]*?safe\("setup", bindSetup\);\s*safe\("path", bindPath\);\s*safe\("video", bindVideo\);\s*safe\("gallery", bindGallery\);\s*safe\("talk", bindTalk\);\s*\}/.test(MAIN),
+  "bindDiag");
+report("F2) bindVideo wires in guarded stages, so the labels, the shelf and the faces each paint whatever threw before them",
+  ["video:models", "video:buttons", "video:labels", "video:shelf", "vidup:models", "v2v:models", "video:paint", "vidup:paint", "v2v:paint"]
+    .every(n => MAIN.indexOf('safe("' + n + '"') > 0) &&
+  /safe\("video:labels", vidPaintLabels\);\s*safe\("video:shelf", renderVidWf\);/.test(MAIN),
+  "stage names in bindVideo");
+report("F3) bindSetup and its repaint are staged the same way",
+  ["setup:account", "setup:runninghub", "setup:money", "setup:about-wire", "setup:statics", "setup:readiness", "setup:rh-models"]
+    .every(n => MAIN.indexOf('safe("' + n + '"') > 0), "stage names in bindSetup / bindSetupRefresh");
+report("F4) safe() records every stage — ok, or the message and the line — and the log carries the line too",
+  /const WIRED = \{\};/.test(MAIN) &&
+  /try \{ fn\(\); if \(!WIRED\[name\]\) WIRED\[name\] = "ok"; \}/.test(MAIN) &&
+  /WIRED\[name\] = \(\(e && e\.message\) \|\| String\(e\)\) \+ errWhere\(e\);/.test(MAIN) &&
+  /function errWhere\(e\)/.test(MAIN) &&
+  /if \(a instanceof Error\) return \(a\.message \|\| String\(a\)\) \+ errWhere\(a\);/.test(MAIN),
+  "safe / errWhere / pushLog");
+report("F5) the card reads WIRED, the Video page's DOM, the JavaScript-only labels and the panel's log",
+  /label: "Wiring", detail: \(wnames\.length - wfail\.length\) \+ " ok · " \+ wfail\.length \+ " failed"/.test(MAIN) &&
+  /label: "Video page", detail: vOpts \+ " opt · face "/.test(MAIN) &&
+  /label: "Labels", detail: blank\.length \? blank\.join\(", "\)/.test(MAIN) &&
+  /label: "Panel log", detail: bad\.length \? bad\.length \+ " · " \+ HNK_LOG\.length/.test(MAIN),
+  "selfTestRowsInner");
+
+/* the self-test card's rows, as the DOM holds them */
+const READ_CARD = () => {
+  const box = document.getElementById("selfTestRows");
+  if (!box) return null;
+  const rows = [];
+  box.querySelectorAll(".diagrow").forEach(function (r) {
+    rows.push({
+      name: (r.querySelector(".diag-nm") || {}).textContent || "",
+      detail: (r.querySelector(".diag-st") || {}).textContent || "",
+      level: ((r.querySelector(".diag-ic") || {}).className || "").replace("diag-ic", "").trim()
+    });
+  });
+  const caps = (window.HNK && window.HNK.selfTest && window.HNK.selfTest.capabilities()) || {};
+  return { rows: rows, caps: caps, errors: (window.HNK.selfTest.errors() || []).length,
+    copy: typeof selfTestText === "function" ? selfTestText() : "" };
+};
 
 /* --------------------------------------------------------------- runtime */
 
@@ -263,21 +326,7 @@ report("D3) Setup carries the card, and the parity walk is told it is panel-only
     /* D) the self-test card, drawn and readable */
     await page.evaluate(() => { try { switchPage("setup"); } catch (e) { } });
     await page.waitForTimeout(700);
-    const st = await page.evaluate(() => {
-      const box = document.getElementById("selfTestRows");
-      if (!box) return null;
-      const rows = [];
-      box.querySelectorAll(".diagrow").forEach(function (r) {
-        rows.push({
-          name: (r.querySelector(".diag-nm") || {}).textContent || "",
-          detail: (r.querySelector(".diag-st") || {}).textContent || "",
-          level: ((r.querySelector(".diag-ic") || {}).className || "").replace("diag-ic", "").trim()
-        });
-      });
-      const caps = (window.HNK && window.HNK.selfTest && window.HNK.selfTest.capabilities()) || {};
-      return { rows: rows, caps: caps, errors: (window.HNK.selfTest.errors() || []).length,
-        copy: typeof selfTestText === "function" ? selfTestText() : "" };
-    });
+    const st = await page.evaluate(READ_CARD);
     const named = (n) => !!st && st.rows.some(r => r.name === n);
     report("D4) the card names the panel, the host, the renderer's three answers and every list a page is built from",
       !!st && ["Panel", "Photoshop", "optgroup", "line boxes", "SVG in img", "Video model",
@@ -300,6 +349,90 @@ report("D3) Setup carries the card, and the parity walk is told it is panel-only
     report("D9) nothing threw while all of that was built",
       errs.length === 0 && !!st && st.errors === 0,
       errs.slice(0, 3).join(" | ") + " | selfTest: " + (st ? st.errors : "?"));
+
+    /* F) the new rows, on the healthy build */
+    const row = (n) => (st && st.rows.find(r => r.name === n)) || null;
+    report("F6) the card reports the wiring: dozens of stages, none failed",
+      !!row("Wiring") && /^(\d+) ok · 0 failed$/.test(row("Wiring").detail) && Number(/^(\d+)/.exec(row("Wiring").detail)[1]) >= 50 && row("Wiring").level === "ok",
+      JSON.stringify(row("Wiring")));
+    report("F7) it reports the Video page as the DOM holds it — options, a named face, shelf cards",
+      !!row("Video page") && /^(\d+) opt · face ✓ · (\d+) cards$/.test(row("Video page").detail) &&
+      Number(/^(\d+)/.exec(row("Video page").detail)[1]) > 150 && Number(/· (\d+) cards$/.exec(row("Video page").detail)[1]) > 20 && row("Video page").level === "ok",
+      JSON.stringify(row("Video page")));
+    report("F8) every JavaScript-written label it watches carries text, and the panel's own log is clean",
+      !!row("Labels") && /^5\/5 ✓$/.test(row("Labels").detail) && row("Labels").level === "ok" &&
+      !!row("Panel log") && row("Panel log").level === "ok",
+      JSON.stringify([row("Labels"), row("Panel log")]));
+    report("F9) the copy text carries all of it",
+      !!st && ["Wiring:", "Video page:", "Labels:", "Panel log:"].every(k => st.copy.indexOf(k) > 0), !!st && st.copy.slice(-200));
+
+    /* G) FAULT INJECTION. A second page, one renderer gap simulated: the
+       option.disabled setter throws — the statement vidFillModels reaches for
+       its family header rows, which no other picker on the panel uses at
+       build time. On 6.107.0 that single throw left the Video page without
+       labels, shelf or faces and unbound Gallery and Talk behind it, and the
+       card said nothing. */
+    const page2 = await browser.newPage({ viewport: { width: 380, height: 900 } });
+    const errs2 = [];
+    page2.on("pageerror", e => errs2.push(String(e).slice(0, 200)));
+    await page2.addInitScript(`Object.defineProperty(HTMLOptionElement.prototype, "disabled", {
+      configurable: true, get: function () { return false; },
+      set: function () { throw new TypeError("UXP-sim: option.disabled is read-only"); } });`);
+    await page2.addInitScript(UXP_STUB);
+    await page2.addInitScript(`(function(){
+      var stub = window.fetch;
+      var BASE = ${JSON.stringify(ASSET_HOST + "/app/")};
+      window.fetch = function(url, init){
+        var u = String(url);
+        if (u.indexOf(BASE) === 0) u = "http://127.0.0.1:${port}/__app/" + u.slice(BASE.length);
+        return stub(u, init);
+      };
+    })();`);
+    await page2.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: "load" });
+    await page2.waitForFunction(() => {
+      try { return !!(window.HNK && window.HNK.panelNav && window.HNK.panelNav.dash()); }
+      catch (e) { return false; }
+    }, null, { timeout: 30000 }).catch(() => {});
+    await page2.waitForTimeout(1200);
+    for (const key of ["video", "talk", "gallery", "setup"]) {
+      await page2.evaluate(k => { try { switchPage(k); } catch (e) { } }, key);
+      await page2.waitForTimeout(400);
+    }
+    const hurt = await page2.evaluate(() => {
+      const t = id => { const el = document.getElementById(id); return el ? String(el.textContent || "").trim() : "<missing>"; };
+      const sel = document.getElementById("vidModel");
+      return {
+        vidModelOpts: sel && sel.options ? sel.options.length : -1,
+        wfIntro: t("vidWfIntro"), shelf: (document.getElementById("vidWfRow") || { children: [] }).children.length,
+        resFace: t("vidResVal"), tkGen: t("btnTkGen"), tkFace: t("tkModelVal"), galDl: t("galDl"), checkUpdate: t("btnCheckUpdate"),
+        wired: (typeof WIRED !== "undefined") ? Object.keys(WIRED).filter(k => WIRED[k] !== "ok") : null,
+        log: (typeof HNK_LOG !== "undefined") ? HNK_LOG.filter(e => e.level === "ERR").map(e => e.msg) : null
+      };
+    });
+    report("G1) the simulated gap really did stop the model picker from filling (the fault landed where 6.107.0 broke)",
+      hurt.vidModelOpts === 0, JSON.stringify(hurt));
+    report("G2) and the Video page still painted its labels, its shelf and its resolution face around the failure",
+      hurt.wfIntro.length > 10 && hurt.shelf > 20 && hurt.resFace.length > 0, JSON.stringify(hurt));
+    report("G3) Talk, Gallery and Setup — bound after Video — are labelled: one page's throw no longer unbinds the rest",
+      hurt.tkGen.length > 0 && hurt.tkFace.length > 3 && hurt.galDl.length > 0 && hurt.checkUpdate.length > 0, JSON.stringify(hurt));
+    report("G4) WIRED names exactly the stage that failed, and the log line carries the file and line",
+      Array.isArray(hurt.wired) && hurt.wired.length === 1 && hurt.wired[0] === "video:models" &&
+      Array.isArray(hurt.log) && hurt.log.some(m => /^wire-fail: video:models UXP-sim: option\.disabled is read-only @ main\.js:\d+$/.test(m)),
+      JSON.stringify({ wired: hurt.wired, log: hurt.log }));
+    const st2 = await page2.evaluate(READ_CARD);
+    const row2 = (n) => (st2 && st2.rows.find(r => r.name === n)) || null;
+    report("G5) the card says so: Wiring counts the failure, the failing stage is a red row with message, file and line",
+      !!row2("Wiring") && / · 1 failed$/.test(row2("Wiring").detail) && row2("Wiring").level === "err" &&
+      !!row2("✗ video:models") && /UXP-sim: option\.disabled is read-only @ main\.js:\d+/.test(row2("✗ video:models").detail) && row2("✗ video:models").level === "err",
+      JSON.stringify([row2("Wiring"), row2("✗ video:models")]));
+    report("G6) and the Video page row is red with the DOM's own numbers — 0 options, no face — while the shelf count stands",
+      !!row2("Video page") && /^0 opt · face — · (\d+) cards$/.test(row2("Video page").detail) && row2("Video page").level === "err",
+      JSON.stringify(row2("Video page")));
+    report("G7) the copy text names the stage too, so a student with no camera still sends the line",
+      !!st2 && st2.copy.indexOf("✗ video:models: UXP-sim") > 0 && /main\.js:\d+/.test(st2.copy), !!st2 && st2.copy.slice(0, 200));
+    report("G8) the fault stayed caught — no uncaught page error escaped the guards",
+      errs2.length === 0, errs2.join(" | "));
+    await page2.close();
   } finally {
     await browser.close();
     await new Promise(r => server.close(r));

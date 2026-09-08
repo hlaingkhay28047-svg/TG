@@ -95,8 +95,9 @@ function capabilities() {
         per character? fitBtnIn() splits a wrapped button label on that
         measurement, and a per-character answer chops the label after one
         letter — the shape of the owner's overlapping Home text. */
+  var probe = null;
   try {
-    var probe = doc.createElement("div");
+    probe = doc.createElement("div");
     probe.style.position = "absolute"; probe.style.left = "-9999px";
     probe.style.top = "0"; probe.style.width = "40px"; probe.style.fontSize = "12px";
     var text = "abcdefghij klmnopqrst uvwxyzabcd";
@@ -110,8 +111,15 @@ function capabilities() {
     for (var i = 0; rects && i < rects.length; i++) if (rects[i].width > 0.5) n++;
     caps.rangeRects = n;
     caps.rangeLineBoxes = n > 0 && n < text.length / 2;
-    probe.parentNode.removeChild(probe);
-  } catch (e2) { caps.rangeRects = -1; caps.rangeLineBoxes = false; }
+  } catch (e2) {
+    /* -1: the probe could not run at all. The owner's Photoshop answers this
+       way — document.createRange is not there — which is a different fact
+       from "one box per glyph", and the card says which. */
+    caps.rangeRects = -1; caps.rangeLineBoxes = false;
+  }
+  /* v6.107.1 — the probe div used to be removed only on the success path, so
+     the renderer that throws here (the owner's) kept a stray off-screen node */
+  try { if (probe && probe.parentNode) probe.parentNode.removeChild(probe); } catch (e4) { }
 
   /* C. can this renderer draw an SVG file in <img>? The whole icon set is
         SVG, so a "no" here would explain a great deal at a glance. */
