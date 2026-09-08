@@ -8949,21 +8949,36 @@ function selfTestRowsInner() {
   rows.push({ label: "Panel", detail: "v" + PANEL_VERSION, level: "ok" });
   /* the host's own version — the acceptance record needs exactly this and it
      has been one message away for weeks */
+  /* v6.107.1 — uxp.host, not app.version. The owner's first SELF-TEST photograph
+     read "Photoshop  win32": app.version came back empty and only os.platform()
+     survived, so the one number the acceptance record has been waiting weeks for
+     was still missing from the card built to fetch it. UXP publishes the host it
+     is running inside as require("uxp").host = { name, version, uiLocale };
+     app.version stays as the fallback, and the platform is appended either way. */
   let host = "";
-  try { host = String((app && app.version) || ""); } catch (e) { host = ""; }
+  try {
+    const h = uxp && uxp.host;
+    if (h && h.version) host = String(h.name || "Photoshop") + " " + String(h.version);
+  } catch (e) { host = ""; }
+  if (!host) { try { host = String((app && app.version) || ""); } catch (e) { host = ""; } }
   try {
     const osm = require("os");
     if (osm && typeof osm.platform === "function") host += (host ? " · " : "") + osm.platform();
   } catch (e) { }
-  rows.push({ label: "Photoshop", detail: host || "—", level: host ? "ok" : "warn" });
+  rows.push({ label: "Photoshop", detail: host || "—", level: /\d/.test(host) ? "ok" : "warn" });
 
   /* --- what this renderer does, measured, not assumed --- */
   const st = H.selfTest || null;
   const caps = st && typeof st.capabilities === "function" ? st.capabilities() : {};
   rows.push({ label: "optgroup", detail: caps.optgroup === undefined ? "—" : (caps.optgroup ? "flattens" : "NOT read"),
     level: caps.optgroup === undefined ? "pend" : (caps.optgroup ? "ok" : "warn") });
+  /* v6.107.1 — -1 is the catch branch: the probe could not run at all, which is
+     a DIFFERENT answer from "one box per glyph" and the card said the wrong one.
+     The owner's Photoshop reports -1, so Range.getClientRects is simply not
+     available there — which is exactly why fitBtnIn must not trust it. */
   rows.push({ label: "line boxes", detail: caps.rangeRects === undefined ? "—" :
-    (caps.rangeLineBoxes ? "yes (" + caps.rangeRects + ")" : "per glyph (" + caps.rangeRects + ")"),
+    (caps.rangeRects < 0 ? "unavailable"
+      : caps.rangeLineBoxes ? "yes (" + caps.rangeRects + ")" : "per glyph (" + caps.rangeRects + ")"),
     level: caps.rangeRects === undefined ? "pend" : (caps.rangeLineBoxes ? "ok" : "warn") });
   rows.push({ label: "SVG in img", detail: caps.svgImg || "—",
     level: caps.svgImg === "yes" ? "ok" : (caps.svgImg === "no" ? "err" : "pend") });

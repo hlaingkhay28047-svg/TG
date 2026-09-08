@@ -126,6 +126,17 @@ function capabilities() {
   return caps;
 }
 
+/* v6.107.1 — start the SVG probe at LOAD, not at first render. The owner's
+   first SELF-TEST photograph read "SVG in img  pending": capabilities() had
+   only just kicked the image off, and an <img> resolves a frame or two later,
+   so the card showed the state of a question it had asked a moment earlier.
+   The answer lands on the same caps object either way (capabilities() returns
+   the cached one, and the handlers below mutate it), so pressing Run again
+   would have shown it — but a diagnostic should be right the first time. */
+try {
+  if (typeof document !== "undefined" && document.createElement) capabilities();
+} catch (e) { }
+
 var API = {
   errors: function () { return errors.slice(); },
   errorCount: function () { return errors.length; },
