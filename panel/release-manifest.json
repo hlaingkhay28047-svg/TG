@@ -1,9 +1,9 @@
 {
-  "version": "6.102.2",
-  "minimum_supported_version": "6.102.2",
-  "artifact_file": "HNK_Ai_Panel_v6.102.2.ccx",
-  "sha256": "939baf289935e58d85a0ac6227db905ebdfb222ff6deb522cc70ef1b8862780f",
-  "bytes": 20394580,
+  "version": "6.102.3",
+  "minimum_supported_version": "6.102.3",
+  "artifact_file": "HNK_Ai_Panel_v6.102.3.ccx",
+  "sha256": "d086130a9a4a26d50dab30036dad96aa0874124f2d7cea491032191c4ec04914",
+  "bytes": 20396296,
   "released": "2026-09-08",
   "distribution": "private authenticated one-time stream",
   "adobe_acceptance": "pending"
