@@ -193,10 +193,19 @@ const NEW = Object.keys(SCRIPTS);
      tdd, khb and kht to Shan, so those readers see the real Shan sentence —
      A2 below measures it. */
   const V6290_KEYS = ["ph_imagine"];
+  /* 6.35.0 wave — the device list's badge (dev_admin_only) joins on exactly the
+     same terms as ph_imagine before it. It replaces a hardcoded English
+     "Admin reset only" that every one of these packs was already showing in
+     English, so the fifteen packs with readers are strictly better off and the
+     three Tai packs are no worse: LANG_FB routes tdd, khb and kht to Shan, and
+     the Shan string is real (TR carries it), which A2 below measures. Guessing
+     a Tai Le sentence, or pasting the Shan text into their own packs, is the
+     invention this registry exists to refuse. */
+  const V6350_KEYS = ["dev_admin_only"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {
