@@ -8923,6 +8923,20 @@ const ST_L = {
 /* every row: [label, value, level]. Absent or zero where something is expected
    is what makes a row red — the card is useless if it flatters the panel. */
 function selfTestRows() {
+  try { return selfTestRowsInner(); }
+  catch (e) {
+    /* v6.107.1 — the card is a DIAGNOSTIC. It reads a dozen things the panel
+       may or may not have, on a renderer this code cannot test, and 6.107.0
+       shipped it as a bare call inside setupApplyStatics — which is on the
+       boot path. If any one of those reads threw, the panel died before the
+       sign-in card was ever painted, and the student saw a form with no
+       labels and a button that did nothing. A tool for finding faults must
+       not be able to cause one. */
+    return [{ label: "Panel", detail: "v" + PANEL_VERSION, level: "ok" },
+      { label: "Self-test", detail: (e && e.message) || "failed", level: "err" }];
+  }
+}
+function selfTestRowsInner() {
   const H = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK : {};
   const rows = [];
   const lvl = function (ok) { return ok ? "ok" : "err"; };
@@ -8992,6 +9006,9 @@ function selfTestRows() {
   return rows;
 }
 function renderSelfTest() {
+  try { renderSelfTestInner(); } catch (e) { try { hwarn("selftest:", e); } catch (e2) { } }
+}
+function renderSelfTestInner() {
   const h = $("selfTestH2");
   if (h) {
     /* the heading keeps its gold icon; only the words are replaced */
@@ -9040,7 +9057,11 @@ function setupApplyStatics() {
   const pr = $("aboutPrivacy"); if (pr) pr.textContent = sl("about_privacy");
   const tm = $("aboutTerms"); if (tm) tm.textContent = sl("about_terms");
   const ch = $("aboutContactH"); if (ch) ch.textContent = sl("about_contact");
-  renderSelfTest();   /* v6.107.0 — read fresh on every repaint; a stale self-test is worse than none */
+  /* v6.107.1 — GUARDED AT THE CALL SITE TOO. setupApplyStatics runs from
+     bindSetupRefresh on the boot path, so anything that throws here takes the
+     rest of the panel's startup with it. Read fresh on every repaint (a stale
+     self-test is worse than none), but never at the cost of the panel. */
+  try { renderSelfTest(); } catch (e) { try { hwarn("selftest:", e); } catch (e2) { } }
   setIcnText($("dataH2"), "i-stack", "gold", sl("data_h"), "ic-h2");
   setIcnText($("btnExportData"), "i-download", "cream", sl("data_export"));
   setIcnText($("btnImportData"), "i-restore", "cream", sl("data_import"));
