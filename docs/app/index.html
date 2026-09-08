@@ -319,8 +319,12 @@ select.inp{padding:9px 10px}
 .nw-row:first-of-type{margin-top:0}
 .nw-th{width:56px;height:38px;flex:0 0 auto;object-fit:cover;border-radius:7px;border:1px solid var(--line-soft);background:#000}
 .nw-tx{flex:1;min-width:0}
-.nw-t{font-weight:800;font-size:12.5px;line-height:1.35}
-.nw-s{font-size:11px;color:var(--muted);line-height:1.4;margin-top:2px}
+/* 6.39.1 — two lines per row, the same ceiling .wfmini .t/.s have had.
+   Measured on the panel, which carries this same rule set: unclamped, one
+   Burmese subtitle came to 617px and the three-row card to 2,495px at 360x960
+   — three screens of changelog standing between a student and the studio. */
+.nw-t{font-weight:800;font-size:12.5px;line-height:1.6;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.nw-s{font-size:11px;color:var(--muted);line-height:1.6;margin-top:2px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .nw-tag{flex:0 0 auto;font-size:9.5px;font-weight:900;letter-spacing:.06em;color:#1a1408;background:var(--gold);border-radius:999px;padding:3px 7px}
 .nw-x{flex:0 0 auto;min-width:36px;min-height:36px;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
 /* the card ribbon. Sits opposite .wf-need (top-left) so neither covers the
@@ -26776,7 +26780,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.39.0";
+var APP_VER="6.39.1";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
