@@ -6339,7 +6339,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.108.1";
+const PANEL_VERSION = "6.108.2";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7083,7 +7083,8 @@ async function gateSignIn() {
   gateBusy(true); gateErr("");
   try {
     const r = await gateReq("/auth/v1/token?grant_type=password",
-      { method: "POST", body: JSON.stringify({ email: em, password: pw, client_kind: "panel" }) }, null);
+      { method: "POST", hnkNoRetry: true,
+        body: JSON.stringify({ email: em, password: pw, client_kind: "panel" }) }, null);
     /* v6.64.0 — every failed sign-in used to read "Wrong email or password",
        including the two that are not about the password at all. A student
        locked out by the failed-login limiter was told their password was
@@ -12563,6 +12564,9 @@ async function hnkFetch(url, opts, timeoutMs) {
         timer = setTimeout(function () { try { ctrl.abort(); } catch (e) { } }, tmo);
       }
       const o = Object.assign({}, opts || {});
+      /* our own flag, never a fetch init member — UXP's fetch is not a browser's
+         and an unknown key is not worth finding out about in production */
+      try { delete o.hnkNoRetry; } catch (e) { }
       if (ctrl) o.signal = ctrl.signal;
       const res = await fetch(url, o);
       if (timer) clearTimeout(timer);
@@ -12574,16 +12578,27 @@ async function hnkFetch(url, opts, timeoutMs) {
       throw new Error("HNKERR:err_net:" + msg);
     }
   };
+  /* v6.108.2 — SOME CALLS MUST NOT BE SENT TWICE. The retry below exists for
+     a dropped picture fetch; sending a sign-in twice is a different thing
+     entirely. The server allows five REJECTED passwords per account and
+     computer in fifteen minutes (server/lib/auth.js FAILED_LOGIN_LIMIT), and
+     every attempt that reaches it is counted whether or not our own retry
+     asked for it. One 5xx or one dropped connection therefore charged the
+     student TWO of their five, and three presses could lock an account whose
+     password was never wrong. The owner met exactly that: HTTP 429 on a
+     correct password, at the first press. Callers that change state — the
+     sign-in POST above all — pass hnkNoRetry and are sent once, and once only. */
+  const once = !!(opts && opts.hnkNoRetry);
   try {
     const r = await attempt();
-    if (r && r.status >= 500 && r.status < 600) {
+    if (!once && r && r.status >= 500 && r.status < 600) {
       await sleep(1200);
       return await attempt();
     }
     return r;
   } catch (e) {
     const msg = (e && e.message ? e.message : String(e));
-    if (/err_net:/.test(msg)) { await sleep(1200); return await attempt(); }
+    if (!once && /err_net:/.test(msg)) { await sleep(1200); return await attempt(); }
     throw e;
   }
 }

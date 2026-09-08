@@ -155,6 +155,10 @@ function initScript(cfg) {
           user: { id: ${JSON.stringify(UID)}, email: "student@example.com" } });
       }
       if (url.indexOf("grant_type=password") >= 0) {
+        /* v6.108.2 — a 5xx on the sign-in POST. The panel used to answer it by
+           sending the SAME login again, which spends two of the server's five
+           rejected-password attempts for one press. */
+        if (window.__cfg.loginStatus) return json({ message: "Service unavailable" }, window.__cfg.loginStatus);
         var b = {}; try { b = JSON.parse(init.body || "{}"); } catch(e){}
         if (b.password !== window.__cfg.goodPass) return json({ message: "Invalid login credentials" }, 400);
         return json({ access_token: "access-login", refresh_token: "refresh-login", expires_in: 3600,
@@ -241,6 +245,26 @@ async function run(browser, cfg) {
     !result.state.errShown && result.state.errClass === "gate-err" && result.state.error === "" &&
     result.state.emailLbl !== "" && result.state.forgot !== "" &&
     panelVersion !== "" && result.state.kicker === "Photoshop Panel · v" + panelVersion, result.state);
+  await result.page.close();
+
+  /* v6.108.2 — ONE PRESS, ONE ATTEMPT. hnkFetch retries a 5xx and a dropped
+     connection, which is right for a picture and wrong for a credential: the
+     server counts every login it receives against FAILED_LOGIN_LIMIT (five per
+     account and computer in fifteen minutes), so a single flaky reply charged
+     the student twice and three presses could lock an account whose password
+     was never wrong. The owner met that as HTTP 429 on a correct password. */
+  result = await run(browser, { settings: {}, goodPass: "correct-horse", loginStatus: 503 });
+  await result.page.fill("#gateEmail", "student@example.com");
+  await result.page.fill("#gatePass", "correct-horse");
+  await result.page.click("#gateSignIn");
+  await result.page.waitForFunction(() => (document.getElementById("gateErr").textContent || "") !== "", null, { timeout: 15000 }).catch(() => {});
+  await result.page.waitForTimeout(3000);   /* longer than hnkFetch's 1200ms retry pause */
+  const onceOnly = await result.page.evaluate(() => ({
+    logins: window.__reqs.filter(r => r.url.indexOf("grant_type=password") >= 0).length,
+    text: document.getElementById("gateErr").textContent || ""
+  }));
+  report("H1) 6.108.2 — a 5xx on sign-in is reported, never re-sent: one press spends one of the server's five attempts",
+    onceOnly.logins === 1 && /HTTP 503/.test(onceOnly.text), onceOnly);
   await result.page.close();
 
   result = await run(browser, { settings: saved });
