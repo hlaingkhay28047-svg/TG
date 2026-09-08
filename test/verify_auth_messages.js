@@ -94,7 +94,10 @@ SERVER_ERRORS.push({ status: 503, message: "Server busy", code: "auth_busy" });
 
   /* the lockout must not read as a wrong password, and must name the wait */
   const lock = B.filter(r => r.code === "rate_limited");
-  const badLock = lock.filter(r => !/15|၁၅|นาที|分钟|phút|menit|minit|minute|Minute/i.test(r.login));
+  /* 6.39.3 — the wait itself is env-tunable (FAILED_LOGIN_WINDOW_SECONDS, now
+     five minutes rather than fifteen), so the pin is that a lockout NAMES a
+     wait and clears the password of blame — not that it names one number. */
+  const badLock = lock.filter(r => !/\d|၅|၁၅|นาที|分钟|phút|menit|minit|minute|Minute/i.test(r.login));
   report("C) a locked-out student is told to WAIT and told their password is fine — never that the password is wrong",
     lock.length > 0 && badLock.length === 0, badLock.slice(0, 4).map(r => r.lang + ": " + r.login));
 
@@ -201,7 +204,7 @@ SERVER_ERRORS.push({ status: 503, message: "Server busy", code: "auth_busy" });
     waitCount === 9 && busyCount === 9, { gate_wait: waitCount, gate_busy: busyCount });
 
   const panelWait = [...panelSrc.matchAll(/gate_wait: "([^"]*)"/g)].map(m => m[1]);
-  const noMinutes = panelWait.filter(w => !/15|၁၅|นาที|分钟|phút|menit|minit|Minute|minute/i.test(w));
+  const noMinutes = panelWait.filter(w => !/\d|၅|၁၅|นาที|分钟|phút|menit|minit|Minute|minute/i.test(w));
   report("D3) the panel's lockout line also names the wait and clears the password of blame",
     noMinutes.length === 0, noMinutes);
 
@@ -223,7 +226,7 @@ SERVER_ERRORS.push({ status: 503, message: "Server busy", code: "auth_busy" });
     creds: window.TR.acc_bad_creds[window.LANG] || window.TR.acc_bad_creds.en,
   }), realBody);
   report("E) an actual 429 response, parsed from a real HTTP body, produces the wait message — not the connection message and not the wrong-password message",
-    E.msg !== E.unreachable && E.msg !== E.creds && /15|၁၅/.test(E.msg), E);
+    E.msg !== E.unreachable && E.msg !== E.creds && /\d|၅|၁၅/.test(E.msg), E);
 
   /* ---- G: the phone keyboard's Go key ---- */
   /* The panel's gate has submitted on Enter since 6.28.0. The web app has no

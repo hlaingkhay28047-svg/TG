@@ -25,14 +25,26 @@ const SECRET = process.env.JWT_SECRET || "";
    an account is usable immediately. Set REQUIRE_EMAIL_CONFIRMATION=1 to demand
    it — the client already renders the "check your email" state. */
 const REQUIRE_CONFIRM = process.env.REQUIRE_EMAIL_CONFIRMATION === "1";
-const FAILED_LOGIN_LIMIT = Math.max(3, Number(process.env.FAILED_LOGIN_LIMIT || 5));
-const FAILED_EMAIL_LIMIT = Math.max(FAILED_LOGIN_LIMIT, Number(process.env.FAILED_EMAIL_LIMIT || 10));
-const FAILED_IP_LIMIT = Math.max(FAILED_LOGIN_LIMIT + 1, Number(process.env.FAILED_IP_LIMIT || 25));
-const FAILED_LOGIN_WINDOW_SECONDS = Math.max(60, Number(process.env.FAILED_LOGIN_WINDOW_SECONDS || 900));
+/* 6.39.3 — THE STUDENT NEVER MEETS THIS. Five rejected passwords in fifteen
+   minutes locked the owner out on a correct password, and the people this
+   product is for work on a line that drops: a student in a Mandalay classroom
+   retyping a password on a phone hotspot must never be told to come back in a
+   quarter of an hour. The ceiling now sits where only a machine reaches it —
+   forty tries, and the count forgets everything older than five minutes, so a
+   person who mistypes twice and gets it right on the third has no memory of it
+   at all. It is not switched off: an unattended script guessing passwords is
+   still stopped, which is the only thing this was ever for, and the numbers
+   remain env-tunable if that judgement needs revisiting. */
+const FAILED_LOGIN_LIMIT = Math.max(3, Number(process.env.FAILED_LOGIN_LIMIT || 40));
+const FAILED_EMAIL_LIMIT = Math.max(FAILED_LOGIN_LIMIT, Number(process.env.FAILED_EMAIL_LIMIT || 80));
+const FAILED_IP_LIMIT = Math.max(FAILED_LOGIN_LIMIT + 1, Number(process.env.FAILED_IP_LIMIT || 200));
+const FAILED_LOGIN_WINDOW_SECONDS = Math.max(60, Number(process.env.FAILED_LOGIN_WINDOW_SECONDS || 300));
 const LOGIN_ADMISSION_WINDOW_SECONDS = Math.max(10,
   Number(process.env.LOGIN_ADMISSION_WINDOW_SECONDS || 60));
+/* A dropped line makes a student press Sign in again, and again. Sixty a
+   minute from one computer is far past a person and far under a flood. */
 const LOGIN_ADMISSION_IP_LIMIT = Math.max(1,
-  Number(process.env.LOGIN_ADMISSION_IP_LIMIT || 20));
+  Number(process.env.LOGIN_ADMISSION_IP_LIMIT || 60));
 const LOGIN_ADMISSION_GLOBAL_LIMIT = Math.max(LOGIN_ADMISSION_IP_LIMIT,
   Number(process.env.LOGIN_ADMISSION_GLOBAL_LIMIT || 300));
 const AUTH_ATTEMPT_WINDOW_SECONDS = Math.max(60,Number(process.env.AUTH_ATTEMPT_WINDOW_SECONDS || 3600));
