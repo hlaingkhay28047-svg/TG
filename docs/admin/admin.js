@@ -247,6 +247,7 @@
     "d.computer": "ကွန်ပျူတာ",
     "d.registered": "မှတ်ပုံတင်ပြီး",
     "d.notRegistered": "မမှတ်ပုံတင်ရသေး",
+    "d.sharedWith": "ဒီစက်ကို တခြားအကောင့် {N} ခုကလည်း သုံးနေပါတယ်",
     "p.webApp": "ကျောင်းသား Web App",
     "p.ccx": "Panel download",
     "p.panel": "Photoshop Panel",
@@ -829,6 +830,17 @@
     return n > 1 ? `${kind} ×${n}` : String(kind);
   }
 
+  /* v6.48.0 — the largest shared_with among the live installations on this
+     slot. The server counts per installation (a slot can carry the Web App and
+     the Photoshop Panel), and what the teacher wants is one number: how many
+     other accounts are on this machine at all. Revoked rows are already
+     excluded server-side; guarded here so a payload from an older API, which
+     carries no shared_with at all, simply shows nothing. */
+  function sharedWith(device) {
+    const rows = device && Array.isArray(device.installations) ? device.installations : [];
+    return rows.reduce((most, row) => Math.max(most, Number(row && row.shared_with) || 0), 0);
+  }
+
   function detailButton(item, compact = false) {
     const id = item.id || item.user_id || item.student_id;
     return node("button", { className: compact ? "button" : "text-button", type: "button", text: t("dl.viewDetails", "View details"), dataset: { studentId: id } });
@@ -1111,7 +1123,17 @@
       [t("d.phone", "Phone"), devices.phone, liveOf("phone") || (devices.phone ? 1 : 0)],
       [t("d.computer", "Computer"), devices.computer, liveOf("computer") || (devices.computer ? 1 : 0)],
     ].map(([kind, device, count]) => node("div", { className: "device-row" }, [
-      node("div", {}, [node("b", { text: deviceRowLabel(kind, device, count) }), node("small", { text: device ? prettyDevice(device.label || device.device_name) || t("d.registered", "Registered") : t("d.notRegistered", "Not registered") })]),
+      node("div", {}, [node("b", { text: deviceRowLabel(kind, device, count) }),
+        node("small", { text: device ? prettyDevice(device.label || device.device_name) || t("d.registered", "Registered") : t("d.notRegistered", "Not registered") }),
+        /* v6.48.0 — THE NUMBER THAT REPLACED THE BLOCK. One browser may belong
+           to several accounts now, so instead of refusing the second one the
+           server counts them (admin-api.js shared_with) and the teacher sees
+           it here. It appears only when there IS co-use, and it names no other
+           student: a figure to look into, not a roster pulled out of somebody
+           else's page. */
+        sharedWith(device) ? node("small", { className: "shared-note",
+          text: t("d.sharedWith", "Also used by {N} other account(s)").replace("{N}", sharedWith(device)) }) : null,
+      ].filter(Boolean)),
       statusPill(device ? "active" : "empty"),
     ])));
 

@@ -916,3 +916,9 @@ jobs:
       # rather than the student refused at their own ceiling
       - name: "Run seat-leak contract (live database: a refusal costs no seat; an empty seat is reused)"
         run: node test/verify_seat_leak.js
+
+      # 6.48.0 — one browser may belong to several accounts: the global hash
+      # index is gone, the uniqueness is per account, the admin-set device
+      # limit still binds, and the co-use is recorded instead of refused
+      - name: "Run shared-device contract (live database: one browser, several accounts, the limit intact)"
+        run: node test/verify_shared_device.js

@@ -69,39 +69,41 @@ function createDeviceRegistry(options) {
        Not one rule moved. Only the moment they are asked did, and a refusal
        now costs the student nothing.
 
-       v6.44.0 — THE HASH INDEX IS GLOBAL, AND THIS IS WHERE IT BITES.
+       v6.48.0 — AND WHAT IT IS ASKED ABOUT IS NOW THIS ACCOUNT ALONE.
 
-       device_installations_active_hash_uniq is
-           unique (installation_hash) where revoked_at is null
-       across the WHOLE table — not per account, not per client. getInstallation
-       above searches by (user, active slot, client_type, hash), so it misses
-       whenever the live row carrying this hash belongs to somebody else, and
-       the insert below then violated the index. registerPanelDevice has caught
-       that since 2026-08-30; this path never did, so the raw SQLSTATE travelled
-       out through server/index.js fail(), which publishes err.code as the
-       response's `error`, and the student was told the reason they could not
-       register was "23505" (the owner's photograph, 2026-09-09).
+       The hash index used to be global — one browser, one account, across the
+       whole system — and this lookup swept the whole table so the refusal
+       could name the stranger holding the machine. That refusal is gone
+       (schema.sql carries the full reasoning: it never stopped licence
+       sharing, which is one account on many devices and is what
+       allowed_devices counts; it only stopped honest people sharing a
+       computer, and a second browser walked around it). Another account's row
+       is now neither an obstacle nor this path's business, so the question
+       narrowed to the one row that IS: this account's own.
 
-       So ask first, and answer in words. The constraint stays exactly as it is
-       — one machine registered to one account at a time is the anti-sharing
-       rule the whole seat model rests on — but a student who runs into it now
-       learns what happened and what to do about it. */
+       v6.44.0 — the reason that lookup exists at all. getInstallation above
+       searches by (user, ACTIVE slot, client_type, hash), so it misses this
+       account's own live row when the slot behind it has been reset. Without
+       this second look the insert violated the index and the raw SQLSTATE
+       travelled out through server/index.js fail(), which publishes err.code
+       as the response's `error` — the student was told the reason they could
+       not register was "23505" (the owner's photograph, 2026-09-09). Ask
+       first, and answer in words. */
     const live = typeof repository.findLiveInstallationByHash === "function"
-      ? await repository.findLiveInstallationByHash(installationId) : null;
-    /* FAIL CLOSED ON THE OWNER OF THAT ROW. The first draft of this read
-       `live.userId && live.userId !== input.userId`, so a row whose owner came
-       back undefined fell past the refusal, past the client check, and into the
-       revoke below — one account quietly revoking another's registration and
-       taking the machine. Written this way an unknown owner is somebody else,
-       which is the only safe reading of "I could not tell whose this is". */
-    if (live && live.userId !== input.userId) return denial("device_registered_elsewhere");
-    if (live && live.clientType !== "web") return denial("installation_id_conflict");
-    if (live && typeof repository.revokeInstallation === "function") {
+      ? await repository.findLiveInstallationByHash(installationId, input.userId) : null;
+    /* the row came back scoped to this account, but the scope is an argument
+       and an older repository may ignore it. An owner that is not plainly this
+       account is treated as somebody else's and left alone — the only safe
+       reading of "I could not tell whose this is", and now simply a no-op
+       rather than a refusal. */
+    const mine = live && live.userId === input.userId ? live : null;
+    if (mine && mine.clientType !== "web") return denial("installation_id_conflict");
+    if (mine && typeof repository.revokeInstallation === "function") {
       /* this account's own row for this exact machine and client, left live on
          a seat that is no longer active — the same student coming back to the
          same browser. Reclaiming it is what they expect; refusing would strand
          them behind a row only an administrator could see. */
-      await repository.revokeInstallation(live.id, clock().toISOString());
+      await repository.revokeInstallation(mine.id, clock().toISOString());
     }
 
     /* seat model: sit on an existing seat with a free web place first, and
@@ -123,10 +125,25 @@ function createDeviceRegistry(options) {
       });
     } catch (error) {
       /* the lookup above is not in the same transaction as the insert, so two
-         browsers racing for one hash still land here. A denial, never a raw
-         code — and never a seat left standing for a registration that failed. */
+         requests racing for one hash still land here. Never a raw code, and
+         never a seat left standing for a registration that failed.
+
+         v6.48.0 — a lost race is now a SUCCESS, not a refusal. The index is
+         scoped to the account, so the only way to collide is against this
+         account's own row for this same browser and client: two tabs of the
+         same browser, or a retry after a reply that never arrived. The other
+         request registered the very device this one was registering. Refusing
+         the second one told a student their own machine was taken; reading
+         back what the winner wrote tells them the truth. */
       await releaseUnusedSeat(seat);
-      if (error && error.code === "23505") return denial("device_registered_elsewhere");
+      if (error && error.code === "23505") {
+        const won = await repository.getInstallation(input.userId, "web", installationId);
+        if (won) {
+          return { allowed: true, reason: "allowed", slotId: won.slotId,
+            slotType: won.slotType, installationId: won.id };
+        }
+        return denial("device_registration_failed");
+      }
       throw error;
     }
     return { allowed: true, reason: "allowed", slotId: slot.id, slotType: slot.slotType, installationId: installation.id };
@@ -155,17 +172,17 @@ function createDeviceRegistry(options) {
       return { allowed: true, reason: "allowed", slotId: already.slotId, slotType: "computer" };
     }
     /* v6.47.0 — and the ownership question comes before the seat here too;
-       registerWebDevice above carries the full account of why. */
-    /* v6.44.0 — the same global hash index reaches this path too, and until now
-       every 23505 here was reported as panel_slot_occupied. That is the right
-       answer for the index this comment block names (one active panel per
-       computer seat) and the wrong one for the hash index: when ANOTHER account
-       holds this machine, the student's own seats may all be free, and being
-       told the seat is occupied sends them to an admin who will find nothing. */
+       registerWebDevice above carries the full account of why.
+       v6.48.0 — asked about this account alone, for the reason schema.sql
+       gives: another account holding this same computer is no longer a refusal
+       on this path either. One active panel per computer SEAT is still the
+       control, and that is a different index.
+       v6.44.0 — the 23505 that reaches the catch below is still reported as
+       panel_slot_occupied, which is the right answer for that seat index. */
     const live = typeof repository.findLiveInstallationByHash === "function"
-      ? await repository.findLiveInstallationByHash(installationId) : null;
-    if (live && live.userId !== input.userId) return denial("device_registered_elsewhere");
-    if (live && live.clientType !== "panel") return denial("installation_id_conflict");
+      ? await repository.findLiveInstallationByHash(installationId, input.userId) : null;
+    const mine = live && live.userId === input.userId ? live : null;
+    if (mine && mine.clientType !== "panel") return denial("installation_id_conflict");
     const seat = await takeSeat(input.userId, "computer", "panel", input.label);
     if (!seat.slot) return denial("panel_slot_occupied");
     try {
@@ -306,17 +323,38 @@ function createPgDeviceRepository(client) {
         [userId,clientType,installationHash]);
       return mapInstallation(rows[0]);
     },
-    /* v6.44.0 — the live owner of an installation hash, across every account
-       and both clients. device_installations_active_hash_uniq makes at most one
-       such row exist, and knowing whose it is turns a constraint violation into
-       a sentence. */
-    async findLiveInstallationByHash(installationHash) {
+    /* v6.48.0 — THIS ACCOUNT's live row for this machine, and only this
+       account's. The lookup used to sweep the whole table because the index
+       behind it was global: one browser, one account, everywhere. Now that the
+       uniqueness is per account (schema.sql explains why), another account's
+       row is none of this account's business — it is not an obstacle and it is
+       not a fact this path may act on. What remains is the row this account
+       already has, on a slot that getInstallation could not see because the
+       slot is no longer active: the same student returning to the same
+       browser, whose row must be reclaimed rather than left to collide.
+
+       v6.44.0 — knowing whose the row is turns a constraint violation into a
+       sentence. That still holds; the question is now asked about one
+       account rather than about everybody. */
+    async findLiveInstallationByHash(installationHash, userId) {
       const { rows } = await client.query(
         `select i.*,s.user_id,s.slot_type from public.device_installations i
           join public.device_slots s on s.id=i.slot_id
-         where i.installation_hash=$1 and i.revoked_at is null limit 1`,
-        [installationHash]);
+         where i.installation_hash=$1 and i.revoked_at is null
+           and ($2::uuid is null or s.user_id=$2::uuid) limit 1`,
+        [installationHash,userId || null]);
       return mapInstallation(rows[0]);
+    },
+    /* v6.48.0 — how many OTHER accounts are live on this same browser. This is
+       the number the block used to hide: with the refusal gone, co-use is
+       recorded and shown in the admin student view instead of being pushed
+       onto a second browser profile where nothing can see it. */
+    async countOtherAccountsOnHash(installationHash, userId) {
+      const { rows } = await client.query(
+        `select count(distinct i.user_id)::int as n from public.device_installations i
+          where i.installation_hash=$1 and i.revoked_at is null and i.user_id <> $2`,
+        [installationHash,userId]);
+      return Number(rows[0] && rows[0].n) || 0;
     },
     /* v6.47.0 — hand back a seat that has nothing live on it. Guarded rather
        than trusted: the seat must still be active AND still be empty, so a
@@ -339,12 +377,17 @@ function createPgDeviceRepository(client) {
         [id,revokedAt]);
       return rowCount;
     },
+    /* v6.48.0 — user_id is written, not derived. It is the column the
+       per-account uniqueness index is built on, so a row that reached the
+       table without it would be a row outside the constraint. The value is
+       the caller's own user id and the slot's owner — the same thing, and the
+       foreign key on device_slots keeps it that way. */
     async insertInstallation(row) {
       const { rows } = await client.query(
         `insert into public.device_installations
-          (slot_id,client_type,installation_hash,label,created_at,last_seen_at)
-         values ($1,$2,$3,$4,$5,$6) returning *, $7::uuid as user_id`,
-        [row.slotId,row.clientType,row.installationId,row.label,row.createdAt,row.lastSeenAt,row.userId]);
+          (slot_id,user_id,client_type,installation_hash,label,created_at,last_seen_at)
+         values ($1,$2,$3,$4,$5,$6,$7) returning *`,
+        [row.slotId,row.userId,row.clientType,row.installationId,row.label,row.createdAt,row.lastSeenAt]);
       return mapInstallation(rows[0]);
     },
     async insertPairing(row) {

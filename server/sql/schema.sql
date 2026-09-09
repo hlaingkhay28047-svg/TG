@@ -1439,11 +1439,55 @@ create table if not exists public.device_installations (
   unique (slot_id, client_type, installation_hash)
 );
 
+/* v6.48.0 — WHOSE DEVICE THIS IS, ON THE ROW ITSELF.
+   The ownership of an installation has always lived one join away, on the
+   slot. Every check that asks "does this account already hold this machine?"
+   paid for that join, and no index could express "unique per ACCOUNT" without
+   the column. It is denormalized, never edited (a slot never changes hands)
+   and backfilled here, so deployed data needs nothing done to it. */
+alter table public.device_installations
+  add column if not exists user_id uuid references public.hnk_auth_users (id) on delete cascade;
+update public.device_installations i
+   set user_id = s.user_id
+  from public.device_slots s
+ where s.id = i.slot_id and i.user_id is distinct from s.user_id;
+alter table public.device_installations alter column user_id set not null;
+create index if not exists device_installations_user_hash_idx
+  on public.device_installations (user_id, installation_hash);
+
 create unique index if not exists device_installations_active_client_uniq
   on public.device_installations (slot_id, client_type)
   where revoked_at is null;
-create unique index if not exists device_installations_active_hash_uniq
-  on public.device_installations (installation_hash)
+
+/* v6.48.0 — ONE BROWSER MAY BELONG TO SEVERAL ACCOUNTS.
+   Until now this index was
+       unique (installation_hash) where revoked_at is null
+   across the WHOLE table: a browser registered to one account could not be
+   registered to any other, anywhere in the system. It was written as an
+   anti-sharing control and it is not one. Licence sharing is ONE ACCOUNT ON
+   MANY DEVICES, and profiles.allowed_devices — counted in claimSlot under a
+   per-user advisory lock — is what stops that. This index stopped MANY
+   ACCOUNTS ON ONE BROWSER, which is not sharing: each of those accounts pays
+   for its own licence and spends its own seat out of its own allowance.
+
+   What it cost was real. A student who borrowed a laptop, a family with one
+   computer, a shop machine, a teacher opening a student's own view — all
+   refused, and told to sign in as an account that is not theirs. And it never
+   enforced what it looked like it enforced: the identity is a per-BROWSER id,
+   so anyone it inconvenienced opened a second browser and walked around it.
+
+   Worse, it destroyed the signal. Blocking pushed genuine multi-account use
+   onto separate browser profiles, where nothing can see it. Scoped per
+   account, one browser may hold many accounts, each still bounded by its own
+   seat count — and the co-use becomes visible: the admin student view counts
+   the other accounts live on the same installation_hash (admin-api.js), so a
+   pattern worth looking at can be looked at instead of hidden.
+
+   The owner asked for exactly this trade on 2026-09-09: stop blocking, start
+   recording. */
+drop index if exists device_installations_active_hash_uniq;
+create unique index if not exists device_installations_active_user_hash_uniq
+  on public.device_installations (user_id, client_type, installation_hash)
   where revoked_at is null;
 
 create table if not exists public.sessions (

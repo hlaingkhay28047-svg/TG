@@ -327,10 +327,19 @@ async function studentDetail(client, identity, userId) {
        left join public.licenses l on l.user_id=p.id
        left join public.app_permissions a on a.user_id=p.id where p.id=$1`, [userId]);
   if (!profile.rows.length) throw new ApiError(404,"Student not found","not_found");
+  /* v6.48.0 — shared_with is the number the removed block used to hide. One
+     browser may now belong to several accounts (schema.sql carries why), so
+     the fact worth knowing is no longer "refused" but "this device is also
+     live on N other accounts" — counted from the row, for live rows only, and
+     never naming those accounts: the teacher gets a number to look into, not
+     a roster of other people's identities out of one student's page. */
   const devices = await client.query(
     `select s.id,s.slot_type,s.status,s.generation,s.label,s.created_at,s.updated_at,s.reset_at,
             json_agg(json_build_object('id',i.id,'client_type',i.client_type,'label',i.label,
-                     'created_at',i.created_at,'last_seen_at',i.last_seen_at,'revoked_at',i.revoked_at)
+                     'created_at',i.created_at,'last_seen_at',i.last_seen_at,'revoked_at',i.revoked_at,
+                     'shared_with',(select count(distinct o.user_id) from public.device_installations o
+                                     where o.installation_hash=i.installation_hash
+                                       and o.revoked_at is null and o.user_id<>$1))
                      order by i.created_at) filter (where i.id is not null) as installations
        from public.device_slots s left join public.device_installations i on i.slot_id=s.id
       where s.user_id=$1 group by s.id order by s.slot_type`, [userId]);
