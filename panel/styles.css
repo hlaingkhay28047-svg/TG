@@ -308,16 +308,24 @@ body {
   position: absolute; top: 0; left: 0;
   width: 100%; height: 100%;
 }
+/* v6.41.0 — these two carry no shadow, and the Home hero two hundred lines
+   below carries a heavy one. On a dark plate nobody noticed; on the Imagine
+   and Retouch A banners, whose art is bright where the words sit, the owner
+   photographed a headline he could not read. Same shadow the Home hero uses —
+   text-shadow is one of the properties this renderer does draw (seven other
+   rules in this file rely on it). */
 .ph-kick {
   position: relative;
   font-size: 10px; font-weight: 800; letter-spacing: .26em;
   text-transform: uppercase; color: var(--accent-h);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .9), 0 2px 14px rgba(0, 0, 0, .75);
 }
 .ph-head {
   position: relative;
   margin: 2px 0 0;
   font-size: 15px; font-weight: 800; line-height: 1.5;
   color: var(--text);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .9), 0 2px 14px rgba(0, 0, 0, .75);
 }
 .ph-head em { font-style: normal; color: var(--accent-h); }
 
@@ -1152,10 +1160,23 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 
 /* v6.35.0 — per-workflow design fields (concept-poster) */
 .hnk-wf-fields { margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
-.hnk-wf-field { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.hnk-wf-field-l { min-width: 118px; font-size: 12px; color: var(--hnk-mut, #b9c0d0); }
+/* v6.41.0 — THE SWITCH MUST NOT SIT ON THE WORDS. In Chromium this row is
+   correct at panel width (measured: an 8px gap between the label and the ON
+   button at 360 and at 340, no overflow), but the owner's Photoshop photograph
+   shows the yellow ON pills painted over the ends of the Burmese labels. The
+   row's escape hatch was flex-wrap, and this stylesheet's own header lists the
+   properties this renderer does not draw — a row that can only survive by
+   wrapping is a row that overflows on a host that does not wrap.
+
+   So the row no longer needs to wrap. The label is a shrinkable flex item with
+   min-width:0, which lets its own TEXT wrap inside it however narrow the panel
+   is, and the switch is fixed-width with a real margin rather than a flex gap
+   (another property worth not depending on here). Chromium is unchanged — the
+   same 8px gap, the same five rows. */
+.hnk-wf-field { display: flex; flex-direction: row; align-items: center; }
+.hnk-wf-field-l { flex: 1 1 auto; min-width: 0; font-size: 12px; color: var(--hnk-mut, #b9c0d0); }
 .hnk-wf-text { flex: 1; min-width: 150px; }
-.hnk-wf-sw { min-width: 52px; }
+.hnk-wf-sw { flex: 0 0 auto; min-width: 52px; margin-left: 8px; }
 .hnk-wf-sw.on { background: var(--hnk-gold, #e9b949); color: #17130a; font-weight: 700; }
 .hnk-wf-swatches { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .hnk-wf-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); padding: 0; }
@@ -2212,10 +2233,21 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 
 /* ---- the jump bar (app: #stJumpBar, sticky in the app, in flow here) ---- */
 .stpg #stJumpBar { display: block; padding: 2px 0 4px; background-color: var(--bg); }
-.stpg #stJumpTop { display: flex; flex-direction: row; align-items: center; margin-top: 4px; }
+/* v6.41.0 — THE SECOND SUITE TAB WAS OFF THE EDGE. Measured on Retouch B at
+   panel width: the two tabs need 320px, the row gave them 242 (360 wide) or 222
+   (340), and "RETOUCH B · 213" sat 71.6px — 91.6px on the narrower panel — past
+   the visible edge, cut mid-word, exactly as the owner photographed it. The row
+   was tabs and search side by side with overflow-x:auto as the escape, and a
+   horizontal scroller inside a Photoshop panel is not something a studio will
+   find. There are only ever two suite tabs, so give them the whole width and
+   put the search on its own line under them. */
+.stpg #stJumpTop { display: flex; flex-direction: column; align-items: stretch; margin-top: 4px; }
 .stpg #stSuiteTabs { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; overflow-x: auto; margin-top: 0; }
-.stpg #stSuiteTabs .chip { flex: 0 0 auto; white-space: nowrap; margin-bottom: 0; }
-.stpg #stSearch { flex: 1 1 0; min-width: 80px; min-height: 38px; height: 38px; margin-left: 6px; padding: 6px 10px; font-size: 11px; }
+/* and both of them fit the narrowest panel the manifest allows: at 340 the
+   pair still wanted 320px of a 308px row, so the two tabs carry a tighter
+   pad and a half-point smaller label — measured, not guessed. */
+.stpg #stSuiteTabs .chip { flex: 0 0 auto; white-space: nowrap; margin-bottom: 0; padding-left: 8px; padding-right: 8px; font-size: 10.5px; }
+.stpg #stSearch { box-sizing: border-box; width: 100%; min-width: 0; min-height: 38px; height: 38px; margin-left: 0; margin-top: 6px; padding: 6px 10px; font-size: 11px; }
 .stpg #stGroupChips { flex-wrap: nowrap; overflow-x: auto; margin-top: 8px; padding-bottom: 2px; }
 .stpg #stGroupChips .chip { flex: 0 0 auto; white-space: nowrap; min-height: 34px; padding: 4px 11px; font-size: 10px; margin-bottom: 0; }
 .stpg #stGroupChips .chip.edited { border-color: var(--accent); color: var(--accent-h); }
