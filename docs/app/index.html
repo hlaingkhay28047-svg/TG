@@ -26098,15 +26098,24 @@ function unifiedRender(){
   var seatWord = seatsAllowed
     ? " · " + L9(SEAT_TXT).replace("{U}", seatsUsed).replace("{A}", seatsAllowed)
     : "";
-  var phoneN = liveOfType("phone"), compN = liveOfType("computer");
+  /* the slot list is the count, but devices.phone / devices.computer are the
+     answer when a payload carries the pair without the list — the first cut of
+     this read the list alone and said "Available" over a registered computer,
+     which sweep_account 6c caught. A registered device is never "Available". */
+  var phoneN = liveOfType("phone") || (devices.phone ? 1 : 0);
+  var compN = liveOfType("computer") || (devices.computer ? 1 : 0);
   $("unifiedPhone").textContent = (phoneN
     ? ((devices.phone && (devices.phone.label || devices.phone.device_name) || "Registered") +
        (phoneN > 1 ? " +" + (phoneN - 1) : ""))
     : "Available") + seatWord;
   try{ accPanelBtnLabel(); }catch(e){}   /* the button quotes the same answer */
+  /* "shared slot" stays: one computer seat carries BOTH the Web App and the
+     Photoshop Panel, which is unchanged by the seat count and is the thing a
+     student most needs to know about this row. Only the "1/1" it used to be
+     followed by is gone — that was the hard-coded number this wave removes. */
   $("unifiedComputer").textContent = (compN
     ? ((devices.computer && (devices.computer.label || devices.computer.device_name) || "Registered") +
-       (compN > 1 ? " +" + (compN - 1) : ""))
+       " · shared slot" + (compN > 1 ? " +" + (compN - 1) : ""))
     : "Available") + seatWord;
   var current = unifiedDeviceType();
   /* a seat is free, and THIS browser is not the one already sitting on one —
