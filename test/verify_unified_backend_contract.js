@@ -196,8 +196,12 @@ function createDeviceRepository() {
       const slot = slots.find(row => row.id === installation.slotId);
       return copy(Object.assign({}, installation, { slotType: slot && slot.slotType }));
     },
-    async findLiveInstallationByHash(installationId) {
-      const live = installations.find(row => row.installationId === installationId && !row.revokedAt);
+    /* v6.48.0 — scoped to one account, like the repository it stands in for.
+       A mock that still swept every account would keep proving the rule this
+       release removed. */
+    async findLiveInstallationByHash(installationId, userId) {
+      const live = installations.find(row => row.installationId === installationId &&
+        !row.revokedAt && (!userId || row.userId === userId));
       if (!live) return null;
       const slot = slots.find(row => row.id === live.slotId);
       return copy(Object.assign({}, live, { slotType: slot && slot.slotType }));
@@ -219,15 +223,20 @@ function createDeviceRepository() {
         err.code = "23505";
         throw err;
       }
-      /* v6.44.0 — AND MIRROR device_installations_active_hash_uniq, the OTHER
-         partial unique index:  unique (installation_hash) where revoked_at is
-         null — global, not per account and not per client. Leaving it out of
-         this mock is why nothing caught the defect the owner photographed on
-         2026-09-09: the mock accepted a second account registering a browser
-         the first account still held, the real database raised 23505, and
-         registerWebDevice had no catch, so the student was shown the SQLSTATE.
-         A mock that is more permissive than the schema proves nothing. */
+      /* v6.48.0 — AND MIRROR device_installations_active_user_hash_uniq, the
+         OTHER partial unique index: unique (user_id, client_type,
+         installation_hash) where revoked_at is null. It was global until this
+         release — one browser, one account, everywhere — and schema.sql says
+         why that was the wrong shape. What the mock must still refuse is the
+         SAME account registering the SAME browser on the SAME client twice.
+
+         v6.44.0 — leaving this index out of the mock entirely is why nothing
+         caught the defect the owner photographed on 2026-09-09: the mock
+         accepted what the real database raised 23505 for, registerWebDevice
+         had no catch, and the student was shown the SQLSTATE. A mock more
+         permissive than the schema proves nothing. */
       if (installations.some(existing => existing.installationId === row.installationId &&
+          existing.userId === row.userId && existing.clientType === row.clientType &&
           !existing.revokedAt)) {
         const err = new Error("duplicate active installation hash");
         err.code = "23505";
@@ -557,36 +566,85 @@ async function verifyDevices() {
       oldPanelReason === "device_mismatch" && computerAfterReset && computerAfterReset.allowed === true,
     { studentResetReason, adminReset, oldPanelReason, computerAfterReset });
 
-  /* v6.44.0 — ONE MACHINE, TWO ACCOUNTS.
+  /* v6.48.0 — ONE MACHINE, TWO ACCOUNTS, AND THAT IS ALLOWED NOW.
 
-     device_installations_active_hash_uniq is global: `unique (installation_hash)
-     where revoked_at is null`, across every account and both clients. So a
-     second student signing into a browser the first still holds cannot be
-     registered — that is the anti-sharing rule and it stays. What must never
-     happen again is HOW they were told. registerWebDevice had no catch around
-     its insert, the constraint's SQLSTATE travelled out through fail(), and the
-     owner photographed his own laptop reading
+     Until this release device_installations_active_hash_uniq was global —
+     `unique (installation_hash) where revoked_at is null` across every account
+     and both clients — so a second student signing into a browser the first
+     still held was refused. It was written as an anti-sharing rule and was not
+     one: sharing is ONE ACCOUNT ON MANY DEVICES, which allowed_devices counts,
+     while this refused MANY ACCOUNTS ON ONE BROWSER, where each account pays
+     for and spends its own seat. It blocked the borrowed laptop, the family
+     computer and the shop machine, and anyone it inconvenienced opened a
+     second browser and walked around it in ten seconds (schema.sql carries the
+     whole argument; the owner asked for the trade on 2026-09-09).
+
+     So the index is per account now, and these two prove the new contract:
+     the second account registers, and neither account's seats move because of
+     the other.
+
+     v6.44.0 — what must never come back is the SQLSTATE. registerWebDevice had
+     no catch around its insert, the violation travelled out through fail(), and
+     the owner photographed his own laptop reading
 
          Server က ငြင်းလိုက်တဲ့ အကြောင်းရင်း: 23505
 
-     — unique_violation, printed to a human as the reason. These three pin the
-     answer in words instead. */
+     — unique_violation, printed to a human as a reason. The catch stays. */
   /* a genuinely different account — the first draft of this line reused the
      userId above, so "the other student" was the same student and the checks
      below measured nothing. */
   const otherUser = "33333333-3333-4333-8333-333333333333";
   repository.setAllowedDevices(otherUser, 4);
-  const stolenWeb = await denied(() => registry.registerWebDevice({
+  const seatsBeforeShare = repository.slots.filter(s => s.userId === userId && s.status === "active").length;
+  const sharedWeb = await registry.registerWebDevice({
     userId: otherUser, deviceType: "computer", installationId: "computer-web-B", label: "Same laptop",
-  }));
-  report("a second account on a machine the first still holds is refused BY NAME, never 23505",
-    stolenWeb === "device_registered_elsewhere", { stolenWeb });
+  });
+  const firstStillHolds = await registry.validate({
+    userId, clientType: "web", installationId: "computer-web-B",
+  });
+  report("a second account registers the very browser the first still holds — and the first keeps it",
+    sharedWeb && sharedWeb.allowed === true && firstStillHolds && firstStillHolds.allowed === true &&
+    repository.slots.filter(s => s.userId === userId && s.status === "active").length === seatsBeforeShare,
+    { sharedWeb, firstStillHolds, seatsBeforeShare,
+      seatsAfter: repository.slots.filter(s => s.userId === userId && s.status === "active").length });
 
-  const stolenPanel = await denied(() => registry.registerPanelDevice({
+  /* the panel path carried the same global rule and loses it the same way: a
+     panel installation the FIRST account still holds live no longer refuses
+     the second. Both join their OWN computer seat, so neither account's count
+     moves because of the other. */
+  const firstPanel = await registry.registerPanelDevice({
+    userId, installationId: "panel-shared-laptop", label: "Same laptop",
+  });
+  const sharedPanel = await registry.registerPanelDevice({
+    userId: otherUser, installationId: "panel-shared-laptop", label: "Same laptop",
+  });
+  report("a panel installation the first account still holds no longer refuses the second — each on its own seat",
+    firstPanel && firstPanel.allowed === true && sharedPanel && sharedPanel.allowed === true &&
+    sharedPanel.slotId !== firstPanel.slotId &&
+    repository.slots.filter(s => s.userId === otherUser && s.status === "active").length === 1,
+    { firstPanel, sharedPanel,
+      otherSeats: repository.slots.filter(s => s.userId === otherUser && s.status === "active").length });
+
+  /* and the refusal that is NOT about other people stays exactly where it was:
+     the web app and the panel keep separate installation ids, so one account
+     presenting its own WEB id on the panel is still a named conflict. */
+  const crossedClient = await denied(() => registry.registerPanelDevice({
     userId: otherUser, installationId: "computer-web-B", label: "Same laptop",
   }));
-  report("the panel says the same thing, not panel_slot_occupied — the seats are free",
-    stolenPanel === "device_registered_elsewhere", { stolenPanel });
+  report("a web installation id presented on the panel is still installation_id_conflict, within the account",
+    crossedClient === "installation_id_conflict", { crossedClient });
+
+  /* the refusal that DOES remain: the same account, the same browser, the same
+     client, twice over. The index still forbids it — and because the collision
+     can only be this account's own row for this very device, the second call
+     reads back what the first wrote instead of refusing a student their own
+     machine. */
+  const sameTwice = await registry.registerWebDevice({
+    userId: otherUser, deviceType: "computer", installationId: "computer-web-B", label: "Same laptop again",
+  });
+  report("the same account registering the same browser twice is answered from the row it already has",
+    sameTwice && sameTwice.allowed === true && sameTwice.slotId === sharedWeb.slotId,
+    { sameTwice, first: sharedWeb && sharedWeb.slotId });
 
   /* the same student, the same browser, on a seat that is no longer active:
      their own row, so they get it back rather than meeting a wall only an

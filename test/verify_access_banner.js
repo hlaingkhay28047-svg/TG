@@ -153,10 +153,19 @@ const hasBurmese = s => /[က-႟]/.test(String(s || ""));
 
      23505 is PostgreSQL's unique_violation: device_installations_active_hash_uniq
      fired because another account still held that machine, registerWebDevice
-     had no catch, and fail() published err.code verbatim. The server now
-     answers device_registered_elsewhere, and these two prove the student is
+     had no catch, and fail() published err.code verbatim. The server answered
+     device_registered_elsewhere from 6.44.0, and these two prove the student is
      told what that means and what to do — with the code itself gone from the
-     text, because a student cannot act on it. */
+     text, because a student cannot act on it.
+
+     v6.48.0 — THE SERVER NO LONGER SAYS IT AT ALL. The global hash index is
+     gone (schema.sql), so a machine another account holds is simply
+     registered. The sentence is KEPT and still checked for one reason: an app
+     and an API do not deploy in the same instant, and a browser holding the
+     new page against the previous API must not meet a bare code in the window
+     between them. It is the fallback for a reason that should not arrive, not
+     copy for a rule that still exists — and H2 below covers the conflict that
+     genuinely remains. */
   report("H) 'another account holds this machine' is a sentence with a way out, not a code",
     hasBurmese(R.elsewhere[0]) && hasBurmese(R.elsewhere[1]) &&
     R.elsewhere[1].indexOf("device_registered_elsewhere") < 0 &&

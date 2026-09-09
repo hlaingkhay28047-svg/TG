@@ -49,7 +49,10 @@ function orderIn(fnName) {
   const body = DEVICES.slice(start, DEVICES.indexOf("\n  }\n", start));
   return {
     ownership: body.indexOf("findLiveInstallationByHash"),
-    denial: body.indexOf('denial("device_registered_elsewhere")'),
+    /* v6.48.0 — device_registered_elsewhere is gone (schema.sql says why), so
+       the denial this ordering protects is the one that remains: a hash this
+       ACCOUNT holds on the other client. */
+    denial: body.indexOf('denial("installation_id_conflict")'),
     seat: body.indexOf("takeSeat("),
     release: body.indexOf("releaseUnusedSeat("),
     body,
@@ -61,6 +64,13 @@ function orderIn(fnName) {
     !!o && o.ownership > 0 && o.seat > 0 && o.denial > 0 &&
     o.ownership < o.seat && o.denial < o.seat, o && {
       ownership: o.ownership, denial: o.denial, seat: o.seat });
+  /* the lookup must be asked about ONE ACCOUNT. Called without the user id it
+     sweeps every account again, and a row belonging to a stranger would once
+     more be treated as this registration's business. */
+  report("A1) " + fn + " scopes the ownership lookup to this account",
+    !!o && /findLiveInstallationByHash\(installationId, input\.userId\)/.test(o.body), null);
+  report("A1b) " + fn + " acts only on a row that is plainly this account's",
+    !!o && /const mine = live && live\.userId === input\.userId \? live : null;/.test(o.body), null);
   report("A2) " + fn + " hands back a seat it claimed and could not fill",
     !!o && o.release > o.seat, o && { seat: o.seat, release: o.release });
 });
@@ -106,12 +116,18 @@ function fakeRepo(options) {
   const live = () => state.installations.filter(i => !i.revokedAt);
   const repo = {
     state,
+    /* mapInstallation attaches the slot's own type from the join; a mock that
+       returned the bare row made every re-registration look like a
+       device_type_mismatch, which is a defect in the mock, not the code. */
     async getInstallation(userId, clientType, hash) {
-      return live().find(i => {
+      const row = live().find(i => {
         const slot = state.slots.find(s => s.id === i.slotId);
         return slot && slot.userId === userId && slot.status === "active" &&
           i.clientType === clientType && i.installationId === hash;
-      }) || null;
+      });
+      if (!row) return null;
+      const slot = state.slots.find(s => s.id === row.slotId);
+      return Object.assign({}, row, { slotType: slot && slot.slotType, userId: slot && slot.userId });
     },
     async findFreeSlot(userId, slotType, clientType) {
       return state.slots.find(s => s.userId === userId && s.slotType === slotType &&
@@ -137,8 +153,15 @@ function fakeRepo(options) {
       if (live().some(i => i.slotId === slotId)) return 0;
       slot.status = "reset"; state.releases++; return 1;
     },
-    async findLiveInstallationByHash(hash) {
-      const row = live().find(i => i.installationId === hash);
+    /* v6.48.0 — scoped, like the repository. A mock that still swept every
+       account would keep the removed rule alive here. */
+    async findLiveInstallationByHash(hash, userId) {
+      const row = live().find(i => {
+        if (i.installationId !== hash) return false;
+        if (!userId) return true;
+        const slot = state.slots.find(x => x.id === i.slotId);
+        return slot && slot.userId === userId;
+      });
       if (!row) return null;
       /* mapInstallation reads userId off the JOINED SLOT, never off the
          installation row — the fake must too, or B3 measures the fake */
@@ -150,8 +173,15 @@ function fakeRepo(options) {
       if (row) row.revokedAt = "now";
       return row ? 1 : 0;
     },
+    /* v6.48.0 — mirrors device_installations_active_user_hash_uniq:
+       unique (user_id, client_type, installation_hash) where revoked_at is
+       null. It was global until this release. */
     async insertInstallation(row) {
-      if (live().some(i => i.installationId === row.installationId)) {
+      if (live().some(i => {
+        if (i.installationId !== row.installationId || i.clientType !== row.clientType) return false;
+        const slot = state.slots.find(x => x.id === i.slotId);
+        return slot && slot.userId === row.userId;
+      })) {
         const error = new Error("duplicate key value violates unique constraint");
         error.code = "23505";
         throw error;
@@ -170,39 +200,47 @@ const activeSeats = repo => repo.state.slots.filter(s => s.status === "active").
 (async () => {
   const ME = "user-me", OTHER = "user-other";
 
-  /* the exact case the owner hit: the machine is live on somebody else's seat */
+  /* v6.48.0 — the case the owner hit, and what it does now. The machine is
+     live on somebody else's seat; before this release that was a refusal that
+     also ate a seat, and 6.47.0 made it a refusal that cost nothing. It is not
+     a refusal at all any more: the other account's row is not this account's
+     business (schema.sql), so the student registers, and the exactly-one seat
+     they spend is their own. */
   {
     const repo = fakeRepo({
       slots: [{ id: "s-other", userId: OTHER, slotType: "computer", status: "active" }],
       installations: [{ id: "i-other", slotId: "s-other", clientType: "web",
         installationId: "machine-1", revokedAt: null }],
     });
-    const before = activeSeats(repo);
+    const otherBefore = repo.state.slots.filter(s => s.userId === OTHER && s.status === "active").length;
     const first = await registry(repo).registerWebDevice({
       userId: ME, deviceType: "computer", installationId: "machine-1" });
-    const after = activeSeats(repo);
+    const mySeats = () => repo.state.slots.filter(s => s.userId === ME && s.status === "active").length;
+    const afterOne = mySeats();
     const second = await registry(repo).registerWebDevice({
       userId: ME, deviceType: "computer", installationId: "machine-1" });
-    report("B) a machine registered to another account is refused, and the refusal costs the student nothing",
-      first.allowed === false && first.reason === "device_registered_elsewhere" &&
-      second.reason === "device_registered_elsewhere" &&
-      after === before && activeSeats(repo) === before && repo.state.claims === 0,
-      { first, before, after, end: activeSeats(repo), claims: repo.state.claims });
+    report("B) a machine another account holds is registered, on one seat of this student's own — and the other account keeps its seat",
+      first.allowed === true && second.allowed === true && afterOne === 1 && mySeats() === 1 &&
+      repo.state.slots.filter(s => s.userId === OTHER && s.status === "active").length === otherBefore &&
+      repo.state.installations.filter(i => !i.revokedAt && i.installationId === "machine-1").length === 2,
+      { first, second, afterOne, mine: mySeats(),
+        theirs: repo.state.slots.filter(s => s.userId === OTHER && s.status === "active").length });
   }
 
-  /* the panel path had the same order, and the same fix */
+  /* the panel path had the same order, the same fix, and now the same opening:
+     one computer, two accounts, a panel seat each */
   {
     const repo = fakeRepo({
       slots: [{ id: "s-other", userId: OTHER, slotType: "computer", status: "active" }],
       installations: [{ id: "i-other", slotId: "s-other", clientType: "panel",
         installationId: "machine-2", revokedAt: null }],
     });
-    const before = activeSeats(repo);
     const verdict = await registry(repo).registerPanelDevice({ userId: ME, installationId: "machine-2" });
-    report("B2) the Photoshop panel path refuses the same machine, and takes no seat either",
-      verdict.allowed === false && verdict.reason === "device_registered_elsewhere" &&
-      activeSeats(repo) === before && repo.state.claims === 0,
-      { verdict, before, end: activeSeats(repo), claims: repo.state.claims });
+    report("B2) the Photoshop panel on a computer another account holds registers too, on one seat of this account's own",
+      verdict.allowed === true &&
+      repo.state.slots.filter(s => s.userId === ME && s.status === "active").length === 1 &&
+      repo.state.slots.filter(s => s.userId === OTHER && s.status === "active").length === 1,
+      { verdict, mine: repo.state.slots.filter(s => s.userId === ME && s.status === "active").length });
   }
 
   /* the OTHER refusal on that path: the hash belongs to this account but to the
@@ -221,26 +259,47 @@ const activeSeats = repo => repo.state.slots.filter(s => s.status === "active").
       activeSeats(repo) === before, { verdict, before, end: activeSeats(repo) });
   }
 
-  /* the race the ordering cannot close: two browsers, one hash, the insert
-     loses. The seat this call opened goes straight back. */
+  /* v6.48.0 — the race the ordering cannot close. With the index scoped to the
+     account the only way to collide is against this account's OWN row for this
+     very browser and client: two tabs, or a retry after a lost reply. The
+     winner registered the exact device this call was registering, so the loser
+     reads back what the winner wrote instead of telling a student their own
+     machine is taken. The seat is not handed back — the winner's row is live
+     on it, and releaseEmptySlot is guarded for exactly that. */
   {
     const repo = fakeRepo({ slots: [], installations: [] });
     const original = repo.insertInstallation;
     repo.insertInstallation = async row => {
-      /* another browser wins the hash between the lookup and the insert */
-      repo.state.installations.push({ id: "i-race", slotId: "s-race", clientType: "web",
-        installationId: row.installationId, revokedAt: null });
+      /* the other tab wins between the lookup and the insert, on the very seat
+         this call just claimed */
+      repo.state.installations.push({ id: "i-race", slotId: row.slotId, userId: ME,
+        clientType: "web", installationId: row.installationId, revokedAt: null });
       repo.insertInstallation = original;
       return original.call(repo, row);
     };
     const verdict = await registry(repo).registerWebDevice({
       userId: ME, deviceType: "phone", installationId: "machine-4" });
-    report("B4) a lost race answers in words and returns the seat it had just opened",
-      verdict.allowed === false && verdict.reason === "device_registered_elsewhere" &&
-      repo.state.claims === 1 && repo.state.releases === 1 &&
-      repo.state.slots.filter(s => s.userId === ME && s.status === "active").length === 0,
+    report("B4) a lost race is answered from the row the winner wrote, and the winner's seat is left alone",
+      verdict.allowed === true && repo.state.claims === 1 && repo.state.releases === 0 &&
+      repo.state.slots.filter(s => s.userId === ME && s.status === "active").length === 1,
       { verdict, claims: repo.state.claims, releases: repo.state.releases,
         active: repo.state.slots.filter(s => s.userId === ME && s.status === "active").length });
+  }
+
+  /* and an insert that fails for any OTHER reason still hands the seat back —
+     the guarantee 6.47.0 added, executed rather than assumed. */
+  {
+    const repo = fakeRepo({ slots: [], installations: [] });
+    repo.insertInstallation = async () => { throw new Error("connection reset"); };
+    let threw = "";
+    try {
+      await registry(repo).registerWebDevice({
+        userId: ME, deviceType: "phone", installationId: "machine-4b" });
+    } catch (error) { threw = String(error && error.message); }
+    report("B4b) an insert that fails for any other reason rethrows AND gives the seat back",
+      threw === "connection reset" && repo.state.claims === 1 && repo.state.releases === 1 &&
+      repo.state.slots.filter(s => s.userId === ME && s.status === "active").length === 0,
+      { threw, claims: repo.state.claims, releases: repo.state.releases });
   }
 
   /* and the seat a registration DID fill is not released by anything here */
@@ -318,6 +377,7 @@ const activeSeats = repo => repo.state.slots.filter(s => s.status === "active").
   const PASSWORD = "seat-leak-probe";
   const ME_ID = "dddddddd-0000-4000-8000-00000000000a";
   const OTHER_ID = "dddddddd-0000-4000-8000-00000000000b";
+  const SHARED_ID = "dddddddd-0000-4000-8000-00000000000c";
   const ENV = Object.assign({}, process.env, {
     PGHOST: process.env.PGHOST || "127.0.0.1",
     PGPORT: process.env.PGPORT || "5432",
@@ -397,6 +457,10 @@ const activeSeats = repo => repo.state.slots.filter(s => s.status === "active").
 
   await seed(ME_ID, "seat-me@probe.test", 4);
   await seed(OTHER_ID, "seat-other@probe.test", 2);
+  /* v6.48.0 — the account that shares OTHER's browser. Kept separate from
+     ME_ID so the ceiling arithmetic further down measures the recycler rather
+     than this. */
+  await seed(SHARED_ID, "seat-shared@probe.test", 4);
   const reg = ent.deviceRegistry(client);
 
   /* the other student's phone is registered on the machine first */
@@ -405,27 +469,42 @@ const activeSeats = repo => repo.state.slots.filter(s => s.status === "active").
   report("C1) the other account registers the machine first",
     theirs.allowed === true && (await seats(OTHER_ID)) === 1, theirs);
 
-  /* now the owner's account tries twice from that same machine — the exact
-     probe that measured the leak on 2026-09-09 */
-  const startSeats = await seats(ME_ID);
+  /* now the second account uses the same machine. On 2026-09-09 this was the
+     probe that measured the seat leak; 6.47.0 made the refusal free, and
+     6.48.0 removes the refusal — twice over, because the second call must be
+     idempotent rather than a second seat. */
+  const startSeats = await seats(SHARED_ID);
   const try1 = await reg.registerWebDevice({
-    userId: ME_ID, deviceType: "computer", installationId: "shared-machine" });
-  const afterOne = await seats(ME_ID);
+    userId: SHARED_ID, deviceType: "computer", installationId: "shared-machine" });
+  const afterOne = await seats(SHARED_ID);
   const try2 = await reg.registerWebDevice({
-    userId: ME_ID, deviceType: "computer", installationId: "shared-machine" });
-  const afterTwo = await seats(ME_ID);
-  report("C2) two refusals from a machine registered elsewhere leave the student's seat count exactly where it was",
-    try1.allowed === false && try1.reason === "device_registered_elsewhere" &&
-    try2.reason === "device_registered_elsewhere" &&
-    startSeats === 0 && afterOne === 0 && afterTwo === 0,
-    { try1, try2, startSeats, afterOne, afterTwo });
+    userId: SHARED_ID, deviceType: "computer", installationId: "shared-machine" });
+  const afterTwo = await seats(SHARED_ID);
+  report("C2) the same machine registers on a second account — once, on one seat, however many times it is asked",
+    try1.allowed === true && try2.allowed === true &&
+    startSeats === 0 && afterOne === 1 && afterTwo === 1 &&
+    (await seats(OTHER_ID)) === 1,
+    { try1, try2, startSeats, afterOne, afterTwo, theirs: await seats(OTHER_ID) });
+
+  /* THE RECORD THAT REPLACES THE BLOCK. Two accounts are live on one browser;
+     that is the fact the refusal used to hide by pushing people onto a second
+     browser profile. Counted from the row, per account, both ways — and it is
+     zero for an account that shares nothing. */
+  const repo = require(path.join(ROOT, "server/lib/devices.js")).createPgDeviceRepository(client);
+  const hash = (await client.query(
+    "select installation_hash from public.device_installations where user_id=$1 and revoked_at is null limit 1",
+    [SHARED_ID])).rows[0].installation_hash;
+  const othersForShared = await repo.countOtherAccountsOnHash(hash, SHARED_ID);
+  const othersForThem = await repo.countOtherAccountsOnHash(hash, OTHER_ID);
+  report("C2b) the co-use is recorded rather than refused — each account sees exactly one other on this browser",
+    othersForShared === 1 && othersForThem === 1, { othersForShared, othersForThem });
 
   /* the entitlement the app and the console both read must agree */
   const state = await ent.loadEntitlementState(client, ME_ID, {});
   const slots = await ent.listDeviceSlots(client, ME_ID);
-  report("C3) the account the student sees still has every seat free — no phantom row for the console to explain",
+  report("C3) an account that registered nothing still has every seat free — no phantom row for the console to explain",
     state.allowedDevices === 4 && slots.length === 0,
-    { allowed: state.allowedDevices, slots });
+    { allowed: state.allowedDevices, slots: slots.length });
 
   /* their own machine still registers, and takes exactly one seat */
   const mine = await reg.registerWebDevice({
