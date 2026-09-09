@@ -71,6 +71,7 @@ async function loadEntitlementState(client, userId, options) {
   const input = options || {};
   const { rows } = await client.query(
     `select p.id,p.name,coalesce(p.email,u.email) as email,p.account_status,p.is_admin,
+            coalesce(p.allowed_devices,2) as allowed_devices,
             l.status as license_status,l.starts_at,l.expires_at,
             a.web_app_enabled,a.ccx_download_enabled,a.panel_enabled
        from public.hnk_auth_users u
@@ -110,6 +111,15 @@ async function loadEntitlementState(client, userId, options) {
 
   return {
     account: { id:row.id,name:row.name,email:row.email,status:row.account_status,isAdmin:!!row.is_admin },
+    /* v6.45.0 — THE SEAT COUNT THE ADMIN SET, WHERE THE APP CAN SEE IT.
+       profiles.allowed_devices is what claimSlot enforces (devices.js: one
+       advisory lock, one count of active slots, refuse at the limit) and it is
+       what a renewal is priced on — allowed_devices x per-device. It had never
+       been in this response, so the Account card could only draw the two boxes
+       its HTML happened to contain, and a student whose teacher had set four
+       could register two. The owner set his own account to 4 and met exactly
+       that (2026-09-09). */
+    allowedDevices: Math.max(1, Number(row.allowed_devices) || 2),
     accountStatus: row.account_status,
     license: row.license_status ? {
       status:row.license_status,startsAt:iso(row.starts_at),expiresAt:iso(row.expires_at),
@@ -187,7 +197,12 @@ function publicEntitlement(state, decisions, slots) {
       ccx_download:state.permissions.ccxDownloadEnabled,
       photoshop_panel:state.permissions.panelEnabled,
     },
-    devices: normalizeDeviceSlots(slots),
+    devices: Object.assign(normalizeDeviceSlots(slots), {
+      /* the ceiling and what is standing on it — see loadEntitlementState */
+      allowed: state.allowedDevices,
+      used: (Array.isArray(slots) ? slots : []).filter(slot => slot &&
+        (slot.registered === true || slot.status === "active")).length,
+    }),
     panel: {
       latest_version:state.panelVersion.latestVersion,
       minimum_supported_version:state.panelVersion.minimumSupportedVersion,
