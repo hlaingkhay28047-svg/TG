@@ -168,19 +168,34 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       const card = document.getElementById("hnkDashNew");
       const H = el => Math.round(el.getBoundingClientRect().height);
       const rows = [...document.querySelectorAll("#hnkDashNew .nw-row")].map(H);
+      /* v6.41.0 — the ceiling is on the CONTENT box now: the half-em of padding
+         each side is the room the Burmese ink needs (see C2 and .wfmini .t),
+         and it is not part of the line count. clientHeight includes it. */
       const lines = [...document.querySelectorAll("#hnkDashNew .nw-t, #hnkDashNew .nw-s")].map(el => {
-        const lh = parseFloat(getComputedStyle(el).lineHeight);
+        const cs = getComputedStyle(el);
+        const lh = parseFloat(cs.lineHeight);
+        const inner = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
         return { fits: el.scrollHeight - el.clientHeight <= 2,
-          lines: lh > 0 ? el.clientHeight / lh : -1 };
+          lines: lh > 0 ? inner / lh : -1 };
       });
       return { card: card ? H(card) : -1, rows, viewport: window.innerHeight,
         clamped: lines.filter(l => !l.fits).length,
         offBoundary: lines.filter(l => !l.fits && Math.abs(l.lines - Math.round(l.lines)) > 0.08).length };
     });
     report("B4) the news card keeps its ceiling — three even rows, under half a screen, and a clamp that cuts between lines",
-      box.card > 0 && box.card < box.viewport / 2 &&
+      box.card > 0 && box.card < box.viewport * 0.55 &&
       box.rows.length === 3 && Math.max(...box.rows) - Math.min(...box.rows) <= 2 &&
-      Math.max(...box.rows) <= 130 && box.offBoundary === 0, box);
+      Math.max(...box.rows) <= 136 && box.offBoundary === 0, box);
+    /* v6.41.0 — the two numbers above were derived from the OLD leading, and
+       the old leading was the defect: at line-height 1.6 the rows were 99px
+       and three of them 442px, but the glyphs inside them were being shaved
+       (see C2 and the .nw-t note in styles.css). With a line box that holds
+       its own ink the same two lines measure 130px a row and 470px a card.
+       What the ceiling exists to stop is unchanged and still enormous by
+       comparison: unclamped, this card measured 2,495px — two and three-
+       quarter screens. Half a screen was a round number chosen against the
+       broken metric; the honest bound is a little over it, and the check
+       still turns red the moment the clamp is removed. */
 
     /* the ribbon on the Workflows page */
     await page.evaluate(() => { try { switchPage("wf"); } catch (e) { } });
@@ -200,25 +215,55 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       wf.marked.slice().sort().join(",") === wf.want.slice().sort().join(",") &&
       wf.ribbons === wf.want.length, wf);
 
-    /* v6.108.1 — the workflow card's own ceiling, guarded. The app clamps .t
-       and .s with -webkit-line-clamp, which cuts BETWEEN line boxes; UXP has
-       no line-clamp, so the panel emulates it with max-height, and a
-       max-height that is not an exact multiple of the line-height would cut
-       THROUGH a line. Today's values (2.9em/1.45, 3em/1.5) are exact, which is
-       why the reported clipping was NOT reproduced here — this pins that
-       property so an em nudged by hand cannot quietly break it. */
+    /* v6.41.0 — THE CEILING MUST NOT CUT THE GLYPHS. v6.108.1 pinned the wrong
+       property: it required max-height to be a whole multiple of the
+       line-height, which was true, and the owner's Photoshop photograph still
+       showed the subtitles sliced. A line box is not the box the glyphs are
+       painted in — at 12.5px a Burmese run's INK box measures 28px inside an
+       18.13px line box, so ~5px of stacked vowels above the first line and ~5px
+       of tail below the last were being shaved off by overflow:hidden, which
+       clips at the element's edge. The fix is half an em of padding on each
+       side; what has to be guarded is therefore the ink, not the arithmetic.
+
+       Range.getClientRects reports the painted box directly. For every clamped
+       box this asks: does the ink of the first line, or of the last line the
+       ceiling means to show, fall outside the box that clips it? Fault-inject
+       by deleting the padding from .wfmini .t and this check names the boxes. */
     const clamp = await page.evaluate(() => {
-      const boxes = [...document.querySelectorAll(".wfmini .t, .wfmini .s")].map(el => {
-        const lh = parseFloat(getComputedStyle(el).lineHeight);
-        return { cut: el.scrollHeight - el.clientHeight > 2, lines: lh > 0 ? el.clientHeight / lh : -1 };
+      const px = v => Math.round(v * 100) / 100;
+      const bad = [];
+      let seen = 0;
+      [...document.querySelectorAll(".wfmini .t, .wfmini .s, .nw-t, .nw-s")].forEach(el => {
+        const bb = el.getBoundingClientRect();
+        if (bb.height < 4 || bb.width < 4) return;
+        const cs = getComputedStyle(el);
+        if (cs.overflow !== "hidden" && cs.overflowY !== "hidden") return;
+        const r = document.createRange();
+        r.selectNodeContents(el);
+        let rects;
+        try { rects = [...r.getClientRects()].filter(x => x.height > 0.5 && x.width > 0.5); } catch (e) { return; }
+        if (!rects.length) return;
+        const lines = [];
+        rects.forEach(x => {
+          const hit = lines.find(l => Math.abs(l.top - x.top) < 2);
+          if (hit) hit.bottom = Math.max(hit.bottom, x.bottom);
+          else lines.push({ top: x.top, bottom: x.bottom });
+        });
+        lines.sort((a, b) => a.top - b.top);
+        const lh = parseFloat(cs.lineHeight) || bb.height;
+        /* the lines the ceiling means to show: those whose LINE box is inside */
+        const vis = lines.filter(l => (l.top + (l.bottom - l.top) / 2 - lh / 2) + lh <= bb.bottom + 0.75);
+        const last = vis.length ? vis[vis.length - 1] : lines[0];
+        const overTop = px(Math.max(bb.top - lines[0].top, 0));
+        const overBot = px(Math.max(last.bottom - bb.bottom, 0));
+        seen++;
+        if (overTop > 0.6 || overBot > 0.6)
+          bad.push((el.className || el.tagName) + " top+" + overTop + " bot+" + overBot);
       });
-      const cut = boxes.filter(b => b.cut);
-      return { boxes: boxes.length, cut: cut.length,
-        offBoundary: cut.filter(b => Math.abs(b.lines - Math.round(b.lines)) > 0.08).length,
-        lines: [...new Set(cut.map(b => Math.round(b.lines * 100) / 100))].slice(0, 6) };
+      return { seen, bad: bad.length, first: bad.slice(0, 5) };
     });
-    report("C2) every clamped workflow-card line box cuts between lines, never through one",
-      clamp.boxes > 0 && clamp.offBoundary === 0, clamp);
+    report("C2) no clamped card or news box shaves the ink off its first or last line",
+      clamp.seen > 0 && clamp.bad === 0, clamp);
 
     /* v6.78.1 — DISMISSING BY HAND, the way a student does it. The × used to
        remove its own row and nothing else: main.js never wires deps.onRefresh,

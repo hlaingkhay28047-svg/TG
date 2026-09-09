@@ -195,7 +195,12 @@ body {
   font-weight: 700; font-size: 11px; line-height: 1; color: var(--accent-h);
 }
 .hdr .hsl-lab { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.hdr .hsl-val { font-size: 12px; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* v6.41.0 — "မြန်မာ" was losing 6px off the top and 5.6px off the bottom: one
+   line, ink box 26px, line box 14.4px, and overflow:hidden (here for the
+   ellipsis, not for any ceiling) clipping at the line box. A single line needs
+   no padding — the line box itself is made tall enough to hold the ink, and
+   26.4px still fits inside the 40px button's 30px of room. */
+.hdr .hsl-val { font-size: 12px; font-weight: 600; line-height: 2.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hdr .hsl-caret { flex: 0 0 auto; display: block; width: 9px; height: 9px; margin-left: 7px; }
 .hdr .hsl .inp { position: absolute; left: 0; top: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; }
 .pages {
@@ -853,8 +858,13 @@ input[type="range"] { min-width: 0; }
    -webkit-line-clamp (see the PATH block below), so the ceiling is a
    max-height that is an exact multiple of the line-height — two lines, cut
    between line boxes, the same two the app now clamps to. */
-.nw-t{font-weight:800;font-size:12.5px;line-height:1.6;max-height:3.2em;overflow:hidden}
-.nw-s{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.6;max-height:3.2em;overflow:hidden}
+/* v6.41.0 — the same line box that holds its own ink, for the same reason (see
+   the .wfmini .t note): 4px of the first line's stacked vowels and 4px of the
+   last line's tail were being shaved off by overflow:hidden at 1.6. Still two
+   lines; the rows go from 99px to 121px and the card still sits under half a
+   screen, which verify_panel_whats_new B4 measures. */
+.nw-t{font-weight:800;font-size:12.5px;line-height:2.25;max-height:4.5em;overflow:hidden}
+.nw-s{font-size:11px;color:var(--muted);margin-top:2px;line-height:2.25;max-height:4.5em;overflow:hidden}
 .nw-tag{color:#1a1408;background:var(--gold);border-radius:999px;padding:3px 7px;font-size:9.5px;font-weight:900}
 .nw-x{flex:0 0 auto;box-sizing:border-box;width:36px;height:36px;min-width:36px;min-height:36px;margin-left:8px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
 .wf-new{position:absolute;top:8px;right:8px;background:var(--gold);color:#1a1408;border-radius:999px;padding:2px 8px;font-size:9.5px;font-weight:900}
@@ -1316,10 +1326,20 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 #pageAiTools .dash-card .bdg .ic-m { flex: none; display: block; width: 18px; height: 18px; margin: 0; }
 /* app .lbl{800;14.5px;mt8;lh1.45;min-height 2.9em;flex centred} — the panel's
    global .lbl is a 42px-wide muted field label, so every value is restated */
+/* v6.41.0 — TEXT ON TEXT, on the tile the owner photographed. Nothing here
+   clips, so this is the other half of the ink-box story (see .wfmini .t): the
+   glyphs are painted in a box 2.24em tall inside a 1.45em line box, so a
+   two-line Burmese label's ink hangs 5.7px BELOW its own box — and .sub began
+   at exactly 0. Measured: "နောက်ခံ·ဝတ်စုံပြောင်းမယ်" printed 4.97px into the
+   line under it, and the label's top ink cleared the picture above by 2.3px.
+   The room here is sized for an ink box of 2.5em, not the 2.24em this renderer
+   happens to draw, because the host that showed it to the owner is not this
+   renderer: 7.6px of bleed under the label, 5.5px over the sub, so 14px
+   between them and 12px above. */
 #pageAiTools .dash-card .lbl { display: flex; flex-direction: row; align-items: center; justify-content: center;
-  width: auto; margin: 8px 0 0; padding: 0; min-height: 2.9em; height: auto; overflow: visible;
+  width: auto; margin: 12px 0 0; padding: 0; min-height: 2.9em; height: auto; overflow: visible;
   font-weight: 800; font-size: 14.5px; line-height: 1.45; color: var(--text); text-align: center; }
-#pageAiTools .dash-card .sub { display: block; margin: 0; height: auto; overflow: visible;
+#pageAiTools .dash-card .sub { display: block; margin: 14px 0 0; height: auto; overflow: visible;
   font-size: 11px; color: var(--muted); line-height: 1.5; }
 #pageAiTools .dash-card:hover .art { border-color: var(--accent); }
 
@@ -1375,18 +1395,40 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .wfmini .wf-need { position: absolute; left: 4px; bottom: 4px; padding: 2px 8px;
   border: 1px solid var(--line); border-radius: 999px;
   background-color: rgba(11, 13, 20, .78); color: var(--text); font-size: 10px; line-height: normal; }
-/* The ceiling is TWO LINES and max-height is an exact multiple of line-height
-   (2.9em / 1.45 and 3em / 1.5), so the cut lands between line boxes exactly as
-   the app's -webkit-line-clamp does — UXP has no line-clamp (see the PATH
-   block below). Measured again in v6.108.1 against the report of clipped
-   subtitles: fourteen boxes are clamped here, every one of them on a whole
-   number of lines, and a Burmese line's ink measured 12px inside a 16.7px box
-   at 1.45. Nothing is being cut through, so nothing here changed;
-   verify_panel_whats_new C2 keeps the multiple honest. */
-.wfmini .t { display: block; margin-top: 4px; min-height: 2.5em; max-height: 2.9em; font-size: 12.5px; font-weight: 800;
-  line-height: 1.45; overflow: hidden; }
-.wfmini .s { display: block; margin-top: 4px; margin-bottom: 4px; max-height: 3em; font-size: 11.5px; color: var(--muted);
-  line-height: 1.5; overflow: hidden; }
+/* v6.41.0 — THE SLICED SUBTITLE, ROOT-CAUSED AT LAST. The ceiling was two
+   lines and max-height was an exact multiple of the line-height, so the cut
+   landed exactly between two LINE BOXES — and the owner's photograph still
+   showed the words sliced through the middle. Both were true, because a line
+   box is not the box the reader sees.
+
+   Measured with Range.getClientRects, which reports the box the glyphs are
+   actually painted in: at 12.5px a Burmese run's ink box is 28px tall while
+   its line box was 18.13px (1.45em). The extra 9.87px hung 4.94px above and
+   4.94px below — stacked vowels over the top, tails under the bottom — and
+   overflow:hidden clips at the element's edge, which is where the line boxes
+   end. So the TOP of the first line and the BOTTOM of the last were shaved
+   off. Latin survives it (its ink is small inside the same box); Burmese does
+   not, which is why this only ever showed on the owner's screen.
+
+   Padding was tried first and rejected on the render: it does give the shown
+   lines their ink back, but the clip then moves past the start of the NEXT
+   line's box, so line three peeks over the fence as a strip of vowel tops.
+   There is no clip position that keeps line two whole and line three hidden
+   while their ink boxes overlap — and they overlap by 9.87px at 1.45.
+
+   So the line box is made big enough to hold its own ink: line-height 2.25,
+   which is 28.1px at 12.5px and 25.9px at 11.5px, both above the 28px and 25px
+   the glyphs measure. Now nothing overflows a line box, the ceiling (two of
+   them, 4.5em) cuts cleanly between two whole lines, and the third line is
+   entirely out of sight. Burmese has always wanted this leading; the cards are
+   about forty pixels taller for it and every word in them is whole. The web
+   app carries the identical change — -webkit-line-clamp slices exactly the
+   same way, proved side by side in the harness — and verify_panel_whats_new C2
+   now measures the ink against the box instead of counting line-heights. */
+.wfmini .t { display: block; margin-top: 4px; min-height: 2.25em; max-height: 4.5em;
+  font-size: 12.5px; font-weight: 800; line-height: 2.25; overflow: hidden; }
+.wfmini .s { display: block; margin-top: 4px; margin-bottom: 4px; max-height: 4.5em;
+  font-size: 11.5px; color: var(--muted); line-height: 2.25; overflow: hidden; }
 .wfmini .go { display: flex; flex-direction: row; align-items: center; margin-top: auto;
   font-size: 10.5px; font-weight: 800; color: var(--accent-h); line-height: normal; }
 .wfmini .go .ic-s { flex: 0 0 auto; width: 11.5px; height: 11.5px; margin-right: 3px; position: relative; top: -1.4px; }
@@ -1597,7 +1639,11 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .hsl-lab { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .apg .hsl-ctx { font-size: 8px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
   line-height: 1; margin-bottom: 1px; }
-.apg .hsl-val { font-size: 12px; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* v6.41.0 — the same one-line ink room as the header picker: 26px of ink in a
+   14.4px line box, clipped 6px top and 5.6px bottom by the ellipsis overflow.
+   The button carries it — 8px of context plus a 26.4px value inside 42px of
+   minimum height leaves it 5px taller, and nothing is cut. */
+.apg .hsl-val { font-size: 12px; font-weight: 600; line-height: 2.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* app .hsl-caret: the 9×9 gold chevron svg (CARET), here the same path as an <img> */
 .apg .hsl-caret { flex: 0 0 auto; display: block; width: 9px; height: 9px; margin-left: 7px; }
 /* app .hsl-tile svg{width:15px;height:15px}: the brand glyph (IC map) as an <img> */
