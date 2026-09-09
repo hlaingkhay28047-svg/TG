@@ -67,7 +67,42 @@ async function open(browser, secondsLeft) {
   await page.goto(APP, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => typeof accFetch === "function" && typeof accNeedsRefresh === "function",
     null, { timeout: 30000 });
+  await settle(page);
   return page;
+}
+
+/* v6.42.0 — THE FIXTURE MUST NOT RACE THE PAGE'S OWN BOOT.
+
+   This test failed intermittently — once in a local 199-test sweep and once on
+   main, while the identical tree passed on the pull request. The failure data
+   named the cause: check A's recorded calls began with a /v1/me/entitlement
+   already carrying "token-new", and ended with a /v1/devices/enroll the test
+   never makes. Both are BOOT's requests, landing inside the measurement window
+   after it had cleared window.__calls. With one of them ahead of the test's own
+   read, refreshAt < readAt is false and A reports a rotation that came late.
+
+   Check C failed the same way from the other side: it set a spent token with no
+   wait at all, so a boot rotation still in flight resolved afterwards and left
+   the session healthy — no rotation for the visibilitychange to make, and
+   nothing to observe. C asserted the app was broken when the app was fine.
+
+   v6.39.4 saw half of this and waited for the boot ROTATION in A. That is not
+   enough: boot also issues the entitlement and enroll calls, and those are what
+   land late. So every page now waits for quiet — no new recorded call for 350ms
+   — before a check touches the session, and C waits for the boot rotation the
+   way A already did. The contracts are untouched: each check still fails if the
+   app stops rotating (fault-injected below by pinning accNeedsRefresh to false,
+   which turns A red exactly as it should). */
+async function settle(page, quietMs = 350, capMs = 8000) {
+  const started = Date.now();
+  let last = -1, since = Date.now();
+  while (Date.now() - started < capMs) {
+    const n = await page.evaluate(() => (window.__calls || []).length).catch(() => -1);
+    if (n !== last) { last = n; since = Date.now(); }
+    else if (Date.now() - since >= quietMs) return true;
+    await page.waitForTimeout(50);
+  }
+  return false;
 }
 
 (async () => {
@@ -84,6 +119,7 @@ async function open(browser, secondsLeft) {
      the spent token back and measures the request path. */
   await page.waitForFunction(() => typeof acc !== "undefined" && acc.sess &&
     acc.sess.access === "token-new", null, { timeout: 30000 }).catch(() => {});
+  await settle(page);
   const near = await page.evaluate(async () => {
     /* boot itself already rotates a spent token — that is the feature. Put the
        session back inside the margin so the request path is what is measured. */
@@ -131,6 +167,11 @@ async function open(browser, secondsLeft) {
 
   /* ---- C) coming back to the tab rotates a spent token with no request to carry it ---- */
   page = await open(browser, 30);
+  /* the same boot gate A carries: a rotation still in flight would land on top
+     of the spent token this check installs, leaving nothing for the wake to do */
+  await page.waitForFunction(() => typeof acc !== "undefined" && acc.sess &&
+    acc.sess.access === "token-new", null, { timeout: 30000 }).catch(() => {});
+  await settle(page);
   const woke = await page.evaluate(async () => {
     acc.sess.access = "token-old";
     acc.sess.exp = Math.floor(Date.now() / 1000) + 30;
