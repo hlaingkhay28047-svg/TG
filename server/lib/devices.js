@@ -41,15 +41,57 @@ function createDeviceRegistry(options) {
       if (!claim || claim.claimed !== true) return denial(input.deviceType + "_slot_occupied");
       slot = claim.slot;
     }
-    const installation = await repository.insertInstallation({
-      userId: input.userId,
-      slotId: slot.id,
-      clientType: "web",
-      installationId,
-      label: input.label || null,
-      createdAt: clock().toISOString(),
-      lastSeenAt: clock().toISOString(),
-    });
+    /* v6.44.0 — THE HASH INDEX IS GLOBAL, AND THIS IS WHERE IT BITES.
+
+       device_installations_active_hash_uniq is
+           unique (installation_hash) where revoked_at is null
+       across the WHOLE table — not per account, not per client. getInstallation
+       above searches by (user, active slot, client_type, hash), so it misses
+       whenever the live row carrying this hash belongs to somebody else, and
+       the insert below then violated the index. registerPanelDevice has caught
+       that since 2026-08-30; this path never did, so the raw SQLSTATE travelled
+       out through server/index.js fail(), which publishes err.code as the
+       response's `error`, and the student was told the reason they could not
+       register was "23505" (the owner's photograph, 2026-09-09).
+
+       So ask first, and answer in words. The constraint stays exactly as it is
+       — one machine registered to one account at a time is the anti-sharing
+       rule the whole seat model rests on — but a student who runs into it now
+       learns what happened and what to do about it. */
+    const live = typeof repository.findLiveInstallationByHash === "function"
+      ? await repository.findLiveInstallationByHash(installationId) : null;
+    /* FAIL CLOSED ON THE OWNER OF THAT ROW. The first draft of this read
+       `live.userId && live.userId !== input.userId`, so a row whose owner came
+       back undefined fell past the refusal, past the client check, and into the
+       revoke below — one account quietly revoking another's registration and
+       taking the machine. Written this way an unknown owner is somebody else,
+       which is the only safe reading of "I could not tell whose this is". */
+    if (live && live.userId !== input.userId) return denial("device_registered_elsewhere");
+    if (live && live.clientType !== "web") return denial("installation_id_conflict");
+    if (live && typeof repository.revokeInstallation === "function") {
+      /* this account's own row for this exact machine and client, left live on
+         a seat that is no longer active — the same student coming back to the
+         same browser. Reclaiming it is what they expect; refusing would strand
+         them behind a row only an administrator could see. */
+      await repository.revokeInstallation(live.id, clock().toISOString());
+    }
+    let installation;
+    try {
+      installation = await repository.insertInstallation({
+        userId: input.userId,
+        slotId: slot.id,
+        clientType: "web",
+        installationId,
+        label: input.label || null,
+        createdAt: clock().toISOString(),
+        lastSeenAt: clock().toISOString(),
+      });
+    } catch (error) {
+      /* the lookup above is not in the same transaction as the insert, so two
+         browsers racing for one hash still land here. A denial, never a raw code. */
+      if (error && error.code === "23505") return denial("device_registered_elsewhere");
+      throw error;
+    }
     return { allowed: true, reason: "allowed", slotId: slot.id, slotType: slot.slotType, installationId: installation.id };
   }
 
@@ -78,6 +120,16 @@ function createDeviceRegistry(options) {
       if (!claim || claim.claimed !== true) return denial("panel_slot_occupied");
       slot = claim.slot;
     }
+    /* v6.44.0 — the same global hash index reaches this path too, and until now
+       every 23505 here was reported as panel_slot_occupied. That is the right
+       answer for the index this comment block names (one active panel per
+       computer seat) and the wrong one for the hash index: when ANOTHER account
+       holds this machine, the student's own seats may all be free, and being
+       told the seat is occupied sends them to an admin who will find nothing. */
+    const live = typeof repository.findLiveInstallationByHash === "function"
+      ? await repository.findLiveInstallationByHash(installationId) : null;
+    if (live && live.userId !== input.userId) return denial("device_registered_elsewhere");
+    if (live && live.clientType !== "panel") return denial("installation_id_conflict");
     try {
       await repository.insertInstallation({
         userId: input.userId,
@@ -190,6 +242,24 @@ function createPgDeviceRepository(client) {
            and i.installation_hash=$3 and i.revoked_at is null`,
         [userId,clientType,installationHash]);
       return mapInstallation(rows[0]);
+    },
+    /* v6.44.0 — the live owner of an installation hash, across every account
+       and both clients. device_installations_active_hash_uniq makes at most one
+       such row exist, and knowing whose it is turns a constraint violation into
+       a sentence. */
+    async findLiveInstallationByHash(installationHash) {
+      const { rows } = await client.query(
+        `select i.*,s.user_id,s.slot_type from public.device_installations i
+          join public.device_slots s on s.id=i.slot_id
+         where i.installation_hash=$1 and i.revoked_at is null limit 1`,
+        [installationHash]);
+      return mapInstallation(rows[0]);
+    },
+    async revokeInstallation(id, revokedAt) {
+      const { rowCount } = await client.query(
+        "update public.device_installations set revoked_at=$2 where id=$1 and revoked_at is null",
+        [id,revokedAt]);
+      return rowCount;
     },
     async insertInstallation(row) {
       const { rows } = await client.query(

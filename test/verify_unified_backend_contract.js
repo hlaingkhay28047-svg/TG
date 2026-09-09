@@ -20,6 +20,7 @@
  * Usage: node test/verify_unified_backend_contract.js
  */
 const path = require("path");
+const fs = require("fs");
 
 const ROOT = path.join(__dirname, "..");
 let failures = 0;
@@ -195,6 +196,18 @@ function createDeviceRepository() {
       const slot = slots.find(row => row.id === installation.slotId);
       return copy(Object.assign({}, installation, { slotType: slot && slot.slotType }));
     },
+    async findLiveInstallationByHash(installationId) {
+      const live = installations.find(row => row.installationId === installationId && !row.revokedAt);
+      if (!live) return null;
+      const slot = slots.find(row => row.id === live.slotId);
+      return copy(Object.assign({}, live, { slotType: slot && slot.slotType }));
+    },
+    async revokeInstallation(id, revokedAt) {
+      const row = installations.find(item => item.id === id && !item.revokedAt);
+      if (!row) return 0;
+      row.revokedAt = revokedAt;
+      return 1;
+    },
     async insertInstallation(row) {
       /* mirror device_installations_active_client_uniq — the partial unique
          index on (slot_id, client_type) where revoked_at is null. Without
@@ -203,6 +216,20 @@ function createDeviceRepository() {
       if (installations.some(existing => existing.slotId === row.slotId &&
           existing.clientType === row.clientType && !existing.revokedAt)) {
         const err = new Error("duplicate active installation for slot/client");
+        err.code = "23505";
+        throw err;
+      }
+      /* v6.44.0 — AND MIRROR device_installations_active_hash_uniq, the OTHER
+         partial unique index:  unique (installation_hash) where revoked_at is
+         null — global, not per account and not per client. Leaving it out of
+         this mock is why nothing caught the defect the owner photographed on
+         2026-09-09: the mock accepted a second account registering a browser
+         the first account still held, the real database raised 23505, and
+         registerWebDevice had no catch, so the student was shown the SQLSTATE.
+         A mock that is more permissive than the schema proves nothing. */
+      if (installations.some(existing => existing.installationId === row.installationId &&
+          !existing.revokedAt)) {
+        const err = new Error("duplicate active installation hash");
         err.code = "23505";
         throw err;
       }
@@ -529,6 +556,59 @@ async function verifyDevices() {
     studentResetReason === "admin_required" && adminReset && adminReset.allowed === true &&
       oldPanelReason === "device_mismatch" && computerAfterReset && computerAfterReset.allowed === true,
     { studentResetReason, adminReset, oldPanelReason, computerAfterReset });
+
+  /* v6.44.0 — ONE MACHINE, TWO ACCOUNTS.
+
+     device_installations_active_hash_uniq is global: `unique (installation_hash)
+     where revoked_at is null`, across every account and both clients. So a
+     second student signing into a browser the first still holds cannot be
+     registered — that is the anti-sharing rule and it stays. What must never
+     happen again is HOW they were told. registerWebDevice had no catch around
+     its insert, the constraint's SQLSTATE travelled out through fail(), and the
+     owner photographed his own laptop reading
+
+         Server က ငြင်းလိုက်တဲ့ အကြောင်းရင်း: 23505
+
+     — unique_violation, printed to a human as the reason. These three pin the
+     answer in words instead. */
+  /* a genuinely different account — the first draft of this line reused the
+     userId above, so "the other student" was the same student and the checks
+     below measured nothing. */
+  const otherUser = "33333333-3333-4333-8333-333333333333";
+  repository.setAllowedDevices(otherUser, 4);
+  const stolenWeb = await denied(() => registry.registerWebDevice({
+    userId: otherUser, deviceType: "computer", installationId: "computer-web-B", label: "Same laptop",
+  }));
+  report("a second account on a machine the first still holds is refused BY NAME, never 23505",
+    stolenWeb === "device_registered_elsewhere", { stolenWeb });
+
+  const stolenPanel = await denied(() => registry.registerPanelDevice({
+    userId: otherUser, installationId: "computer-web-B", label: "Same laptop",
+  }));
+  report("the panel says the same thing, not panel_slot_occupied — the seats are free",
+    stolenPanel === "device_registered_elsewhere", { stolenPanel });
+
+  /* the same student, the same browser, on a seat that is no longer active:
+     their own row, so they get it back rather than meeting a wall only an
+     administrator can see. */
+  await registry.resetSlot({ actorRole: "admin", userId, slotType: "phone" });
+  const phoneAgain = await registry.registerWebDevice({
+    userId, deviceType: "phone", installationId: "phone-web-A", label: "Same phone",
+  });
+  report("the same student on the same device reclaims it after a reset",
+    phoneAgain && phoneAgain.allowed === true, { phoneAgain });
+
+  /* and the second fence: even when some future constraint fires somewhere
+     this file does not reach, fail() must not publish its SQLSTATE as the
+     `error` a client reads and, since 6.42.0, shows to a human. 42501 and
+     P0001 keep their codes on purpose — both are read by name on the client. */
+  const indexSrc = fs.readFileSync(path.join(ROOT, "server/index.js"), "utf8");
+  const nameMap = /const PG_ERROR_NAME = \{([\s\S]*?)\};/.exec(indexSrc);
+  const usesMap = /error: err && err\.code \? \(PG_ERROR_NAME\[err\.code\] \|\| err\.code\)/.test(indexSrc);
+  report("fail() never publishes a bare SQLSTATE as the error a student is shown",
+    !!nameMap && usesMap && /"23505": "conflict"/.test(nameMap[1]) &&
+      !/"42501"/.test(nameMap[1]) && !/"P0001"/.test(nameMap[1]),
+    { mapped: !!nameMap, usesMap, body: nameMap && nameMap[1].replace(/\s+/g, " ").trim() });
 }
 
 (async () => {
