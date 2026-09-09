@@ -6339,7 +6339,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.111.0";
+const PANEL_VERSION = "6.112.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6415,6 +6415,9 @@ const gateS = {
   sess: null, entitlement: null, lease: "", leaseExp: 0, devId: "",
   enrolled: false, busy: false, view: "", run: 0, updateRequired: false,
   timer: null,
+  /* v6.43.0 — consecutive validates that never reached the server, and the
+     earliest moment the automatic beat may try again. See gateHeartbeat. */
+  netFails: 0, nextBeat: 0,
   /* the app's acc.prof / acc.devices / profOffline — the profiles row, the
      enrolled devices list and "the profiles read failed" for the Setup card. */
   prof: null, devices: [], profOffline: false
@@ -6970,10 +6973,35 @@ async function gateValidate(force) {
     gateS.updateRequired = false;
     gateErr(""); gateUnlock();
     homeRefresh();            /* the plan line can now be named */
+    gateS.netFails = 0;
     return true;
   } catch (e) {
+    /* v6.43.0 — A LEASE THE SERVER ALREADY ISSUED SURVIVES A LOST CONNECTION.
+
+       These three lines used to run for every failure alike, and only one of
+       the two kinds of failure is a decision: the branch above, where the
+       server answered and the answer was no, and this one, where nothing came
+       back at all. Deleting the lease here made the panel treat a Wi-Fi dropout
+       exactly as it treats a revoked licence — locked, "the licence service
+       cannot be reached", and every protected operation refused through
+       gateRequireLease.
+
+       In Photoshop that was constant rather than occasional. gateHeartbeat is
+       bound to window "focus" as well as to its interval, and a retoucher
+       clicks between the canvas and the panel dozens of times a minute, so on
+       the owner's connection (2026-09-09: "အင်တာနက်ကမကောင်းဘူး ခနခနကျတယ်") the
+       panel re-validated, timed out, and locked itself again and again in the
+       middle of the work.
+
+       A lease is precisely the server's statement that this panel may work
+       until leaseExp without asking again, so while it is still live we honour
+       it and say nothing. Once it has actually run out we do lock — but with
+       gate_offline, which says the internet could not be reached, instead of
+       gate_service_down, which blames a server nobody has heard from. */
+    gateS.netFails = (gateS.netFails || 0) + 1;
+    if (gateLeaseValid()) return true;
     gateS.lease = ""; gateS.leaseExp = 0;
-    gateShow("locked"); gateErr(gateT("gate_service_down"));
+    gateShow("locked"); gateErr(gateT("gate_offline"));
     return false;
   }
 }
@@ -6993,6 +7021,9 @@ try {
 
 async function gateCheck() {
   const ticket = ++gateS.run;
+  /* v6.43.0 — a check the student asked for is never held back by the backoff
+     the automatic beat has built up, and it re-bases the beat from here. */
+  gateS.nextBeat = 0;
   if (!gateS.sess || !gateS.sess.refresh) { gateShow("login"); return; }
   gateShow("checking");
   gateBusy(true);
@@ -7287,11 +7318,28 @@ function gateWire() {
   }
 }
 
+/* v6.43.0 — the beat has a floor, and the floor grows while the line is bad.
+   GATE_LEASE_REFRESH_MS was the interval only; the "focus" binding below had no
+   interval at all, so in Photoshop the beat was effectively "every time the
+   student clicks the panel". That is a validate POST per click, each one able
+   to hang for the request timeout on a weak connection. Now every caller —
+   interval, focus, visibilitychange — passes through the same gate: at most one
+   check per GATE_LEASE_REFRESH_MS, doubling up to GATE_BEAT_MAX_MS after
+   consecutive network failures, and back to normal on the first one that
+   lands. A validate that the student asks for by pressing Check still goes
+   straight out; this only governs the automatic ones. */
+const GATE_BEAT_MAX_MS = 900000;
+function gateBeatMs() {
+  const f = gateS.netFails || 0;
+  if (!f) return GATE_LEASE_REFRESH_MS;
+  return Math.min(GATE_BEAT_MAX_MS, GATE_LEASE_REFRESH_MS * Math.pow(2, Math.min(f, 4)));
+}
 function gateHeartbeat() {
   if (!gateS.sess || gateS.busy || gateS.view === "login") return;
-  gateValidate(true).catch(function () {
-    gateShow("locked"); gateErr(gateT("gate_service_down"));
-  });
+  const now = Date.now();
+  if (now < (gateS.nextBeat || 0)) return;
+  gateS.nextBeat = now + gateBeatMs();
+  gateValidate(true).catch(function () { });
 }
 
 async function gateBoot() {

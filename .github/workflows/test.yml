@@ -298,6 +298,15 @@ jobs:
       - name: Verify the access banner names the reason a student is blocked
         run: PORT=8931 node test/verify_access_banner.js
 
+      # v6.43.0 — the owner, on a weak line: "အင်တာနက်ကမကောင်းဘူး ခနခနကျတယ်".
+      # unifiedRefresh's catch used to null the entitlement, so one timed-out
+      # request out of the fifteen-second heartbeat walled the whole studio.
+      # This pins that only an answer replaces an answer — the app keeps the
+      # last verdict, backs its beat off while the line is bad, and the panel
+      # keeps a lease the server already issued.
+      - name: Verify a dropped connection does not wall the app
+        run: PORT=8931 node test/verify_offline_grace.js
+
       # v5.94.0 — the owner asked whether quality, size and ratio really come
       # out. The app's own rule is "never offered-but-ignored", enforced by two
       # hand-written kind tables; nothing checked the tables against the
