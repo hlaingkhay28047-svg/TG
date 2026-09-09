@@ -15,8 +15,7 @@ const { asService } = require("./db");
 const { withPasswordKdfSlot, signToken, verifyToken, randomToken } = require("./crypto");
 const { sendRecoveryEmail, sendSignupNotice } = require("./email");
 const { createSessionStore, createPgSessionRepository, hashRefreshToken } = require("./session");
-const { evaluateFailedLoginThrottle,evaluateAuthAttemptThrottle,
-  evaluateLoginAdmissionThrottle } = require("./login-protection");
+const { evaluateAuthAttemptThrottle } = require("./login-protection");
 
 const ACCESS_TTL  = Number(process.env.ACCESS_TOKEN_TTL  || 3600);          // 1 hour
 const REFRESH_TTL = Number(process.env.REFRESH_TOKEN_TTL || 60 * 60 * 24 * 30); // 30 days
@@ -25,16 +24,20 @@ const SECRET = process.env.JWT_SECRET || "";
    an account is usable immediately. Set REQUIRE_EMAIL_CONFIRMATION=1 to demand
    it — the client already renders the "check your email" state. */
 const REQUIRE_CONFIRM = process.env.REQUIRE_EMAIL_CONFIRMATION === "1";
-const FAILED_LOGIN_LIMIT = Math.max(3, Number(process.env.FAILED_LOGIN_LIMIT || 5));
-const FAILED_EMAIL_LIMIT = Math.max(FAILED_LOGIN_LIMIT, Number(process.env.FAILED_EMAIL_LIMIT || 10));
-const FAILED_IP_LIMIT = Math.max(FAILED_LOGIN_LIMIT + 1, Number(process.env.FAILED_IP_LIMIT || 25));
-const FAILED_LOGIN_WINDOW_SECONDS = Math.max(60, Number(process.env.FAILED_LOGIN_WINDOW_SECONDS || 900));
-const LOGIN_ADMISSION_WINDOW_SECONDS = Math.max(10,
-  Number(process.env.LOGIN_ADMISSION_WINDOW_SECONDS || 60));
-const LOGIN_ADMISSION_IP_LIMIT = Math.max(1,
-  Number(process.env.LOGIN_ADMISSION_IP_LIMIT || 20));
-const LOGIN_ADMISSION_GLOBAL_LIMIT = Math.max(LOGIN_ADMISSION_IP_LIMIT,
-  Number(process.env.LOGIN_ADMISSION_GLOBAL_LIMIT || 300));
+/* 6.39.4 — THE SIGN-IN LOCKOUT IS GONE. Owner instruction, after being told to
+   wait fifteen minutes on a password that was never wrong: "what about the
+   people whose line is bad", and then "delete all of it". Counting rejected
+   passwords per account and per computer, and the all-attempt ledger that went
+   with it, is removed: a sign-in is answered on its own merits every time,
+   however many times it is asked.
+
+   What still stands in front of the door: the KDF admission window
+   (withPasswordKdfSlot), which bounds how much CPU any flood can take and
+   answers auth_busy instead of holding an account shut, and the durable
+   login_history audit, which still records every failed attempt for the admin
+   to read. Signup, password recovery and password change keep their own
+   limits — those send mail and create accounts, and the instruction was about
+   the sign-in door. */
 const AUTH_ATTEMPT_WINDOW_SECONDS = Math.max(60,Number(process.env.AUTH_ATTEMPT_WINDOW_SECONDS || 3600));
 const SIGNUP_IP_LIMIT = Math.max(1,Number(process.env.SIGNUP_IP_LIMIT || 5));
 const SIGNUP_EMAIL_LIMIT = Math.max(1,Number(process.env.SIGNUP_EMAIL_LIMIT || 3));
@@ -112,74 +115,6 @@ async function reserveAuthAttempt(operation,email,context) {
   if (decision.blocked) {
     throw new AuthError(429,"Too many requests. Try again later.","rate_limited");
   }
-}
-
-async function reserveLoginAttempt(email,context) {
-  const ipHash=String(context&&context.ipHash||"missing_source");
-  const emailHash=authAttemptEmailHash(email);
-  const decision=await asService(async client=>{
-    /* Failed-password limits span both email and source. A short global lock
-       makes their count+reservation atomic across every instance without
-       holding the lock during scrypt. Successful credentials remove their
-       reservation below; failed credentials leave durable evidence. */
-    await client.query(
-      "select pg_advisory_xact_lock(hashtextextended($1,0))",
-      ["auth-attempt:login"]);
-    const {rows}=await client.query(
-      `select
-        (select count(*)::int from public.auth_attempts
-          where operation='login' and email_hash=$1 and ip_hash=$2
-            and occurred_at>now()-($3||' seconds')::interval) as email_ip_failures,
-        (select count(*)::int from public.auth_attempts
-          where operation='login' and email_hash=$1
-            and occurred_at>now()-($3||' seconds')::interval) as email_failures,
-        (select count(*)::int from public.auth_attempts
-          where operation='login' and ip_hash=$2
-            and occurred_at>now()-($3||' seconds')::interval) as ip_failures,
-        (select count(*)::int from public.auth_attempts
-          where operation='login_admission' and ip_hash=$2
-            and occurred_at>now()-($4||' seconds')::interval) as admission_ip_attempts,
-        (select count(*)::int from public.auth_attempts
-          where operation='login_admission'
-            and occurred_at>now()-($4||' seconds')::interval) as admission_global_attempts`,
-      [emailHash,ipHash,String(FAILED_LOGIN_WINDOW_SECONDS),
-        String(LOGIN_ADMISSION_WINDOW_SECONDS)]);
-    const failureVerdict=evaluateFailedLoginThrottle({
-      emailIpFailures:rows[0].email_ip_failures,
-      emailFailures:rows[0].email_failures,
-      ipFailures:rows[0].ip_failures,
-      emailIpLimit:FAILED_LOGIN_LIMIT,
-      emailLimit:FAILED_EMAIL_LIMIT,
-      ipLimit:FAILED_IP_LIMIT,
-    });
-    if (failureVerdict.blocked) return failureVerdict;
-    const admissionVerdict=evaluateLoginAdmissionThrottle({
-      ipAttempts:rows[0].admission_ip_attempts,
-      globalAttempts:rows[0].admission_global_attempts,
-      ipLimit:LOGIN_ADMISSION_IP_LIMIT,
-      globalLimit:LOGIN_ADMISSION_GLOBAL_LIMIT,
-    });
-    if (admissionVerdict.blocked) return admissionVerdict;
-    /* Admissions remain for the short all-attempt window, including after a
-       successful password proof. This bounds known-correct-password KDF and
-       session floods without charging success to a victim email's failure
-       allowance. */
-    await client.query(
-      "insert into public.auth_attempts (operation,ip_hash,email_hash) values ('login_admission',$1,$2)",
-      [ipHash,emailHash]);
-    const inserted=await client.query(
-      "insert into public.auth_attempts (operation,ip_hash,email_hash) values ('login',$1,$2) returning id",
-      [ipHash,emailHash]);
-    await client.query(
-      `delete from public.auth_attempts where id in
-        (select id from public.auth_attempts where occurred_at<now()-interval '7 days'
-          order by occurred_at limit 100)`);
-    return Object.assign({},admissionVerdict,{reservationId:inserted.rows[0].id});
-  });
-  if (decision.blocked) {
-    throw new AuthError(429,"Too many login attempts. Try again later.","rate_limited");
-  }
-  return decision.reservationId;
 }
 
 function sessionBody(user, issued) {
@@ -296,10 +231,9 @@ async function tokenPassword(body, context) {
     throw new AuthError(400,"Invalid login credentials","invalid_grant");
   }
   return withPasswordKdfSlot(async kdf=>{
-    /* Capacity is owned before durable admission. If the process is already at
-       its KDF bound, the request receives auth_busy without touching the DB;
-       once admitted, the DB record remains an honest all-attempt observation. */
-    const loginReservationId=await reserveLoginAttempt(email,context);
+    /* Capacity is owned first: at the KDF bound the request receives auth_busy
+       without touching the database. Nothing else is reserved — a sign-in is
+       not rationed (6.39.4). */
     const result=await asService(async client => {
       const { rows } = await client.query(
         "select id, email, encrypted_password, email_confirmed_at from public.hnk_auth_users " +
@@ -318,12 +252,6 @@ async function tokenPassword(body, context) {
         }));
         return { error: new AuthError(400, "Invalid login credentials", "invalid_grant") };
       }
-      /* This row represented an unproven password attempt, not an audit event.
-         Once the credential is proven it must not consume the failed-password
-         allowance, even if a later account-status check denies access. */
-      await client.query(
-        "delete from public.auth_attempts where id=$1 and operation='login'",
-        [loginReservationId]);
       if (REQUIRE_CONFIRM && !user.email_confirmed_at) {
         await recordLogin(client, Object.assign({}, context, {
           userId:user.id,email,eventType:"failed_login",success:false,

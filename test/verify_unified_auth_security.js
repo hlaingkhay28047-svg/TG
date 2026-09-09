@@ -47,47 +47,42 @@ function verifyThrottle() {
   let protection=null;
   try { protection=require(path.join(ROOT,"server/lib/login-protection.js")); }
   catch (error) { report("login protection module is loadable",false,{error:String(error.message||error)});return; }
-  report("login protection exports login and public-auth attempt evaluators",
-    typeof protection.evaluateFailedLoginThrottle==="function"&&
-      typeof protection.evaluateAuthAttemptThrottle==="function"&&
-      typeof protection.evaluateLoginAdmissionThrottle==="function");
-  if (typeof protection.evaluateFailedLoginThrottle!=="function") return;
-  const shared={emailIpLimit:5,emailLimit:10,ipLimit:25};
-  const emailIp=protection.evaluateFailedLoginThrottle({...shared,emailIpFailures:5,ipFailures:5});
-  const email=protection.evaluateFailedLoginThrottle({...shared,emailIpFailures:1,emailFailures:10,ipFailures:4});
-  const ip=protection.evaluateFailedLoginThrottle({...shared,emailIpFailures:1,ipFailures:25});
-  const otherIps=protection.evaluateFailedLoginThrottle({...shared,emailIpFailures:0,ipFailures:4});
-  report("throttle limits an email/source pair, a distributed email attack, and a high-volume IP independently",
-    emailIp.blocked&&emailIp.reason==="email_ip_rate_limited"&&
-      email.blocked&&email.reason==="email_rate_limited"&&
-      ip.blocked&&ip.reason==="ip_rate_limited"&&!otherIps.blocked,
-    {emailIp,email,ip,otherIps});
-  const admissionIp=protection.evaluateLoginAdmissionThrottle({
-    ipAttempts:20,globalAttempts:20,ipLimit:20,globalLimit:300});
-  const admissionGlobal=protection.evaluateLoginAdmissionThrottle({
-    ipAttempts:1,globalAttempts:300,ipLimit:20,globalLimit:300});
-  report("all password attempts have independent IP and global admission limits",
-    admissionIp.blocked&&admissionIp.reason==="ip_rate_limited"&&
-      admissionGlobal.blocked&&admissionGlobal.reason==="global_rate_limited",
-    {admissionIp,admissionGlobal});
+  report("login protection exports the public-auth attempt evaluator",
+    typeof protection.evaluateAuthAttemptThrottle==="function");
+  if (typeof protection.evaluateAuthAttemptThrottle!=="function") return;
+  /* 6.39.4 — the sign-in lockout was deleted at the owner's instruction, and
+     the evaluators that counted rejected passwords went with it. What is
+     pinned now is that they STAY gone: a module that quietly grew one again
+     would put a student on a dropping line back behind a locked door. */
+  report("no failed-login or login-admission evaluator has come back",
+    typeof protection.evaluateFailedLoginThrottle==="undefined"&&
+      typeof protection.evaluateLoginAdmissionThrottle==="undefined",
+    Object.keys(protection));
+  const pub={ipLimit:5,emailLimit:3,globalLimit:200};
+  const publicIp=protection.evaluateAuthAttemptThrottle({...pub,ipAttempts:5});
+  const publicEmail=protection.evaluateAuthAttemptThrottle({...pub,emailAttempts:3});
+  const publicGlobal=protection.evaluateAuthAttemptThrottle({...pub,globalAttempts:200});
+  const publicOk=protection.evaluateAuthAttemptThrottle({...pub,ipAttempts:1});
+  report("signup, recovery and password change keep independent IP, email and global limits",
+    publicIp.blocked&&publicIp.reason==="ip_rate_limited"&&
+      publicEmail.blocked&&publicEmail.reason==="email_rate_limited"&&
+      publicGlobal.blocked&&publicGlobal.reason==="global_rate_limited"&&!publicOk.blocked,
+    {publicIp,publicEmail,publicGlobal,publicOk});
 
   const source=fs.readFileSync(path.join(ROOT,"server/lib/auth.js"),"utf8");
-  report("failed-login SQL keys the low threshold by email plus server-hashed IP",
-    /operation='login'.*email_hash=\$1 and ip_hash=\$2/is.test(source)&&
-      /email_ip_failures/i.test(source)&&/email_failures/i.test(source)&&
-      /ip_failures/i.test(source)&&!/count\(\*\)\s+filter/i.test(source));
-  report("blocked login attempts do not amplify the audit table after reaching the threshold",
-    /if \(decision\.blocked\) \{[\s\S]{0,180}rate_limited/m.test(source));
-  report("failed-password admission is atomically reserved before scrypt and released only after proof",
-    /async function reserveLoginAttempt[\s\S]*pg_advisory_xact_lock[\s\S]*operation='login'[\s\S]*insert into public\.auth_attempts[\s\S]*returning id/.test(source)&&
-      source.lastIndexOf("reserveLoginAttempt(email,context)")<source.indexOf("kdf.verifyPassword(password")&&
-      /delete from public\.auth_attempts where id=\$1 and operation='login'/.test(source));
-  report("known-correct logins retain a separate all-attempt admission without poisoning victim failure counts",
-    /operation='login_admission'/.test(source)&&
-      /insert into public\.auth_attempts \(operation,ip_hash,email_hash\) values \('login_admission'/.test(source)&&
-      !/delete from public\.auth_attempts where id=\$1 and operation='login_admission'/.test(source));
+  /* 6.39.4 — the lockout is not merely turned down, it is not in the file:
+     no reservation, no per-email or per-IP failure counting, no admission
+     ledger. Every sign-in reaches the password check, however many times it
+     is asked. */
+  report("the sign-in path reserves nothing and counts no failures",
+    !/reserveLoginAttempt/.test(source)&&!/login_admission/.test(source)&&
+      !/email_ip_failures|email_failures|ip_failures/.test(source)&&
+      !/evaluateFailedLoginThrottle|evaluateLoginAdmissionThrottle/.test(source)&&
+      !/operation='login'/.test(source));
+  report("failed sign-ins are still written to the durable audit the admin reads",
+    /eventType:"failed_login"/.test(source)&&/failureReason:"invalid_credentials"/.test(source));
   report("KDF overflow is rejected before login, signup, or reset reserves durable DB capacity",
-    /withPasswordKdfSlot\(async kdf=>\{[\s\S]{0,500}reserveLoginAttempt\(email,context\)/.test(source)&&
+    /withPasswordKdfSlot\(async kdf=>\{[\s\S]{0,600}select id, email, encrypted_password/.test(source)&&
       /withPasswordKdfSlot\(async kdf=>\{[\s\S]{0,180}reserveAuthAttempt\("signup"/.test(source)&&
       /withPasswordKdfSlot\(async kdf=>\{[\s\S]{0,1200}reserveAuthAttempt\("password_change"/.test(source)&&
       !/error&&error\.code==="auth_busy"[\s\S]{0,500}delete from public\.auth_attempts/.test(source));
