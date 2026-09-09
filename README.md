@@ -9,10 +9,22 @@ Every upgrade should have a live DigitalOcean copy automatically:
 1. Work on `upgrade-safe-wave`.
 2. Every push to `upgrade-safe-wave` runs GitHub CI and updates DigitalOcean staging `hnk-ai-tools-2`.
 3. As soon as the full CI sweep is green, merge to `main` — tested upgrades ship immediately by standing owner approval; the test suite is the release gate.
-4. Every push/merge to `main` updates DigitalOcean production `hnk-ai-tools-3` and verifies `/app/version.json` matches the repository release.
+4. Every push/merge to `main` updates DigitalOcean production `hnk-ai-tools-3`
+   and verifies, against the live host, that `/app/version.json` is this
+   release and that the landing page, the web app and the admin console
+   (`/admin/` and `/admin/admin.js`) are byte-for-byte the files in this
+   commit — plus the API version, the schema fingerprint, readiness and
+   database TLS. Staging runs the identical checks, so a mismatch is caught on
+   the rehearsal host first.
 5. Web app, landing site and Photoshop panel source/metadata ship together in
    one wave. The CCX itself is built outside Git and delivered only through the
    authenticated private-artifact path below.
+6. The admin console's `?v=` cache token is not written by hand: run
+   `node tools/build_admin_cache_token.js` after touching `docs/admin/admin.css`
+   or `docs/admin/admin.js`, and the token becomes the first twelve hex of that
+   file's own SHA-256. `test/verify_admin_cache_token.js` fails the build if the
+   page and the bytes disagree, so a changed script can never ship behind a
+   token that tells every browser to keep the old one (6.48.0 did exactly that).
 
 This keeps both GitHub and DigitalOcean moving together while still separating unfinished staging code from the production app.
 

@@ -922,3 +922,9 @@ jobs:
       # limit still binds, and the co-use is recorded instead of refused
       - name: "Run shared-device contract (live database: one browser, several accounts, the limit intact)"
         run: node test/verify_shared_device.js
+
+      # 6.49.0 — a changed admin asset cannot ship behind a stale ?v= token,
+      # and production verifies the admin console byte-for-byte the way it has
+      # always verified landing and app
+      - name: Run admin cache-token and admin-console deploy contract
+        run: node test/verify_admin_cache_token.js
