@@ -81,6 +81,25 @@ const hasBurmese = s => /[က-႟]/.test(String(s || ""));
         window.accEnrollReason = "";
         return out;
       })(),
+      /* v6.44.0 — the two named refusals that replaced a raw SQLSTATE */
+      elsewhere: (() => {
+        window.accEnrollReason = "device_registered_elsewhere";
+        const d = JSON.parse(JSON.stringify(base));
+        d.reasons.web_app = "device_required";
+        window.unified = window.unified || {}; unified.entitlement = d;
+        const out = unifiedMessage(unifiedAccountStatus(d), d);
+        window.accEnrollReason = "";
+        return out;
+      })(),
+      idConflict: (() => {
+        window.accEnrollReason = "installation_id_conflict";
+        const d = JSON.parse(JSON.stringify(base));
+        d.reasons.web_app = "device_required";
+        window.unified = window.unified || {}; unified.entitlement = d;
+        const out = unifiedMessage(unifiedAccountStatus(d), d);
+        window.accEnrollReason = "";
+        return out;
+      })(),
       mismatch: run(d => { d.reasons.web_app = "device_mismatch"; withComputer(d); }),
       novel: run(d => { d.reasons.web_app = "quota_exhausted"; withComputer(d); }),
       granted: run(d => { d.allowed.web_app = true; withComputer(d); }),
@@ -123,6 +142,30 @@ const hasBurmese = s => /[က-႟]/.test(String(s || ""));
   report("G) an enroll the server refused is reported as the refusal, with the server's own word",
     Array.isArray(R.refused) && R.refused[1].indexOf("computer_slot_occupied") >= 0 &&
     R.refused[0] !== R.required[0] && hasBurmese(R.refused[0]), R.refused);
+
+  /* H) v6.44.0 — A SQLSTATE IS NOT A SENTENCE.
+
+     6.42.0 made this banner print the server's reason, and on 2026-09-09 the
+     owner photographed his own laptop reading
+
+         ဒီစက်ကို မှတ်ပုံတင်လို့ မရပါ
+         Server က ငြင်းလိုက်တဲ့ အကြောင်းရင်း: 23505
+
+     23505 is PostgreSQL's unique_violation: device_installations_active_hash_uniq
+     fired because another account still held that machine, registerWebDevice
+     had no catch, and fail() published err.code verbatim. The server now
+     answers device_registered_elsewhere, and these two prove the student is
+     told what that means and what to do — with the code itself gone from the
+     text, because a student cannot act on it. */
+  report("H) 'another account holds this machine' is a sentence with a way out, not a code",
+    hasBurmese(R.elsewhere[0]) && hasBurmese(R.elsewhere[1]) &&
+    R.elsewhere[1].indexOf("device_registered_elsewhere") < 0 &&
+    R.elsewhere[1].indexOf("23505") < 0 &&
+    /စက်များ|HNK Studio/.test(R.elsewhere[1]), R.elsewhere);
+  report("H2) the web/panel id clash is named too, and says who can clear it",
+    hasBurmese(R.idConflict[0]) && R.idConflict[0] !== R.elsewhere[0] &&
+    R.idConflict[1].indexOf("installation_id_conflict") < 0 &&
+    /HNK Studio/.test(R.idConflict[1]), R.idConflict);
 
   /* E) the earlier gates still win, and the granted state is unchanged */
   report("E) account status and licence still outrank the device branches",

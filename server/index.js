@@ -21,7 +21,7 @@ const { securitySecretStatus } = require("./lib/entitlements");
 
 const PORT = Number(process.env.PORT || 8080);
 const MAX_BODY = Number(process.env.MAX_BODY_BYTES || 12 * 1024 * 1024);
-const API_VERSION = "6.43.0";
+const API_VERSION = "6.44.0";
 
 function boundedTimeout(value,fallback,minimum,maximum) {
   const parsed=Number(value);
@@ -91,6 +91,17 @@ function send(res, status, body, contentType) {
    is the correct outcome for an anonymous caller reaching for profiles, and
    reporting it as 500 would both hide the reason and look like an outage. */
 const PG_STATUS = { "42501": 403, "42P01": 404, "23505": 409, "23503": 409, "23514": 400, "22P02": 400, "P0001": 403 };
+/* v6.44.0 — AND A SQLSTATE IS NOT A SENTENCE. `error` below is read by the web
+   app and the panel and, since 6.42.0, printed to the student when nothing
+   friendlier matches. On 2026-09-09 the owner photographed his own laptop
+   saying "Server က ငြင်းလိုက်တဲ့ အကြောင်းရင်း: 23505" — unique_violation,
+   verbatim, as the reason a human could not register their computer. The device
+   path that produced it is fixed in server/lib/devices.js; this is the second
+   fence, so the next constraint to fire somewhere else cannot do the same
+   thing. 42501 and P0001 keep their codes: both are read by name on the client
+   (insufficient_privilege, and the device-limit trigger). */
+const PG_ERROR_NAME = { "23505": "conflict", "23503": "conflict",
+  "23514": "invalid_input", "22P02": "invalid_input", "42P01": "not_found" };
 
 function fail(res, err) {
   const status = (err && err.status) ? err.status
@@ -99,7 +110,8 @@ function fail(res, err) {
   if (status >= 500) console.error("unhandled:", err && err.stack ? err.stack : err);
   const message = status >= 500 ? "Internal error" : String((err && err.message) || "Bad request");
   const body = {
-    error: err && err.code ? err.code : (status >= 500 ? "internal_error" : "bad_request"),
+    error: err && err.code ? (PG_ERROR_NAME[err.code] || err.code)
+                           : (status >= 500 ? "internal_error" : "bad_request"),
     message: message,
     msg: message,
   };

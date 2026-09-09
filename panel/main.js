@@ -6339,7 +6339,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.112.0";
+const PANEL_VERSION = "6.113.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6888,6 +6888,14 @@ const GATE_REASON_MY = {
   panel_slot_occupied: "ဒီအကောင့်မှာ Photoshop panel တစ်ခု ချိတ်ပြီးသားပါ — hnkaistudio.com ကို ဖွင့်ပြီး Account မှာ “Computer နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်ပါ (၇ ရက်တစ်ကြိမ်)၊ ပြီးရင် ဒီစက်နဲ့ ပြန်ဝင်ပါ",
   computer_slot_occupied: "ဒီအကောင့်ရဲ့ computer နေရာ ပြည့်နေပါတယ် — hnkaistudio.com ကို ဖွင့်ပြီး Account မှာ “Computer နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်ပါ (၇ ရက်တစ်ကြိမ်)",
   device_mismatch: "ဒီစက်က ဒီအကောင့်နဲ့ ချိတ်ထားတာ မဟုတ်ပါ — ဆရာ့ကို ပြောပြီး Reset Computer လုပ်ခိုင်းပါ",
+  /* v6.44.0 — the two refusals that used to arrive as a raw PostgreSQL
+     SQLSTATE. device_installations_active_hash_uniq is global — one live row
+     per installation hash across every account — so a machine another student
+     still holds cannot be registered here, and until now the panel called that
+     panel_slot_occupied, which sent them to an admin who would find their own
+     seats empty. */
+  device_registered_elsewhere: "ဒီစက်ကို တခြားအကောင့်တစ်ခုက မှတ်ပုံတင်ထားပါတယ် — စက်တစ်လုံးကို အကောင့်တစ်ခုတည်းသာ ရပါတယ်။ အရင်အကောင့်နဲ့ hnkaistudio.com မှာ ဝင်ပြီး Account ▸ စက်များ မှာ ဖြုတ်ပါ၊ ဒါမှမဟုတ် ဆရာ့ကို ပြောပါ",
+  installation_id_conflict: "ဒီစက်ရဲ့ မှတ်ပုံတင်နံပါတ် Web App နဲ့ ထပ်နေပါတယ် — ဆရာ့ကို ပြောပြီး ရှင်းခိုင်းပါ",
   /* v6.47.0 — the server refuses a build it has no release row for, which is
      right: an unpublished .ccx must not be trusted. But it said only "Access
      denied", and the owner met exactly that on a fresh build minutes after
