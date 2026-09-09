@@ -6,7 +6,10 @@ const { verifyToken } = require("./crypto");
 const { resolveClientAddress } = require("./request-source");
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ADMIN_IDLE_SECONDS = Math.max(60, Number(process.env.ADMIN_SESSION_TIMEOUT_SECONDS || 900));
+/* v6.46.0 — the same window the session store enforces; see session.js for why
+   it moved from 900. The two must agree, and verify_admin_self_action A1 says
+   so out loud rather than trusting that a later edit remembers both files. */
+const ADMIN_IDLE_SECONDS = Math.max(60, Number(process.env.ADMIN_SESSION_TIMEOUT_SECONDS || 14400));
 const TRUST_PROXY_HOPS = Math.min(5,Math.max(0,Number(process.env.TRUST_PROXY_HOPS || 0)));
 const TRUST_DO_CONNECTING_IP = process.env.TRUST_DO_CONNECTING_IP === "1";
 

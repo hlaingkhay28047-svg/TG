@@ -175,6 +175,35 @@ async function audit(client, identity, action, targetUserId, details, context) {
 /* v5.61.0 — the landing's privacy-light visit counters: per-day totals and
    per-room ranking over the last 30 days. The table stores nothing but
    (day, page, hits), so this is the whole story there is to tell. */
+/* v6.46.0 — THE CONSOLE'S KEEP-ALIVE, AND WHY IT IS A ROUTE OF ITS OWN.
+
+   An admin session dies after ADMIN_SESSION_TIMEOUT_SECONDS of no requests,
+   and last_seen_at is bumped by exactly one thing: an authenticated call
+   reaching live-auth. The console had nothing to call. It rotated its access
+   token only when that token was nearly spent, so it touched the server about
+   once an hour and was already long past the window when it did — it signed
+   itself out on a timer nothing wound.
+
+   The fix has to be a REQUEST; no in-page timer can substitute for one. It
+   gets its own endpoint rather than borrowing /dashboard so that the intent is
+   legible in a log and in a route table, and so it stays the cheapest possible
+   authenticated read: one row, the caller's own session, nothing about anybody
+   else. requireAdminBase, not requireAdmin — staying signed in is not an
+   administrative action and must never be gated behind a second factor the
+   administrator has not enrolled. */
+async function sessionHeartbeat(client, identity) {
+  requireAdminBase(identity);
+  const { rows } = await client.query(
+    "select last_seen_at,expires_at from public.sessions where id=$1 and user_id=$2 and revoked_at is null",
+    [identity.sessionId || null, identity.uid]);
+  return {
+    ok: true,
+    session_id: identity.sessionId || null,
+    last_seen_at: rows[0] && rows[0].last_seen_at || null,
+    expires_at: rows[0] && rows[0].expires_at || null,
+  };
+}
+
 async function visits(client, identity) {
   requireAdmin(identity, "view_visits");
   const days = await client.query(
@@ -365,9 +394,11 @@ async function upsertLicense(client, target, body, actor, mode) {
       from public.licenses l where p.id=$1 and l.user_id=p.id`, [target]);
 }
 
-async function revokeAllUserSessions(client,userId,reason) {
+/* keepSessionId is the acting administrator's own session, and only
+   force_logout passes it — see the call site. */
+async function revokeAllUserSessions(client,userId,reason,keepSessionId) {
   const count=await createPgSessionRepository(client).revokeByUser(
-    userId,new Date().toISOString(),reason);
+    userId,new Date().toISOString(),reason,keepSessionId||null);
   /* Pre-v5.43 refresh rows carry no session/client metadata. They must be
      deleted with every all-session/device revocation or the compatibility
      bridge could mint a fresh canonical session after force logout. */
@@ -417,7 +448,21 @@ async function studentAction(client, identity, userId, body, context) {
     }
     await upsertLicense(client,userId,body,identity.uid,"preserve");
   } else if (["reject","activate","suspend","ban"].includes(requested)) {
-    const status = requested === "activate" ? "active" : requested === "reject" ? "rejected" : requested;
+    /* v6.46.0 — SUSPEND AND BAN HAD NEVER WORKED, and nothing was watching.
+       This line read `... : requested`, so "suspend" wrote account_status
+       'suspend' and "ban" wrote 'ban'. profiles_account_status_chk allows only
+       pending / active / suspended / banned / rejected, so Postgres refused
+       both with 23514 and the teacher got an error instead of a suspension.
+       Reject and Activate were spelled out and worked, which is why the fault
+       hid: the two actions that carried their own past tense were the two that
+       never got one. Every name is written out now rather than half-derived,
+       and verify_admin_self_action B3/B5 execute all four against a real
+       database with the real constraint — the only thing that could have
+       caught this, and the reason it surfaced at all. */
+    const STATUS_BY_ACTION = {
+      activate:"active", reject:"rejected", suspend:"suspended", ban:"banned",
+    };
+    const status = STATUS_BY_ACTION[requested];
     /* Account state and license state are independent controls. In particular,
        Suspend must preserve the remaining paid term so Activate can restore
        access without silently revoking that license through the legacy sync
@@ -447,7 +492,18 @@ async function studentAction(client, identity, userId, body, context) {
       `insert into public.device_history (user_id,actor_user_id,event_type,details)
        values ($1,$2,'reset',$3::jsonb)`, [userId,identity.uid,JSON.stringify({slot_type:resetType,count})]);
   } else if (requested === "force_logout") {
-    await revokeAllUserSessions(client,userId,"force_logout");
+    /* v6.46.0 — THE CONSOLE SURVIVES YOUR OWN FORCE LOGOUT.
+       The owner is is_admin on his own student record, so pressing this on it
+       revoked his admin console session in the same sweep as his phone and his
+       computer, and the console he pressed it in signed itself out. Force
+       Logout means "end this student's app sessions", never "end the
+       administrator". Passing the acting session spares that one row and
+       nothing else: on any other student the id is not in their set, so an
+       admin force-logging out ANOTHER admin still ends everything of theirs,
+       their console included. The account-status sweeps above deliberately do
+       NOT pass it — an account you have just suspended may not be
+       administered from. */
+    await revokeAllUserSessions(client,userId,"force_logout",identity.sessionId);
     await client.query(
       `insert into public.login_history (user_id,event_type,client_type,success,failure_reason)
        values ($1,'forced_logout','admin',true,'force_logout')`, [userId]);
@@ -1062,7 +1118,7 @@ async function mfaVerify(client, identity, body, context) {
   return { ok:true,mfa_verified:true,mfa_replaced:promotingPending };
 }
 
-module.exports={ audit,visits,dashboard,students,studentDetail,studentAction,
+module.exports={ audit,visits,dashboard,students,studentDetail,studentAction,sessionHeartbeat,
   listPaymentRequests,reviewPayment,paymentProof,grantPayment,histories,
   getPanelVersion,putPanelVersion,mfaSetup,mfaVerify,requireAdmin,requireAdminBase,
   effectiveAccountStatus,normalizeDeviceSlots,normalizeStudent,normalizeHistoryType,validatePanelPolicy,

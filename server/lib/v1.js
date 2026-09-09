@@ -550,6 +550,12 @@ async function handle(input) {
     delete result.passwordReset;
     return {status:result.action==="password_reset"?202:200,body:result};
   }
+  /* v6.46.0 — the console's keep-alive. adminCall runs live-auth, which is the
+     only thing that bumps last_seen_at, so simply reaching this route is the
+     whole point of it; the body it returns is a courtesy. */
+  if (pathname==="/v1/admin/session"&&method==="GET") {
+    return {status:200,body:await adminCall(identity,context,(client,id)=>admin.sessionHeartbeat(client,id))};
+  }
   if (pathname==="/v1/admin/visits"&&method==="GET") {
     return {status:200,body:await adminCall(identity,context,(client,id)=>admin.visits(client,id))};
   }

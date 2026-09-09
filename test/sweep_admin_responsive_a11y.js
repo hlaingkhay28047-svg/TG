@@ -167,7 +167,15 @@ function staticServer() {
   await page.click("#studentCards [data-student-id='student-1']");
   await page.waitForSelector("#studentDialog[open]");
   const detail=await page.evaluate(()=>({focus:document.activeElement&&document.activeElement.id,labelled:!!document.getElementById("studentDialog").getAttribute("aria-labelledby"),summary:document.getElementById("studentSummary").textContent,devices:document.getElementById("studentDevices").textContent,permissions:[...document.querySelectorAll("#permissionToggles input")].map(input=>input.checked)}));
-  report("flat detail normalizes into license, mixed permissions and Phone/Computer 1/1",detail.labelled&&!!detail.focus&&/Dec.*2026/i.test(detail.summary)&&/Phone 1\/1/.test(detail.devices)&&/Computer 1\/1/.test(detail.devices)&&JSON.stringify(detail.permissions)===JSON.stringify([true,false,true]),detail);
+  /* v6.46.0 — the "1/1" this line used to pin was a literal in admin.js: it
+     said one seat of each kind existed whatever profiles.allowed_devices was
+     set to, so an account the teacher had raised to four still read
+     "Phone 1/1 · Computer 0/1". Removing it is the point of this wave. What
+     this check was ever really about — a FLAT array payload normalising into
+     two named, registered rows — is asserted properly here instead, against
+     the machines themselves; the seat counts are pinned by
+     verify_admin_self_action against the real ceiling. */
+  report("flat detail normalizes into license, mixed permissions and two named registered devices",detail.labelled&&!!detail.focus&&/Dec.*2026/i.test(detail.summary)&&/Phone/.test(detail.devices)&&/Computer/.test(detail.devices)&&/iPhone/.test(detail.devices)&&/Windows/.test(detail.devices)&&!/\d\/\d/.test(detail.devices)&&JSON.stringify(detail.permissions)===JSON.stringify([true,false,true]),detail);
   const accountActionLabels=await page.locator("#accountActions button").allTextContents();
   report("an active account never offers the pending-only Approve action",
     !accountActionLabels.includes("Approve"),accountActionLabels);

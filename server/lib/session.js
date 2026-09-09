@@ -9,8 +9,19 @@ function createSessionStore(options) {
   const clock = options.clock || (() => new Date());
   const randomToken = options.randomToken || (() => crypto.randomBytes(32).toString("base64url"));
   const refreshTtlSeconds = Number(options.refreshTtlSeconds || 60 * 60 * 24 * 30);
+  /* v6.46.0 — 900 seconds was a clock nothing wound. The console only called
+     the server when its access token was nearly spent (ACCESS_TTL 3600 less a
+     five-minute margin), so an open, untouched console reached the server once
+     an hour with a last_seen_at 55 minutes old and was revoked every time: it
+     signed ITSELF out, roughly hourly, and any pause longer than fifteen
+     minutes ended the session. 6.46.0 fixes the cause with a five-minute
+     keep-alive from the open console, and widens the window to a working
+     stretch so that returning to a phone whose browser was suspended — which
+     no in-page timer can survive — is not a fresh sign-in either. The owner
+     was told the new number before it shipped, and
+     ADMIN_SESSION_TIMEOUT_SECONDS still tightens it in one place. */
   const adminIdleSeconds = Math.max(60, Number(options.adminIdleSeconds ||
-    process.env.ADMIN_SESSION_TIMEOUT_SECONDS || 900));
+    process.env.ADMIN_SESSION_TIMEOUT_SECONDS || 14400));
   const id = options.randomId || (() => crypto.randomUUID());
 
   const denial = reason => ({ active: false, allowed: false, reason });
@@ -183,11 +194,19 @@ function createPgSessionRepository(client) {
         [id,revokedAt,reason || "logout"]);
       return mapSession(rows[0]);
     },
-    async revokeByUser(userId, revokedAt, reason) {
+    /* v6.46.0 — keepSessionId spares exactly ONE row, and the caller is the
+       only thing that decides which. It exists for the administrator who
+       presses Force Logout on their OWN student record: the sweep must still
+       end their phone and their computer, but taking down the console they
+       pressed the button in is not a security property, it is a bug. The keep
+       is safe by construction — the id belongs to the ACTING admin, so on any
+       other target `id<>$4` excludes nothing and the sweep stays total. */
+    async revokeByUser(userId, revokedAt, reason, keepSessionId) {
       const result = await client.query(
         `update public.sessions set revoked_at=$2,revoked_reason=$3
-          where user_id=$1 and revoked_at is null`,
-        [userId,revokedAt,reason || "force_logout"]);
+          where user_id=$1 and revoked_at is null
+            and ($4::uuid is null or id <> $4::uuid)`,
+        [userId,revokedAt,reason || "force_logout",keepSessionId || null]);
       return result.rowCount;
     },
   };
