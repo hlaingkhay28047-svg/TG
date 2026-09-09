@@ -827,7 +827,14 @@ input[type="range"] { min-width: 0; }
    (44px rows, 56px thumb slot, pill radius) is the app's. ---- */
 .nw-card{border:1px solid var(--gold);background:rgba(244,212,136,.07)}
 .nw-card h2{color:var(--gold)}
-.nw-wrap{display:flex;flex-direction:row;align-items:stretch;margin-top:8px}
+/* v6.41.0 — CENTRE, NOT STRETCH. The panel wraps each What's New row and its
+   ✕ in a flex row of its own (the web app puts the ✕ inside the row), and it
+   was stretching: the dismiss button grew to the full height of a two-line
+   row, so every row was followed by a tall empty box with a small ✕ at the
+   top of it — which is what the owner photographed. The web app's own rule is
+   align-items:center; this now matches it, and the button is a fixed 36×36
+   with its glyph centred. */
+.nw-wrap{display:flex;flex-direction:row;align-items:center;margin-top:8px}
 .nw-row{display:flex;flex-direction:row;align-items:center;flex:1;text-align:left;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:11px;padding:10px;color:var(--cream);min-height:44px}
 .nw-tx{flex:1}
 /* v6.108.1 — the two lines a row is allowed. Measured in the harness at the
@@ -841,7 +848,7 @@ input[type="range"] { min-width: 0; }
 .nw-t{font-weight:800;font-size:12.5px;line-height:1.6;max-height:3.2em;overflow:hidden}
 .nw-s{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.6;max-height:3.2em;overflow:hidden}
 .nw-tag{color:#1a1408;background:var(--gold);border-radius:999px;padding:3px 7px;font-size:9.5px;font-weight:900}
-.nw-x{min-width:36px;min-height:36px;margin-left:8px;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
+.nw-x{flex:0 0 auto;box-sizing:border-box;width:36px;height:36px;min-width:36px;min-height:36px;margin-left:8px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
 .wf-new{position:absolute;top:8px;right:8px;background:var(--gold);color:#1a1408;border-radius:999px;padding:2px 8px;font-size:9.5px;font-weight:900}
 .wfmini.is-new{border-color:var(--gold)}
 
