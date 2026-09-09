@@ -904,3 +904,8 @@ jobs:
       # <optgroup>, and a label splitter that refuses an incredible measurement.
       - name: Run panel renderer-safety contract (no remote img, no optgroup, guarded splitter, self-test card)
         run: node test/verify_panel_renderer_safety.js
+
+      # 6.46.0 — an admin action on your OWN account must not sign you out of the
+      # console, and the console's idle clock must be wound by something
+      - name: Run admin self-action contract (live database: your console survives your own Force Logout; the keep-alive is inside the window)
+        run: node test/verify_admin_self_action.js

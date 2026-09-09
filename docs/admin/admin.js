@@ -26,6 +26,7 @@
     password: "/api/auth/v1/token?grant_type=password",
     refresh: "/api/auth/v1/token?grant_type=refresh_token",
     logout: "/api/auth/v1/logout",
+    session: "/api/v1/admin/session",
     dashboard: "/api/v1/admin/dashboard",
     visits: "/api/v1/admin/visits",
     students: "/api/v1/admin/students",
@@ -258,6 +259,11 @@
     "act.forceLogout": "အတင်း ထွက်စေ",
     "act.resetPhone": "ဖုန်း Reset",
     "act.resetComputer": "ကွန်ပျူတာ Reset",
+    /* v6.46.0 — this installation has exactly ONE administrator, and it is his
+       own student record he is usually looking at. The dialog says so. */
+    "act.selfWarn": "ဒါ သင့်ကိုယ်ပိုင် အကောင့်ပါ။",
+    "act.selfKeepsConsole": "ဖုန်းနဲ့ ကွန်ပျူတာ ထွက်သွားမယ်၊ ဒီ admin console ကတော့ ပွင့်နေမယ်။",
+    "act.selfLockout": "သင့် admin session ပါ ပိတ်သွားမယ်၊ workflow ကနေပဲ ပြန်ဖွင့်လို့ရမယ်။",
     "msg.pickExpiry": "စိတ်ကြိုက် ကုန်ဆုံးရက်ကို အရင်ရွေးပါ။",
     "msg.versionSaved": "Panel ဗားရှင်း မူဝါဒ သိမ်းပြီးပါပြီ။",
     "msg.deviceRange": "စက်အရေအတွက် ၁ မှ ၂၀ ကြား ဖြစ်ရပါမယ်။",
@@ -443,13 +449,42 @@
     if (!refreshToken() || !sessionNearExpiry()) return true;
     return await refreshSession();
   }
+  /* v6.46.0 — THE CLOCK NOTHING WOUND.
+
+     The server ends an admin session that has made no request for
+     ADMIN_SESSION_TIMEOUT_SECONDS, and only a request bumps last_seen_at.
+     keepSessionFresh above is NOT that request: it returns immediately unless
+     the access token is near expiry, so a console left open called the server
+     once an hour — by which time it was long past the window and was revoked.
+     The console signed ITSELF out, roughly hourly, and the owner reported
+     exactly that: "ခနခန ဝင်ထွက်နေတယ်".
+
+     So there is now a real ping, and it must stay well inside the window:
+     five minutes leaves room for one lost round trip before the server's four
+     hours are anywhere near up (verify_admin_self_action A2 asserts that
+     margin against the server's own constant, so tightening one and not the
+     other fails the suite rather than the owner).
+
+     It runs only when there is a session to keep and the tab is actually
+     visible — a hidden tab is not someone working, and pinging from one would
+     turn the idle window into no window at all. A failed ping is silent: the
+     next api() call handles a genuinely dead session, and a dropped ping must
+     never be what signs an administrator out. */
+  const ADMIN_KEEPALIVE_MS = 300000;
+  let adminPingAt = 0;
+  async function adminKeepAlive() {
+    if (!accessToken() && !refreshToken()) return false;
+    if (Date.now() - adminPingAt < ADMIN_KEEPALIVE_MS - 5000) return false;
+    adminPingAt = Date.now();
+    try { await api(API.session); return true; } catch (_) { return false; }
+  }
   try {
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") keepSessionFresh();
+      if (document.visibilityState === "visible") { keepSessionFresh(); adminKeepAlive(); }
     });
     window.addEventListener("online", () => { keepSessionFresh(); });
     setInterval(() => {
-      if (document.visibilityState === "visible") keepSessionFresh();
+      if (document.visibilityState === "visible") { keepSessionFresh(); adminKeepAlive(); }
     }, ADMIN_FRESH_TICK_MS);
   } catch (_) {}
 
@@ -767,10 +802,31 @@
     const devices = item.devices || {};
     const phone = devices.phone || item.phone_device;
     const computer = devices.computer || item.computer_device;
-    /* 2026-08-30 — seats: the denominator is the admin-set allowed_devices */
-    const limit = item.allowed_devices != null ? Number(item.allowed_devices) : 2;
-    const used = (phone ? 1 : 0) + (computer ? 1 : 0);
+    /* 2026-08-30 — seats: the denominator is the admin-set allowed_devices.
+       v6.46.0 — and the numerator is the SLOT LIST, not one phone plus one
+       computer. devices.phone / devices.computer name the FIRST live slot of
+       each kind, so a four-seat account carrying three phones read "1/4" and
+       the teacher could not see what they had actually given away. The pair is
+       still the fallback for a payload that carries no list. */
+    const limit = devices.allowed != null ? Number(devices.allowed)
+      : item.allowed_devices != null ? Number(item.allowed_devices) : 2;
+    const slots = Array.isArray(devices.slots) ? devices.slots : [];
+    const live = slots.filter(slot => slot && (slot.registered === true || slot.status === "active")).length;
+    const used = devices.used != null ? Number(devices.used)
+      : live || ((phone ? 1 : 0) + (computer ? 1 : 0));
     return `Devices ${used}/${limit}` + (phone ? " · Phone" : "") + (computer ? " · Computer" : "");
+  }
+
+  /* v6.46.0 — A ROW MUST NOT INVENT A CEILING.
+     This label was `${kind} ${device ? "1/1" : "0/1"}` — a literal that claimed
+     one seat of this kind existed and said nothing true about an account set to
+     four. The owner photographed it: allowed devices 4, rows "Phone 1/1" and
+     "Computer 0/1". A row now states only what it knows — how many of THIS kind
+     are registered — and the ceiling is printed once, by deviceSummary, from
+     the number the teacher actually set. */
+  function deviceRowLabel(kind, device, count) {
+    const n = Number(count) || (device ? 1 : 0);
+    return n > 1 ? `${kind} ×${n}` : String(kind);
   }
 
   function detailButton(item, compact = false) {
@@ -1044,8 +1100,18 @@
     }));
 
     const devices = item.devices || {};
-    $("#studentDevices").replaceChildren(...[[t("d.phone", "Phone"), devices.phone], [t("d.computer", "Computer"), devices.computer]].map(([kind, device]) => node("div", { className: "device-row" }, [
-      node("div", {}, [node("b", { text: `${kind} ${device ? "1/1" : "0/1"}` }), node("small", { text: device ? prettyDevice(device.label || device.device_name) || t("d.registered", "Registered") : t("d.notRegistered", "Not registered") })]),
+    /* count from the slot list, and fall back to the pair when a payload
+       carries no list — the same lesson 6.45.0 learned in the web app: a
+       registered device must never be reported as absent */
+    const slotList = Array.isArray(devices.slots) ? devices.slots : [];
+    const liveOf = type => slotList.filter(slot => slot &&
+      (slot.slot_type || slot.type) === type &&
+      (slot.registered === true || slot.status === "active")).length;
+    $("#studentDevices").replaceChildren(...[
+      [t("d.phone", "Phone"), devices.phone, liveOf("phone") || (devices.phone ? 1 : 0)],
+      [t("d.computer", "Computer"), devices.computer, liveOf("computer") || (devices.computer ? 1 : 0)],
+    ].map(([kind, device, count]) => node("div", { className: "device-row" }, [
+      node("div", {}, [node("b", { text: deviceRowLabel(kind, device, count) }), node("small", { text: device ? prettyDevice(device.label || device.device_name) || t("d.registered", "Registered") : t("d.notRegistered", "Not registered") })]),
       statusPill(device ? "active" : "empty"),
     ])));
 
@@ -1105,8 +1171,34 @@
     });
   }
 
+  /* v6.46.0 — SAY IT WHEN THE STUDENT IS YOU.
+     This installation has exactly one administrator and it is his own student
+     record he is usually looking at, so the difference between "log my phone
+     out" and "lock myself out of the console" has to be on screen BEFORE the
+     button, not discovered after it. Force Logout now spares this console;
+     Suspend, Ban and Reject deliberately do not, and nothing inside the product
+     can undo them — only a workflow can. */
+  function selectedIsMe() {
+    const mine = String(readSession().uid || "");
+    return !!mine && String(selectedId() || "") === mine;
+  }
+  function selfWarning(action) {
+    if (!selectedIsMe()) return "";
+    const head = " " + t("act.selfWarn", "This is YOUR OWN account.");
+    if (["suspend", "ban", "reject"].includes(action)) {
+      return head + " " + t("act.selfLockout",
+        "It will end your admin session too, and only a workflow can restore it.");
+    }
+    if (action === "force_logout") {
+      return head + " " + t("act.selfKeepsConsole",
+        "Your phone and computer will sign out; this admin console stays open.");
+    }
+    return head;
+  }
+
   async function confirmAndRun(action, label, extra = {}) {
-    const approved = await confirmAction(`${label} for ${state.selected && (state.selected.email || state.selected.name || "this student")}? This operation is written to the admin audit history.`, ["reject", "suspend", "ban", "force_logout", "reset_phone", "reset_computer"].includes(action));
+    const who = state.selected && (state.selected.email || state.selected.name) || "this student";
+    const approved = await confirmAction(`${label} for ${who}?${selfWarning(action)} This operation is written to the admin audit history.`, ["reject", "suspend", "ban", "force_logout", "reset_phone", "reset_computer"].includes(action));
     if (!approved) return;
     await runAction(action, extra);
   }
