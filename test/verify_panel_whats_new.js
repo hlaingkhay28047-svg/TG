@@ -162,8 +162,8 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
        max-height) the three-row card came to 2,495px at 360x960 and 2,740px at
        the manifest's own 340x920, from one Burmese subtitle 617px tall: three
        screens of changelog between a student and the studio. Three rows of two
-       lines each cannot reach half a screen, and three rows drawn from the same
-       template cannot differ in height. */
+       lines each cannot reach half a screen, and no row may be taller than its
+       own two-line cap or collapsed to nothing. */
     const box = await page.evaluate(() => {
       const card = document.getElementById("hnkDashNew");
       const H = el => Math.round(el.getBoundingClientRect().height);
@@ -182,10 +182,23 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
         clamped: lines.filter(l => !l.fits).length,
         offBoundary: lines.filter(l => !l.fits && Math.abs(l.lines - Math.round(l.lines)) > 0.08).length };
     });
-    report("B4) the news card keeps its ceiling — three even rows, under half a screen, and a clamp that cuts between lines",
+    report("B4) the news card keeps its ceiling — three capped rows, under half a screen, and a clamp that cuts between lines",
       box.card > 0 && box.card < box.viewport * 0.55 &&
-      box.rows.length === 3 && Math.max(...box.rows) - Math.min(...box.rows) <= 2 &&
-      Math.max(...box.rows) <= 136 && box.offBoundary === 0, box);
+      box.rows.length === 3 &&
+      Math.max(...box.rows) <= 136 && Math.min(...box.rows) >= 60 &&
+      box.offBoundary === 0, box);
+    /* v6.43.0 — THE ROWS ARE CAPPED, NOT IDENTICAL. This asked for
+       `max - min <= 2`, and the note above justified it as "three rows drawn
+       from the same template cannot differ in height", which is not true and
+       had only ever been true by accident: every headline so far happened to
+       wrap to two lines in Burmese. 6.43.0's is shorter, wraps to one, and its
+       row measured 102px beside two of 130 — correct typography, and the check
+       called it a defect. What the ceiling exists to stop is a row growing
+       PAST its cap, so that is what is asserted, with a floor beneath it so a
+       row that collapses to nothing is still caught: one title line plus one
+       subtitle line is a little over 60px at this leading, and an empty row is
+       near zero. The card bound, the row count and the between-lines clamp are
+       untouched. */
     /* v6.41.0 — the two numbers above were derived from the OLD leading, and
        the old leading was the defect: at line-height 1.6 the rows were 99px
        and three of them 442px, but the glyphs inside them were being shaved
