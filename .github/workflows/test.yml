@@ -307,6 +307,16 @@ jobs:
       - name: Verify a dropped connection does not wall the app
         run: PORT=8931 node test/verify_offline_grace.js
 
+      # v6.45.0 — profiles.allowed_devices is the account's seat count, it is
+      # what claimSlot enforces and what a renewal is priced on, and until now
+      # it never reached the student's app: the Account card drew two boxes with
+      # "1/1" hard-coded and hid each Register button as soon as one device of
+      # that kind existed. Four seats paid for, two given (the owner's own
+      # account, 2026-09-09). This pins that the number the teacher sets is the
+      # number the student can register.
+      - name: Verify the device seats the teacher sets are the seats the student gets
+        run: PORT=8931 node test/verify_device_seats.js
+
       # v5.94.0 — the owner asked whether quality, size and ratio really come
       # out. The app's own rule is "never offered-but-ignored", enforced by two
       # hand-written kind tables; nothing checked the tables against the
