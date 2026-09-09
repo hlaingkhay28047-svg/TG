@@ -107,19 +107,14 @@ report("D2) all three change handlers can reach it",
       rows.push({ k, drag: +diff(before, during).toFixed(2), settled: +diff(before, after).toFixed(2) });
     }
 
-    /* B) a purely CSS-representable recipe must keep the cheap sharp path.
-          The CSS path leaves style.filter set; the proxy clears it. */
-    reset();
-    await new Promise(r => setTimeout(r, 550));
-    state.st.t1.bri = 40; stT1Changed();
-    await new Promise(r => setTimeout(r, 60));
-    const cssPathFilter = cv.style.filter || "";
-    /* and one that is NOT representable must take the proxy */
-    reset();
-    await new Promise(r => setTimeout(r, 550));
-    state.st.t1.vig = 60; stT1Changed();
-    await new Promise(r => setTimeout(r, 60));
-    const proxyPathFilter = cv.style.filter || "";
+    /* B) v6.50.0 — a recipe the drag can render exactly must stay SHARP while
+          it is dragged. Until 6.50.0 the only way to be both fast and sharp
+          was the CSS filter, so this checked that style.filter was left set.
+          The GPU fast path is a third way: it draws the true render over the
+          whole buffer and then CLEARS the filter, because the canvas already
+          carries the grade. Pinning the string would now forbid the better
+          path, so what is measured is the thing the string stood for —
+          how much detail the frame actually holds while the finger is down. */
 
     /* C) the settled frame is sharper than the proxy could be. Compare
           neighbour-to-neighbour contrast: a 320px render blown up to the
@@ -145,10 +140,22 @@ report("D2) all three change handlers can reach it",
     await new Promise(r => setTimeout(r, 900));
     const dSettled = +detail().toFixed(3);
 
+    /* the CSS-representable drag, measured the same way: its frame during the
+       drag, and the settled frame it must not be coarser than */
+    reset();
+    await new Promise(r => setTimeout(r, 550));
+    state.st.t1.bri = 40; stT1Changed();
+    await new Promise(r => setTimeout(r, 60));
+    const dSharpDrag = +detail().toFixed(3);
+    const sharpFilter = cv.style.filter || "";
+    await new Promise(r => setTimeout(r, 900));
+    const dSharpSettled = +detail().toFixed(3);
+    /* how that sharpness arrived, for the record rather than as the assertion */
+    const sharpVia = sharpFilter ? "css-filter" : "gpu";
+
     return {
       bufH: ST.buf.height, rows,
-      cssPathFilter, proxyPathFilter,
-      dProxy, dSettled
+      dProxy, dSettled, dSharpDrag, dSharpSettled, sharpVia
     };
   });
 
@@ -157,9 +164,15 @@ report("D2) all three change handlers can reach it",
     silent.length === 0,
     { bufferLongEdge: out.bufH, stillSilent: silent, all: out.rows.map(r => r.k + ":" + r.drag).join(" ") });
 
-  report("B) a CSS-representable recipe keeps the cheap sharp path; one that is not takes the proxy",
-    out.cssPathFilter.length > 0 && out.proxyPathFilter === "",
-    { cssPath: out.cssPathFilter.slice(0, 60), proxyPath: out.proxyPathFilter });
+  /* the drag frame must be as sharp as the frame it settles into (within a
+     couple of percent for the resampling), and it must be visibly sharper than
+     the coarse rung a recipe the drag cannot render exactly has to fall back
+     to. Both halves matter: the first says the sharp path is really sharp, the
+     second says the coarse path is really the one being avoided. */
+  report("B) a drag the studio can render exactly stays as sharp as the settled frame",
+    out.dSharpDrag >= out.dSharpSettled * 0.97 && out.dSharpDrag > out.dProxy,
+    { via: out.sharpVia, dragDetail: out.dSharpDrag, settledDetail: out.dSharpSettled,
+      coarseRungDetail: out.dProxy });
 
   report("C) the settled frame lands sharper than the proxy it replaced",
     out.dSettled > out.dProxy,
@@ -169,6 +182,8 @@ report("D2) all three change handlers can reach it",
 
   console.log("      (before: cla grn vig dhz smooth even white rosy radiance all measured 0.00 " +
     "during a drag — vignette alone is 11.86 mean levels once it lands)");
+  console.log("      sharp drag arrived via " + out.sharpVia + " — detail " + out.dSharpDrag +
+    " against " + out.dSharpSettled + " settled, and " + out.dProxy + " on the coarse rung");
 
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   await browser.close();
