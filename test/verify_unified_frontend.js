@@ -57,9 +57,31 @@ try {
 } catch (_) { unifiedGateOutcomes = [true,true,false]; }
 check("premium execution gates honor cached suspension and Web App disable verdicts",
   JSON.stringify(unifiedGateOutcomes) === JSON.stringify([false,false,true]));
-check("entitlement authorization failures clear cached verdicts and stay fail-closed",
-  /catch\(e\)\{\s*unified\.enforced\s*=\s*true;\s*unified\.error\s*=\s*true;\s*unified\.entitlement\s*=\s*null;/.test(app) &&
-  /if \(unified\.loading \|\| unified\.error \|\| !unified\.entitlement\) return ["']checking["']/.test(app));
+/* v6.43.0 — this used to demand ONE catch that nulled the verdict for every
+   failure alike:
+
+     catch(e){ unified.enforced = true; unified.error = true; unified.entitlement = null;
+     if (unified.loading || unified.error || !unified.entitlement) return "checking"
+
+   which made a request that never left the phone indistinguishable from one the
+   server refused, and walled the whole app on every missed beat of a
+   fifteen-second heartbeat (the owner, on a weak line, 2026-09-09). The
+   property being defended — a client may not work off a verdict the server has
+   withdrawn — is intact and is now stated precisely, in two halves: an ANSWER
+   that is not an entitlement clears the cache at once, and the wall is still
+   fail-closed with no verdict AND once an unconfirmable one goes stale. The
+   transport half is driven in a browser by verify_offline_grace. */
+const refreshSrc = (app.slice(app.indexOf("async function unifiedRefresh(force)"),
+                              app.indexOf("var REL_TXT =")) || "")
+  .replace(/\/\*[\s\S]*?\*\//g, "");
+check("an entitlement answer that is not an entitlement clears the cached verdict at once",
+  /var answered = false;/.test(refreshSrc) &&
+  /answered = true;\s*if \(!r\.ok\) throw/.test(refreshSrc) &&
+  /if \(answered\)\{\s*unified\.entitlement = null; unified\.fails = 0;\s*return null;/.test(refreshSrc));
+check("the access wall is fail-closed with no verdict, and again once one goes stale",
+  /if \(!unified\.entitlement\) return ["']checking["'];/.test(app) &&
+  /if \(unified\.error && Date\.now\(\) - unified\.last > UNIFIED_GRACE_MS\) return ["']checking["'];/.test(app) &&
+  /var UNIFIED_GRACE_MS = 6 \* 3600000;/.test(app));
 /* 2026-08-30 owner instruction: the Panel pairing-code step is retired.
    Typed device enrollment stays; the pairing-code endpoint and its UI must
    stay gone from the student app. */
