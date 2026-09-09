@@ -61,7 +61,9 @@ report("A8) 6.102.3 gate layout — header row, labelled fields, banner under Si
   at('id="gateEmailLbl"') < at('id="gateEmail" class="gate-f"') &&
   at('id="gatePassLbl"') < at('id="gateForgot"') && at('id="gateForgot"') < at('id="gatePass" class="gate-f"') &&
   at('id="gateSignIn"') < at('id="gateErr"') && at('id="gateErr"') < at('class="gate-hr"') && at('class="gate-hr"') < at('id="gateLocked">') &&
-  /<div class="gate-row">\s*<div id="gateRetry"[^>]*><\/div>\s*<div id="gateSignOut"[^>]*><\/div>\s*<\/div>/.test(gateMarkup) &&
+  /* 6.108.5 — the two secondary buttons carry their English word in the markup
+     now (A9), so this pin reads the row's SHAPE and lets the text through. */
+  /<div class="gate-row">\s*<div id="gateRetry"[^>]*>[^<]*<\/div>\s*<div id="gateSignOut"[^>]*>[^<]*<\/div>\s*<\/div>/.test(gateMarkup) &&
   /<div class="gate-foot">\s*<div class="gate-foot-l">[^<]+<\/div>\s*<select id="gateLang"/.test(gateMarkup) &&
   !/v\d+\.\d+\.\d+/.test(gateMarkupCode) &&
   /gateTxt\("gateKicker", "Photoshop Panel \\u00b7 v" \+ PANEL_VERSION\)/.test(mainJs) &&
@@ -71,6 +73,38 @@ report("A8) 6.102.3 gate layout — header row, labelled fields, banner under Si
   /\.gate-err\{display:none\}/.test(gateStyleCode) && /\.gate-err-on\{display:block/.test(gateStyleCode) &&
   !/::|:not\(|~|\*|\binset\b|display:grid|position:sticky|object-fit/.test(gateStyleCode) && !/<button\b/.test(gateMarkup),
   { markup: gateMarkup.length, style: gateStyleCode.length });
+
+/* v6.108.5 — THE CARD'S WORDS SURVIVE A DEAD SCRIPT. Every label and button on
+   this card used to be empty in index.html and filled by gateTexts() in main.js.
+   A fault before that call — the shape of the 6.107.1 Media Lab throw, a main.js
+   that never loads, a host that stops the parse — left the gate painted and
+   wordless. The floor is now in the markup: each control ships its English text,
+   and gateTexts still overwrites all of them with the chosen language.
+
+   Two must stay empty: gateLockedMsg is a state ("your access is…"), which on
+   the login screen would alarm, and gateErr is hidden precisely while it is
+   empty. Both are pinned empty here so a later edit cannot "helpfully" fill them. */
+const SEEDED = {
+  gateH: "HNK Create Studio", gateKicker: "Photoshop Panel",
+  gateSub: "gate_sub_login", gateEmailLbl: "gate_email_ph", gatePassLbl: "gate_pass_ph",
+  gateForgot: "gate_forgot", gateSignIn: "gate_signin", gateBuy: "gate_buy",
+  gateRetry: "gate_retry", gateSignOut: "gate_signout",
+};
+const english = key => (mainJs.match(new RegExp("\\n\\s+" + key + ': "([^"]*)"')) || [])[1] || null;
+const seededText = id => {
+  const m = gateMarkup.match(new RegExp('id="' + id + '"[^>]*>([^<]*)<'));
+  return m ? m[1].trim() : null;
+};
+const missing = Object.keys(SEEDED).filter(id => {
+  const want = /^gate_/.test(SEEDED[id]) ? english(SEEDED[id]) : SEEDED[id];
+  return !want || seededText(id) !== want;
+});
+report("A9) 6.108.5 — every word on the gate ships in the HTML: the ten controls carry their English text, the two state lines stay empty, and gateTexts still repaints all ten",
+  missing.length === 0 && seededText("gateLockedMsg") === "" && seededText("gateErr") === "" &&
+  /placeholder="name@example\.com"/.test(gateMarkup) &&
+  Object.keys(SEEDED).filter(id => id !== "gateH").every(id => mainJs.includes('gateTxt("' + id + '"')) &&
+  !/v\d+\.\d+\.\d+/.test(gateMarkupCode),
+  { missing, locked: seededText("gateLockedMsg"), err: seededText("gateErr") });
 
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".svg": "image/svg+xml",
@@ -266,6 +300,37 @@ async function run(browser, cfg) {
   report("H1) 6.108.2 — a 5xx on sign-in is reported, never re-sent: one press spends one of the server's five attempts",
     onceOnly.logins === 1 && /HTTP 503/.test(onceOnly.text), onceOnly);
   await result.page.close();
+
+  /* v6.108.5 — THE PROOF FOR A9, DRIVEN. main.js is blocked at the network, so
+     gateTexts() never runs — the same end state as a fault before it, which is
+     how the owner met this card wordless. Everything a student needs to read
+     must still be on screen. This page's console errors are its own fixture
+     (a script was refused on purpose), so they are deliberately NOT pushed
+     into allErrors: check J still watches the pages that loaded whole. */
+  const dead = await browser.newPage({ viewport: { width: 420, height: 760 } });
+  await dead.route("**/main.js", route => route.abort());
+  await dead.goto(`http://127.0.0.1:${server.address().port}/index.html`, { waitUntil: "load" });
+  await dead.waitForTimeout(250);
+  const wordless = await dead.evaluate(() => {
+    const t = id => ((document.getElementById(id) || {}).textContent || "").trim();
+    return {
+      scriptRan: typeof gateTexts === "function",
+      gateUp: !!document.getElementById("hnkGate") &&
+        getComputedStyle(document.getElementById("hnkGate")).display !== "none",
+      h: t("gateH"), kicker: t("gateKicker"), sub: t("gateSub"),
+      emailLbl: t("gateEmailLbl"), passLbl: t("gatePassLbl"), forgot: t("gateForgot"),
+      signIn: t("gateSignIn"), buy: t("gateBuy"), retry: t("gateRetry"), signOut: t("gateSignOut"),
+      emailPh: (document.getElementById("gateEmail") || {}).placeholder || "",
+      lockedMsg: t("gateLockedMsg"), err: t("gateErr"),
+    };
+  });
+  const blanks = ["h", "kicker", "sub", "emailLbl", "passLbl", "forgot", "signIn", "buy", "retry", "signOut"]
+    .filter(k => !wordless[k]);
+  report("H2) 6.108.5 — with main.js blocked the card still reads: ten controls named, the address field shows its shape, and the two state lines stay empty",
+    wordless.scriptRan === false && wordless.gateUp && blanks.length === 0 &&
+    wordless.emailPh === "name@example.com" && wordless.lockedMsg === "" && wordless.err === "",
+    { blanks, wordless });
+  await dead.close();
 
   result = await run(browser, { settings: saved });
   allErrors.push(...result.errors);

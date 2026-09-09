@@ -134,7 +134,29 @@
      with the gold hairline, labelled fields with the forgot link on the
      password label's row, the error as a banner right under Sign in, Check
      again + Sign out on one row, and a footer row that carries the language
-     picker. Same ids, same handlers, same fail-closed contract. -->
+     picker. Same ids, same handlers, same fail-closed contract.
+
+     v6.108.5 — EVERY WORD ON THIS CARD IS IN THE HTML. Until now the heading
+     was the only text typed here: the subtitle, both field labels, the forgot
+     link and all four buttons arrived from gateTexts() in main.js. That is
+     fine while main.js runs — and it is exactly what fails when it does not.
+     A script fault before gateTexts (the shape of the 6.107.1 Media Lab
+     throw), a main.js that never loads, or any host that stops the parse
+     leaves this card painted and wordless: a logo, a gold hairline, two blank
+     boxes and four blank buttons, with no way to tell whether the panel is
+     working or broken. The fail-closed promise at the top of this comment is
+     about the LOCK, not about the words, and the words were not keeping it.
+
+     So each control now ships its English text as markup. gateTexts still
+     runs and still overwrites every one of them with the student's chosen
+     language, so nothing about the nine translations changes; the markup is
+     only the floor under them. Two stay deliberately empty, because their
+     text is a state and not a name: gateLockedMsg (an "access" paragraph on
+     the login screen would alarm), and gateErr (empty means no error, and
+     the banner is hidden while it is). No version is typed here either — the
+     kicker reads "Photoshop Panel" and gateTexts appends the version from
+     PANEL_VERSION. verify_panel_gate A9 pins the floor and H2 proves it by
+     loading this page with main.js blocked. -->
 <div id="hnkGate" role="dialog" aria-modal="true" aria-labelledby="gateH">
   <div class="gate-card">
     <!-- v6.102.3 — header row + gold hairline: the web app's .nav in miniature.
@@ -143,19 +165,19 @@
       <div class="gate-logo"><span id="gateLogoTxt">HNK</span><img id="gateLogoImg" alt="" aria-hidden="true"></div>
       <div class="gate-head-txt">
         <div class="gate-h" id="gateH">HNK Create Studio</div>
-        <div class="gate-kicker" id="gateKicker"></div>
+        <div class="gate-kicker" id="gateKicker">Photoshop Panel</div>
       </div>
     </div>
     <div class="gate-rule"></div>
-    <div class="gate-sub" id="gateSub"></div>
+    <div class="gate-sub" id="gateSub">Sign in with your HNK account to use this panel.</div>
     <div id="gateLogin">
-      <div class="gate-lbl" id="gateEmailLbl"></div>
-      <input id="gateEmail" class="gate-f" type="text" spellcheck="false" autocomplete="off" />
+      <div class="gate-lbl" id="gateEmailLbl">Email</div>
+      <input id="gateEmail" class="gate-f" type="text" spellcheck="false" autocomplete="off" placeholder="name@example.com" />
       <!-- the reset flow lives on the website's login card — the gate only
            links, from the password label's own row -->
       <div class="gate-lbl-row">
-        <div class="gate-lbl" id="gatePassLbl"></div>
-        <div id="gateForgot" role="button" tabindex="0"></div>
+        <div class="gate-lbl" id="gatePassLbl">Password</div>
+        <div id="gateForgot" role="button" tabindex="0">Forgot password?</div>
       </div>
       <!-- v6.27.1 — UXP renders type="password" without visible dots on some
            Photoshop builds (typing registers, nothing paints). The eye flips
@@ -163,10 +185,10 @@
            field has shipped with since v1 — so the customer can SEE what they
            type on any host. A div-button, like every other gate control. -->
       <div class="gate-pw-row">
-        <input id="gatePass" class="gate-f" type="password" autocomplete="off" />
+        <input id="gatePass" class="gate-f" type="password" autocomplete="off" placeholder="••••••••" />
         <div id="gatePassEye" class="gate-eye" role="button" tabindex="0" aria-label="Show password" aria-pressed="false">&#128065;</div>
       </div>
-      <div id="gateSignIn" class="gate-b" role="button" tabindex="0"></div>
+      <div id="gateSignIn" class="gate-b" role="button" tabindex="0">Log in</div>
     </div>
     <!-- v6.102.3 — the one error line sits right under Sign in, and above the
          account actions when the lock itself is the message; hidden while
@@ -175,10 +197,10 @@
     <div class="gate-hr"></div>
     <div id="gateLocked">
       <div class="gate-msg" id="gateLockedMsg"></div>
-      <div id="gateBuy" class="gate-b" role="button" tabindex="0"></div>
+      <div id="gateBuy" class="gate-b" role="button" tabindex="0">Open the website</div>
       <div class="gate-row">
-        <div id="gateRetry" class="gate-b gate-b2" role="button" tabindex="0"></div>
-        <div id="gateSignOut" class="gate-b gate-b2" role="button" tabindex="0"></div>
+        <div id="gateRetry" class="gate-b gate-b2" role="button" tabindex="0">Check again</div>
+        <div id="gateSignOut" class="gate-b gate-b2" role="button" tabindex="0">Sign out</div>
       </div>
     </div>
     <div class="gate-foot">
@@ -206,7 +228,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.108.4</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.108.5</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.svg" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -1479,7 +1501,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.108.4</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.108.5</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
