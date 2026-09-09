@@ -385,6 +385,11 @@ const activeSeats = repo => repo.state.slots.filter(s => s.status === "active").
   }
   const seats = async uid => Number((await client.query(
     "select count(*)::int as n from public.device_slots where user_id=$1 and status='active'", [uid])).rows[0].n);
+  const emptySeats = async uid => Number((await client.query(
+    `select count(*)::int as n from public.device_slots s
+      where s.user_id=$1 and s.status='active'
+        and not exists (select 1 from public.device_installations i
+                         where i.slot_id=s.id and i.revoked_at is null)`, [uid])).rows[0].n);
   const liveInstalls = async uid => Number((await client.query(
     `select count(*)::int as n from public.device_installations i
       join public.device_slots s on s.id=i.slot_id
@@ -441,18 +446,34 @@ const activeSeats = repo => repo.state.slots.filter(s => s.status === "active").
     panelAgain.allowed === true && panelAgain.slotId === mine.slotId && (await seats(ME_ID)) === 1,
     { panelAgain, seats: await seats(ME_ID) });
 
-  /* THE CEILING. Fill the account to four with seats nothing lives on, then
-     ask for a device the student can actually use. */
+  /* THE CEILING, AND THE RECYCLER ITSELF. Fill the account to four with seats
+     nothing lives on, then ask for the ONE kind findFreeSlot cannot supply: the
+     account's only computer seat already carries this student's web
+     installation, so the request goes through to claimSlot — which is at the
+     limit, with three empty phone seats beside it. Before this release that was
+     "computer_slot_occupied" over three seats holding nothing. */
   await client.query(
     `insert into public.device_slots (user_id,slot_type,status,generation,created_at,updated_at)
      values ($1,'phone','active',1,now(),now()),($1,'phone','active',1,now(),now()),
             ($1,'phone','active',1,now(),now())`, [ME_ID]);
   const full = await seats(ME_ID);
+  const emptyBefore = await emptySeats(ME_ID);
   const atCeiling = await reg.registerWebDevice({
-    userId: ME_ID, deviceType: "phone", installationId: "my-phone" });
-  report("C7) at a ceiling of empty seats the student registers anyway — an empty seat is reused, the total does not grow",
-    full === 4 && atCeiling.allowed === true && (await seats(ME_ID)) === 4,
-    { full, atCeiling, after: await seats(ME_ID) });
+    userId: ME_ID, deviceType: "computer", installationId: "my-second-computer" });
+  const recycled = atCeiling.slotId ? (await client.query(
+    "select slot_type from public.device_slots where id=$1", [atCeiling.slotId])).rows[0] : null;
+  report("C7) at a ceiling of empty seats the student registers anyway — an empty seat is retyped and reused, and the total does not grow",
+    full === 4 && emptyBefore === 3 && atCeiling.allowed === true &&
+    (await seats(ME_ID)) === 4 && !!recycled && recycled.slot_type === "computer" &&
+    (await emptySeats(ME_ID)) === 2,
+    { full, emptyBefore, atCeiling, after: await seats(ME_ID),
+      recycledType: recycled && recycled.slot_type, emptyAfter: await emptySeats(ME_ID) });
+  /* the seat that was reused must be a REAL seat the student can now use — the
+     web installation is live on it, and the console counts it as one of four */
+  report("C7b) the reused seat carries the new registration, and the student's four seats are three in use and one free",
+    (await liveInstalls(ME_ID)) === 3 && (await emptySeats(ME_ID)) === 2 &&
+    (await ent.listDeviceSlots(client, ME_ID)).length === 4,
+    { installs: await liveInstalls(ME_ID), slots: (await ent.listDeviceSlots(client, ME_ID)).length });
 
   /* and the count the teacher set is still the count */
   await client.query("update public.profiles set allowed_devices=2 where id=$1", [OTHER_ID]);
