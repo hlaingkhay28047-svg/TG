@@ -35,6 +35,20 @@ check('production app name is locked', /DO_APP_NAME:\s*hnk-ai-tools-3\b/.test(pr
 check('production host is locked', /DO_APP_HOST:\s*hnk-ai-tools-3-s4nnu\.ondigitalocean\.app\b/.test(productionWorkflow));
 check('production verifier cancels when a newer main release supersedes it', /group:\s*digitalocean-production[\s\S]*?cancel-in-progress:\s*true/.test(productionWorkflow));
 check('production verifies version plus exact landing and app HTML', productionWorkflow.includes('/app/version.json') && productionWorkflow.includes('sha256sum docs/index.html') && productionWorkflow.includes('sha256sum docs/app/index.html'));
+// v6.49.0 — the admin console is a deployed surface, so the lane proves it like
+// the other two: fetched from the live host with caching defeated, compared
+// byte-for-byte, and inside the condition that decides the deploy passed. A lane
+// that downloads a page and never compares it is theatre, so the gate is checked
+// separately from the digest.
+check('production verifies the exact admin console and its script',
+  productionWorkflow.includes('sha256sum docs/admin/index.html') &&
+  productionWorkflow.includes('sha256sum docs/admin/admin.js') &&
+  productionWorkflow.includes('ADMIN_URL="https://${DO_APP_HOST}/admin/?sha=${GITHUB_SHA}') &&
+  productionWorkflow.includes('ADMIN_JS_URL="https://${DO_APP_HOST}/admin/admin.js?sha=${GITHUB_SHA}'));
+check('production gates on the admin digests and says so when it passes',
+  occurrences(productionWorkflow, '[ "$ACTUAL_ADMIN_SHA" = "$EXPECTED_ADMIN_SHA" ]') === 2 &&
+  occurrences(productionWorkflow, '[ "$ACTUAL_ADMIN_JS_SHA" = "$EXPECTED_ADMIN_JS_SHA" ]') === 2 &&
+  productionWorkflow.includes('exact landing, app and admin console'));
 check('production gates on live API version, exact schema fingerprint, readiness and verified TLS',
   productionWorkflow.includes('/api/health') &&
   productionWorkflow.includes('sha256sum server/sql/schema.sql') &&
@@ -56,6 +70,24 @@ check('staging manual dispatch is restricted to upgrade-safe-wave', stagingWorkf
 check('staging app name is locked', /DO_APP_NAME:\s*hnk-ai-tools-2\b/.test(stagingWorkflow));
 check('staging host is locked', /DO_APP_HOST:\s*hnk-ai-tools-2-gibhz\.ondigitalocean\.app\b/.test(stagingWorkflow));
 check('staging verifies version plus exact landing and app HTML', stagingWorkflow.includes('/app/version.json') && stagingWorkflow.includes('sha256sum docs/index.html') && stagingWorkflow.includes('sha256sum docs/app/index.html'));
+// a check only production runs is a check that first fails on production, so the
+// rehearsal host carries the identical pair.
+check('staging verifies the exact admin console and its script',
+  stagingWorkflow.includes('sha256sum docs/admin/index.html') &&
+  stagingWorkflow.includes('sha256sum docs/admin/admin.js') &&
+  stagingWorkflow.includes('ADMIN_URL="https://${DO_APP_HOST}/admin/?sha=${GITHUB_SHA}') &&
+  stagingWorkflow.includes('ADMIN_JS_URL="https://${DO_APP_HOST}/admin/admin.js?sha=${GITHUB_SHA}'));
+check('staging gates on the admin digests and says so when it passes',
+  occurrences(stagingWorkflow, '[ "$ACTUAL_ADMIN_SHA" = "$EXPECTED_ADMIN_SHA" ]') === 2 &&
+  occurrences(stagingWorkflow, '[ "$ACTUAL_ADMIN_JS_SHA" = "$EXPECTED_ADMIN_JS_SHA" ]') === 2 &&
+  stagingWorkflow.includes('exact landing, app and admin console'));
+// both lanes write the fetched console to their own runner temp file, so one
+// lane's probe can never read the other's leftovers.
+check('each lane names its own admin temp files',
+  productionWorkflow.includes('ADMIN_FILE="$RUNNER_TEMP/production-admin-index.html"') &&
+  productionWorkflow.includes('ADMIN_JS_FILE="$RUNNER_TEMP/production-admin.js"') &&
+  stagingWorkflow.includes('ADMIN_FILE="$RUNNER_TEMP/staging-admin-index.html"') &&
+  stagingWorkflow.includes('ADMIN_JS_FILE="$RUNNER_TEMP/staging-admin.js"'));
 check('staging gates on live API version, exact schema fingerprint, readiness and verified TLS',
   stagingWorkflow.includes('/api/health') &&
   stagingWorkflow.includes('sha256sum server/sql/schema.sql') &&

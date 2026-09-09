@@ -20,11 +20,17 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self' 'sha256-N1JqgPKm0tGnTeG9YIQ2WKMWU1lwsKr7E7ykGcGDRes='; object-src 'none'; base-uri 'none'; form-action 'self'">
   <meta name="robots" content="noindex,nofollow">
   <title>HNK Admin Control Center</title>
-  <!-- Bump both ?v= values on every admin.css/admin.js change. Browsers
-       revalidate this HTML but may keep the assets cached, and a stale
-       admin.js binding against changed markup throws before the boot code
-       runs, wedging the tab on the "Checking admin access" gate. -->
-  <link rel="stylesheet" href="admin.css?v=20260908a">
+  <!-- v6.49.0 — these ?v= tokens are the first twelve hex of each file's own
+       SHA-256, written by tools/build_admin_cache_token.js and asserted by
+       test/verify_admin_cache_token.js. Do not edit them by hand: change the
+       file and run the tool. Until 6.49.0 the rule here was "bump both by
+       hand on every change", and 6.48.0 forgot — the markup was unchanged so
+       nothing threw, and that release's admin feature simply was not there for
+       any browser holding the old script. Browsers revalidate this HTML but
+       may keep the assets cached, and a stale admin.js binding against changed
+       markup throws before the boot code runs, wedging the tab on the
+       "Checking admin access" gate. -->
+  <link rel="stylesheet" href="admin.css?v=0cbf81b83beb">
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to admin content</a>
@@ -176,6 +182,6 @@
   <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow" data-i18n="cf.eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle" data-i18n="cf.title">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel" data-i18n="cf.cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm" data-i18n="cf.confirm">Confirm</button></div></form></dialog>
 
   <div class="toast" id="liveStatus" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script src="admin.js?v=20260908a" defer></script>
+  <script src="admin.js?v=9530647f5247" defer></script>
 </body>
 </html>

@@ -114,14 +114,29 @@ if (scripts.length === 1 && declared.length === 1) {
 report("the console has no inline <style> block (style-src allows none)",
   !/<style[\s>]/i.test(html), "an inline <style> would be blocked by style-src 'self'");
 
-/* ---- the cache-busting the file's own comment promises ----
-   admin.js binds against this markup, so a stale copy throws before boot. The
-   comment in the file tells the next editor to bump both ?v= values; this
-   checks they are at least present and identical, which is the part a person
-   forgets. */
-const vs = [...html.matchAll(/(?:admin\.css|admin\.js)\?v=([A-Za-z0-9]+)/g)].map(function (x) { return x[1]; });
-report("admin.css and admin.js are both cache-busted, with the same stamp",
-  vs.length === 2 && vs[0] === vs[1], vs.join(" vs ") || "no ?v= stamps found");
+/* ---- the cache-busting, which is no longer a promise in a comment ----
+   admin.js binds against this markup, so a stale copy throws before boot. Until
+   v6.49.0 both assets shared one hand-written stamp and the file's comment asked
+   the next editor to bump it; 6.48.0 changed admin.js and did not, and the
+   release's admin feature was simply absent on every console holding the old
+   script. The stamp is now DERIVED — the first twelve hex of each file's own
+   SHA-256, written by tools/build_admin_cache_token.js — so the two differ by
+   design and a shared stamp would now be the bug. Each one is checked against
+   the bytes it points at, which is strictly stronger than the old equality: a
+   single stamp cannot say which of the two files changed.
+   test/verify_admin_cache_token.js owns the rest of that contract. */
+const vs = [...html.matchAll(/(admin\.css|admin\.js)\?v=([A-Za-z0-9]+)/g)]
+  .map(function (x) { return { asset: x[1], stamp: x[2] }; });
+report("admin.css and admin.js are both cache-busted", vs.length === 2,
+  vs.map(function (v) { return v.asset + "=" + v.stamp; }).join(" ") || "no ?v= stamps found");
+const wrong = vs.filter(function (v) {
+  const bytes = fs.readFileSync(path.join(__dirname, "..", "docs", "admin", v.asset));
+  return v.stamp !== crypto.createHash("sha256").update(bytes).digest("hex").slice(0, 12);
+});
+report("each stamp is the first twelve hex of that file's own SHA-256",
+  vs.length === 2 && wrong.length === 0,
+  wrong.map(function (v) { return v.asset + " carries " + v.stamp; }).join(", ") +
+  " — run: node tools/build_admin_cache_token.js");
 
 console.log(failures
   ? `\n${failures} FAILURE(S) — the admin console's CSP and its one allowed inline script have parted.`

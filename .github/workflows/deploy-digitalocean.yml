@@ -199,9 +199,22 @@ jobs:
           EXPECTED_VERSION="$(jq -r '.v' docs/app/version.json)"
           EXPECTED_LANDING_SHA="$(sha256sum docs/index.html | awk '{print $1}')"
           EXPECTED_APP_SHA="$(sha256sum docs/app/index.html | awk '{print $1}')"
+          # v6.49.0 — THE ADMIN CONSOLE IS A DEPLOYED SURFACE TOO.
+          # Landing and app have been verified byte-for-byte since the lane was
+          # written; /admin/ never was. It is the one page a student never opens
+          # and the owner opens under pressure — a broken or stale deploy of it
+          # would be discovered by the teacher, at the moment they needed it,
+          # with no lane having said a word. Its script is checked beside the
+          # page because the page without admin.js is an empty shell, and 6.48.0
+          # shipped an admin.js change whose cache token was not bumped: the
+          # markup was fine and the feature simply was not there.
+          EXPECTED_ADMIN_SHA="$(sha256sum docs/admin/index.html | awk '{print $1}')"
+          EXPECTED_ADMIN_JS_SHA="$(sha256sum docs/admin/admin.js | awk '{print $1}')"
           EXPECTED_SCHEMA_SHA="$(sha256sum server/sql/schema.sql | awk '{print $1}')"
           LANDING_FILE="$RUNNER_TEMP/production-index.html"
           APP_FILE="$RUNNER_TEMP/production-app-index.html"
+          ADMIN_FILE="$RUNNER_TEMP/production-admin-index.html"
+          ADMIN_JS_FILE="$RUNNER_TEMP/production-admin.js"
           HEALTH_FILE="$RUNNER_TEMP/production-health.json"
           APP_STATE_FILE="$RUNNER_TEMP/production-app-state.json"
           DEADLINE_EPOCH="${JOB_DEADLINE_EPOCH:?deployment deadline was not recorded}"
@@ -214,8 +227,12 @@ jobs:
             APP_URL="https://${DO_APP_HOST}/app/?sha=${GITHUB_SHA}&attempt=${attempt}"
             HEALTH_URL="https://${DO_APP_HOST}/api/health?sha=${GITHUB_SHA}&attempt=${attempt}"
             ACTUAL_VERSION="$(curl -fsSL --max-time 5 -H 'Cache-Control: no-cache' "$VERSION_URL" 2>/dev/null | jq -r '.v // empty' 2>/dev/null || true)"
+            ADMIN_URL="https://${DO_APP_HOST}/admin/?sha=${GITHUB_SHA}&attempt=${attempt}"
+            ADMIN_JS_URL="https://${DO_APP_HOST}/admin/admin.js?sha=${GITHUB_SHA}&attempt=${attempt}"
             ACTUAL_LANDING_SHA=""
             ACTUAL_APP_SHA=""
+            ACTUAL_ADMIN_SHA=""
+            ACTUAL_ADMIN_JS_SHA=""
             ACTUAL_API_VERSION=""
             ACTUAL_SCHEMA_SHA=""
             ACTUAL_READY="false"
@@ -229,6 +246,12 @@ jobs:
               if curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "$APP_URL" -o "$APP_FILE" 2>/dev/null; then
                 ACTUAL_APP_SHA="$(sha256sum "$APP_FILE" | awk '{print $1}')"
               fi
+              if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$ADMIN_URL" -o "$ADMIN_FILE" 2>/dev/null; then
+                ACTUAL_ADMIN_SHA="$(sha256sum "$ADMIN_FILE" | awk '{print $1}')"
+              fi
+              if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$ADMIN_JS_URL" -o "$ADMIN_JS_FILE" 2>/dev/null; then
+                ACTUAL_ADMIN_JS_SHA="$(sha256sum "$ADMIN_JS_FILE" | awk '{print $1}')"
+              fi
             fi
             if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$HEALTH_URL" -o "$HEALTH_FILE" 2>/dev/null; then
               ACTUAL_API_VERSION="$(jq -r '.apiVersion // empty' "$HEALTH_FILE" 2>/dev/null || true)"
@@ -239,6 +262,8 @@ jobs:
             if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ] && \
                [ "$ACTUAL_LANDING_SHA" = "$EXPECTED_LANDING_SHA" ] && \
                [ "$ACTUAL_APP_SHA" = "$EXPECTED_APP_SHA" ] && \
+               [ "$ACTUAL_ADMIN_SHA" = "$EXPECTED_ADMIN_SHA" ] && \
+               [ "$ACTUAL_ADMIN_JS_SHA" = "$EXPECTED_ADMIN_JS_SHA" ] && \
                [ "$ACTUAL_API_VERSION" = "$EXPECTED_VERSION" ] && \
                [ "$ACTUAL_SCHEMA_SHA" = "$EXPECTED_SCHEMA_SHA" ] && \
                [ "$ACTUAL_READY" = "true" ] && [ "$ACTUAL_TLS" = "verified" ]; then
@@ -254,15 +279,15 @@ jobs:
                 fi
               fi
             fi
-            if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_LANDING_SHA" = "$EXPECTED_LANDING_SHA" ] && [ "$ACTUAL_APP_SHA" = "$EXPECTED_APP_SHA" ] && [ "$ACTUAL_API_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_SCHEMA_SHA" = "$EXPECTED_SCHEMA_SHA" ] && [ "$ACTUAL_READY" = "true" ] && [ "$ACTUAL_TLS" = "verified" ] && [ "$SOURCE_SHA_MATCH" = "true" ]; then
-              echo "Verified production Web/API ${ACTUAL_VERSION}, active source ${ACTUAL_SOURCE_SHA}, exact static HTML, schema fingerprint, readiness, and verified database TLS."
+            if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_LANDING_SHA" = "$EXPECTED_LANDING_SHA" ] && [ "$ACTUAL_APP_SHA" = "$EXPECTED_APP_SHA" ] && [ "$ACTUAL_ADMIN_SHA" = "$EXPECTED_ADMIN_SHA" ] && [ "$ACTUAL_ADMIN_JS_SHA" = "$EXPECTED_ADMIN_JS_SHA" ] && [ "$ACTUAL_API_VERSION" = "$EXPECTED_VERSION" ] && [ "$ACTUAL_SCHEMA_SHA" = "$EXPECTED_SCHEMA_SHA" ] && [ "$ACTUAL_READY" = "true" ] && [ "$ACTUAL_TLS" = "verified" ] && [ "$SOURCE_SHA_MATCH" = "true" ]; then
+              echo "Verified production Web/API ${ACTUAL_VERSION}, active source ${ACTUAL_SOURCE_SHA}, exact landing, app and admin console, schema fingerprint, readiness, and verified database TLS."
               exit 0
             fi
-            echo "Attempt ${attempt}: web='${ACTUAL_VERSION:-unavailable}', api='${ACTUAL_API_VERSION:-unavailable}', source='${ACTUAL_SOURCE_SHA:0:12}', landing='${ACTUAL_LANDING_SHA:-unavailable}', app='${ACTUAL_APP_SHA:-unavailable}', schema='${ACTUAL_SCHEMA_SHA:0:12}', ready='${ACTUAL_READY}', tls='${ACTUAL_TLS:-unavailable}'."
+            echo "Attempt ${attempt}: web='${ACTUAL_VERSION:-unavailable}', api='${ACTUAL_API_VERSION:-unavailable}', source='${ACTUAL_SOURCE_SHA:0:12}', landing='${ACTUAL_LANDING_SHA:-unavailable}', app='${ACTUAL_APP_SHA:-unavailable}', admin='${ACTUAL_ADMIN_SHA:-unavailable}', adminjs='${ACTUAL_ADMIN_JS_SHA:-unavailable}', schema='${ACTUAL_SCHEMA_SHA:0:12}', ready='${ACTUAL_READY}', tls='${ACTUAL_TLS:-unavailable}'."
             if [ $(( $(date +%s) + 15 )) -ge "$DEADLINE_EPOCH" ]; then
               break
             fi
             sleep 15
           done
-          echo "::error::Production did not simultaneously publish commit ${GITHUB_SHA}, Web/API ${EXPECTED_VERSION}, exact static files, schema SHA-256 ${EXPECTED_SCHEMA_SHA}, ready:true, and tls:verified before the shared 33-minute job deadline. Check the hnk-ai-tools-3 source and API bindings."
+          echo "::error::Production did not simultaneously publish commit ${GITHUB_SHA}, Web/API ${EXPECTED_VERSION}, exact static files including the admin console, schema SHA-256 ${EXPECTED_SCHEMA_SHA}, ready:true, and tls:verified before the shared 33-minute job deadline. Check the hnk-ai-tools-3 source and API bindings."
           exit 1
