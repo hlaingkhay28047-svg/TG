@@ -285,9 +285,16 @@ function testPasswordHash(password,parallelization) {
   report("E) an unknown address answers identically, not 'no such user'",
     r.status === 400 && /Invalid login credentials/.test(r.text), { status: r.status });
 
+  /* 6.39.4 — THE SIGN-IN DOOR DOES NOT LOCK. The owner was told to wait
+     fifteen minutes on a password that was never wrong, and the students this
+     is built for work on a line that drops; the lockout was deleted at his
+     instruction. Twelve rejected passwords in a row must each be answered on
+     their own merits — 400 invalid_grant, never 429 — while every one of them
+     still lands in the audit an admin reads, and auth_attempts holds no
+     sign-in rows at all. */
   const bruteEmail = "parallel-bruteforce@example.test";
   const bruteStatuses = [];
-  for (let attempt = 0; attempt < 4; attempt++) {
+  for (let attempt = 0; attempt < 12; attempt++) {
     const response = await call("POST", "/auth/v1/token?grant_type=password", {
       body: { email: bruteEmail, password: "wrong" },
     });
@@ -296,15 +303,14 @@ function testPasswordHash(password,parallelization) {
   const bruteEmailHash = crypto.createHmac("sha256", process.env.JWT_SECRET)
     .update(bruteEmail, "utf8").digest("hex");
   const bruteEvidence = runtimeServicePsql(
-    `select (select count(*) from public.auth_attempts where operation='login' ` +
-    `and email_hash='${bruteEmailHash}')||'|'||` +
-    `(select count(*) from public.auth_attempts where operation='login_admission' ` +
+    `select (select count(*) from public.auth_attempts where operation in ('login','login_admission') ` +
     `and email_hash='${bruteEmailHash}')||'|'||` +
     `(select count(*) from public.login_history where event_type='failed_login' ` +
     `and attempted_email='${bruteEmail}')`, DB);
-  report("E2) failed-password admission stops at the durable pre-KDF limit without audit amplification",
-    bruteStatuses.join(",") === "400,400,400,429" && bruteEvidence === "3|3|3",
-    { statuses: bruteStatuses, failureAdmissionAndAudit: bruteEvidence });
+  report("E2) a rejected password is answered every time — no lockout — and every attempt is still audited",
+    bruteStatuses.length === 12 && bruteStatuses.every(status => status === 400) &&
+      bruteEvidence === "0|12",
+    { statuses: bruteStatuses, signinRowsAndAudit: bruteEvidence });
 
   /* Make verification slow enough to observe the transaction after it reads
      the old hash. A concurrent password update must wait on that shared row
