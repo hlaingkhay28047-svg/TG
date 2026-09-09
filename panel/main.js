@@ -6339,7 +6339,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.108.5";
+const PANEL_VERSION = "6.109.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -15462,6 +15462,8 @@ const HIST_L = {
   cleared:{my:"History ရှင်းပြီးပါပြီ",en:"History cleared",shn:"လၢင်ႉ History ယဝ်ႉ",kac:"History shakau sai",th:"ล้าง History แล้ว",zh:"已清空 History",vi:"Đã xoá History",id:"History dibersihkan",ms:"History dibersihkan"},
   del:    {my:"ဒီရလဒ်ကို ဖျက်",en:"Delete this result",shn:"မွတ်ႇဢၼ်ၼႆႉ",kac:"Ndai hpe shamat",th:"ลบผลลัพธ์นี้",zh:"删除此结果",vi:"Xoá kết quả này",id:"Hapus hasil ini",ms:"Padam hasil ini"},
   toPs:   {my:"Photoshop ထဲ layer အဖြစ် ထည့်",en:"Place into Photoshop as a layer",shn:"သႂ်ႇၶဝ်ႈ Photoshop ပဵၼ် layer",kac:"Photoshop kaw layer hku bang u",th:"วางลง Photoshop เป็นเลเยอร์",zh:"作为图层放入 Photoshop",vi:"Đặt vào Photoshop thành lớp",id:"Tempatkan ke Photoshop sebagai layer",ms:"Letak ke Photoshop sebagai lapisan"},
+  allToPs:{my:"အားလုံး → PS",en:"All → PS",shn:"တင်းသဵင်ႈ → PS",kac:"Yawng → PS",th:"ทั้งหมด → PS",zh:"全部 → PS",vi:"Tất cả → PS",id:"Semua → PS",ms:"Semua → PS"},
+  placedAll:{my:"Photoshop ထဲ {N} ပုံ ထည့်ပြီးပါပြီ ✓",en:"{N} placed into Photoshop ✓",shn:"သႂ်ႇၶဝ်ႈ Photoshop {N} ဢၼ် ✓",kac:"Photoshop kaw {N} bang sai ✓",th:"วางลง Photoshop {N} ภาพแล้ว ✓",zh:"已放入 Photoshop {N} 张 ✓",vi:"Đã đặt {N} ảnh vào Photoshop ✓",id:"{N} ditempatkan ke Photoshop ✓",ms:"{N} diletak ke Photoshop ✓"},
   placed: {my:"Photoshop ထဲ ထည့်ပြီးပါပြီ ✓",en:"Placed into Photoshop ✓",shn:"သႂ်ႇၶဝ်ႈ Photoshop ယဝ်ႉ ✓",kac:"Photoshop kaw bang sai ✓",th:"วางลง Photoshop แล้ว ✓",zh:"已放入 Photoshop ✓",vi:"Đã đặt vào Photoshop ✓",id:"Sudah ditempatkan ke Photoshop ✓",ms:"Telah diletak ke Photoshop ✓"},
   done:   {my:"History က ဖယ်ပြီးပါပြီ",en:"Removed from History",shn:"ဢဝ်ဢွၵ်ႇ History ယဝ်ႉ",kac:"History kaw na shamat sai",th:"ลบออกจากประวัติแล้ว",zh:"已从历史中移除",vi:"Đã gỡ khỏi Lịch sử",id:"Dihapus dari Riwayat",ms:"Dibuang daripada Sejarah"}
 };
@@ -15519,6 +15521,41 @@ function histClearP(say) {
   renderHistory();
   if (say !== false) setStatus(ff9(HIST_L.cleared), "ok");
 }
+/* v6.109.0 — AND ALL OF THEM AT ONCE. A Path run of a hundred photographs
+   leaves a hundred takes in this strip and, until 6.109.0, no way to put any of
+   them into the open document (auto-place skips a batch on purpose). One take
+   at a time is the PS pill above; this is the other half, for the studio that
+   wants the whole run stacked in one document to compare or to flatten. It
+   places them in strip order through the same proven path, says where it is
+   while it works, and stops at the first refusal rather than pressing on
+   silently. It only appears when there is more than one take. */
+async function histPlaceAllP() {
+  if (state.busy || state.history.length < 2) return;
+  const n = state.history.length;
+  const keep = state.histSel;
+  let done = 0;
+  for (let i = 0; i < n; i++) {
+    if (!state.history[i] || !state.history[i].after) continue;
+    setStatus(t("st_place") + " " + (i + 1) + "/" + n);
+    selectHistory(i);
+    try {
+      const r = await placeResultToPS();
+      if (!r) break;
+      done++;
+    } catch (err) {
+      setStatus(friendlyErr(err), "err");
+      break;
+    }
+  }
+  if (keep >= 0 && keep < state.history.length) selectHistory(keep);
+  setStatus(ff9(HIST_L.placedAll).replace("{N}", String(done)), done === n ? "ok" : "err");
+}
+function histPlaceAllSyncP() {
+  const b = $("histPlaceAll"); if (!b) return;
+  b.style.display = state.history.length > 1 ? "" : "none";
+  b.textContent = ff9(HIST_L.allToPs);
+  b.onclick = function () { histPlaceAllP(); };
+}
 function histClearSyncP() {
   const b = $("histClear"); if (!b) return;
   b.style.display = state.history.length ? "" : "none"; b.textContent = ff9(HIST_L.clear);
@@ -15564,6 +15601,7 @@ function renderHistory() {
     })(i);
   }
   histClearSyncP();
+  histPlaceAllSyncP();
 }
 
 function selectHistory(idx) {
