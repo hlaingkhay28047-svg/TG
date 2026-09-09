@@ -86,13 +86,26 @@ report("B) the panel's CREATE and VIDEO strips carry the same Clear chips and a 
   /\.apg \.hist \.hx \{ position: absolute/.test(PANEL_CSS) && /const x = document\.createElement\("div"\); x\.className = "hx"/.test(PANEL_JS) && !/createElement\(\s*["']button["']\s*\)/.test(PANEL_JS), null);
 const pl = PANEL_JS.match(/const HIST_L = \{([\s\S]*?)\n\};/);
 const plGaps = [];
-["clear", "cleared", "del", "done"].forEach(k => {
+["clear", "cleared", "del", "done", "toPs", "placed"].forEach(k => {
   const m = pl && pl[1].match(new RegExp("\\n  " + k + ":\\s*\\{([^\\n]*)\\}"));
   if (!m) { plGaps.push(k + " missing"); return; }
   LANGS.forEach(l => { if (!new RegExp('(^|,)' + l + ':"').test(m[1])) plGaps.push(k + "." + l); });
 });
 const appClear = (APP.match(/\n  clear:\s*\{my:"([^"]*)",en:"([^"]*)"/) || []).slice(1, 3);
 const panClear = (PANEL_JS.match(/\n  clear:\s*\{my:"([^"]*)",en:"([^"]*)"/) || []).slice(1, 3);
+/* v6.109.0 — AND EVERY TAKE CAN GO BACK INTO PHOTOSHOP FROM WHERE IT IS.
+   The strip could delete a take and select one; placing it meant selecting it
+   and then finding the one Place button elsewhere on the page, and in a batch
+   there was no way at all — the auto-place path skips state.batch on purpose,
+   and nothing replaced it. Each take now carries its own PS pill beside its ✕:
+   it selects the take first, so what lands in the document is the picture the
+   student is looking at. A div like every other panel control, never a
+   <button> (verify_panel_gate Q). */
+report("B3) 6.109.0 — every take in the panel's strip carries its own PS pill that selects it and places it as a layer",
+  /const p = document\.createElement\("div"\); p\.className = "hps"/.test(PANEL_JS) &&
+  /d\.appendChild\(histPsBtn\(function \(\) \{ histPlaceP\(idx\); \}\)\);/.test(PANEL_JS) &&
+  /async function histPlaceP\(idx\) \{[\s\S]*?selectHistory\(idx\);[\s\S]*?await placeResultToPS\(\);/.test(PANEL_JS) &&
+  /\.apg \.hist \.hps \{ position: absolute/.test(PANEL_CSS), null);
 report("B2) the panel's strings speak the nine languages and its Clear label is the app's own words", plGaps.length === 0 && appClear.length === 2 && JSON.stringify(appClear) === JSON.stringify(panClear), { plGaps, appClear, panClear });
 
 /* ---- C..G) driven ---- */

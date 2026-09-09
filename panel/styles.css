@@ -1705,6 +1705,11 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .hist .hitem { position: relative; display: inline-block; line-height: 0; }
 .apg .hist .hx { position: absolute; top: -6px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--panel, #0f1424); border: 1px solid var(--line-soft); color: inherit; font-size: 11px; line-height: 18px; text-align: center; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .apg .hist .hx:hover { border-color: var(--accent); }
+/* v6.109.0 — the take's own door back into Photoshop, opposite its ✕. Same
+   pill the ✕ uses so the pair reads as one control strip; gold ink because it
+   is the button that spends nothing and gives the studio its picture. */
+.apg .hist .hps { position: absolute; top: -6px; left: 2px; height: 20px; padding: 0 7px; border-radius: 10px; background: var(--panel, #0f1424); border: 1px solid var(--line-soft); color: var(--accent); font-size: 10px; font-weight: 700; line-height: 18px; text-align: center; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.apg .hist .hps:hover { border-color: var(--accent); }
 /* app .hist video: the Video page's 64px recent-result tiles, black plate */
 .apg .hist video { width: 64px; height: 64px; margin: 0 8px 8px 0; border-radius: 9px; border: 1px solid var(--line-soft); background-color: #000; }
 .apg .hist video.sel { border-color: var(--accent); }

@@ -15461,6 +15461,8 @@ const HIST_L = {
   clear:  {my:"History ရှင်းမယ်",en:"Clear history",shn:"လၢင်ႉ History",kac:"History shakau u",th:"ล้างประวัติ",zh:"清空历史",vi:"Xoá lịch sử",id:"Bersihkan riwayat",ms:"Bersihkan sejarah"},
   cleared:{my:"History ရှင်းပြီးပါပြီ",en:"History cleared",shn:"လၢင်ႉ History ယဝ်ႉ",kac:"History shakau sai",th:"ล้าง History แล้ว",zh:"已清空 History",vi:"Đã xoá History",id:"History dibersihkan",ms:"History dibersihkan"},
   del:    {my:"ဒီရလဒ်ကို ဖျက်",en:"Delete this result",shn:"မွတ်ႇဢၼ်ၼႆႉ",kac:"Ndai hpe shamat",th:"ลบผลลัพธ์นี้",zh:"删除此结果",vi:"Xoá kết quả này",id:"Hapus hasil ini",ms:"Padam hasil ini"},
+  toPs:   {my:"Photoshop ထဲ layer အဖြစ် ထည့်",en:"Place into Photoshop as a layer",shn:"သႂ်ႇၶဝ်ႈ Photoshop ပဵၼ် layer",kac:"Photoshop kaw layer hku bang u",th:"วางลง Photoshop เป็นเลเยอร์",zh:"作为图层放入 Photoshop",vi:"Đặt vào Photoshop thành lớp",id:"Tempatkan ke Photoshop sebagai layer",ms:"Letak ke Photoshop sebagai lapisan"},
+  placed: {my:"Photoshop ထဲ ထည့်ပြီးပါပြီ ✓",en:"Placed into Photoshop ✓",shn:"သႂ်ႇၶဝ်ႈ Photoshop ယဝ်ႉ ✓",kac:"Photoshop kaw bang sai ✓",th:"วางลง Photoshop แล้ว ✓",zh:"已放入 Photoshop ✓",vi:"Đã đặt vào Photoshop ✓",id:"Sudah ditempatkan ke Photoshop ✓",ms:"Telah diletak ke Photoshop ✓"},
   done:   {my:"History က ဖယ်ပြီးပါပြီ",en:"Removed from History",shn:"ဢဝ်ဢွၵ်ႇ History ယဝ်ႉ",kac:"History kaw na shamat sai",th:"ลบออกจากประวัติแล้ว",zh:"已从历史中移除",vi:"Đã gỡ khỏi Lịch sử",id:"Dihapus dari Riwayat",ms:"Dibuang daripada Sejarah"}
 };
 function histXBtn(onRemove) {
@@ -15470,8 +15472,37 @@ function histXBtn(onRemove) {
   ffPressable(x, function (ev) { if (ev && ev.preventDefault) ev.preventDefault(); onRemove(); });
   return x;
 }
+/* v6.109.0 — EVERY TAKE HAS A WAY BACK INTO PHOTOSHOP. The strip could delete
+   a take and select it, and the only Place button on the page acted on whatever
+   was selected — so sending the third take back meant selecting it first and
+   then hunting for a button somewhere else, and in a batch there was no way at
+   all (the auto-place path skips state.batch on purpose: a hundred layers is
+   not a kindness). The take now carries its own door. It selects itself first,
+   so what lands in the document is the picture the student is looking at. */
+function histPsBtn(onPlace) {
+  const p = document.createElement("div"); p.className = "hps"; p.textContent = "PS";
+  p.setAttribute("aria-label", ff9(HIST_L.toPs));
+  ffPressable(p, function (ev) { if (ev && ev.preventDefault) ev.preventDefault(); onPlace(); });
+  return p;
+}
+async function histPlaceP(idx) {
+  const e = state.history[idx];
+  if (!e || !e.after || state.busy) return;
+  selectHistory(idx);
+  try { setStage("placing"); } catch (e0) { }
+  setStatus(t("st_place"));
+  try {
+    const r = await placeResultToPS();
+    try { setStage(null); } catch (e1) { }
+    if (r) setStatus(ff9(HIST_L.placed), "ok");
+  } catch (err) {
+    try { setStage(null); } catch (e2) { }
+    setStatus(friendlyErr(err), "err");
+  }
+}
 function histItemP(host, im, idx) {
   const d = document.createElement("div"); d.className = "hitem"; d.appendChild(im);
+  d.appendChild(histPsBtn(function () { histPlaceP(idx); }));
   d.appendChild(histXBtn(function () { histRemoveP(idx); })); host.appendChild(d);
 }
 function histRemoveP(idx) {
