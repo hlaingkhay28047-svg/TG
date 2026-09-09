@@ -928,3 +928,10 @@ jobs:
       # always verified landing and app
       - name: Run admin cache-token and admin-console deploy contract
         run: node test/verify_admin_cache_token.js
+
+      # v6.50.0 — the GPU fast path is compared against the CPU pipeline that
+      # exports, pixel by pixel, on a runner with no GPU at all: Chromium's
+      # SwiftShader runs the same GLSL in software, so the shader's ARITHMETIC
+      # is what CI checks. A driver cannot make a wrong formula pass here.
+      - name: Verify the GPU preview renders the CPU's picture
+        run: PORT=8931 node test/verify_gpu_preview.js
