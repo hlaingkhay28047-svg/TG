@@ -683,7 +683,12 @@ function create(deps) {
       if (thumb) {
         var ref = (inp.image && inp.image.ref) || "";
         var show = /^data:image\//.test(String(ref));
-        thumb.style.display = show ? "" : "none";
+        /* v6.109.0 — the tile itself never hides now; its two faces swap. */
+        var emptyEl = nodes["empty_" + inp.key];
+        if (thumb.firstChild) thumb.firstChild.style.display = show ? "" : "none";
+        var clearEl = doc.getElementById("hnkWfClear_" + inp.key);
+        if (clearEl) clearEl.style.display = show ? "" : "none";
+        if (emptyEl) emptyEl.style.display = show ? "none" : "";
         if (show && thumb.firstChild && thumb.firstChild.src !== ref) thumb.firstChild.src = ref;
       }
     });
@@ -941,9 +946,24 @@ function create(deps) {
       wstate.setInput(state, inp.key, { source: "", role: inp.role, ref: null, valid: false });
       refresh();
     });
-    var thumb = dom.el(doc, "div", { class: "hnk-req-thumb", id: "hnkWfThumb_" + inp.key }, [thumbImg, clear]);
-    thumb.style.display = "none";
+    /* v6.109.0 — AN EMPTY SLOT IS STILL A SLOT. Until now this tile appeared
+       only once a picture had landed, so a workflow that wanted two photographs
+       opened as a label, the word "Missing" and a row of buttons: the owner read
+       that, correctly, as "the Smart Workflow has no image slots" — Freeform
+       shows IMG 1…IMG 4 as boxes you can see and press before anything is in
+       them, and this screen showed nothing at all. The tile is now always on
+       screen: an empty frame with a + while the slot is waiting, the photograph
+       itself once one arrives. Pressing the empty frame takes the open
+       Photoshop layer, the same thing its + Layer button does, so the shortest
+       path in the panel is also the most obvious one. */
+    var emptyPlus = dom.el(doc, "span", { class: "hnk-req-plus", text: "+" });
+    var emptyTxt = dom.el(doc, "span", { class: "hnk-req-empty-t", text: dom.t("btn_ref_layer", "+ Layer") });
+    var empty = dom.el(doc, "div", { class: "hnk-req-empty", id: "hnkWfEmpty_" + inp.key,
+      attrs: { role: "button", tabindex: "0" } }, [emptyPlus, emptyTxt]);
+    dom.on(empty, "click", function () { addImage(inp); });
+    var thumb = dom.el(doc, "div", { class: "hnk-req-thumb", id: "hnkWfThumb_" + inp.key }, [thumbImg, clear, empty]);
     nodes["thumb_" + inp.key] = thumb;
+    nodes["empty_" + inp.key] = empty;
 
     return dom.el(doc, "div", { class: "hnk-req-block" }, [
       dom.el(doc, "div", { class: "hnk-req-row" }, [

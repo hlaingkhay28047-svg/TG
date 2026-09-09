@@ -860,6 +860,19 @@ input[type="range"] { min-width: 0; }
   border-radius: 8px; border: 1px solid var(--line); background: #000;
 }
 .hnk-req-clear { padding: 4px 9px; font-size: 12px; line-height: 1; }
+/* v6.109.0 — the waiting slot. Same 88×64 frame the photograph will occupy, so
+   the row does not jump when one lands, drawn as a dashed frame with a + the
+   way Freeform draws IMG 1…IMG 4. Longhand properties and no pseudo-elements:
+   UXP draws neither ::before nor a shorthand `border` with a dashed style
+   reliably, and this frame has to be visible on the host that needed it. */
+.hnk-req-empty {
+  box-sizing: border-box; width: 88px; height: 64px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-radius: 8px; border-width: 1px; border-style: dashed; border-color: var(--line);
+  background-color: rgba(255,255,255,.03); cursor: pointer;
+}
+.hnk-req-plus { font-size: 18px; line-height: 1; color: var(--accent); font-weight: 700; }
+.hnk-req-empty-t { font-size: 10px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
 
 /* ---- HNK AI Tools: History screen (§22) ---- */
 .hnk-hist-list { display:flex; flex-direction:column; gap:8px; }
@@ -1692,6 +1705,11 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .hist .hitem { position: relative; display: inline-block; line-height: 0; }
 .apg .hist .hx { position: absolute; top: -6px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--panel, #0f1424); border: 1px solid var(--line-soft); color: inherit; font-size: 11px; line-height: 18px; text-align: center; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .apg .hist .hx:hover { border-color: var(--accent); }
+/* v6.109.0 — the take's own door back into Photoshop, opposite its ✕. Same
+   pill the ✕ uses so the pair reads as one control strip; gold ink because it
+   is the button that spends nothing and gives the studio its picture. */
+.apg .hist .hps { position: absolute; top: -6px; left: 2px; height: 20px; padding: 0 7px; border-radius: 10px; background: var(--panel, #0f1424); border: 1px solid var(--line-soft); color: var(--accent); font-size: 10px; font-weight: 700; line-height: 18px; text-align: center; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.apg .hist .hps:hover { border-color: var(--accent); }
 /* app .hist video: the Video page's 64px recent-result tiles, black plate */
 .apg .hist video { width: 64px; height: 64px; margin: 0 8px 8px 0; border-radius: 9px; border: 1px solid var(--line-soft); background-color: #000; }
 .apg .hist video.sel { border-color: var(--accent); }
