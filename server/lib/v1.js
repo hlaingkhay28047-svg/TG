@@ -215,7 +215,12 @@ async function enrollDevice(identity, body, context) {
   });
 }
 
-/* v6.35.0 — the student releases their own Computer slot. evaluateSelfRelease
+/* v6.47.0 — and the Phone slot with it. The route was already written around a
+   slot_type; what changes here is that "phone" is no longer rejected by the
+   policy, that the sentences name the slot the student actually pressed, and
+   that an unknown slot_type is refused before any of it runs.
+
+   v6.35.0 — the student releases their own Computer slot. evaluateSelfRelease
    (server/lib/devices.js) owns the permission; this function owns the effects,
    and there are exactly three: the slot is reset, the sessions bound to THAT
    slot end, and the release is written into device_history under the student's
@@ -230,6 +235,7 @@ async function enrollDevice(identity, body, context) {
    looking at survives to show them the result. */
 async function releaseDevice(identity, body) {
   const slotType = String(body.slot_type || "computer");
+  const slotWord = slotType === "phone" ? "Phone" : "Computer";
   return asService(async client => {
     const previous = await client.query(
       `select created_at from public.device_history
@@ -242,16 +248,16 @@ async function releaseDevice(identity, body) {
     });
     if (!verdict.allowed) {
       if (verdict.code === "release_cooldown") {
-        throw new ApiError(429,"You have already released a Computer this week","release_cooldown",
+        throw new ApiError(429,"You have already released a "+slotWord+" this week","release_cooldown",
           {next_allowed_at:verdict.nextAllowedAt,cooldown_days:7});
       }
       if (verdict.code === "web_session_required") {
-        throw new ApiError(403,"Release the Computer from the Web App on a signed-in browser","web_session_required");
+        throw new ApiError(403,"Release the "+slotWord+" from the Web App on a signed-in browser","web_session_required");
       }
-      throw new ApiError(400,"Only the Computer slot can be released from here","slot_not_releasable");
+      throw new ApiError(400,"Only the Computer or the Phone slot can be released from here","slot_not_releasable");
     }
     const count = await createPgDeviceRepository(client).resetSlot(identity.uid,slotType,new Date().toISOString());
-    if (!count) throw new ApiError(409,"There is no registered Computer to release","slot_not_registered");
+    if (!count) throw new ApiError(409,"There is no registered "+slotWord+" to release","slot_not_registered");
     await client.query(
       `update public.sessions set revoked_at=now(),revoked_reason=$3
         where user_id=$1 and id<>$4 and device_installation_id in
