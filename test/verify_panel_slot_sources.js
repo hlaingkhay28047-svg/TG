@@ -94,7 +94,8 @@ function catalogIds() {
 
     /* open each card and look at what its slots really offer */
     const bad = [];
-    const seen = { cards: 0, slots: 0, selection: 0 };
+    const noTile = [];
+    const seen = { cards: 0, slots: 0, selection: 0, tiles: 0 };
     for (const w of wanted) {
       const got = await page.evaluate(async id => {
         const card = document.getElementById("hnkWf_" + id);
@@ -113,7 +114,17 @@ function catalogIds() {
             paste: !!document.getElementById("hnkWfPaste_" + k),
             web: !!document.getElementById("hnkWfWeb_" + k),
             url: !!document.getElementById("hnkWfUrl_" + k) && !!document.getElementById("hnkWfUrlGo_" + k),
-            lib: !!document.getElementById("hnkWfLib_" + k)
+            lib: !!document.getElementById("hnkWfLib_" + k),
+            /* v6.109.0 — the WAITING slot has to be visible too: an empty
+               frame with a +, drawn before any picture lands, so the card
+               reads as "two photographs go here" rather than as a label and
+               a row of buttons. */
+            tile: (function () {
+              const e = document.getElementById("hnkWfEmpty_" + k);
+              if (!e) return false;
+              const r = e.getBoundingClientRect();
+              return getComputedStyle(e).display !== "none" && r.width > 40 && r.height > 30;
+            })()
           });
         });
         return { open: true, slots: slots };
@@ -136,6 +147,8 @@ function catalogIds() {
           if (w.id === "region-edit" && !s.key) { seen.selection++; return; }
           const miss = ["layer", "file", "paste", "web", "url", "lib"].filter(k => !s[k]);
           if (miss.length) bad.push(w.id + "/" + s.key + ": no " + miss.join("+"));
+          if (!s.tile) noTile.push(w.id + "/" + s.key);
+          else seen.tiles++;
         });
       }
       /* back to the list for the next card. The screen's own "← Workflow
@@ -149,6 +162,13 @@ function catalogIds() {
 
     report("every image slot on every card offers all five ways in — Active Layer, File, Paste, Web link, Library",
       bad.length === 0, bad.slice(0, 8).join(" | "));
+    /* v6.109.0 — and every one of them is a SLOT you can see before you have
+       filled it. The owner opened a Smart Workflow card in Photoshop and
+       reported it had no image slots at all: the tile only appeared once a
+       picture had landed, so a waiting card was a label, the word "Missing"
+       and five buttons. */
+    report("and every waiting slot draws its own empty frame, before any picture lands",
+      noTile.length === 0, noTile.slice(0, 8).join(" | ") + " (" + seen.tiles + " frames drawn)");
     console.log("      (" + seen.cards + " cards opened, " + seen.slots + " slots inspected, "
       + seen.selection + " of them Selection Edit's live-marquee slot)");
 
