@@ -156,7 +156,14 @@ var IMAGINE = (function(){
       var add = btn("im-th im-add", "+"); add.id="imAdd"; add.setAttribute("aria-label", t("add_photos")); add.title=t("add_photos");
       strip.appendChild(add); H.pickWire(add, addPhotos);
     }
-    card.appendChild(el("div","mut im-count", S.photos.length ? t("photo_of",{n:S.cur+1,m:S.photos.length}) : t("empty_hint")));
+    /* 6.41.0 — the count line, and ONLY the count. It used to fall back to
+       empty_hint when there was no photograph, and the empty state below prints
+       that same sentence, so a student opening any Imagine tool read "Add a
+       photo (JPG/PNG) to start — up to 11 photos at once" twice, once above the
+       drop zone and once inside it. The empty state is where that sentence
+       belongs; this line counts photographs and says nothing when there are
+       none to count. */
+    card.appendChild(el("div","mut im-count", S.photos.length ? t("photo_of",{n:S.cur+1,m:S.photos.length}) : ""));
     /* the picture: Before | After once there is a result */
     var cur = S.photos[S.cur];
     /* 6.32.0 — the brush tools: a bar of chips above the picture — Mark (paint mode on/off), three brush sizes, Undo, Clear — and the red strokes */
