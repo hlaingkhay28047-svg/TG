@@ -2553,9 +2553,9 @@ html.splashing #splash{display:flex}
   </section>
   <section class="card">
     <h2>Registered devices</h2>
-    <p class="mut">You can release your own Computer slot once every 7 days, and every release is recorded. The Phone slot is still reset by an HNK administrator.</p>
+    <p class="mut">You can release your own Computer slot and your own Phone slot once every 7 days each, and every release is recorded. Ask an HNK administrator when you need more devices than your plan allows.</p>
     <div class="unified-devices">
-      <article class="unified-device"><h3>Phone · Web App</h3><p id="unifiedPhone">Checking this Phone slot…</p><button class="btn" id="unifiedEnrollPhone" type="button">Register this Phone</button></article>
+      <article class="unified-device"><h3>Phone · Web App</h3><p id="unifiedPhone">Checking this Phone slot…</p><button class="btn" id="unifiedEnrollPhone" type="button">Register this Phone</button><button class="btn" id="unifiedReleasePhone" type="button" hidden>Release this Phone</button><p class="mut" style="margin-top:6px;font-size:12px">ဖုန်းအသစ် ပြောင်းလိုက်ရင် အပေါ်က “Phone နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်လိုက်ပါ — ၇ ရက်ကို တစ်ကြိမ် ကိုယ်တိုင် လုပ်လို့ရပါတယ်။</p></article>
       <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button><button class="btn" id="unifiedReleaseComputer" type="button" hidden>Release this Computer</button><p class="mut" style="margin-top:6px;font-size:12px">ဒီ computer က တစ်ခါ register ဖြစ်ပြီးရင် အလိုအလျောက် မှတ်ထားပါတယ် — Photoshop panel လည်း sign-in တစ်ခါတည်းနဲ့ ဝင်လို့ရပါပြီ။ စက်အသစ် ပြောင်းလိုက်ရင် အပေါ်က “Computer နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်လိုက်ပါ — ၇ ရက်ကို တစ်ကြိမ် ကိုယ်တိုင် လုပ်လို့ရပါတယ်။ စက် အရေအတွက် ထပ်တိုးချင်တာကတော့ ဆရာ့ကို ပြောပါ။</p></article>
     </div>
   </section>
@@ -5273,6 +5273,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.47.0", kind:"page", ref:"pgAccount",
+    t:{my:"ငြင်းလိုက်တဲ့ မှတ်ပုံတင်မှုက စက်နေရာ မယူတော့ဘူး — ဖုန်း နေရာကိုလည်း ကိုယ်တိုင် ပြန်လွှတ်လို့ရပြီ",en:"A refused registration no longer takes one of your device seats — and you can release your own Phone",shn:"မၢႆၾၢင်ဢမ်ႇလႆႈ ဢမ်ႇၵိၼ်တီႈယဝ်ႉ — ဢဝ်ၾူၼ်းဢွၵ်ႇႁင်းၵူၺ်းလႆႈ",kac:"N hkap la ai mying galaw gaw shara n sha sai — Phone shara mung tinang shale kau lu sai",th:"การลงทะเบียนที่ถูกปฏิเสธไม่กินสล็อตเครื่องอีกต่อไป — และคุณปลดสล็อตโทรศัพท์เองได้แล้ว",zh:"被拒绝的注册不再占用设备名额 — 手机名额也可以自己释放",vi:"Đăng ký bị từ chối không còn chiếm suất thiết bị — và bạn tự giải phóng suất Điện thoại được",id:"Pendaftaran yang ditolak tidak lagi memakan slot perangkat — dan Anda bisa melepaskan slot Ponsel sendiri",ms:"Pendaftaran yang ditolak tidak lagi memakan slot peranti — dan anda boleh melepaskan slot Telefon sendiri"},
+    s:{my:"စက်တစ်လုံးက တခြားအကောင့်တစ်ခုမှာ မှတ်ပုံတင်ထားလို့ ငြင်းခံရတိုင်း၊ ကိုယ့်စက်နေရာ တစ်လုံး ကုန်သွားခဲ့တယ် — ငြင်းပြီးမှ နေရာ ပြန်မပေးလို့ပါ။ အခု ဘယ်သူပိုင်လဲ အရင် စစ်ပြီးမှ နေရာယူတော့ ငြင်းလိုက်တာက ဘာမှ မကုန်တော့ဘူး၊ ဗလာနေတဲ့ နေရာဟောင်းကိုလည်း ပြန်သုံးပေးပါတယ်။ ဖုန်းပျောက်သွား/ရောင်းလိုက်ရင်လည်း အကောင့် ▸ ကျွန်ုပ်၏ စက်များ မှာ “Phone နေရာ ပြန်လွှတ်မယ်” ကို ကိုယ်တိုင် နှိပ်လို့ရပြီ — ၇ ရက်ကို တစ်ကြိမ်၊ ဖြစ်တိုင်း မှတ်တမ်းတင်ထားပါတယ်။",en:"Every time a machine was refused because another account had registered it, one of your device seats was quietly used up — the seat was claimed before the refusal and never given back. The server now asks who owns the machine before it takes a seat, so a refusal costs nothing, and an empty seat left behind is reused instead of refusing you. And if your phone is lost, sold or wiped, Account ▸ My devices now has “Release this Phone” — yours to press, once every seven days, and every release is recorded.",shn:"ၶိူင်ႈဢၼ်ဢမ်ႇလႆႈမၢႆၾၢင် ၵိၼ်တီႈလွတ်ႁဝ်းၵႂႃႇ — ယၢမ်းလဵဝ် ထၢမ်ဢွၼ်တၢင်းဝႃႈ ၶိူင်ႈၼႆႉ ၽႂ်ပိူင်ႇ၊ ဢမ်ႇလႆႈၵေႃႈ တီႈဢမ်ႇႁၢႆ။ တီႈလွတ်ႁၢမ်း ၵေႃႈ ၸႂ်ႉၶိုၼ်း။ ၾူၼ်း ႁၢႆ/ၶၢႆ ၵေႃႈ ဢဝ်ဢွၵ်ႇႁင်းၵူၺ်းလႆႈ — 7 ဝၼ်း ၼိုင်ႈပွၵ်ႈ။",kac:"Machine langai hpe kaga account mahtai da ai majaw n hkap la ai shaloi, na a shara langai gaw sha kau da ai — shara hpe shawng la nna, hpang e n hkap la ai. Ya gaw kadai a machine re ngu shawng san ai, dai majaw n hkap la ai gaw shara n sha sai. Shara hkrai nga ai mung bai jai lu sai. Na a phone hten, mari kau, sut kau yang Account ▸ Devices kaw “Release this Phone” nga ai — nanhte dip lu ai, 7 ya hta kalang mi, shagu ka da ai.",th:"ทุกครั้งที่เครื่องถูกปฏิเสธเพราะบัญชีอื่นลงทะเบียนไว้แล้ว สล็อตเครื่องของคุณจะถูกใช้ไปหนึ่งช่องเงียบ ๆ — เพราะจองสล็อตก่อนแล้วค่อยปฏิเสธ ตอนนี้เซิร์ฟเวอร์ถามก่อนว่าเครื่องนี้เป็นของใคร การถูกปฏิเสธจึงไม่เสียสล็อต และสล็อตว่างที่ค้างอยู่จะถูกนำมาใช้ใหม่ ถ้าโทรศัพท์หาย ขายไป หรือถูกล้างเครื่อง ที่ บัญชี ▸ เครื่องของฉัน มีปุ่ม “ปลดสล็อตโทรศัพท์นี้” ให้กดเอง 7 วันต่อครั้ง และบันทึกทุกครั้ง",zh:"每当一台机器因为已被别的账户注册而被拒绝时，你的一个设备名额就被悄悄用掉了 — 名额先被占用，然后才拒绝，而且从不归还。现在服务器会先问这台机器属于谁，再决定是否占用名额，所以被拒绝不花费任何名额；留下的空名额也会被重新使用。手机丢了、卖了或被清空，账户 ▸ 我的设备 里现在有“释放这台手机名额” — 你自己按，每 7 天一次，每次都有记录。",vi:"Mỗi lần một máy bị từ chối vì tài khoản khác đã đăng ký nó, một suất thiết bị của bạn lại bị dùng mất — suất được chiếm trước khi từ chối và không bao giờ được trả lại. Giờ máy chủ hỏi máy này của ai trước khi chiếm suất, nên một lần từ chối không tốn gì, và một suất trống còn sót lại sẽ được dùng lại. Nếu điện thoại bị mất, bán đi hay xoá sạch, Tài khoản ▸ Thiết bị của tôi giờ có “Giải phóng suất Điện thoại” — bạn tự nhấn, 7 ngày một lần, và mỗi lần đều được ghi lại.",id:"Setiap kali sebuah perangkat ditolak karena sudah didaftarkan akun lain, satu slot perangkat Anda diam-diam terpakai — slot diambil sebelum penolakan dan tidak pernah dikembalikan. Kini server menanyakan siapa pemilik perangkat itu sebelum mengambil slot, jadi penolakan tidak memakan apa pun, dan slot kosong yang tertinggal dipakai ulang. Kalau ponsel hilang, dijual atau dihapus, di Akun ▸ Perangkat saya kini ada “Lepaskan slot Ponsel” — Anda tekan sendiri, sekali tiap 7 hari, dan setiap pelepasan dicatat.",ms:"Setiap kali sebuah peranti ditolak kerana akaun lain sudah mendaftarkannya, satu slot peranti anda terpakai secara senyap — slot diambil sebelum penolakan dan tidak pernah dipulangkan. Kini pelayan bertanya siapa pemilik peranti itu sebelum mengambil slot, jadi penolakan tidak memakan apa-apa, dan slot kosong yang tertinggal digunakan semula. Jika telefon hilang, dijual atau dipadam, di Akaun ▸ Peranti saya kini ada “Lepaskan slot Telefon” — anda tekan sendiri, sekali setiap 7 hari, dan setiap pelepasan direkodkan."} },
   { v:"6.46.0", kind:"page", ref:"pgAccount",
     t:{my:"ဆရာ့ Admin ကွန်ဆိုးလ် ပြင်ပြီး — ခဏခဏ ထွက်မသွားတော့ဘူး",en:"The teacher's admin console is fixed — it no longer signs itself out",shn:"Admin console ၶူးသွၼ် မႄးယဝ်ႉ — ဢမ်ႇဢွၵ်ႇႁင်းၵူၺ်းယဝ်ႉ",kac:"Sara a admin console mai sai — shi hkrai n pru mat sai",th:"คอนโซลแอดมินของครูแก้แล้ว — ไม่หลุดออกเองอีก",zh:"老师的管理后台已修复 — 不再自己退出",vi:"Bảng quản trị của giáo viên đã sửa — không tự đăng xuất nữa",id:"Konsol admin guru diperbaiki — tidak lagi keluar sendiri",ms:"Konsol admin guru dibaiki — tidak lagi log keluar sendiri"},
     s:{my:"ဆရာ့ကွန်ဆိုးလ်က နာရီဝက်တစ်ခါလောက် ကိုယ့်ဘာသာကိုယ် ထွက်သွားနေတယ် — server ကို တစ်နာရီတစ်ခါပဲ ဆက်သွယ်ပြီး အချိန်ကန့်သတ်ချက်က ၁၅ မိနစ်ဖြစ်နေလို့ပါ။ အခု ဖွင့်ထားစဉ် ၅ မိနစ်တစ်ခါ ဆက်သွယ်ပြီး ကန့်သတ်ချက်ကို ၄ နာရီ တိုးလိုက်ပြီ။ ကိုယ့်အကောင့်ကိုယ် Force Logout နှိပ်ရင်လည်း ကွန်ဆိုးလ် မပိတ်တော့ဘူး။ Suspend နဲ့ Ban ခလုတ်နှစ်ခုက တစ်ခါမှ အလုပ်မလုပ်ခဲ့တာလည်း ပြင်ပြီးပါပြီ။",en:"The console signed itself out about once an hour: it only reached the server when its token was nearly spent, while the idle limit was fifteen minutes. It now checks in every five minutes while it is open, and the limit is four hours. Pressing Force Logout on your own account no longer closes the console either. And Suspend and Ban — which had never worked, because the server wrote a status the database refused — now do.",shn:"Console ဢွၵ်ႇႁင်းၵူၺ်း ၸူဝ်ႈမူင်းၼိုင်ႈပွၵ်ႈ။ ယၢမ်းလဵဝ် ၵူႈ 5 မိၼိတ်ႉ ၵပ်းသိုပ်ႇ၊ ၶၢဝ်းယၢမ်းၵိုတ်း 4 ၸူဝ်ႈမူင်း။ Force Logout ၽႃႈတူဝ်ၵဝ်ႇ ၵေႃႈ console ဢမ်ႇပိၵ်ႉ။ Suspend လႄႈ Ban ဢၼ်ဢမ်ႇယၢမ်ႈလႆႈၵၢၼ် မႄးယဝ်ႉ။",kac:"Console gaw hkying mi hkan shi hkrai pru mat ai. Ya gaw hpaw da ai ten 5 minute hkan shaga nna, ten hkringhtawng gaw 4 hkying re sai. Tinang a account hta Force Logout dip yang mung console n pat sai. Suspend hte Ban — moi kaw nna galoi mung n byin ai — ya byin sai.",th:"คอนโซลหลุดเองราวชั่วโมงละครั้ง เพราะติดต่อเซิร์ฟเวอร์แค่ชั่วโมงละหน แต่กำหนดว่างไว้ 15 นาที ตอนนี้เช็คอินทุก 5 นาทีขณะเปิดอยู่ และกำหนดเป็น 4 ชั่วโมง กด Force Logout กับบัญชีตัวเองก็ไม่ปิดคอนโซลแล้ว ส่วน Suspend กับ Ban ที่ไม่เคยทำงานเลย ก็แก้แล้ว",zh:"后台大约每小时自己退出一次：它只在令牌快过期时才联系服务器，而空闲上限是十五分钟。现在打开期间每五分钟报到一次，上限改为四小时。对自己的账号按强制登出也不会再关闭后台。而从未生效过的暂停与封禁——服务器写入了数据库不接受的状态——现在可以用了。",vi:"Bảng quản trị tự đăng xuất khoảng mỗi giờ: nó chỉ liên hệ máy chủ khi mã sắp hết hạn, trong khi giới hạn nghỉ là mười lăm phút. Nay cứ năm phút báo danh một lần khi đang mở, và giới hạn là bốn giờ. Bấm Buộc đăng xuất trên tài khoản của chính bạn cũng không đóng bảng nữa. Và Tạm ngưng cùng Cấm — vốn chưa từng chạy — nay đã chạy.",id:"Konsol keluar sendiri kira-kira sejam sekali: ia hanya menghubungi server saat tokennya hampir habis, sementara batas diam adalah lima belas menit. Kini ia melapor tiap lima menit selama terbuka, dan batasnya empat jam. Menekan Paksa Keluar pada akun Anda sendiri pun tak lagi menutup konsol. Dan Tangguhkan serta Blokir — yang belum pernah berfungsi — kini berfungsi.",ms:"Konsol log keluar sendiri lebih kurang sejam sekali: ia hanya menghubungi pelayan apabila tokennya hampir habis, sedangkan had melahu ialah lima belas minit. Kini ia melapor setiap lima minit semasa dibuka, dan hadnya empat jam. Menekan Paksa Log Keluar pada akaun anda sendiri juga tidak lagi menutup konsol. Dan Gantung serta Haram — yang tidak pernah berfungsi — kini berfungsi."} },
@@ -26132,7 +26135,16 @@ function unifiedRender(){
      reaches for the machine they still have, and the slot they are freeing is
      not the one they are standing on. */
   var relBtn = $("unifiedReleaseComputer");
-  if (relBtn){ relBtn.hidden = !devices.computer; relBtn.textContent = L9(REL_TXT.btn); }
+  if (relBtn){ relBtn.hidden = !compN; relBtn.textContent = L9(REL_TXT.btn); }
+  /* v6.47.0 — the Phone gets the same control, on the same rule and for the
+     same reason: a phone that was lost, sold or wiped holds a seat the student
+     paid for, the seats have been one total count since 6.45.0, and waiting for
+     a teacher to free a device you no longer own is not a licence control.
+     Both buttons read the counted seats rather than devices.phone /
+     devices.computer alone — a payload carrying the slot list without the pair
+     used to hide a control over a device that is plainly registered. */
+  var relPhoneBtn = $("unifiedReleasePhone");
+  if (relPhoneBtn){ relPhoneBtn.hidden = !phoneN; relPhoneBtn.textContent = L9(REL_PHONE_TXT.btn); }
   $("unifiedDownloadNote").textContent = unifiedCanDownload()
     ? "Verified. Download the Panel under Setup ▸ Account ▸ Photoshop Panel — the one place in the app that creates the temporary link."
     : (p.ccx_download === true && unifiedComputerOnly(rs.ccx_download)
@@ -26233,32 +26245,50 @@ var REL_TXT = {
   none: {my:"ပြန်လွှတ်စရာ မှတ်ပုံတင်ထားတဲ့ Computer မရှိပါ",en:"There is no registered Computer to release",shn:"ဢမ်ႇမီးၶိူင်ႈ Computer ဢၼ်ႁဵတ်းမၢႆၾၢင်ဝႆႉ",kac:"Mahtai da ai Computer shara n nga ai",th:"ไม่มีคอมพิวเตอร์ที่ลงทะเบียนให้ปลด",zh:"没有已注册的电脑可释放",vi:"Không có Máy tính nào đã đăng ký để giải phóng",id:"Tidak ada Komputer terdaftar untuk dilepaskan",ms:"Tiada Komputer berdaftar untuk dilepaskan"},
   taken: {my:"ဒီအကောင့်ရဲ့ Computer နေရာကို တခြားစက်တစ်လုံးက ယူထားပါတယ် — “Computer နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်ပါ",en:"Another machine holds this account's Computer slot — press “Release this Computer”",shn:"Computer ၼႆႉ တဵမ်ယဝ်ႉ — ၼဵၵ်း “ဢဝ်ၶိူင်ႈ Computer ဢွၵ်ႇ” တီႈတႂ်ႈၼႆႉ",kac:"Ndai account a Computer shara gaw tup sai — npu na “Computer shara hpe shale kau” hpe dip u",th:"มีเครื่องอื่นถือสล็อตคอมพิวเตอร์ของบัญชีนี้อยู่ — กด “ปลดสล็อตคอมพิวเตอร์นี้”",zh:"另一台机器占用了本账户的电脑名额 — 请点击“释放这台电脑名额”",vi:"Một máy khác đang giữ suất Máy tính của tài khoản này — nhấn “Giải phóng suất Máy tính”",id:"Mesin lain memegang slot Komputer akun ini — tekan “Lepaskan slot Komputer”",ms:"Mesin lain memegang slot Komputer akaun ini — tekan “Lepaskan slot Komputer”"}
 };
+/* v6.47.0 — the Phone's own nine languages. Not the Computer pack with a word
+   swapped at runtime: each sentence names the device it is about, and a
+   student reads the whole line, not the noun. */
+var REL_PHONE_TXT = {
+  btn: {my:"Phone နေရာ ပြန်လွှတ်မယ်",en:"Release this Phone",shn:"ဢဝ်ၶိူင်ႈ Phone ဢွၵ်ႇ",kac:"Phone shara hpe shale kau",th:"ปลดสล็อตโทรศัพท์นี้",zh:"释放这台手机名额",vi:"Giải phóng suất Điện thoại",id:"Lepaskan slot Ponsel",ms:"Lepaskan slot Telefon"},
+  q: {my:"Phone နေရာကို ပြန်လွှတ်မလား? အရင် မှတ်ပုံတင်ထားတဲ့ ဖုန်းက Web App ကနေ ထွက်သွားပါမယ် — ပြီးရင် ဖုန်းအသစ်ကို ချက်ချင်း မှတ်ပုံတင်လို့ရပါတယ်။ ၇ ရက်ကို တစ်ကြိမ်ပဲ လုပ်လို့ရပါတယ်။",en:"Release the registered Phone? That phone will be signed out of the Web App, and you can register a new one straight away. You can do this once every 7 days.",shn:"ဢဝ်ၶိူင်ႈ Phone ဢၼ်ႁဵတ်းမၢႆၾၢင်ဝႆႉ ဢွၵ်ႇႁႃႉ? ၾူၼ်းၼၼ်ႉ တေဢွၵ်ႇၵႂႃႇတီႈ Web App၊ ယဝ်ႉၵေႃႈ ႁဵတ်းမၢႆၾၢင် ၾူၼ်းမႂ်ႇလႆႈယဝ်ႉ။ 7 ဝၼ်း ၼိုင်ႈပွၵ်ႈၵူၺ်း။",kac:"Mahtai da ai Phone shara hpe shale kau na i? Dai phone gaw Web App kaw na pru mat na re, dai hpang nnan langai hpe mahtai da lu sai. 7 ya hta kalang mi galaw lu ai.",th:"ปลดโทรศัพท์ที่ลงทะเบียนไว้หรือไม่? เครื่องนั้นจะหลุดจาก Web App แล้วคุณลงทะเบียนเครื่องใหม่ได้ทันที ทำได้ 7 วันต่อครั้ง",zh:"要释放已注册的手机吗？那台机器会退出网页版，你可以立即注册新的一台。每 7 天可以做一次。",vi:"Giải phóng Điện thoại đã đăng ký? Máy đó sẽ bị đăng xuất khỏi Web App, và bạn có thể đăng ký máy mới ngay. Mỗi 7 ngày được một lần.",id:"Lepaskan Ponsel yang terdaftar? Ponsel itu akan keluar dari Web App, dan Anda bisa mendaftarkan yang baru seketika. Bisa dilakukan sekali tiap 7 hari.",ms:"Lepaskan Telefon yang didaftarkan? Telefon itu akan log keluar daripada Web App, dan anda boleh mendaftarkan yang baharu serta-merta. Boleh dilakukan sekali setiap 7 hari."},
+  busy: {my:"Phone နေရာ ပြန်လွှတ်နေပါတယ်…",en:"Releasing the Phone slot…",shn:"ဢဝ်ၶိူင်ႈ Phone ဢွၵ်ႇယူႇ…",kac:"Phone shara hpe shale kau nga ai…",th:"กำลังปลดสล็อตโทรศัพท์…",zh:"正在释放手机名额…",vi:"Đang giải phóng suất Điện thoại…",id:"Melepaskan slot Ponsel…",ms:"Melepaskan slot Telefon…"},
+  ok: {my:"Phone နေရာ လွတ်သွားပါပြီ ✓ — ဒီဖုန်းကို အခု မှတ်ပုံတင်လို့ရပါပြီ",en:"Phone slot released ✓ — you can register this phone now",shn:"ဢဝ်ၶိူင်ႈ Phone ဢွၵ်ႇယဝ်ႉ ✓ — ႁဵတ်းမၢႆၾၢင် ၾူၼ်းဢၼ်ၼႆႉလႆႈယဝ်ႉ",kac:"Phone shara shale kau ngut sai ✓ — ya ndai phone hpe mahtai da lu sai",th:"ปลดสล็อตโทรศัพท์แล้ว ✓ — ลงทะเบียนเครื่องนี้ได้เลย",zh:"手机名额已释放 ✓ — 现在可以注册这台手机",vi:"Đã giải phóng suất Điện thoại ✓ — bạn có thể đăng ký máy này ngay",id:"Slot Ponsel dilepaskan ✓ — Anda bisa mendaftarkan ponsel ini sekarang",ms:"Slot Telefon dilepaskan ✓ — anda boleh mendaftarkan telefon ini sekarang"},
+  wait: {my:"၇ ရက်အတွင်း ဖုန်း တစ်ကြိမ် ပြန်လွှတ်ပြီးပါပြီ — {D} မှာ ထပ်လုပ်လို့ရပါမယ်",en:"You already released a Phone in the last 7 days — you can do it again on {D}",shn:"ၼႂ်း 7 ဝၼ်း ဢဝ်ၾူၼ်းဢွၵ်ႇယဝ်ႉ ၼိုင်ႈပွၵ်ႈ — {D} ႁဵတ်းလႆႈထႅင်ႈ",kac:"7 ya hta phone shara kalang mi shale kau sai — {D} hta bai galaw lu ai",th:"คุณปลดโทรศัพท์ไปแล้วใน 7 วันที่ผ่านมา — ทำได้อีกครั้งวันที่ {D}",zh:"你在过去 7 天内已经释放过一次手机名额 — {D} 可以再次操作",vi:"Bạn đã giải phóng một Điện thoại trong 7 ngày qua — có thể làm lại vào {D}",id:"Anda sudah melepaskan Ponsel dalam 7 hari terakhir — bisa lagi pada {D}",ms:"Anda sudah melepaskan Telefon dalam 7 hari lepas — boleh lagi pada {D}"},
+  none: {my:"ပြန်လွှတ်စရာ မှတ်ပုံတင်ထားတဲ့ Phone မရှိပါ",en:"There is no registered Phone to release",shn:"ဢမ်ႇမီးၶိူင်ႈ Phone ဢၼ်ႁဵတ်းမၢႆၾၢင်ဝႆႉ",kac:"Mahtai da ai Phone shara n nga ai",th:"ไม่มีโทรศัพท์ที่ลงทะเบียนให้ปลด",zh:"没有已注册的手机可释放",vi:"Không có Điện thoại nào đã đăng ký để giải phóng",id:"Tidak ada Ponsel terdaftar untuk dilepaskan",ms:"Tiada Telefon berdaftar untuk dilepaskan"},
+  taken: {my:"ဒီအကောင့်ရဲ့ Phone နေရာကို တခြားဖုန်းတစ်လုံးက ယူထားပါတယ် — “Phone နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်ပါ",en:"Another phone holds this account's Phone slot — press “Release this Phone”",shn:"Phone ၼႆႉ တဵမ်ယဝ်ႉ — ၼဵၵ်း “ဢဝ်ၶိူင်ႈ Phone ဢွၵ်ႇ” တီႈတႂ်ႈၼႆႉ",kac:"Ndai account a Phone shara gaw tup sai — npu na “Phone shara hpe shale kau” hpe dip u",th:"มีเครื่องอื่นถือสล็อตโทรศัพท์ของบัญชีนี้อยู่ — กด “ปลดสล็อตโทรศัพท์นี้”",zh:"另一台机器占用了本账户的手机名额 — 请点击“释放这台手机名额”",vi:"Một máy khác đang giữ suất Điện thoại của tài khoản này — nhấn “Giải phóng suất Điện thoại”",id:"Ponsel lain memegang slot Ponsel akun ini — tekan “Lepaskan slot Ponsel”",ms:"Telefon lain memegang slot Telefon akaun ini — tekan “Lepaskan slot Telefon”"}
+};
 /* v6.35.0 — the release itself. The confirm is not decoration: this press signs
-   another machine out of Photoshop, and the student gets one of these a week. */
-async function unifiedRelease(){
+   another machine out of Photoshop, and the student gets one of these a week.
+   v6.47.0 — one function for both slots. The slot type picks its own copy pack
+   and its own button; the server keeps a separate seven-day cooldown per type,
+   so freeing a dead phone never costs the student the Computer release they
+   may need the same week. */
+async function unifiedRelease(kind){
   if (!acc.sess) return;
-  if (!confirm(L9(REL_TXT.q))) return;
-  var btn = $("unifiedReleaseComputer");
+  var slot = kind === "phone" ? "phone" : "computer";
+  var TX = slot === "phone" ? REL_PHONE_TXT : REL_TXT;
+  if (!confirm(L9(TX.q))) return;
+  var btn = $(slot === "phone" ? "unifiedReleasePhone" : "unifiedReleaseComputer");
   if (btn) btn.disabled = true;
-  accSetInline("unifiedStatus", L9(REL_TXT.busy));
+  accSetInline("unifiedStatus", L9(TX.busy));
   try {
-    var r = await accFetch("/v1/devices/release", {method:"POST",body:JSON.stringify({slot_type:"computer"})});
+    var r = await accFetch("/v1/devices/release", {method:"POST",body:JSON.stringify({slot_type:slot})});
     var b = await accJson(r);
     if (!r.ok){
       var code = String((b && (b.error || b.code)) || "");
       if (r.status === 429 || code === "release_cooldown"){
         var when = b && b.details && b.details.next_allowed_at;
-        accSetInline("unifiedStatus", L9(REL_TXT.wait).replace("{D}", when ? accFmtDate(when) : "\u2014"), "err");
+        accSetInline("unifiedStatus", L9(TX.wait).replace("{D}", when ? accFmtDate(when) : "\u2014"), "err");
         return;
       }
       if (r.status === 409 || code === "slot_not_registered"){
-        accSetInline("unifiedStatus", L9(REL_TXT.none), "err"); return;
+        accSetInline("unifiedStatus", L9(TX.none), "err"); return;
       }
       throw new Error((b && (b.message || b.msg)) || code || "Release was not authorized");
     }
     await unifiedRefresh(true);
-    accSetInline("unifiedStatus", L9(REL_TXT.ok), "ok");
-    try { toast(L9(REL_TXT.ok), "ok"); } catch(e){}
+    accSetInline("unifiedStatus", L9(TX.ok), "ok");
+    try { toast(L9(TX.ok), "ok"); } catch(e){}
   } catch(e){ accSetInline("unifiedStatus", friendlyError(e), "err"); }
   finally { if (btn) btn.disabled = false; }
 }
@@ -26274,6 +26304,11 @@ async function unifiedEnroll(kind){
          reason and end the conversation. Its fix is now one button along, so
          say which button. */
       var rc = String((b && (b.error||b.code||b.reason)) || "");
+      /* v6.47.0 — phone_slot_occupied was the one refusal with nowhere to send
+         the student: until this release the Phone had no control to press. */
+      if (/phone_slot_occupied/.test(rc)){
+        accSetInline("unifiedStatus", L9(REL_PHONE_TXT.taken), "err"); return;
+      }
       if (/computer_slot_occupied|panel_slot_occupied/.test(rc)){
         accSetInline("unifiedStatus", L9(REL_TXT.taken), "err"); return;
       }
@@ -26310,7 +26345,8 @@ function unifiedWire(){
   document.querySelectorAll("[data-unified-page],[data-tutorial-page]").forEach(function(b){ b.addEventListener("click",function(){ switchPage(b.getAttribute("data-unified-page")||b.getAttribute("data-tutorial-page")); }); });
   var ep=$("unifiedEnrollPhone"); if(ep) ep.onclick=function(){ unifiedEnroll("phone"); };
   var ec=$("unifiedEnrollComputer"); if(ec) ec.onclick=function(){ unifiedEnroll("computer"); };
-  var rlc=$("unifiedReleaseComputer"); if(rlc) rlc.onclick=function(){ unifiedRelease(); };
+  var rlc=$("unifiedReleaseComputer"); if(rlc) rlc.onclick=function(){ unifiedRelease("computer"); };
+  var rlp=$("unifiedReleasePhone"); if(rlp) rlp.onclick=function(){ unifiedRelease("phone"); };
   /* v6.33.1 — ONE PLACE (owner: "တစ်နေရာပဲ ထားပေးပါ"). The Panel is downloaded from the Account
      card's Photoshop Panel group under Setup and nowhere else: the Home, Tutorials and Account
      Center door buttons of 6.28.x are gone. The ?panel=download deep link (the website's old
@@ -27102,7 +27138,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.46.0";
+var APP_VER="6.47.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

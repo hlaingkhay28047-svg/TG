@@ -15,6 +15,37 @@ function createDeviceRegistry(options) {
   const normalizeInstallation = options.hashInstallationId || (value => String(value || ""));
   const denial = reason => ({ allowed: false, reason });
 
+  /* v6.47.0 — ONE PLACE WHERE A REGISTRATION TAKES A SEAT, AND ONE PLACE WHERE
+     IT GIVES AN UNUSED ONE BACK.
+
+     takeSeat remembers whether THIS call opened the seat. That single bit is
+     the whole safety of releaseUnusedSeat: a seat findFreeSlot sat us on was
+     already the account's and may carry the other client's installation — the
+     one computer seat holds both the Web App and the Photoshop Panel — so it
+     is never handed back here. Only a seat this call opened and could not
+     fill is. */
+  async function takeSeat(userId, slotType, clientType, label) {
+    const free = typeof repository.findFreeSlot === "function"
+      ? await repository.findFreeSlot(userId, slotType, clientType) : null;
+    if (free) return { slot: free, claimed: false };
+    const claim = await repository.claimSlot({
+      userId, slotType, label: label || null,
+      createdAt: clock().toISOString(), updatedAt: clock().toISOString(),
+    });
+    if (!claim || claim.claimed !== true) return { slot: null, claimed: false };
+    return { slot: claim.slot, claimed: true };
+  }
+  async function releaseUnusedSeat(seat) {
+    if (!seat || seat.claimed !== true || !seat.slot) return false;
+    if (typeof repository.releaseEmptySlot !== "function") return false;
+    /* the caller is already refusing this registration; a seat that cannot be
+       handed back must not turn that refusal into a 500. Failing here leaves
+       the account exactly where it stood before this release — and claimSlot's
+       recycler picks the seat up at the next registration anyway. */
+    try { return (await repository.releaseEmptySlot(seat.slot.id, clock().toISOString())) > 0; }
+    catch (error) { return false; }
+  }
+
   async function registerWebDevice(input) {
     if (!input || !["phone", "computer"].includes(input.deviceType)) return denial("invalid_device_type");
     const installationId = normalizeInstallation(input.installationId);
@@ -25,23 +56,20 @@ function createDeviceRegistry(options) {
       return { allowed: true, reason: "allowed", slotId: existing.slotId, slotType: existing.slotType };
     }
 
-    /* seat model: sit on an existing seat with a free web place first, and
-       only then ask claimSlot for a NEW seat (which enforces the
-       admin-set allowed_devices count). */
-    let slot = typeof repository.findFreeSlot === "function"
-      ? await repository.findFreeSlot(input.userId, input.deviceType, "web") : null;
-    if (!slot) {
-      const claim = await repository.claimSlot({
-        userId: input.userId,
-        slotType: input.deviceType,
-        label: input.label || null,
-        createdAt: clock().toISOString(),
-        updatedAt: clock().toISOString(),
-      });
-      if (!claim || claim.claimed !== true) return denial(input.deviceType + "_slot_occupied");
-      slot = claim.slot;
-    }
-    /* v6.44.0 — THE HASH INDEX IS GLOBAL, AND THIS IS WHERE IT BITES.
+    /* v6.47.0 — WHOSE MACHINE IS THIS? ASKED BEFORE A SEAT IS TAKEN FOR IT.
+
+       The order used to be claim-then-check: a seat was taken out of the
+       student's paid allowance, the machine was then found to belong to
+       somebody else, and the refusal was returned — with the seat still
+       claimed and nothing on it. Measured on a live database (2026-09-09):
+       from a machine registered to another account, two refused attempts ate
+       one of the owner's four seats and never gave it back, and only an
+       administrator could see why "4 devices" had quietly become 3.
+
+       Not one rule moved. Only the moment they are asked did, and a refusal
+       now costs the student nothing.
+
+       v6.44.0 — THE HASH INDEX IS GLOBAL, AND THIS IS WHERE IT BITES.
 
        device_installations_active_hash_uniq is
            unique (installation_hash) where revoked_at is null
@@ -75,6 +103,13 @@ function createDeviceRegistry(options) {
          them behind a row only an administrator could see. */
       await repository.revokeInstallation(live.id, clock().toISOString());
     }
+
+    /* seat model: sit on an existing seat with a free web place first, and
+       only then ask claimSlot for a NEW seat (which enforces the
+       admin-set allowed_devices count). */
+    const seat = await takeSeat(input.userId, input.deviceType, "web", input.label);
+    if (!seat.slot) return denial(input.deviceType + "_slot_occupied");
+    const slot = seat.slot;
     let installation;
     try {
       installation = await repository.insertInstallation({
@@ -88,7 +123,9 @@ function createDeviceRegistry(options) {
       });
     } catch (error) {
       /* the lookup above is not in the same transaction as the insert, so two
-         browsers racing for one hash still land here. A denial, never a raw code. */
+         browsers racing for one hash still land here. A denial, never a raw
+         code — and never a seat left standing for a registration that failed. */
+      await releaseUnusedSeat(seat);
       if (error && error.code === "23505") return denial("device_registered_elsewhere");
       throw error;
     }
@@ -107,19 +144,18 @@ function createDeviceRegistry(options) {
   async function registerPanelDevice(input) {
     const installationId = normalizeInstallation(input.installationId);
     if (!installationId) return denial("invalid_installation_id");
-    let slot = typeof repository.findFreeSlot === "function"
-      ? await repository.findFreeSlot(input.userId, "computer", "panel") : null;
-    if (!slot) {
-      const claim = await repository.claimSlot({
-        userId: input.userId,
-        slotType: "computer",
-        label: input.label || null,
-        createdAt: clock().toISOString(),
-        updatedAt: clock().toISOString(),
-      });
-      if (!claim || claim.claimed !== true) return denial("panel_slot_occupied");
-      slot = claim.slot;
+    /* v6.47.0 — this machine, already registered to this account on this
+       client, is not a new registration and must not be charged a seat for
+       one. enrollDevice has asked validate() first since 2026-08-30, so the
+       route never reached the claim; called directly, this function used to,
+       and then failed the hash index on the way out — a refusal with a seat
+       taken. It answers for itself now. */
+    const already = await repository.getInstallation(input.userId, "panel", installationId);
+    if (already) {
+      return { allowed: true, reason: "allowed", slotId: already.slotId, slotType: "computer" };
     }
+    /* v6.47.0 — and the ownership question comes before the seat here too;
+       registerWebDevice above carries the full account of why. */
     /* v6.44.0 — the same global hash index reaches this path too, and until now
        every 23505 here was reported as panel_slot_occupied. That is the right
        answer for the index this comment block names (one active panel per
@@ -130,10 +166,12 @@ function createDeviceRegistry(options) {
       ? await repository.findLiveInstallationByHash(installationId) : null;
     if (live && live.userId !== input.userId) return denial("device_registered_elsewhere");
     if (live && live.clientType !== "panel") return denial("installation_id_conflict");
+    const seat = await takeSeat(input.userId, "computer", "panel", input.label);
+    if (!seat.slot) return denial("panel_slot_occupied");
     try {
       await repository.insertInstallation({
         userId: input.userId,
-        slotId: slot.id,
+        slotId: seat.slot.id,
         clientType: "panel",
         installationId,
         label: input.label || null,
@@ -141,10 +179,11 @@ function createDeviceRegistry(options) {
         lastSeenAt: clock().toISOString(),
       });
     } catch (error) {
+      await releaseUnusedSeat(seat);
       if (error && error.code === "23505") return denial("panel_slot_occupied");
       throw error;
     }
-    return { allowed: true, reason: "allowed", slotId: slot.id, slotType: "computer" };
+    return { allowed: true, reason: "allowed", slotId: seat.slot.id, slotType: "computer" };
   }
 
   async function validate(input) {
@@ -202,6 +241,30 @@ function createPgDeviceRepository(client) {
         "select count(*)::int as n from public.device_slots where user_id=$1 and status='active'",
         [row.userId]);
       if (Number(activeQ.rows[0].n) >= limit) {
+        /* v6.47.0 — AT THE CEILING, LOOK FOR A SEAT WITH NOTHING ON IT.
+           An account reaches its limit holding seats that carry no live
+           installation at all: the leak this release closes made them, a
+           machine that was wiped or sold leaves one behind, and an
+           administrator's Reset of the OTHER kind can leave the account
+           full of a type the student no longer uses. Refusing while such a
+           seat sits there tells a student who paid for four devices that
+           they have none — and only an administrator could tell them why.
+
+           Reusing it changes no count: the seat was already active and
+           already counted against allowed_devices. It only moves the seat to
+           where the student is standing. A seat with ANY live installation on
+           it, of either client, is never touched. */
+        const recycled = await client.query(
+          `update public.device_slots
+              set slot_type=$2,generation=generation+1,label=$3,updated_at=$4,reset_at=null
+            where id = (select s.id from public.device_slots s
+                         where s.user_id=$1 and s.status='active'
+                           and not exists (select 1 from public.device_installations i
+                                            where i.slot_id=s.id and i.revoked_at is null)
+                         order by s.created_at limit 1)
+            returning *`,
+          [row.userId,row.slotType,row.label,row.updatedAt]);
+        if (recycled.rows[0]) return { claimed: true, slot: mapSlot(recycled.rows[0]) };
         const current = await client.query(
           "select * from public.device_slots where user_id=$1 and slot_type=$2 order by created_at limit 1",
           [row.userId,row.slotType]);
@@ -254,6 +317,21 @@ function createPgDeviceRepository(client) {
          where i.installation_hash=$1 and i.revoked_at is null limit 1`,
         [installationHash]);
       return mapInstallation(rows[0]);
+    },
+    /* v6.47.0 — hand back a seat that has nothing live on it. Guarded rather
+       than trusted: the seat must still be active AND still be empty, so a
+       browser that sat down on it through findFreeSlot in the moment between
+       the failed insert and this update keeps it. 'reset' rather than deleted,
+       so claimSlot revives the same row and the seat keeps its history and its
+       generation counter. */
+    async releaseEmptySlot(slotId, releasedAt) {
+      const { rowCount } = await client.query(
+        `update public.device_slots set status='reset',reset_at=$2,updated_at=$2
+          where id=$1 and status='active'
+            and not exists (select 1 from public.device_installations i
+                             where i.slot_id=$1 and i.revoked_at is null)`,
+        [slotId,releasedAt]);
+      return rowCount;
     },
     async revokeInstallation(id, revokedAt) {
       const { rowCount } = await client.query(
@@ -309,17 +387,30 @@ function createPgDeviceRepository(client) {
   };
 }
 
-/* v6.35.0 — SELF-RELEASE OF THE COMPUTER SLOT.
+/* v6.47.0 — AND OF THE PHONE.
+   6.35.0 left the Phone with the administrator on the reasoning below: the
+   Phone is not what blocks a new machine from Photoshop. It blocks something
+   just as real. Since 6.45.0 the seats are ONE TOTAL COUNT — a phone the
+   student lost, sold or wiped holds a seat they paid for and cannot reach,
+   and the whole point of self-release is that a device you no longer have is
+   not a reason to wait for your teacher. Everything else is unchanged: a web
+   session only, the student's own account, once every seven days, and each
+   slot type keeps its own cooldown because releasing a dead phone must not
+   cost the student the computer release they may need the same week.
+
+   v6.35.0 — SELF-RELEASE OF THE COMPUTER SLOT.
    The whole permission question is decided here, in one pure function with no
    database and no clock of its own, so a test can execute every branch instead
    of reading the route and hoping. Three things decide it: the session must be
    a web session (a panel that has just been refused the slot must not be able
    to take it from the machine holding it), the slot must be the Computer one
-   (the Phone slot is not what blocks a new machine, and stays with the
-   administrator), and the student must not have done this in the last seven
-   days. The cooldown is what keeps a released slot a repair rather than a way
-   to run one licence around a classroom. */
+   (v6.47.0: or the Phone one — the list is RELEASABLE_SLOT_TYPES, and a slot
+   type that is neither is still refused), and the student must not have done
+   this to THAT slot type in the last seven days. The cooldown is what keeps a
+   released slot a repair rather than a way to run one licence around a
+   classroom. */
 const SELF_RELEASE_COOLDOWN_DAYS = 7;
+const RELEASABLE_SLOT_TYPES = ["computer", "phone"];
 const SELF_RELEASE_COOLDOWN_MS = SELF_RELEASE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
 function selfReleaseTime(value) {
   if (value === null || value === undefined || value === "") return 0;
@@ -334,7 +425,7 @@ function evaluateSelfRelease(input) {
   if (String(o.clientType || "") !== "web") {
     return { allowed: false, code: "web_session_required", nextAllowedAt: null };
   }
-  if (String(o.slotType || "") !== "computer") {
+  if (RELEASABLE_SLOT_TYPES.indexOf(String(o.slotType || "")) < 0) {
     return { allowed: false, code: "slot_not_releasable", nextAllowedAt: null };
   }
   const last = selfReleaseTime(o.lastSelfReleaseAt);
@@ -347,4 +438,4 @@ function evaluateSelfRelease(input) {
 }
 
 module.exports = { sha256, createDeviceRegistry, createPgDeviceRepository,
-  evaluateSelfRelease, SELF_RELEASE_COOLDOWN_DAYS };
+  evaluateSelfRelease, SELF_RELEASE_COOLDOWN_DAYS, RELEASABLE_SLOT_TYPES };
