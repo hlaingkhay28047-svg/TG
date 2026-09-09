@@ -72,6 +72,15 @@ const hasBurmese = s => /[က-႟]/.test(String(s || ""));
     const withComputer = d => { d.devices.computer = { registered: true }; };
     return {
       required: run(d => { d.reasons.web_app = "device_required"; }),
+      refused: (() => {
+        window.accEnrollReason = "computer_slot_occupied";
+        const d = JSON.parse(JSON.stringify(base));
+        d.reasons.web_app = "device_required";
+        window.unified = window.unified || {}; unified.entitlement = d;
+        const out = unifiedMessage(unifiedAccountStatus(d), d);
+        window.accEnrollReason = "";
+        return out;
+      })(),
       mismatch: run(d => { d.reasons.web_app = "device_mismatch"; withComputer(d); }),
       novel: run(d => { d.reasons.web_app = "quota_exhausted"; withComputer(d); }),
       granted: run(d => { d.allowed.web_app = true; withComputer(d); }),
@@ -103,10 +112,17 @@ const hasBurmese = s => /[က-႟]/.test(String(s || ""));
     Array.isArray(R.novel) && R.novel[1].indexOf("quota_exhausted") >= 0, R.novel);
 
   /* D) the banner speaks the running language in every branch */
-  const branches = ["required", "mismatch", "novel", "granted", "disabled", "suspended", "expiredLicence"];
+  const branches = ["required", "refused", "mismatch", "novel", "granted", "disabled", "suspended", "expiredLicence"];
   const english = branches.filter(k => !hasBurmese(R[k][0]) || !hasBurmese(R[k][1]));
   report("D) every branch answers in the running language, not English",
     english.length === 0, { english, sample: english.map(k => R[k]) });
+
+  /* G) a browser that ASKED for a slot and was refused is told the refusal,
+     not "choose a device" — the chooser would send it back to a button that
+     had already failed, which is what the owner's laptop was doing */
+  report("G) an enroll the server refused is reported as the refusal, with the server's own word",
+    Array.isArray(R.refused) && R.refused[1].indexOf("computer_slot_occupied") >= 0 &&
+    R.refused[0] !== R.required[0] && hasBurmese(R.refused[0]), R.refused);
 
   /* E) the earlier gates still win, and the granted state is unchanged */
   report("E) account status and licence still outrank the device branches",

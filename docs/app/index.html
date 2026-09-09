@@ -25389,6 +25389,9 @@ function accDevLimitMsg(){
 /* The unified backend owns the Phone/Computer slots. A 404 fallback keeps an
    older staged API usable during the rolling deployment; production uses the
    typed endpoint and never lets the browser choose or replace another slot. */
+/* v6.42.0 - what the last automatic registration was refused for, so the
+   banner can say it. Empty when the device is registered or was never asked. */
+var accEnrollReason = "";
 async function accRegisterDevice(){
   if (!acc.sess) return { ok:true };
   var did = deviceId();
@@ -25403,13 +25406,21 @@ async function accRegisterDevice(){
       })
     });
     if (typed.ok){
+      accEnrollReason = "";
       try { await unifiedRefresh(true); } catch(e){}
       return { ok:true };
     }
     if (typed.status !== 404){
       var typedBody = null; try { typedBody = await typed.json(); } catch(e){}
       if (accIsDeviceLimit(typed.status, typedBody)) return { ok:false, limit:true };
-      return { ok:false };
+      /* v6.42.0 - KEEP THE REASON. The server says exactly why it refused -
+         device_type_mismatch, computer_slot_occupied, invalid_installation_id -
+         and this line read that body and threw it away, so the app knew and
+         could not say. The owner's laptop, 2026-09-09: the phone registered and
+         working, the computer seat free, and the computer refused with nothing
+         on screen but "the server is not authorizing". The banner reads this. */
+      accEnrollReason = accDeviceReason(typedBody) || ("http_" + typed.status);
+      return { ok:false, reason: accEnrollReason };
     }
 
     var g = await accFetch("/rest/v1/devices?select=id&user_id=eq." + encodeURIComponent(acc.sess.uid) +
@@ -25425,7 +25436,8 @@ async function accRegisterDevice(){
 
     var body = null; try { body = await r.json(); } catch(e){}
     if (accIsDeviceLimit(r.status, body)) return { ok:false, limit:true };
-    return { ok:false };
+    accEnrollReason = accDeviceReason(body) || ("http_" + r.status);
+    return { ok:false, reason: accEnrollReason };
   } catch(e){ return { ok:true, offline:true }; }   /* offline: never block, retry next boot */
 }
 function accShowDeviceLimit(){
@@ -25915,6 +25927,13 @@ function unifiedMessage(status, data){
     /* the account, the licence and the permission all passed above, so the
        server can only be refusing on the device — and one of those two answers
        is a button away, not a wall. */
+    /* v6.42.0 - if this browser ASKED for a slot and was refused, that refusal
+       is the answer, not "choose a device": the owner's laptop had a free
+       computer seat and still could not take it, and the chooser would have
+       told him to press a button that had already failed. */
+    if (accEnrollReason) return pick(
+      {my:"ဒီစက်ကို မှတ်ပုံတင်လို့ မရပါ",en:"This device could not be registered",shn:"မၢႆၽၢင်ၶိူင်ႈၼႆႉ ဢမ်ႇလႆႈ",kac:"Ndai jaw hpe mying galaw n lu ai",th:"ลงทะเบียนอุปกรณ์นี้ไม่ได้",zh:"无法注册这台设备",vi:"Không thể đăng ký thiết bị này",id:"Perangkat ini tidak dapat didaftarkan",ms:"Peranti ini tidak dapat didaftarkan"},
+      {my:"Server က ငြင်းလိုက်တဲ့ အကြောင်းရင်း: " + accEnrollReason + " — အကောင့် ▸ စက်များ မှာ ကြည့်ပါ။",en:"The server refused with: " + accEnrollReason + " — see Account ▸ Devices.",shn:"Server ဢမ်ႇႁပ်ႉ - လွင်ႈတၢင်း: " + accEnrollReason + " - တူၺ်းတီႈ Account ▸ ၶိူင်ႈ။",kac:"Server gaw n hkap la ai - lam: " + accEnrollReason + " - Account ▸ Devices de yu u.",th:"เซิร์ฟเวอร์ปฏิเสธด้วยเหตุผล: " + accEnrollReason + " — ดูที่ บัญชี ▸ อุปกรณ์",zh:"服务器拒绝，原因：" + accEnrollReason + " — 请查看 账号 ▸ 设备。",vi:"Máy chủ từ chối với lý do: " + accEnrollReason + " — xem Tài khoản ▸ Thiết bị.",id:"Server menolak dengan alasan: " + accEnrollReason + " — lihat Akun ▸ Perangkat.",ms:"Pelayan menolak dengan sebab: " + accEnrollReason + " — lihat Akaun ▸ Peranti."});
     if (reason === "device_required" || (!d.phone && !d.computer)) return chooseDevice;
     if (reason === "device_mismatch") return pick(
       {my:"တခြားစက်တစ်လုံး မှတ်ပုံတင်ထားပါတယ်",en:"Another device is registered",shn:"မီးၶိူင်ႈတၢင်ႇဢၼ် မၢႆၽၢင်ဝႆႉ",kac:"Kaga jaw langai mying galaw da ai",th:"มีอุปกรณ์อื่นลงทะเบียนอยู่",zh:"已注册了另一台设备",vi:"Một thiết bị khác đã được đăng ký",id:"Perangkat lain sudah terdaftar",ms:"Peranti lain telah didaftarkan"},
