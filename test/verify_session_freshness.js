@@ -75,6 +75,15 @@ async function open(browser, secondsLeft) {
 
   /* ---- A) a token inside the margin is rotated BEFORE the call goes out ---- */
   let page = await open(browser, 60);
+  /* 6.39.4 — WAIT FOR BOOT TO FINISH ROTATING. This page opens with a spent
+     token, so the boot path rotates it (that is B2's feature). Setting the
+     session back inside the margin while that rotation is still in flight let
+     it land afterwards, leaving a healthy token at request time and no refresh
+     to observe — the measurement raced its own fixture, and under a loaded
+     machine it lost. This waits for the boot rotation to be visible, then puts
+     the spent token back and measures the request path. */
+  await page.waitForFunction(() => typeof acc !== "undefined" && acc.sess &&
+    acc.sess.access === "token-new", null, { timeout: 30000 }).catch(() => {});
   const near = await page.evaluate(async () => {
     /* boot itself already rotates a spent token — that is the feature. Put the
        session back inside the margin so the request path is what is measured. */

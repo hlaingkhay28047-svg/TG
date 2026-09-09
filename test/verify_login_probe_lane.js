@@ -91,7 +91,11 @@ report("B8) the computer it registers is a throwaway named by the run, never a s
 /* ---- C) the sources it mirrors ---- */
 report("C) the panel still signs in the way the script assumes — gateHeaders, client_kind:\"panel\", the DigitalOcean API host — and the web app still signs in from its own origin with apikey anon",
   /function gateHeaders\(tok, json\) \{\n  const h = \{ "Accept": "application\/json" \};/.test(PANEL) &&
-  /grant_type=password",\n\s+\{ method: "POST", body: JSON\.stringify\(\{ email: em, password: pw, client_kind: "panel" \}\) \}/.test(PANEL) &&
+  /* 6.39.4 — hnkNoRetry rides in the same options object now (the panel used to
+     re-send a sign-in that met a 5xx, spending two of the server's attempts for
+     one press), so the pin follows the call and additionally requires it: what
+     the lane mirrors is ONE post per press. */
+  /grant_type=password",\n\s+\{ method: "POST", hnkNoRetry: true,\n\s+body: JSON\.stringify\(\{ email: em, password: pw, client_kind: "panel" \}\) \}/.test(PANEL) &&
   /const GATE_API_URL = "https:\/\/hnk-ai-tools-3-s4nnu\.ondigitalocean\.app\/api";/.test(PANEL) &&
   /var SB_URL  = location\.origin \+ "\/api";/.test(APP) && /var h = \{ "apikey": SB_ANON, "Authorization": "Bearer " \+ \(tok \|\| SB_ANON\) \};/.test(APP), null);
 
