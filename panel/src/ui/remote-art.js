@@ -41,6 +41,17 @@ var queue = [];
 var active = 0;
 var stats = { asked: 0, ok: 0, failed: 0, bytes: 0, lastError: "" };
 
+/* v6.58.2 — THE SEVEN THE OWNER PHOTOGRAPHED THE SECOND TIME.
+   6.58.1 gave the diagnostic a tongue and the next card named them:
+   "<img in .wfv no src> — img failed to load ×7". Not the gallery: the
+   WORKFLOW CARDS. paint() below fetches the bytes before it has a src to
+   give, six at a time across 194 cards, so at any instant several <img>
+   elements are sitting in the document with nothing in them — and in this
+   renderer that is a load error each. Seven were in flight when the card was
+   drawn. Same 1x1 transparent GIF the panel uses everywhere else; the two
+   literals are checked identical by verify_panel_renderer_safety. */
+var BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
 var B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 /* the Library's encoder, which has run in Photoshop since 6.47.1.
 
@@ -126,7 +137,14 @@ function fetchArt(url) {
    bytes never arrive, so the caller can show a labelled placeholder rather
    than the silent black box <img> left behind. */
 function paint(img, url, onFail) {
-  if (!img || !url) return;
+  if (!img) return;
+  /* BEFORE ANYTHING ELSE, AND BEFORE ANY RETURN. A caller that asks for a
+     picture has an <img> in its hand either way, and every path out of here
+     that does not set a src leaves it empty: no url at all, a fetch still in
+     flight, or a fetch that failed. This renderer reports each of those as a
+     picture it could not load. */
+  try { if (!img.getAttribute || !img.getAttribute("src")) img.src = BLANK; } catch (e0) { }
+  if (!url) return;
   stats.asked++;
   if (!isRemote(url)) { img.src = url; return; }
   if (cache[url]) { img.src = cache[url]; return; }
@@ -151,6 +169,7 @@ function paintBg(node, url, onFail) {
 }
 
 var API = {
+  BLANK: BLANK,
   paint: paint,
   paintBg: paintBg,
   load: fetchArt,

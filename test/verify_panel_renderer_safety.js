@@ -53,6 +53,20 @@
       The rule is simple enough to check: no <img> in the markup ships without
       a src, and removeAttribute("src") appears nowhere in the panel.
 
+      v6.58.2 — AND THE SEVEN CAME BACK, WHICH IS HOW THE FIX PROVED ITSELF.
+      6.58.1 gave the reporter a tongue and the next card named them:
+      "<img in .wfv no src> ×7". Not the gallery — the WORKFLOW CARDS. .wfv is
+      vidWfCard's picture wrapper, and its <img> goes through pnlArt into
+      remoteArt.paint, which fetches the bytes BEFORE it has a src to give.
+      Six fetches run at a time across 194 cards, so several of those elements
+      are always sitting in the document with nothing in them. paint() now
+      fills the element first, before every return it has.
+
+      That is the shape of this whole defect: not one bug but one RULE — an
+      <img> must never be reachable without a src — broken in four places
+      (static markup, a gallery await, a fetch await, and a src built out of
+      state that can be absent). J1..J8 below are that rule, not those four.
+
    E) CI runs this test.
 
    v6.38.1 / panel 6.107.1 — THE SECOND PHOTOGRAPH. With 6.107.0 installed the
@@ -616,6 +630,39 @@ const READ_CARD = () => {
   report("J6) the self-test names a failing <img> by class, read the way UXP answers",
     namer.indexOf('getAttribute("class")') >= 0 && !/\.className/.test(namer),
     { readsClassName: /\.className/.test(namer) });
+
+  /* v6.58.2 — the fetch path. Every card picture in the panel comes through
+     here, and it is the one place that legitimately has no src to give yet. */
+  const RA = fs.readFileSync(path.join(PANEL, "src/ui/remote-art.js"), "utf8");
+  const paintFn = (RA.match(/function paint\(img, url, onFail\) \{[\s\S]*?\n\}/) || [])[0] || "";
+  /* ONE return may precede the fill, and only one: the guard for having no
+     element at all, which has nothing to fill. Every other way out of paint —
+     no url, a local path, the cache, and above all the fetch — must find the
+     element already carrying something. */
+  const iFill  = paintFn.indexOf("BLANK");
+  const iNoUrl = paintFn.indexOf("if (!url)");
+  const iFetch = paintFn.indexOf("fetchArt");
+  const before = paintFn.slice(0, iFill);
+  const retsBeforeFill = (before.match(/\breturn\b/g) || []).length;
+  report("J7) a picture element is filled before every way out of paint that leaves one behind",
+    !!paintFn && iFill > 0 && retsBeforeFill === 1 && /if \(!img\) return;/.test(before) &&
+    iNoUrl > iFill && iFetch > iFill,
+    { fillAt: iFill, returnsBeforeFill: retsBeforeFill, noUrlAt: iNoUrl, fetchAt: iFetch });
+
+  /* one placeholder, two files — a second literal that drifts is a second bug */
+  const raBlank = (RA.match(/var BLANK = "([^"]+)"/) || [])[1] || "";
+  report("J8) the fetch path and the panel agree on the same placeholder, byte for byte",
+    !!raBlank && !!blank && raBlank === blank && /API = \{\s*BLANK: BLANK/.test(RA),
+    { same: raBlank === blank, exported: /BLANK: BLANK/.test(RA) });
+
+  /* the third road: a src ASSEMBLED out of state. "data:image/png;base64," +
+     undefined is a string, so it throws nothing and reads as present — and is
+     not a picture. One helper checks the payload, so the rule is a grep. */
+  const builtRaw = (MAIN_CODE.match(/\.src\s*=\s*"data:/g) || []).length;
+  const helper2 = (MAIN_CODE.match(/function dataSrc\(el, mime, b64\) \{[\s\S]*?\n\}/) || [])[0] || "";
+  report("J9) no data: URL is assembled straight onto a .src — they go through one checked helper",
+    builtRaw === 0 && /b64 \?/.test(helper2) && /IMG_BLANK/.test(helper2),
+    { rawAssignments: builtRaw, helperChecksPayload: /b64 \?/.test(helper2) });
 
   const CI = fs.readFileSync(path.join(ROOT, ".github/workflows/test.yml"), "utf8");
   report("E) CI runs this test", CI.includes("node test/verify_panel_renderer_safety.js"), null);
