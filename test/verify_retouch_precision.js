@@ -21,7 +21,22 @@ function report(name, ok, extra) {
 report("A) contour helpers exist, ride into the render worker, and the zones carry the measured polygons + under-eye ellipses",
   /^function stLmPoly\(pts,idx\)/m.test(APP) && /^function stLmBand\(pts,idx,half\)/m.test(APP) && /^function stLmQuad\(a,b,half\)/m.test(APP) &&
   /^function stPolyScale\(poly,sc\)/m.test(APP) && /^function stShapeAlpha\(W,H,shapes,feather\)/m.test(APP) &&
-  /stLmEll,stLmRange,stLmPoly,stLmBand,stLmQuad,stPolyScale,stShapeAlpha,stZonesOneFace,/.test(APP) &&
+  /* v6.59.0 — this used to pin one literal run of names, which broke the moment
+     a helper was inserted into the middle of the array for a good reason. What
+     it is really asking is that every helper stApplySkin reaches is IN the
+     worker's list, so it asks that, name by name — a callee missing from the
+     array is a ReferenceError inside the worker and every HD frame is dropped
+     silently (that is how the 6.59.0 teeth refactor showed up, two checks down
+     at G). New helpers belong on this list. */
+  (() => {
+    const m = APP.match(/var fns=\[([^\]]+)\];/);
+    if (!m) return false;
+    const have = m[1].split(",").map(x => x.trim());
+    return ["stLmEll", "stLmRange", "stLmPoly", "stLmBand", "stLmQuad", "stPolyScale",
+            "stShapeBytes", "stShapeAlpha", "stFaceSetOf", "stMouthsOf", "stTeethShape",
+            "stZonesOneFace", "stZonesFromLM", "stFaceZones", "stApplySkin", "stRunPipeline"]
+           .every(n => have.indexOf(n) >= 0);
+  })() &&
   /R\.poly=\{ lips:stLmPoly\(pts,stLmRange\(48,59\)\), lipInner:stLmPoly\(pts,stLmRange\(60,67\)\),/.test(APP) &&
   /R\.underEyeL=F\.E\(-0\.5,0\.40,0\.36,0\.20\); R\.underEyeR=F\.E\(0\.5,0\.40,0\.36,0\.20\);/.test(APP), null);
 report("A2) the passes read the contour alpha and fall back to the ellipse test only when a face carries no polygons",
