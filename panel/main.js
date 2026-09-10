@@ -258,6 +258,16 @@ function ffIcon(name, tint, cls) {
    it when a sprite icon stands in front — the sprite IS the glyph. */
 const ICN_LEAD = /^(?:[\u2190-\u21FF\u2600-\u27BF\u2B00-\u2BFF\u3030\u25A0-\u25FF\u2B50\uFE0F\u200D]|[\uD83C-\uD83E][\uDC00-\uDFFF])+\s*/;
 function stripIcn(s) { return String(s == null ? "" : s).replace(ICN_LEAD, ""); }
+/* v6.53.0 — UXP ANSWERS null, NOT "", FOR AN ELEMENT WITH NO class ATTRIBUTE.
+   The owner's Photoshop self-test found this the expensive way: four Setup
+   wirings dead and one button label blank, every one of them the same throw at
+   the single line that read className without checking. Each of the four paints
+   an accordion title of exactly one shape — <span id="..."> with an id and no
+   class, inside <div class="grp-h"> — and setup:statics threw at platPS seven
+   lines before it would have labelled btnCheckUpdate. One null, six red rows.
+   Every className read goes through here now, so the next element that ships
+   without a class cannot repeat it. */
+function clsOf(el) { return (el && el.className != null) ? String(el.className) : ""; }
 function setIcnText(el, name, tint, text, cls) {
   if (!el) return;
   el.textContent = "";
@@ -273,7 +283,7 @@ function setIcnText(el, name, tint, text, cls) {
   const pn = el.parentNode;
   if (host !== el || (pn && pn.classList && pn.classList.contains("grp-h"))) {
     host.__icn = host.firstChild; host.__txt = host.lastChild.nodeValue;
-    host.__base = host.className.replace(/\s*\bicn-wrap\b/g, "");
+    host.__base = clsOf(host).replace(/\s*\bicn-wrap\b/g, "");
     fitBtnInLater(host);
   }
 }
@@ -6339,7 +6349,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.121.0";
+const PANEL_VERSION = "6.122.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6839,13 +6849,13 @@ function gatePaintPlan() {
    ::after); the gear's own "on" (Setup open) is left as switchPage set it. */
 function gatePaintAccDot(days) {
   const g = gateEl("btnGearSetup"); if (!g) return;
-  const on = /\bon\b/.test(g.className);
+  const on = /\bon\b/.test(clsOf(g));
   let cls = "nav-gear" + (on ? " on" : "");
   if (gateS.sess) {
     const premium = days > 0 || gatePremium(gateS.prof);
     cls += premium ? (days <= 7 ? " acc-soon" : " acc-pro") : " acc-in";
   }
-  if (g.className !== cls) g.className = cls;
+  if (clsOf(g) !== cls) g.className = cls;
 }
 
 /* ---------------- flow ---------------- */
@@ -10551,8 +10561,8 @@ function renderVidWf() {
   while (host.firstChild) host.removeChild(host.firstChild);
   P.WF.forEach(function (w) { host.appendChild(vidWfCard(w)); });
   /* the app widens the last card of an odd shelf so the grid has no hole */
-  if (P.WF.length % 2 === 1 && host.lastChild && host.lastChild.className)
-    host.lastChild.className = host.lastChild.className + " wf-span2";
+  if (P.WF.length % 2 === 1 && host.lastChild && clsOf(host.lastChild))
+    host.lastChild.className = clsOf(host.lastChild) + " wf-span2";
 
   const w = vidWfActive ? P.byKey(vidWfActive) : null;
   const opts = $("vidWfOpts");
@@ -10894,8 +10904,8 @@ function renderVtWf() {
   if (!host || !P) return;
   while (host.firstChild) host.removeChild(host.firstChild);
   P.WF.forEach(function (w) { host.appendChild(vtWfCard(w)); });
-  if (P.WF.length % 2 === 1 && host.lastChild && host.lastChild.className)
-    host.lastChild.className = host.lastChild.className + " wf-span2";
+  if (P.WF.length % 2 === 1 && host.lastChild && clsOf(host.lastChild))
+    host.lastChild.className = clsOf(host.lastChild) + " wf-span2";
   const w = vtWfActive ? P.byKey(vtWfActive) : null;
   const hint = $("vtWfHint");
   if (hint) hint.textContent = w ? stripIcn(P.tr(w.hint)) : ff9(VT_L.wfIntroHint);
@@ -11041,7 +11051,7 @@ function renderVWiz() {
     if (vwiz.kind === "v2v" && d && !d.prompt) body.appendChild(el("mut", vwizL("noPrompt")));
     else {
       const g = el("grp"); const gh = mkBtn("grp-h", ""); gh.textContent = vwizL("viewPrompt") + " · " + txt.length;
-      ffPressable(gh, function () { g.className = g.className.indexOf("open") >= 0 ? "grp" : "grp open"; });
+      ffPressable(gh, function () { g.className = clsOf(g).indexOf("open") >= 0 ? "grp" : "grp open"; });
       const gb = el("grp-b"); const ta = document.createElement("textarea"); ta.className = "inp"; ta.rows = 6; ta.value = txt;
       ta.addEventListener("input", function () { if (pageBox) { pageBox.value = ta.value; if (vwiz.kind === "i2v") vidPaintPromptCount(); } });
       gb.appendChild(ta); g.appendChild(gh); g.appendChild(gb); body.appendChild(g);
@@ -12694,7 +12704,7 @@ function endBusy() {
   try { setStage(null); } catch (e) { }
   /* a run that ends without a closing message must not leave its progress
      toast up forever — give whatever is showing the app's 2.6 s */
-  try { const tb = $("toast"); if (tb && /\bon\b/.test(tb.className)) toastArm(); } catch (e) { }
+  try { const tb = $("toast"); if (tb && /\bon\b/.test(clsOf(tb))) toastArm(); } catch (e) { }
 }
 
 /* ---------------- Settings persistence (file-backed JSON) ---------------- */
@@ -14799,7 +14809,7 @@ const GEN_GUIDES = {
 /* strip every learn-state class off a button so we can repaint one cleanly */
 function clearArmClass(el) {
   if (!el) return;
-  el.className = el.className.replace(" armed", "").replace(" armp", "").replace(" go", "");
+  el.className = clsOf(el).replace(" armed", "").replace(" armp", "").replace(" go", "");
 }
 function setArmClass(el, cls) {
   if (!el) return;
@@ -14824,7 +14834,7 @@ function disarm() {
 function greenFlash(el) {
   if (!el) return;
   setArmClass(el, "go");
-  setTimeout(function () { try { el.className = el.className.replace(" go", ""); } catch (e) { } }, 700);
+  setTimeout(function () { try { el.className = clsOf(el).replace(" go", ""); } catch (e) { } }, 700);
 }
 
 /* Stage 1 = the teaching guide (what it does + what it needs). */
@@ -15572,7 +15582,7 @@ function histRemoveP(idx) {
 }
 function histClearP(say) {
   state.history = []; state.histSel = -1; state.resultB64 = null; state.resultMime = null;
-  const rb = $("resultBox"); if (rb) rb.className = rb.className.replace(/ ?\bon\b/, "");
+  const rb = $("resultBox"); if (rb) rb.className = clsOf(rb).replace(/ ?\bon\b/, "");
   try { refreshCompare(); } catch (e) { }
   renderHistory();
   if (say !== false) setStatus(ff9(HIST_L.cleared), "ok");
@@ -16706,7 +16716,7 @@ function bindFreeform() {
   }
   const adv = $("genAdvH"), grp = $("genGrpAdvanced");
   if (adv && grp) adv.addEventListener("click", function () {
-    grp.className = grp.className.indexOf(" open") >= 0 ? "grp app-grp" : "grp app-grp open";
+    grp.className = clsOf(grp).indexOf(" open") >= 0 ? "grp app-grp" : "grp app-grp open";
   });
   const eng = $("genEngine");
   if (eng) eng.addEventListener("click", function () { switchPage("setup"); saveSettings(); });
@@ -16819,7 +16829,7 @@ function stickyGenUpdate() {
     const ref = stickyGenNatural(btn);
     const card = ref.closest ? ref.closest(".card") : null;
     const pageEl = ref.closest ? ref.closest(".page") : null;
-    const shown = pageEl && pageEl.className.indexOf(" on") >= 0 && btn.style.display !== "none";
+    const shown = pageEl && clsOf(pageEl).indexOf(" on") >= 0 && btn.style.display !== "none";
     if (!shown || !card) { stickyGenUndock(btn); continue; }
     const nr = ref.getBoundingClientRect(), cr = card.getBoundingClientRect();
     const h = ref === btn ? nr.height : parseFloat(ref.style.height) || nr.height;
@@ -16857,7 +16867,7 @@ function fabTopPaint() {
   if (!b || !pages) return;
   const on = pages.scrollTop > 1200;
   const cls = "fab-top" + (on ? " on" : "");
-  if (b.className !== cls) b.className = cls;
+  if (clsOf(b) !== cls) b.className = cls;
 }
 function fabTopBind(pages) {
   const b = $("btnTop");
@@ -17460,8 +17470,8 @@ function bindAppGroup(grpId, headId) {
   const g = $(grpId), h = $(headId);
   if (!g || !h) return;
   h.addEventListener("click", function () {
-    g.className = /\bopen\b/.test(g.className)
-      ? g.className.replace(/\s*\bopen\b/g, "")
+    g.className = /\bopen\b/.test(clsOf(g))
+      ? clsOf(g).replace(/\s*\bopen\b/g, "")
       : (g.className + " open");
   });
 }
@@ -17647,7 +17657,7 @@ function renderSubtabs(activeKey) {
 function subFadePaint() {
   const host = $("subtabs"), fl = $("subfadeL"), fr = $("subfadeR");
   if (!host || !fl || !fr) return;
-  const on = /\bon\b/.test(host.className);
+  const on = /\bon\b/.test(clsOf(host));
   const atStart = host.scrollLeft <= 1;
   const atEnd = host.scrollLeft + host.clientWidth >= host.scrollWidth - 1;
   fl.className = "subfade subfade-l" + (on && !atStart ? " on" : "");
@@ -17672,8 +17682,8 @@ function switchPage(key) {
     if (pe) {
       /* v6.51.0 — a rebuilt page keeps its scope classes (.apg app-parity,
          .stpg the studio suites); only .on toggles */
-      const apg = /\bapg\b/.test(pe.className) ? " apg" : "";
-      const stpg = /\bstpg\b/.test(pe.className) ? " stpg" : "";
+      const apg = /\bapg\b/.test(clsOf(pe)) ? " apg" : "";
+      const stpg = /\bstpg\b/.test(clsOf(pe)) ? " stpg" : "";
       pe.className = "page" + apg + stpg + (active && p.page === active.page ? " on" : "");
     }
   }
@@ -17692,7 +17702,7 @@ function switchPage(key) {
   const gear = $("btnGearSetup");
   if (gear) {
     const onSetup = key === "setup";
-    gear.className = gear.className.replace(/\s*\bon\b/g, "") + (onSetup ? " on" : "");
+    gear.className = clsOf(gear).replace(/\s*\bon\b/g, "") + (onSetup ? " on" : "");
     shellPaintIcon(gear, "nav-gear-ic", "i-gear", onSetup ? "hi" : "cream");
   }
   renderSubtabs(key);

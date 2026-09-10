@@ -53,8 +53,22 @@ try {
          photographed, so it is worth naming rather than dropping */
       var t = ev.target;
       if (t && t !== window && t.tagName) {
-        push("load", t.tagName.toLowerCase() + " failed to load",
-          t.getAttribute ? (t.getAttribute("src") || "") : "", 0, 0);
+        /* v6.53.0 — the owner's card showed nine of these as a bare "load"
+           with nothing beside it, because getAttribute("src") came back empty
+           and there was nothing else to say. Name the element every way it can
+           be named, so the next photograph identifies WHICH pictures failed
+           instead of only how many. */
+        var who = "";
+        try {
+          who = (t.getAttribute && t.getAttribute("src")) || t.src || "";
+          if (!who) {
+            who = "<" + t.tagName.toLowerCase() +
+              (t.id ? " #" + t.id : "") +
+              (t.className != null && String(t.className) ? " ." + String(t.className).split(/\s+/)[0] : "") +
+              " no src>";
+          }
+        } catch (e) { who = ""; }
+        push("load", t.tagName.toLowerCase() + " failed to load", who, 0, 0);
         return;
       }
       push("error", ev.message || String(ev.error || "error"), ev.filename, ev.lineno, ev.colno);
