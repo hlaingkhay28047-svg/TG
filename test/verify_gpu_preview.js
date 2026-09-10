@@ -146,12 +146,25 @@ function report(name, ok, detail) {
   if (!ok) failures++;
 }
 
+/* v6.59.0 — A TEST THAT DIES WITHOUT SAYING WHY IS A BAD TEST.
+   This one went red on CI four seconds in, with nothing in the log to read but
+   the container teardown: the async body rejected, node exited non-zero, and
+   the reason was thrown away. Everything below now runs inside a reporter that
+   prints the exception, the page's own errors and how far the run got. The
+   exit code is unchanged — a throw is still a failure — but the next one names
+   itself in the first line instead of costing a cycle to find. */
+let PHASE = "starting";
+process.on("unhandledRejection", (e) => {
+  console.log("FAIL — the run threw during: " + PHASE + "  :: " + (e && e.stack || e));
+  process.exit(1);
+});
 (async () => {
   const browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] });
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
   const pageErrors = [];
   page.on("pageerror", e => pageErrors.push(String(e)));
+  PHASE = "page.goto";
   await page.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "networkidle" });
 
   /* the studio's functions live in the page; everything below runs there */
@@ -339,7 +352,9 @@ function report(name, ok, detail) {
         grade: { evSh: "#1e3a6e", evHi: "#ffcf9a", evAmt: 55, evBal: -10, evSat: 20 } }
   };
 
+  PHASE = "the main page.evaluate (recipes, teeth, stage 4b)";
   const results = await page.evaluate(async (RECIPES) => {
+    /* eslint-disable no-undef */
     const W = 256, H = 256;
     /* a deterministic source with full tonal and hue coverage, so no stage is
        exercised on a flat patch that would hide an error */
@@ -367,7 +382,11 @@ function report(name, ok, detail) {
       };
     }
     const out = {};
+    /* the browser side reports its own progress too: an exception here used to
+       reach node as a bare rejection with no idea which recipe was in hand */
+    window.__hnkPhase = "recipes";
     for (const name in RECIPES) {
+      window.__hnkPhase = "recipe: " + name;
       const r = RECIPES[name];
       const t1 = Object.assign(zeroT1(), r.t1 || {});
       /* v6.57.0 — an effT2 recipe is set on state.st.t2 and read back through
@@ -564,6 +583,7 @@ function report(name, ok, detail) {
        can actually act on — skin-toned ground, a bright neutral band where the
        inner lip will sit — and a fabricated 68-point face over it. Both paths
        are handed the same landmarks, so any disagreement is the shader's. */
+    window.__hnkPhase = "teeth";
     let teethCheck = null;
     {
       const tc = document.createElement("canvas"); tc.width = W; tc.height = H;
@@ -657,6 +677,7 @@ function report(name, ok, detail) {
        key were the tonal half alone the second frame would reuse the first
        radius and quietly draw the wrong picture — which is exactly the shape of
        the plane-reuse trap check C8 exists for. */
+    window.__hnkPhase = "stage 4b radius cache";
     let fsRadiusReuse = null;
     {
       const grabF = (cv) => { const q = document.createElement("canvas"); q.width = W; q.height = H;
@@ -689,6 +710,7 @@ function report(name, ok, detail) {
        the GL frame flushed through a real draw so the timer cannot stop before
        the GPU has finished — the mistake that made the first Vibe Glow
        measurement in 6.58.0 read backwards. */
+    window.__hnkPhase = "stage 4b speed";
     let fsSpeed = null;
     {
       const SW = 512, SH = 768;
@@ -766,6 +788,7 @@ function report(name, ok, detail) {
        program still links, the fast path still exists, and only stage (4b) is
        gone. This is the check that stands between one new stage and losing the
        whole fast path on a student's machine. */
+    window.__hnkPhase = "stage 4b build fallback";
     let fsBuildFallback = null;
     {
       const keptDecl = window.ST_GPU_FS_DECL;
@@ -864,7 +887,15 @@ function report(name, ok, detail) {
       stillAcceptsSmoothWhenFsSpent, noUnits,
       stillAcceptsTonalWhenT4Spent, maskProvenance, planeReuse,
       acceptsGlow, refusesGlowWhenSpent, stillAcceptsTonalWhenGlowSpent, glowCoverage };
-  }, RECIPES);
+  }, RECIPES).catch(async (e) => {
+    let where = "?";
+    try { where = await page.evaluate(() => window.__hnkPhase || "?"); } catch (e2) { }
+    console.log("FAIL — the browser threw inside the comparison, at: " + where +
+      "  :: " + (e && e.message || e));
+    console.log("       page errors so far: " + JSON.stringify(pageErrors.slice(0, 5)));
+    await browser.close();
+    process.exit(1);
+  });
 
   /* ---- B) the two paths agree, recipe by recipe ----
      The bar: no channel off by more than the arithmetic width can explain (1,
