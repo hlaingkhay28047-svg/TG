@@ -9,7 +9,8 @@
  * source, at the SAME size, through stRunPipeline (the CPU, the one that
  * exports) and through stGpuRender (the shader), and compares the two images
  * pixel by pixel, on recipes chosen to exercise every stage the shader claims:
- * the tonal LUT, the colour pass, HSL bands, split-grading and B&W.
+ * the tonal LUT, the colour pass, HSL bands, split-grading, B&W, and — since
+ * v6.51.0 — the vignette (7) and the grain (8).
  *
  * HOW CLOSE THE TWO ACTUALLY ARE, MEASURED. The colour pass comes back BIT FOR
  * BIT identical. The rest do not, and the honest reason is arithmetic width,
@@ -24,6 +25,12 @@
  *     black & white      285 differ, by 1
  *     split-grade         71 differ, by at most 2
  *     everything at once  28 differ, by at most 2
+ *     grain (v6.51.0)      0 channels differ
+ *
+ * Grain is exact for a reason worth stating: v4.78 made the noise tile a SEEDED
+ * mulberry32 bitmap, so the shader can upload the very bytes the CPU is
+ * compositing instead of generating its own field. Only the overlay blend had
+ * to be ported, and it comes back bit for bit.
  *
  * The 2 belongs to the grade block alone and has a specific cause worth
  * writing down: stRunPipeline indexes its per-zone weight table with `lum3|0`,
@@ -31,6 +38,26 @@
  * in float64 and exactly 127.0 in float32, so the two read neighbouring rows
  * of the table, and one index step through two zone tints is two counts out.
  * No shader can avoid that; it is a property of the CPU's own truncation.
+ *
+ * THE VIGNETTE IS A THIRD CASE, AND ITS BAR IS WIDER ON PURPOSE. Stage (7) is
+ * not a per-pixel loop at all: the CPU paints a two-stop radial gradient with
+ * the canvas, and Skia DITHERS gradients to hide banding. The dither is a
+ * sub-count perturbation that varies with position, so a shader drawing the
+ * same clean ramp lands one count away wherever the dither pushed a pixel over
+ * a rounding edge. Measured, on a flat grey plate so nothing but the vignette
+ * can move a pixel:
+ *
+ *   - the ramp itself is EXACT: reading out along the radius the two paths give
+ *     200,200,…,195,190,184 identically, and the CPU never brightens (0 rises
+ *     in 127 steps), so the centre, the two radii and the falloff all match;
+ *   - the pixels that do differ cluster in a 4x4 lattice — 2.3% of pixels in
+ *     some cells against 31.6%, 27.6%, 23.5% in others. A wrong radius or
+ *     falloff cannot do that; it would not care where a pixel sits in a 4x4
+ *     grid. An ordered dither is the only thing that does.
+ *
+ * So the vignette is allowed one count on many more pixels, and check F2 below
+ * is what stops that from becoming an excuse: it moves the vignette by a SINGLE
+ * step (60 -> 61) and requires the wider bar to fail anyway.
  *
  * WHY THESE NUMBERS ARE A BAR AND NOT AN EXCUSE. A tolerance is only worth
  * something if a real mistake fails it, so this file proves that rather than
@@ -88,6 +115,16 @@ function report(name, ok, detail) {
       { grade: { evSh: "#2a4a80", evMid: "#806040", evHi: "#ffd2a0", evAmt: 70, evBal: 20, evSat: 35 } },
     "black & white with channel mixer":
       { bw: { on: true, r: 40, g: -20, b: 30 } },
+    /* stage (8): the noise tile is the seeded mulberry32 bitmap v4.78 made
+       deterministic, so the shader samples the CPU's own bytes — this one is
+       expected to come back bit-identical, and it does */
+    "grain only":
+      { t1: { grn: 45 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    /* stage (7): see the dither note at the top of this file */
+    "vignette only":
+      { t1: { vig: 60 }, bar: { maxd: 1, pct: 0.15, mean: 0.15 } },
+    "vignette + grain over a grade":
+      { t1: { exp: 15, con: 12, vig: 40, grn: 30 }, bar: { maxd: 2, pct: 0.25, mean: 0.30 } },
     "everything at once":
       { t1: { exp: 20, bri: 10, con: 15, hi: -20, sh: 25, wht: 12, blk: -8, dhz: 15, wrm: 25, tnt: -18, sat: 20, vib: 30 },
         hsl: { r: { h: 12, s: 20, l: 6 }, b: { h: -10, s: 25, l: -8 } },
@@ -196,8 +233,6 @@ function report(name, ok, detail) {
     let a;
     a = mk(); a.t1.shp = 40; refusals["sharpen (5)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.cla = 40; refusals["clarity (5)"] = stGpuCan(a.t1, a.t2, a.pv, null);
-    a = mk(); a.t1.grn = 30; refusals["grain (8)"] = stGpuCan(a.t1, a.t2, a.pv, null);
-    a = mk(); a.t1.vig = 30; refusals["vignette (7)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.bgb = 30; refusals["background blur (6)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.glow = 30; refusals["vibe glow (6b)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t2.smooth = 40; refusals["skin smoothing (4)"] = stGpuCan(a.t1, a.t2, a.pv, null);
@@ -207,11 +242,15 @@ function report(name, ok, detail) {
     a = mk(); a.pv.frame = "white"; refusals["frame (9)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); refusals["heal taps (1b)"] = stGpuCan(a.t1, a.t2, a.pv, [{ u: 0.5, v: 0.5, ur: 0.05 }]);
     a = mk(); a.t1.__unknown_future_control = 25; refusals["an unknown control"] = stGpuCan(a.t1, a.t2, a.pv, null);
-    /* and it must ACCEPT a plain tonal recipe, or the path is dead code */
+    /* and it must ACCEPT what the shader really does implement, or the path is
+       dead code. v6.51.0 added stages (7) and (8), so those must pass the gate
+       now — a refusal here would leave the new shader work unreachable. */
     a = mk(); a.t1.exp = 20; a.t1.sat = 15;
     const accepts = stGpuCan(a.t1, a.t2, a.pv, null);
+    a = mk(); a.t1.vig = 30; const acceptsVig = stGpuCan(a.t1, a.t2, a.pv, null);
+    a = mk(); a.t1.grn = 30; const acceptsGrn = stGpuCan(a.t1, a.t2, a.pv, null);
 
-    return { out, refusals, accepts };
+    return { out, refusals, accepts, acceptsVig, acceptsGrn };
   }, RECIPES);
 
   /* ---- B) the two paths agree, recipe by recipe ----
@@ -222,20 +261,25 @@ function report(name, ok, detail) {
   for (const name in results.out) {
     const r = results.out[name];
     if (r.error) { report("B) GPU matches the CPU — " + name, false, r); continue; }
-    const cap = r.gradeless ? 1 : 2;
+    /* a recipe may state its own bar where a canvas stage makes the default
+       impossible; everything else is held to float32 arithmetic alone */
+    const bar = (RECIPES[name] && RECIPES[name].bar) ||
+                { maxd: r.gradeless ? 1 : 2, pct: 0.002, mean: 0.01 };
     const frac = r.diffN / r.chanN;
-    report("B) GPU matches the CPU to within float32 — " + name,
-      r.maxd <= cap && frac < 0.002 && r.mean < 0.01,
-      { maxd: r.maxd, cap: cap, differing: r.diffN + "/" + r.chanN,
-        pct: (frac * 100).toFixed(4) + "%", mean: r.mean, worst: r.worst });
+    report("B) GPU matches the CPU within its stated bar — " + name,
+      r.maxd <= bar.maxd && frac <= bar.pct && r.mean <= bar.mean,
+      { maxd: r.maxd, allowed: bar.maxd, differing: r.diffN + "/" + r.chanN,
+        pct: (frac * 100).toFixed(4) + "%", allowedPct: (bar.pct * 100) + "%",
+        mean: r.mean, allowedMean: bar.mean, worst: r.worst });
   }
 
   /* ---- C) the honesty gate ---- */
   const wrongly = Object.keys(results.refusals).filter(k => results.refusals[k] !== false);
   report("C) the gate refuses every stage the shader does not implement",
     wrongly.length === 0, { accepted_when_it_should_refuse: wrongly });
-  report("C2) and it accepts a plain tonal recipe, so the path is reachable",
-    results.accepts === true, { accepts: results.accepts });
+  report("C2) and it accepts every stage the shader does implement, so none is dead code",
+    results.accepts === true && results.acceptsVig === true && results.acceptsGrn === true,
+    { tonal: results.accepts, vignette: results.acceptsVig, grain: results.acceptsGrn });
 
   /* ---- D) it is actually faster, which is the whole point ---- */
   const heavy = results.out["everything at once"];
@@ -284,6 +328,50 @@ function report(name, ok, detail) {
   const caught = !teeth.error && !(teeth.maxd <= 1 && teeth.diffN / teeth.chanN < 0.002 && teeth.mean < 0.01);
   report("F) one step wrong on one control fails the same bar check B applies",
     caught, teeth);
+
+  /* F2) the vignette is allowed a count on many more pixels because Skia
+     dithers the gradient. That width is only acceptable if a REAL vignette
+     error still fails it, so move the control by one step and require the
+     vignette's own bar (maxd 1, 15% of channels) to reject it. */
+  const vigTeeth = await page.evaluate(() => {
+    const W = 256, H = 256;
+    const sc = document.createElement("canvas"); sc.width = W; sc.height = H;
+    const sx = sc.getContext("2d");
+    sx.fillStyle = "rgb(200,200,200)"; sx.fillRect(0, 0, W, H);
+    const t1 = {}; { const e = stEffT1(); for (const k in e) if (typeof e[k] === "number") t1[k] = 0; }
+    const t2 = {}; { const e = stEffT2(); for (const k in e) t2[k] = (typeof e[k] === "number") ? 0 : (k === "finish" ? "" : null); }
+    const pv = { hsl: ST_HSL_BANDS.map(x => ({ c: x[1], h: 0, s: 0, l: 0 })), anyHsl: false,
+      gradeZones: [], gradeSat: 0, anyGrade: false, bwOn: false, bwR: 0, bwG: 0, bwB: 0,
+      anyHGB: false, wbOn: false, wbGr: 1, wbGb: 1, bgEnh: 0, leak: null, leakV: 0, frame: null, frameW: 0 };
+    const curve = { hl: 0, lt: 0, dk: 0, sh: 0 };
+    t1.vig = 60;
+    const cpu = stRunPipeline(sc, W, H, { t1, t2, pv, curve, heals: null, rs: 1, lm: null });
+    const gpu = stGpuRender(sc, W, H, { t1: Object.assign({}, t1, { vig: 61 }), t2, pv, curve, rs: 1 });
+    if (!gpu) return { error: "no gpu canvas" };
+    const ca = cpu.getContext("2d").getImageData(0, 0, W, H).data;
+    const gc = document.createElement("canvas"); gc.width = W; gc.height = H;
+    gc.getContext("2d").drawImage(gpu, 0, 0);
+    const ga = gc.getContext("2d").getImageData(0, 0, W, H).data;
+    let maxd = 0, diffN = 0, n = 0, sum = 0;
+    for (let i = 0; i < ca.length; i += 4) for (let c = 0; c < 3; c++) {
+      const d = Math.abs(ca[i + c] - ga[i + c]); n++; sum += d;
+      if (d) diffN++; if (d > maxd) maxd = d;
+    }
+    return { maxd, diffN, chanN: n, mean: sum / n, pct: (diffN / n * 100).toFixed(2) + "%" };
+  });
+  /* the SAME bar the vignette recipe is held to in check B — maxd 1, 15% of
+     channels, mean 0.15 — applied to a vignette that is one step wrong */
+  const vigBar = RECIPES["vignette only"].bar;
+  const vigWouldPass = !vigTeeth.error && vigTeeth.maxd <= vigBar.maxd &&
+    (vigTeeth.diffN / vigTeeth.chanN) <= vigBar.pct && vigTeeth.mean <= vigBar.mean;
+  report("F2) the vignette's wider bar still rejects a vignette off by one step",
+    !vigTeeth.error && !vigWouldPass,
+    Object.assign({ bar: vigBar }, vigTeeth));
+  if (!vigTeeth.error) {
+    console.log("      vignette 60 rendered against a CPU vignette of 61: max " + vigTeeth.maxd +
+      ", " + vigTeeth.pct + " of channels, mean " + vigTeeth.mean.toFixed(3) +
+      " — rejected by the same bar that accepts the real one");
+  }
 
   if (heavy) {
     console.log("\n      full recipe at 256x256 — CPU " + heavy.cpuMs.toFixed(2) +
