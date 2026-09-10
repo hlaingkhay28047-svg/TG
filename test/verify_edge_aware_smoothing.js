@@ -241,8 +241,58 @@ function report(name, ok, detail) {
     !/dl<=30/.test(APPSRC), null);
   /* The worker IS this array — a name missing here is a ReferenceError inside the
      worker, which kills it and drops every render silently onto the sync path. */
-  report("F4) the worker is built with the two new functions in its source list",
-    /var fns=\[stClamp,stComputeLut,stBoxBlurMask,stBoxF32,stGuidedRGB,stSkinWindow,stSkinMask,stBlurData,/.test(APPSRC), null);
+  report("F4) the worker is built with the guided filter's own functions in its source list",
+    /var fns=\[stClamp,stComputeLut,stBoxBlurMask,stBoxF32,stGuidedPlanes,stGuidedRGB,stSkinWindow,stSkinMask,stBlurData,/.test(APPSRC), null);
+  /* v6.54.0 — F4 names the functions 6.36.0 added and nothing more, so it goes
+     green for every OTHER name that goes missing. Splitting stGuidedPlanes out of
+     stGuidedRGB proved that: the split was right, the list was not, and F4 had
+     nothing to say about it. So stop reading the list and RUN it. The worker is
+     built by the app's own stWorker(), handed a photograph and a full skin
+     recipe, and asked to render — a name missing from that array is a
+     ReferenceError inside stRunPipeline, and the worker answers with err instead
+     of a picture. There is no list here to fall behind the app. */
+  const workerRun = await page.evaluate(async () => {
+    const w = stWorker();
+    if (!w) return { skipped: "this browser has no worker path" };
+    const t0 = Date.now();
+    while (!STW.ready && !STW.dead && Date.now() - t0 < 5000) {
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    if (!STW.ready) return { skipped: "the worker never became ready" };
+    const c = document.createElement("canvas"); c.width = 96; c.height = 96;
+    const x = c.getContext("2d");
+    const im = x.createImageData(96, 96);
+    for (let i = 0; i < 96 * 96; i++) {
+      const v = 150 + ((i * 37) % 23) - 11;           /* skin-ish, with grain to smooth */
+      im.data[i * 4] = v + 40; im.data[i * 4 + 1] = v;
+      im.data[i * 4 + 2] = v - 25; im.data[i * 4 + 3] = 255;
+    }
+    x.putImageData(im, 0, 0);
+    const bmp = await createImageBitmap(c);
+    const t1 = stEffT1(), t2 = stEffT2(), pv = stPipeVals();
+    for (const k in t1) if (typeof t1[k] === "number") t1[k] = 0;
+    for (const k in t2) if (typeof t2[k] === "number") t2[k] = 0;
+    /* every Tier-2 control that reaches the guided filter or the skin mask */
+    t2.smooth = 60; t2.even = 40; t2.white = 30; t2.rosy = 20;
+    t2.deshine = 30; t2.gloss = 15; t2.deyellow = 25; t2.radiance = 30;
+    const id = 900000 + Math.floor(Math.random() * 1000);
+    const reply = await new Promise((res) => {
+      const to = setTimeout(() => res({ timeout: true }), 20000);
+      w.addEventListener("message", function h(e) {
+        if (!e.data || e.data.id !== id) return;
+        clearTimeout(to); w.removeEventListener("message", h); res(e.data);
+      });
+      w.postMessage({ id: id, bmp: bmp, W: 96, H: 96, rs: 1, t1: t1, t2: t2, pv: pv,
+        curve: stCurveVals(), um: null, umInv: false, heals: [], mi: null, lm: null }, [bmp]);
+    });
+    try { if (reply.bmp && reply.bmp.close) reply.bmp.close(); } catch (e) {}
+    return { err: reply.err || null, timeout: !!reply.timeout, drew: !!reply.bmp };
+  });
+  report("F4b) …and the worker actually renders a full skin recipe, so no name in that list is missing",
+    !!workerRun.skipped || (workerRun.drew && !workerRun.err && !workerRun.timeout),
+    workerRun.skipped ? "skipped: " + workerRun.skipped
+      : (workerRun.err ? "the worker threw: " + workerRun.err
+         : (workerRun.timeout ? "the worker never answered" : "the worker returned a rendered frame")));
   report("F5) the guided filter touches no canvas, so the worker keeps it on a browser without ctx.filter",
     (() => {
       const i = APPSRC.indexOf("function stGuidedRGB(");

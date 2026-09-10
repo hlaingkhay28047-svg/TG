@@ -10,7 +10,8 @@
  * exports) and through stGpuRender (the shader), and compares the two images
  * pixel by pixel, on recipes chosen to exercise every stage the shader claims:
  * the tonal LUT, the colour pass, HSL bands, split-grading, B&W, the vignette
- * (7) and the grain (8) since v6.51.0, and the unsharp mask (5) since v6.52.0.
+ * (7) and the grain (8) since v6.51.0, the unsharp mask (5) since v6.52.0, and
+ * the mask-only half of the Tier-2 skin stage (4) since v6.54.0.
  *
  * HOW CLOSE THE TWO ACTUALLY ARE, MEASURED. The colour pass comes back BIT FOR
  * BIT identical. The rest do not, and the honest reason is arithmetic width,
@@ -29,11 +30,35 @@
  *     sharpen (v6.52.0)    0 channels differ
  *     clarity (v6.52.0)    0 channels differ
  *     both at maximum      0 channels differ
+ *     rosy/deshine/gloss   0 channels differ   (stage (4), v6.54.0)
+ *     white, deyellow      1 count on under 1% of channels
  *
  * Grain is exact for a reason worth stating: v4.78 made the noise tile a SEEDED
  * mulberry32 bitmap, so the shader can upload the very bytes the CPU is
  * compositing instead of generating its own field. Only the overlay blend had
  * to be ported, and it comes back bit for bit.
+ *
+ * STAGE (4) IS THE NOISE TILE'S BARGAIN AGAIN. The Tier-2 skin controls are
+ * per-pixel functions of the pixel and the skin mask, and the mask depends on
+ * the PHOTOGRAPH, never on a slider — which is why ST.maskCache already exists.
+ * So the shader is handed the CPU's own mask once per source and size, and
+ * reads it free for the rest of the drag.
+ *
+ * ONLY THE MASK-ONLY HALF IS HERE, and the split is worth stating because it
+ * was measured on the 16 shipped presets before any of it was written:
+ * this half takes coverage 1/16 -> 3/16, adding "even" reaches 7/16, and adding
+ * "smooth" 15/16. "even" needs the mean chroma of the masked region AFTER the
+ * tonal stages — a frame-wide reduction of pass 1, so it needs a readback — and
+ * "smooth" needs its guided filter re-solved every time the slider moves. The
+ * gate refuses both, and check C5 proves it still does.
+ *
+ * RADIANCE IS NOT ONLY A SKIN CONTROL, and that cost 12 measured counts before
+ * it was caught: stage (5)'s clarity amount is (cla + radiance*0.3 + …), so a
+ * recipe carrying radiance and no clarity slider STILL runs an unsharp pass.
+ * While the gate refused every non-zero t2 this could not happen; accepting
+ * radiance opened it. stGpuRender now decides stage (5) on the AMOUNT the CPU
+ * computes rather than on the slider, and the radiance recipe below is what
+ * keeps that true.
  *
  * STAGE (5) IS EXACT FOR THE SAME REASON, AND THAT IS THE WHOLE DESIGN. An
  * unsharp mask is v += shpA*(v - blur1.5) + claA*(v - blur8), and those blurs
@@ -139,6 +164,27 @@ function report(name, ok, detail) {
       { t1: { vig: 60 }, bar: { maxd: 1, pct: 0.15, mean: 0.15 } },
     "vignette + grain over a grade":
       { t1: { exp: 15, con: 12, vig: 40, grn: 30 }, bar: { maxd: 2, pct: 0.25, mean: 0.30 } },
+    /* stage (4): per-pixel, mask only. rosy, deshine and gloss are pure
+       arithmetic on the pixel and come back bit-identical; white and deyellow
+       carry the tonal pass's usual single count. */
+    "skin: rosy only":
+      { t2: { rosy: 40 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "skin: deshine only":
+      { t2: { deshine: 55 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "skin: gloss up":
+      { t2: { gloss: 45 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "skin: gloss down":
+      { t2: { gloss: -45 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "skin: white only":
+      { t2: { white: 60 }, bar: { maxd: 1, pct: 0.001, mean: 0.005 } },
+    "skin: deyellow only":
+      { t2: { deyellow: 50 }, bar: { maxd: 1, pct: 0.004, mean: 0.01 } },
+    /* the recipe that proves radiance drives clarity as well as white */
+    "skin: radiance, which drives clarity too":
+      { t2: { radiance: 70 }, bar: { maxd: 2, pct: 0.001, mean: 0.005 } },
+    "skin: every mask-only control at once":
+      { t2: { white: 40, rosy: 25, deshine: 35, gloss: 20, deyellow: 30, radiance: 30 },
+        bar: { maxd: 2, pct: 0.001, mean: 0.005 } },
     /* stage (5): the CPU's own blurs, uploaded — expected bit-identical */
     "sharpen only":
       { t1: { shp: 60 }, bar: { maxd: 0, pct: 0, mean: 0 } },
@@ -188,7 +234,7 @@ function report(name, ok, detail) {
     for (const name in RECIPES) {
       const r = RECIPES[name];
       const t1 = Object.assign(zeroT1(), r.t1 || {});
-      const t2 = zeroT2();
+      const t2 = Object.assign(zeroT2(), r.t2 || {});
       const pv = basePv();
       if (r.hsl) {
         pv.hsl = ST_HSL_BANDS.map(b => {
@@ -278,8 +324,21 @@ function report(name, ok, detail) {
     /* v6.52.0 — stage (5) is the one stage the gate can WITHDRAW, because it
        costs a readback that a weak renderer cannot afford. Once the frame has
        been measured as not worth it, the same recipes must be refused again. */
+    /* v6.54.0 — a skin recipe on a source the mask calls entirely non-skin
+       would pass every bar while testing nothing. Measure the coverage. */
+    const mcv = document.createElement("canvas"); mcv.width = W; mcv.height = H;
+    mcv.getContext("2d").drawImage(sc, 0, 0);
+    const mpx = mcv.getContext("2d").getImageData(0, 0, W, H);
+    const mres = stSkinMask(mpx, W, H, null);
+    let mOn = 0;
+    if (mres && mres.mask) for (let i = 0; i < mres.mask.length; i++) if (mres.mask[i] > 5) mOn++;
+    const maskFrac = mOn / (W * H);
+
     const wasOff = ST_GPU.s5off;
     ST_GPU.s5off = true;
+    a = mk(); a.t2.even = 40; const refusesEven = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t2.smooth = 40; const refusesSmooth = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t2.white = 40; const acceptsWhite = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.shp = 40; const refusesShpWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t1.cla = 40; const refusesClaWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t1.exp = 20; const stillAcceptsTonalWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null);
@@ -294,7 +353,8 @@ function report(name, ok, detail) {
     };
 
     return { out, refusals, accepts, acceptsVig, acceptsGrn, acceptsShp, acceptsCla,
-      refusesShpWhenSpent, refusesClaWhenSpent, stillAcceptsTonalWhenSpent, spent };
+      refusesShpWhenSpent, refusesClaWhenSpent, stillAcceptsTonalWhenSpent, spent,
+      maskFrac: +maskFrac.toFixed(4), refusesEven, refusesSmooth, acceptsWhite };
   }, RECIPES);
 
   /* ---- B) the two paths agree, recipe by recipe ----
@@ -331,6 +391,12 @@ function report(name, ok, detail) {
     results.stillAcceptsTonalWhenSpent === true,
     { sharpenRefused: results.refusesShpWhenSpent, clarityRefused: results.refusesClaWhenSpent,
       tonalUnaffected: results.stillAcceptsTonalWhenSpent });
+  report("C5) stage (4) is accepted, and the two skin controls it does NOT implement are still refused",
+    results.acceptsWhite === true && results.refusesEven && results.refusesSmooth,
+    { white: results.acceptsWhite, evenRefused: results.refusesEven, smoothRefused: results.refusesSmooth });
+  report("C6) the skin mask covers part of this source, so the stage (4) recipes are not vacuous",
+    results.maskFrac > 0.02 && results.maskFrac < 0.98,
+    { maskedFraction: results.maskFrac });
   report("C4) and the rule that withdraws it compares against what the CPU costs here",
     Object.keys(results.spent).every(k => results.spent[k] === true), results.spent);
 
