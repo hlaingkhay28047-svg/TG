@@ -118,7 +118,26 @@ report("D2) all three change handlers can reach it",
 
     /* C) the settled frame is sharper than the proxy could be. Compare
           neighbour-to-neighbour contrast: a 320px render blown up to the
-          canvas cannot carry the buffer's own high-frequency detail. */
+          canvas cannot carry the buffer's own high-frequency detail.
+
+          THE CONTROL USED HERE MUST BE ONE THE SHADER REFUSES. Until v6.51.0
+          this dragged the vignette, which was a fair coarse-rung sample right
+          up to the moment that wave put the vignette on the GPU — and then it
+          was quietly sampling the fast path instead, which is sharper than the
+          settle rather than coarser (the settle resamples a 1400px buffer down
+          into the canvas; the shader draws straight onto the canvas grid). The
+          check went red, which is how it should behave.
+
+          Background blur is the choice that cannot flatter the result: it
+          REMOVES high-frequency detail from the settled frame, so the effect
+          works against the assertion and whatever margin remains is the
+          resolution alone. Measured on the refused controls — shp 2.35x,
+          cla 2.08x, bgb 1.76x settled-over-rung; glow is the one that softens
+          more than the rung costs, which is why it is not used here.
+
+          RUNG_KEY is asserted refused below, so the next wave that widens the
+          shader fails this check instead of inheriting a silent pass. */
+    const RUNG_KEY = "bgb";
     function detail() {
       const t = document.createElement("canvas"); t.width = cv.width; t.height = cv.height;
       t.getContext("2d").drawImage(cv, 0, 0);
@@ -133,8 +152,10 @@ report("D2) all three change handlers can reach it",
       return n ? s / n : 0;
     }
     reset();
+    const rungT1 = Object.assign({}, stDefT1()); rungT1[RUNG_KEY] = 60;
+    const rungRefused = stGpuCan(rungT1, stEffT2(), stPipeVals(), null) === false;
     await new Promise(r => setTimeout(r, 550));
-    state.st.t1.vig = 60; stT1Changed();
+    state.st.t1[RUNG_KEY] = 60; stT1Changed();
     await new Promise(r => setTimeout(r, 60));
     const dProxy = +detail().toFixed(3);
     await new Promise(r => setTimeout(r, 900));
@@ -155,7 +176,8 @@ report("D2) all three change handlers can reach it",
 
     return {
       bufH: ST.buf.height, rows,
-      dProxy, dSettled, dSharpDrag, dSharpSettled, sharpVia
+      dProxy, dSettled, dSharpDrag, dSharpSettled, sharpVia,
+      rungKey: RUNG_KEY, rungRefused
     };
   });
 
@@ -174,9 +196,11 @@ report("D2) all three change handlers can reach it",
     { via: out.sharpVia, dragDetail: out.dSharpDrag, settledDetail: out.dSharpSettled,
       coarseRungDetail: out.dProxy });
 
+  report("C0) the control check C drags is one the shader refuses, so the coarse rung is what gets sampled",
+    out.rungRefused === true, { control: out.rungKey, refusedByStGpuCan: out.rungRefused });
   report("C) the settled frame lands sharper than the proxy it replaced",
     out.dSettled > out.dProxy,
-    { proxyDetail: out.dProxy, settledDetail: out.dSettled });
+    { control: out.rungKey, proxyDetail: out.dProxy, settledDetail: out.dSettled });
 
   report("no page errors", errs.length === 0, errs);
 
