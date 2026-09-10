@@ -498,6 +498,54 @@ const READ_CARD = () => {
     await new Promise(r => server.close(r));
   }
 
+  /* D) className IS NOT A STRING IN UXP.
+        v6.53.0 — the owner photographed the self-test on panel 6.119.0: Wiring
+        56 ok / 4 FAILED, every failure the same line —
+        "Cannot read properties of null (reading 'replace') @ main.js:276" —
+        and Labels ✗ "Setup #btnCheckUpdate" beneath it.
+
+        A browser hands back "" for an element with no class attribute. UXP
+        hands back null. Line 276 read host.className and called .replace on
+        it. Every one of the four failing wirings paints an accordion title of
+        exactly one shape — <span id="..."> carrying an id and NO class, inside
+        <div class="grp-h"> — and setup:statics threw on platPS seven lines
+        before it would have written btnCheckUpdate's label. One null produced
+        six red rows, and no browser test could see it, because in a browser
+        that expression is simply "".
+
+        So this pins the shape rather than the symptom: every className READ in
+        the panel goes through clsOf(), which answers "" for null. A write is
+        fine and stays untouched. */
+  const clsFn = MAIN.match(/function clsOf\(el\)\s*\{[^}]*\}/);
+  report("D1) the panel has one place that reads className, and it survives null",
+    !!clsFn && (function () {
+      const fn = new Function("return " + clsFn[0] + "; clsOf")();
+      const f = eval("(" + clsFn[0] + ")");
+      return f({ className: null }) === "" && f(null) === "" && f({}) === "" &&
+             f({ className: "grp-h open" }) === "grp-h open";
+    })(),
+    { found: !!clsFn });
+
+  /* every OTHER .className in the file must be a write (x.className = ...),
+     never a read — a read is what threw in the owner's Photoshop */
+  const withoutHelper = MAIN.replace(/function clsOf\(el\)\s*\{[^}]*\}/, "");
+  const rawReads = [];
+  const reRe = /\.className\s*(?!=[^=])(?:[.[(]|==|!=|\))/g;
+  let m;
+  while ((m = reRe.exec(withoutHelper))) {
+    const at = withoutHelper.slice(Math.max(0, m.index - 60), m.index + 40).replace(/\s+/g, " ");
+    rawReads.push(at);
+  }
+  report("D2) nothing else reads className raw, so UXP's null cannot throw again",
+    rawReads.length === 0, rawReads.slice(0, 4));
+
+  /* and the markup shape that caused it still ships, so the guard is not
+     protecting against something hypothetical */
+  const grpH = INDEX.match(/class="grp-h"[^>]*>[\s\S]*?<\/div>/g) || [];
+  const bare = grpH.filter(h => /<span id="[A-Za-z0-9_]+"(?!\s+class)/.test(h)).length;
+  report("D3) accordion titles still ship with an id and no class — the guard is live, not theoretical",
+    bare > 0, { bareTitles: bare, groups: grpH.length });
+
   const CI = fs.readFileSync(path.join(ROOT, ".github/workflows/test.yml"), "utf8");
   report("E) CI runs this test", CI.includes("node test/verify_panel_renderer_safety.js"), null);
 
