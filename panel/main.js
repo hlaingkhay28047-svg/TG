@@ -266,7 +266,10 @@ function stripIcn(s) { return String(s == null ? "" : s).replace(ICN_LEAD, ""); 
    both as inert; this renderer treats them as a picture it was asked for and
    could not fetch. So the panel never leaves an <img> without one — an empty
    slot carries a 1x1 transparent GIF instead, which always decodes, draws
-   nothing, and costs no request. Set it, never remove the attribute. */
+   nothing, and costs no request. Set it, never remove the attribute.
+   v6.58.2 — and a src BUILT out of state that may be absent is the same empty
+   <img> by another road: "data:image/png;base64," + undefined is not a
+   picture. Every such expression falls back to this. */
 const IMG_BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 /* …EXCEPT ON A <video>, which cannot decode a GIF and says so. vtThumbFor
    serves both an <img> and a <video> through the same id, and handing the
@@ -275,6 +278,18 @@ const IMG_BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAA
    difference is stated once, here, rather than remembered at each call site:
    a picture slot gets the placeholder, a video slot really does lose the
    attribute. This is the only place in the panel that removes a src. */
+/* v6.58.2 — AND THE THIRD ROAD TO AN EMPTY <img>: a src BUILT out of state.
+   "data:image/png;base64," + undefined is a string, so nothing throws and
+   nothing reads as missing — it is simply not a picture, and this renderer
+   reports it exactly like the other two. Every data: URL the panel assembles
+   goes through here, so the payload is checked once instead of at each call
+   site, and verify_panel_renderer_safety can say "no .src = \"data:\" anywhere"
+   and mean it. */
+function dataSrc(el, mime, b64) {
+  if (!el) return;
+  try { el.src = b64 ? ("data:" + (mime || "image/png") + ";base64," + b64) : IMG_BLANK; }
+  catch (e) { }
+}
 function clearSrc(el) {
   if (!el) return;
   try {
@@ -6373,7 +6388,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.128.0";
+const PANEL_VERSION = "6.129.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9552,7 +9567,8 @@ function ptRenderGrid() {
     const b = document.createElement("div");
     b.className = "pt-th"; b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
     const im = document.createElement("img");
-    im.src = (p.status === "done" && p.outB64) ? ("data:" + (p.outMime || "image/png") + ";base64," + p.outB64) : p.srcDataUrl;
+    if (p.status === "done" && p.outB64) dataSrc(im, p.outMime, p.outB64);
+    else im.src = p.srcDataUrl || IMG_BLANK;
     im.alt = "";
     b.appendChild(im);
     const idx = document.createElement("span"); idx.className = "pt-idx"; idx.textContent = String(i + 1);
@@ -9831,7 +9847,7 @@ function ptRenderChips() {
   const rc = $("btnPtRefClear"); if (rc) rc.style.display = PT.ref ? "" : "none";
   const rt = $("ptRefThumb");
   if (rt) {
-    if (PT.ref) { rt.src = "data:" + PT.ref.mime + ";base64," + PT.ref.b64; rt.style.display = ""; }
+    if (PT.ref) { dataSrc(rt, PT.ref.mime, PT.ref.b64); rt.style.display = ""; }
     else { clearSrc(rt); rt.style.display = "none"; }
   }
 }
@@ -15687,7 +15703,7 @@ function renderHistory() {
       const e = state.history[idx];
       if (!e || !e.after) return;
       const im = document.createElement("img");
-      im.src = "data:" + (e.afterMime || "image/png") + ";base64," + e.after;
+      dataSrc(im, e.afterMime, e.after);
       im.alt = "result " + (idx + 1);
       im.className = state.histSel === idx ? "sel" : "";
       im.addEventListener("click", function () { selectHistory(idx); });
@@ -16372,12 +16388,12 @@ function refreshCompare() {
   if (box) box.className = "card result-box" + (hasA ? " on" : "");
   const ri = $("resultImg");
   if (ri) {
-    if (hasA) ri.src = "data:" + state.resultMime + ";base64," + state.resultB64;
+    if (hasA) dataSrc(ri, state.resultMime, state.resultB64);
     else clearSrc(ri);
   }
   const iB = $("imgBefore"), iA = $("imgAfter");
   if (iB) {
-    if (hasB) { iB.onload = function () { fitCompareBox(); }; iB.src = "data:" + state.beforeMime + ";base64," + state.beforeB64; }
+    if (hasB) { iB.onload = function () { fitCompareBox(); }; dataSrc(iB, state.beforeMime, state.beforeB64); }
     else clearSrc(iB);
   }
   if (iA) {
@@ -16386,7 +16402,7 @@ function refreshCompare() {
         if (iA.naturalWidth) state.previewRatio = iA.naturalHeight / iA.naturalWidth;
         fitCompareBox();
       };
-      iA.src = "data:" + state.resultMime + ";base64," + state.resultB64;
+      dataSrc(iA, state.resultMime, state.resultB64);
     } else clearSrc(iA);
   }
   const prov = $("resProv");
@@ -17058,8 +17074,8 @@ function refreshCreateCompare() {
   paintCreateResultBox();
   const iA = $("cImgAfter"), iB = $("cImgBefore"), box = $("cCmpBox");
   if (!iA || !box) return;
-  if (state.cResultB64) iA.src = "data:" + state.cMime + ";base64," + state.cResultB64;
-  if (iB && state.cBeforeB64) iB.src = "data:" + state.cMime + ";base64," + state.cBeforeB64;
+  if (state.cResultB64) dataSrc(iA, state.cMime, state.cResultB64);
+  if (iB && state.cBeforeB64) dataSrc(iB, state.cMime, state.cBeforeB64);
   const w = box.clientWidth;
   if (w) {
     /* professional, aspect-aware size (matches the Output tab) with a generous
@@ -17145,7 +17161,7 @@ function paintCGallery() {
     (function (item, idx) {
       const im = document.createElement("img");
       im.className = "gthumb" + (idx === state.cSel ? " sel" : "");
-      im.src = "data:" + item.mime + ";base64," + item.b64;
+      dataSrc(im, item.mime, item.b64);
       im.addEventListener("click", function () {
         state.cSel = idx;
         state.cResultB64 = item.b64; state.cMime = item.mime;
