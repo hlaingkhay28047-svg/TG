@@ -9,8 +9,8 @@
  * source, at the SAME size, through stRunPipeline (the CPU, the one that
  * exports) and through stGpuRender (the shader), and compares the two images
  * pixel by pixel, on recipes chosen to exercise every stage the shader claims:
- * the tonal LUT, the colour pass, HSL bands, split-grading, B&W, and — since
- * v6.51.0 — the vignette (7) and the grain (8).
+ * the tonal LUT, the colour pass, HSL bands, split-grading, B&W, the vignette
+ * (7) and the grain (8) since v6.51.0, and the unsharp mask (5) since v6.52.0.
  *
  * HOW CLOSE THE TWO ACTUALLY ARE, MEASURED. The colour pass comes back BIT FOR
  * BIT identical. The rest do not, and the honest reason is arithmetic width,
@@ -26,11 +26,25 @@
  *     split-grade         71 differ, by at most 2
  *     everything at once  28 differ, by at most 2
  *     grain (v6.51.0)      0 channels differ
+ *     sharpen (v6.52.0)    0 channels differ
+ *     clarity (v6.52.0)    0 channels differ
+ *     both at maximum      0 channels differ
  *
  * Grain is exact for a reason worth stating: v4.78 made the noise tile a SEEDED
  * mulberry32 bitmap, so the shader can upload the very bytes the CPU is
  * compositing instead of generating its own field. Only the overlay blend had
  * to be ported, and it comes back bit for bit.
+ *
+ * STAGE (5) IS EXACT FOR THE SAME REASON, AND THAT IS THE WHOLE DESIGN. An
+ * unsharp mask is v += shpA*(v - blur1.5) + claA*(v - blur8), and those blurs
+ * are ctx.filter="blur(Npx)" — Skia's blur, whose kernel is an implementation
+ * detail. A GLSL re-derivation would be a guess, and a guess here is visible:
+ * it shows up as sharpening halos the delivered file does not have. So the
+ * shader is handed the CPU's OWN blurred bytes as textures and does only the
+ * arithmetic. The one thing that had to be got right is that the two terms are
+ * SEQUENTIAL — clarity acts on the value sharpening already moved. Treating
+ * them as independent terms measured 14 counts out with both at maximum, which
+ * is what the "both at maximum" recipe below is here to keep catching.
  *
  * The 2 belongs to the grade block alone and has a specific cause worth
  * writing down: stRunPipeline indexes its per-zone weight table with `lum3|0`,
@@ -125,6 +139,18 @@ function report(name, ok, detail) {
       { t1: { vig: 60 }, bar: { maxd: 1, pct: 0.15, mean: 0.15 } },
     "vignette + grain over a grade":
       { t1: { exp: 15, con: 12, vig: 40, grn: 30 }, bar: { maxd: 2, pct: 0.25, mean: 0.30 } },
+    /* stage (5): the CPU's own blurs, uploaded — expected bit-identical */
+    "sharpen only":
+      { t1: { shp: 60 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "clarity only":
+      { t1: { cla: 60 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    /* the one that catches a non-sequential unsharp */
+    "sharpen + clarity at maximum":
+      { t1: { shp: 100, cla: 100 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    /* stage (5) stacked on the stages that are not exact: the bar is the
+       vignette's, because that is where the counts come from */
+    "sharpen + clarity + vignette + grain over a grade":
+      { t1: { shp: 45, cla: 35, vig: 40, grn: 30, exp: 10 }, bar: { maxd: 2, pct: 0.25, mean: 0.30 } },
     "everything at once":
       { t1: { exp: 20, bri: 10, con: 15, hi: -20, sh: 25, wht: 12, blk: -8, dhz: 15, wrm: 25, tnt: -18, sat: 20, vib: 30 },
         hsl: { r: { h: 12, s: 20, l: 6 }, b: { h: -10, s: 25, l: -8 } },
@@ -231,8 +257,6 @@ function report(name, ok, detail) {
     const refusals = {};
     const mk = () => ({ t1: zeroT1(), t2: zeroT2(), pv: basePv() });
     let a;
-    a = mk(); a.t1.shp = 40; refusals["sharpen (5)"] = stGpuCan(a.t1, a.t2, a.pv, null);
-    a = mk(); a.t1.cla = 40; refusals["clarity (5)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.bgb = 30; refusals["background blur (6)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.glow = 30; refusals["vibe glow (6b)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t2.smooth = 40; refusals["skin smoothing (4)"] = stGpuCan(a.t1, a.t2, a.pv, null);
@@ -249,8 +273,28 @@ function report(name, ok, detail) {
     const accepts = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.vig = 30; const acceptsVig = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.grn = 30; const acceptsGrn = stGpuCan(a.t1, a.t2, a.pv, null);
+    a = mk(); a.t1.shp = 40; const acceptsShp = stGpuCan(a.t1, a.t2, a.pv, null);
+    a = mk(); a.t1.cla = 40; const acceptsCla = stGpuCan(a.t1, a.t2, a.pv, null);
+    /* v6.52.0 — stage (5) is the one stage the gate can WITHDRAW, because it
+       costs a readback that a weak renderer cannot afford. Once the frame has
+       been measured as not worth it, the same recipes must be refused again. */
+    const wasOff = ST_GPU.s5off;
+    ST_GPU.s5off = true;
+    a = mk(); a.t1.shp = 40; const refusesShpWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t1.cla = 40; const refusesClaWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t1.exp = 20; const stillAcceptsTonalWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null);
+    ST_GPU.s5off = wasOff;
+    /* and the rule that sets it, checked as a rule */
+    const spent = {
+      slowerThanTheSettle: stGpuS5Spent(300, 320) === true,
+      barelyUnderIsStillSpent: stGpuS5Spent(290, 320) === true,
+      comfortablyFasterIsKept: stGpuS5Spent(40, 320) === false,
+      noSettleYetButUnderTheCeiling: stGpuS5Spent(80, 0) === false,
+      noSettleYetAndOverTheCeiling: stGpuS5Spent(200, 0) === true
+    };
 
-    return { out, refusals, accepts, acceptsVig, acceptsGrn };
+    return { out, refusals, accepts, acceptsVig, acceptsGrn, acceptsShp, acceptsCla,
+      refusesShpWhenSpent, refusesClaWhenSpent, stillAcceptsTonalWhenSpent, spent };
   }, RECIPES);
 
   /* ---- B) the two paths agree, recipe by recipe ----
@@ -278,8 +322,17 @@ function report(name, ok, detail) {
   report("C) the gate refuses every stage the shader does not implement",
     wrongly.length === 0, { accepted_when_it_should_refuse: wrongly });
   report("C2) and it accepts every stage the shader does implement, so none is dead code",
-    results.accepts === true && results.acceptsVig === true && results.acceptsGrn === true,
-    { tonal: results.accepts, vignette: results.acceptsVig, grain: results.acceptsGrn });
+    results.accepts === true && results.acceptsVig === true && results.acceptsGrn === true &&
+    results.acceptsShp === true && results.acceptsCla === true,
+    { tonal: results.accepts, vignette: results.acceptsVig, grain: results.acceptsGrn,
+      sharpen: results.acceptsShp, clarity: results.acceptsCla });
+  report("C3) once the round trip is measured as not worth it, stage (5) is refused again",
+    results.refusesShpWhenSpent && results.refusesClaWhenSpent &&
+    results.stillAcceptsTonalWhenSpent === true,
+    { sharpenRefused: results.refusesShpWhenSpent, clarityRefused: results.refusesClaWhenSpent,
+      tonalUnaffected: results.stillAcceptsTonalWhenSpent });
+  report("C4) and the rule that withdraws it compares against what the CPU costs here",
+    Object.keys(results.spent).every(k => results.spent[k] === true), results.spent);
 
   /* ---- D) it is actually faster, which is the whole point ---- */
   const heavy = results.out["everything at once"];
