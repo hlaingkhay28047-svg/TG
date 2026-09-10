@@ -207,6 +207,29 @@ function report(name, ok, detail) {
       { t1: { exp: 18, con: 22, sat: 14, wrm: 12 },
         t2: { even: 50, white: 40, rosy: 25, deshine: 35, gloss: 20, deyellow: 30, radiance: 30 },
         bar: { maxd: 1, pct: 0.01, mean: 0.005 } },
+    /* v6.56.0 — SMOOTHING. Only the upsample half is the shader's; the planes
+       are stGuidedPlanes' own, carried in as 16-bit fixed point. The counts
+       below are that packing and the float32 the shader interpolates in, and
+       nothing else. */
+    "skin: smooth alone":
+      { t2: { smooth: 60 }, bar: { maxd: 1, pct: 0.05, mean: 0.001 } },
+    "skin: smooth at maximum":
+      { t2: { smooth: 100 }, bar: { maxd: 1, pct: 0.35, mean: 0.005 } },
+    /* at the bottom of the slider the blend is small enough to round away */
+    "skin: smooth at its lowest setting":
+      { t2: { smooth: 5 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "skin: smooth under a grade":
+      { t2: { smooth: 55 }, t1: { exp: 18, con: 22, sat: 14, wrm: 12 },
+        bar: { maxd: 1, pct: 0.08, mean: 0.001 } },
+    "skin: smooth + even together":
+      { t2: { smooth: 50, even: 50 }, bar: { maxd: 1, pct: 0.07, mean: 0.001 } },
+    /* THE ONE THAT PINS THE BORROWED TEXTURE UNITS. The smoothing planes ride
+       units 4, 5 and 7, and stage (5)'s two blurs are bound over 4 and 5 for
+       the second draw. If the planes were not uploaded again on the next frame
+       that smooths, this recipe would read the blurs as planes. */
+    "skin: smooth + sharpen, which binds over two of the plane units":
+      { t1: { shp: 50, cla: 30 }, t2: { smooth: 50 },
+        bar: { maxd: 2, pct: 0.1, mean: 0.002 } },
     /* stage (5): the CPU's own blurs, uploaded — expected bit-identical */
     "sharpen only":
       { t1: { shp: 60 }, bar: { maxd: 0, pct: 0, mean: 0 } },
@@ -327,7 +350,8 @@ function report(name, ok, detail) {
     let a;
     a = mk(); a.t1.bgb = 30; refusals["background blur (6)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.glow = 30; refusals["vibe glow (6b)"] = stGpuCan(a.t1, a.t2, a.pv, null);
-    a = mk(); a.t2.smooth = 40; refusals["skin smoothing (4)"] = stGpuCan(a.t1, a.t2, a.pv, null);
+    a = mk(); a.t2.freqHi = 40; refusals["frequency separation (4)"] = stGpuCan(a.t1, a.t2, a.pv, null);
+    a = mk(); a.t2.teeth = 40; refusals["teeth whitening (4)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t2.gdn = 40; refusals["denoise (3c)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.pv.bgEnh = 30; refusals["background enhance (6)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.pv.leak = "warm"; a.pv.leakV = 40; refusals["light leak (6c)"] = stGpuCan(a.t1, a.t2, a.pv, null);
@@ -385,17 +409,48 @@ function report(name, ok, detail) {
       maskProvenance = { rendered: !!gone, vsGraded, vsSource, candidatesDiffer };
     }
 
+    /* v6.56.0 — THE SECOND FRAME. The smoothing planes ride texture units 4, 5
+       and 7; stage (5) binds its two blurs over 4 and 5 for its own draw. On the
+       NEXT frame with the same planes the cache would say "already uploaded"
+       while those units hold the blurs — so the shader would read a blurred
+       picture as a regression plane. One render never sees it, because the
+       planes are uploaded on a cache MISS: it takes a second frame with the
+       same recipe, which is exactly what a held slider produces. */
+    let planeReuse = null;
+    {
+      const rt1 = zeroT1(); rt1.shp = 50; rt1.cla = 30;
+      const rt2 = zeroT2(); rt2.smooth = 50;
+      const rpv = basePv(), rcurve = stCurveVals();
+      const cpu = stRunPipeline(sc, W, H, { rs: 1, t1: rt1, t2: rt2, pv: rpv, curve: rcurve,
+        um: null, umInv: false, heals: [], maskInfo: null, lm: null });
+      stGpuRender(sc, W, H, { t1: rt1, t2: rt2, pv: rpv, curve: rcurve, rs: 1 });   /* frame 1 */
+      const two = stGpuRender(sc, W, H, { t1: rt1, t2: rt2, pv: rpv, curve: rcurve, rs: 1 }); /* frame 2 */
+      const grab = (cv) => { const q = document.createElement("canvas"); q.width = W; q.height = H;
+        const qq = q.getContext("2d"); qq.drawImage(cv, 0, 0); return qq.getImageData(0, 0, W, H).data; };
+      if (two) {
+        const A2 = grab(cpu), B2 = grab(two);
+        let d = 0, m = 0;
+        for (let i = 0; i < W * H; i++) for (let ch = 0; ch < 3; ch++) {
+          const dd = Math.abs(A2[i * 4 + ch] - B2[i * 4 + ch]);
+          if (dd) { d++; if (dd > m) m = dd; }
+        }
+        planeReuse = { differing: d, pct: +(100 * d / (W * H * 3)).toFixed(4), maxd: m };
+      }
+    }
+
     const wasOff = ST_GPU.s5off;
     ST_GPU.s5off = true;
-    a = mk(); a.t2.smooth = 40; const refusesSmooth = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t2.freqHi = 40; const refusesFreq = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t2.white = 40; const acceptsWhite = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t2.even = 40; const acceptsEven = stGpuCan(a.t1, a.t2, a.pv, null);
+    a = mk(); a.t2.smooth = 40; const acceptsSmooth = stGpuCan(a.t1, a.t2, a.pv, null);
     /* v6.55.0 — stage (4) now costs a readback of its own, so it has a
        withdrawal of its own, and it must bite on every control in the stage */
     const wasT4 = ST_GPU.t4off;
     ST_GPU.t4off = true;
     a = mk(); a.t2.white = 40; const refusesWhiteWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t2.even = 40; const refusesEvenWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t2.smooth = 40; const refusesSmoothWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t1.exp = 20; const stillAcceptsTonalWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null);
     ST_GPU.t4off = wasT4;
     a = mk(); a.t1.shp = 40; const refusesShpWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
@@ -413,9 +468,9 @@ function report(name, ok, detail) {
 
     return { out, refusals, accepts, acceptsVig, acceptsGrn, acceptsShp, acceptsCla,
       refusesShpWhenSpent, refusesClaWhenSpent, stillAcceptsTonalWhenSpent, spent,
-      maskFrac: +maskFrac.toFixed(4), refusesSmooth, acceptsWhite, acceptsEven,
-      refusesWhiteWhenT4Spent, refusesEvenWhenT4Spent, stillAcceptsTonalWhenT4Spent,
-      maskProvenance };
+      maskFrac: +maskFrac.toFixed(4), refusesFreq, acceptsWhite, acceptsEven, acceptsSmooth,
+      refusesWhiteWhenT4Spent, refusesEvenWhenT4Spent, refusesSmoothWhenT4Spent,
+      stillAcceptsTonalWhenT4Spent, maskProvenance, planeReuse };
   }, RECIPES);
 
   /* ---- B) the two paths agree, recipe by recipe ----
@@ -452,14 +507,21 @@ function report(name, ok, detail) {
     results.stillAcceptsTonalWhenSpent === true,
     { sharpenRefused: results.refusesShpWhenSpent, clarityRefused: results.refusesClaWhenSpent,
       tonalUnaffected: results.stillAcceptsTonalWhenSpent });
-  report("C5) stage (4) is accepted — Even included — and Smoothing, which it does not implement, is still refused",
-    results.acceptsWhite === true && results.acceptsEven === true && results.refusesSmooth,
-    { white: results.acceptsWhite, even: results.acceptsEven, smoothRefused: results.refusesSmooth });
+  report("C5) stage (4) is accepted — Even and Smoothing included — and what it does not implement is still refused",
+    results.acceptsWhite === true && results.acceptsEven === true &&
+    results.acceptsSmooth === true && results.refusesFreq,
+    { white: results.acceptsWhite, even: results.acceptsEven, smooth: results.acceptsSmooth,
+      freqSeparationRefused: results.refusesFreq });
   report("C5b) …and once its own readback is measured as not worth it, the whole stage is refused again",
     results.refusesWhiteWhenT4Spent && results.refusesEvenWhenT4Spent &&
-    results.stillAcceptsTonalWhenT4Spent === true,
+    results.refusesSmoothWhenT4Spent && results.stillAcceptsTonalWhenT4Spent === true,
     { whiteRefused: results.refusesWhiteWhenT4Spent, evenRefused: results.refusesEvenWhenT4Spent,
+      smoothRefused: results.refusesSmoothWhenT4Spent,
       tonalUnaffected: results.stillAcceptsTonalWhenT4Spent });
+  report("C8) a SECOND smoothing frame is still the CPU's picture, after stage (5) bound its blurs over two of the plane units",
+    !!results.planeReuse && results.planeReuse.maxd <= 2 && results.planeReuse.pct <= 0.1,
+    results.planeReuse && (results.planeReuse.differing + " channels differ (" +
+      results.planeReuse.pct + "%), max " + results.planeReuse.maxd + " counts on the second frame"));
   report("C7) the mask the shader is handed is the GRADED frame's, which is the one stRunPipeline asks about",
     !!results.maskProvenance && results.maskProvenance.rendered &&
     results.maskProvenance.vsGraded === 0 &&
