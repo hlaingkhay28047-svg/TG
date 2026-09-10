@@ -259,6 +259,30 @@ function report(name, ok, detail) {
        vignette's, because that is where the counts come from */
     "sharpen + clarity + vignette + grain over a grade":
       { t1: { shp: 45, cla: 35, vig: 40, grn: 30, exp: 10 }, bar: { maxd: 2, pct: 0.25, mean: 0.30 } },
+    /* v6.58.0 — stage (6b) Vibe Glow. The stage is TWO SKIA CALLS on the
+       round-tripped frame, not shader arithmetic, so these must come back
+       bit-identical: anything else means the frame handed to (6b) was not the
+       frame stRunPipeline reaches (6b) with. The three that carry a bar carry
+       it for the stage that follows the glow, not for the glow. */
+    "glow alone":
+      { t1: { glow: 40 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "glow at maximum":
+      { t1: { glow: 100 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "glow at its lowest step":
+      { t1: { glow: 8 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    /* the ordering check: (5) runs BEFORE (6b), so the blurred copy has to be
+       of the sharpened frame. Blur the unsharpened one and this goes red. */
+    "glow after sharpening":
+      { t1: { glow: 45, shp: 60, cla: 30 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    /* and (6b) runs BEFORE (7) and (8): the bar here is the vignette's own,
+       measured at 20.4% with no glow in the recipe at all */
+    "glow before the vignette and the grain":
+      { t1: { glow: 50, vig: 40, grn: 30 }, bar: { maxd: 2, pct: 0.25, mean: 0.30 } },
+    "glow under a grade":
+      { t1: { glow: 45, exp: 15, con: 20, wrm: 25, sat: 20 }, bar: { maxd: 1, pct: 0.0005, mean: 0.01 } },
+    "glow over a full skin recipe":
+      { t1: { glow: 50, shp: 40 }, t2: { smooth: 45, even: 30, white: 25, deshine: 20 },
+        bar: { maxd: 1, pct: 0.0005, mean: 0.01 } },
     "everything at once":
       { t1: { exp: 20, bri: 10, con: 15, hi: -20, sh: 25, wht: 12, blk: -8, dhz: 15, wrm: 25, tnt: -18, sat: 20, vib: 30 },
         hsl: { r: { h: 12, s: 20, l: 6 }, b: { h: -10, s: 25, l: -8 } },
@@ -370,12 +394,15 @@ function report(name, ok, detail) {
                     offBoundary, offEx, cpuMs, gpuMs, worst };
     }
 
-    /* the gate must refuse every stage the shader does not implement */
+    /* the gate must refuse every stage the shader does not implement.
+       v6.58.0 — vibe glow (6b) LEFT THIS LIST and joined check C9: the stage is
+       now drawn, by handing the frame to Skia between two shader passes. A row
+       leaving here has to arrive there, or the gate would be untested in both
+       directions at once. */
     const refusals = {};
     const mk = () => ({ t1: zeroT1(), t2: zeroT2(), pv: basePv() });
     let a;
     a = mk(); a.t1.bgb = 30; refusals["background blur (6)"] = stGpuCan(a.t1, a.t2, a.pv, null);
-    a = mk(); a.t1.glow = 30; refusals["vibe glow (6b)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t2.freqHi = 40; refusals["frequency separation (4)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t2.teeth = 40; refusals["teeth whitening (4)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t2.gdn = 40; refusals["denoise (3c)"] = stGpuCan(a.t1, a.t2, a.pv, null);
@@ -502,11 +529,40 @@ function report(name, ok, detail) {
       noSettleYetAndOverTheCeiling: stGpuS5Spent(200, 0) === true
     };
 
+    /* v6.58.0 — stage (6b) is accepted, withdrawn on its own flag, and takes
+       nothing else with it when it goes */
+    const glowT1 = Object.assign(zeroT1(), { glow: 40 });
+    const acceptsGlow = stGpuCan(glowT1, zeroT2(), basePv(), null) === true;
+    ST_GPU.glowOff = true;
+    const refusesGlowWhenSpent = stGpuCan(glowT1, zeroT2(), basePv(), null) === false;
+    const stillAcceptsTonalWhenGlowSpent =
+      stGpuCan(Object.assign(zeroT1(), { exp: 10, shp: 30 }), zeroT2(), basePv(), null) === true;
+    ST_GPU.glowOff = false;
+
+    /* THE NUMBER THIS WAVE IS FOR: every preset the studio ships, asked of the
+       real gate the way the app asks it — stEffT1/stEffT2 off state.st, so the
+       Skin Finish fold and every other derivation happens first. */
+    const savedT1 = state.st.t1, savedT2 = state.st.t2;
+    let eligible = 0, presets = 0, blocked = [];
+    for (const pr of [].concat(ST_PRESETS_MU || [], ST_PRESETS_EV || [])) {
+      state.st.t1 = stDefT1(); state.st.t2 = stDefT2();
+      const src = pr.t1 || pr.v || pr;
+      for (const k in src) if (k in state.st.t1 && typeof src[k] === "number") state.st.t1[k] = src[k];
+      const s2 = pr.t2 || {};
+      for (const k in s2) if (k in state.st.t2) state.st.t2[k] = s2[k];
+      presets++;
+      if (stGpuCan(stEffT1(), stEffT2(), stPipeVals(), null) === true) eligible++;
+      else blocked.push(pr.key);
+    }
+    state.st.t1 = savedT1; state.st.t2 = savedT2;
+    const glowCoverage = { eligible, presets, blocked };
+
     return { out, refusals, accepts, acceptsVig, acceptsGrn, acceptsShp, acceptsCla, acceptsFinish,
       refusesShpWhenSpent, refusesClaWhenSpent, stillAcceptsTonalWhenSpent, spent,
       maskFrac: +maskFrac.toFixed(4), refusesFreq, acceptsWhite, acceptsEven, acceptsSmooth,
       refusesWhiteWhenT4Spent, refusesEvenWhenT4Spent, refusesSmoothWhenT4Spent,
-      stillAcceptsTonalWhenT4Spent, maskProvenance, planeReuse };
+      stillAcceptsTonalWhenT4Spent, maskProvenance, planeReuse,
+      acceptsGlow, refusesGlowWhenSpent, stillAcceptsTonalWhenGlowSpent, glowCoverage };
   }, RECIPES);
 
   /* ---- B) the two paths agree, recipe by recipe ----
@@ -571,6 +627,20 @@ function report(name, ok, detail) {
   report("C6) the skin mask covers part of this source, so the stage (4) recipes are not vacuous",
     results.maskFrac > 0.02 && results.maskFrac < 0.98,
     { maskedFraction: results.maskFrac });
+  report("C9) stage (6b) Vibe Glow is accepted, and withdrawing it takes nothing else with it",
+    results.acceptsGlow === true && results.refusesGlowWhenSpent === true &&
+    results.stillAcceptsTonalWhenGlowSpent === true,
+    { accepted: results.acceptsGlow, refusedWhenSpent: results.refusesGlowWhenSpent,
+      tonalAndSharpenUnaffected: results.stillAcceptsTonalWhenGlowSpent });
+  /* v6.58.0 — the gate is not a list of keys to a student, it is which of the
+     studio's own looks draw while they drag. Every one of them does now, and a
+     stage taken back off this path has to say so here rather than quietly. */
+  report("C10) every preset the studio ships draws on this path",
+    !!results.glowCoverage && results.glowCoverage.presets >= 16 &&
+    results.glowCoverage.eligible === results.glowCoverage.presets,
+    results.glowCoverage && (results.glowCoverage.eligible + " / " + results.glowCoverage.presets +
+      " presets" + (results.glowCoverage.blocked.length
+        ? "; still on the CPU: " + results.glowCoverage.blocked.join(", ") : "")));
   report("C4) and the rule that withdraws it compares against what the CPU costs here",
     Object.keys(results.spent).every(k => results.spent[k] === true), results.spent);
 
