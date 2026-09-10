@@ -5273,6 +5273,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.55.0", kind:"page", ref:"pgMeitu",
+    t:{my:"အရေပြား အရောင် ညီညာစေခြင်း (Even) ကိုလည်း ဆွဲနေတုန်း အစစ်အတိုင်း မြင်ရပြီ",en:"Even skin tone now shows truly while you drag it too",shn:"Even ၽိဝ်ၼင် ၵေႃႈ လၢၵ်ႈယူႇ ႁၼ်ဢၼ်တႄႉ",kac:"Even hpyi a hkri mung dun nga ten hta teng man ai hku mu sai",th:"Even skin tone ก็เห็นของจริงระหว่างลากแล้ว",zh:"肤色均匀（Even）在拖动时也显示真实效果了",vi:"Even skin tone giờ cũng hiện đúng thật khi bạn kéo",id:"Even skin tone kini tampil sebenarnya saat digeser",ms:"Even skin tone kini dipaparkan sebenar semasa diseret"},
+    s:{my:"အရေပြား အရောင် ညီညာစေခြင်း (Even) ကို ဂရပ်ဖစ်ကတ်ပေါ် တင်လိုက်ပါပြီ။ ဒီခလုတ်က ကျန်တာတွေနဲ့ မတူပါဘူး — pixel တစ်ခုချင်းကို ကြည့်ရုံနဲ့ မရဘဲ ပုံတစ်ပုံလုံးရဲ့ အရေပြားအရောင် ပျမ်းမျှကို သိမှ ရပါတယ်။ ဂရပ်ဖစ်ကတ်က pixel တစ်ခုစီကို သီးခြား တွက်တာမို့ အဲဒီကိန်းကို မမြင်နိုင်ပါ။ ဒါကြောင့် အလင်း/အရောင် အဆင့်ပြီးတဲ့ ပုံကို တစ်ခါ ဆွဲပြီး ပြန်ဖတ်ကာ ကွန်ပျူတာက ပျမ်းမျှကို အတိအကျ တွက်ပေးလိုက်ပါတယ် — ခန့်မှန်းတာ မဟုတ်ပါ။ Even ခလုတ် ဆွဲနေတုန်း အဲဒီကိန်း မပြောင်းလို့ တစ်ခါပဲ တွက်ရပါတယ်။ ရလဒ်က တစ်ပွင့်မှ မကွာ တူညီပါတယ်။ အရေးကြီးတဲ့ ဂဏန်း — ဒီနည်းနဲ့ ဆွဲလို့ရတဲ့ Preset က ၁၆ ခုမှာ ၃ ခုကနေ ၇ ခု ဖြစ်သွားပါပြီ။ ကျန်တာက ချောမွေ့စေခြင်း (Smooth) ပါ။ အဲဒါက နောက်တစ်ဆင့်ပါ။ ဒီအလုပ်လုပ်ရင်း ၆.၅၄.၀ က အမှားတစ်ခုလည်း ပေါ်လာပါတယ် — ကွန်ပျူတာက အရေပြား ဘယ်နေရာလဲ ဆိုတာကို အလင်း/အရောင် ပြင်ပြီးတဲ့ ပုံကနေ ရှာပေမဲ့၊ ၆.၅၄.၀ က မူရင်းပုံကနေ ရှာနေခဲ့ပါတယ်။ အလင်းအရောင် ပြင်ထားရင် နှစ်ခုက မတူတော့ဘဲ အရေပြားခလုတ်တွေ ၉ ဆင့်အထိ လွဲနိုင်ပါတယ်။ ယခု ပြင်ပြီးပါပြီ — အခု နှစ်ဖက်စလုံး တစ်ပွင့်မှ မကွာပါ။ သိမ်းတဲ့ပုံ၊ ထုတ်တဲ့ပုံကို ဘယ်တုန်းကမှ မထိပါ။",en:"Even skin tone is on the graphics card now. It is unlike the others: a pixel cannot be evened out by looking at that pixel — the control pulls every skin pixel towards the AVERAGE skin colour of the whole photograph, and a graphics card works one pixel at a time, so it cannot see that number. So the picture is drawn once with only the light and colour stages, read back, and the computer works out the average exactly as it always has — nothing is estimated or sampled. Dragging Even never changes that number, so it is worked out once and the rest of the drag is free. The result comes back bit-identical. The number that matters: presets that can draw this way go from 3 of 16 to 7 of 16. Smoothing is the one still holding the rest back, and it is the next step. This work also turned up a mistake in 6.54.0: the computer finds the skin in the picture AFTER light and colour are applied, and 6.54.0 was looking for it in the original. With a grade on, those are different regions and the skin controls could land up to 9 steps out. It is fixed, and both sides are now bit-identical. The saved and exported picture was never touched by any of this.",shn:"Even ၽိဝ်ၼင် ၶိုၼ်ႈၵၢတ်ႉႁၢင်ႈယဝ်ႉ။ ဢၼ်ၼႆႉ ဢမ်ႇမိူၼ်ဢၼ်တၢင်ႇဢၼ် — လူဝ်ႇႁူႉ သီၽိဝ်ၼင် ၶၼ်ႉၵၢင် ၶွင်ႁၢင်ႈတင်းသဵင်ႈ၊ ၵၢတ်ႉ ႁဵတ်းတီႈလဵဝ်ၵူၺ်း ဢမ်ႇႁၼ်လႆႈ။ ၸင်ႇဝႃႈ ဢဝ်ႁၢင်ႈ ဢၼ်ႁဵတ်းသီယဝ်ႉ ဝႆႉ ၶိုၼ်းလူ သေ ၶွမ်း ႁဵတ်းၶၼ်ႉၵၢင်ပၼ် တႄႉတႄႉ — ဢမ်ႇၸႂ်ႈဢၼ်ၶၢတ်ႈ။ ၽွင်းလၢၵ်ႈ Even ၶၼ်ႉၵၢင်ဢမ်ႇလႅၵ်ႈ ၸင်ႇႁဵတ်းပွၵ်ႈလဵဝ်။ ၽိတ်ႈမိူၼ်ၵၼ်ၵူႈတီႈ။ Preset 16 ဢၼ် ၼႆႉ 3 ဢၼ် ၶိုၼ်ႈပဵၼ် 7 ဢၼ်။ Smooth ယင်းပိၵ်ႉဝႆႉ — ပဵၼ်ၶၵ်ႉတွၼ်ႈထႅင်ႈ။ ၶၢဝ်းၼႆႉ ႁၼ်တၢင်းၽိတ်း 6.54.0 ထႅင်ႈ: ၶွမ်း ႁႃၽိဝ်ၼင် ၼႂ်းႁၢင်ႈဢၼ်ႁဵတ်းသီယဝ်ႉ၊ 6.54.0 ႁႃၼႂ်းႁၢင်ႈၵဝ်ႇ၊ ၸၢင်ႈၶၢတ်ႇထိုင် 9 ၶၵ်ႉ။ မႄးယဝ်ႉ။ ႁၢင်ႈဢၼ်သိမ်း၊ ဢၼ်ဢွၵ်ႇ ဢမ်ႇလႅၵ်ႈသင်။",kac:"Even hpyi a hkri gaw ya graphics card hta lawm sai. Ndai gaw kaga ni hte n bung ai: sumla makau langai hpe dai makau langai sha yu nna n mai galaw ai — hpyi makau shagu hpe sumla ting a hpyi a hkri gitawng de dun ai re, graphics card gaw makau langai hpang langai galaw ai majaw dai masat hpe n mu lu ai. Dai majaw sumla gaw nhtoi hte hkri lam sha galaw nna kalang mi soi la ai, bai hti la nna, computer gaw gitawng hpe moi na zawn nan shadum ai — hpa mung n shadu ai, n lata ai. Even hpe dun ai gaw dai masat hpe n galai ai majaw kalang mi sha shadum ra ai. Akyaw gaw hkum ting maren re. Ahkyak dik ai masat: ndai hku galaw lu ai preset ni gaw 16 kaw na 3 kaw nna 7 du sai. Smooth gaw ngam ai ni hpe naw pat da ai, dai gaw hpang na lam re. Ndai bungli hta 6.54.0 na shut ai lam mung mu ai: computer gaw nhtoi hte hkri jaw ngut ai sumla hta hpyi hpe tam ai, 6.54.0 gaw shawng na sumla hta tam nga ai; grade nga yang shara shai nna 9 lakang du hkra shut lu ai. Ya mai sai. Makawp da ai sumla hte shapraw ai sumla gaw galoi mung n hkra ai.",th:"Even skin tone อยู่บนการ์ดจอแล้ว ปุ่มนี้ต่างจากปุ่มอื่น: จะทำให้พิกเซลหนึ่งสม่ำเสมอไม่ได้ด้วยการดูพิกเซลนั้นเอง เพราะมันดึงทุกพิกเซลผิวเข้าหาค่าเฉลี่ยสีผิวของทั้งภาพ และการ์ดจอทำงานทีละพิกเซลจึงมองไม่เห็นตัวเลขนั้น ระบบจึงวาดภาพหนึ่งครั้งด้วยขั้นแสงและสีเท่านั้น อ่านกลับมา แล้วให้คอมพิวเตอร์คำนวณค่าเฉลี่ยอย่างแม่นยำเหมือนเดิม ไม่ได้ประมาณและไม่ได้สุ่ม การลาก Even ไม่ทำให้ตัวเลขนั้นเปลี่ยน จึงคำนวณครั้งเดียว ผลลัพธ์ออกมาเหมือนกันทุกจุด ตัวเลขที่สำคัญ: พรีเซ็ตที่วาดแบบนี้ได้เพิ่มจาก 3 ใน 16 เป็น 7 ใน 16 เหลือ Smoothing ที่ยังกั้นอยู่ ซึ่งเป็นขั้นถัดไป งานนี้ยังพบข้อผิดพลาดของ 6.54.0 ด้วย: คอมพิวเตอร์หาผิวจากภาพหลังปรับแสงและสี แต่ 6.54.0 หาจากภาพต้นฉบับ เมื่อมีการปรับสี ทั้งสองเป็นคนละบริเวณ และปุ่มผิวอาจคลาดเคลื่อนได้ถึง 9 ระดับ แก้แล้ว ภาพที่บันทึกและส่งออกไม่เคยถูกแตะต้อง",zh:"肤色均匀（Even）现在也在显卡上了。它和其他控制不同：一个像素无法只看它自己来均匀化 —— 这个控制把每个皮肤像素拉向整张照片的平均肤色，而显卡一次只处理一个像素，看不到那个数。所以画面先只走光影和色彩两步画一次，读回来，由电脑像以往一样精确算出平均值 —— 不估计，也不抽样。拖动 Even 不会改变那个数，因此只算一次。结果逐位相同。最要紧的数字：能这样绘制的预设从 16 个里的 3 个变成 7 个。还挡着其余的是磨皮（Smoothing），那是下一步。这次还发现了 6.54.0 的一个错误：电脑是在调好光影色彩之后的画面里找皮肤，而 6.54.0 在原图里找。加了调色之后两者是不同的区域，皮肤控制最多可能差 9 级。已修复，两边现在逐位相同。保存和导出的画面从未受到影响。",vi:"Even skin tone giờ đã nằm trên card đồ họa. Nút này khác các nút kia: không thể làm đều một điểm ảnh bằng cách chỉ nhìn vào chính nó — nó kéo mọi điểm ảnh da về màu da trung bình của cả tấm ảnh, mà card đồ họa xử lý từng điểm một nên không thấy được con số đó. Vì vậy ảnh được vẽ một lần chỉ với các bước sáng và màu, đọc ngược lại, rồi máy tính tính trung bình chính xác như xưa nay — không ước lượng, không lấy mẫu. Kéo Even không làm con số đó đổi, nên chỉ phải tính một lần. Kết quả giống hệt từng điểm. Con số quan trọng: các preset vẽ được theo cách này tăng từ 3 trên 16 lên 7 trên 16. Chỉ còn Smoothing chặn phần còn lại, và đó là bước tiếp theo. Công việc này cũng lộ ra một lỗi của 6.54.0: máy tính tìm vùng da trên ảnh SAU khi đã chỉnh sáng và màu, còn 6.54.0 tìm trên ảnh gốc. Khi có chỉnh màu, hai vùng đó khác nhau và các nút chỉnh da có thể lệch tới 9 bậc. Đã sửa. Ảnh lưu và ảnh xuất chưa bao giờ bị đụng tới.",id:"Even skin tone kini ada di kartu grafis. Kontrol ini berbeda dari yang lain: satu piksel tidak bisa diratakan hanya dengan melihat piksel itu — kontrol ini menarik setiap piksel kulit ke arah warna kulit RATA-RATA seluruh foto, sedangkan kartu grafis bekerja satu piksel sekali jalan sehingga tidak bisa melihat angka itu. Maka gambar digambar sekali hanya dengan tahap cahaya dan warna, dibaca kembali, lalu komputer menghitung rata-ratanya persis seperti biasa — tidak menebak dan tidak menyampel. Menggeser Even tidak mengubah angka itu, jadi cukup dihitung sekali. Hasilnya persis sama. Angka yang penting: preset yang bisa digambar begini naik dari 3 dari 16 menjadi 7 dari 16. Tinggal Smoothing yang menahan sisanya, dan itu langkah berikutnya. Pekerjaan ini juga memunculkan kesalahan pada 6.54.0: komputer mencari kulit pada gambar SETELAH cahaya dan warna diterapkan, sedangkan 6.54.0 mencarinya pada gambar asli. Dengan grade aktif, keduanya wilayah yang berbeda dan kontrol kulit bisa meleset sampai 9 tingkat. Sudah diperbaiki. Gambar yang disimpan dan diekspor tidak pernah tersentuh.",ms:"Even skin tone kini berada pada kad grafik. Kawalan ini berbeza daripada yang lain: satu piksel tidak boleh diratakan hanya dengan melihat piksel itu — ia menarik setiap piksel kulit ke arah warna kulit PURATA bagi keseluruhan foto, sedangkan kad grafik bekerja satu piksel pada satu masa jadi ia tidak nampak nombor itu. Maka gambar dilukis sekali dengan peringkat cahaya dan warna sahaja, dibaca semula, dan komputer mengira purata itu dengan tepat seperti biasa — tiada anggaran, tiada persampelan. Menyeret Even tidak mengubah nombor itu, jadi ia dikira sekali sahaja. Hasilnya sama tepat. Angka yang penting: preset yang boleh dilukis begini naik daripada 3 daripada 16 kepada 7 daripada 16. Tinggal Smoothing yang menahan selebihnya, dan itulah langkah seterusnya. Kerja ini turut mendedahkan satu kesilapan dalam 6.54.0: komputer mencari kulit pada gambar SELEPAS cahaya dan warna dikenakan, manakala 6.54.0 mencarinya pada gambar asal. Apabila ada gred, kedua-duanya kawasan berbeza dan kawalan kulit boleh tersasar sehingga 9 tahap. Sudah dibaiki. Gambar yang disimpan dan dieksport tidak pernah disentuh."} },
   { v:"6.54.0", kind:"page", ref:"pgMeitu",
     t:{my:"အရေပြား ခလုတ်တွေကိုလည်း ဆွဲနေတုန်း အစစ်အတိုင်း မြင်ရပြီ",en:"The skin controls now show truly while you drag them too",shn:"ၶိူင်ႈၽိဝ်ၼင် ၵေႃႈ လၢၵ်ႈယူႇ ႁၼ်ဢၼ်တႄႉ",kac:"Hpyi a matu jat ni mung dun nga ten hta teng man ai hku mu sai",th:"ปุ่มปรับผิวก็เห็นของจริงระหว่างลากแล้ว",zh:"皮肤控制在拖动时也显示真实效果了",vi:"Các nút chỉnh da giờ cũng hiện đúng thật khi bạn kéo",id:"Kontrol kulit kini tampil sebenarnya saat digeser",ms:"Kawalan kulit kini dipaparkan sebenar semasa diseret"},
     s:{my:"အရေပြား ခလုတ် ခြောက်ခု — ဖြူစေခြင်း (White)၊ နီရဲစေခြင်း (Rosy)၊ တောက်ပြောင်မှု လျှော့ခြင်း (De-shine)၊ အရောင်တင်ခြင်း (Gloss)၊ အဝါဖျောက်ခြင်း (De-yellow)၊ တောက်ပမှု (Radiance) — ကို ဂရပ်ဖစ်ကတ်ပေါ် တင်လိုက်ပါပြီ။ ဆွဲနေတုန်း ပြတဲ့ပုံက ခန့်မှန်းပုံ မဟုတ်တော့ဘဲ အစစ်ပါ။ ဂရပ်ဖစ်ကတ်က အရေပြားကို ကိုယ်တိုင် ပြန်ရှာတာ မဟုတ်ပါဘူး — ကွန်ပျူတာက တစ်ခါ ရှာပြီး သူသုံးတဲ့ mask အတိအကျကိုပဲ လက်ဆင့်ကမ်းပေးလိုက်တာမို့ နှစ်ဖက် တူညီဖို့ သေချာပါတယ်။ Rosy၊ De-shine နဲ့ Gloss က တစ်ပွင့်မှ မကွာ တူညီပါတယ်။ White၊ De-yellow နဲ့ Radiance ကတော့ ၂၅၅ ဆင့်မှာ အများဆုံး တစ်ဆင့်သာ ကွာပြီး ပုံရဲ့ တစ်ရာခိုင်နှုန်းရဲ့ လေးပုံတစ်ပုံအောက်မှာသာ ဖြစ်ပါတယ်။ အရေးအကြီးဆုံး ဂဏန်းကို ပွင့်ပွင့်လင်းလင်း ပြောရရင် — ဒီနည်းနဲ့ ဆွဲလို့ရတဲ့ Preset က ၁၆ ခုမှာ ၁ ခုကနေ ၃ ခု ဖြစ်သွားပါပြီ။ ကျန်တာတွေကို ခလုတ် နှစ်ခုက ပိတ်ထားဆဲပါ — အရေပြား ညီညာစေခြင်း (Even) နဲ့ ချောမွေ့စေခြင်း (Smooth) — အဲဒီနှစ်ခုက နောက်ထပ် အဆင့် နှစ်ဆင့်ပါ။ သိမ်းတဲ့ပုံ၊ ထုတ်တဲ့ပုံ ဘာမှ မပြောင်းပါဘူး — ဆွဲနေတုန်း မြင်ရတာပဲ ပြောင်းသွားတာပါ။",en:"Six skin controls — White, Rosy, De-shine, Gloss, De-yellow and Radiance — are on the graphics card now, so the drag shows the real picture instead of a rough stand-in. The graphics card does not go hunting for the skin on its own: the computer finds it once and hands the shader the very mask it uses, so the two agree by construction. Rosy, De-shine and Gloss come out bit-identical. White, De-yellow and Radiance are at most one step out of 255, on under a quarter of one percent of the picture. Plainly, the number that matters: presets that can draw this way go from 1 of 16 to 3 of 16. Two controls still hold the rest back — Even skin tone and Smooth — and those are the next two steps. The saved and exported picture does not change at all; this is only what you see while your finger is on the slider.",shn:"ၶိူင်ႈၽိဝ်ၼင် 6 ဢၼ် — White, Rosy, De-shine, Gloss, De-yellow, Radiance — ၶိုၼ်ႈၵၢတ်ႉႁၢင်ႈယဝ်ႉ။ ၽွင်းလၢၵ်ႈ ႁၼ်ႁၢင်ႈတႄႉ ဢမ်ႇၸႂ်ႈႁၢင်ႈပွမ်။ ၵၢတ်ႉ ဢမ်ႇလႆႈသွၵ်ႈႁႃ ၽိဝ်ၼင် ႁင်းၵူၺ်း — ၶွမ်း ႁႃဝႆႉပွၵ်ႈၼိုင်ႈ သေ ဢဝ် mask ဢၼ်ၼၼ်ႉ သူင်ႇပၼ်၊ ၸင်ႇမိူၼ်ၵၼ်တႄႉ။ Rosy, De-shine, Gloss မိူၼ်ၵၼ်ၵူႈတီႈ။ White, De-yellow, Radiance ၶၢတ်ႇသုတ်း 1 ၶၵ်ႉ ၼႂ်း 255၊ ဢေႇလိူဝ် သီႇပုၼ်ႈၼိုင်ႈ ၶွင်ပိုၼ်ႉၼိုင်ႈ။ Preset 16 ဢၼ် ၼႆႉ 1 ဢၼ် ၶိုၼ်ႈပဵၼ် 3 ဢၼ်။ Even လႄႈ Smooth ယင်းပိၵ်ႉဝႆႉ — ပဵၼ်ၶၵ်ႉတွၼ်ႈ သွင်ဢၼ်ထႅင်ႈ။ ႁၢင်ႈဢၼ်သိမ်း၊ ဢၼ်ဢွၵ်ႇ ဢမ်ႇလႅၵ်ႈသင်။",kac:"Hpyi a matu jat 6 — White, Rosy, De-shine, Gloss, De-yellow hte Radiance — gaw ya graphics card hta lawm sai, dai majaw dun nga ten hta mu ai gaw teng man ai sumla re, sumla kasha n re. Graphics card gaw hpyi hpe shi nan n tam ai: computer gaw kalang mi tam nna, shi jai ai mask hpe nan shader hpe jaw dat ai majaw, lahkawng yen maren nga ai. Rosy, De-shine hte Gloss gaw hkum ting maren re. White, De-yellow hte Radiance gaw 255 kaw na langai sha shai ai, sumla a tsa mi a daw mali langai n du ai shara hta sha. Ahkyak dik ai masat gaw: ndai hku galaw lu ai preset ni gaw 16 kaw na 1 kaw nna 3 du sai. Jat lahkawng gaw ngam ai ni hpe naw pat da ai — Even hte Smooth — dai lahkawng gaw hpang na lam lahkawng re. Makawp da ai sumla hte shapraw ai sumla gaw hpa mung n galai ai.",th:"ปุ่มปรับผิว 6 ปุ่ม — White, Rosy, De-shine, Gloss, De-yellow และ Radiance — อยู่บนการ์ดจอแล้ว ระหว่างลากจึงเห็นภาพจริง ไม่ใช่ภาพประมาณ การ์ดจอไม่ได้ไปหาผิวเอง คอมพิวเตอร์หาให้ครั้งเดียวแล้วส่งมาสก์ตัวเดียวกันให้ ทั้งสองฝั่งจึงตรงกันตั้งแต่ต้น Rosy, De-shine และ Gloss ออกมาเหมือนกันทุกจุด ส่วน White, De-yellow และ Radiance ต่างกันมากสุด 1 ระดับจาก 255 บนพื้นที่ไม่ถึงหนึ่งในสี่ของหนึ่งเปอร์เซ็นต์ ตัวเลขที่สำคัญที่สุด: พรีเซ็ตที่วาดแบบนี้ได้ เพิ่มจาก 1 ใน 16 เป็น 3 ใน 16 ยังมีอีกสองปุ่มที่กั้นอยู่ — Even และ Smooth — ซึ่งเป็นสองขั้นถัดไป ภาพที่บันทึกและส่งออกไม่เปลี่ยนแปลงเลย",zh:"六个皮肤控制 —— White、Rosy、De-shine、Gloss、De-yellow 和 Radiance —— 现在都在显卡上了，拖动时看到的是真实效果，不再是粗略的替代图。显卡并不自己去找皮肤：电脑找一次，然后把它自己用的那张遮罩直接交给着色器，两边因此天然一致。Rosy、De-shine 和 Gloss 完全逐位相同；White、De-yellow 和 Radiance 最多差 255 分之 1 级，而且只出现在不到画面千分之二点五的地方。最要紧的数字：能这样绘制的预设从 16 个里的 1 个变成 3 个。还有两个控制挡着其余的 —— Even 和 Smooth —— 这就是接下来的两步。保存和导出的画面完全不变。",vi:"Sáu nút chỉnh da — White, Rosy, De-shine, Gloss, De-yellow và Radiance — giờ đã nằm trên card đồ họa, nên khi kéo bạn thấy ảnh thật chứ không phải bản phác. Card đồ họa không tự đi tìm vùng da: máy tính tìm một lần rồi trao đúng mặt nạ nó đang dùng cho shader, nên hai bên khớp nhau ngay từ gốc. Rosy, De-shine và Gloss giống hệt từng điểm. White, De-yellow và Radiance lệch nhiều nhất 1 bậc trên 255, trên chưa tới một phần tư của một phần trăm ảnh. Con số quan trọng nhất: các preset vẽ được theo cách này tăng từ 1 trên 16 lên 3 trên 16. Vẫn còn hai nút chặn phần còn lại — Even và Smooth — và đó là hai bước tiếp theo. Ảnh lưu và ảnh xuất không thay đổi gì.",id:"Enam kontrol kulit — White, Rosy, De-shine, Gloss, De-yellow, dan Radiance — kini ada di kartu grafis, jadi saat digeser yang tampil adalah gambar sebenarnya, bukan perkiraan. Kartu grafis tidak mencari kulit sendiri: komputer mencarinya sekali lalu menyerahkan masker yang sama persis ke shader, sehingga keduanya cocok sejak awal. Rosy, De-shine, dan Gloss keluar persis sama. White, De-yellow, dan Radiance paling banyak meleset 1 tingkat dari 255, pada kurang dari seperempat satu persen gambar. Angka yang paling penting: preset yang bisa digambar begini naik dari 1 dari 16 menjadi 3 dari 16. Dua kontrol masih menahan sisanya — Even dan Smooth — dan itulah dua langkah berikutnya. Gambar yang disimpan dan diekspor tidak berubah sama sekali.",ms:"Enam kawalan kulit — White, Rosy, De-shine, Gloss, De-yellow dan Radiance — kini berada pada kad grafik, jadi semasa diseret yang dipaparkan ialah gambar sebenar, bukan anggaran. Kad grafik tidak mencari kulit sendiri: komputer mencarinya sekali lalu menyerahkan topeng yang sama kepada shader, jadi kedua-duanya sepadan dari awal. Rosy, De-shine dan Gloss keluar sama tepat. White, De-yellow dan Radiance tersasar paling banyak 1 tahap daripada 255, pada kurang daripada satu perempat satu peratus gambar. Angka yang paling penting: preset yang boleh dilukis begini naik daripada 1 daripada 16 kepada 3 daripada 16. Dua kawalan masih menahan selebihnya — Even dan Smooth — itulah dua langkah seterusnya. Gambar yang disimpan dan dieksport tidak berubah langsung."} },
@@ -16142,7 +16145,16 @@ var ST_GPU_S5 = ["shp","cla"];
    frame-wide reduction of the POST-TONAL image, so it cannot be answered
    without reading pass 1 back. "smooth" is not here either: its guided filter
    is re-solved every time the slider moves. Both are later steps. */
-var ST_GPU_T2 = ["white","rosy","deshine","gloss","deyellow","radiance"];
+/* v6.55.0 — "even" joins them, and the whole list now costs a readback.
+   THE 6.54.0 DEFECT THIS CORRECTS: stRunPipeline builds the skin mask from the
+   POST-TONAL frame (var mi = opts.maskInfo || stSkinMask(px,...) — px is the
+   graded array, not the source), while 6.54.0 built it from the SOURCE. With
+   no grade the two agree; under a grade they are different regions, measured
+   3.2% of bytes apart, and the six controls landed up to 9 counts out. So the
+   mask is now taken from the same tonal draw "even" already needed, and both
+   come off one readback. ST_GPU.t4off withdraws the whole stage the way
+   ST_GPU.s5off withdraws stage (5). */
+var ST_GPU_T2 = ["white","rosy","deshine","gloss","deyellow","radiance","even"];
 /* the only budget available before a settle has ever been timed on this device:
    a drag frame slower than this is not a fast path by any reading */
 var ST_GPU_S5_CEIL = 120;
@@ -16185,6 +16197,7 @@ var ST_GPU_FS = [
    /* v6.54.0 — stage (4). skinOn is 0 when no Tier-2 control is active, so the
       mask is not even sampled on a tone-only frame. */
 "uniform sampler2D skin;uniform int skinOn;",
+"uniform float evenA,meanCb,meanCr;",
 "uniform float whiteAmt,rosy,deshine,gloss,deyellow;",
 /* the CPU rounds to 8 bits between stage (3) and stage (3b) because
    putImageData does; without this the two paths drift on the second loop */
@@ -16284,6 +16297,20 @@ var ST_GPU_FS = [
 "  if(skinOn==1&&mode!=2){",
 "    float m=texture2D(skin,uv).r;",
 "    if(m>0.02){",
+     /* (4a) even skin tone. stApplySkin runs this BEFORE de-yellow, inside the
+        same "if(blur1||t2.even>0)" round trip through YCbCr — so the round trip
+        happens here too, and only when it happens there. meanCb/meanCr are the
+        CPU's own mean, handed in; the shader never estimates it. */
+"      if(evenA>0.0){",
+"        float Y =0.299*R+0.587*G+0.114*B;",
+"        float Cb=128.0-0.168736*R-0.331264*G+0.5*B;",
+"        float Cr=128.0+0.5*R-0.418688*G-0.081312*B;",
+"        float ae=evenA*m;",
+"        Cb+=(meanCb-Cb)*ae; Cr+=(meanCr-Cr)*ae;",
+"        R=Y+1.402*(Cr-128.0);",
+"        G=Y-0.344136*(Cb-128.0)-0.714136*(Cr-128.0);",
+"        B=Y+1.772*(Cb-128.0);",
+"      }",
 "      if(deyellow>0.0&&((R+G)*0.5-B)>12.0) B+=(min(R,G)-B)*deyellow/100.0*0.5*m;",
 "      if(whiteAmt>0.0){",
 "        float wv=whiteAmt/100.0*0.25*m;",
@@ -16373,7 +16400,10 @@ function stGpuCan(t1,t2,pv,heals){
         if(k2==="finish"){ if(t2[k2]) return false; continue; }
         if(k2==="lipC"||k2==="blushC"){ if(t2[k2]) return false; continue; }
         if(typeof t2[k2]!=="number" || !t2[k2]) continue;
-        if(ST_GPU_T2.indexOf(k2)>=0) continue;               /* (4) */
+        if(ST_GPU_T2.indexOf(k2)>=0){                        /* (4) */
+          if(ST_GPU.t4off) return false;
+          continue;
+        }
         return false;                                        /* (3c) and the rest of (4) */
       }
     }
@@ -16446,29 +16476,58 @@ function stGpuU(n){
 }
 /* returns the GL canvas (drawn at W x H) or null — null always means "the
    caller must do what it did before v6.50.0" */
-/* v6.54.0 — THE SKIN MASK, UPLOADED ONCE PER PHOTOGRAPH AND SIZE. stSkinMask
-   reads the source pixels, so its answer changes only when the photograph or
-   the render size changes — never when a slider moves. That is what makes
-   stage (4) affordable at all: the mask costs one upload for a whole drag,
-   the same bargain the seeded noise tile struck in 6.51.0. The key holds the
-   source identity so a new photo cannot inherit the old face. */
-function stGpuSkinTex(gl,srcImg,W,H){
-  var key=W+"x"+H+"|"+((ST.px0&&ST.px0.data&&ST.px0.data.length)||0)+"|"+(ST.maskRev||0);
-  if(ST_GPU.skinKey===key) return true;
-  var c=document.createElement("canvas"); c.width=W; c.height=H;
-  var x=c.getContext("2d",{willReadFrequently:true});
-  x.drawImage(srcImg,0,0,W,H);
-  var px=x.getImageData(0,0,W,H);
+/* v6.55.0 — STAGE (4) IS BOUGHT WITH ONE READBACK, AND BOTH THINGS IT NEEDS
+   COME OFF IT.
+
+   stApplySkin is handed the graded array and asks it two questions before it
+   touches a pixel: WHERE is the skin (stSkinMask of that array) and, for Even
+   skin tone, what is the mean Cb/Cr inside it. Neither is answerable in a
+   fragment — one is a region, the other is a number for the whole picture — and
+   neither is answerable from the source, because the grade moves both.
+
+   So the frame is drawn once with mode 1 and skinOn 0. That is stages
+   (1b)(2)(3)(3b) and nothing else: byte for byte the array stApplySkin
+   receives. It is read back, un-flipped, and handed to stSkinMask and to the
+   same averaging sweep the CPU runs. Nothing here is estimated or sampled.
+
+   The cost is one readback, and it is paid only when the TONAL half moves.
+   Dragging any skin slider — Even included — leaves this cached, which is the
+   case that matters: both answers are properties of the picture underneath. */
+function stGpuSkinPass(gl,W,H,sig){
+  if(ST_GPU.t4key===sig) return true;
+  var buf=ST_GPU.t4buf;
+  if(!buf||buf.length!==W*H*4) buf=ST_GPU.t4buf=new Uint8Array(W*H*4);
+  gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,buf);
+  /* readPixels row 0 is the BOTTOM of the picture; an ImageData row 0 is the
+     top. stSkinMask and the mask texture both speak top-down, so the flip is
+     undone once, here, rather than at every use — measured before it was
+     written, not assumed. */
+  var px=ST_GPU.t4px;
+  if(!px||px.width!==W||px.height!==H) px=ST_GPU.t4px=new ImageData(W,H);
+  var row=W*4;
+  for(var y=0;y<H;y++) px.data.set(buf.subarray((H-1-y)*row,(H-y)*row),y*row);
   var mi=stSkinMask(px,W,H,(typeof ST!=="undefined"&&ST.faceLM)||null);
   if(!mi||!mi.mask) return false;
   /* LUMINANCE is one byte per pixel — the mask's own shape, no padding */
-  var lum=new Uint8Array(W*H);
+  var lum=ST_GPU.t4lum;
+  if(!lum||lum.length!==W*H) lum=ST_GPU.t4lum=new Uint8Array(W*H);
   for(var i=0;i<lum.length;i++) lum[i]=mi.mask[i];
   gl.activeTexture(gl.TEXTURE6); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.skin);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.LUMINANCE,W,H,0,gl.LUMINANCE,gl.UNSIGNED_BYTE,lum);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);
-  ST_GPU.skinKey=key;
+  /* the mean, over the same >128 test and the same arithmetic stApplySkin uses.
+     Its "no masked pixel" answer is 128/128, so that is this one's too. */
+  var d=px.data, sCb=0, sCr=0, n=0;
+  for(var j2=0,q=0;j2<W*H;j2++,q+=4){
+    if(mi.mask[j2]>128){
+      var R=d[q],G=d[q+1],B=d[q+2]; n++;
+      sCb+=128.0-0.168736*R-0.331264*G+0.5*B;
+      sCr+=128.0+0.5*R-0.418688*G-0.081312*B;
+    }
+  }
+  ST_GPU.t4mean = n ? {cb:sCb/n,cr:sCr/n} : {cb:128,cr:128};
+  ST_GPU.t4key=sig;
   return true;
 }
 function stGpuRender(srcImg,W,H,o){
@@ -16545,9 +16604,11 @@ function stGpuRender(srcImg,W,H,o){
        and the frame is the single pass 6.51.0 shipped. */
     /* (4) — whiteAmt folds radiance in exactly as stApplySkin does */
     var whiteAmt=Math.max(0,Math.min(100,(t2.white||0)+(t2.radiance||0)*0.4));
+    var evenA = (!ST_GPU.t4off && (t2.even||0)>0) ? ((t2.even||0)/100*0.6) : 0;
     var skinOn = (whiteAmt>0 || (t2.rosy||0)!==0 || (t2.deshine||0)>0 ||
-                  (t2.gloss||0)!==0 || (t2.deyellow||0)>0);
-    if(skinOn && !stGpuSkinTex(gl,srcImg,W,H)) return null;
+                  (t2.gloss||0)!==0 || (t2.deyellow||0)>0 || evenA>0);
+    /* the mask itself is not uploaded here any more — it comes off the tonal
+       draw below, because that is the array the CPU asks stSkinMask about */
     gl.uniform1i(stGpuU("skinOn"),skinOn?1:0);
     gl.uniform1f(stGpuU("whiteAmt"),whiteAmt);
     gl.uniform1f(stGpuU("rosy"),t2.rosy||0);
@@ -16585,6 +16646,40 @@ function stGpuRender(srcImg,W,H,o){
         ST_GPU.noiseUp=true;
       }
     }
+    /* v6.55.0 — the mean is a property of the TONAL half only, so it is keyed on
+       exactly what feeds stages (1b)(2)(3)(3b) and on the photograph itself.
+       Sharpening, vignette, grain and the other five skin controls are absent
+       from this key on purpose: moving them must not buy a second readback. */
+    ST_GPU.t4paid=false;
+    if(skinOn){
+      /* everything that changes stages (1b)(2)(3)(3b), and the photograph
+         itself. Sharpening, vignette, grain and the skin sliders are absent on
+         purpose: moving them must not buy a second readback. */
+      var evenSig=W+"x"+H+"|"+((ST.px0&&ST.px0.data&&ST.px0.data.length)||0)+"|"+(ST.maskRev||0)+"|"+
+        [t1.exp,t1.bri,t1.con,t1.hi,t1.sh,t1.fad,t1.wht,t1.blk,t1.dhz,
+         t1.wrm,t1.tnt,t1.sat,t1.vib].join(",")+"|"+
+        JSON.stringify(o.curve||null)+"|"+
+        JSON.stringify(pv.hsl||null)+"|"+(pv.anyHsl?1:0)+"|"+
+        JSON.stringify(pv.gradeZones||null)+"|"+(pv.anyGrade?1:0)+"|"+(pv.gradeSat||0)+"|"+
+        (pv.bwOn?1:0)+","+pv.bwR+","+pv.bwG+","+pv.bwB+"|"+
+        (pv.wbOn?1:0)+","+(pv.wbGr||0)+","+(pv.wbGb||0);
+      if(ST_GPU.t4key!==evenSig){
+        /* the tonal draw. mode 1 returns before the finishing stages and
+           skinOn 0 skips stage (4), so what lands in the buffer is the array
+           stApplySkin is handed, byte for byte. */
+        gl.uniform1i(stGpuU("mode"),1);
+        gl.uniform1i(stGpuU("skinOn"),0);
+        gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+        var okT4=stGpuSkinPass(gl,W,H,evenSig);
+        gl.uniform1i(stGpuU("mode"),s5?1:0);
+        gl.uniform1i(stGpuU("skinOn"),1);
+        if(!okT4) return null;
+        ST_GPU.t4paid=true;
+      }
+      gl.uniform1f(stGpuU("meanCb"),ST_GPU.t4mean.cb);
+      gl.uniform1f(stGpuU("meanCr"),ST_GPU.t4mean.cr);
+    }
+    gl.uniform1f(stGpuU("evenA"),evenA);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     if(s5){
       /* pass 1's own pixels, off the GPU once, then blurred BY THE CPU at the
@@ -16663,6 +16758,18 @@ function stGpuTryPaint(c,W,H){
        stage (5) for the session and go back to what 6.51.0 shipped. */
     if(((t1.shp||0)>0||(t1.cla||0)>0)&&!ST_GPU.s5off
        &&stGpuS5Spent(_ms,(ST.q&&ST.q.last&&ST.q.last.settle)||0)) ST_GPU.s5off=true;
+    /* v6.55.0 — the same question for stage (4), asked only of the frames that
+       actually paid for it. Unlike stage (5), whose readback is on every frame,
+       the tonal draw runs only when the tonal half moved, so a skin drag pays
+       once and the rest of its frames have nothing to answer for. Two strikes
+       rather than one: the first such frame on a photograph also warms the
+       readback buffer, and that frame is not the one to judge a device on. */
+    if(ST_GPU.t4paid&&!ST_GPU.t4off){
+      if(stGpuS5Spent(_ms,(ST.q&&ST.q.last&&ST.q.last.settle)||0)){
+        ST_GPU.t4slow=(ST_GPU.t4slow||0)+1;
+        if(ST_GPU.t4slow>=2) ST_GPU.t4off=true;
+      } else ST_GPU.t4slow=0;
+    }
     stQObserve("gpu", _ms);
     return true;
   }catch(e){ return false; }
@@ -27783,7 +27890,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.54.0";
+var APP_VER="6.55.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
