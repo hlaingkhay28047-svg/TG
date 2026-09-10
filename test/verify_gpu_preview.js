@@ -185,6 +185,28 @@ function report(name, ok, detail) {
     "skin: every mask-only control at once":
       { t2: { white: 40, rosy: 25, deshine: 35, gloss: 20, deyellow: 30, radiance: 30 },
         bar: { maxd: 2, pct: 0.001, mean: 0.005 } },
+    /* v6.55.0 — stage (4) with a frame-wide number. "even" pulls every masked
+       pixel's Cb/Cr towards the mean of the masked region, which the shader is
+       handed rather than estimating, so these come back exact. */
+    "skin: even alone":
+      { t2: { even: 60 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "skin: even at maximum":
+      { t2: { even: 100 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    /* THE RECIPE THAT WOULD HAVE CAUGHT 6.54.0. The CPU builds the skin mask
+       from the GRADED frame, not the source; 6.54.0 built it from the source,
+       and under a grade the two are different regions — measured 3.2% of bytes
+       apart and up to 9 counts out. Every recipe above has a flat tonal half,
+       which is exactly why none of them saw it. */
+    "skin: white under a grade — the mask must be the graded frame's":
+      { t1: { exp: 18, con: 22, sat: 14, wrm: 12 }, t2: { white: 60 },
+        bar: { maxd: 1, pct: 0.03, mean: 0.001 } },
+    "skin: even under that same grade":
+      { t1: { exp: 18, con: 22, sat: 14, wrm: 12 }, t2: { even: 55 },
+        bar: { maxd: 1, pct: 0.003, mean: 0.0001 } },
+    "skin: every stage-(4) control at once, under a grade":
+      { t1: { exp: 18, con: 22, sat: 14, wrm: 12 },
+        t2: { even: 50, white: 40, rosy: 25, deshine: 35, gloss: 20, deyellow: 30, radiance: 30 },
+        bar: { maxd: 1, pct: 0.01, mean: 0.005 } },
     /* stage (5): the CPU's own blurs, uploaded — expected bit-identical */
     "sharpen only":
       { t1: { shp: 60 }, bar: { maxd: 0, pct: 0, mean: 0 } },
@@ -334,11 +356,48 @@ function report(name, ok, detail) {
     if (mres && mres.mask) for (let i = 0; i < mres.mask.length; i++) if (mres.mask[i] > 5) mOn++;
     const maskFrac = mOn / (W * H);
 
+    /* v6.55.0 — WHICH PICTURE IS THE MASK TAKEN FROM? stRunPipeline asks
+       stSkinMask about the array it has in hand at stage (4), which is the
+       GRADED frame. Render a strong grade on both paths and compare the mask
+       the shader was actually handed with the mask of each candidate. It has
+       to match the graded one and NOT the source one — and the check reports
+       how far apart those two are, so a source where they agree cannot make it
+       pass by accident. */
+    let maskProvenance = null;
+    {
+      const gt1 = zeroT1(); gt1.exp = 18; gt1.con = 22; gt1.sat = 14; gt1.wrm = 12;
+      const gt2 = zeroT2(); gt2.white = 60;
+      const gpv = basePv(), gcurve = stCurveVals();
+      const gone = stGpuRender(sc, W, H, { t1: gt1, t2: gt2, pv: gpv, curve: gcurve, rs: 1 });
+      const handed = ST_GPU.t4lum ? Uint8Array.from(ST_GPU.t4lum) : null;
+      const tonal = stRunPipeline(sc, W, H, { rs: 1, t1: gt1, t2: zeroT2(), pv: gpv,
+        curve: gcurve, um: null, umInv: false, heals: [], maskInfo: null, lm: null });
+      const tc = document.createElement("canvas"); tc.width = W; tc.height = H;
+      const tx = tc.getContext("2d"); tx.drawImage(tonal, 0, 0);
+      const gradedMask = stSkinMask(tx.getImageData(0, 0, W, H), W, H, null).mask;
+      const sourceMask = stSkinMask(mpx, W, H, null).mask;
+      let vsGraded = 0, vsSource = 0, candidatesDiffer = 0;
+      if (handed) for (let i = 0; i < handed.length; i++) {
+        if (handed[i] !== gradedMask[i]) vsGraded++;
+        if (handed[i] !== sourceMask[i]) vsSource++;
+        if (gradedMask[i] !== sourceMask[i]) candidatesDiffer++;
+      }
+      maskProvenance = { rendered: !!gone, vsGraded, vsSource, candidatesDiffer };
+    }
+
     const wasOff = ST_GPU.s5off;
     ST_GPU.s5off = true;
-    a = mk(); a.t2.even = 40; const refusesEven = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t2.smooth = 40; const refusesSmooth = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t2.white = 40; const acceptsWhite = stGpuCan(a.t1, a.t2, a.pv, null);
+    a = mk(); a.t2.even = 40; const acceptsEven = stGpuCan(a.t1, a.t2, a.pv, null);
+    /* v6.55.0 — stage (4) now costs a readback of its own, so it has a
+       withdrawal of its own, and it must bite on every control in the stage */
+    const wasT4 = ST_GPU.t4off;
+    ST_GPU.t4off = true;
+    a = mk(); a.t2.white = 40; const refusesWhiteWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t2.even = 40; const refusesEvenWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t1.exp = 20; const stillAcceptsTonalWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null);
+    ST_GPU.t4off = wasT4;
     a = mk(); a.t1.shp = 40; const refusesShpWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t1.cla = 40; const refusesClaWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t1.exp = 20; const stillAcceptsTonalWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null);
@@ -354,7 +413,9 @@ function report(name, ok, detail) {
 
     return { out, refusals, accepts, acceptsVig, acceptsGrn, acceptsShp, acceptsCla,
       refusesShpWhenSpent, refusesClaWhenSpent, stillAcceptsTonalWhenSpent, spent,
-      maskFrac: +maskFrac.toFixed(4), refusesEven, refusesSmooth, acceptsWhite };
+      maskFrac: +maskFrac.toFixed(4), refusesSmooth, acceptsWhite, acceptsEven,
+      refusesWhiteWhenT4Spent, refusesEvenWhenT4Spent, stillAcceptsTonalWhenT4Spent,
+      maskProvenance };
   }, RECIPES);
 
   /* ---- B) the two paths agree, recipe by recipe ----
@@ -391,9 +452,22 @@ function report(name, ok, detail) {
     results.stillAcceptsTonalWhenSpent === true,
     { sharpenRefused: results.refusesShpWhenSpent, clarityRefused: results.refusesClaWhenSpent,
       tonalUnaffected: results.stillAcceptsTonalWhenSpent });
-  report("C5) stage (4) is accepted, and the two skin controls it does NOT implement are still refused",
-    results.acceptsWhite === true && results.refusesEven && results.refusesSmooth,
-    { white: results.acceptsWhite, evenRefused: results.refusesEven, smoothRefused: results.refusesSmooth });
+  report("C5) stage (4) is accepted — Even included — and Smoothing, which it does not implement, is still refused",
+    results.acceptsWhite === true && results.acceptsEven === true && results.refusesSmooth,
+    { white: results.acceptsWhite, even: results.acceptsEven, smoothRefused: results.refusesSmooth });
+  report("C5b) …and once its own readback is measured as not worth it, the whole stage is refused again",
+    results.refusesWhiteWhenT4Spent && results.refusesEvenWhenT4Spent &&
+    results.stillAcceptsTonalWhenT4Spent === true,
+    { whiteRefused: results.refusesWhiteWhenT4Spent, evenRefused: results.refusesEvenWhenT4Spent,
+      tonalUnaffected: results.stillAcceptsTonalWhenT4Spent });
+  report("C7) the mask the shader is handed is the GRADED frame's, which is the one stRunPipeline asks about",
+    !!results.maskProvenance && results.maskProvenance.rendered &&
+    results.maskProvenance.vsGraded === 0 &&
+    results.maskProvenance.candidatesDiffer > 0 &&
+    results.maskProvenance.vsSource === results.maskProvenance.candidatesDiffer,
+    results.maskProvenance && (results.maskProvenance.vsGraded + " bytes from the graded mask, " +
+      results.maskProvenance.vsSource + " from the source mask, and the two candidates are " +
+      results.maskProvenance.candidatesDiffer + " apart — 6.54.0 used the source one"));
   report("C6) the skin mask covers part of this source, so the stage (4) recipes are not vacuous",
     results.maskFrac > 0.02 && results.maskFrac < 0.98,
     { maskedFraction: results.maskFrac });
