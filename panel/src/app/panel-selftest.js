@@ -57,15 +57,40 @@ try {
            with nothing beside it, because getAttribute("src") came back empty
            and there was nothing else to say. Name the element every way it can
            be named, so the next photograph identifies WHICH pictures failed
-           instead of only how many. */
+           instead of only how many.
+           v6.58.1 — AND THE CLASS COULD NEVER BE PRINTED. This read went
+           through .className, and 6.53.0 established that UXP answers null for
+           an element with no class attribute — while the gallery sets
+           className to "" for an unselected thumbnail, which is falsy too. So
+           seven gallery pictures reported as a bare "<img no src>" with
+           nothing to identify them by, and the cause took a code read rather
+           than the card to find. The class comes off getAttribute now, and alt
+           and the parent's id are printed as well, because an element with no
+           id and no class still sits somewhere with a name. */
         var who = "";
         try {
           who = (t.getAttribute && t.getAttribute("src")) || t.src || "";
           if (!who) {
+            var cls = "";
+            try { cls = (t.getAttribute && t.getAttribute("class")) || ""; } catch (e2) { cls = ""; }
+            var alt = "";
+            try { alt = (t.getAttribute && t.getAttribute("alt")) || ""; } catch (e3) { alt = ""; }
+            var par = "";
+            try {
+              var pn = t.parentNode;
+              for (var up = 0; up < 3 && pn && pn.getAttribute; up++) {
+                var pid = pn.id || pn.getAttribute("id") || "";
+                var pcl = pn.getAttribute("class") || "";
+                if (pid) { par = " in #" + pid; break; }
+                if (pcl) { par = " in ." + String(pcl).split(/\s+/)[0]; break; }
+                pn = pn.parentNode;
+              }
+            } catch (e4) { par = ""; }
             who = "<" + t.tagName.toLowerCase() +
               (t.id ? " #" + t.id : "") +
-              (t.className != null && String(t.className) ? " ." + String(t.className).split(/\s+/)[0] : "") +
-              " no src>";
+              (cls ? " ." + String(cls).split(/\s+/)[0] : "") +
+              (alt ? " alt=" + alt.slice(0, 24) : "") +
+              par + " no src>";
           }
         } catch (e) { who = ""; }
         push("load", t.tagName.toLowerCase() + " failed to load", who, 0, 0);

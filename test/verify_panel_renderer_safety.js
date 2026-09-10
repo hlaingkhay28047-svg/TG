@@ -39,6 +39,20 @@
       guessed: an error hook installed before anything else can throw, three
       renderer probes, the module counts, the picture tallies.
 
+   J) NO <img> WITHOUT A src (v6.58.1). The owner's self-test on 6.127.0
+      photographed eight load errors: "<img no src>" seven times and
+      "<img #resultImg no src>" once. A browser treats an <img> with no src as
+      inert — no request, no error — so nothing here could ever have caught it
+      and nothing in the panel looked wrong. This renderer treats it as a
+      picture it was asked for and could not fetch.
+      Two shapes made them. The gallery creates a thumbnail, classes it,
+      appends it, and only sets src when galThumb resolves — seven items,
+      seven errors. And refreshCompare stripped #resultImg with
+      removeAttribute("src") whenever there was no result yet. Both now set a
+      1x1 transparent GIF instead, which always decodes and draws nothing.
+      The rule is simple enough to check: no <img> in the markup ships without
+      a src, and removeAttribute("src") appears nowhere in the panel.
+
    E) CI runs this test.
 
    v6.38.1 / panel 6.107.1 — THE SECOND PHOTOGRAPH. With 6.107.0 installed the
@@ -211,6 +225,7 @@ const READ_CARD = () => {
   });
   const caps = (window.HNK && window.HNK.selfTest && window.HNK.selfTest.capabilities()) || {};
   return { rows: rows, caps: caps, errors: (window.HNK.selfTest.errors() || []).length,
+    errorList: (window.HNK.selfTest.errors() || []).slice(0, 5),
     copy: typeof selfTestText === "function" ? selfTestText() : "" };
 };
 
@@ -366,7 +381,8 @@ const READ_CARD = () => {
       !!st && st.copy.slice(0, 120));
     report("D9) nothing threw while all of that was built",
       errs.length === 0 && !!st && st.errors === 0,
-      errs.slice(0, 3).join(" | ") + " | selfTest: " + (st ? st.errors : "?"));
+      errs.slice(0, 3).join(" | ") + " | selfTest: " + (st ? st.errors : "?") +
+      " " + JSON.stringify(st && st.errorList));
 
     /* F) the new rows, on the healthy build */
     const row = (n) => (st && st.rows.find(r => r.name === n)) || null;
@@ -545,6 +561,61 @@ const READ_CARD = () => {
   const bare = grpH.filter(h => /<span id="[A-Za-z0-9_]+"(?!\s+class)/.test(h)).length;
   report("D3) accordion titles still ship with an id and no class — the guard is live, not theoretical",
     bare > 0, { bareTitles: bare, groups: grpH.length });
+
+  /* ---- J) no <img> reaches this renderer without a src (v6.58.1) ---- */
+  /* prose that merely MENTIONS <img> is not markup, so comments come out first */
+  const INDEX_TAGS = INDEX.replace(/<!--[\s\S]*?-->/g, "");
+  const imgTags = INDEX_TAGS.match(/<img\b[^>]*>/g) || [];
+  const srcless = imgTags.filter(t => !/\ssrc\s*=/.test(t));
+  report("J1) every <img> in the panel's markup ships with a src",
+    imgTags.length > 0 && srcless.length === 0,
+    { tags: imgTags.length, without: srcless.slice(0, 4) });
+
+  /* the placeholder has to BE a picture, not an empty string dressed up as one */
+  const blank = (MAIN.match(/const IMG_BLANK = "([^"]+)"/) || [])[1] || "";
+  let blankOk = false;
+  try {
+    const m = /^data:image\/(gif|png);base64,([A-Za-z0-9+/=]+)$/.exec(blank);
+    const buf = m ? Buffer.from(m[2], "base64") : null;
+    blankOk = !!buf && buf.length > 8 &&
+      (buf.slice(0, 6).toString("latin1") === "GIF89a" ||
+       buf.slice(1, 4).toString("latin1") === "PNG");
+  } catch (e) { blankOk = false; }
+  report("J2) the empty-slot placeholder is a real image this renderer can decode",
+    blankOk, { bytes: blank.length, head: blank.slice(0, 32) });
+
+  /* every srcless tag carries the SAME placeholder, so one edit moves them all */
+  const usesBlank = imgTags.filter(t => blank && t.indexOf(blank) >= 0).length;
+  report("J3) the twelve slots that have no picture yet all carry that one placeholder",
+    blankOk && usesBlank >= 12, { carrying: usesBlank });
+
+  /* removeAttribute("src") is the other way to make an empty <img>, and it now
+     lives in exactly one place — clearSrc — because a <video> genuinely does
+     need it: handing the video slot a GIF traded eight image errors for one
+     video error, and D9 above caught that before Photoshop did. */
+  const MAIN_CODE = MAIN.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const removals = (MAIN_CODE.match(/removeAttribute\(\s*["']src["']\s*\)/g) || []);
+  const helper = (MAIN_CODE.match(/function clearSrc\(el\) \{[\s\S]*?\n\}/) || [])[0] || "";
+  report("J4) a src comes off an element in one place only, and only for a <video>",
+    removals.length === 1 && /VIDEO/.test(helper) &&
+    /removeAttribute\(\s*["']src["']\s*\)/.test(helper) && /IMG_BLANK/.test(helper),
+    { removals: removals.length, helperFound: !!helper });
+
+  /* the gallery thumbnail is the one that made seven of them: it must have a
+     src before it can enter the document, not only when galThumb answers */
+  const galBlock = (MAIN.match(/im\.alt = f\.name;[\s\S]{0,400}?galThumb\(f\)/) || [])[0] || "";
+  report("J5) a gallery thumbnail carries the placeholder before galThumb answers",
+    galBlock.indexOf("IMG_BLANK") >= 0 &&
+    galBlock.indexOf("IMG_BLANK") < galBlock.indexOf("galThumb(f)"),
+    { block: galBlock ? galBlock.replace(/\s+/g, " ").slice(0, 90) : "not found" });
+
+  /* and the diagnostic that failed to name them: it read .className, which
+     6.53.0 proved is null here, so a class could never be printed */
+  const SELFTEST = fs.readFileSync(path.join(PANEL, "src/app/panel-selftest.js"), "utf8");
+  const namer = (SELFTEST.match(/if \(!who\) \{[\s\S]*?\n\s{10}\}/) || [])[0] || "";
+  report("J6) the self-test names a failing <img> by class, read the way UXP answers",
+    namer.indexOf('getAttribute("class")') >= 0 && !/\.className/.test(namer),
+    { readsClassName: /\.className/.test(namer) });
 
   const CI = fs.readFileSync(path.join(ROOT, ".github/workflows/test.yml"), "utf8");
   report("E) CI runs this test", CI.includes("node test/verify_panel_renderer_safety.js"), null);
