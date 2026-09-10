@@ -156,7 +156,13 @@ function report(name, ok, detail) {
 
   /* the studio's functions live in the page; everything below runs there */
   const gl = await page.evaluate(() => {
-    try { return !!(typeof stGpuBoot === "function" && stGpuBoot()); } catch (e) { return "throw:" + e; }
+    try {
+      const ok = !!(typeof stGpuBoot === "function" && stGpuBoot());
+      /* v6.59.0 — say WHY when it is not ok. A boot that fails with no reason
+         recorded cost a CI cycle to diagnose. */
+      return ok ? true : { booted: false, bootErr: (window.ST_GPU && ST_GPU.bootErr) || null,
+                           tried: !!(window.ST_GPU && ST_GPU.tried) };
+    } catch (e) { return "throw:" + e; }
   });
   report("A) the page can boot a WebGL context for the fast path", gl === true, { gl });
   if (gl !== true) {
@@ -711,6 +717,19 @@ function report(name, ok, detail) {
       ST.maskRev = (ST.maskRev || 0) + 1;
     }
 
+    /* what this runner actually reports, so a red C12a names the reason in one
+       run instead of costing a cycle to find out */
+    const glLimits = (() => {
+      try {
+        const g = ST_GPU.gl;
+        const d = g.getExtension("WEBGL_debug_renderer_info");
+        return { renderer: d ? g.getParameter(d.UNMASKED_RENDERER_WEBGL) : "?",
+                 maxTextureImageUnits: g.getParameter(g.MAX_TEXTURE_IMAGE_UNITS),
+                 maxCombined: g.getParameter(g.MAX_COMBINED_TEXTURE_IMAGE_UNITS),
+                 fsBuildErr: ST_GPU.fsBuildErr || null };
+      } catch (e) { return { error: String(e) }; }
+    })();
+
     const fsCapReal = ST_GPU.fsCap;
     const fsFrom = (t2k, v) => { const t = zeroT2(); t[t2k] = v; return t; };
     const acceptsFreqHi = stGpuCan(zeroT1(), fsFrom("freqHi", 40), basePv(), null) === true;
@@ -722,12 +741,52 @@ function report(name, ok, detail) {
     const stillAcceptsTeethWhenFsSpent = stGpuCan(zeroT1(), fsFrom("teeth", 40), basePv(), null) === true;
     const stillAcceptsSmoothWhenFsSpent = stGpuCan(zeroT1(), fsFrom("smooth", 40), basePv(), null) === true;
     ST_GPU.fsOff = false;
-    /* and the capability road: a device that reports only the eight units WebGL
-       guarantees must refuse the two sliders, and must still boot a program */
+    /* and the capability road. It is the RENDERER that owns this question, not
+       the gate: the gate must never boot GL to answer it (see stGpuFsOn), so on
+       a device without the units the frame is refused where GL is in hand and
+       the CPU draws it. Asked here as behaviour: a freq recipe comes back null,
+       a teeth recipe still renders, and the program still boots. */
     ST_GPU.fsCap = false;
-    const refusesFreqWithoutUnits = stGpuCan(zeroT1(), fsFrom("freqHi", 40), basePv(), null) === false;
-    const stillAcceptsTeethWithoutUnits = stGpuCan(zeroT1(), fsFrom("teeth", 40), basePv(), null) === true;
+    const noUnits = (() => {
+      const t1 = zeroT1(), pv = basePv(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      const freq = stGpuRender(sc, W, H, { t1, t2: fsFrom("freqHi", 40), pv, curve: cu, rs: 1 });
+      const teethOnly = stGpuRender(sc, W, H, { t1, t2: fsFrom("teeth", 40), pv, curve: cu, rs: 1 });
+      const tonal = stGpuRender(sc, W, H, { t1: Object.assign(zeroT1(), { exp: 20 }), t2: zeroT2(), pv, curve: cu, rs: 1 });
+      return { freqIsNull: freq === null, teethStillDraws: !!teethOnly, tonalStillDraws: !!tonal,
+               stillBooted: !!ST_GPU.gl };
+    })();
     ST_GPU.fsCap = fsCapReal;
+    ST.maskRev = (ST.maskRev || 0) + 1;
+
+    /* v6.59.0 — AND IF THE DRIVER SIMPLY WILL NOT TAKE THE PROGRAM.
+       The unit count is what a driver REPORTS; whether its compiler accepts the
+       spliced source is a different question, and the answer must never be "no
+       GPU at all". Break the splice on purpose, boot again, and check that the
+       program still links, the fast path still exists, and only stage (4b) is
+       gone. This is the check that stands between one new stage and losing the
+       whole fast path on a student's machine. */
+    let fsBuildFallback = null;
+    {
+      const keptDecl = window.ST_GPU_FS_DECL;
+      const reboot = () => { ST_GPU.tried = false; ST_GPU.gl = null; ST_GPU.prog = null;
+        ST_GPU.loc = {}; ST_GPU.tex = {}; ST_GPU.fsCap = null; ST_GPU.noiseUp = false;
+        ST_GPU.t4key = ""; ST_GPU.t4tkey = ""; ST_GPU.gpKey = ""; ST_GPU.fsSrcKey = "";
+        return !!stGpuBoot(); };
+      window.ST_GPU_FS_DECL = "this is not glsl at all;";
+      const booted = reboot();
+      const capAfter = ST_GPU.fsCap, errAfter = ST_GPU.fsBuildErr || null;
+      const t1 = zeroT1(), pv = basePv(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      const tonalStillDraws = !!stGpuRender(sc, W, H,
+        { t1: Object.assign(zeroT1(), { exp: 20 }), t2: zeroT2(), pv, curve: cu, rs: 1 });
+      const freqIsNull = stGpuRender(sc, W, H, { t1, t2: fsFrom("freqHi", 40), pv, curve: cu, rs: 1 }) === null;
+      window.ST_GPU_FS_DECL = keptDecl;
+      const bootedClean = reboot();
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      fsBuildFallback = { booted, capAfter, sawAnError: !!errAfter, tonalStillDraws, freqIsNull,
+                          bootedClean, capClean: ST_GPU.fsCap };
+    }
 
     const wasOff = ST_GPU.s5off;
     ST_GPU.s5off = true;
@@ -800,9 +859,9 @@ function report(name, ok, detail) {
       refusesWhiteWhenT4Spent, refusesEvenWhenT4Spent, refusesSmoothWhenT4Spent,
       refusesTeethWhenT4Spent, refusesFreqWhenT4Spent,
       refusesRadianceWhenS5Spent, refusesNegLowWhenS5Spent, stillAcceptsTeethWhenS5Spent,
-      teethCheck, fsRadiusReuse, fsSpeed, fsCapReal, acceptsFreqHi, acceptsFreqLo, acceptsTeeth,
+      teethCheck, fsRadiusReuse, fsSpeed, fsBuildFallback, fsCapReal, glLimits, acceptsFreqHi, acceptsFreqLo, acceptsTeeth,
       refusesFreqWhenSpent, stillAcceptsNegLowWhenFsSpent, stillAcceptsTeethWhenFsSpent,
-      stillAcceptsSmoothWhenFsSpent, refusesFreqWithoutUnits, stillAcceptsTeethWithoutUnits,
+      stillAcceptsSmoothWhenFsSpent, noUnits,
       stillAcceptsTonalWhenT4Spent, maskProvenance, planeReuse,
       acceptsGlow, refusesGlowWhenSpent, stillAcceptsTonalWhenGlowSpent, glowCoverage };
   }, RECIPES);
@@ -935,16 +994,23 @@ function report(name, ok, detail) {
   }
 
   report("C12a) this device reports the texture units stage (4b) needs, so the checks above rendered it",
-    results.fsCapReal === true, { fsCap: results.fsCapReal });
+    results.fsCapReal === true, { fsCap: results.fsCapReal, gl: results.glLimits });
   report("C12) once stage (4b) is measured as not worth it, the two frequency sliders are refused — and nothing else is",
     results.refusesFreqWhenSpent === true && results.stillAcceptsTeethWhenFsSpent === true &&
     results.stillAcceptsSmoothWhenFsSpent === true && results.stillAcceptsNegLowWhenFsSpent === true,
     { freqRefused: results.refusesFreqWhenSpent, teethKept: results.stillAcceptsTeethWhenFsSpent,
       smoothKept: results.stillAcceptsSmoothWhenFsSpent,
       negativeLowKept: results.stillAcceptsNegLowWhenFsSpent });
-  report("C12b) a device with only the eight units WebGL guarantees refuses the frequency bands and keeps the rest",
-    results.refusesFreqWithoutUnits === true && results.stillAcceptsTeethWithoutUnits === true,
-    { freqRefused: results.refusesFreqWithoutUnits, teethKept: results.stillAcceptsTeethWithoutUnits });
+  report("C12c) a driver that will not compile stage (4b) loses that stage and NOTHING else — the fast path still boots",
+    (() => { const r = results.fsBuildFallback;
+      return !!r && r.booted === true && r.capAfter === false && r.sawAnError === true &&
+             r.tonalStillDraws === true && r.freqIsNull === true &&
+             r.bootedClean === true && r.capClean === true; })(),
+    results.fsBuildFallback);
+  report("C12b) a device with only the eight units WebGL guarantees sends a frequency frame to the CPU and keeps every other stage",
+    !!results.noUnits && results.noUnits.freqIsNull === true &&
+    results.noUnits.teethStillDraws === true && results.noUnits.tonalStillDraws === true &&
+    results.noUnits.stillBooted === true, results.noUnits);
 
   report("C4) and the rule that withdraws it compares against what the CPU costs here",
     Object.keys(results.spent).every(k => results.spent[k] === true), results.spent);

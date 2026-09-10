@@ -16597,14 +16597,24 @@ var ST_GPU_FS_BODY = [
 "        R+=(R-lo2.r)*kHi; G+=(G-lo2.g)*kHi; B+=(B-lo2.b)*kHi;",
 "      }"
 ].join("\n");
-/* Is stage (4b) available AT ALL on this device, and has it been withdrawn?
-   The gate and the renderer must never answer this differently — a frame drawn
-   without a band the gate promised is a wrong picture, silently — so both ask
-   here. fsCap is measured once, in stGpuBoot; a null means GL has not been
-   booted yet, and the gate boots it rather than answering no forever. */
+/* Has stage (4b) been withdrawn on this device?
+   v6.59.0 — THIS DELIBERATELY DOES NOT ASK WHETHER THE DEVICE HAS THE UNITS,
+   and the first version of it did, by booting GL from inside the gate to find
+   out. That was wrong twice over. stGpuBoot caches its answer for the session
+   on the FIRST call, so a gate that boots decides the whole session's GPU path
+   at whatever moment a predicate happened to run — and a context that cannot
+   be had at that moment is remembered as "no GPU" forever, for every stage,
+   not just this one. CI caught it: the boot moved earlier and the WebGL check
+   at the top of verify_gpu_preview went red five seconds in.
+
+   So the capability is the RENDERER's question, asked where GL is already in
+   hand: stGpuRender returns null when the bands are wanted and the units are
+   not there, and a null means the CPU draws this frame — the same fallback
+   every other refusal uses. The gate can be the more permissive of the two
+   safely, because the stricter one cannot draw a wrong picture, only a slower
+   one. What must never differ is the ARITHMETIC, and that is one shader. */
 function stGpuFsOn(){
-  if(ST_GPU.fsCap===null||ST_GPU.fsCap===undefined) stGpuBoot();
-  return !!ST_GPU.fsCap && !ST_GPU.fsOff && !ST_GPU.t4off;
+  return !ST_GPU.fsOff && !ST_GPU.t4off;
 }
 /* THE HONESTY GATE. Every stage this shader does not implement is listed as a
    reason to refuse, by the control that switches it on. Anything unknown also
@@ -16706,9 +16716,6 @@ function stGpuBoot(){
     var tuF=gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)||0;
     var tuC=gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)||0;
     ST_GPU.fsCap=(Math.min(tuF,tuC)>=10);
-    var fsSrc=ST_GPU_FS;
-    if(ST_GPU.fsCap) fsSrc=fsSrc.replace("/*HNK_FS_DECL*/",ST_GPU_FS_DECL)
-                                .replace("/*HNK_FS_BODY*/",ST_GPU_FS_BODY);
     /* a lost context must not keep handing back a blank frame — one loss and
        the whole session goes back to the CPU, which is always correct */
     cv.addEventListener("webglcontextlost",function(ev){ ev.preventDefault(); ST_GPU.lost=true; ST_GPU.gl=null; },false);
@@ -16717,11 +16724,37 @@ function stGpuBoot(){
       if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)||"shader");
       return s;
     }
-    var pr=gl.createProgram();
-    gl.attachShader(pr,sh(gl.VERTEX_SHADER,ST_GPU_VS));
-    gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fsSrc));
-    gl.linkProgram(pr);
-    if(!gl.getProgramParameter(pr,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr)||"link");
+    function build(srcTxt){
+      var p=gl.createProgram();
+      p.__vs=sh(gl.VERTEX_SHADER,ST_GPU_VS);
+      p.__fs=sh(gl.FRAGMENT_SHADER,srcTxt);
+      gl.attachShader(p,p.__vs); gl.attachShader(p,p.__fs);
+      gl.linkProgram(p);
+      if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)||"link");
+      return p;
+    }
+    /* v6.59.0 — STAGE (4b)'s SHADER IS AN ATTEMPT, NEVER A REQUIREMENT.
+       The two frequency bands need texture units 8 and 9; units 0-7 are already
+       spoken for (src, lut, zw, noise, b1/gpA, b8/gpB, skin, gpC) and WebGL 1
+       guarantees only eight. The unit count is asked above — but a count is
+       what a driver REPORTS, and what actually matters is whether this driver's
+       compiler takes the program. If it does not, for any reason, the fallback
+       is not "no GPU": it is the shader 6.58.x shipped, on the same device,
+       with the two sliders refused. Losing one stage is a slower drag; losing
+       the program is losing the whole fast path for every stage, and no new
+       stage is worth that risk on a student's machine. */
+    var pr=null;
+    if(ST_GPU.fsCap){
+      try{
+        pr=build(ST_GPU_FS.replace("/*HNK_FS_DECL*/",ST_GPU_FS_DECL)
+                          .replace("/*HNK_FS_BODY*/",ST_GPU_FS_BODY));
+      }catch(eFs){
+        ST_GPU.fsCap=false;
+        ST_GPU.fsBuildErr=String((eFs&&eFs.message)||eFs);
+        pr=null;
+      }
+    }
+    if(!pr) pr=build(ST_GPU_FS);
     gl.useProgram(pr);
     var buf=gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER,buf);
@@ -16769,7 +16802,12 @@ function stGpuBoot(){
     }
     ST_GPU.cv=cv; ST_GPU.gl=gl; ST_GPU.prog=pr;
     return gl;
-  }catch(e){ ST_GPU.gl=null; return null; }
+  }catch(e){
+    /* v6.59.0 — a boot that fails silently is a whole GPU path that vanishes
+       with no reason recorded. verify_gpu_preview reads this. */
+    ST_GPU.bootErr=String((e&&e.message)||e);
+    ST_GPU.gl=null; return null;
+  }
 }
 function stGpuU(n){
   var g=ST_GPU.loc; if(!(n in g)) g[n]=ST_GPU.gl.getUniformLocation(ST_GPU.prog,n);
@@ -16960,6 +16998,17 @@ function stGpuRender(srcImg,W,H,o){
   var gl=stGpuBoot(); if(!gl) return null;
   try{
     var t1=o.t1, t2=o.t2, pv=o.pv;
+    /* v6.59.0 — THE CAPABILITY REFUSAL, AND WHY IT IS HERE AND NOT IN THE GATE.
+       stGpuFsOn deliberately does not ask whether this device has the two
+       texture units stage (4b) needs — answering it there meant booting GL from
+       inside a predicate, which decides the whole session's GPU path at
+       whatever moment a predicate happened to run (see stGpuFsOn). So the
+       question is asked HERE, where GL is already in hand, and it reads the
+       CONTROLS the caller set rather than the amounts they fold into: with the
+       amounts zeroed this frame would draw happily, just without the bands the
+       gate promised — a wrong picture, silently, which is the one outcome this
+       whole path exists to prevent. Returning null sends the frame to the CPU. */
+    if(!ST_GPU.fsCap && t2 && (((t2.freqHi||0)!==0) || ((t2.freqLo||0)>0))) return null;
     var cv=ST_GPU.cv;
     if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
     gl.viewport(0,0,W,H);
