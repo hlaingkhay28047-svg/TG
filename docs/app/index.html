@@ -5273,6 +5273,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.56.0", kind:"page", ref:"pgMeitu",
+    t:{my:"ချောမွေ့စေခြင်း (Smooth) ကိုလည်း ဆွဲနေတုန်း အစစ်အတိုင်း မြင်ရပြီ",en:"Smoothing now shows truly while you drag it too",shn:"Smooth ၵေႃႈ လၢၵ်ႈယူႇ ႁၼ်ဢၼ်တႄႉ",kac:"Smooth mung dun nga ten hta teng man ai hku mu sai",th:"Smoothing ก็เห็นของจริงระหว่างลากแล้ว",zh:"磨皮（Smoothing）在拖动时也显示真实效果了",vi:"Smoothing giờ cũng hiện đúng thật khi bạn kéo",id:"Smoothing kini tampil sebenarnya saat digeser",ms:"Smoothing kini dipaparkan sebenar semasa diseret"},
+    s:{my:"ချောမွေ့စေခြင်း (Smooth) ကို ဂရပ်ဖစ်ကတ်ပေါ် တင်လိုက်ပါပြီ။ ဒါက အခက်ဆုံး ခလုတ်ပါ။ သူ့အလုပ်က နှစ်ပိုင်း ရှိပါတယ် — ပထမပိုင်းက ပုံသေးလေး (၃၂၀ pixel ခန့်) ပေါ်မှာ အနားသတ်တွေ ဘယ်မှာလဲ တွက်တာပါ၊ ဒုတိယပိုင်းက အဲဒီအဖြေကို ပုံအပြည့်အထိ ချဲ့ပြီး ပွတ်တာပါ။ ပထမပိုင်းက ဂရပ်ဖစ်ကတ်ပေါ် တင်လို့ မရပါ — slider ဆွဲတိုင်း အကုန် ပြန်တွက်ရပါတယ်။ ဒါပေမဲ့ ဒုတိယပိုင်းက ပိုကြီးပြီး ဂရပ်ဖစ်ကတ်နဲ့ ကိုက်ပါတယ်။ ဒါကြောင့် ကွန်ပျူတာက ပထမပိုင်းကို ဆက်လုပ်ပြီး အဖြေကို ဂရပ်ဖစ်ကတ်ဆီ လက်ဆင့်ကမ်းပေးလိုက်ပါတယ် — ခန့်မှန်းတာ မဟုတ်ပါ။ ကိန်းတွေက အသေးစိတ် လိုတာမို့ bit ၁၆ လုံးနဲ့ သယ်ပါတယ်။ တိုင်းကြည့်တော့ ၅၁၂×၇၆၈ မှာ ၁၁၀ မီလီစက္ကန့်ကနေ ၄၆၊ ၈၉၆×၁၃၄၄ မှာ ၃၉၁ ကနေ ၅၁ ဖြစ်သွားပါတယ် — ပုံကြီးလေ ပိုကွာလေပါ။ ရလဒ်က ၂၅၅ ဆင့်မှာ အများဆုံး တစ်ဆင့်သာ ကွာပါတယ်။ အရေးကြီးတဲ့ ဂဏန်း — ဒီနည်းနဲ့ ဆွဲလို့ရတဲ့ Preset က ၁၆ ခုမှာ ၇ ခုကနေ ၁၂ ခု ဖြစ်သွားပါပြီ။ ကျန်တဲ့ ၄ ခုက Finish look သုံးခုနဲ့ Vibe Glow တစ်ခုပါ။ သိမ်းတဲ့ပုံ၊ ထုတ်တဲ့ပုံကို ဘယ်တုန်းကမှ မထိပါ။",en:"Smoothing is on the graphics card now, and it was the hardest of them all. The work has two halves: first it decides WHERE the edges are, on a small copy of the picture about 320 pixels across; then it stretches that answer across the full frame and does the softening. The first half cannot go on the graphics card — both numbers it depends on move with the slider, so it has to be worked out afresh on every frame of a drag. The second half is the bigger one, and it is exactly the shape a graphics card is built for. So the computer keeps the first half and hands the answer over; nothing is estimated. Those numbers need fine detail, so they travel as 16-bit values rather than bytes. Measured: 110 milliseconds down to 46 at 512x768, and 391 down to 51 at 896x1344 — the bigger the picture, the bigger the difference. The result is at most one step out of 255. The number that matters: presets that can draw this way go from 7 of 16 to 12 of 16. The four still left are three Finish looks and Vibe Glow. The saved and exported picture was never touched by any of this.",shn:"Smooth ၶိုၼ်ႈၵၢတ်ႉႁၢင်ႈယဝ်ႉ — ဢၼ်ယၢပ်ႇသုတ်း။ ၵၢၼ်မီးသွင်ပိူင်: ပိူင်ၼိုင်ႈ ႁႃဝႃႈ ႁိမ်းႁွမ်းယူႇလႂ်၊ ႁဵတ်းၼိူဝ်ႁၢင်ႈဢွၼ်ႇ 320 pixel; ပိူင်သွင် ဢဝ်ၶေႃႈတွပ်ႇၼၼ်ႉ ၶႂၢၵ်ႈပေႃးတဵမ်ႁၢင်ႈ သေ ႁဵတ်းမူၼ်း။ ပိူင်ၼိုင်ႈ ဢမ်ႇၶိုၼ်ႈၵၢတ်ႉလႆႈ — လၢၵ်ႈတိုၵ်ႉ တေလႆႈႁဵတ်းမႂ်ႇၵူႈပွၵ်ႈ။ ပိူင်သွင် ယႂ်ႇလိူဝ် လႄႈ ၶဝ်ႈတၢင်းၵၢတ်ႉ။ ၸင်ႇဝႃႈ ၶွမ်း ႁဵတ်းပိူင်ၼိုင်ႈ သေ သူင်ႇၶေႃႈတွပ်ႇပၼ် — ဢမ်ႇၸႂ်ႈဢၼ်ၶၢတ်ႈ။ 512x768: 110 ms လူင်း 46; 896x1344: 391 လူင်း 51။ ၶၢတ်ႇသုတ်း 1 ၶၵ်ႉ ၼႂ်း 255။ Preset 16 ဢၼ် ၼႆႉ 7 ဢၼ် ၶိုၼ်ႈပဵၼ် 12 ဢၼ်။ ႁၢင်ႈဢၼ်သိမ်း၊ ဢၼ်ဢွၵ်ႇ ဢမ်ႇလႅၵ်ႈသင်။",kac:"Smooth gaw ya graphics card hta lawm sai, ndai gaw yawng hta grau yak ai re. Bungli gaw daw lahkawng nga ai: shawng na gaw jarik ni gara hta nga ai hpe sumla kachyi 320 pixel daram hta shadum ai; hpang na gaw dai hpe sumla ting de shakut nna hpyi hpe mahkrai ai. Shawng na daw gaw graphics card hta n mai lawm ai — shi jai ai masat lahkawng yen gaw slider hte rau shamu ai majaw, dun ai lam shagu hta nnan shadum ra ai. Hpang na daw gaw grau kaba ai, graphics card a mying nan re. Dai majaw computer gaw shawng na daw hpe hkum nna akyaw hpe jaw dat ai; hpa mung n shadu ai. Dai masat ni gaw ahkyak ai majaw byte n re, 16-bit hku sa ai. Shadum ai: 512x768 hta 110 ms kaw na 46, 896x1344 hta 391 kaw na 51 — sumla kaba yang grau shai ai. Akyaw gaw 255 kaw na langai sha shai ai. Ahkyak dik ai masat: preset ni gaw 16 kaw na 7 kaw nna 12 du sai. Ngam ai mali gaw Finish look masum hte Vibe Glow re. Makawp da ai sumla hte shapraw ai sumla gaw galoi mung n hkra ai.",th:"Smoothing อยู่บนการ์ดจอแล้ว และเป็นปุ่มที่ยากที่สุด งานของมันมีสองส่วน ส่วนแรกคือหาว่าขอบอยู่ตรงไหน บนภาพย่อขนาดราว 320 พิกเซล ส่วนที่สองคือขยายคำตอบนั้นให้เต็มภาพแล้วเกลี่ยผิว ส่วนแรกขึ้นการ์ดจอไม่ได้ เพราะค่าที่มันใช้ทั้งสองตัวขยับตามสไลเดอร์ จึงต้องคำนวณใหม่ทุกเฟรมที่ลาก ส่วนที่สองใหญ่กว่าและเหมาะกับการ์ดจอพอดี คอมพิวเตอร์จึงทำส่วนแรกแล้วส่งคำตอบให้ ไม่มีการประมาณ ตัวเลขเหล่านั้นต้องละเอียดจึงส่งเป็น 16 บิตแทนไบต์ วัดได้: 512x768 จาก 110 มิลลิวินาทีเหลือ 46 และ 896x1344 จาก 391 เหลือ 51 ภาพยิ่งใหญ่ยิ่งต่างมาก ผลลัพธ์ต่างกันมากสุด 1 ระดับจาก 255 ตัวเลขที่สำคัญ: พรีเซ็ตที่วาดแบบนี้ได้เพิ่มจาก 7 ใน 16 เป็น 12 ใน 16 ที่เหลืออีกสี่คือ Finish look สามแบบกับ Vibe Glow ภาพที่บันทึกและส่งออกไม่เคยถูกแตะต้อง",zh:"磨皮现在也在显卡上了，它是其中最难的一个。它的工作分两半：先在一张约 320 像素的小图上判断边缘在哪里，再把这个答案铺满整幅画面去做柔化。前一半上不了显卡 —— 它依赖的两个数都随滑杆移动，所以拖动时每一帧都得重算。后一半更大，而且正是显卡擅长的形状。于是电脑保留前一半，把答案交给显卡；没有任何估计。这些数需要精细，所以用 16 位而不是字节来传。实测：512x768 从 110 毫秒降到 46，896x1344 从 391 降到 51 —— 画面越大差别越大。结果最多差 255 分之 1 级。最要紧的数字：能这样绘制的预设从 16 个里的 7 个变成 12 个。剩下的四个是三个 Finish look 和 Vibe Glow。保存和导出的画面从未受到影响。",vi:"Smoothing giờ đã nằm trên card đồ họa, và nó là nút khó nhất. Công việc chia làm hai nửa: trước hết xác định các cạnh nằm ở đâu, trên một bản thu nhỏ khoảng 320 pixel; sau đó trải câu trả lời đó ra toàn khung hình và làm mịn. Nửa đầu không lên card đồ họa được — cả hai con số nó dựa vào đều chạy theo thanh trượt, nên phải tính lại ở từng khung khi bạn kéo. Nửa sau lớn hơn, và đúng là hình dạng card đồ họa sinh ra để làm. Vì vậy máy tính giữ nửa đầu rồi trao câu trả lời sang; không có gì được ước lượng. Những con số ấy cần độ tinh, nên chúng đi bằng 16 bit thay vì byte. Đo được: 512x768 từ 110 mili giây còn 46, và 896x1344 từ 391 còn 51 — ảnh càng lớn khác biệt càng lớn. Kết quả lệch nhiều nhất 1 bậc trên 255. Con số quan trọng: các preset vẽ được theo cách này tăng từ 7 trên 16 lên 12 trên 16. Bốn cái còn lại là ba Finish look và Vibe Glow. Ảnh lưu và ảnh xuất chưa bao giờ bị đụng tới.",id:"Smoothing kini ada di kartu grafis, dan inilah yang paling sulit di antara semuanya. Kerjanya ada dua bagian: pertama menentukan DI MANA tepiannya, pada salinan kecil gambar sekitar 320 piksel; lalu membentangkan jawaban itu ke seluruh bingkai dan menghaluskan. Bagian pertama tidak bisa naik ke kartu grafis — kedua angka yang dipakainya ikut bergerak bersama penggeser, jadi harus dihitung ulang di setiap bingkai saat digeser. Bagian kedua lebih besar, dan justru itulah bentuk yang cocok untuk kartu grafis. Maka komputer menyimpan bagian pertama dan menyerahkan jawabannya; tidak ada yang ditebak. Angka-angka itu perlu ketelitian, jadi dibawa sebagai nilai 16-bit, bukan byte. Terukur: 512x768 dari 110 milidetik menjadi 46, dan 896x1344 dari 391 menjadi 51 — makin besar gambarnya, makin besar bedanya. Hasilnya meleset paling banyak 1 tingkat dari 255. Angka yang penting: preset yang bisa digambar begini naik dari 7 dari 16 menjadi 12 dari 16. Empat sisanya adalah tiga Finish look dan Vibe Glow. Gambar yang disimpan dan diekspor tidak pernah tersentuh.",ms:"Smoothing kini berada pada kad grafik, dan inilah yang paling sukar antara semuanya. Kerjanya ada dua bahagian: mula-mula ia menentukan DI MANA tepinya, pada salinan kecil gambar kira-kira 320 piksel; kemudian ia membentangkan jawapan itu ke seluruh bingkai dan melembutkan. Bahagian pertama tidak boleh naik ke kad grafik — kedua-dua nombor yang digunakannya bergerak bersama peluncur, jadi ia perlu dikira semula pada setiap bingkai semasa diseret. Bahagian kedua lebih besar, dan itulah bentuk yang memang sesuai untuk kad grafik. Maka komputer menyimpan bahagian pertama dan menyerahkan jawapannya; tiada apa-apa yang dianggar. Nombor itu memerlukan kehalusan, jadi ia dibawa sebagai nilai 16-bit dan bukan bait. Diukur: 512x768 daripada 110 milisaat kepada 46, dan 896x1344 daripada 391 kepada 51 — semakin besar gambar, semakin besar bezanya. Hasilnya tersasar paling banyak 1 tahap daripada 255. Angka yang penting: preset yang boleh dilukis begini naik daripada 7 daripada 16 kepada 12 daripada 16. Empat yang tinggal ialah tiga Finish look dan Vibe Glow. Gambar yang disimpan dan dieksport tidak pernah disentuh."} },
   { v:"6.55.0", kind:"page", ref:"pgMeitu",
     t:{my:"အရေပြား အရောင် ညီညာစေခြင်း (Even) ကိုလည်း ဆွဲနေတုန်း အစစ်အတိုင်း မြင်ရပြီ",en:"Even skin tone now shows truly while you drag it too",shn:"Even ၽိဝ်ၼင် ၵေႃႈ လၢၵ်ႈယူႇ ႁၼ်ဢၼ်တႄႉ",kac:"Even hpyi a hkri mung dun nga ten hta teng man ai hku mu sai",th:"Even skin tone ก็เห็นของจริงระหว่างลากแล้ว",zh:"肤色均匀（Even）在拖动时也显示真实效果了",vi:"Even skin tone giờ cũng hiện đúng thật khi bạn kéo",id:"Even skin tone kini tampil sebenarnya saat digeser",ms:"Even skin tone kini dipaparkan sebenar semasa diseret"},
     s:{my:"အရေပြား အရောင် ညီညာစေခြင်း (Even) ကို ဂရပ်ဖစ်ကတ်ပေါ် တင်လိုက်ပါပြီ။ ဒီခလုတ်က ကျန်တာတွေနဲ့ မတူပါဘူး — pixel တစ်ခုချင်းကို ကြည့်ရုံနဲ့ မရဘဲ ပုံတစ်ပုံလုံးရဲ့ အရေပြားအရောင် ပျမ်းမျှကို သိမှ ရပါတယ်။ ဂရပ်ဖစ်ကတ်က pixel တစ်ခုစီကို သီးခြား တွက်တာမို့ အဲဒီကိန်းကို မမြင်နိုင်ပါ။ ဒါကြောင့် အလင်း/အရောင် အဆင့်ပြီးတဲ့ ပုံကို တစ်ခါ ဆွဲပြီး ပြန်ဖတ်ကာ ကွန်ပျူတာက ပျမ်းမျှကို အတိအကျ တွက်ပေးလိုက်ပါတယ် — ခန့်မှန်းတာ မဟုတ်ပါ။ Even ခလုတ် ဆွဲနေတုန်း အဲဒီကိန်း မပြောင်းလို့ တစ်ခါပဲ တွက်ရပါတယ်။ ရလဒ်က တစ်ပွင့်မှ မကွာ တူညီပါတယ်။ အရေးကြီးတဲ့ ဂဏန်း — ဒီနည်းနဲ့ ဆွဲလို့ရတဲ့ Preset က ၁၆ ခုမှာ ၃ ခုကနေ ၇ ခု ဖြစ်သွားပါပြီ။ ကျန်တာက ချောမွေ့စေခြင်း (Smooth) ပါ။ အဲဒါက နောက်တစ်ဆင့်ပါ။ ဒီအလုပ်လုပ်ရင်း ၆.၅၄.၀ က အမှားတစ်ခုလည်း ပေါ်လာပါတယ် — ကွန်ပျူတာက အရေပြား ဘယ်နေရာလဲ ဆိုတာကို အလင်း/အရောင် ပြင်ပြီးတဲ့ ပုံကနေ ရှာပေမဲ့၊ ၆.၅၄.၀ က မူရင်းပုံကနေ ရှာနေခဲ့ပါတယ်။ အလင်းအရောင် ပြင်ထားရင် နှစ်ခုက မတူတော့ဘဲ အရေပြားခလုတ်တွေ ၉ ဆင့်အထိ လွဲနိုင်ပါတယ်။ ယခု ပြင်ပြီးပါပြီ — အခု နှစ်ဖက်စလုံး တစ်ပွင့်မှ မကွာပါ။ သိမ်းတဲ့ပုံ၊ ထုတ်တဲ့ပုံကို ဘယ်တုန်းကမှ မထိပါ။",en:"Even skin tone is on the graphics card now. It is unlike the others: a pixel cannot be evened out by looking at that pixel — the control pulls every skin pixel towards the AVERAGE skin colour of the whole photograph, and a graphics card works one pixel at a time, so it cannot see that number. So the picture is drawn once with only the light and colour stages, read back, and the computer works out the average exactly as it always has — nothing is estimated or sampled. Dragging Even never changes that number, so it is worked out once and the rest of the drag is free. The result comes back bit-identical. The number that matters: presets that can draw this way go from 3 of 16 to 7 of 16. Smoothing is the one still holding the rest back, and it is the next step. This work also turned up a mistake in 6.54.0: the computer finds the skin in the picture AFTER light and colour are applied, and 6.54.0 was looking for it in the original. With a grade on, those are different regions and the skin controls could land up to 9 steps out. It is fixed, and both sides are now bit-identical. The saved and exported picture was never touched by any of this.",shn:"Even ၽိဝ်ၼင် ၶိုၼ်ႈၵၢတ်ႉႁၢင်ႈယဝ်ႉ။ ဢၼ်ၼႆႉ ဢမ်ႇမိူၼ်ဢၼ်တၢင်ႇဢၼ် — လူဝ်ႇႁူႉ သီၽိဝ်ၼင် ၶၼ်ႉၵၢင် ၶွင်ႁၢင်ႈတင်းသဵင်ႈ၊ ၵၢတ်ႉ ႁဵတ်းတီႈလဵဝ်ၵူၺ်း ဢမ်ႇႁၼ်လႆႈ။ ၸင်ႇဝႃႈ ဢဝ်ႁၢင်ႈ ဢၼ်ႁဵတ်းသီယဝ်ႉ ဝႆႉ ၶိုၼ်းလူ သေ ၶွမ်း ႁဵတ်းၶၼ်ႉၵၢင်ပၼ် တႄႉတႄႉ — ဢမ်ႇၸႂ်ႈဢၼ်ၶၢတ်ႈ။ ၽွင်းလၢၵ်ႈ Even ၶၼ်ႉၵၢင်ဢမ်ႇလႅၵ်ႈ ၸင်ႇႁဵတ်းပွၵ်ႈလဵဝ်။ ၽိတ်ႈမိူၼ်ၵၼ်ၵူႈတီႈ။ Preset 16 ဢၼ် ၼႆႉ 3 ဢၼ် ၶိုၼ်ႈပဵၼ် 7 ဢၼ်။ Smooth ယင်းပိၵ်ႉဝႆႉ — ပဵၼ်ၶၵ်ႉတွၼ်ႈထႅင်ႈ။ ၶၢဝ်းၼႆႉ ႁၼ်တၢင်းၽိတ်း 6.54.0 ထႅင်ႈ: ၶွမ်း ႁႃၽိဝ်ၼင် ၼႂ်းႁၢင်ႈဢၼ်ႁဵတ်းသီယဝ်ႉ၊ 6.54.0 ႁႃၼႂ်းႁၢင်ႈၵဝ်ႇ၊ ၸၢင်ႈၶၢတ်ႇထိုင် 9 ၶၵ်ႉ။ မႄးယဝ်ႉ။ ႁၢင်ႈဢၼ်သိမ်း၊ ဢၼ်ဢွၵ်ႇ ဢမ်ႇလႅၵ်ႈသင်။",kac:"Even hpyi a hkri gaw ya graphics card hta lawm sai. Ndai gaw kaga ni hte n bung ai: sumla makau langai hpe dai makau langai sha yu nna n mai galaw ai — hpyi makau shagu hpe sumla ting a hpyi a hkri gitawng de dun ai re, graphics card gaw makau langai hpang langai galaw ai majaw dai masat hpe n mu lu ai. Dai majaw sumla gaw nhtoi hte hkri lam sha galaw nna kalang mi soi la ai, bai hti la nna, computer gaw gitawng hpe moi na zawn nan shadum ai — hpa mung n shadu ai, n lata ai. Even hpe dun ai gaw dai masat hpe n galai ai majaw kalang mi sha shadum ra ai. Akyaw gaw hkum ting maren re. Ahkyak dik ai masat: ndai hku galaw lu ai preset ni gaw 16 kaw na 3 kaw nna 7 du sai. Smooth gaw ngam ai ni hpe naw pat da ai, dai gaw hpang na lam re. Ndai bungli hta 6.54.0 na shut ai lam mung mu ai: computer gaw nhtoi hte hkri jaw ngut ai sumla hta hpyi hpe tam ai, 6.54.0 gaw shawng na sumla hta tam nga ai; grade nga yang shara shai nna 9 lakang du hkra shut lu ai. Ya mai sai. Makawp da ai sumla hte shapraw ai sumla gaw galoi mung n hkra ai.",th:"Even skin tone อยู่บนการ์ดจอแล้ว ปุ่มนี้ต่างจากปุ่มอื่น: จะทำให้พิกเซลหนึ่งสม่ำเสมอไม่ได้ด้วยการดูพิกเซลนั้นเอง เพราะมันดึงทุกพิกเซลผิวเข้าหาค่าเฉลี่ยสีผิวของทั้งภาพ และการ์ดจอทำงานทีละพิกเซลจึงมองไม่เห็นตัวเลขนั้น ระบบจึงวาดภาพหนึ่งครั้งด้วยขั้นแสงและสีเท่านั้น อ่านกลับมา แล้วให้คอมพิวเตอร์คำนวณค่าเฉลี่ยอย่างแม่นยำเหมือนเดิม ไม่ได้ประมาณและไม่ได้สุ่ม การลาก Even ไม่ทำให้ตัวเลขนั้นเปลี่ยน จึงคำนวณครั้งเดียว ผลลัพธ์ออกมาเหมือนกันทุกจุด ตัวเลขที่สำคัญ: พรีเซ็ตที่วาดแบบนี้ได้เพิ่มจาก 3 ใน 16 เป็น 7 ใน 16 เหลือ Smoothing ที่ยังกั้นอยู่ ซึ่งเป็นขั้นถัดไป งานนี้ยังพบข้อผิดพลาดของ 6.54.0 ด้วย: คอมพิวเตอร์หาผิวจากภาพหลังปรับแสงและสี แต่ 6.54.0 หาจากภาพต้นฉบับ เมื่อมีการปรับสี ทั้งสองเป็นคนละบริเวณ และปุ่มผิวอาจคลาดเคลื่อนได้ถึง 9 ระดับ แก้แล้ว ภาพที่บันทึกและส่งออกไม่เคยถูกแตะต้อง",zh:"肤色均匀（Even）现在也在显卡上了。它和其他控制不同：一个像素无法只看它自己来均匀化 —— 这个控制把每个皮肤像素拉向整张照片的平均肤色，而显卡一次只处理一个像素，看不到那个数。所以画面先只走光影和色彩两步画一次，读回来，由电脑像以往一样精确算出平均值 —— 不估计，也不抽样。拖动 Even 不会改变那个数，因此只算一次。结果逐位相同。最要紧的数字：能这样绘制的预设从 16 个里的 3 个变成 7 个。还挡着其余的是磨皮（Smoothing），那是下一步。这次还发现了 6.54.0 的一个错误：电脑是在调好光影色彩之后的画面里找皮肤，而 6.54.0 在原图里找。加了调色之后两者是不同的区域，皮肤控制最多可能差 9 级。已修复，两边现在逐位相同。保存和导出的画面从未受到影响。",vi:"Even skin tone giờ đã nằm trên card đồ họa. Nút này khác các nút kia: không thể làm đều một điểm ảnh bằng cách chỉ nhìn vào chính nó — nó kéo mọi điểm ảnh da về màu da trung bình của cả tấm ảnh, mà card đồ họa xử lý từng điểm một nên không thấy được con số đó. Vì vậy ảnh được vẽ một lần chỉ với các bước sáng và màu, đọc ngược lại, rồi máy tính tính trung bình chính xác như xưa nay — không ước lượng, không lấy mẫu. Kéo Even không làm con số đó đổi, nên chỉ phải tính một lần. Kết quả giống hệt từng điểm. Con số quan trọng: các preset vẽ được theo cách này tăng từ 3 trên 16 lên 7 trên 16. Chỉ còn Smoothing chặn phần còn lại, và đó là bước tiếp theo. Công việc này cũng lộ ra một lỗi của 6.54.0: máy tính tìm vùng da trên ảnh SAU khi đã chỉnh sáng và màu, còn 6.54.0 tìm trên ảnh gốc. Khi có chỉnh màu, hai vùng đó khác nhau và các nút chỉnh da có thể lệch tới 9 bậc. Đã sửa. Ảnh lưu và ảnh xuất chưa bao giờ bị đụng tới.",id:"Even skin tone kini ada di kartu grafis. Kontrol ini berbeda dari yang lain: satu piksel tidak bisa diratakan hanya dengan melihat piksel itu — kontrol ini menarik setiap piksel kulit ke arah warna kulit RATA-RATA seluruh foto, sedangkan kartu grafis bekerja satu piksel sekali jalan sehingga tidak bisa melihat angka itu. Maka gambar digambar sekali hanya dengan tahap cahaya dan warna, dibaca kembali, lalu komputer menghitung rata-ratanya persis seperti biasa — tidak menebak dan tidak menyampel. Menggeser Even tidak mengubah angka itu, jadi cukup dihitung sekali. Hasilnya persis sama. Angka yang penting: preset yang bisa digambar begini naik dari 3 dari 16 menjadi 7 dari 16. Tinggal Smoothing yang menahan sisanya, dan itu langkah berikutnya. Pekerjaan ini juga memunculkan kesalahan pada 6.54.0: komputer mencari kulit pada gambar SETELAH cahaya dan warna diterapkan, sedangkan 6.54.0 mencarinya pada gambar asli. Dengan grade aktif, keduanya wilayah yang berbeda dan kontrol kulit bisa meleset sampai 9 tingkat. Sudah diperbaiki. Gambar yang disimpan dan diekspor tidak pernah tersentuh.",ms:"Even skin tone kini berada pada kad grafik. Kawalan ini berbeza daripada yang lain: satu piksel tidak boleh diratakan hanya dengan melihat piksel itu — ia menarik setiap piksel kulit ke arah warna kulit PURATA bagi keseluruhan foto, sedangkan kad grafik bekerja satu piksel pada satu masa jadi ia tidak nampak nombor itu. Maka gambar dilukis sekali dengan peringkat cahaya dan warna sahaja, dibaca semula, dan komputer mengira purata itu dengan tepat seperti biasa — tiada anggaran, tiada persampelan. Menyeret Even tidak mengubah nombor itu, jadi ia dikira sekali sahaja. Hasilnya sama tepat. Angka yang penting: preset yang boleh dilukis begini naik daripada 3 daripada 16 kepada 7 daripada 16. Tinggal Smoothing yang menahan selebihnya, dan itulah langkah seterusnya. Kerja ini turut mendedahkan satu kesilapan dalam 6.54.0: komputer mencari kulit pada gambar SELEPAS cahaya dan warna dikenakan, manakala 6.54.0 mencarinya pada gambar asal. Apabila ada gred, kedua-duanya kawasan berbeza dan kawalan kulit boleh tersasar sehingga 9 tahap. Sudah dibaiki. Gambar yang disimpan dan dieksport tidak pernah disentuh."} },
@@ -16154,7 +16157,7 @@ var ST_GPU_S5 = ["shp","cla"];
    mask is now taken from the same tonal draw "even" already needed, and both
    come off one readback. ST_GPU.t4off withdraws the whole stage the way
    ST_GPU.s5off withdraws stage (5). */
-var ST_GPU_T2 = ["white","rosy","deshine","gloss","deyellow","radiance","even"];
+var ST_GPU_T2 = ["white","rosy","deshine","gloss","deyellow","radiance","even","smooth"];
 /* the only budget available before a settle has ever been timed on this device:
    a drag frame slower than this is not a fast path by any reading */
 var ST_GPU_S5_CEIL = 120;
@@ -16198,6 +16201,16 @@ var ST_GPU_FS = [
       mask is not even sampled on a tone-only frame. */
 "uniform sampler2D skin;uniform int skinOn;",
 "uniform float evenA,meanCb,meanCr;",
+   /* v6.56.0 — stage (4) smoothing. gpA/gpB/gpC each carry ONE colour channel's
+      guided-filter planes: A in the red+green bytes, B in the blue+alpha bytes,
+      both as 16-bit fixed point over [gpLo, gpLo+gpSpan]. 8 bits is not enough —
+      A was measured from -2.13 to +2.37 across ordinary frames, so a fixed
+      byte range would either clip it or quantise it to a visible step. */
+"uniform sampler2D gpA,gpB,gpC;",
+"uniform vec2 gpSize;uniform float gpLo,gpSpan,smA;",
+"float dec16(float h8,float l8){",
+"  return (floor(h8*255.0+0.5)*256.0+floor(l8*255.0+0.5))/65535.0;",
+"}",
 "uniform float whiteAmt,rosy,deshine,gloss,deyellow;",
 /* the CPU rounds to 8 bits between stage (3) and stage (3b) because
    putImageData does; without this the two paths drift on the second loop */
@@ -16297,6 +16310,45 @@ var ST_GPU_FS = [
 "  if(skinOn==1&&mode!=2){",
 "    float m=texture2D(skin,uv).r;",
 "    if(m>0.02){",
+     /* (4a) SMOOTHING. stGuidedRGB is two halves: a least-squares solve on a
+        ~320px grid (stGuidedPlanes) and a bilinear upsample of its A/B planes
+        followed by out = A*luma + B. Only the second half is here; the planes
+        are the CPU's own, handed over as textures, because the solve is a
+        box-filtered regression a fragment cannot reach.
+        The upsample is written out rather than left to GL_LINEAR: the CPU
+        interpolates in float64 and a texture unit interpolates with a few bits
+        of subtexel precision, and the 16-bit packing could not be filtered by
+        the sampler anyway. fi/fw below are stGuidedRGB's own fx/wx, and the
+        clamp is its own neighbour clamp. */
+"      if(smA>0.0){",
+"        vec2 gsz=gpSize;",
+"        vec2 ff=uv*gsz-0.5;",
+"        vec2 fi=floor(ff), fw=ff-fi;",
+"        vec2 c0=clamp(fi,vec2(0.0),gsz-1.0), c1=clamp(fi+1.0,vec2(0.0),gsz-1.0);",
+"        vec2 t00=(vec2(c0.x,c0.y)+0.5)/gsz, t01=(vec2(c1.x,c0.y)+0.5)/gsz;",
+"        vec2 t10=(vec2(c0.x,c1.y)+0.5)/gsz, t11=(vec2(c1.x,c1.y)+0.5)/gsz;",
+"        float w00=(1.0-fw.x)*(1.0-fw.y), w01=fw.x*(1.0-fw.y);",
+"        float w10=(1.0-fw.x)*fw.y,       w11=fw.x*fw.y;",
+        /* stGuidedRGB reads its luma from the array it was handed, which is
+           exactly these values: nothing has touched them yet this pass */
+"        float Iv=(0.299*R+0.587*G+0.114*B)/255.0;",
+"        float aU,bU,sv; vec4 q00,q01,q10,q11;",
+"        q00=texture2D(gpA,t00);q01=texture2D(gpA,t01);q10=texture2D(gpA,t10);q11=texture2D(gpA,t11);",
+"        aU=dec16(q00.r,q00.g)*w00+dec16(q01.r,q01.g)*w01+dec16(q10.r,q10.g)*w10+dec16(q11.r,q11.g)*w11;",
+"        bU=dec16(q00.b,q00.a)*w00+dec16(q01.b,q01.a)*w01+dec16(q10.b,q10.a)*w10+dec16(q11.b,q11.a)*w11;",
+"        sv=quant8(((gpLo+aU*gpSpan)*Iv+(gpLo+bU*gpSpan))*255.0);",
+"        R+=(sv-R)*smA*m;",
+"        q00=texture2D(gpB,t00);q01=texture2D(gpB,t01);q10=texture2D(gpB,t10);q11=texture2D(gpB,t11);",
+"        aU=dec16(q00.r,q00.g)*w00+dec16(q01.r,q01.g)*w01+dec16(q10.r,q10.g)*w10+dec16(q11.r,q11.g)*w11;",
+"        bU=dec16(q00.b,q00.a)*w00+dec16(q01.b,q01.a)*w01+dec16(q10.b,q10.a)*w10+dec16(q11.b,q11.a)*w11;",
+"        sv=quant8(((gpLo+aU*gpSpan)*Iv+(gpLo+bU*gpSpan))*255.0);",
+"        G+=(sv-G)*smA*m;",
+"        q00=texture2D(gpC,t00);q01=texture2D(gpC,t01);q10=texture2D(gpC,t10);q11=texture2D(gpC,t11);",
+"        aU=dec16(q00.r,q00.g)*w00+dec16(q01.r,q01.g)*w01+dec16(q10.r,q10.g)*w10+dec16(q11.r,q11.g)*w11;",
+"        bU=dec16(q00.b,q00.a)*w00+dec16(q01.b,q01.a)*w01+dec16(q10.b,q10.a)*w10+dec16(q11.b,q11.a)*w11;",
+"        sv=quant8(((gpLo+aU*gpSpan)*Iv+(gpLo+bU*gpSpan))*255.0);",
+"        B+=(sv-B)*smA*m;",
+"      }",
      /* (4a) even skin tone. stApplySkin runs this BEFORE de-yellow, inside the
         same "if(blur1||t2.even>0)" round trip through YCbCr — so the round trip
         happens here too, and only when it happens there. meanCb/meanCr are the
@@ -16459,6 +16511,11 @@ function stGpuBoot(){
     }
     ST_GPU.tex.src=mkTex(0); ST_GPU.tex.lut=mkTex(1); ST_GPU.tex.zw=mkTex(2); ST_GPU.tex.noise=mkTex(3);
     ST_GPU.tex.b1=mkTex(4); ST_GPU.tex.b8=mkTex(5); ST_GPU.tex.skin=mkTex(6);
+    /* v6.56.0 — the smoothing planes ride units 4, 5 and 7. Four and five are
+       stage (5)'s blur units, and the two never overlap: stage (4) is drawn in
+       mode 0 or 1 and stage (5) only in mode 2, which is a separate draw whose
+       uploads come after this one. Seven is the last unit WebGL guarantees. */
+    ST_GPU.tex.gpA=mkTex(4); ST_GPU.tex.gpB=mkTex(5); ST_GPU.tex.gpC=mkTex(7);
     gl.uniform1i(gl.getUniformLocation(pr,"src"),0);
     gl.uniform1i(gl.getUniformLocation(pr,"lut"),1);
     gl.uniform1i(gl.getUniformLocation(pr,"zw"),2);
@@ -16466,6 +16523,9 @@ function stGpuBoot(){
     gl.uniform1i(gl.getUniformLocation(pr,"b1"),4);
     gl.uniform1i(gl.getUniformLocation(pr,"b8"),5);
     gl.uniform1i(gl.getUniformLocation(pr,"skin"),6);
+    gl.uniform1i(gl.getUniformLocation(pr,"gpA"),4);
+    gl.uniform1i(gl.getUniformLocation(pr,"gpB"),5);
+    gl.uniform1i(gl.getUniformLocation(pr,"gpC"),7);
     ST_GPU.cv=cv; ST_GPU.gl=gl; ST_GPU.prog=pr;
     return gl;
   }catch(e){ ST_GPU.gl=null; return null; }
@@ -16528,6 +16588,57 @@ function stGpuSkinPass(gl,W,H,sig){
   }
   ST_GPU.t4mean = n ? {cb:sCb/n,cr:sCr/n} : {cb:128,cr:128};
   ST_GPU.t4key=sig;
+  return true;
+}
+/* v6.56.0 — THE HALF OF THE GUIDED FILTER A SHADER CAN HAVE.
+   stGuidedRGB solves for two planes on a decimated grid and then upsamples
+   them across the frame. The SOLVE cannot move: it is a box-filtered
+   least squares whose radius AND eps both ride the Smoothing slider, so it is
+   re-solved on every frame of a drag no matter where the pixels are drawn.
+   The UPSAMPLE can, and measured at 896x1344 it is the larger half — 78ms of
+   the 166ms stGuidedRGB spends, against a whole CPU pipeline of 269ms.
+   So the CPU keeps the solve and the shader is handed the planes themselves.
+   They go up as 16-bit fixed point over the frame's own [lo, hi]: 8 bits would
+   quantise A — measured from -2.13 to +2.37 across ordinary frames — to a step
+   the eye can see, and no fixed byte range covers it without clipping. */
+function stGpuSmoothPlanes(gl,W,H,r,eps,key){
+  if(ST_GPU.gpKey===key && !ST_GPU.gpDirty) return true;
+  var px=ST_GPU.t4px;
+  if(!px||px.width!==W||px.height!==H) return false;
+  var pl=stGuidedPlanes(px.data,W,H,r,eps);
+  if(!pl||!pl.A||!pl.B) return false;
+  var sw=pl.sw, sh=pl.sh, n=sw*sh, cc, i;
+  /* the real range, not a guessed one — so nothing is ever clipped */
+  var lo=Infinity, hi=-Infinity;
+  for(cc=0;cc<3;cc++){
+    var Ac=pl.A[cc], Bc=pl.B[cc];
+    for(i=0;i<n;i++){
+      var av=Ac[i]; if(av<lo)lo=av; if(av>hi)hi=av;
+      var bv=Bc[i]; if(bv<lo)lo=bv; if(bv>hi)hi=bv;
+    }
+  }
+  if(!(hi>lo)){ hi=lo+1e-6; }
+  var span=hi-lo, k=65535/span;
+  var buf=ST_GPU.gpBuf;
+  if(!buf||buf.length!==n*4) buf=ST_GPU.gpBuf=new Uint8Array(n*4);
+  var texes=[ST_GPU.tex.gpA,ST_GPU.tex.gpB,ST_GPU.tex.gpC], units=[4,5,7];
+  for(cc=0;cc<3;cc++){
+    var A=pl.A[cc], B=pl.B[cc];
+    for(i=0;i<n;i++){
+      var qa=Math.round((A[i]-lo)*k); qa=qa<0?0:qa>65535?65535:qa;
+      var qb=Math.round((B[i]-lo)*k); qb=qb<0?0:qb>65535?65535:qb;
+      var o4=i*4;
+      buf[o4]=(qa>>8)&255; buf[o4+1]=qa&255;
+      buf[o4+2]=(qb>>8)&255; buf[o4+3]=qb&255;
+    }
+    gl.activeTexture(gl.TEXTURE0+units[cc]);
+    gl.bindTexture(gl.TEXTURE_2D,texes[cc]);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,sw,sh,0,gl.RGBA,gl.UNSIGNED_BYTE,buf);
+  }
+  gl.uniform2f(stGpuU("gpSize"),sw,sh);
+  gl.uniform1f(stGpuU("gpLo"),lo);
+  gl.uniform1f(stGpuU("gpSpan"),span);
+  ST_GPU.gpKey=key; ST_GPU.gpDirty=false;
   return true;
 }
 function stGpuRender(srcImg,W,H,o){
@@ -16605,8 +16716,9 @@ function stGpuRender(srcImg,W,H,o){
     /* (4) — whiteAmt folds radiance in exactly as stApplySkin does */
     var whiteAmt=Math.max(0,Math.min(100,(t2.white||0)+(t2.radiance||0)*0.4));
     var evenA = (!ST_GPU.t4off && (t2.even||0)>0) ? ((t2.even||0)/100*0.6) : 0;
+    var smA   = (!ST_GPU.t4off && (t2.smooth||0)>0) ? ((t2.smooth||0)/100*0.85) : 0;
     var skinOn = (whiteAmt>0 || (t2.rosy||0)!==0 || (t2.deshine||0)>0 ||
-                  (t2.gloss||0)!==0 || (t2.deyellow||0)>0 || evenA>0);
+                  (t2.gloss||0)!==0 || (t2.deyellow||0)>0 || evenA>0 || smA>0);
     /* the mask itself is not uploaded here any more — it comes off the tonal
        draw below, because that is the array the CPU asks stSkinMask about */
     gl.uniform1i(stGpuU("skinOn"),skinOn?1:0);
@@ -16678,7 +16790,19 @@ function stGpuRender(srcImg,W,H,o){
       }
       gl.uniform1f(stGpuU("meanCb"),ST_GPU.t4mean.cb);
       gl.uniform1f(stGpuU("meanCr"),ST_GPU.t4mean.cr);
+      /* v6.56.0 — the smoothing planes are solved from the SAME readback the
+         mask and the mean came off, which is the array stGuidedRGB is handed.
+         Radius and eps are stApplySkin's own expressions, not a restatement:
+         both ride the slider, so the solve is keyed on them as well as on the
+         tonal half, and a Smoothing drag really does re-solve every frame. */
+      if(smA>0){
+        var smR=Math.max(2,(2+(t2.smooth||0)/100*4)*((typeof o.rs==="number"&&o.rs>0)?o.rs:1));
+        var smE=Math.pow(0.02+(t2.smooth||0)/100*0.10,2);
+        if(!stGpuSmoothPlanes(gl,W,H,smR,smE,evenSig+"|"+smR+"|"+smE)) return null;
+        ST_GPU.t4paid=true;
+      }
     }
+    gl.uniform1f(stGpuU("smA"),smA);
     gl.uniform1f(stGpuU("evenA"),evenA);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     if(s5){
@@ -16719,6 +16843,10 @@ function stGpuRender(srcImg,W,H,o){
       gl.uniform1f(stGpuU("shpA"),shpA);
       gl.uniform1f(stGpuU("claA"),claA);
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      /* the blurs above were bound over the smoothing planes' own units, so the
+         next frame that smooths has to upload them again rather than trust a
+         cache that is describing textures which are no longer there */
+      ST_GPU.gpDirty=true;
     }
     if(gl.getError()!==gl.NO_ERROR) return null;
     return cv;
@@ -27890,7 +28018,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.55.0";
+var APP_VER="6.56.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
