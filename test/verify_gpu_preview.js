@@ -230,6 +230,23 @@ function report(name, ok, detail) {
     "skin: smooth + sharpen, which binds over two of the plane units":
       { t1: { shp: 50, cla: 30 }, t2: { smooth: 50 },
         bar: { maxd: 2, pct: 0.1, mean: 0.002 } },
+    /* v6.57.0 — SKIN FINISH. It is not a stage: stEffT2 folds it into controls
+       already on this path (matte -> deshine, dewy -> gloss, cream -> smooth
+       and white). These recipes are the ONLY ones that go through the real
+       stEffT2 rather than an object built here — because the fold is the thing
+       under test. If Finish ever grows a pass of its own, the CPU render moves
+       and the shader's does not, and these go red. */
+    "finish: matte":
+      { effT2: { finish: "matte", finishV: 50 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "finish: matte at maximum":
+      { effT2: { finish: "matte", finishV: 100 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "finish: dewy":
+      { effT2: { finish: "dewy", finishV: 60 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "finish: cream, which spends itself on smoothing and white":
+      { effT2: { finish: "cream", finishV: 70 }, bar: { maxd: 1, pct: 0.05, mean: 0.001 } },
+    "finish: cream on top of a skin recipe it has to add to":
+      { effT2: { finish: "cream", finishV: 50, smooth: 30, white: 20, even: 25, rosy: 15 },
+        bar: { maxd: 1, pct: 0.1, mean: 0.002 } },
     /* stage (5): the CPU's own blurs, uploaded — expected bit-identical */
     "sharpen only":
       { t1: { shp: 60 }, bar: { maxd: 0, pct: 0, mean: 0 } },
@@ -279,7 +296,16 @@ function report(name, ok, detail) {
     for (const name in RECIPES) {
       const r = RECIPES[name];
       const t1 = Object.assign(zeroT1(), r.t1 || {});
-      const t2 = Object.assign(zeroT2(), r.t2 || {});
+      /* v6.57.0 — an effT2 recipe is set on state.st.t2 and read back through
+         stEffT2, so the Skin Finish fold is exercised rather than restated */
+      let t2;
+      if (r.effT2) {
+        state.st.t2 = stDefT2();
+        for (const k in r.effT2) state.st.t2[k] = r.effT2[k];
+        t2 = stEffT2();
+      } else {
+        t2 = Object.assign(zeroT2(), r.t2 || {});
+      }
       const pv = basePv();
       if (r.hsl) {
         pv.hsl = ST_HSL_BANDS.map(b => {
@@ -364,6 +390,16 @@ function report(name, ok, detail) {
     a = mk(); a.t1.exp = 20; a.t1.sat = 15;
     const accepts = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.vig = 30; const acceptsVig = stGpuCan(a.t1, a.t2, a.pv, null);
+    /* v6.57.0 — a Skin Finish reaches the gate through stEffT2, already folded
+       into deshine / gloss / smooth / white. Ask it the way the app does. */
+    const acceptsFinish = (() => {
+      const keep1 = state.st.t1, keep2 = state.st.t2;
+      state.st.t1 = stDefT1(); state.st.t2 = stDefT2();
+      state.st.t2.finish = "matte"; state.st.t2.finishV = 50;
+      const v = stGpuCan(stEffT1(), stEffT2(), basePv(), null);
+      state.st.t1 = keep1; state.st.t2 = keep2;
+      return v;
+    })();
     a = mk(); a.t1.grn = 30; const acceptsGrn = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.shp = 40; const acceptsShp = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t1.cla = 40; const acceptsCla = stGpuCan(a.t1, a.t2, a.pv, null);
@@ -466,7 +502,7 @@ function report(name, ok, detail) {
       noSettleYetAndOverTheCeiling: stGpuS5Spent(200, 0) === true
     };
 
-    return { out, refusals, accepts, acceptsVig, acceptsGrn, acceptsShp, acceptsCla,
+    return { out, refusals, accepts, acceptsVig, acceptsGrn, acceptsShp, acceptsCla, acceptsFinish,
       refusesShpWhenSpent, refusesClaWhenSpent, stillAcceptsTonalWhenSpent, spent,
       maskFrac: +maskFrac.toFixed(4), refusesFreq, acceptsWhite, acceptsEven, acceptsSmooth,
       refusesWhiteWhenT4Spent, refusesEvenWhenT4Spent, refusesSmoothWhenT4Spent,
@@ -497,6 +533,8 @@ function report(name, ok, detail) {
   const wrongly = Object.keys(results.refusals).filter(k => results.refusals[k] !== false);
   report("C) the gate refuses every stage the shader does not implement",
     wrongly.length === 0, { accepted_when_it_should_refuse: wrongly });
+  report("C2b) a Skin Finish is accepted, because stEffT2 has already spent it on controls the shader draws",
+    results.acceptsFinish === true, { matte50: results.acceptsFinish });
   report("C2) and it accepts every stage the shader does implement, so none is dead code",
     results.accepts === true && results.acceptsVig === true && results.acceptsGrn === true &&
     results.acceptsShp === true && results.acceptsCla === true,
