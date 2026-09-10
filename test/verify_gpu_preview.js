@@ -140,10 +140,21 @@
 const { chromium } = require("playwright");
 const PORT = process.env.PORT || 8931;
 let failures = 0;
+/* v6.59.0 — AND IT HAS TO SAY IT SOMEWHERE READABLE.
+   A red run's reason was in the job log, and the job log's tail is the whole
+   PostgreSQL container dump — hundreds of lines of schema — so the one line
+   that mattered could not be reached through the API at all. A "::error::"
+   line becomes an ANNOTATION on the check run, which is readable without the
+   log. Only on a runner; locally it would just be noise. */
+function ann(text) {
+  if (!process.env.GITHUB_ACTIONS) return;
+  console.log("::error title=GPU preview::" + String(text).replace(/[\r\n]+/g, " ").slice(0, 900));
+}
 function report(name, ok, detail) {
-  console.log((ok ? "PASS" : "FAIL") + " — " + name +
-    (ok ? "" : "  :: " + String(typeof detail === "string" ? detail : JSON.stringify(detail)).slice(0, 500)));
-  if (!ok) failures++;
+  const line = (ok ? "PASS" : "FAIL") + " — " + name +
+    (ok ? "" : "  :: " + String(typeof detail === "string" ? detail : JSON.stringify(detail)).slice(0, 500));
+  console.log(line);
+  if (!ok) { failures++; ann(line); }
 }
 
 /* v6.59.0 — A TEST THAT DIES WITHOUT SAYING WHY IS A BAD TEST.
@@ -155,7 +166,11 @@ function report(name, ok, detail) {
    itself in the first line instead of costing a cycle to find. */
 let PHASE = "starting";
 process.on("unhandledRejection", (e) => {
-  console.log("FAIL — the run threw during: " + PHASE + "  :: " + (e && e.stack || e));
+  const line = "FAIL — the run threw during: " + PHASE + "  :: " + (e && e.stack || e);
+  console.log(line);
+  if (process.env.GITHUB_ACTIONS) {
+    console.log("::error title=GPU preview::" + String(line).replace(/[\r\n]+/g, " ").slice(0, 900));
+  }
   process.exit(1);
 });
 (async () => {
@@ -890,9 +905,11 @@ process.on("unhandledRejection", (e) => {
   }, RECIPES).catch(async (e) => {
     let where = "?";
     try { where = await page.evaluate(() => window.__hnkPhase || "?"); } catch (e2) { }
-    console.log("FAIL — the browser threw inside the comparison, at: " + where +
-      "  :: " + (e && e.message || e));
+    const line = "FAIL — the browser threw inside the comparison, at: " + where +
+      "  :: " + (e && e.message || e);
+    console.log(line);
     console.log("       page errors so far: " + JSON.stringify(pageErrors.slice(0, 5)));
+    ann(line + " | page errors: " + JSON.stringify(pageErrors.slice(0, 3)));
     await browser.close();
     process.exit(1);
   });
