@@ -258,6 +258,30 @@ function ffIcon(name, tint, cls) {
    it when a sprite icon stands in front — the sprite IS the glyph. */
 const ICN_LEAD = /^(?:[\u2190-\u21FF\u2600-\u27BF\u2B00-\u2BFF\u3030\u25A0-\u25FF\u2B50\uFE0F\u200D]|[\uD83C-\uD83E][\uDC00-\uDFFF])+\s*/;
 function stripIcn(s) { return String(s == null ? "" : s).replace(ICN_LEAD, ""); }
+/* v6.58.1 — AN <img> IN THIS DOCUMENT WITH NO src RAISES A LOAD ERROR.
+   The owner's Photoshop self-test on 6.127.0 photographed eight of them: seven
+   gallery thumbnails, which are created and appended and only get their src
+   when galThumb resolves, and #resultImg, which refreshCompare strips with
+   removeAttribute("src") whenever there is no result yet. A browser treats
+   both as inert; this renderer treats them as a picture it was asked for and
+   could not fetch. So the panel never leaves an <img> without one — an empty
+   slot carries a 1x1 transparent GIF instead, which always decodes, draws
+   nothing, and costs no request. Set it, never remove the attribute. */
+const IMG_BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+/* …EXCEPT ON A <video>, which cannot decode a GIF and says so. vtThumbFor
+   serves both an <img> and a <video> through the same id, and handing the
+   video the blank picture traded eight image errors for one video error —
+   caught by this file's own D9 before it ever reached Photoshop. So the
+   difference is stated once, here, rather than remembered at each call site:
+   a picture slot gets the placeholder, a video slot really does lose the
+   attribute. This is the only place in the panel that removes a src. */
+function clearSrc(el) {
+  if (!el) return;
+  try {
+    if (String(el.tagName || "").toUpperCase() === "VIDEO") el.removeAttribute("src");
+    else el.src = IMG_BLANK;
+  } catch (e) { }
+}
 /* v6.53.0 — UXP ANSWERS null, NOT "", FOR AN ELEMENT WITH NO class ATTRIBUTE.
    The owner's Photoshop self-test found this the expensive way: four Setup
    wirings dead and one button label blank, every one of them the same throw at
@@ -6349,7 +6373,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.127.0";
+const PANEL_VERSION = "6.128.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6703,7 +6727,7 @@ function gatePaintAvatar() {
   const a = gateAvaOk(state.accAvatar) ? state.accAvatar : "";
   if (img) {
     if (a) { img.src = a; img.style.display = "block"; }
-    else { try { img.removeAttribute("src"); } catch (e) { } img.style.display = "none"; }
+    else { clearSrc(img); img.style.display = "none"; }
   }
   if (txt) txt.style.display = a ? "none" : "";
 }
@@ -8407,7 +8431,7 @@ function accAvaRender() {
   const img = $("accAvaImg"), brand = $("accAvaBrand");
   if (img && brand) {
     if (a) { img.src = a; img.style.display = ""; brand.style.display = "none"; }
-    else { img.removeAttribute("src"); img.style.display = "none"; brand.style.display = ""; }
+    else { clearSrc(img); img.style.display = "none"; brand.style.display = ""; }
   }
   const plus = $("accAvaPlus"); if (plus) plus.style.display = sess ? "" : "none";
   const drop = $("btnAvaDrop"); if (drop) drop.style.display = a ? "" : "none";
@@ -9671,7 +9695,7 @@ function ptRenderSrc() {
   show("ptWfSel", !!wf);
   if (wf) {
     const art = $("ptWfSelArt");
-    if (art) { if (wf.cardImg) { art.src = wf.cardImg; art.style.display = ""; } else { art.removeAttribute("src"); art.style.display = "none"; } }
+    if (art) { if (wf.cardImg) { art.src = wf.cardImg; art.style.display = ""; } else { clearSrc(art); art.style.display = "none"; } }
     const ti = $("ptWfSelTitle"); if (ti) ti.textContent = wf.title;
     const su = $("ptWfSelSum"); if (su) su.textContent = wf.sum || "";
     const nd = $("ptWfSelNeed");
@@ -9808,7 +9832,7 @@ function ptRenderChips() {
   const rt = $("ptRefThumb");
   if (rt) {
     if (PT.ref) { rt.src = "data:" + PT.ref.mime + ";base64," + PT.ref.b64; rt.style.display = ""; }
-    else { rt.removeAttribute("src"); rt.style.display = "none"; }
+    else { clearSrc(rt); rt.style.display = "none"; }
   }
 }
 /* The app's ptSync() calls saveState(), which writes a string to localStorage;
@@ -10720,7 +10744,7 @@ function vtThumbFor(entry, id, nameId, metaId, wrapId, isVideo) {
     wrap.style.display = "none";
     if ($(nameId)) $(nameId).textContent = "";
     if ($(metaId)) $(metaId).textContent = "";
-    el.removeAttribute("src");
+    clearSrc(el);
     return;
   }
   wrap.style.display = "";
@@ -11792,6 +11816,10 @@ function renderGal() {
     const im = document.createElement("img");
     im.alt = f.name;
     im.className = ((GAL.selMode && GAL.sel[f.name]) || GAL.pick === f.name) ? "sel" : "";
+    /* v6.58.1 — the thumbnail enters the document long before galThumb answers,
+       and this renderer raises a load error for every <img> it finds without a
+       src. Seven gallery items, seven errors on the owner's card. */
+    im.src = IMG_BLANK;
     galThumb(f).then(function (url) { if (url) im.src = url; });
     im.addEventListener("click", function () {
       if (GAL.selMode) {
@@ -16345,12 +16373,12 @@ function refreshCompare() {
   const ri = $("resultImg");
   if (ri) {
     if (hasA) ri.src = "data:" + state.resultMime + ";base64," + state.resultB64;
-    else ri.removeAttribute("src");
+    else clearSrc(ri);
   }
   const iB = $("imgBefore"), iA = $("imgAfter");
   if (iB) {
     if (hasB) { iB.onload = function () { fitCompareBox(); }; iB.src = "data:" + state.beforeMime + ";base64," + state.beforeB64; }
-    else iB.removeAttribute("src");
+    else clearSrc(iB);
   }
   if (iA) {
     if (hasA) {
@@ -16359,7 +16387,7 @@ function refreshCompare() {
         fitCompareBox();
       };
       iA.src = "data:" + state.resultMime + ";base64," + state.resultB64;
-    } else iA.removeAttribute("src");
+    } else clearSrc(iA);
   }
   const prov = $("resProv");
   if (prov) { prov.textContent = hasA ? provTag() : ""; prov.style.display = hasA ? "block" : "none"; }
