@@ -970,8 +970,8 @@ let PHASE = "starting";
       const cpuMs = (performance.now() - c0) / 3;
       let g0 = performance.now(); for (let i = 0; i < 3; i++) { const g = gpu1(); if (g) flush(g); }
       const gpuMs = (performance.now() - g0) / 3;
-      warpSpeed = { W: SW, H: SH, kernels: (stGpuWarpPlan(SW, SH, wlm, t2) || {}).K
-                      ? stGpuWarpPlan(SW, SH, wlm, t2).K.length : 0,
+      const wplanSp = stGpuWarpPlan(SW, SH, wlm, t2);
+      warpSpeed = { W: SW, H: SH, kernels: (wplanSp && wplanSp.K) ? wplanSp.K.length : 0,
                     cpuMs: +cpuMs.toFixed(1), gpuMs: +gpuMs.toFixed(1),
                     x: +(cpuMs / Math.max(gpuMs, 0.001)).toFixed(2),
                     withdrawnIfSlower: stGpuS5Spent(gpuMs, cpuMs) === true };

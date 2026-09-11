@@ -17607,7 +17607,10 @@ function stGpuRender(srcImg,W,H,o){
       }
       gl.useProgram(ST_GPU.warpProg);
       if(ST_GPU.warpAp>=0){ gl.enableVertexAttribArray(ST_GPU.warpAp); gl.vertexAttribPointer(ST_GPU.warpAp,2,gl.FLOAT,false,0,0); }
-      var wA=new Float32Array(ST_GPU_WARP_MAX*4), wB=new Float32Array(ST_GPU_WARP_MAX*2), wi;
+      /* held rather than allocated: a reshape drag renders these every frame,
+         and the tail beyond wN is never read (the loop breaks at it) */
+      var wA=ST_GPU.wA||(ST_GPU.wA=new Float32Array(ST_GPU_WARP_MAX*4));
+      var wB=ST_GPU.wB||(ST_GPU.wB=new Float32Array(ST_GPU_WARP_MAX*2)), wi;
       for(wi=0;wi<wplan.K.length;wi++){
         var kq=wplan.K[wi];
         wA[wi*4]=kq.x; wA[wi*4+1]=kq.y; wA[wi*4+2]=kq.r; wA[wi*4+3]=kq.s||0;
