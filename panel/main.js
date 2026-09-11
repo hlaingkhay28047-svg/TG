@@ -6388,7 +6388,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.131.0";
+const PANEL_VERSION = "6.132.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7913,7 +7913,24 @@ function renderRows(hostId, rows) {
     ic.textContent = DIAG_ICON[r.level] || DIAG_ICON.pend;
     const nm = document.createElement("div"); nm.className = "diag-nm";
     nm.textContent = r.key ? t(r.key) : (r.label || "");
-    const st = document.createElement("div"); st.className = "diag-st"; st.textContent = r.detail || "";
+    const st = document.createElement("div"); st.className = "diag-st";
+    /* v6.132.0 — a row may SHOW pictures instead of describing them. No script
+       in this renderer can read back what colour an <img> painted, and the one
+       question the owner's photograph can answer instantly is whether a
+       stroke-drawn icon and a fill-drawn icon come out the same. So the card
+       draws one of each, side by side, and the camera is the instrument. */
+    if (r.icons && r.icons.length) {
+      for (let k = 0; k < r.icons.length; k++) {
+        const sw = document.createElement("img");
+        sw.className = "diag-sw"; sw.alt = "";
+        sw.src = r.icons[k];
+        st.appendChild(sw);
+      }
+      if (r.detail) {
+        const cap = document.createElement("span"); cap.className = "diag-swcap";
+        cap.textContent = r.detail; st.appendChild(cap);
+      }
+    } else st.textContent = r.detail || "";
     row.appendChild(ic); row.appendChild(nm); row.appendChild(st);
     box.appendChild(row);
   }
@@ -9105,6 +9122,50 @@ function selfTestRowsInner() {
     level: caps.rangeRects === undefined ? "pend" : (caps.rangeLineBoxes ? "ok" : "warn") });
   rows.push({ label: "SVG in img", detail: caps.svgImg || "—",
     level: caps.svgImg === "yes" ? "ok" : (caps.svgImg === "no" ? "err" : "pend") });
+  /* v6.132.0 — THE BLACK ICONS, ASKED AS A PICTURE.
+     259 of the panel's 276 icons are drawn with STROKE on fill="none"; the
+     other 17 (the brand marks) are drawn with FILL. If this renderer honours
+     fill and ignores stroke it paints the stroke-only ones as their default
+     fill — black — which is exactly what the owner photographed, and would
+     leave the brand marks correct. One of each, at the size the panel uses
+     them, settles it in one photograph. */
+  rows.push({ label: "stroke vs fill", level: "pend",
+    icons: ["icons/ui/i-home-muted.svg", "icons/ui/i-star-fill-gold.svg"],
+    detail: "\u2190 stroke \u00b7 fill \u2192" });
+  /* v6.132.0 — can a picker be set at all? Twenty <select> carry the model,
+     language, ratio, count and size pickers. */
+  rows.push({ label: "select set", detail: caps.selectSet || "—",
+    level: caps.selectSet === "yes" ? "ok" : (caps.selectSet === "no" ? "err" : "pend") });
+  /* v6.132.0 — DOES A TAP ARRIVE? Wiring says every handler bound; the owner
+     says nothing responds. This counts clicks at the document in the capture
+     phase, so it sees them before any handler could. Tap five things, then
+     read this row: a count means the events arrive and the fault is in the
+     handler or the widget; a zero means they never arrive at all. */
+  try {
+    const tp = (st && typeof st.taps === "function") ? st.taps() : null;
+    rows.push({ label: "Taps", detail: tp ? (tp.count + (tp.last ? " \u00b7 " + tp.last : "")) : "—",
+      level: tp && tp.count > 0 ? "ok" : "pend" });
+  } catch (eT) { rows.push({ label: "Taps", detail: String(eT), level: "err" }); }
+  /* v6.132.0 — the Photoshop side, read straight rather than inferred from a
+     failed action. "No document/layer selected" is the panel's own refusal;
+     these two rows say whether it was right. */
+  try {
+    const dcc = (typeof app !== "undefined" && app) ? app.activeDocument : null;
+    rows.push({ label: "Document", detail: dcc ? (String(dcc.name || "?") + " \u00b7 " + dcc.width + "\u00d7" + dcc.height) : "none",
+      level: dcc ? "ok" : "warn" });
+    let ln = null;
+    try { ln = dcc ? dcc.activeLayers : null; } catch (eL) { ln = null; }
+    rows.push({ label: "Active layer",
+      detail: !dcc ? "\u2014" : (ln && ln.length ? (ln.length + " \u00b7 " + String(ln[0].name || "?")) : "none selected"),
+      level: (ln && ln.length) ? "ok" : "warn" });
+  } catch (eD) {
+    rows.push({ label: "Document", detail: String(eD).slice(0, 90), level: "err" });
+  }
+  /* v6.132.0 — "the panel is far too long" is a measurement */
+  if (caps.viewW) {
+    rows.push({ label: "Panel size", detail: caps.viewW + "\u00d7" + caps.viewH + " \u00b7 content " + caps.docH,
+      level: (caps.docH && caps.viewH && caps.docH > caps.viewH * 6) ? "warn" : "ok" });
+  }
 
   /* --- the lists the pages are built from --- */
   const V = H.runninghubVideo || null;

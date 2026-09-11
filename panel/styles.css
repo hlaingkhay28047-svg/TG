@@ -775,6 +775,11 @@ input[type="range"] { min-width: 0; }
 .diag-ic.warn { color: var(--warn); }
 .diag-ic.err { color: var(--err); }
 .diag-ic.pend { color: var(--muted-2); }
+/* v6.132.0 — the stroke-vs-fill swatches. Drawn at the size the panel uses
+   its icons, on the row's own background, so the photograph compares like
+   with like. No object-fit and no pointer-events: UXP supports neither. */
+.diag-sw { width: 20px; height: 20px; margin-left: 6px; vertical-align: middle; }
+.diag-swcap { margin-left: 8px; font-size: 10px; color: var(--muted-2); }
 
 /* ============================================================
    HNK AI Tools — Free Generate + Smart Workflow UI

@@ -161,17 +161,100 @@ function capabilities() {
   try { if (probe && probe.parentNode) probe.parentNode.removeChild(probe); } catch (e4) { }
 
   /* C. can this renderer draw an SVG file in <img>? The whole icon set is
-        SVG, so a "no" here would explain a great deal at a glance. */
+        SVG, so a "no" here would explain a great deal at a glance.
+
+     v6.132.0 — AND IT NEVER ANSWERED, FOR TWO YEARS OF BUILDS. The probe
+     created the <img>, set .src and never put it IN THE DOCUMENT. UXP does
+     not load a detached image — that is the same fact 6.128.0 and 6.129.0
+     were about — so neither onload nor onerror ever fired and the row read
+     "pending" forever. The owner photographed it that way on 6.107.0 and
+     again on 6.131.0; 6.107.1 moved WHEN the probe starts and never noticed
+     that it could not finish. The line-box probe directly above appends its
+     node. This one now does too, and takes it away again on the answer.
+
+     NOTHING CHECKS THE CHECKER — that is why a broken diagnostic survived
+     five waves of diagnostics. */
   caps.svgImg = "pending";
   try {
     var im = doc.createElement("img");
-    im.onload = function () { caps.svgImg = im.naturalWidth > 0 ? "yes" : "no"; };
-    im.onerror = function () { caps.svgImg = "no"; };
+    im.style.position = "absolute"; im.style.left = "-9999px"; im.style.top = "0";
+    im.style.width = "16px"; im.style.height = "16px";
+    var done = function (v) {
+      caps.svgImg = v;
+      try { if (im.parentNode) im.parentNode.removeChild(im); } catch (e5) { }
+    };
+    im.onload = function () { done(im.naturalWidth > 0 ? "yes" : "no"); };
+    im.onerror = function () { done("no"); };
+    (doc.body || doc.documentElement).appendChild(im);
     im.src = "icons/ui/i-home-muted.svg";
   } catch (e3) { caps.svgImg = "no"; }
 
+  /* D. v6.132.0 — CAN A <select> BE SET AT ALL? Twenty of them carry the
+        panel's pickers (model, language, ratio, count, size) and the owner
+        reports every one of them unselectable. Reading options already works
+        (A above), so this asks the next question: does assigning
+        selectedIndex stick, and does the widget report the value back. It
+        cannot ask whether the DROPDOWN OPENS — no script can — but a "no"
+        here would settle it without a photograph. */
+  try {
+    var s2 = doc.createElement("select");
+    s2.style.position = "absolute"; s2.style.left = "-9999px"; s2.style.top = "0";
+    var oA = doc.createElement("option"); oA.value = "a"; oA.text = "a"; oA.textContent = "a";
+    var oB = doc.createElement("option"); oB.value = "b"; oB.text = "b"; oB.textContent = "b";
+    s2.appendChild(oA); s2.appendChild(oB);
+    (doc.body || doc.documentElement).appendChild(s2);
+    s2.selectedIndex = 1;
+    var got = (s2.value === "b" && s2.selectedIndex === 1);
+    caps.selectSet = got ? "yes" : "no";
+    try { if (s2.parentNode) s2.parentNode.removeChild(s2); } catch (e6) { }
+  } catch (e7) { caps.selectSet = "no"; }
+
+  /* E. v6.132.0 — how tall is this panel, really? "panel အရမ်းရှည်" is a
+        measurement, not an opinion, and the renderer is the only place it
+        can be taken. */
+  try {
+    var de = doc.documentElement;
+    caps.viewW = de ? de.clientWidth : 0;
+    caps.viewH = de ? de.clientHeight : 0;
+    caps.docH = (doc.body && doc.body.scrollHeight) || (de && de.scrollHeight) || 0;
+  } catch (e8) { }
+
   return caps;
 }
+
+/* v6.132.0 — DOES A TAP EVEN ARRIVE?
+
+   Wiring reads "60 ok · 0 failed" and the owner cannot press a single
+   control. Those two facts are not in conflict: binding a listener proves the
+   bind ran, never that an event reaches it. So this counts events at the
+   DOCUMENT, in the capture phase, before any handler can stop them, and
+   remembers what was under the last one.
+
+   Read the row after tapping five things:
+     taps 5 -> the events arrive; the fault is the handler or the widget
+     taps 0 -> nothing reaches the document at all; the fault is the shell
+   Either answer removes half the search space, which is the whole job of a
+   diagnostic. */
+var taps = 0, lastTap = "";
+function describe(el) {
+  try {
+    if (!el || !el.tagName) return "?";
+    var t = String(el.tagName).toLowerCase();
+    if (el.id) return t + "#" + el.id;
+    var c = el.className;
+    /* className is null on some UXP nodes (6.53.0) — never assume a string */
+    c = (typeof c === "string" && c) ? ("." + c.split(/\s+/)[0]) : "";
+    return t + c;
+  } catch (e) { return "?"; }
+}
+try {
+  if (typeof document !== "undefined" && document.addEventListener) {
+    document.addEventListener("click", function (ev) {
+      taps++;
+      lastTap = describe(ev && (ev.target || ev.srcElement));
+    }, true);
+  }
+} catch (e) { }
 
 /* v6.107.1 — start the SVG probe at LOAD, not at first render. The owner's
    first SELF-TEST photograph read "SVG in img  pending": capabilities() had
@@ -188,7 +271,8 @@ var API = {
   errors: function () { return errors.slice(); },
   errorCount: function () { return errors.length; },
   note: function (message, source) { push("note", message, source || "", 0, 0); },
-  capabilities: capabilities
+  capabilities: capabilities,
+  taps: function () { return { count: taps, last: lastTap }; }
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = API;
