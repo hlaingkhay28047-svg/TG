@@ -52,6 +52,31 @@
  * "smooth" needs its guided filter re-solved every time the slider moves. The
  * gate refuses both, and check C5 proves it still does.
  *
+ * v6.59.0 — THE LAST TWO TIER-2 CONTROLS, AND WHAT EACH OF THEM COSTS.
+ *
+ * TEETH needs a MEASURED MOUTH. Neither the skin mask nor the pixel alone can
+ * say where teeth are, so the alpha stApplySkin reads comes off the same
+ * readback the mask does and rides that texture's GREEN byte — no second
+ * texture, no second pass. It cannot be tested on the shared source below:
+ * with no face, stApplySkin whitens nothing and the two paths would agree
+ * about nothing happening. C11 builds a frame with a bright neutral band and
+ * a fabricated 68-point face over it, hands the SAME landmarks to both paths,
+ * and first proves the CPU's own whitening moves that frame at all.
+ *
+ * FREQUENCY SEPARATION needs two BLURS of the frame, and a fragment cannot
+ * blur. They are Skia's own blurs of the array the readback already holds,
+ * uploaded on units 8 and 9 — and WebGL 1 guarantees only eight, so the two
+ * samplers and the arithmetic that reads them are spliced into the shader at
+ * boot and only on a device that reports the units. C12b asks what a device
+ * with eight does: refuse the two sliders, keep everything else, still boot.
+ *
+ * AND THE ROUNDING FINALLY SHOWED. quant8 rounded an exact .5 up; the CPU
+ * writes into a Uint8ClampedArray, whose ToUint8Clamp sends a .5 to the EVEN
+ * neighbour. Five waves never saw it — a graded pixel rarely lands on a half —
+ * and then teeth did: the lift at full alpha is 70*0.15 = 10.5 exactly. Fixing
+ * the tie rule turned four more recipes below bit-identical and moved one
+ * (split-grade zones) by a single channel the other way.
+ *
  * RADIANCE IS NOT ONLY A SKIN CONTROL, and that cost 12 measured counts before
  * it was caught: stage (5)'s clarity amount is (cla + radiance*0.3 + …), so a
  * recipe carrying radiance and no clarity slider STILL runs an unsharp pass.
@@ -115,26 +140,69 @@
 const { chromium } = require("playwright");
 const PORT = process.env.PORT || 8931;
 let failures = 0;
+/* v6.59.0 — AND IT HAS TO SAY IT SOMEWHERE READABLE.
+   A red run's reason was in the job log, and the job log's tail is the whole
+   PostgreSQL container dump — hundreds of lines of schema — so the one line
+   that mattered could not be reached through the API at all. A "::error::"
+   line becomes an ANNOTATION on the check run, which is readable without the
+   log. Only on a runner; locally it would just be noise. */
+function ann(text) {
+  if (!process.env.GITHUB_ACTIONS) return;
+  const one = String(text).replace(/[\r\n]+/g, " ").slice(0, 900);
+  console.log("::error title=GPU preview::" + one);
+  /* AND into the step summary, which is the ONE place a red run's reason can be
+     read back through the API: it lands in the check run's output. The job log
+     cannot be used — its tail is the PostgreSQL container's own dump, hundreds
+     of lines of schema, and the line that matters sits before all of it. */
+  try {
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, "- " + one + "\n");
+    }
+  } catch (e) { }
+}
+process.on("unhandledRejection", (e) => {
+  const line = "FAIL — the run threw during: " + PHASE + "  :: " + (e && e.stack || e);
+  console.log(line);
+  ann(line);
+  process.exit(1);
+});
 function report(name, ok, detail) {
-  console.log((ok ? "PASS" : "FAIL") + " — " + name +
-    (ok ? "" : "  :: " + String(typeof detail === "string" ? detail : JSON.stringify(detail)).slice(0, 500)));
-  if (!ok) failures++;
+  const line = (ok ? "PASS" : "FAIL") + " — " + name +
+    (ok ? "" : "  :: " + String(typeof detail === "string" ? detail : JSON.stringify(detail)).slice(0, 500));
+  console.log(line);
+  if (!ok) { failures++; ann(line); }
 }
 
+/* v6.59.0 — A TEST THAT DIES WITHOUT SAYING WHY IS A BAD TEST.
+   This one went red on CI four seconds in, with nothing in the log to read but
+   the container teardown: the async body rejected, node exited non-zero, and
+   the reason was thrown away. Everything below now runs inside a reporter that
+   prints the exception, the page's own errors and how far the run got. The
+   exit code is unchanged — a throw is still a failure — but the next one names
+   itself in the first line instead of costing a cycle to find. */
+let PHASE = "starting";
 (async () => {
   const browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] });
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
   const pageErrors = [];
   page.on("pageerror", e => pageErrors.push(String(e)));
+  PHASE = "page.goto";
   await page.goto("http://127.0.0.1:" + PORT + "/", { waitUntil: "networkidle" });
 
   /* the studio's functions live in the page; everything below runs there */
   const gl = await page.evaluate(() => {
-    try { return !!(typeof stGpuBoot === "function" && stGpuBoot()); } catch (e) { return "throw:" + e; }
+    try {
+      const ok = !!(typeof stGpuBoot === "function" && stGpuBoot());
+      /* v6.59.0 — say WHY when it is not ok. A boot that fails with no reason
+         recorded cost a CI cycle to diagnose. */
+      return ok ? true : { booted: false, bootErr: (window.ST_GPU && ST_GPU.bootErr) || null,
+                           tried: !!(window.ST_GPU && ST_GPU.tried) };
+    } catch (e) { return "throw:" + e; }
   });
   report("A) the page can boot a WebGL context for the fast path", gl === true, { gl });
   if (gl !== true) {
+    ann("FAIL — no GL context, so the comparison below cannot run :: " + JSON.stringify(gl));
     console.log("\nFAIL — no GL context, so the comparison below cannot run");
     await browser.close();
     process.exit(1);
@@ -227,6 +295,25 @@ function report(name, ok, detail) {
        units 4, 5 and 7, and stage (5)'s two blurs are bound over 4 and 5 for
        the second draw. If the planes were not uploaded again on the next frame
        that smooths, this recipe would read the blurs as planes. */
+    /* v6.59.0 — stage (4b). The two bands are Skia blurs of the frame the
+       readback already holds, handed over as textures, so the shader does the
+       arithmetic and none of the blurring. High alone, low alone, both
+       together, and both under everything else. */
+    "skin: freq-sep high alone":
+      { t2: { freqHi: 60 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "skin: freq-sep high, negative (softer pores)":
+      { t2: { freqHi: -60 }, bar: { maxd: 1, pct: 0.001, mean: 0.001 } },
+    "skin: freq-sep low alone":
+      { t2: { freqLo: 70 }, bar: { maxd: 1, pct: 0.001, mean: 0.001 } },
+    "skin: freq-sep low + high together":
+      { t2: { freqLo: 70, freqHi: 45 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    /* a NEGATIVE low is not a band at all: it only raises stage (5)'s clarity,
+       so it needs no plane and no mask — and the gate must still accept it */
+    "skin: freq-sep low negative, which is clarity and nothing else":
+      { t2: { freqLo: -50 }, bar: { maxd: 0, pct: 0, mean: 0 } },
+    "skin: freq-sep with smoothing, evening and whitening on top":
+      { t2: { freqLo: 70, freqHi: 45, smooth: 40, even: 30, white: 25 },
+        bar: { maxd: 1, pct: 0.001, mean: 0.001 } },
     "skin: smooth + sharpen, which binds over two of the plane units":
       { t1: { shp: 50, cla: 30 }, t2: { smooth: 50 },
         bar: { maxd: 2, pct: 0.1, mean: 0.002 } },
@@ -289,7 +376,9 @@ function report(name, ok, detail) {
         grade: { evSh: "#1e3a6e", evHi: "#ffcf9a", evAmt: 55, evBal: -10, evSat: 20 } }
   };
 
+  PHASE = "the main page.evaluate (recipes, teeth, stage 4b)";
   const results = await page.evaluate(async (RECIPES) => {
+    /* eslint-disable no-undef */
     const W = 256, H = 256;
     /* a deterministic source with full tonal and hue coverage, so no stage is
        exercised on a flat patch that would hide an error */
@@ -317,7 +406,11 @@ function report(name, ok, detail) {
       };
     }
     const out = {};
+    /* the browser side reports its own progress too: an exception here used to
+       reach node as a bare rejection with no idea which recipe was in hand */
+    window.__hnkPhase = "recipes";
     for (const name in RECIPES) {
+      window.__hnkPhase = "recipe: " + name;
       const r = RECIPES[name];
       const t1 = Object.assign(zeroT1(), r.t1 || {});
       /* v6.57.0 — an effT2 recipe is set on state.st.t2 and read back through
@@ -403,8 +496,10 @@ function report(name, ok, detail) {
     const mk = () => ({ t1: zeroT1(), t2: zeroT2(), pv: basePv() });
     let a;
     a = mk(); a.t1.bgb = 30; refusals["background blur (6)"] = stGpuCan(a.t1, a.t2, a.pv, null);
-    a = mk(); a.t2.freqHi = 40; refusals["frequency separation (4)"] = stGpuCan(a.t1, a.t2, a.pv, null);
-    a = mk(); a.t2.teeth = 40; refusals["teeth whitening (4)"] = stGpuCan(a.t1, a.t2, a.pv, null);
+    /* v6.59.0 — "frequency separation (4)" and "teeth whitening (4)" LEFT THIS
+       LIST and arrived at C11 and C12. Same rule as vibe glow in 6.58.0: a row
+       that leaves here has to land in a check that renders it, or the gate
+       would be untested in both directions at once. */
     a = mk(); a.t2.gdn = 40; refusals["denoise (3c)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.pv.bgEnh = 30; refusals["background enhance (6)"] = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.pv.leak = "warm"; a.pv.leakV = 40; refusals["light leak (6c)"] = stGpuCan(a.t1, a.t2, a.pv, null);
@@ -456,7 +551,12 @@ function report(name, ok, detail) {
       const gt2 = zeroT2(); gt2.white = 60;
       const gpv = basePv(), gcurve = stCurveVals();
       const gone = stGpuRender(sc, W, H, { t1: gt1, t2: gt2, pv: gpv, curve: gcurve, rs: 1 });
-      const handed = ST_GPU.t4lum ? Uint8Array.from(ST_GPU.t4lum) : null;
+      /* v6.59.0 — the mask no longer travels as a one-byte LUMINANCE texture:
+         it is the RED byte of an RGBA texel whose GREEN byte carries the teeth
+         alpha. Read it back out of the array that was uploaded, which is a
+         stronger question than the old one — this is the texture itself. */
+      const handed = ST_GPU.t4tex
+        ? Uint8Array.from({ length: W * H }, (_, i) => ST_GPU.t4tex[i * 4]) : null;
       const tonal = stRunPipeline(sc, W, H, { rs: 1, t1: gt1, t2: zeroT2(), pv: gpv,
         curve: gcurve, um: null, umInv: false, heals: [], maskInfo: null, lm: null });
       const tc = document.createElement("canvas"); tc.width = W; tc.height = H;
@@ -501,9 +601,254 @@ function report(name, ok, detail) {
       }
     }
 
+    /* v6.59.0 — TEETH WHITENING NEEDS A MEASURED MOUTH, so the shared source
+       cannot test it: with no face, stApplySkin whitens nothing and the two
+       paths would agree about nothing happening. This builds a frame the pass
+       can actually act on — skin-toned ground, a bright neutral band where the
+       inner lip will sit — and a fabricated 68-point face over it. Both paths
+       are handed the same landmarks, so any disagreement is the shader's. */
+    window.__hnkPhase = "teeth";
+    let teethCheck = null;
+    {
+      const tc = document.createElement("canvas"); tc.width = W; tc.height = H;
+      const tx = tc.getContext("2d");
+      const ti = tx.createImageData(W, H);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const q = (y * W + x) * 4;
+        ti.data[q] = 208 + ((x >> 4) & 7);
+        ti.data[q + 1] = 168 + ((y >> 4) & 7);
+        ti.data[q + 2] = 148 + ((x + y) & 7);
+        ti.data[q + 3] = 255;
+      }
+      for (let y = 150; y < 175; y++) for (let x = 96; x < 160; x++) {
+        const q = (y * W + x) * 4; ti.data[q] = 232; ti.data[q + 1] = 228; ti.data[q + 2] = 214;
+      }
+      tx.putImageData(ti, 0, 0);
+      const pts = new Array(68), cx = 128, eyeY = 96, iod = 56, mouthY = 162;
+      for (let i = 0; i <= 16; i++) { const t = (i - 8) / 8; pts[i] = [cx + t * 70, 120 + (1 - t * t) * 80]; }
+      for (let i = 17; i <= 21; i++) { const t = (i - 17) / 4; pts[i] = [cx - iod / 2 - 18 + t * 36, eyeY - 18]; }
+      for (let i = 22; i <= 26; i++) { const t = (i - 22) / 4; pts[i] = [cx + iod / 2 - 18 + t * 36, eyeY - 18]; }
+      for (let i = 27; i <= 30; i++) { const t = (i - 27) / 3; pts[i] = [cx, eyeY + t * 32]; }
+      for (let i = 31; i <= 35; i++) { const t = (i - 31) / 4; pts[i] = [cx - 14 + t * 28, eyeY + 40]; }
+      const eye = (base, ex) => { for (let i = 0; i < 6; i++) { const a = Math.PI * 2 * i / 6;
+        pts[base + i] = [ex + Math.cos(a) * 13, eyeY + Math.sin(a) * 7]; } };
+      eye(36, cx - iod / 2); eye(42, cx + iod / 2);
+      for (let i = 48; i <= 59; i++) { const a = Math.PI * 2 * (i - 48) / 12;
+        pts[i] = [cx + Math.cos(a) * 42, mouthY + Math.sin(a) * 22]; }
+      for (let i = 60; i <= 67; i++) { const a = Math.PI * 2 * (i - 60) / 8;
+        pts[i] = [cx + Math.cos(a) * 30, mouthY + Math.sin(a) * 11]; }
+      const lm = { w: W, h: H, scanned: true, faces: [{ score: 0.9, pts: pts }] };
+      const keptLM = ST.faceLM; ST.faceLM = lm;
+      /* THIS BLOCK RENDERS A SECOND SOURCE, and that is how it found the stale
+         cache: stGpuRender keys its readback on ST.maskRev, which stBuildBuffer
+         bumps whenever the pipeline's input is rebuilt. The app calls that
+         function; a test that swaps the canvas underneath has to say so too, or
+         the frames below are masked with the first source's skin. Bumping it
+         here is the app's own signal, not a reset of the cache. */
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      const zone = stZonesFromLM(lm, W, H);
+      const tmi = stSkinMask(tx.getImageData(0, 0, W, H), W, H, lm);
+      const plane = stTeethPlane(W, H, stFaceZones(tx.getImageData(0, 0, W, H), W, H, tmi, lm));
+      let planeOn = 0; if (plane) for (let i = 0; i < plane.length; i++) if (plane[i] > 12) planeOn++;
+      const grabT = (cv) => { const q = document.createElement("canvas"); q.width = W; q.height = H;
+        const qq = q.getContext("2d"); qq.drawImage(cv, 0, 0); return qq.getImageData(0, 0, W, H).data; };
+      const run = (t2) => {
+        const pv = basePv(), t1 = zeroT1(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+        const cpu = stRunPipeline(tc, W, H, { t1, t2, pv, curve: cu, heals: null, rs: 1, lm });
+        const gpu = stGpuRender(tc, W, H, { t1, t2, pv, curve: cu, rs: 1 });
+        return { gate: stGpuCan(t1, t2, pv, null), cpu: grabT(cpu), gpu: gpu ? grabT(gpu) : null };
+      };
+      const off = run(zeroT2());
+      const t2t = zeroT2(); t2t.teeth = 70;
+      const on = run(t2t);
+      const t2c = zeroT2(); t2c.teeth = 70; t2c.white = 30; t2c.smooth = 35; t2c.freqHi = 40; t2c.freqLo = 50;
+      const combo = run(t2c);
+      const cmpT = (r) => {
+        if (!r.gpu) return { error: "stGpuRender returned null", gate: r.gate };
+        let maxd = 0, diff = 0, sum = 0, n = 0, worst = null;
+        for (let i = 0; i < r.cpu.length; i += 4) for (let c = 0; c < 3; c++) {
+          const d = Math.abs(r.cpu[i + c] - r.gpu[i + c]); sum += d; n++;
+          if (d) { diff++; if (d > maxd) { maxd = d; worst = { px: i / 4, ch: c, cpu: r.cpu[i + c], gpu: r.gpu[i + c] }; } }
+        }
+        return { gate: r.gate, maxd, diff, pct: +(100 * diff / n).toFixed(4), mean: +(sum / n).toFixed(5), worst };
+      };
+      /* did the whitening move anything at all? measured on the CPU's own two
+         renders, so a vacuous check cannot pass by agreeing about nothing */
+      let moved = 0, movedMax = 0;
+      for (let i = 0; i < off.cpu.length; i += 4) for (let c = 0; c < 3; c++) {
+        const d = Math.abs(off.cpu[i + c] - on.cpu[i + c]);
+        if (d) { moved++; if (d > movedMax) movedMax = d; }
+      }
+      teethCheck = {
+        zonesReal: !!(zone && zone.real),
+        planePixels: planeOn,
+        cpuMovedChannels: moved, cpuMovedMax: movedMax,
+        baseline: cmpT(off), teeth: cmpT(on), combo: cmpT(combo)
+      };
+      ST.faceLM = keptLM;
+      /* and back to the shared source for the checks below */
+      ST.maskRev = (ST.maskRev || 0) + 1;
+    }
+
+    /* v6.59.0 — stage (4b) lives on two texture units the shader only gets on a
+       device that reports them, and it can be withdrawn on measured frames like
+       stage (5) and (6b). Both roads to "no" are asked here, and both must take
+       the frequency sliders and NOTHING ELSE with them. */
+    /* v6.59.0 — THE WIDE BAND'S RADIUS RIDES THE SLIDER, so its cache key must
+       too. The narrow band is keyed on the tonal half alone (dragging Freq-Sep
+       High must re-blur nothing); the wide one carries the Low value. Drag it:
+       render at one Low, then another, with the tonal half untouched. If the
+       key were the tonal half alone the second frame would reuse the first
+       radius and quietly draw the wrong picture — which is exactly the shape of
+       the plane-reuse trap check C8 exists for. */
+    window.__hnkPhase = "stage 4b radius cache";
+    let fsRadiusReuse = null;
+    {
+      const grabF = (cv) => { const q = document.createElement("canvas"); q.width = W; q.height = H;
+        const c = q.getContext("2d"); c.drawImage(cv, 0, 0); return c.getImageData(0, 0, W, H).data; };
+      const one = (lo) => {
+        const t1 = zeroT1(), pv = basePv(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+        const t2 = zeroT2(); t2.freqLo = lo;
+        const cpu = stRunPipeline(sc, W, H, { t1, t2, pv, curve: cu, heals: null, rs: 1, lm: null });
+        const gpu = stGpuRender(sc, W, H, { t1, t2, pv, curve: cu, rs: 1 });
+        if (!gpu) return { error: "null" };
+        const A = grabF(cpu), B = grabF(gpu);
+        let maxd = 0, diff = 0;
+        for (let i = 0; i < A.length; i += 4) for (let c = 0; c < 3; c++) {
+          const d = Math.abs(A[i + c] - B[i + c]); if (d) { diff++; if (d > maxd) maxd = d; }
+        }
+        return { lo, maxd, diff };
+      };
+      const first = one(20);
+      const second = one(90);
+      const third = one(20);          /* and back, so a one-way key is caught too */
+      fsRadiusReuse = { first, second, third };
+    }
+
+    /* v6.59.0 — IS STAGE (4b) ACTUALLY FASTER, measured the way a drag actually
+       happens. The recipe table above renders each recipe ONCE at 256x256, and
+       a first frame there is all cost and no benefit: it pays the readback, the
+       guided-filter solve and both blurs on 65k pixels. What a retoucher does
+       is hold a slider on a real preview, where the tonal half is already
+       cached. So: a realistic size, both paths warmed, three frames each, and
+       the GL frame flushed through a real draw so the timer cannot stop before
+       the GPU has finished — the mistake that made the first Vibe Glow
+       measurement in 6.58.0 read backwards. */
+    window.__hnkPhase = "stage 4b speed";
+    let fsSpeed = null;
+    {
+      const SW = 512, SH = 768;
+      const bc = document.createElement("canvas"); bc.width = SW; bc.height = SH;
+      const bx = bc.getContext("2d"); const bi = bx.createImageData(SW, SH);
+      for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) {
+        const q = (y * SW + x) * 4;
+        bi.data[q] = 190 + ((x >> 3) & 31); bi.data[q + 1] = 150 + ((y >> 3) & 31);
+        bi.data[q + 2] = 130 + ((x + y) & 31); bi.data[q + 3] = 255;
+      }
+      bx.putImageData(bi, 0, 0);
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      const flush = (cv) => { const q = document.createElement("canvas"); q.width = 8; q.height = 8;
+        const c = q.getContext("2d"); c.drawImage(cv, 0, 0, 8, 8); return c.getImageData(0, 0, 1, 1).data[0]; };
+      const t1 = zeroT1(), pv = basePv(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+      const t2 = zeroT2(); t2.freqLo = 70; t2.freqHi = 45;
+      const cpu1 = () => stRunPipeline(bc, SW, SH, { t1, t2, pv, curve: cu, heals: null, rs: 1, lm: null });
+      const gpu1 = () => stGpuRender(bc, SW, SH, { t1, t2, pv, curve: cu, rs: 1 });
+      flush(cpu1()); const w = gpu1(); if (w) flush(w);
+      let c0 = performance.now(); for (let i = 0; i < 3; i++) flush(cpu1());
+      const cpuMs = (performance.now() - c0) / 3;
+      let g0 = performance.now(); for (let i = 0; i < 3; i++) { const g = gpu1(); if (g) flush(g); }
+      const gpuMs = (performance.now() - g0) / 3;
+      /* and, when it did NOT win, whether the product's own withdrawal rule
+         fires on that number — which is the thing that actually protects a
+         student on such a machine */
+      fsSpeed = { W: SW, H: SH, cpuMs: +cpuMs.toFixed(1), gpuMs: +gpuMs.toFixed(1),
+                  x: +(cpuMs / Math.max(gpuMs, 0.001)).toFixed(2),
+                  withdrawnIfSlower: stGpuS5Spent(gpuMs, cpuMs) === true };
+      ST.maskRev = (ST.maskRev || 0) + 1;
+    }
+
+    /* what this runner actually reports, so a red C12a names the reason in one
+       run instead of costing a cycle to find out */
+    const glLimits = (() => {
+      try {
+        const g = ST_GPU.gl;
+        const d = g.getExtension("WEBGL_debug_renderer_info");
+        return { renderer: d ? g.getParameter(d.UNMASKED_RENDERER_WEBGL) : "?",
+                 maxTextureImageUnits: g.getParameter(g.MAX_TEXTURE_IMAGE_UNITS),
+                 maxCombined: g.getParameter(g.MAX_COMBINED_TEXTURE_IMAGE_UNITS),
+                 fsBuildErr: ST_GPU.fsBuildErr || null };
+      } catch (e) { return { error: String(e) }; }
+    })();
+
+    const fsCapReal = ST_GPU.fsCap;
+    const fsFrom = (t2k, v) => { const t = zeroT2(); t[t2k] = v; return t; };
+    const acceptsFreqHi = stGpuCan(zeroT1(), fsFrom("freqHi", 40), basePv(), null) === true;
+    const acceptsFreqLo = stGpuCan(zeroT1(), fsFrom("freqLo", 40), basePv(), null) === true;
+    const acceptsTeeth = stGpuCan(zeroT1(), fsFrom("teeth", 40), basePv(), null) === true;
+    ST_GPU.fsOff = true;
+    const refusesFreqWhenSpent = stGpuCan(zeroT1(), fsFrom("freqHi", 40), basePv(), null) === false;
+    const stillAcceptsNegLowWhenFsSpent = stGpuCan(zeroT1(), fsFrom("freqLo", -60), basePv(), null) === true;
+    const stillAcceptsTeethWhenFsSpent = stGpuCan(zeroT1(), fsFrom("teeth", 40), basePv(), null) === true;
+    const stillAcceptsSmoothWhenFsSpent = stGpuCan(zeroT1(), fsFrom("smooth", 40), basePv(), null) === true;
+    ST_GPU.fsOff = false;
+    /* and the capability road. It is the RENDERER that owns this question, not
+       the gate: the gate must never boot GL to answer it (see stGpuFsOn), so on
+       a device without the units the frame is refused where GL is in hand and
+       the CPU draws it. Asked here as behaviour: a freq recipe comes back null,
+       a teeth recipe still renders, and the program still boots. */
+    ST_GPU.fsCap = false;
+    const noUnits = (() => {
+      const t1 = zeroT1(), pv = basePv(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      const freq = stGpuRender(sc, W, H, { t1, t2: fsFrom("freqHi", 40), pv, curve: cu, rs: 1 });
+      const teethOnly = stGpuRender(sc, W, H, { t1, t2: fsFrom("teeth", 40), pv, curve: cu, rs: 1 });
+      const tonal = stGpuRender(sc, W, H, { t1: Object.assign(zeroT1(), { exp: 20 }), t2: zeroT2(), pv, curve: cu, rs: 1 });
+      return { freqIsNull: freq === null, teethStillDraws: !!teethOnly, tonalStillDraws: !!tonal,
+               stillBooted: !!ST_GPU.gl };
+    })();
+    ST_GPU.fsCap = fsCapReal;
+    ST.maskRev = (ST.maskRev || 0) + 1;
+
+    /* v6.59.0 — AND IF THE DRIVER SIMPLY WILL NOT TAKE THE PROGRAM.
+       The unit count is what a driver REPORTS; whether its compiler accepts the
+       spliced source is a different question, and the answer must never be "no
+       GPU at all". Break the splice on purpose, boot again, and check that the
+       program still links, the fast path still exists, and only stage (4b) is
+       gone. This is the check that stands between one new stage and losing the
+       whole fast path on a student's machine. */
+    window.__hnkPhase = "stage 4b build fallback";
+    let fsBuildFallback = null;
+    {
+      const keptDecl = window.ST_GPU_FS_DECL;
+      const reboot = () => { ST_GPU.tried = false; ST_GPU.gl = null; ST_GPU.prog = null;
+        ST_GPU.loc = {}; ST_GPU.tex = {}; ST_GPU.fsCap = null; ST_GPU.noiseUp = false;
+        ST_GPU.t4key = ""; ST_GPU.t4tkey = ""; ST_GPU.gpKey = ""; ST_GPU.fsSrcKey = "";
+        return !!stGpuBoot(); };
+      window.ST_GPU_FS_DECL = "this is not glsl at all;";
+      const booted = reboot();
+      const capAfter = ST_GPU.fsCap, errAfter = ST_GPU.fsBuildErr || null;
+      const t1 = zeroT1(), pv = basePv(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      const tonalStillDraws = !!stGpuRender(sc, W, H,
+        { t1: Object.assign(zeroT1(), { exp: 20 }), t2: zeroT2(), pv, curve: cu, rs: 1 });
+      const freqIsNull = stGpuRender(sc, W, H, { t1, t2: fsFrom("freqHi", 40), pv, curve: cu, rs: 1 }) === null;
+      window.ST_GPU_FS_DECL = keptDecl;
+      const bootedClean = reboot();
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      fsBuildFallback = { booted, capAfter, sawAnError: !!errAfter, tonalStillDraws, freqIsNull,
+                          bootedClean, capClean: ST_GPU.fsCap };
+    }
+
     const wasOff = ST_GPU.s5off;
     ST_GPU.s5off = true;
-    a = mk(); a.t2.freqHi = 40; const refusesFreq = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    /* v6.59.0 — WHAT s5off ACTUALLY HAS TO REFUSE. claA is not only the Clarity
+       slider: radiance*0.3 feeds it and a NEGATIVE Freq-Sep Low *0.4 feeds it.
+       Before this wave the gate refused shp/cla when stage (5) was withdrawn
+       but accepted a radiance recipe, whose clarity then silently vanished from
+       the frame. Both are asked here, with s5off set. */
+    a = mk(); a.t2.radiance = 50; const refusesRadianceWhenS5Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t2.freqLo = -60; const refusesNegLowWhenS5Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t2.teeth = 40; const stillAcceptsTeethWhenS5Spent = stGpuCan(a.t1, a.t2, a.pv, null) === true;
     a = mk(); a.t2.white = 40; const acceptsWhite = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t2.even = 40; const acceptsEven = stGpuCan(a.t1, a.t2, a.pv, null);
     a = mk(); a.t2.smooth = 40; const acceptsSmooth = stGpuCan(a.t1, a.t2, a.pv, null);
@@ -514,6 +859,8 @@ function report(name, ok, detail) {
     a = mk(); a.t2.white = 40; const refusesWhiteWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t2.even = 40; const refusesEvenWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t2.smooth = 40; const refusesSmoothWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t2.teeth = 40; const refusesTeethWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
+    a = mk(); a.t2.freqHi = 40; const refusesFreqWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
     a = mk(); a.t1.exp = 20; const stillAcceptsTonalWhenT4Spent = stGpuCan(a.t1, a.t2, a.pv, null);
     ST_GPU.t4off = wasT4;
     a = mk(); a.t1.shp = 40; const refusesShpWhenSpent = stGpuCan(a.t1, a.t2, a.pv, null) === false;
@@ -559,11 +906,26 @@ function report(name, ok, detail) {
 
     return { out, refusals, accepts, acceptsVig, acceptsGrn, acceptsShp, acceptsCla, acceptsFinish,
       refusesShpWhenSpent, refusesClaWhenSpent, stillAcceptsTonalWhenSpent, spent,
-      maskFrac: +maskFrac.toFixed(4), refusesFreq, acceptsWhite, acceptsEven, acceptsSmooth,
+      maskFrac: +maskFrac.toFixed(4), acceptsWhite, acceptsEven, acceptsSmooth,
       refusesWhiteWhenT4Spent, refusesEvenWhenT4Spent, refusesSmoothWhenT4Spent,
+      refusesTeethWhenT4Spent, refusesFreqWhenT4Spent,
+      refusesRadianceWhenS5Spent, refusesNegLowWhenS5Spent, stillAcceptsTeethWhenS5Spent,
+      teethCheck, fsRadiusReuse, fsSpeed, fsBuildFallback, fsCapReal, glLimits, acceptsFreqHi, acceptsFreqLo, acceptsTeeth,
+      refusesFreqWhenSpent, stillAcceptsNegLowWhenFsSpent, stillAcceptsTeethWhenFsSpent,
+      stillAcceptsSmoothWhenFsSpent, noUnits,
       stillAcceptsTonalWhenT4Spent, maskProvenance, planeReuse,
       acceptsGlow, refusesGlowWhenSpent, stillAcceptsTonalWhenGlowSpent, glowCoverage };
-  }, RECIPES);
+  }, RECIPES).catch(async (e) => {
+    let where = "?";
+    try { where = await page.evaluate(() => window.__hnkPhase || "?"); } catch (e2) { }
+    const line = "FAIL — the browser threw inside the comparison, at: " + where +
+      "  :: " + (e && e.message || e);
+    console.log(line);
+    console.log("       page errors so far: " + JSON.stringify(pageErrors.slice(0, 5)));
+    ann(line + " | page errors: " + JSON.stringify(pageErrors.slice(0, 3)));
+    await browser.close();
+    process.exit(1);
+  });
 
   /* ---- B) the two paths agree, recipe by recipe ----
      The bar: no channel off by more than the arithmetic width can explain (1,
@@ -601,11 +963,21 @@ function report(name, ok, detail) {
     results.stillAcceptsTonalWhenSpent === true,
     { sharpenRefused: results.refusesShpWhenSpent, clarityRefused: results.refusesClaWhenSpent,
       tonalUnaffected: results.stillAcceptsTonalWhenSpent });
-  report("C5) stage (4) is accepted — Even and Smoothing included — and what it does not implement is still refused",
+  report("C5) stage (4) is accepted — Even, Smoothing, teeth and both frequency bands included",
     results.acceptsWhite === true && results.acceptsEven === true &&
-    results.acceptsSmooth === true && results.refusesFreq,
+    results.acceptsSmooth === true && results.acceptsTeeth === true &&
+    results.acceptsFreqHi === true && results.acceptsFreqLo === true,
     { white: results.acceptsWhite, even: results.acceptsEven, smooth: results.acceptsSmooth,
-      freqSeparationRefused: results.refusesFreq });
+      teeth: results.acceptsTeeth, freqHi: results.acceptsFreqHi, freqLo: results.acceptsFreqLo });
+  /* v6.59.0 — the defect this wave exposed, asked as a rule */
+  report("C5c) with stage (5) withdrawn the gate refuses every recipe whose clarity is non-zero, not only the Clarity slider",
+    results.refusesRadianceWhenS5Spent === true && results.refusesNegLowWhenS5Spent === true &&
+    results.stillAcceptsTeethWhenS5Spent === true,
+    { radiance50: results.refusesRadianceWhenS5Spent, negativeFreqLo: results.refusesNegLowWhenS5Spent,
+      teethIsUnaffected: results.stillAcceptsTeethWhenS5Spent });
+  report("C5b2) …and teeth and the frequency bands go with it, because both ride that same readback",
+    results.refusesTeethWhenT4Spent === true && results.refusesFreqWhenT4Spent === true,
+    { teeth: results.refusesTeethWhenT4Spent, freq: results.refusesFreqWhenT4Spent });
   report("C5b) …and once its own readback is measured as not worth it, the whole stage is refused again",
     results.refusesWhiteWhenT4Spent && results.refusesEvenWhenT4Spent &&
     results.refusesSmoothWhenT4Spent && results.stillAcceptsTonalWhenT4Spent === true,
@@ -641,6 +1013,66 @@ function report(name, ok, detail) {
     results.glowCoverage && (results.glowCoverage.eligible + " / " + results.glowCoverage.presets +
       " presets" + (results.glowCoverage.blocked.length
         ? "; still on the CPU: " + results.glowCoverage.blocked.join(", ") : "")));
+  /* ---- C11) stage (4) teeth: the one control whose WHERE is a measured mouth */
+  {
+    const t = results.teethCheck;
+    report("C11a) the fabricated face reads as measured and the teeth plane covers real pixels",
+      !!t && t.zonesReal === true && t.planePixels > 300,
+      t && { zonesReal: t.zonesReal, planePixels: t.planePixels });
+    report("C11b) …and the CPU's whitening actually moves that frame, so the comparison is not vacuous",
+      !!t && t.cpuMovedChannels > 1000 && t.cpuMovedMax >= 4,
+      t && { movedChannels: t.cpuMovedChannels, maxCounts: t.cpuMovedMax });
+    report("C11c) with no skin control at all the two paths already agree on this frame",
+      !!t && t.baseline && t.baseline.maxd === 0 && t.baseline.diff === 0, t && t.baseline);
+    report("C11) teeth whitening draws on the GPU, bit for bit the CPU's picture",
+      !!t && t.teeth && t.teeth.gate === true && t.teeth.maxd === 0 && t.teeth.diff === 0,
+      t && t.teeth);
+    report("C11d) …and still does with whitening, smoothing and both frequency bands on top of it",
+      !!t && t.combo && t.combo.gate === true && t.combo.maxd <= 1 && t.combo.pct <= 5,
+      t && t.combo);
+  }
+
+  /* ---- C12) stage (4b): two roads to "no", and neither may take anything else */
+  report("C13) dragging Freq-Sep Low re-blurs the wide band — three frames at 20, 90 and 20 again, each the CPU's picture",
+    (() => { const r = results.fsRadiusReuse;
+      return !!r && [r.first, r.second, r.third].every(x => x && !x.error && x.maxd <= 1 && x.diff <= 200); })(),
+    results.fsRadiusReuse);
+  /* v6.59.0 — AND THE APP HAS TO EMIT THE SIGNAL THE TEST USES.
+     The block above bumps ST.maskRev because that is what loading a photo does.
+     Fault injection showed the obvious hole in that: with the test doing the
+     bump, deleting the app's own bump changed nothing here — the check would
+     have gone on passing over the very defect it was written for. stBuildBuffer
+     is the one place the pipeline's input is rebuilt, so the bump has to be
+     inside it, and this reads the shipped file to say so. */
+  {
+    const src = await (await fetch("http://127.0.0.1:" + PORT + "/index.html")).text();
+    const i = src.indexOf("function stBuildBuffer(){");
+    const j = i >= 0 ? src.indexOf("\nfunction ", i + 10) : -1;
+    const body = (i >= 0 && j > i) ? src.slice(i, j) : "";
+    report("C7b) stBuildBuffer bumps ST.maskRev, which is the only thing in the readback key that can tell two photographs apart",
+      /ST\.maskRev\s*=\s*\(\s*ST\.maskRev\s*\|\|\s*0\s*\)\s*\+\s*1/.test(body),
+      { foundStBuildBuffer: i >= 0, bodyChars: body.length });
+  }
+
+  report("C12a) this device reports the texture units stage (4b) needs, so the checks above rendered it",
+    results.fsCapReal === true, { fsCap: results.fsCapReal, gl: results.glLimits });
+  report("C12) once stage (4b) is measured as not worth it, the two frequency sliders are refused — and nothing else is",
+    results.refusesFreqWhenSpent === true && results.stillAcceptsTeethWhenFsSpent === true &&
+    results.stillAcceptsSmoothWhenFsSpent === true && results.stillAcceptsNegLowWhenFsSpent === true,
+    { freqRefused: results.refusesFreqWhenSpent, teethKept: results.stillAcceptsTeethWhenFsSpent,
+      smoothKept: results.stillAcceptsSmoothWhenFsSpent,
+      negativeLowKept: results.stillAcceptsNegLowWhenFsSpent });
+  report("C12c) a driver that will not compile stage (4b) loses that stage and NOTHING else — the fast path still boots",
+    (() => { const r = results.fsBuildFallback;
+      return !!r && r.booted === true && r.capAfter === false && r.sawAnError === true &&
+             r.tonalStillDraws === true && r.freqIsNull === true &&
+             r.bootedClean === true && r.capClean === true; })(),
+    results.fsBuildFallback);
+  report("C12b) a device with only the eight units WebGL guarantees sends a frequency frame to the CPU and keeps every other stage",
+    !!results.noUnits && results.noUnits.freqIsNull === true &&
+    results.noUnits.teethStillDraws === true && results.noUnits.tonalStillDraws === true &&
+    results.noUnits.stillBooted === true, results.noUnits);
+
   report("C4) and the rule that withdraws it compares against what the CPU costs here",
     Object.keys(results.spent).every(k => results.spent[k] === true), results.spent);
 
@@ -649,6 +1081,41 @@ function report(name, ok, detail) {
   report("D) the shader is not slower than the CPU on the full recipe",
     !!heavy && heavy.gpuMs <= heavy.cpuMs,
     heavy ? { cpuMs: heavy.cpuMs.toFixed(2), gpuMs: heavy.gpuMs.toFixed(2) } : null);
+
+  /* v6.59.0 — what the two stages this wave added are worth, measured on a
+     SwiftShader software rasteriser with the tonal half held still the way a
+     slider drag holds it:
+
+                                                        512x768      896x1344
+       freq-sep low 70 + high 45                        2.23x          2.54x
+       teeth 70                                         1.60x          1.92x
+       grade + smooth + even + white + freq + teeth +
+         sharpen — a retoucher's actual frame           1.61x          2.09x
+
+     THOSE ARE ONE MACHINE'S NUMBERS. The CI runner measured the first row at
+     0.66x — a fast CPU against a slow software rasteriser — and it is just as
+     real. That is why D2 below does not assert a speedup. */
+  /* v6.59.0 — AND THIS IS WHERE THE FIRST VERSION OF THIS CHECK WAS WRONG.
+     It asserted "the GPU is faster", full stop. It is faster on the container
+     this was written in (2.23x at 512x768) and SLOWER on the CI runner (0.66x:
+     CPU 29ms, GPU 44ms) — because that runner has a fast CPU and a software
+     rasteriser, so the JS pipeline wins. Both numbers are true; neither is a
+     property of the code. 6.58.0 learned exactly this about Vibe Glow and I
+     wrote the lesson down without applying it here: a bare slider with every
+     other control at zero is the case where the CPU has almost nothing to do.
+
+     What IS a property of the code, and what a student actually depends on, is
+     that a machine where this does not pay TAKES IT BACK. So: win, or the rule
+     that withdraws it fires on the frame that lost. Never neither. */
+  report("D2) stage (4b) either beats the CPU on this machine, or the rule that withdraws it fires on the frame that did not",
+    !!results.fsSpeed && (results.fsSpeed.x > 1 || results.fsSpeed.withdrawnIfSlower === true),
+    results.fsSpeed);
+  if (results.fsSpeed) {
+    console.log("      stage (4b) at " + results.fsSpeed.W + "x" + results.fsSpeed.H +
+      " — CPU " + results.fsSpeed.cpuMs + "ms, GPU " + results.fsSpeed.gpuMs +
+      "ms (" + results.fsSpeed.x + "x)" +
+      (results.fsSpeed.x > 1 ? "" : " — withdrawn: " + results.fsSpeed.withdrawnIfSlower));
+  }
 
   report("E) nothing threw while rendering either path", pageErrors.length === 0, pageErrors);
 
