@@ -212,9 +212,18 @@ for (const [key, why] of [
     rx.test(SELFTEST) && rx.test(MAIN), null);
 }
 
-report("D7) the four geometric probes read a number back, not a style string",
-  /offsetWidth - 100/.test(SELFTEST) && /c2\.offsetLeft - c1\.offsetLeft/.test(SELFTEST) &&
-  /offsetWidth - 60/.test(SELFTEST) && /getBoundingClientRect/.test(SELFTEST), null);
+/* v6.63.0 — THIS CHECK USED TO PIN THE WRONG RULER, and the owner's
+   photograph of 6.133.0 is what exposed it: `box-sizing 0px`, `flex gap 0`,
+   `calc() NO`. None of those was a CSS answer. offsetWidth and offsetLeft
+   return 0 in UXP, so all three probes reported the failure of the measuring
+   instrument. position:fixed was the only row that worked, and the only one
+   that used getBoundingClientRect. The check now demands the ruler that works
+   and forbids the one that does not — which is a stronger assertion than the
+   line it replaces, not a looser one. */
+report("D7) every geometric probe measures with getBoundingClientRect, and none with offsetWidth/offsetLeft (UXP answers 0)",
+  /getBoundingClientRect/.test(SELFTEST) &&
+  !/offsetWidth|offsetLeft/.test(SELFTEST.replace(/\/\*[\s\S]*?\*\//g, "")) &&
+  /w1 - 100/.test(SELFTEST) && /x2 - x1/.test(SELFTEST) && /w3 - 60/.test(SELFTEST), null);
 
 /* ----------------------------------------------------- E. the rules are written */
 

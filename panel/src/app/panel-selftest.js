@@ -173,21 +173,45 @@ function capabilities() {
      node. This one now does too, and takes it away again on the answer.
 
      NOTHING CHECKS THE CHECKER — that is why a broken diagnostic survived
-     five waves of diagnostics. */
+     five waves of diagnostics.
+
+     v6.63.0 — AND WHEN IT FINALLY ANSWERED, IT ANSWERED WRONG. 6.132.0 fixed
+     the probe so it could resolve, 6.133.0's card read "SVG in img: no", and
+     the SAME PHOTOGRAPH shows two SVGs plainly drawn two rows below it in the
+     stroke-vs-fill row. Both cannot be true. The probe judged on
+     `naturalWidth > 0`, and UXP reports no intrinsic width for an SVG it is
+     perfectly willing to paint — so "no" meant "this renderer does not tell me
+     the size", never "this renderer cannot draw it".
+
+     The row is now two facts, each judged on what actually matters:
+       · icon (png)  — does the file the panel now ships for every icon load?
+                       That is the only one the UI depends on.
+       · svg         — does the old SVG load? Kept because the answer is
+                       interesting, but judged on onload/onerror alone; the
+                       intrinsic size is never consulted again.
+     The stroke-vs-fill row below remains the real evidence for both: two
+     pictures, at panel size, that a photograph can settle. */
+  caps.iconPng = "pending";
   caps.svgImg = "pending";
-  try {
-    var im = doc.createElement("img");
-    im.style.position = "absolute"; im.style.left = "-9999px"; im.style.top = "0";
-    im.style.width = "16px"; im.style.height = "16px";
-    var done = function (v) {
-      caps.svgImg = v;
-      try { if (im.parentNode) im.parentNode.removeChild(im); } catch (e5) { }
-    };
-    im.onload = function () { done(im.naturalWidth > 0 ? "yes" : "no"); };
-    im.onerror = function () { done("no"); };
-    (doc.body || doc.documentElement).appendChild(im);
-    im.src = "icons/ui/i-home-muted.svg";
-  } catch (e3) { caps.svgImg = "no"; }
+  var probeImg = function (src, set) {
+    try {
+      var im = doc.createElement("img");
+      im.style.position = "absolute"; im.style.left = "-9999px"; im.style.top = "0";
+      im.style.width = "16px"; im.style.height = "16px";
+      var done = function (v) {
+        set(v);
+        try { if (im.parentNode) im.parentNode.removeChild(im); } catch (e5) { }
+      };
+      /* onload IS the answer. naturalWidth is not consulted: that is the
+         mistake this probe made for a whole release. */
+      im.onload = function () { done("yes"); };
+      im.onerror = function () { done("no"); };
+      (doc.body || doc.documentElement).appendChild(im);
+      im.src = src;
+    } catch (e3) { set("no"); }
+  };
+  probeImg("icons/ui/i-home-muted.png", function (v) { caps.iconPng = v; });
+  probeImg("icons/ui/i-home-muted.svg", function (v) { caps.svgImg = v; });
 
   /* D. v6.132.0 — CAN A <select> BE SET AT ALL? Twenty of them carry the
         panel's pickers (model, language, ratio, count, size) and the owner
@@ -245,31 +269,56 @@ function capabilities() {
     var host = box(doc, { width: "200px", height: "80px" });
     (doc.body || doc.documentElement).appendChild(host);
 
+    /* v6.63.0 — EVERY MEASUREMENT BELOW READS getBoundingClientRect(), AND
+       THAT IS THE WHOLE CORRECTION. 6.62.0 wrote F1-F3 with offsetWidth and
+       offsetLeft, and the owner's Photoshop answered `box-sizing 0px`,
+       `flex gap 0`, `calc() NO`. None of those was a CSS answer: UXP returns
+       0 from offsetWidth and offsetLeft for these nodes, so all three probes
+       reported the failure of the ruler rather than the size of the box.
+       F4 was the only one that worked, and F4 was the only one that used
+       getBoundingClientRect. I built the instrument that was supposed to end
+       the guessing and did not check the instrument — the exact mistake this
+       panel's SVG probe made for five waves. `w()` is now the only ruler. */
+    var w = function (el) {
+      try { var r = el.getBoundingClientRect(); return r ? r.width : -1; } catch (e) { return -1; }
+    };
+    var x = function (el) {
+      try { var r = el.getBoundingClientRect(); return r ? r.left : -1; } catch (e) { return -1; }
+    };
+
     /* F1 — is the box-model reset in force? 100px wide, 10px padding, 1px
-       border: border-box measures 100, content-box measures 122. A `no` here
+       border: border-box measures 100, content-box measures 122. A "no" here
        means every padded box in the panel is 22px wider than its rule says,
        which is what a panel that will not fit its column looks like. */
     var b1 = box(doc, { width: "100px", padding: "10px", border: "1px solid #000" });
     host.appendChild(b1);
-    caps.cssBox = (Math.abs(b1.offsetWidth - 100) <= 1) ? "border-box"
-      : (Math.abs(b1.offsetWidth - 122) <= 2 ? "content-box" : String(b1.offsetWidth) + "px");
+    var w1 = w(b1);
+    caps.cssBox = (w1 < 0) ? "unmeasurable"
+      : (Math.abs(w1 - 100) <= 1) ? "border-box"
+      : (Math.abs(w1 - 122) <= 2) ? "content-box"
+      : (Math.round(w1) + "px");
 
     /* F2 — flex gap. Two 10px children in a row with gap:20px: the second
-       starts at 30 if gap is honoured, at 10 if it is dropped. */
+       starts 30 from the first if gap is honoured, 10 if it is dropped. */
     var f2 = box(doc, { display: "flex", flexDirection: "row", width: "180px" });
     try { f2.style.gap = "20px"; } catch (e) { }
     var c1 = box(doc, { width: "10px", height: "10px" }); c1.style.position = "static";
     var c2 = box(doc, { width: "10px", height: "10px" }); c2.style.position = "static";
     f2.appendChild(c1); f2.appendChild(c2); host.appendChild(f2);
-    var d2 = c2.offsetLeft - c1.offsetLeft;
-    caps.cssGap = (d2 >= 28 && d2 <= 32) ? "yes" : (d2 >= 9 && d2 <= 11 ? "NO" : String(d2));
+    var x1 = x(c1), x2 = x(c2), d2 = (x1 < 0 || x2 < 0) ? -1 : (x2 - x1);
+    caps.cssGap = (d2 < 0) ? "unmeasurable"
+      : (d2 >= 28 && d2 <= 32) ? "yes"
+      : (d2 >= 9 && d2 <= 11) ? "NO"
+      : (Math.round(d2) + "px");
 
     /* F3 — calc(). #pageAiTools already ships a plain percentage before every
        calc() width, which is the shape of a codebase that suspected this. */
     var b3 = box(doc, { width: "calc(50px + 10px)", height: "10px" });
     host.appendChild(b3);
-    caps.cssCalc = (Math.abs(b3.offsetWidth - 60) <= 1) ? "yes"
-      : (b3.offsetWidth > 0 ? String(b3.offsetWidth) + "px" : "NO");
+    var w3 = w(b3);
+    caps.cssCalc = (w3 < 0) ? "unmeasurable"
+      : (Math.abs(w3 - 60) <= 1) ? "yes"
+      : (w3 > 0) ? (Math.round(w3) + "px") : "NO";
 
     /* F4 — position:fixed. The toast, the Freeform sheet and the video wizard
        sheet are all fixed; if it degrades to static they land in the flow. */

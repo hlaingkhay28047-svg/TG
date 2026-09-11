@@ -324,7 +324,7 @@ function render(root, deps) {
     var card = dom.el(doc, "div", { class: "card nw-card", id: "hnkDashNew" });
     var h2 = dom.el(doc, "h2", { id: "hnkDashNewH2" });
     var hic = doc.createElement("img");
-    hic.className = "ic-s"; hic.alt = ""; hic.src = "icons/ui/i-sparkle-gold.svg";
+    hic.className = "ic-s"; hic.alt = ""; hic.src = "icons/ui/i-sparkle-gold.png";
     h2.appendChild(hic);
     h2.appendChild(doc.createTextNode(l9(L_NEW_H) + " (" + all.length + ")"));
     card.appendChild(h2);
@@ -388,7 +388,7 @@ function render(root, deps) {
     var money = dom.el(doc, "div", { class: "card", id: "dashMoney" });
     var mh2 = dom.el(doc, "h2", { id: "dashMoneyH2" });
     var mic = doc.createElement("img");
-    mic.className = "ic-s"; mic.alt = ""; mic.src = "icons/ui/i-bolt-gold.svg";
+    mic.className = "ic-s"; mic.alt = ""; mic.src = "icons/ui/i-bolt-gold.png";
     mh2.appendChild(mic);
     mh2.appendChild(doc.createTextNode(m.h || ""));
     money.appendChild(mh2);

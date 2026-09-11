@@ -72,7 +72,7 @@
   function icon(name, tint, cls) {
     var im = doc.createElement('img');
     im.className = cls || 'ic-s';
-    im.setAttribute('src', 'icons/ui/' + name + '-' + tint + '.svg');
+    im.setAttribute('src', 'icons/ui/' + name + '-' + tint + '.png');
     im.setAttribute('alt', '');
     return im;
   }

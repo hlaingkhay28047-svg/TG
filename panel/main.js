@@ -241,11 +241,26 @@ function ffModelBrand(label) {
   return ["t-gold", "spark"];
 }
 function ffModelTile(label) { return ffModelBrand(label)[0]; }
-/* the app's sprite icons (svg.ic-s) as pre-tinted <img> files, icons/ui/<symbol>-<tint>.svg */
+/* the app's sprite icons (svg.ic-s) as pre-tinted <img> files.
+
+   v6.63.0 — .png, NOT .svg, AND THE OWNER'S PHOTOGRAPH IS WHY. panel 6.133.0's
+   SELF-TEST card put a stroke-drawn icon beside a fill-drawn one at the size
+   the panel uses them, and Photoshop 27.10.0 drew the stroke one as a SOLID
+   BLACK house and the fill one as a correct gold star. Adobe's renderer paints
+   `fill` and ignores `stroke`, and it does not inherit `fill="none"` from the
+   parent <svg> — so a path with no fill of its own falls back to black.
+   263 of the panel's 276 icons are stroke-drawn. That is the whole of
+   "icons တွေ အမဲဖြစ်နေတယ်", and it had outlived five waves of guessing.
+
+   tools/build_panel_icon_png.js compiles every icon to a PNG at 3x. The same
+   photograph reports "Pictures 247 ok · 0 failed": this renderer draws raster
+   images without exception, so a PNG cannot fail the way the SVG did. The SVGs
+   stay in the tree as the source — the web app runs in Chromium and never had
+   the problem. */
 function ffIcon(name, tint, cls) {
   const im = document.createElement("img");
   im.className = cls || "ic-s";
-  im.src = "icons/ui/" + name + "-" + (tint || "cream") + ".svg";
+  im.src = "icons/ui/" + name + "-" + (tint || "cream") + ".png";
   im.alt = "";
   return im;
 }
@@ -6388,7 +6403,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.133.0";
+const PANEL_VERSION = "6.134.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8759,7 +8774,7 @@ function rhPaintQualityBtn() {
   const label = opt ? String(opt.textContent || "").replace(/^quality:\s+/, "") : "";
   const v = $("rhQualityVal"); if (v) v.textContent = label;
   const tile = $("rhQualityTile"); if (tile) tile.className = "hsl-tile t-gold";
-  const gl = $("rhQualityGlyph"); if (gl) gl.src = "icons/ui/brand-spark.svg";
+  const gl = $("rhQualityGlyph"); if (gl) gl.src = "icons/ui/brand-spark.png";
 }
 function rhFillModelSel() {
   const sel = $("rhModelSel");
@@ -9120,8 +9135,13 @@ function selfTestRowsInner() {
     (caps.rangeRects < 0 ? "unavailable"
       : caps.rangeLineBoxes ? "yes (" + caps.rangeRects + ")" : "per glyph (" + caps.rangeRects + ")"),
     level: caps.rangeRects === undefined ? "pend" : (caps.rangeLineBoxes ? "ok" : "warn") });
+  /* v6.63.0 — the PNG is the one that matters now: every icon in the panel is
+     one. The SVG row stays beside it because the pair is the whole story of
+     this wave, and because "svg no · png yes" is what the fix looks like. */
+  rows.push({ label: "icon (png)", detail: caps.iconPng || "—",
+    level: caps.iconPng === "yes" ? "ok" : (caps.iconPng === "no" ? "err" : "pend") });
   rows.push({ label: "SVG in img", detail: caps.svgImg || "—",
-    level: caps.svgImg === "yes" ? "ok" : (caps.svgImg === "no" ? "err" : "pend") });
+    level: caps.svgImg === "yes" ? "ok" : (caps.svgImg === "no" ? "warn" : "pend") });
   /* v6.132.0 — THE BLACK ICONS, ASKED AS A PICTURE.
      259 of the panel's 276 icons are drawn with STROKE on fill="none"; the
      other 17 (the brand marks) are drawn with FILL. If this renderer honours
@@ -9129,9 +9149,15 @@ function selfTestRowsInner() {
      fill — black — which is exactly what the owner photographed, and would
      leave the brand marks correct. One of each, at the size the panel uses
      them, settles it in one photograph. */
+  /* v6.63.0 — THIS ROW IS THE PROOF, AND IT IS NOW THE FIX TOO. On 6.133.0 it
+     showed a stroke-drawn SVG and a fill-drawn SVG side by side and Photoshop
+     drew the first as a solid black house. Both pictures are PNGs now, so on
+     this build the house must come back as a thin grey outline. If it is still
+     black, the raster path is not the answer either and the next wave learns
+     that from one photograph instead of five. */
   rows.push({ label: "stroke vs fill", level: "pend",
-    icons: ["icons/ui/i-home-muted.svg", "icons/ui/i-star-fill-gold.svg"],
-    detail: "\u2190 stroke \u00b7 fill \u2192" });
+    icons: ["icons/ui/i-home-muted.png", "icons/ui/i-star-fill-gold.png"],
+    detail: "\u2190 outline \u00b7 fill \u2192 (both png)" });
   /* v6.132.0 — can a picker be set at all? Twenty <select> carry the model,
      language, ratio, count and size pickers. */
   rows.push({ label: "select set", detail: caps.selectSet || "—",
@@ -16076,7 +16102,7 @@ function ffSpinEnsure(id) {
   if (!sp) return null;
   if (!sp.firstChild) {
     const row = document.createElement("div"); row.className = "spin-row";
-    const ring = document.createElement("img"); ring.className = "spin-ring"; ring.src = "icons/ui/spin-ring.svg"; ring.alt = "";
+    const ring = document.createElement("img"); ring.className = "spin-ring"; ring.src = "icons/ui/spin-ring.png"; ring.alt = "";
     const txt = document.createElement("span"); txt.className = "spin-txt"; txt.id = id + "Txt";
     row.appendChild(ring); row.appendChild(txt);
     const bar = document.createElement("div"); bar.className = "spin-bar";
