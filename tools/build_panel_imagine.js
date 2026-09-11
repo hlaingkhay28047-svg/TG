@@ -45,6 +45,7 @@ const TOKENS = [["var(--gold-hi)", "var(--accent-h)"], ["var(--gold)", "var(--ac
    converts flex `gap` into margins, and REFUSES (throws, naming the line)
    anything it cannot translate with certainty. */
 const { uxpSafeCss } = require("./lib/uxp_safe_css.js");
+const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 function panelCss(appCss) {
   let s = appCss;
   TOKENS.forEach(function (p) { s = s.split(p[0]).join(p[1]); });
@@ -74,7 +75,11 @@ function build(opts) {
     "globalThis.HNK.imagine = IMAGINE;\n" +
     "globalThis.HNK.imagineData = IMAGINE_DATA;\n";
   const changed = [];
-  if (writeIfChanged(OUT_JS, js)) changed.push("panel/js/hnk_imagine.js");
+  /* the glyph rule set, at the same seam as the CSS one: the web app may write an
+     emoji into a label and Chromium draws it, while Adobe's UI font has no glyph and
+     paints a black box. uxpSafeCode replaces the ones this panel has a decision for
+     and REFUSES a new one rather than dropping it silently. */
+  if (writeIfChanged(OUT_JS, uxpSafeCode(js, "build_panel_imagine (the IMAGINE module lifted from docs/app/index.html)"))) changed.push("panel/js/hnk_imagine.js");
   /* CSS: replace the block between the markers, or append it once */
   const css = panelCss(between(app, C0, C1, "css"));
   let cur = fs.readFileSync(OUT_CSS, "utf8");

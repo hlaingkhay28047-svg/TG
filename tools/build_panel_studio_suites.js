@@ -27,6 +27,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 
 const ROOT = path.join(__dirname, "..");
 const SRC = path.join(ROOT, "docs", "app", "index.html");
@@ -468,7 +469,7 @@ function emit(slices, data, meta) {
     "})();",
     ""
   ].join("\n");
-  return head;
+  return uxpSafeCode(head, "build_panel_studio_suites");
 }
 
 /* ------------------------------------------------------ validation */

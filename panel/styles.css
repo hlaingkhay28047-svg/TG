@@ -827,6 +827,18 @@ input[type="range"] { min-width: 0; }
    with like. No object-fit and no pointer-events: UXP supports neither. */
 .diag-sw { width: 20px; height: 20px; margin-left: 6px; vertical-align: middle; }
 .diag-swcap { margin-left: 8px; font-size: 10px; color: var(--muted-2); }
+/* v6.64.0 — the glyph strip. The advance-width probe says which characters
+   this renderer has no glyph for; this draws them large enough that one
+   photograph checks the arithmetic, with the codepoints printed beneath in
+   the same order. 15px is the size the panel's own labels use, doubled — a
+   .notdef box is unmistakable at it, and a real glyph still reads. */
+.diag-glyphs { display: flex; flex-direction: row; flex-wrap: wrap; margin-left: 6px; }
+.diag-glyphs > span { margin: 0 4px 2px 0; }
+.diag-gl {
+  min-width: 20px; padding: 1px 3px;
+  font-size: 15px; line-height: 20px; text-align: center;
+  color: var(--text); background-color: var(--panel); border: 1px solid var(--line); border-radius: 5px;
+}
 
 /* ============================================================
    HNK AI Tools — Free Generate + Smart Workflow UI
@@ -1339,11 +1351,19 @@ input[type="range"] { min-width: 0; }
   flex: 1; min-width: 0; }
 .hnk-action-label, .hnk-action-sub, .hnk-action-meta { display: block; width: 100%; }
 .hnk-action-meta { margin-top: 2px; font-size: 8.5px; font-weight: 700; color: var(--accent-soft); }
+/* v6.64.0 — the workflow detail hero holds an <img>, not a background.
+   A remote https URL in background-image never arrives in this renderer and
+   never reports that it did not, which is the empty gold rectangle the owner
+   photographed on 6.134.0; the picture now comes through HNK.remoteArt as a
+   data: URL, on the same path as the grid card above it. The fixed height
+   goes with the background: the card art is 3:2 and draws at its own ratio,
+   which is the fit the repo has proven in Photoshop. */
 .hnk-wf-hero {
-  height: 118px; margin: 6px 0 8px;
+  margin: 6px 0 8px; overflow: hidden;
   border: 1px solid rgba(217, 164, 65, 0.6); border-radius: 11px;
-  background-color: #0b0d14; background-size: cover; background-position: center 30%; background-repeat: no-repeat;
+  background-color: #0b0d14;
 }
+.hnk-wf-hero img { width: 100%; height: auto; display: block; }
 .hnk-wf-chips { display: flex; flex-direction: row; flex-wrap: wrap; margin-bottom: 6px; }
 .hnk-wf-chip {
   margin: 0 4px 4px 0; padding: 2px 7px;

@@ -18,6 +18,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 
 const ROOT = path.join(__dirname, "..");
 const APP = path.join(ROOT, "docs/app/index.html");
@@ -88,7 +89,7 @@ function build() {
   const html = fs.readFileSync(APP, "utf8");
   const body = lift(html);
   const n = (body.slice(body.indexOf("var VID_WF=[")).match(/\{ key:"/g) || []).length;
-  return head(n) + body + TAIL;
+  return uxpSafeCode(head(n) + body + TAIL, "build_panel_video_wf");
 }
 
 module.exports = { build, lift };

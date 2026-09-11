@@ -259,14 +259,37 @@ function capabilities() {
         other way. The wave removed all six kinds from the stylesheet, so the
         panel no longer depends on any answer; the card reports them because
         the next question (the nine object-fit thumbs) turns on them. */
+  /* v6.64.0 — A PROBE BOX IS NOW AN ORDINARY BOX, AND THE HOST IS ON SCREEN.
+
+     6.63.0 replaced offsetWidth with getBoundingClientRect and the owner's
+     6.134.0 photograph STILL reads `box-sizing 0px · flex gap 0px ·
+     calc() NO`. The ruler was necessary and not sufficient, and the second
+     half of the fault was in this function: every probe box was created
+     `position:absolute; left:-9999px`. Two things follow from that, and
+     both are fatal to a measurement:
+
+       · the box is nine thousand pixels outside the window, and this
+         renderer answers 0 for the rect of a node laid out there;
+       · every CHILD was absolutely positioned too, so the flex-gap probe
+         measured two out-of-flow boxes stacked at the same coordinate —
+         a difference of 0 no matter what `gap` does.
+
+     F4 has always worked, and F4 is the one probe that placed itself
+     ON SCREEN at top:0 left:0 (position:fixed). That is the only placement
+     this renderer has ever measured, so it is the placement all of them
+     use now. The host is fixed at the origin, transparent, and taken out
+     of the document in the same synchronous turn it was put in — it cannot
+     paint a frame — and the probe boxes inside it are plain in-flow divs
+     with no positioning of their own. */
   function box(doc2, css) {
     var d = doc2.createElement("div");
-    d.style.position = "absolute"; d.style.left = "-9999px"; d.style.top = "0";
     for (var k in css) if (css.hasOwnProperty(k)) { try { d.style[k] = css[k]; } catch (e) { } }
     return d;
   }
   try {
     var host = box(doc, { width: "200px", height: "80px" });
+    host.style.position = "fixed"; host.style.top = "0"; host.style.left = "0";
+    host.style.opacity = "0"; host.style.overflow = "hidden";
     (doc.body || doc.documentElement).appendChild(host);
 
     /* v6.63.0 — EVERY MEASUREMENT BELOW READS getBoundingClientRect(), AND
@@ -302,8 +325,11 @@ function capabilities() {
        starts 30 from the first if gap is honoured, 10 if it is dropped. */
     var f2 = box(doc, { display: "flex", flexDirection: "row", width: "180px" });
     try { f2.style.gap = "20px"; } catch (e) { }
-    var c1 = box(doc, { width: "10px", height: "10px" }); c1.style.position = "static";
-    var c2 = box(doc, { width: "10px", height: "10px" }); c2.style.position = "static";
+    /* the two children carried an explicit position:static in 6.62.0, to undo
+       the absolute box() gave them. box() no longer positions anything, so
+       they are in flow because that is what a div is. */
+    var c1 = box(doc, { width: "10px", height: "10px" });
+    var c2 = box(doc, { width: "10px", height: "10px" });
     f2.appendChild(c1); f2.appendChild(c2); host.appendChild(f2);
     var x1 = x(c1), x2 = x(c2), d2 = (x1 < 0 || x2 < 0) ? -1 : (x2 - x1);
     caps.cssGap = (d2 < 0) ? "unmeasurable"
@@ -339,8 +365,85 @@ function capabilities() {
     try { b6.style.backgroundSize = "cover"; } catch (e) { }
     caps.cssBgSize = (b6.style && b6.style.backgroundSize === "cover") ? "kept" : "DROPPED";
 
+    /* G. v6.64.0 — WHICH SYMBOLS DOES THIS FONT ACTUALLY HAVE?
+
+       The owner's photographs of 6.134.0 show black rounded squares in UI
+       text on Retouch A, Retouch B, Path and Recipes. A square like that is
+       `.notdef`: what a font draws when it is asked for a character it does
+       not carry. The same photographs show → ← and ✓ drawn correctly, so
+       the panel cannot simply replace every symbol it uses — 1,131 of them
+       already work — and it must not go on guessing which ones do not.
+
+       So measure. Every glyph in a font has an advance width, and every
+       character the font is MISSING gets the same one: .notdef's. Put one
+       character in a span, read its width, and compare it with the width of
+       U+E0FF — a private-use codepoint no font maps, so it is .notdef by
+       construction. Equal widths mean the renderer has nothing for that
+       character either, and it is drawing the box.
+
+       Two guards, because a measurement that cannot fail is not a
+       measurement: if the reference width is 0 the ruler is broken and every
+       row reads "unmeasurable" rather than "all missing"; and if .notdef
+       happens to be exactly as wide as a real letter the test cannot
+       separate them and says so. The card also DRAWS the whole strip, so one
+       photograph checks the arithmetic — the same two-facts discipline that
+       finally settled the icons. */
+    /* the list is written as CODEPOINTS, not as characters. A source file
+       that carries the very glyphs it is investigating is a source file the
+       gate has to make an exception for, and an exception is how the next
+       one gets in. It also survives every editor and every encoding on the
+       way to Photoshop, which a diagnostic must. */
+    var GLYPH_CP = [
+      0x2192, 0x2713, 0x2190, 0x25B8, 0x2715, 0x26A0, 0x270E, 0x21BA,
+      0x2605, 0x25B6, 0x2665, 0x2B07, 0x25BE, 0x25C0, 0x27A1, 0x22EE,
+      0x2B06, 0x2295, 0x2726, 0x25B4, 0x21C4, 0x2194, 0x267B, 0x26D3,
+      0x2717, 0x27F3, 0x25C9, 0x2248, 0x2264, 0x263D,
+      /* and the six this wave removed from the panel, as the control: if the
+         measurement is right at all, these must come back missing. */
+      0x1F504, 0x2B50, 0x1F4CC, 0x26A1, 0x1F4BE, 0x1F558
+    ];
+    var chOf = function (cp) {
+      if (cp < 0x10000) return String.fromCharCode(cp);
+      var v = cp - 0x10000;
+      return String.fromCharCode(0xD800 + (v >> 10), 0xDC00 + (v & 0x3FF));
+    };
+    var GLYPHS = [];
+    for (var gc = 0; gc < GLYPH_CP.length; gc++) GLYPHS.push(chOf(GLYPH_CP[gc]));
+    caps.glyphList = GLYPHS;
+    try {
+      var gs = doc.createElement("span");
+      gs.style.fontSize = "64px";
+      gs.style.whiteSpace = "pre";
+      host.appendChild(gs);
+      var gw = function (ch) {
+        while (gs.firstChild) gs.removeChild(gs.firstChild);
+        gs.appendChild(doc.createTextNode(ch));
+        try { var r = gs.getBoundingClientRect(); return r ? r.width : -1; } catch (e) { return -1; }
+      };
+      var miss = gw(chOf(0xE0FF));    /* private use: nothing maps it */
+      var have = gw("n");             /* a glyph every font carries */
+      caps.glyphRef = "notdef " + Math.round(miss) + " · n " + Math.round(have);
+      if (!(miss > 0) || !(have > 0)) {
+        caps.glyphMiss = "unmeasurable";
+      } else if (Math.abs(miss - have) <= 0.5) {
+        /* the two references are the same width, so nothing below can be
+           told apart from nothing. Say that, rather than a list. */
+        caps.glyphMiss = "indistinguishable";
+      } else {
+        var gone = [];
+        for (var gi = 0; gi < GLYPHS.length; gi++) {
+          var gwv = gw(GLYPHS[gi]);
+          if (gwv >= 0 && Math.abs(gwv - miss) <= 0.5) gone.push(GLYPH_CP[gi].toString(16).toUpperCase());
+        }
+        caps.glyphMiss = gone.length ? gone.join(" ") : "none";
+        caps.glyphN = gone.length + "/" + GLYPHS.length;
+      }
+      try { if (gs.parentNode) gs.parentNode.removeChild(gs); } catch (e) { }
+    } catch (eG) { caps.glyphMiss = "unmeasurable"; }
+
     try { if (host.parentNode) host.parentNode.removeChild(host); } catch (e) { }
   } catch (e9) {
+    caps.glyphMiss = caps.glyphMiss || "?";
     caps.cssBox = caps.cssBox || "?"; caps.cssGap = caps.cssGap || "?";
     caps.cssCalc = caps.cssCalc || "?"; caps.cssFixed = caps.cssFixed || "?";
     caps.cssObjectFit = caps.cssObjectFit || "?"; caps.cssBgSize = caps.cssBgSize || "?";

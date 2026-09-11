@@ -23,6 +23,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 
 const ROOT = path.join(__dirname, "..");
 const APP = path.join(ROOT, "docs/app/index.html");
@@ -140,8 +141,8 @@ function build() {
   const html = fs.readFileSync(APP, "utf8");
   const { body, warn } = lift(html);
   const art = cutArtRev(html);
-  return HEAD + body + "\n" + warn +
-    TAIL.replace("__LIB_ART_REV__", art.rev).replace("__LIB_ART_FN__", art.fn);
+  return uxpSafeCode(HEAD + body + "\n" + warn +
+    TAIL.replace("__LIB_ART_REV__", art.rev).replace("__LIB_ART_FN__", art.fn), "build_panel_video_tool_wf");
 }
 
 module.exports = { build };

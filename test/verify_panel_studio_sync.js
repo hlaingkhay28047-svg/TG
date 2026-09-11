@@ -222,8 +222,16 @@ async function smoke() {
         sd.length === 0, sd.slice(0, 4).join(" | "));
     });
 
+    /* v6.64.0 — the one permitted character difference, stated. The panel is
+       painted in a font with no emoji glyph, so tools/lib/uxp_safe_text.js
+       takes those characters out where this module is lifted and the panel
+       shows a sprite instead. Both sides go through the same pass, so the
+       panel's (already clean) strings are unaffected and every OTHER
+       difference still fails. */
+    const { uxpSafeText } = require("../tools/lib/uxp_safe_text.js");
+    const deglyph = (l) => l.map((s) => { try { return uxpSafeText(s, "studio-sync"); } catch (e) { return s; } });
     [["Retouch A", "meitu"], ["Retouch B", "evoto"], ["Retouch Pro", "retouch"]].forEach(([label, key]) => {
-      const a = appText[key] || [], b = panelText[key] || [];
+      const a = deglyph(appText[key] || []), b = deglyph(panelText[key] || []);
       let i = 0;
       while (i < a.length && i < b.length && a[i] === b[i]) i++;
       report(`${label} shows the web app's strings, all ${a.length} of them, in order`,

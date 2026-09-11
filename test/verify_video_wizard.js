@@ -48,7 +48,16 @@ function report(name, ok, detail) {
     (ok ? "" : "  :: " + String(typeof detail === "string" ? detail : JSON.stringify(detail)).slice(0, 700)));
   if (!ok) failures++;
 }
-const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+/* v6.64.0 — the panel's copy of the app's words is exact EXCEPT for the
+   characters Adobe's UI font has no glyph for: it draws a black box for
+   those (the owner photographed a screenful on 6.134.0), so
+   tools/lib/uxp_safe_text.js takes them out where this block is lifted and
+   the panel shows its own sprite instead. `same` therefore compares both
+   sides through that pass — the panel's side is already clean, so it is a
+   no-op there, and every other difference still fails. */
+const { uxpSafeDeep } = require("../tools/lib/uxp_safe_text.js");
+const deglyph = (v) => { try { return uxpSafeDeep(v, "video-wizard"); } catch (e) { return v; } };
+const same = (a, b) => JSON.stringify(deglyph(a)) === JSON.stringify(deglyph(b));
 
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",

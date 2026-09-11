@@ -920,6 +920,15 @@ jobs:
       - name: "Run panel icon raster contract (every icon compiled, none stale, no surface still asks for .svg)"
         run: node test/verify_panel_icon_raster.js
 
+      # 6.64.0 — the black squares that survived the icon wave are .notdef: a
+      # character Adobe's UI font has no glyph for. The panel no longer ships
+      # one (the rule set is applied where the app's text is lifted, so a
+      # re-lift cannot undo it), it MEASURES the symbols nobody has checked,
+      # and the raster gate above is closed on the concatenated icon paths
+      # that eight builders were still using to fetch a stroke .svg.
+      - name: "Run panel glyph contract (no character this renderer lacks, the probe measures the rest, every icon path is a raster)"
+        run: node test/verify_panel_glyphs.js
+
       # 6.46.0 — an admin action on your OWN account must not sign you out of the
       # console, and the console's idle clock must be wound by something
       - name: "Run admin self-action contract (live database: your console survives your own Force Logout; the keep-alive is inside the window)"

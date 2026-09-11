@@ -203,11 +203,24 @@ function dropPatterns(list, res) {
     return true;
   });
 }
+/* v6.64.0 — AND THE ONE PERMITTED CHARACTER DIFFERENCE. Adobe's UI font has
+   no glyph for an emoji, so the panel draws a black box where the web app
+   draws a picture — the owner photographed a screenful of them on 6.134.0.
+   tools/lib/uxp_safe_text.js takes those characters out where the app's text
+   is lifted into the panel, and the panel shows its own sprite instead. So
+   the contract is "the panel says the same thing, minus what this renderer
+   cannot draw", and it is enforced by running BOTH sides through the same
+   pass rather than by excusing a mismatch: the panel's strings are already
+   clean, so the pass is a no-op on them, and any other difference still
+   fails. It never throws here — an emoji the rule set has no decision for
+   stops the BUILD, which is the right place for that argument. */
+const { uxpSafeText } = require("../tools/lib/uxp_safe_text.js");
+function deglyph(s) { try { return uxpSafeText(s, "parity"); } catch (e) { return s; } }
 function rewrite(list) {
   return list.map(function (s) {
     let v = s;
     REWRITE.forEach(function (r) { v = v.replace(r[0], r[1]); });
-    return v;
+    return deglyph(v);
   });
 }
 

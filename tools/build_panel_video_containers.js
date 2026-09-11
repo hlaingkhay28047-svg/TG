@@ -19,6 +19,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 
 const ROOT = path.join(__dirname, "..");
 const APP = path.join(ROOT, "docs/app/index.html");
@@ -61,7 +62,7 @@ else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.videoContainers = A
 })();
 `;
 
-function build() { return HEAD + lift(fs.readFileSync(APP, "utf8")) + TAIL; }
+function build() { return uxpSafeCode(HEAD + lift(fs.readFileSync(APP, "utf8")) + TAIL, "build_panel_video_containers"); }
 module.exports = { build };
 
 if (require.main === module) {
