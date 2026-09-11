@@ -1,7 +1,10 @@
 /* ============================================================
    HNK Photoshop Ai Panel (Students) V5 — styles.css
-   UXP-SAFE: flexbox only (no grid/fr), no pointer-events,
-   no object-fit (thumbs = background-size), no sticky.
+   UXP-SAFE: flexbox only (no grid/fr, no gap -- margins instead), no
+   pointer-events, no object-fit (thumbs = background-size), no sticky, no
+   pseudo-elements, no `*` / :not() / ~ / [disabled] selectors.
+   test/verify_panel_uxp_safe.js enforces every line of that, so it is a
+   gate now and not a promise.
    Shell: .app absolute flex-column → header / .pages(scroll) / .botbar(tabs).
 
    THEME: all colours resolve to CSS custom properties. Dark is the default
@@ -100,7 +103,23 @@
   --line-soft: rgba(20, 22, 32, 0.28);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* v6.62.0 — THE RESET, WITHOUT THE UNIVERSAL SELECTOR.
+   index.html's own header lists `*` among the selectors "none of which the
+   panel uses", and it was wrong: this line, the very first rule in the file,
+   was one. Nothing in the panel had ever proved UXP applies it, and if it
+   does not then every box in Photoshop is content-box -- a 84px thumb with
+   10px of padding and a 1px border measures 106px, every card overflows its
+   column and every page grows taller than it should. That is the shape of
+   "panel too long / untidy" in the owner's photographs. A type selector is
+   supported beyond doubt, so the reset now names each tag the panel renders
+   (the inventory: panel/index.html + every createElement in main.js,
+   panel/js and panel/src). test/verify_panel_uxp_safe.js keeps `*` out and
+   keeps this list in step with the tags actually used. */
+html, body, div, span, p, h1, h2, h3, h4, h5, h6,
+img, video, canvas, dialog, section, article, header, footer, nav, main,
+ul, ol, li, a, b, i, em, strong, s, u, small, label, form, table, tr, td, th,
+input, select, option, optgroup, textarea, button, hr, pre, code
+  { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body { width: 100%; height: 100%; }
 body {
@@ -739,7 +758,21 @@ input[type="range"] { min-width: 0; }
 .keepcols > .ckrow { width: 50%; box-sizing: border-box; padding-right: 6px; }
 
 /* v4.12 Create pro */
-.chiprow { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.chiprow { display: flex; flex-wrap: wrap; margin: 6px 0; }
+.chiprow > div,
+.chiprow > span,
+.chiprow > img,
+.chiprow > p,
+.chiprow > label,
+.chiprow > select,
+.chiprow > input,
+.chiprow > textarea,
+.chiprow > video,
+.chiprow > b,
+.chiprow > em,
+.chiprow > i,
+.chiprow > h2,
+.chiprow > section { margin-right: 6px; margin-bottom: 6px; }
 /* v6.49.0 — the app's chip, byte for byte in behaviour: panel ground, soft
    hairline, cream type, gold when selected. The purple chip family this
    replaced was the panel's own invention and read as a different product
@@ -750,7 +783,21 @@ input[type="range"] { min-width: 0; }
   align-items: center; cursor: pointer; }
 .chip:hover { border-color: var(--accent); }
 .chip.on { background-color: var(--accent); border-color: var(--accent); color: #1a1408; }
-.gallery { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.gallery { display: flex; flex-wrap: wrap; margin-top: 8px; }
+.gallery > div,
+.gallery > span,
+.gallery > img,
+.gallery > p,
+.gallery > label,
+.gallery > select,
+.gallery > input,
+.gallery > textarea,
+.gallery > video,
+.gallery > b,
+.gallery > em,
+.gallery > i,
+.gallery > h2,
+.gallery > section { margin-right: 6px; margin-bottom: 6px; }
 .gthumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid var(--chip-brd); cursor: pointer; }
 .gthumb:hover { border-color: var(--accent-soft); }
 .gthumb.sel { border-color: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft) inset; }
@@ -786,8 +833,45 @@ input[type="range"] { min-width: 0; }
    Uses the existing CSS-variable palette so it inherits both themes.
    Rendered into #hnkAiToolsRoot by src/ui/app-controller (later phase).
    ============================================================ */
-#hnkAiToolsRoot { display:flex; flex-direction:column; gap:10px; padding:10px; color:var(--text); }
-.hnk-nav { display:flex; gap:4px; flex-wrap:wrap; }
+/* v6.62.0 — TRAILING-EDGE COMPENSATION. `gap` puts space only BETWEEN
+   children; a margin puts it after the last one too, and without the
+   `:not(:last-child)` this rule set forbids there is nowhere else to put it.
+   Inside a padded, bordered box that extra N px is visible: the pill grows and
+   its label sits off-centre. So each such container gives N px back out of its
+   own trailing padding -- (P - N) of padding plus the child's N margin is
+   exactly the P the gap used to leave. Containers with no border and no
+   background are left alone: the space lands where nothing can see it.
+   One exception is named at .apg .vtpick below. */
+#hnkAiToolsRoot { display:flex; flex-direction:column; padding:10px 10px 0; color:var(--text); }
+#hnkAiToolsRoot > div,
+#hnkAiToolsRoot > span,
+#hnkAiToolsRoot > img,
+#hnkAiToolsRoot > p,
+#hnkAiToolsRoot > label,
+#hnkAiToolsRoot > select,
+#hnkAiToolsRoot > input,
+#hnkAiToolsRoot > textarea,
+#hnkAiToolsRoot > video,
+#hnkAiToolsRoot > b,
+#hnkAiToolsRoot > em,
+#hnkAiToolsRoot > i,
+#hnkAiToolsRoot > h2,
+#hnkAiToolsRoot > section { margin-bottom: 10px; }
+.hnk-nav { display:flex; flex-wrap:wrap; }
+.hnk-nav > div,
+.hnk-nav > span,
+.hnk-nav > img,
+.hnk-nav > p,
+.hnk-nav > label,
+.hnk-nav > select,
+.hnk-nav > input,
+.hnk-nav > textarea,
+.hnk-nav > video,
+.hnk-nav > b,
+.hnk-nav > em,
+.hnk-nav > i,
+.hnk-nav > h2,
+.hnk-nav > section { margin-right: 4px; margin-bottom: 4px; }
 /* v6.28.0 — sized like the web app's subtab pills so all four sit on ONE
    row at real Photoshop panel widths (they wrapped 2×2 on the owner's Mac). */
 .hnk-nav-btn { flex:1 1 0; min-width:0; padding:6px 4px; border:1px solid var(--line); background:var(--btn);
@@ -795,20 +879,104 @@ input[type="range"] { min-width: 0; }
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
 .hnk-nav-btn:hover { background:var(--btn-h); }
 .hnk-nav-btn.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700; }
-.hnk-screen { display:flex; flex-direction:column; gap:10px; }
+.hnk-screen { display:flex; flex-direction:column; }
+.hnk-screen > div,
+.hnk-screen > span,
+.hnk-screen > img,
+.hnk-screen > p,
+.hnk-screen > label,
+.hnk-screen > select,
+.hnk-screen > input,
+.hnk-screen > textarea,
+.hnk-screen > video,
+.hnk-screen > b,
+.hnk-screen > em,
+.hnk-screen > i,
+.hnk-screen > h2,
+.hnk-screen > section { margin-bottom: 10px; }
 .hnk-sec { font-size:11px; letter-spacing:.08em; color:var(--muted); margin-top:6px; text-transform:uppercase; }
 .hnk-h-title { font-size:15px; font-weight:600; }
-.hnk-h-actions, .hnk-wf-list { display:flex; flex-direction:column; gap:8px; }
+.hnk-h-actions, .hnk-wf-list { display:flex; flex-direction:column; }
+.hnk-h-actions > div,
+.hnk-h-actions > span,
+.hnk-h-actions > img,
+.hnk-h-actions > p,
+.hnk-h-actions > label,
+.hnk-h-actions > select,
+.hnk-h-actions > input,
+.hnk-h-actions > textarea,
+.hnk-h-actions > video,
+.hnk-h-actions > b,
+.hnk-h-actions > em,
+.hnk-h-actions > i,
+.hnk-h-actions > h2,
+.hnk-h-actions > section,
+.hnk-wf-list > div,
+.hnk-wf-list > span,
+.hnk-wf-list > img,
+.hnk-wf-list > p,
+.hnk-wf-list > label,
+.hnk-wf-list > select,
+.hnk-wf-list > input,
+.hnk-wf-list > textarea,
+.hnk-wf-list > video,
+.hnk-wf-list > b,
+.hnk-wf-list > em,
+.hnk-wf-list > i,
+.hnk-wf-list > h2,
+.hnk-wf-list > section { margin-bottom: 8px; }
 .hnk-action { text-align:left; padding:11px 12px; border:1px solid var(--line); background:var(--panel);
   color:var(--text); border-radius:10px; cursor:pointer; }
 .hnk-action:hover { border-color:var(--accent); }
 .hnk-action-label { font-weight:600; font-size:13px; }
 .hnk-action-sub { font-size:11px; color:var(--muted); margin-top:2px; }
-.hnk-slots { display:flex; flex-wrap:wrap; gap:8px; }
-.hnk-slot { display:flex; align-items:center; gap:8px; padding:8px; border:1px dashed var(--line-2);
+.hnk-slots { display:flex; flex-wrap:wrap; }
+.hnk-slots > div,
+.hnk-slots > span,
+.hnk-slots > img,
+.hnk-slots > p,
+.hnk-slots > label,
+.hnk-slots > select,
+.hnk-slots > input,
+.hnk-slots > textarea,
+.hnk-slots > video,
+.hnk-slots > b,
+.hnk-slots > em,
+.hnk-slots > i,
+.hnk-slots > h2,
+.hnk-slots > section { margin-right: 8px; margin-bottom: 8px; }
+.hnk-slot { display:flex; align-items:center; padding:8px 0 8px 8px; border:1px dashed var(--line-2);
   border-radius:8px; background:var(--field); font-size:11px; }
+.hnk-slot > div,
+.hnk-slot > span,
+.hnk-slot > img,
+.hnk-slot > p,
+.hnk-slot > label,
+.hnk-slot > select,
+.hnk-slot > input,
+.hnk-slot > textarea,
+.hnk-slot > video,
+.hnk-slot > b,
+.hnk-slot > em,
+.hnk-slot > i,
+.hnk-slot > h2,
+.hnk-slot > section { margin-right: 8px; }
 .hnk-slot-x { border:none; background:transparent; color:var(--err); cursor:pointer; font-size:14px; }
-.hnk-slot-errors { display:flex; flex-direction:column; gap:4px; margin-top:4px; }
+.hnk-slot-errors { display:flex; flex-direction:column; margin-top:4px; }
+.hnk-slot-errors > div,
+.hnk-slot-errors > span,
+.hnk-slot-errors > img,
+.hnk-slot-errors > p,
+.hnk-slot-errors > label,
+.hnk-slot-errors > select,
+.hnk-slot-errors > input,
+.hnk-slot-errors > textarea,
+.hnk-slot-errors > video,
+.hnk-slot-errors > b,
+.hnk-slot-errors > em,
+.hnk-slot-errors > i,
+.hnk-slot-errors > h2,
+.hnk-slot-errors > section { margin-bottom: 4px; }
 .hnk-slot-err { font-size:11px; color:var(--err, #d05b5b); line-height:1.4; }
 .hnk-prompt { width:100%; min-height:96px; resize:vertical; padding:9px; border:1px solid var(--line);
   border-radius:8px; background:var(--field); color:var(--text); font-size:13px; box-sizing:border-box; }
@@ -820,14 +988,56 @@ input[type="range"] { min-width: 0; }
   background:var(--field); color:var(--text); font-size:12px; }
 .hnk-model-banner { font-size:11px; color:var(--accent); }
 .hnk-hint { font-size:11px; color:var(--muted); line-height:1.4; margin-bottom:6px; }
-.hnk-field { display:flex; flex-direction:column; gap:3px; }
+.hnk-field { display:flex; flex-direction:column; }
+.hnk-field > div,
+.hnk-field > span,
+.hnk-field > img,
+.hnk-field > p,
+.hnk-field > label,
+.hnk-field > select,
+.hnk-field > input,
+.hnk-field > textarea,
+.hnk-field > video,
+.hnk-field > b,
+.hnk-field > em,
+.hnk-field > i,
+.hnk-field > h2,
+.hnk-field > section { margin-bottom: 3px; }
 .hnk-field-label { font-size:11px; color:var(--muted); }
-.hnk-variants { display:flex; gap:6px; }
+.hnk-variants { display:flex; }
+.hnk-variants > div,
+.hnk-variants > span,
+.hnk-variants > img,
+.hnk-variants > p,
+.hnk-variants > label,
+.hnk-variants > select,
+.hnk-variants > input,
+.hnk-variants > textarea,
+.hnk-variants > video,
+.hnk-variants > b,
+.hnk-variants > em,
+.hnk-variants > i,
+.hnk-variants > h2,
+.hnk-variants > section { margin-right: 6px; }
 .hnk-variant { flex:1; }
 .hnk-estimate, .hnk-status, .hnk-wf-route, .hnk-wf-desc { font-size:11px; color:var(--muted); }
 .hnk-generate { background:var(--go); color:var(--go-ink); border-color:var(--go-brd); font-weight:700;
   padding:11px; font-size:13px; }
-.hnk-req-row { display:flex; align-items:center; gap:8px; padding:6px 0; font-size:12px; }
+.hnk-req-row { display:flex; align-items:center; padding:6px 0; font-size:12px; }
+.hnk-req-row > div,
+.hnk-req-row > span,
+.hnk-req-row > img,
+.hnk-req-row > p,
+.hnk-req-row > label,
+.hnk-req-row > select,
+.hnk-req-row > input,
+.hnk-req-row > textarea,
+.hnk-req-row > video,
+.hnk-req-row > b,
+.hnk-req-row > em,
+.hnk-req-row > i,
+.hnk-req-row > h2,
+.hnk-req-row > section { margin-right: 8px; }
 .hnk-req-label { flex:1; }
 .hnk-req-mark { font-size:11px; color:var(--muted); min-width:52px; }
 .hnk-todo { font-size:12px; color:var(--muted); padding:16px 0; }
@@ -835,8 +1045,36 @@ input[type="range"] { min-width: 0; }
 /* v6.27.0 — every image slot offers all four sources; the Web source opens a
    small inline URL row under its slot. */
 .hnk-req-block { padding: 2px 0; }
-.hnk-src-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0 2px; }
-.hnk-url-row { display: flex; align-items: center; gap: 8px; margin: 6px 0 4px; }
+.hnk-src-row { display: flex; align-items: center; flex-wrap: wrap; margin: 6px 0 2px; }
+.hnk-src-row > div,
+.hnk-src-row > span,
+.hnk-src-row > img,
+.hnk-src-row > p,
+.hnk-src-row > label,
+.hnk-src-row > select,
+.hnk-src-row > input,
+.hnk-src-row > textarea,
+.hnk-src-row > video,
+.hnk-src-row > b,
+.hnk-src-row > em,
+.hnk-src-row > i,
+.hnk-src-row > h2,
+.hnk-src-row > section { margin-right: 8px; margin-bottom: 8px; }
+.hnk-url-row { display: flex; align-items: center; margin: 6px 0 4px; }
+.hnk-url-row > div,
+.hnk-url-row > span,
+.hnk-url-row > img,
+.hnk-url-row > p,
+.hnk-url-row > label,
+.hnk-url-row > select,
+.hnk-url-row > input,
+.hnk-url-row > textarea,
+.hnk-url-row > video,
+.hnk-url-row > b,
+.hnk-url-row > em,
+.hnk-url-row > i,
+.hnk-url-row > h2,
+.hnk-url-row > section { margin-right: 8px; }
 .hnk-url-inp { flex: 1; min-width: 0; font-size: 12px; padding: 7px 9px; }
 
 /* ---- v6.61.0 WHAT'S NEW — the same gold as the web app's, box for box.
@@ -879,7 +1117,21 @@ input[type="range"] { min-width: 0; }
    two-image workflow still fits a phone-narrow panel, big enough to tell
    two photographs apart, which is the whole point when the source was a
    link someone pasted. */
-.hnk-req-thumb { display: flex; align-items: center; gap: 8px; margin: 4px 0 6px; }
+.hnk-req-thumb { display: flex; align-items: center; margin: 4px 0 6px; }
+.hnk-req-thumb > div,
+.hnk-req-thumb > span,
+.hnk-req-thumb > img,
+.hnk-req-thumb > p,
+.hnk-req-thumb > label,
+.hnk-req-thumb > select,
+.hnk-req-thumb > input,
+.hnk-req-thumb > textarea,
+.hnk-req-thumb > video,
+.hnk-req-thumb > b,
+.hnk-req-thumb > em,
+.hnk-req-thumb > i,
+.hnk-req-thumb > h2,
+.hnk-req-thumb > section { margin-right: 8px; }
 /* v6.61.0 — the whole photograph, not a square crop of it. The slot exists so
    a studio can check the picture BEFORE the credit is spent; a 64px square
    with object-fit:cover cut the head off a full-length shot and both ends off
@@ -905,16 +1157,58 @@ input[type="range"] { min-width: 0; }
 .hnk-req-empty-t { font-size: 10px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
 
 /* ---- HNK AI Tools: History screen (§22) ---- */
-.hnk-hist-list { display:flex; flex-direction:column; gap:8px; }
-.hnk-hist { display:flex; flex-direction:column; gap:4px; padding:10px; border:1px solid var(--line);
+.hnk-hist-list { display:flex; flex-direction:column; }
+.hnk-hist-list > div,
+.hnk-hist-list > span,
+.hnk-hist-list > img,
+.hnk-hist-list > p,
+.hnk-hist-list > label,
+.hnk-hist-list > select,
+.hnk-hist-list > input,
+.hnk-hist-list > textarea,
+.hnk-hist-list > video,
+.hnk-hist-list > b,
+.hnk-hist-list > em,
+.hnk-hist-list > i,
+.hnk-hist-list > h2,
+.hnk-hist-list > section { margin-bottom: 8px; }
+.hnk-hist { display:flex; flex-direction:column; padding:10px 10px 6px; border:1px solid var(--line);
   border-radius:10px; background:var(--panel); }
+.hnk-hist > div,
+.hnk-hist > span,
+.hnk-hist > img,
+.hnk-hist > p,
+.hnk-hist > label,
+.hnk-hist > select,
+.hnk-hist > input,
+.hnk-hist > textarea,
+.hnk-hist > video,
+.hnk-hist > b,
+.hnk-hist > em,
+.hnk-hist > i,
+.hnk-hist > h2,
+.hnk-hist > section { margin-bottom: 4px; }
 .hnk-hist-badge { align-self:flex-start; font-size:10px; letter-spacing:.06em; padding:2px 7px;
   border-radius:99px; font-weight:700; }
 .hnk-hist-badge.free { background:var(--accent-soft); color:var(--accent-ink); }
 .hnk-hist-badge.wf { background:var(--chip-bg); color:var(--chip-tx); border:1px solid var(--chip-brd); }
 .hnk-hist-meta { font-size:11px; color:var(--muted); }
 .hnk-hist-prompt { font-size:12px; }
-.hnk-hist-actions { display:flex; gap:6px; margin-top:4px; }
+.hnk-hist-actions { display:flex; margin-top:4px; }
+.hnk-hist-actions > div,
+.hnk-hist-actions > span,
+.hnk-hist-actions > img,
+.hnk-hist-actions > p,
+.hnk-hist-actions > label,
+.hnk-hist-actions > select,
+.hnk-hist-actions > input,
+.hnk-hist-actions > textarea,
+.hnk-hist-actions > video,
+.hnk-hist-actions > b,
+.hnk-hist-actions > em,
+.hnk-hist-actions > i,
+.hnk-hist-actions > h2,
+.hnk-hist-actions > section { margin-right: 6px; }
 
 /* ============================================================
    HNK AI Tools — density options + staged workflow buttons
@@ -924,9 +1218,49 @@ input[type="range"] { min-width: 0; }
 .hnk-density-compact     { --hnk-gap: 6px;  --hnk-pad: 7px;  --hnk-fs: 12px; }
 .hnk-density-normal      { --hnk-gap: 10px; --hnk-pad: 11px; --hnk-fs: 13px; }
 .hnk-density-comfortable { --hnk-gap: 15px; --hnk-pad: 15px; --hnk-fs: 14px; }
-.hnk-root .hnk-screen  { gap: var(--hnk-gap); }
+.hnk-root .hnk-screen > div,
+.hnk-root .hnk-screen > span,
+.hnk-root .hnk-screen > img,
+.hnk-root .hnk-screen > p,
+.hnk-root .hnk-screen > label,
+.hnk-root .hnk-screen > select,
+.hnk-root .hnk-screen > input,
+.hnk-root .hnk-screen > textarea,
+.hnk-root .hnk-screen > video,
+.hnk-root .hnk-screen > b,
+.hnk-root .hnk-screen > em,
+.hnk-root .hnk-screen > i,
+.hnk-root .hnk-screen > h2,
+.hnk-root .hnk-screen > section { margin-bottom: var(--hnk-gap); }
 .hnk-root .hnk-action  { padding: var(--hnk-pad); font-size: var(--hnk-fs); }
-.hnk-root .hnk-h-actions, .hnk-root .hnk-wf-list { gap: var(--hnk-gap); }
+.hnk-root .hnk-h-actions > div,
+.hnk-root .hnk-h-actions > span,
+.hnk-root .hnk-h-actions > img,
+.hnk-root .hnk-h-actions > p,
+.hnk-root .hnk-h-actions > label,
+.hnk-root .hnk-h-actions > select,
+.hnk-root .hnk-h-actions > input,
+.hnk-root .hnk-h-actions > textarea,
+.hnk-root .hnk-h-actions > video,
+.hnk-root .hnk-h-actions > b,
+.hnk-root .hnk-h-actions > em,
+.hnk-root .hnk-h-actions > i,
+.hnk-root .hnk-h-actions > h2,
+.hnk-root .hnk-h-actions > section,
+.hnk-root .hnk-wf-list > div,
+.hnk-root .hnk-wf-list > span,
+.hnk-root .hnk-wf-list > img,
+.hnk-root .hnk-wf-list > p,
+.hnk-root .hnk-wf-list > label,
+.hnk-root .hnk-wf-list > select,
+.hnk-root .hnk-wf-list > input,
+.hnk-root .hnk-wf-list > textarea,
+.hnk-root .hnk-wf-list > video,
+.hnk-root .hnk-wf-list > b,
+.hnk-root .hnk-wf-list > em,
+.hnk-root .hnk-wf-list > i,
+.hnk-root .hnk-wf-list > h2,
+.hnk-root .hnk-wf-list > section { margin-bottom: var(--hnk-gap); }
 
 /* Ready / missing state markers + status colours (clear states, spec UX). */
 .hnk-req-mark.ok   { color: var(--go, #2fae52); font-weight: 700; }
@@ -1174,7 +1508,21 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 }
 
 /* v6.35.0 — per-workflow design fields (concept-poster) */
-.hnk-wf-fields { margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+.hnk-wf-fields { margin: 10px 0; display: flex; flex-direction: column; }
+.hnk-wf-fields > div,
+.hnk-wf-fields > span,
+.hnk-wf-fields > img,
+.hnk-wf-fields > p,
+.hnk-wf-fields > label,
+.hnk-wf-fields > select,
+.hnk-wf-fields > input,
+.hnk-wf-fields > textarea,
+.hnk-wf-fields > video,
+.hnk-wf-fields > b,
+.hnk-wf-fields > em,
+.hnk-wf-fields > i,
+.hnk-wf-fields > h2,
+.hnk-wf-fields > section { margin-bottom: 8px; }
 /* v6.41.0 — THE SWITCH MUST NOT SIT ON THE WORDS. In Chromium this row is
    correct at panel width (measured: an 8px gap between the label and the ON
    button at 360 and at 340, no overflow), but the owner's Photoshop photograph
@@ -1193,7 +1541,21 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .hnk-wf-text { flex: 1; min-width: 150px; }
 .hnk-wf-sw { flex: 0 0 auto; min-width: 52px; margin-left: 8px; }
 .hnk-wf-sw.on { background: var(--hnk-gold, #e9b949); color: #17130a; font-weight: 700; }
-.hnk-wf-swatches { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.hnk-wf-swatches { display: flex; align-items: center; flex-wrap: wrap; }
+.hnk-wf-swatches > div,
+.hnk-wf-swatches > span,
+.hnk-wf-swatches > img,
+.hnk-wf-swatches > p,
+.hnk-wf-swatches > label,
+.hnk-wf-swatches > select,
+.hnk-wf-swatches > input,
+.hnk-wf-swatches > textarea,
+.hnk-wf-swatches > video,
+.hnk-wf-swatches > b,
+.hnk-wf-swatches > em,
+.hnk-wf-swatches > i,
+.hnk-wf-swatches > h2,
+.hnk-wf-swatches > section { margin-right: 6px; margin-bottom: 6px; }
 .hnk-wf-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); padding: 0; }
 .hnk-wf-hex { width: 90px; }
 
@@ -1260,12 +1622,66 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 /* the app's #pgDash has no wrapper padding and no gap between sections —
    each section brings its own block margin — so the AI Tools root drops its
    10px frame and the screen its density gap while Home is mounted */
-#hnkAiToolsRoot.hnk-root-home { padding: 0; gap: 0; }
-#hnkAiToolsRoot.hnk-root-home .hnk-screen { gap: 0; }
+#hnkAiToolsRoot.hnk-root-home { padding: 0; }
+#hnkAiToolsRoot.hnk-root-home > div,
+#hnkAiToolsRoot.hnk-root-home > span,
+#hnkAiToolsRoot.hnk-root-home > img,
+#hnkAiToolsRoot.hnk-root-home > p,
+#hnkAiToolsRoot.hnk-root-home > label,
+#hnkAiToolsRoot.hnk-root-home > select,
+#hnkAiToolsRoot.hnk-root-home > input,
+#hnkAiToolsRoot.hnk-root-home > textarea,
+#hnkAiToolsRoot.hnk-root-home > video,
+#hnkAiToolsRoot.hnk-root-home > b,
+#hnkAiToolsRoot.hnk-root-home > em,
+#hnkAiToolsRoot.hnk-root-home > i,
+#hnkAiToolsRoot.hnk-root-home > h2,
+#hnkAiToolsRoot.hnk-root-home > section { margin-bottom: 0; }
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > div,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > span,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > img,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > p,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > label,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > select,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > input,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > textarea,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > video,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > b,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > em,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > i,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > h2,
+#hnkAiToolsRoot.hnk-root-home .hnk-screen > section { margin-bottom: 0; }
 /* the app's Workflows (#pgWf) does the same: hero strip, then the card, with
    their own block margins */
-#hnkAiToolsRoot.hnk-root-wf { padding: 0; gap: 0; }
-#hnkAiToolsRoot.hnk-root-wf .hnk-screen { gap: 0; }
+#hnkAiToolsRoot.hnk-root-wf { padding: 0; }
+#hnkAiToolsRoot.hnk-root-wf > div,
+#hnkAiToolsRoot.hnk-root-wf > span,
+#hnkAiToolsRoot.hnk-root-wf > img,
+#hnkAiToolsRoot.hnk-root-wf > p,
+#hnkAiToolsRoot.hnk-root-wf > label,
+#hnkAiToolsRoot.hnk-root-wf > select,
+#hnkAiToolsRoot.hnk-root-wf > input,
+#hnkAiToolsRoot.hnk-root-wf > textarea,
+#hnkAiToolsRoot.hnk-root-wf > video,
+#hnkAiToolsRoot.hnk-root-wf > b,
+#hnkAiToolsRoot.hnk-root-wf > em,
+#hnkAiToolsRoot.hnk-root-wf > i,
+#hnkAiToolsRoot.hnk-root-wf > h2,
+#hnkAiToolsRoot.hnk-root-wf > section { margin-bottom: 0; }
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > div,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > span,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > img,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > p,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > label,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > select,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > input,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > textarea,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > video,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > b,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > em,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > i,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > h2,
+#hnkAiToolsRoot.hnk-root-wf .hnk-screen > section { margin-bottom: 0; }
 /* the app's .card{margin:16px 0}: adjacent margins collapse to one 16px there,
    so here every section carries the 16px on its top edge only */
 #pageAiTools .card { margin: 16px 0 0; }
@@ -1353,7 +1769,10 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    the bottom 8px is written) ---- */
 #pageAiTools .dash-strip { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
   margin: 0 0 8px; padding: 0; scrollbar-width: none; }
-#pageAiTools .dash-strip::-webkit-scrollbar { display: none; }
+/* v6.62.0 — ::-webkit-scrollbar is a pseudo-element and the panel's rule set
+   allows none (UXP implements no pseudo-elements; 6.109.0 says so in prose).
+   Hiding the strip's scrollbar was cosmetic in Chromium and a no-op in
+   Photoshop; overflow-x:auto already carries the behaviour that matters. */
 #pageAiTools .dash-strip img { flex: none; display: block; width: 96px; height: 128px; margin: 0 8px 0 0; box-sizing: border-box;
   border: 1px solid var(--line-soft); border-radius: 12px; }
 #pageAiTools .dash-strip img:last-child { margin-right: 0; }
@@ -2476,17 +2895,62 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 /* v6.7.3 — WHAT THIS TOOL NEEDS, named before anything is picked. The web
    app's own .slotchip, in the panel's tokens, so a student reads the same
    pill in Photoshop that the V→V card showed them. */
-.apg .slotchips { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 2px; }
-.apg .slotchip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+.apg .slotchips { display: flex; flex-wrap: wrap; margin: 8px 0 2px; }
+.apg .slotchips > div,
+.apg .slotchips > span,
+.apg .slotchips > img,
+.apg .slotchips > p,
+.apg .slotchips > label,
+.apg .slotchips > select,
+.apg .slotchips > input,
+.apg .slotchips > textarea,
+.apg .slotchips > video,
+.apg .slotchips > b,
+.apg .slotchips > em,
+.apg .slotchips > i,
+.apg .slotchips > h2,
+.apg .slotchips > section { margin-right: 8px; margin-bottom: 8px; }
+.apg .slotchip { display: inline-flex; align-items: center; padding: 6px 6px 6px 12px;
   border-radius: 999px; border: 1px dashed var(--line); background: var(--panel-2);
   color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; line-height: 1.4; }
+.apg .slotchip > div,
+.apg .slotchip > span,
+.apg .slotchip > img,
+.apg .slotchip > p,
+.apg .slotchip > label,
+.apg .slotchip > select,
+.apg .slotchip > input,
+.apg .slotchip > textarea,
+.apg .slotchip > video,
+.apg .slotchip > b,
+.apg .slotchip > em,
+.apg .slotchip > i,
+.apg .slotchip > h2,
+.apg .slotchip > section { margin-right: 6px; }
 .apg .slotchip .ic-s { width: 14px; height: 14px; flex: 0 0 14px; }
 .apg .slotchip.on { border-style: solid; border-color: var(--gold); color: var(--gold);
   background: rgba(212,175,55,.10); }
 .apg .slotchip.opt { opacity: .75; }
 
-.apg .vtpick { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 8px;
+/* the one place the sum does not come out: its gap was 10px and its padding
+   is 8px, so 2px cannot be given back. The strip ends 2px wider than it was
+   and nothing else about it moves. (v6.62.0) */
+.apg .vtpick { display: flex; align-items: center; margin-top: 8px; padding: 8px 0 8px 8px;
   border: 1px solid var(--line-soft); border-radius: 12px; background: rgba(255,255,255,.03); }
+.apg .vtpick > div,
+.apg .vtpick > span,
+.apg .vtpick > img,
+.apg .vtpick > p,
+.apg .vtpick > label,
+.apg .vtpick > select,
+.apg .vtpick > input,
+.apg .vtpick > textarea,
+.apg .vtpick > video,
+.apg .vtpick > b,
+.apg .vtpick > em,
+.apg .vtpick > i,
+.apg .vtpick > h2,
+.apg .vtpick > section { margin-right: 10px; }
 .apg .vtpick video, .apg .vtpick img { width: 72px; height: 72px; flex: 0 0 72px;
   object-fit: cover; border-radius: 9px; background: #000; }
 .apg .vtpick-aud { width: 72px; height: 72px; flex: 0 0 72px; border-radius: 8px;
@@ -2583,11 +3047,11 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .im-cmp img.im-base{display:block;width:100%;height:auto;max-width:100%}
 .im-cmp-top{position:absolute;top:0;left:0;bottom:0;width:50%;overflow:hidden}
 .im-cmp-top img.im-orig{position:absolute;top:0;left:0;height:100%;width:auto;max-width:none;display:block}
-.im-cmp-line{position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:var(--accent);box-shadow:0 0 6px rgba(217,164,65,.8);pointer-events:none}
-.im-cmp-knob{position:absolute;top:50%;left:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:var(--accent);color:#1a1408;font-weight:800;font-size:14px;line-height:30px;text-align:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.5)}
-.im-lb{position:absolute;bottom:8px;font-size:10px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:6px;background:rgba(11,13,20,.78);color:var(--text);pointer-events:none}
+.im-cmp-line{position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:var(--accent);box-shadow:0 0 6px rgba(217,164,65,.8);}
+.im-cmp-knob{position:absolute;top:50%;left:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:var(--accent);color:#1a1408;font-weight:800;font-size:14px;line-height:30px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.im-lb{position:absolute;bottom:8px;font-size:10px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:6px;background:rgba(11,13,20,.78);color:var(--text);}
 .im-lb.l{left:8px}.im-lb.r{right:8px}
-.im-badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;background:var(--accent);color:#1a1408;pointer-events:none}
+.im-badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;background:var(--accent);color:#1a1408;}
 .im-busy{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(11,13,20,.55);display:flex;align-items:center;justify-content:center;color:var(--text);font-weight:800}
 .im-spin{width:18px;height:18px;border:3px solid rgba(243,239,230,.35);border-top-color:var(--accent);border-radius:50%;margin-right:10px;animation:imspin 1s linear infinite}
 @keyframes imspin{to{transform:rotate(360deg)}}
@@ -2597,7 +3061,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .im-acts .im-apply{background:var(--accent);border-color:var(--accent);color:#1a1408;flex:2 1 auto}
 .im-acts .im-apply .ic-s{color:#1a1408}
 .im-acts .im-stop{border-color:var(--err);color:var(--err)}
-.im-acts .btn.is-off{opacity:.45;pointer-events:none}
+.im-acts .btn.is-off{opacity:.45;}
 .im-status{margin-top:8px;min-height:18px}
 .im-tabs{display:flex;margin:0 0 10px}
 .im-tabs .chip{margin-right:6px;cursor:pointer}
@@ -2643,7 +3107,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .im-markwrap{position:relative;border:1px solid var(--line-soft);border-radius:12px;overflow:hidden;background:#050b10;user-select:none;-webkit-user-select:none}
 .im-markwrap img{display:block;width:100%;height:auto;max-width:100%}
 .im-markcv{position:absolute;left:0;top:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
-.im-markcv.ro{pointer-events:none}
+
 .im-markwrap.on{border-color:#ff3b3b;box-shadow:0 0 0 1px rgba(255,59,59,.55)}
 .im-th-mk{position:absolute;bottom:2px;left:4px;font-size:11px;font-weight:800;color:#ff6b6b;text-shadow:0 1px 2px #000}
 /* ---- /IMAGINE_CSS ---- */

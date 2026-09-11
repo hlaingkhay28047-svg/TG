@@ -6388,7 +6388,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.132.0";
+const PANEL_VERSION = "6.133.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9166,6 +9166,25 @@ function selfTestRowsInner() {
     rows.push({ label: "Panel size", detail: caps.viewW + "\u00d7" + caps.viewH + " \u00b7 content " + caps.docH,
       level: (caps.docH && caps.viewH && caps.docH > caps.viewH * 6) ? "warn" : "ok" });
   }
+
+  /* --- v6.62.0: the stylesheet's four assumptions, measured in the renderer.
+     styles.css calls itself UXP-SAFE and names what UXP cannot do; the audit
+     behind this wave found it breaking its own list forty-five times. The
+     list is now obeyed AND enforced by test/verify_panel_uxp_safe.js, so a
+     "NO" on any row below no longer costs the panel anything -- it is here
+     because the one rule this wave did not convert (object-fit, nine thumbs
+     across Gallery, Path, the wizard and Video Tools) should be converted on
+     a measurement rather than on a third round of belief. --- */
+  const cssRow = function (label, val, good) {
+    rows.push({ label: label, detail: val === undefined ? "\u2014" : String(val),
+      level: val === undefined ? "pend" : (val === good ? "ok" : "warn") });
+  };
+  cssRow("box-sizing", caps.cssBox, "border-box");
+  cssRow("flex gap", caps.cssGap, "yes");
+  cssRow("calc()", caps.cssCalc, "yes");
+  cssRow("position:fixed", caps.cssFixed, "yes");
+  cssRow("object-fit", caps.cssObjectFit, "kept");
+  cssRow("background-size", caps.cssBgSize, "kept");
 
   /* --- the lists the pages are built from --- */
   const V = H.runninghubVideo || null;
@@ -12651,6 +12670,58 @@ function mkBtn(className, text) {
   if (className) b.className = className;
   if (text !== undefined) b.textContent = text;
   return b;
+}
+
+/* ============================================================
+   v6.62.0 — A DISABLED CONTROL IS DISABLED BY JAVASCRIPT, NOT BY CSS.
+
+   Until this wave the panel had three ways of saying "you cannot press this"
+   and none of them held in Photoshop:
+     · `pointer-events:none` on .im-acts .btn.is-off -- UXP implements no
+       pointer-events at all (styles.css has said so in its own header since
+       v5, main.js repeats it in prose at the gate), so the rule painted the
+       control at 45% and left it fully pressable.
+     · el.disabled = true (btnOff) -- every "button" in this panel is a DIV
+       (src/ui/dom.js turns <button> into one because UXP's button widget
+       drops our labels), and a div has no disabled behaviour in any engine.
+     · aria-disabled="true" -- a screen-reader hint. Nothing enforces it.
+   Only three of the twelve call sites re-checked before acting, so on the
+   owner's Photoshop "Apply" fired a second time mid-run and "Undo mark" ran
+   with nothing to undo. The guard below is the enforcement, in the capture
+   phase, before any handler: one place, both engines, no CSS involved. */
+function hasCls(node, name) {
+  const c = " " + clsOf(node).replace(/\s+/g, " ") + " ";
+  return c.indexOf(" " + name + " ") >= 0;
+}
+function offAncestor(node) {
+  let n = node, hops = 0;
+  while (n && n.nodeType === 1 && hops++ < 14) {
+    if (hasCls(n, "is-off") || hasCls(n, "is-disabled")) return n;
+    try { if (n.getAttribute && n.getAttribute("aria-disabled") === "true") return n; } catch (e) { }
+    try { if (n.disabled === true) return n; } catch (e) { }
+    n = n.parentNode;
+  }
+  return null;
+}
+function bindOffGuard(doc) {
+  const d = doc || (typeof document !== "undefined" ? document : null);
+  if (!d || !d.addEventListener) return false;
+  const swallow = function (ev) {
+    try {
+      const tgt = ev && (ev.target || ev.srcElement);
+      if (!tgt || !offAncestor(tgt)) return;
+      if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      else if (ev.stopPropagation) ev.stopPropagation();
+      if (ev.preventDefault && ev.cancelable !== false) ev.preventDefault();
+    } catch (e) { /* a guard must never be the reason a tap is lost */ }
+  };
+  d.addEventListener("click", swallow, true);
+  d.addEventListener("keydown", function (ev) {
+    const k = ev && ev.key;
+    if (k !== "Enter" && k !== " " && k !== "Spacebar") return;
+    swallow(ev);
+  }, true);
+  return true;
 }
 
 function btnOff(el, on) {
@@ -17965,6 +18036,7 @@ function installGlobalSafetyNet() {
 
 function init() {
   installGlobalSafetyNet();
+  safe("off-guard", function () { bindOffGuard(document); });
   loadSettings().then(function () {
     /* first: the wall comes down only if the plan says so */
     safe("gate", function () { gateBoot(); });

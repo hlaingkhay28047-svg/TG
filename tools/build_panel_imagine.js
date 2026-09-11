@@ -36,11 +36,20 @@ function between(src, a, b, what) {
 }
 /* the app's tokens → the panel's names for the same values (panel/styles.css :root, v6.51) */
 const TOKENS = [["var(--gold-hi)", "var(--accent-h)"], ["var(--gold)", "var(--accent)"], ["var(--cream)", "var(--text)"], ["var(--ink)", "var(--bg)"]];
+/* v6.62.0 — AND THEN THE RULE SET, because this seam is where the two
+   engines meet. The Imagine block is written for the web app's Chromium; the
+   panel's renderer is Adobe UXP. Lifting it verbatim is how six
+   `pointer-events` declarations lived in a stylesheet whose own header says
+   UXP has none — and how they came straight back the first time the lifter
+   ran after the audit removed them. uxpSafeCss drops what UXP cannot do,
+   converts flex `gap` into margins, and REFUSES (throws, naming the line)
+   anything it cannot translate with certainty. */
+const { uxpSafeCss } = require("./lib/uxp_safe_css.js");
 function panelCss(appCss) {
   let s = appCss;
   TOKENS.forEach(function (p) { s = s.split(p[0]).join(p[1]); });
   s = s.split("#pgImagine").join("#pageImagine");
-  return s;
+  return uxpSafeCss(s, "build_panel_imagine (the IMAGINE_CSS block lifted from docs/app/index.html)");
 }
 let DRY = false;   /* build({ dry: true }) only reports what differs — the test's drift check */
 function writeIfChanged(file, content) {
