@@ -758,8 +758,12 @@ let PHASE = "starting";
       const cpuMs = (performance.now() - c0) / 3;
       let g0 = performance.now(); for (let i = 0; i < 3; i++) { const g = gpu1(); if (g) flush(g); }
       const gpuMs = (performance.now() - g0) / 3;
+      /* and, when it did NOT win, whether the product's own withdrawal rule
+         fires on that number — which is the thing that actually protects a
+         student on such a machine */
       fsSpeed = { W: SW, H: SH, cpuMs: +cpuMs.toFixed(1), gpuMs: +gpuMs.toFixed(1),
-                  x: +(cpuMs / Math.max(gpuMs, 0.001)).toFixed(2) };
+                  x: +(cpuMs / Math.max(gpuMs, 0.001)).toFixed(2),
+                  withdrawnIfSlower: stGpuS5Spent(gpuMs, cpuMs) === true };
       ST.maskRev = (ST.maskRev || 0) + 1;
     }
 
@@ -1078,18 +1082,40 @@ let PHASE = "starting";
     !!heavy && heavy.gpuMs <= heavy.cpuMs,
     heavy ? { cpuMs: heavy.cpuMs.toFixed(2), gpuMs: heavy.gpuMs.toFixed(2) } : null);
 
-  /* v6.59.0 — and the two stages this wave added carry their own weight.
-     Measured separately, on a SwiftShader software rasteriser (there is no GPU
-     in this container, so a real device should do better, not worse), with the
-     tonal half held still the way a slider drag holds it:
+  /* v6.59.0 — what the two stages this wave added are worth, measured on a
+     SwiftShader software rasteriser with the tonal half held still the way a
+     slider drag holds it:
 
                                                         512x768      896x1344
        freq-sep low 70 + high 45                        2.23x          2.54x
        teeth 70                                         1.60x          1.92x
        grade + smooth + even + white + freq + teeth +
-         sharpen — a retoucher's actual frame           1.61x          2.09x   */
-  report("D2) stage (4b) beats the CPU on a held slider at a real preview size",
-    !!results.fsSpeed && results.fsSpeed.x > 1, results.fsSpeed);
+         sharpen — a retoucher's actual frame           1.61x          2.09x
+
+     THOSE ARE ONE MACHINE'S NUMBERS. The CI runner measured the first row at
+     0.66x — a fast CPU against a slow software rasteriser — and it is just as
+     real. That is why D2 below does not assert a speedup. */
+  /* v6.59.0 — AND THIS IS WHERE THE FIRST VERSION OF THIS CHECK WAS WRONG.
+     It asserted "the GPU is faster", full stop. It is faster on the container
+     this was written in (2.23x at 512x768) and SLOWER on the CI runner (0.66x:
+     CPU 29ms, GPU 44ms) — because that runner has a fast CPU and a software
+     rasteriser, so the JS pipeline wins. Both numbers are true; neither is a
+     property of the code. 6.58.0 learned exactly this about Vibe Glow and I
+     wrote the lesson down without applying it here: a bare slider with every
+     other control at zero is the case where the CPU has almost nothing to do.
+
+     What IS a property of the code, and what a student actually depends on, is
+     that a machine where this does not pay TAKES IT BACK. So: win, or the rule
+     that withdraws it fires on the frame that lost. Never neither. */
+  report("D2) stage (4b) either beats the CPU on this machine, or the rule that withdraws it fires on the frame that did not",
+    !!results.fsSpeed && (results.fsSpeed.x > 1 || results.fsSpeed.withdrawnIfSlower === true),
+    results.fsSpeed);
+  if (results.fsSpeed) {
+    console.log("      stage (4b) at " + results.fsSpeed.W + "x" + results.fsSpeed.H +
+      " — CPU " + results.fsSpeed.cpuMs + "ms, GPU " + results.fsSpeed.gpuMs +
+      "ms (" + results.fsSpeed.x + "x)" +
+      (results.fsSpeed.x > 1 ? "" : " — withdrawn: " + results.fsSpeed.withdrawnIfSlower));
+  }
 
   report("E) nothing threw while rendering either path", pageErrors.length === 0, pageErrors);
 
