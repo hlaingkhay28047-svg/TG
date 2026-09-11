@@ -833,7 +833,16 @@ input[type="range"] { min-width: 0; }
    Uses the existing CSS-variable palette so it inherits both themes.
    Rendered into #hnkAiToolsRoot by src/ui/app-controller (later phase).
    ============================================================ */
-#hnkAiToolsRoot { display:flex; flex-direction:column; padding:10px; color:var(--text); }
+/* v6.62.0 — TRAILING-EDGE COMPENSATION. `gap` puts space only BETWEEN
+   children; a margin puts it after the last one too, and without the
+   `:not(:last-child)` this rule set forbids there is nowhere else to put it.
+   Inside a padded, bordered box that extra N px is visible: the pill grows and
+   its label sits off-centre. So each such container gives N px back out of its
+   own trailing padding -- (P - N) of padding plus the child's N margin is
+   exactly the P the gap used to leave. Containers with no border and no
+   background are left alone: the space lands where nothing can see it.
+   One exception is named at .apg .vtpick below. */
+#hnkAiToolsRoot { display:flex; flex-direction:column; padding:10px 10px 0; color:var(--text); }
 #hnkAiToolsRoot > div,
 #hnkAiToolsRoot > span,
 #hnkAiToolsRoot > img,
@@ -936,7 +945,7 @@ input[type="range"] { min-width: 0; }
 .hnk-slots > i,
 .hnk-slots > h2,
 .hnk-slots > section { margin-right: 8px; margin-bottom: 8px; }
-.hnk-slot { display:flex; align-items:center; padding:8px; border:1px dashed var(--line-2);
+.hnk-slot { display:flex; align-items:center; padding:8px 0 8px 8px; border:1px dashed var(--line-2);
   border-radius:8px; background:var(--field); font-size:11px; }
 .hnk-slot > div,
 .hnk-slot > span,
@@ -1163,7 +1172,7 @@ input[type="range"] { min-width: 0; }
 .hnk-hist-list > i,
 .hnk-hist-list > h2,
 .hnk-hist-list > section { margin-bottom: 8px; }
-.hnk-hist { display:flex; flex-direction:column; padding:10px; border:1px solid var(--line);
+.hnk-hist { display:flex; flex-direction:column; padding:10px 10px 6px; border:1px solid var(--line);
   border-radius:10px; background:var(--panel); }
 .hnk-hist > div,
 .hnk-hist > span,
@@ -2901,7 +2910,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .slotchips > i,
 .apg .slotchips > h2,
 .apg .slotchips > section { margin-right: 8px; margin-bottom: 8px; }
-.apg .slotchip { display: inline-flex; align-items: center; padding: 6px 12px;
+.apg .slotchip { display: inline-flex; align-items: center; padding: 6px 6px 6px 12px;
   border-radius: 999px; border: 1px dashed var(--line); background: var(--panel-2);
   color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; line-height: 1.4; }
 .apg .slotchip > div,
@@ -2923,7 +2932,10 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   background: rgba(212,175,55,.10); }
 .apg .slotchip.opt { opacity: .75; }
 
-.apg .vtpick { display: flex; align-items: center; margin-top: 8px; padding: 8px;
+/* the one place the sum does not come out: its gap was 10px and its padding
+   is 8px, so 2px cannot be given back. The strip ends 2px wider than it was
+   and nothing else about it moves. (v6.62.0) */
+.apg .vtpick { display: flex; align-items: center; margin-top: 8px; padding: 8px 0 8px 8px;
   border: 1px solid var(--line-soft); border-radius: 12px; background: rgba(255,255,255,.03); }
 .apg .vtpick > div,
 .apg .vtpick > span,
