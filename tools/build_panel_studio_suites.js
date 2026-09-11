@@ -111,9 +111,9 @@ function cutSlices(L) {
    SVG, so each known literal becomes the matching icon file; an unknown one
    is a build error — never silently drop a glyph. */
 const SVG_MAP = [
-  { has: 'd="M3 12a9 9 0 1 0 3-6.7"', img: '<img class="icn ic-sa" src="icons/ui/st-reset-muted.svg">' },
-  { has: 'class="st-tgi"', img: '<img class="icn st-tgi" src="icons/ui/st-target-gold.svg">' },
-  { has: 'd="M6 18 18 6"', img: '<img class="st-thph" src="icons/ui/st-thumb-ph-muted.svg">' }
+  { has: 'd="M3 12a9 9 0 1 0 3-6.7"', img: '<img class="icn ic-sa" src="icons/ui/st-reset-muted.png">' },
+  { has: 'class="st-tgi"', img: '<img class="icn st-tgi" src="icons/ui/st-target-gold.png">' },
+  { has: 'd="M6 18 18 6"', img: '<img class="st-thph" src="icons/ui/st-thumb-ph-muted.png">' }
 ];
 
 /* functions the runtime layer replaces (canvas / File API / DOM-query bound) */

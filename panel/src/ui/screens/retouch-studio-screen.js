@@ -325,7 +325,7 @@ function recipeTile() {
   var w = el("span", "st-tile rc");
   var im = doc().createElement("img");
   im.className = "st-tile-ic";
-  im.src = "icons/ui/i-save-gold.svg";
+  im.src = "icons/ui/i-save-gold.png";
   im.alt = "";
   w.appendChild(im);
   return w;

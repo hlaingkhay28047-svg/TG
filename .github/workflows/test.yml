@@ -913,6 +913,13 @@ jobs:
       - name: "Run panel UXP-SAFE contract (no *, gap, pointer-events, object-fit drift, grid, sticky, inset or pseudo-elements; disabled means disabled)"
         run: node test/verify_panel_uxp_safe.js
 
+      # 6.63.0 — the owner's photograph of 6.133.0 settled it: Photoshop paints
+      # `fill` and ignores `stroke`, and does not inherit fill="none" from
+      # <svg>, so 263 of the 276 icons arrived as solid black silhouettes.
+      # Every icon now ships as a PNG the same renderer is known to draw.
+      - name: "Run panel icon raster contract (every icon compiled, none stale, no surface still asks for .svg)"
+        run: node test/verify_panel_icon_raster.js
+
       # 6.46.0 — an admin action on your OWN account must not sign you out of the
       # console, and the console's idle clock must be wound by something
       - name: "Run admin self-action contract (live database: your console survives your own Force Logout; the keep-alive is inside the window)"
