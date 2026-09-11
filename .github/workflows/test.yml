@@ -905,6 +905,14 @@ jobs:
       - name: Run panel renderer-safety contract (no remote img, no optgroup, guarded splitter, self-test card)
         run: node test/verify_panel_renderer_safety.js
 
+      # 6.62.0 — styles.css has called itself UXP-SAFE since v5 and listed, in
+      # prose, what Adobe's renderer cannot do. Nothing ever checked it, and the
+      # audit found the file breaking its own list 45 times: the `*` box-model
+      # reset, 29 `gap`, 9 `object-fit`, 6 `pointer-events`, 1 pseudo-element.
+      # A rule nobody checks is not a rule.
+      - name: "Run panel UXP-SAFE contract (no *, gap, pointer-events, object-fit drift, grid, sticky, inset or pseudo-elements; disabled means disabled)"
+        run: node test/verify_panel_uxp_safe.js
+
       # 6.46.0 — an admin action on your OWN account must not sign you out of the
       # console, and the console's idle clock must be wound by something
       - name: "Run admin self-action contract (live database: your console survives your own Force Logout; the keep-alive is inside the window)"

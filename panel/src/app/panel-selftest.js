@@ -219,6 +219,84 @@ function capabilities() {
     caps.docH = (doc.body && doc.body.scrollHeight) || (de && de.scrollHeight) || 0;
   } catch (e8) { }
 
+  /* F. v6.62.0 — WHICH OF THE STYLESHEET'S ASSUMPTIONS ARE TRUE HERE?
+
+        styles.css calls itself UXP-SAFE and lists what UXP cannot do, and the
+        audit that opened this wave found the file breaking its own list in
+        forty-five places: one `*` selector (the box-model reset, the FIRST
+        rule in the file), twenty-nine `gap` declarations (the header three
+        lines below the list says "UXP has no gap"), nine `object-fit` and six
+        `pointer-events`. Every one of those was believed, never measured.
+
+        Four of these are geometry, so they are decided here rather than
+        argued: build the case off-screen, read one number back. The other two
+        are property read-backs — weaker evidence (a renderer may store a
+        property it does not honour) but a blank read-back is conclusive the
+        other way. The wave removed all six kinds from the stylesheet, so the
+        panel no longer depends on any answer; the card reports them because
+        the next question (the nine object-fit thumbs) turns on them. */
+  function box(doc2, css) {
+    var d = doc2.createElement("div");
+    d.style.position = "absolute"; d.style.left = "-9999px"; d.style.top = "0";
+    for (var k in css) if (css.hasOwnProperty(k)) { try { d.style[k] = css[k]; } catch (e) { } }
+    return d;
+  }
+  try {
+    var host = box(doc, { width: "200px", height: "80px" });
+    (doc.body || doc.documentElement).appendChild(host);
+
+    /* F1 — is the box-model reset in force? 100px wide, 10px padding, 1px
+       border: border-box measures 100, content-box measures 122. A `no` here
+       means every padded box in the panel is 22px wider than its rule says,
+       which is what a panel that will not fit its column looks like. */
+    var b1 = box(doc, { width: "100px", padding: "10px", border: "1px solid #000" });
+    host.appendChild(b1);
+    caps.cssBox = (Math.abs(b1.offsetWidth - 100) <= 1) ? "border-box"
+      : (Math.abs(b1.offsetWidth - 122) <= 2 ? "content-box" : String(b1.offsetWidth) + "px");
+
+    /* F2 — flex gap. Two 10px children in a row with gap:20px: the second
+       starts at 30 if gap is honoured, at 10 if it is dropped. */
+    var f2 = box(doc, { display: "flex", flexDirection: "row", width: "180px" });
+    try { f2.style.gap = "20px"; } catch (e) { }
+    var c1 = box(doc, { width: "10px", height: "10px" }); c1.style.position = "static";
+    var c2 = box(doc, { width: "10px", height: "10px" }); c2.style.position = "static";
+    f2.appendChild(c1); f2.appendChild(c2); host.appendChild(f2);
+    var d2 = c2.offsetLeft - c1.offsetLeft;
+    caps.cssGap = (d2 >= 28 && d2 <= 32) ? "yes" : (d2 >= 9 && d2 <= 11 ? "NO" : String(d2));
+
+    /* F3 — calc(). #pageAiTools already ships a plain percentage before every
+       calc() width, which is the shape of a codebase that suspected this. */
+    var b3 = box(doc, { width: "calc(50px + 10px)", height: "10px" });
+    host.appendChild(b3);
+    caps.cssCalc = (Math.abs(b3.offsetWidth - 60) <= 1) ? "yes"
+      : (b3.offsetWidth > 0 ? String(b3.offsetWidth) + "px" : "NO");
+
+    /* F4 — position:fixed. The toast, the Freeform sheet and the video wizard
+       sheet are all fixed; if it degrades to static they land in the flow. */
+    var b4 = box(doc, { position: "fixed", top: "0px", left: "0px", width: "8px", height: "8px" });
+    host.appendChild(b4);
+    var r4 = b4.getBoundingClientRect ? b4.getBoundingClientRect() : null;
+    caps.cssFixed = r4 ? ((Math.abs(r4.top) <= 1 && Math.abs(r4.left) <= 1) ? "yes" : "NO") : "?";
+
+    /* F5/F6 — read-backs. object-fit is the one rule this wave did NOT
+       remove (nine thumbs across Gallery, Path, the wizard and the Video
+       Tools strip), so its answer decides whether that conversion is worth
+       three generators of churn. background-size is the substitute the
+       stylesheet's own header names, so it is asked in the same breath. */
+    var b5 = box(doc, {});
+    try { b5.style.objectFit = "cover"; } catch (e) { }
+    caps.cssObjectFit = (b5.style && b5.style.objectFit === "cover") ? "kept" : "DROPPED";
+    var b6 = box(doc, {});
+    try { b6.style.backgroundSize = "cover"; } catch (e) { }
+    caps.cssBgSize = (b6.style && b6.style.backgroundSize === "cover") ? "kept" : "DROPPED";
+
+    try { if (host.parentNode) host.parentNode.removeChild(host); } catch (e) { }
+  } catch (e9) {
+    caps.cssBox = caps.cssBox || "?"; caps.cssGap = caps.cssGap || "?";
+    caps.cssCalc = caps.cssCalc || "?"; caps.cssFixed = caps.cssFixed || "?";
+    caps.cssObjectFit = caps.cssObjectFit || "?"; caps.cssBgSize = caps.cssBgSize || "?";
+  }
+
   return caps;
 }
 
