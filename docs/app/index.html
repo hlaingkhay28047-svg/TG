@@ -5273,6 +5273,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.60.0", kind:"page", ref:"pgMeitu",
+    t:{my:"မျက်နှာပုံသွင်း ခလုတ်တွေကို ဂရပ်ဖစ်ကတ်က ဆွဲပေးပါပြီ",en:"The face-shape sliders now draw on the graphics card",shn:"ၶိူင်ႈယုၵ်ႉၼႃႈ တင်းသဵင်ႈ ၵရႅပ်ႉၾိၵ်ႉၶၢတ်ႉ တႅမ်ႈပၼ်ယဝ်ႉ",kac:"Myiman hkumhpan slider ni graphics card hte ka ai hku byin sai",th:"สไลเดอร์ปรับรูปหน้าวาดด้วยการ์ดจอแล้ว",zh:"脸型滑块现在由显卡绘制",vi:"Các thanh chỉnh dáng mặt giờ do card đồ hoạ vẽ",id:"Penggeser bentuk wajah kini digambar oleh kartu grafis",ms:"Peluncur bentuk muka kini dilukis oleh kad grafik"},
+    s:{my:"Skin အောက်က မျက်နှာပုံသွင်း ခလုတ် ရှစ်ခု — Face Slim၊ V-Jaw၊ Chin၊ Cheek၊ Temple၊ Forehead၊ Philtrum နဲ့ Eye — ကို ဆွဲတဲ့အခါ ဂရပ်ဖစ်ကတ်က ဆွဲပေးနိုင်ပါပြီ။ ဒါက အခြား ခလုတ်တွေနဲ့ မတူပါဘူး — ကျန်တာတွေက အရောင်ကို ပြောင်းတာ၊ ဒါက **ပုံသဏ္ဌာန်ကို ရွှေ့တာ** ဖြစ်လို့ ရှေ့အဆင့်တွေရဲ့ ရလဒ်ကို ပြန်ဖတ်ရပါတယ်။ ရလဒ်ကို တိုင်းကြည့်တော့ ကွန်ပျူတာနဲ့ **တစ်ပွင့်မှ မကွာ** ပါဘူး — ခလုတ် ရှစ်ခုလုံး တစ်ပြိုင်နက် ဖွင့်ရင်တောင် ၁၉၆,၆၀၈ ခုမှာ ၂ ခုပဲ ကွာပါတယ်။ မြန်နှုန်းအကြောင်း ရိုးရိုးသားသား ပြောပါရစေ။ ဒီစက် (ဂရပ်ဖစ်ကတ် အစစ် မရှိတဲ့ စက်) မှာ ဒီအဆင့်က **ပိုနှေး**ပါတယ် — ဒါကြောင့် အက်ပ်က ဖရိမ် နှစ်ခု တိုင်းပြီး မမြန်ရင် ဒီအဆင့်ကို **ချက်ချင်း ပြန်ရုပ်သိမ်း**ပြီး ကွန်ပျူတာကို ပြန်ပေးပါတယ်။ ဂရပ်ဖစ်ကတ် အစစ် ရှိတဲ့ စက်တွေမှာတော့ ပိုမြန်သင့်ပါတယ် — ဒါပေမဲ့ ဒီစက်မှာ မတိုင်းနိုင်လို့ မပြောပါဘူး။ မျက်နှာ နှစ်ခု ရှိတဲ့ ပုံမှာ ကွန်ပျူတာက တစ်ခုပြီးမှ တစ်ခု လုပ်လို့ ဂရပ်ဖစ်ကတ်က ငြင်းပြီး ကွန်ပျူတာကို ပေးပါတယ် — ပုံက အတူတူပါပဲ။ သိမ်းတဲ့ပုံ၊ ထုတ်တဲ့ပုံကို ဘယ်တုန်းကမှ မထိပါ။",en:"The eight face-shape sliders under Skin — Face Slim, V-Jaw, Chin, Cheek, Temple, Forehead, Philtrum and Eye — can be drawn by the graphics card now. This one is unlike every stage before it: the others change a pixel's colour, this one MOVES the picture, so it has to read back what the earlier stages left. Measured, the result is the computer's picture to the byte — with all eight on at once, 37 displacement kernels over every pixel of the face, 2 channels of 196,608 differ by one count. About speed, plainly: on this machine — which has no real graphics card — the stage is SLOWER, so the app times two frames and takes it back, handing those sliders to the computer for the rest of the session. On a machine with real graphics it should be faster, but that is not something this machine can measure, so it is not claimed. A photo with two reshaped faces is refused and goes to the computer, because the computer does them one after the other and one pass cannot. Saved and exported files are untouched, as always.",shn:"ၶိူင်ႈယုၵ်ႉၼႃႈ 8 ဢၼ် ၵရႅပ်ႉၾိၵ်ႉၶၢတ်ႉ တႅမ်ႈလႆႈယဝ်ႉ။ ႁၼ်ဢၼ်တႄႉ တင်းၶွမ်ႇပိဝ်ႇတိူဝ်ႇ ဢမ်ႇပႅၵ်ႈ။ ၶိူင်ႈၼႆႉ ၼိူဝ်ၶိူင်ႈၼႆႉ ဢမ်ႇဝႆး ၼႆၸိုင် ဢဝ်ၶိုၼ်းၵမ်းလဵဝ်။",kac:"Myiman hkumhpan slider matsat lahkawng gaw graphics card hte ka lu sai. Sumla gaw computer hte n shai ai. Ndai jak hta gaw n lawan ai majaw app gaw lahkawng lang hkan nna bai la kau ai.",th:"สไลเดอร์ปรับรูปหน้าทั้งแปดตัวใต้ Skin วาดด้วยการ์ดจอได้แล้ว ผลลัพธ์ตรงกับคอมพิวเตอร์ทุกไบต์ พูดตรง ๆ เรื่องความเร็ว: บนเครื่องนี้ซึ่งไม่มีการ์ดจอจริง ขั้นนี้ช้ากว่า แอปจึงจับเวลาสองเฟรมแล้วถอนคืนให้คอมพิวเตอร์ทำต่อ",zh:"Skin 下的八个脸型滑块现在可由显卡绘制，结果与电脑逐字节一致。关于速度，说实话：本机没有真正的显卡，这一步更慢，所以应用会计时两帧后收回，交还给电脑。两张脸的照片会被拒绝，交给电脑处理。",vi:"Tám thanh chỉnh dáng mặt dưới Skin giờ có thể do card đồ hoạ vẽ, và kết quả trùng khớp từng byte với máy tính. Nói thẳng về tốc độ: trên máy này (không có card đồ hoạ thật) bước này CHẬM hơn, nên ứng dụng đo hai khung hình rồi thu lại, trả về cho máy tính.",id:"Delapan penggeser bentuk wajah di bawah Skin kini dapat digambar kartu grafis, dan hasilnya sama persis dengan komputer. Terus terang soal kecepatan: di mesin ini yang tanpa kartu grafis asli, tahap ini LEBIH LAMBAT, jadi aplikasi mengukur dua bingkai lalu menariknya kembali.",ms:"Lapan peluncur bentuk muka di bawah Skin kini boleh dilukis kad grafik, dan hasilnya sama tepat dengan komputer. Terus terang tentang kelajuan: pada mesin ini yang tiada kad grafik sebenar, peringkat ini LEBIH PERLAHAN, jadi aplikasi mengukur dua bingkai lalu menariknya semula."} },
   { v:"6.59.0", kind:"page", ref:"pgMeitu",
     t:{my:"Freq-Sep နဲ့ သွားဖြူခြင်းလည်း ဆွဲနေတုန်း အစစ်အတိုင်း မြင်ရပြီ",en:"Freq-Sep and teeth whitening now show truly while you drag",shn:"Freq-Sep လႄႈ ႁဵတ်းၶဵဝ်ႈၶၢဝ် လၢၵ်ႈယူႇ ႁၼ်ဢၼ်တႄႉယဝ်ႉ",kac:"Freq-Sep hte wa hpraw galaw ai mung dun nga ten hta teng man ai hku mu sai",th:"Freq-Sep และการฟอกสีฟันก็เห็นของจริงระหว่างลากแล้ว",zh:"频率分离与牙齿美白在拖动时也显示真实效果了",vi:"Freq-Sep và làm trắng răng giờ cũng hiện đúng thật khi bạn kéo",id:"Freq-Sep dan pemutihan gigi kini tampil sebenarnya saat digeser",ms:"Freq-Sep dan pemutihan gigi kini dipaparkan sebenar semasa diseret"},
     s:{my:"Skin အောက်က ခလုတ် သုံးခု — Freq-Sep High၊ Freq-Sep Low နဲ့ သွားဖြူခြင်း — ကို ဆွဲတဲ့အခါ အရင်က ကွန်ပျူတာက တွက်နေရလို့ နှေးပါတယ်။ အခု ဂရပ်ဖစ်ကတ်က ဆွဲပေးပါပြီ။ ရလဒ်ကို တိုင်းကြည့်တော့ ကွန်ပျူတာနဲ့ **တစ်ပွင့်မှ မကွာ** ပါဘူး။ မြန်နှုန်း — Freq-Sep က ၂.၂ ဆ (သေးတဲ့ပုံ) နဲ့ ၂.၅ ဆ (ကြီးတဲ့ပုံ)၊ သွားဖြူခြင်းက ၁.၆ ဆ နဲ့ ၁.၉ ဆ။ ဓာတ်ပုံပြင်သူ တစ်ယောက် တကယ်သုံးတဲ့ ပုံစံ (အရောင် + Smoothing + Freq-Sep + သွား + ချွတ်ခြင်း) မှာတော့ ၁.၆ ဆ နဲ့ ၂.၁ ဆ ပိုမြန်ပါတယ်။ သွားဖြူခြင်းက ပါးစပ်ကို တိုင်းရတဲ့ ခလုတ် ဖြစ်လို့ မျက်နှာ မတွေ့ရင် ဘာမှ မလုပ်ပါဘူး — အရင်အတိုင်းပါ။ ဒီအလုပ်လုပ်ရင်း အရေးကြီးတဲ့ အမှား တစ်ခုလည်း တွေ့ပါတယ်။ ဂရပ်ဖစ်ကတ်က ဂဏန်း တစ်ဝက်တိတိ (ဥပမာ ၂၄၂.၅) ကို အပေါ်ကို လှည့်နေပြီး ကွန်ပျူတာက စုံဂဏန်းဘက် လှည့်ပါတယ်။ သွားဖြူခြင်းက အဲဒီ တစ်ဝက်တိတိ ဂဏန်းကို မကြာခဏ ထုတ်ပေးလို့ ပေါ်လာတာပါ။ ပြင်လိုက်တော့ White၊ De-yellow၊ Radiance စတဲ့ ခလုတ်တွေလည်း ကွန်ပျူတာနဲ့ တစ်ပွင့်မှ မကွာတော့ပါဘူး။ ဓာတ်ပုံ အသစ်တစ်ပုံ ဖွင့်တဲ့အခါ အရင်ပုံရဲ့ အရေပြား မှတ်ချက်ကို မှားပြီး ပြန်သုံးနိုင်တဲ့ အမှားလည်း ပါပြင်လိုက်ပါတယ်။ ဂရပ်ဖစ်ကတ် အဟောင်းအချို့မှာ Freq-Sep နှစ်ခုက ကွန်ပျူတာမှာပဲ ဆက်ရှိပါမယ် — ပုံက အတူတူပါပဲ။ သိမ်းတဲ့ပုံ၊ ထုတ်တဲ့ပုံကို ဘယ်တုန်းကမှ မထိပါ။",en:"Three controls under Skin — Freq-Sep High, Freq-Sep Low and teeth whitening — used to send every drag frame back to the computer. The graphics card draws them now, and the result is measured as NOT ONE STEP away from the computer's. Speed: Freq-Sep 2.2x on a small picture and 2.5x on a large one; teeth 1.6x and 1.9x; and on the frame a retoucher actually has on screen — grade plus smoothing plus Freq-Sep plus teeth plus sharpening — 1.6x and 2.1x. Teeth whitening still needs a measured mouth, so it does nothing on a photo with no face in it, exactly as before. Doing this work exposed a real defect: the graphics card rounded an exact half (242.5, say) UP, while the computer rounds it to the even neighbour. Teeth produces exact halves often, which is what made it visible. Fixing the rule turned White, De-yellow and Radiance bit-identical too. A second defect went with it: opening a new photo of the same size could reuse the previous photo's skin reading. On some older graphics cards the two Freq-Sep sliders stay with the computer — the picture is the same either way. Saving and exporting are untouched, as always.",shn:"ၶိူင်ႈ 3 ဢၼ် တႂ်ႈ Skin — Freq-Sep High, Freq-Sep Low လႄႈ ႁဵတ်းၶဵဝ်ႈၶၢဝ် — ယၢမ်းလဵဝ် graphics card ႁဵတ်းပၼ်ယဝ်ႉ။ ႁၼ်ၽိတ်းသီ ဢမ်ႇမီးသေဢၼ်။ ဝႆး 2.2 ပုၼ်ႈ လႄႈ 2.5 ပုၼ်ႈ။ ၶဵဝ်ႈ တေလႆႈႁၼ်သူပ်း ၸင်ႇႁဵတ်း။ လွင်ႈသိမ်း လႄႈ ဢွၵ်ႇႁၢင်ႈ ဢမ်ႇလႆႈလႅၵ်ႈ။",kac:"Skin npu na ram masat masum — Freq-Sep High, Freq-Sep Low hte wa hpraw galaw ai — ya gaw graphics card gaw galaw sai. Computer hte langai mung n shai ai. Lawan ai: 2.2 lang hte 2.5 lang. Wa hpraw galaw ai gaw n gup hpe hkyen lu yang sha galaw ai. Mahkawng ai hte shalawt ai gaw n shai ai.",th:"สามปุ่มใต้ Skin — Freq-Sep High, Freq-Sep Low และการฟอกสีฟัน — เดิมต้องให้คอมพิวเตอร์คำนวณทุกเฟรมที่ลาก ตอนนี้การ์ดจอวาดให้แล้ว และผลที่วัดได้ไม่ต่างจากคอมพิวเตอร์แม้แต่ขั้นเดียว ความเร็ว: Freq-Sep เร็วขึ้น 2.2 เท่าบนภาพเล็กและ 2.5 เท่าบนภาพใหญ่ ฟอกฟัน 1.6 และ 1.9 เท่า ส่วนเฟรมที่ช่างแต่งภาพใช้จริงเร็วขึ้น 1.6 และ 2.1 เท่า การฟอกฟันยังต้องวัดปากได้ก่อน จึงไม่ทำอะไรกับภาพที่ไม่มีใบหน้า เหมือนเดิม ระหว่างทำงานนี้พบข้อผิดพลาดจริง: การ์ดจอปัดเลขครึ่งพอดี (เช่น 242.5) ขึ้น ส่วนคอมพิวเตอร์ปัดไปทางเลขคู่ แก้แล้วทำให้ White, De-yellow และ Radiance ตรงกันทุกจุดด้วย การบันทึกและส่งออกไม่เปลี่ยน",zh:"皮肤下的三个控件 —— Freq-Sep High、Freq-Sep Low 和牙齿美白 —— 以前每一帧拖动都要交给电脑计算，现在由显卡绘制，实测结果与电脑一模一样，一档都不差。速度：频率分离小图快 2.2 倍、大图快 2.5 倍；牙齿美白 1.6 倍和 1.9 倍；修图师真正在屏幕上的那一帧（调色 + 磨皮 + 频率分离 + 牙齿 + 锐化）快 1.6 倍和 2.1 倍。牙齿美白仍需要测量到嘴部，所以照片里没有人脸时它什么也不做，和以前一样。做这项工作时发现了一个真实缺陷：显卡把正好一半的数值（例如 242.5）向上取整，而电脑取向偶数。牙齿经常产生正好一半的数值，这才让它显形。修好后，White、De-yellow 和 Radiance 也变成完全一致。另一个缺陷一并修好：打开同样尺寸的新照片时，可能沿用上一张照片的皮肤识别。在一些较旧的显卡上，两个频率分离滑块仍由电脑处理 —— 画面完全相同。保存和导出一如既往不受影响。",vi:"Ba điều khiển dưới mục Skin — Freq-Sep High, Freq-Sep Low và làm trắng răng — trước đây phải trả từng khung hình về cho máy tính. Giờ card đồ họa vẽ chúng, và kết quả đo được KHÔNG LỆCH MỘT BẬC nào so với máy tính. Tốc độ: Freq-Sep nhanh hơn 2,2 lần với ảnh nhỏ và 2,5 lần với ảnh lớn; làm trắng răng 1,6 và 1,9 lần; còn với khung hình mà một người sửa ảnh thực sự đang nhìn — chỉnh màu cộng làm mịn cộng Freq-Sep cộng răng cộng làm nét — nhanh hơn 1,6 và 2,1 lần. Làm trắng răng vẫn cần đo được miệng, nên với ảnh không có khuôn mặt nó không làm gì cả, đúng như trước. Công việc này để lộ một lỗi thật: card đồ họa làm tròn số đúng một nửa (ví dụ 242,5) LÊN, còn máy tính làm tròn về số chẵn. Răng tạo ra số đúng một nửa rất thường xuyên, nên lỗi mới hiện ra. Sửa xong, White, De-yellow và Radiance cũng khớp từng bậc. Một lỗi thứ hai đi kèm: mở ảnh mới cùng kích thước có thể dùng lại kết quả đọc da của ảnh trước. Trên một số card đồ họa cũ, hai thanh Freq-Sep vẫn thuộc về máy tính — hình ảnh vẫn như nhau. Lưu và xuất ảnh không thay đổi.",id:"Tiga kontrol di bawah Skin — Freq-Sep High, Freq-Sep Low dan pemutihan gigi — dulu mengembalikan setiap bingkai geseran ke komputer. Kini kartu grafis yang menggambarnya, dan hasilnya diukur TIDAK MELESET SATU TINGKAT pun dari komputer. Kecepatan: Freq-Sep 2,2x pada foto kecil dan 2,5x pada foto besar; gigi 1,6x dan 1,9x; dan pada bingkai yang benar-benar ada di layar seorang retoucher — warna plus penghalusan plus Freq-Sep plus gigi plus penajaman — 1,6x dan 2,1x. Pemutihan gigi tetap memerlukan mulut yang terukur, jadi pada foto tanpa wajah ia tidak melakukan apa pun, persis seperti sebelumnya. Pekerjaan ini membuka satu cacat nyata: kartu grafis membulatkan nilai tepat setengah (misalnya 242,5) KE ATAS, sedangkan komputer membulatkannya ke tetangga genap. Gigi sering menghasilkan nilai tepat setengah, itulah yang membuatnya terlihat. Setelah diperbaiki, White, De-yellow dan Radiance pun sama persis. Satu cacat kedua ikut terbawa: membuka foto baru berukuran sama bisa memakai ulang pembacaan kulit foto sebelumnya. Pada sebagian kartu grafis lama, kedua penggeser Freq-Sep tetap di komputer — gambarnya sama saja. Menyimpan dan mengekspor tidak berubah.",ms:"Tiga kawalan di bawah Skin — Freq-Sep High, Freq-Sep Low dan pemutihan gigi — dahulu menghantar setiap bingkai seretan kembali kepada komputer. Kini kad grafik melukisnya, dan hasilnya diukur TIDAK TERSASAR SATU TAHAP pun daripada komputer. Kelajuan: Freq-Sep 2.2x pada foto kecil dan 2.5x pada foto besar; gigi 1.6x dan 1.9x; dan pada bingkai yang benar-benar berada di skrin seorang penyunting foto — warna campur pelicinan campur Freq-Sep campur gigi campur penajaman — 1.6x dan 2.1x. Pemutihan gigi masih memerlukan mulut yang terukur, jadi pada foto tanpa wajah ia tidak melakukan apa-apa, sama seperti dahulu. Kerja ini mendedahkan satu kecacatan sebenar: kad grafik membundarkan nilai tepat separuh (contohnya 242.5) KE ATAS, manakala komputer membundarkannya ke jiran genap. Gigi kerap menghasilkan nilai tepat separuh, itulah yang menjadikannya kelihatan. Setelah dibetulkan, White, De-yellow dan Radiance turut tepat sama. Satu kecacatan kedua turut dibetulkan: membuka foto baharu bersaiz sama boleh menggunakan semula bacaan kulit foto sebelumnya. Pada sesetengah kad grafik lama, kedua-dua peluncur Freq-Sep kekal pada komputer — gambarnya tetap sama. Menyimpan dan mengeksport tidak berubah."} },
@@ -16193,6 +16196,12 @@ var ST_GPU_T2 = ["white","rosy","deshine","gloss","deyellow","radiance","even","
    the device first. A NEGATIVE Freq-Sep Low is not a band at all — it feeds
    stage (5)'s clarity and nothing else (see claA) — so it needs neither. */
 var ST_GPU_T2_TEETH = ["teeth"];
+/* v6.60.0 — stage (6c-)'s eight controls. They are one list because they are
+   one stage: every one of them feeds the same stWarpKernels call and the same
+   single displacement pass, so a frame with any of them set takes the same
+   round trip and the same withdrawal. smile and browFill are NOT here — they
+   are stApplySkin's, not the warp's, and the shader still refuses them. */
+var ST_GPU_T2_WARP = ["wSlim","wJaw","wChin","wCheek","wTemple","wFore","wPhil","wEye"];
 var ST_GPU_T2_FS = ["freqHi","freqLo"];
 /* the only budget available before a settle has ever been timed on this device:
    a drag frame slower than this is not a fast path by any reading */
@@ -16212,6 +16221,53 @@ var ST_GPU_VS =
   "attribute vec2 p;varying vec2 uv;" +
   "void main(){uv=vec2(p.x*0.5+0.5,0.5-p.y*0.5);gl_Position=vec4(p,0.0,1.0);}";
 
+/* v6.60.0 — QUANT8 AND THE TAIL ARE SHARED SOURCE, NOT TWO COPIES.
+   Stage (6c-) is a SECOND, much smaller program (see ST_GPU_WARP_FS): a
+   coordinate displacement needs the pixels of every earlier stage as a
+   texture, which one pass cannot give itself, and the kernels would push the
+   main program past what a phone guarantees for fragment uniforms. That
+   second program has to quantise exactly as this one does and has to carry
+   the vignette and the grain that come after the warp — so those lines are
+   declared once, here, and spliced into both. A second copy would be free to
+   drift, and a drift in quant8 is a different picture on every stage. */
+var ST_GPU_QUANT = [
+"float quant8(float v){",
+"  v=clamp(v,0.0,255.0);",
+"  float f=floor(v), r=v-f;",
+"  if(r>0.5) return f+1.0;",
+"  if(r<0.5) return f;",
+"  return (mod(f,2.0)>=0.5) ? f+1.0 : f;",
+"}",
+];
+var ST_GPU_TAIL = [
+   /* (7) vignette — a two-stop radial gradient painted source-over in black.
+      Both stops are black, so premultiplied interpolation leaves the colour
+      alone and only the alpha ramps: the whole stage is one distance. */
+"  if(vig>0.0){",
+"    vec2 px=uv*wh;",                       /* uv*W is the pixel centre */
+"    float d=distance(px,wh*0.5);",
+"    float r0=min(wh.x,wh.y)*0.35, r1=max(wh.x,wh.y)*0.72;",
+"    float t=clamp((d-r0)/(r1-r0),0.0,1.0);",
+"    float a=t*(vig/100.0*0.55);",
+"    R*=(1.0-a); G*=(1.0-a); B*=(1.0-a);",
+"    R=quant8(R); G=quant8(G); B=quant8(B);",
+"  }",
+   /* (8) grain — the seeded tile repeated at the same RS the canvas pattern
+      uses, composited 'overlay' at globalAlpha. The overlay formula is the one
+      the compositing spec gives, with the photo as backdrop. */
+"  if(grn>0.0){",
+"    vec2 npx=mod(uv*wh/max(rs,0.0001),256.0);",
+"    vec3 P=texture2D(noise,npx/256.0).rgb;",
+"    vec3 Bc=vec3(R,G,B)/255.0;",
+"    vec3 O;",
+"    O.r = Bc.r<0.5 ? 2.0*Bc.r*P.r : 1.0-2.0*(1.0-Bc.r)*(1.0-P.r);",
+"    O.g = Bc.g<0.5 ? 2.0*Bc.g*P.g : 1.0-2.0*(1.0-Bc.g)*(1.0-P.g);",
+"    O.b = Bc.b<0.5 ? 2.0*Bc.b*P.b : 1.0-2.0*(1.0-Bc.b)*(1.0-P.b);",
+"    float ga=grn/100.0*0.35;",
+"    vec3 M=mix(Bc,O,ga)*255.0;",
+"    R=quant8(M.r); G=quant8(M.g); B=quant8(M.b);",
+"  }",
+];
 var ST_GPU_FS = [
 "precision highp float;",
 "varying vec2 uv;",
@@ -16306,13 +16362,7 @@ var ST_GPU_FS = [
    happened to get right is now got wrong — and it is one channel against
    several hundred. Nothing here was tuned to a number; the CPU's rule was
    copied, and the numbers are what followed. */
-"float quant8(float v){",
-"  v=clamp(v,0.0,255.0);",
-"  float f=floor(v), r=v-f;",
-"  if(r>0.5) return f+1.0;",
-"  if(r<0.5) return f;",
-"  return (mod(f,2.0)>=0.5) ? f+1.0 : f;",
-"}",
+].concat(ST_GPU_QUANT, [
 "void main(){",
 "  vec4 s=texture2D(src,uv);",
 "  float R,G,B;",
@@ -16539,36 +16589,10 @@ var ST_GPU_FS = [
 "    gl_FragColor=vec4(clamp(R,0.0,255.0)/255.0,clamp(G,0.0,255.0)/255.0,clamp(B,0.0,255.0)/255.0,s.a);",
 "    return;",
 "  }",
-   /* (7) vignette — a two-stop radial gradient painted source-over in black.
-      Both stops are black, so premultiplied interpolation leaves the colour
-      alone and only the alpha ramps: the whole stage is one distance. */
-"  if(vig>0.0){",
-"    vec2 px=uv*wh;",                       /* uv*W is the pixel centre */
-"    float d=distance(px,wh*0.5);",
-"    float r0=min(wh.x,wh.y)*0.35, r1=max(wh.x,wh.y)*0.72;",
-"    float t=clamp((d-r0)/(r1-r0),0.0,1.0);",
-"    float a=t*(vig/100.0*0.55);",
-"    R*=(1.0-a); G*=(1.0-a); B*=(1.0-a);",
-"    R=quant8(R); G=quant8(G); B=quant8(B);",
-"  }",
-   /* (8) grain — the seeded tile repeated at the same RS the canvas pattern
-      uses, composited 'overlay' at globalAlpha. The overlay formula is the one
-      the compositing spec gives, with the photo as backdrop. */
-"  if(grn>0.0){",
-"    vec2 npx=mod(uv*wh/max(rs,0.0001),256.0);",
-"    vec3 P=texture2D(noise,npx/256.0).rgb;",
-"    vec3 Bc=vec3(R,G,B)/255.0;",
-"    vec3 O;",
-"    O.r = Bc.r<0.5 ? 2.0*Bc.r*P.r : 1.0-2.0*(1.0-Bc.r)*(1.0-P.r);",
-"    O.g = Bc.g<0.5 ? 2.0*Bc.g*P.g : 1.0-2.0*(1.0-Bc.g)*(1.0-P.g);",
-"    O.b = Bc.b<0.5 ? 2.0*Bc.b*P.b : 1.0-2.0*(1.0-Bc.b)*(1.0-P.b);",
-"    float ga=grn/100.0*0.35;",
-"    vec3 M=mix(Bc,O,ga)*255.0;",
-"    R=quant8(M.r); G=quant8(M.g); B=quant8(M.b);",
-"  }",
+], ST_GPU_TAIL, [
 "  gl_FragColor=vec4(clamp(R,0.0,255.0)/255.0,clamp(G,0.0,255.0)/255.0,clamp(B,0.0,255.0)/255.0,s.a);",
 "}"
-].join("\n");
+]).join("\n");
 
 /* v6.59.0 — THE TWO PIECES SPLICED IN AT BOOT (see the marker comments above).
    They are kept out of the program above so that the source a device without
@@ -16597,6 +16621,245 @@ var ST_GPU_FS_BODY = [
 "        R+=(R-lo2.r)*kHi; G+=(G-lo2.g)*kHi; B+=(B-lo2.b)*kHi;",
 "      }"
 ].join("\n");
+
+/* v6.60.0 — STAGE (6c-), LIVE FACE RESHAPE, AND WHY IT IS ITS OWN PROGRAM.
+
+   Every stage before this one is a function of the pixel's OWN value: a
+   fragment reads uv, and everything it needs is at uv. A reshape is not. It is
+   a coordinate displacement — the pixel at (x,y) takes the colour that was at
+   (x-dx, y-dy) — so the fragment has to read the frame AS THE EARLIER STAGES
+   LEFT IT, at a coordinate that is not its own. One pass cannot give itself
+   that texture, so the warp is a SECOND draw over the first draw's pixels,
+   which is the bargain stage (5) and stage (6b) already strike.
+
+   It is a second PROGRAM rather than a fourth mode of the first for two
+   reasons, and the second one is the load-bearing one:
+
+     - it needs almost none of the main shader (no table, no mask, no planes,
+       no bands, no zones) and all of the tail; and
+
+     - up to 37 kernels at two vec4s each is ~80 more uniform vectors, and
+       WebGL 1 guarantees only SIXTEEN to a fragment shader. Splicing that into
+       the main program would risk the LINK of the whole fast path on a phone,
+       which is exactly the trap 6.59.0 wrote down for the frequency bands. A
+       separate small program cannot cost the main one anything: if it will not
+       build, this stage is refused and every other stage is untouched.
+
+   THE ARITHMETIC IS stWarpApply's, not a restatement of it. The kernels come
+   from stWarpKernels itself — the CPU's own function, called on the CPU — so a
+   change to the reshape geometry moves both paths at once. What the shader
+   carries is only the inner loop: the same (1-d2)^2 falloff, the same
+   accumulation into ux/uy, the same clamp into the read rect, the same
+   hand-written bilinear, the same 8-bit write.
+
+   WHERE THE TWO PATHS CAN PART, AND WHY IT IS THE COORDINATE. Everything else
+   on this path compares two arithmetics on values of size 255, where float32's
+   24 bits are worth about 1.5e-5 of a count. Here the arithmetic runs on
+   COORDINATES of size 1000+, and a fragment shader has the same 24 bits to
+   spend on them — so the sample point lands ~2e-5 of a pixel away from where
+   float64 puts it, and wherever the picture is steep under that point the
+   interpolated value is a fraction of a count away. Three things are done to
+   keep that fraction small rather than to explain it away:
+
+     - the displacement is accumulated ON ITS OWN (magnitude ~20) and only then
+       taken off the pixel index, instead of being subtracted into a coordinate
+       of magnitude ~1000 one kernel at a time;
+     - the integer and the fractional part of the sample point are separated
+       EXACTLY (floor of the accumulator, then an integer subtraction), so the
+       bilinear weight carries the accumulator's own precision and not the
+       coordinate's;
+     - the four texels are snapped back to whole bytes with floor(v*255+0.5),
+       because they ARE whole bytes and a texture fetch's round trip through
+       v/255 is not.
+
+   What is left is measured, not asserted — see the reshape rows of
+   verify_gpu_preview's table. */
+var ST_GPU_WARP_MAX = 40;
+var ST_GPU_WARP_FS = [
+"precision highp float;",
+"varying vec2 uv;",
+"uniform sampler2D src;",
+"uniform sampler2D noise;",
+"uniform vec2 wh;",
+"uniform float rs,vig,grn;",
+   /* the CPU's bx0,by0,bx1,by1 — the box it actually writes — and the padded
+      rect it reads from, with the two clamp limits it computes as rw-1.001 */
+"uniform vec4 wBox;",
+"uniform vec4 wRect;",
+"uniform vec2 wLim;",
+   /* v6.60.0 — WHICH WAY UP IS THE FRAME THIS PASS READS?
+      A texture uploaded from a canvas has row 0 at the TOP, which is what the
+      vertex shader's uv already assumes. A texture the GPU rendered into has
+      row 0 at the BOTTOM, because that is where gl_Position -1 lands. The two
+      roads into this pass therefore hand it the same picture the other way up,
+      and reading one as the other is a mirrored frame — 66% of channels out by
+      up to 120 counts, which is how this was found. So the read is mapped:
+      (0,1) for an uploaded canvas, (1,-1) for a rendered texture. */
+"uniform vec2 wFlipY;",
+   /* one kernel per element: xy = centre, z = radius, w = the scale term (0 for
+      a translation kernel), and wB carries the translation */
+"uniform vec4 wA[" + ST_GPU_WARP_MAX + "];",
+"uniform vec2 wB[" + ST_GPU_WARP_MAX + "];",
+"uniform int wN;"
+].concat(ST_GPU_QUANT).concat([
+   /* the texel IS a whole byte; the fetch's v/255 round trip is not */
+"float b8(float v){ return floor(v*255.0+0.5); }",
+   /* the frame's own pixel (x,y) as a texture coordinate, whichever way up */
+"vec2 stc(vec2 pxy){ vec2 t=(pxy+vec2(0.5))/wh; return vec2(t.x, wFlipY.x+wFlipY.y*t.y); }",
+"void main(){",
+"  vec2 ip=floor(uv*wh);",
+"  vec4 s=texture2D(src,stc(ip));",
+"  float R=b8(s.r), G=b8(s.g), B=b8(s.b), A=s.a;",
+"  if(ip.x>=wBox.x&&ip.x<wBox.z&&ip.y>=wBox.y&&ip.y<wBox.w){",
+     /* stWarpApply's kernel loop, kernel for kernel. ddx/ddy are measured from
+        the PIXEL each time, never from the coordinate already displaced, which
+        is what the CPU does too. */
+"    vec2 acc=vec2(0.0);",
+"    for(int i=0;i<" + ST_GPU_WARP_MAX + ";i++){",
+"      if(i>=wN) break;",
+"      float r=wA[i].z;",
+"      vec2 dd=ip-wA[i].xy;",
+"      float d2=dot(dd,dd)/(r*r);",
+"      if(d2>=1.0) continue;",
+"      float w=1.0-d2; w=w*w;",
+"      float sc=wA[i].w;",
+"      if(sc!=0.0) acc+=dd*(sc*w); else acc+=wB[i]*w;",
+"    }",
+     /* fx = (px-rx0) - acc, but split so the fraction keeps the ACCUMULATOR's
+        precision rather than the coordinate's: floor(acc) is an integer that
+        cancels against an integer, and only the sub-pixel remainder is ever
+        subtracted from something small. Writing it the obvious way instead —
+        fx = I - acc, then floor and frac — is not a style difference: measured,
+        it puts 11% to 40% of channels out by up to 58 counts, because the
+        fraction then carries the rounding of a number of size ~1000 rather
+        than one of size ~20. C14 fails on it.
+
+        The three branches are the CPU's two clamps and its ordinary case, in
+        its order. THE TWO CLAMPS ARE NOT SEPARATELY COVERED, and that is said
+        here rather than left to look covered: the texture is CLAMP_TO_EDGE, so
+        the low one is arithmetically redundant, and no recipe reachable from
+        the eight sliders — including a face shoved into the corner, where the
+        read rect is truncated (C14j) — was found that drives a sample past the
+        padded rect. They are here because they are stWarpApply's lines, not
+        because a check bites when they go. */
+"    vec2 I=ip-wRect.xy;",
+"    vec2 ai=floor(acc), af=acc-ai;",
+"    vec2 Ii=I-ai;",
+"    vec2 fxy=Ii-af;",
+"    vec2 ixy,axy;",
+"    if(fxy.x<0.0){ ixy.x=0.0; axy.x=0.0; }",
+"    else if(fxy.x>wLim.x){ ixy.x=floor(wLim.x); axy.x=wLim.x-floor(wLim.x); }",
+"    else if(af.x==0.0){ ixy.x=Ii.x; axy.x=0.0; }",
+"    else { ixy.x=Ii.x-1.0; axy.x=1.0-af.x; }",
+"    if(fxy.y<0.0){ ixy.y=0.0; axy.y=0.0; }",
+"    else if(fxy.y>wLim.y){ ixy.y=floor(wLim.y); axy.y=wLim.y-floor(wLim.y); }",
+"    else if(af.y==0.0){ ixy.y=Ii.y; axy.y=0.0; }",
+"    else { ixy.y=Ii.y-1.0; axy.y=1.0-af.y; }",
+     /* fx <= rw-1.001 so ix <= rw-2: the +1 neighbours are always inside the
+        read rect, exactly as they are for the CPU's i10/i01/i11 */
+"    vec2 base=wRect.xy+ixy;",
+"    vec3 c00=vec3(0.0),c10=vec3(0.0),c01=vec3(0.0),c11=vec3(0.0);",
+"    c00=texture2D(src,stc(base)).rgb;",
+"    c10=texture2D(src,stc(base+vec2(1.0,0.0))).rgb;",
+"    c01=texture2D(src,stc(base+vec2(0.0,1.0))).rgb;",
+"    c11=texture2D(src,stc(base+vec2(1.0,1.0))).rgb;",
+"    c00=vec3(b8(c00.r),b8(c00.g),b8(c00.b));",
+"    c10=vec3(b8(c10.r),b8(c10.g),b8(c10.b));",
+"    c01=vec3(b8(c01.r),b8(c01.g),b8(c01.b));",
+"    c11=vec3(b8(c11.r),b8(c11.g),b8(c11.b));",
+"    vec3 vv=(c00*(1.0-axy.x)+c10*axy.x)*(1.0-axy.y)+(c01*(1.0-axy.x)+c11*axy.x)*axy.y;",
+     /* od[o]=... into a Uint8ClampedArray, and od[o+3]=255 */
+"    R=quant8(vv.r); G=quant8(vv.g); B=quant8(vv.b); A=1.0;",
+"  }"
+], ST_GPU_TAIL, [
+"  gl_FragColor=vec4(clamp(R,0.0,255.0)/255.0,clamp(G,0.0,255.0)/255.0,clamp(B,0.0,255.0)/255.0,A);",
+"}"
+]).join("\n");
+
+/* Has stage (6c-) been withdrawn on this device?
+   Like stGpuFsOn this DOES NOT BOOT GL, and for the same reason, and it does
+   not ask about the second program either: whether that program built, and
+   whether this frame's faces are ones a single pass can reproduce, are the
+   RENDERER's questions, asked where GL and the landmarks are both in hand. The
+   gate may be the more permissive of the two safely — the stricter one can
+   only draw a slower frame, never a wrong one. */
+function stGpuWarpOn(){
+  return !ST_GPU.warpOff;
+}
+/* v6.60.0 — CAN ONE PASS REPRODUCE THIS FRAME'S RESHAPE?
+
+   stWarpApply walks the faces IN ORDER and puts each one back on the canvas
+   before it reads the next, so face 2 warps pixels face 1 has already moved
+   wherever their boxes meet. One draw cannot do that, and drawing it anyway
+   would put a subtly different picture on screen — the one outcome this path
+   exists to prevent. So a frame with more than one reshaped face is refused
+   and goes to the CPU, whole.
+
+   The box, the pad and the read rect below are stWarpApply's own lines, copied
+   rather than re-derived, because the shader has to clamp exactly where the
+   CPU clamps. Returns the plan, null when there is nothing to warp (the
+   sliders are set but no face was measured — which is what the CPU does too),
+   or false when this frame belongs to the CPU. */
+/* v6.60.0 — THE OFF-SCREEN TARGET, AND WHY STAGE (6c-) NEEDED ONE.
+
+   Stage (5) and stage (6b) both go out to the CPU between passes because they
+   need SKIA — a blur a fragment cannot write. Stage (6c-) needs nothing from
+   the CPU: it only needs the previous pass's pixels as a texture. Sending them
+   out through drawImage and back through texImage2D just to hand the GPU its
+   own output is the most expensive thing on the whole path — measured on this
+   container's software rasteriser, the reshape cost 27ms with the round trip
+   against 10ms of plain JS, so the stage would have lost on every frame and
+   withdrawn itself. Rendering the previous pass straight into a texture and
+   sampling it is the same bytes with none of that.
+
+   Same bytes: the drawing buffer and this attachment are both RGBA8, the
+   shader writes the same clamped value to both, and alpha is 1 throughout so
+   premultiplication cannot separate them. The comparison table is the proof,
+   not this paragraph. */
+function stGpuFbo(gl,W,H){
+  try{
+    if(!ST_GPU.fbo){
+      ST_GPU.fbo=gl.createFramebuffer();
+      ST_GPU.tex.fb=gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.fb);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+      ST_GPU.fbW=-1; ST_GPU.fbH=-1;
+    }
+    if(ST_GPU.fbW!==W||ST_GPU.fbH!==H){
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.fb);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,W,H,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,ST_GPU.fbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,ST_GPU.tex.fb,0);
+      var st=gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+      gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+      /* unit 0 is the main program's src and this borrowed it to allocate */
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.src);
+      if(st!==gl.FRAMEBUFFER_COMPLETE){ ST_GPU.fboErr="status "+st; return false; }
+      ST_GPU.fbW=W; ST_GPU.fbH=H;
+    }
+    return true;
+  }catch(eF){ ST_GPU.fboErr=String((eF&&eF.message)||eF); return false; }
+}
+function stGpuWarpPlan(W,H,lm,t2){
+  if(!lm||!lm.faces||!lm.faces.length||!lm.w||!lm.h) return null;
+  var sx=W/lm.w, sy=H/lm.h, fi, plan=null;
+  for(fi=0;fi<lm.faces.length;fi++){
+    var K=stWarpKernels(lm.faces[fi],sx,sy,t2); if(!K) continue;
+    var x0=W,y0=H,x1=0,y1=0,k,pad=0,q;
+    for(k=0;k<K.length;k++){ q=K[k]; x0=Math.min(x0,q.x-q.r); x1=Math.max(x1,q.x+q.r); y0=Math.min(y0,q.y-q.r); y1=Math.max(y1,q.y+q.r); pad=Math.max(pad, Math.abs(q.dx||0)+Math.abs(q.dy||0)+(q.s?q.r*Math.abs(q.s):0)); }
+    pad=Math.ceil(pad)+2;
+    var bx0=Math.max(0,Math.floor(x0)), by0=Math.max(0,Math.floor(y0)), bx1=Math.min(W,Math.ceil(x1)), by1=Math.min(H,Math.ceil(y1));
+    if(bx1-bx0<2||by1-by0<2) continue;
+    var rx0=Math.max(0,bx0-pad), ry0=Math.max(0,by0-pad), rx1=Math.min(W,bx1+pad), ry1=Math.min(H,by1+pad);
+    if(plan) return false;                        /* a second reshaped face */
+    if(K.length>ST_GPU_WARP_MAX) return false;    /* more kernels than the program holds */
+    plan={K:K,bx0:bx0,by0:by0,bx1:bx1,by1:by1,rx0:rx0,ry0:ry0,rw:rx1-rx0,rh:ry1-ry0};
+  }
+  return plan;
+}
 /* Has stage (4b) been withdrawn on this device?
    v6.59.0 — THIS DELIBERATELY DOES NOT ASK WHETHER THE DEVICE HAS THE UNITS,
    and the first version of it did, by booting GL from inside the gate to find
@@ -16658,6 +16921,10 @@ function stGpuCan(t1,t2,pv,heals){
         }
         if(ST_GPU_T2_TEETH.indexOf(k2)>=0){                  /* (4) teeth */
           if(ST_GPU.t4off) return false;
+          continue;
+        }
+        if(ST_GPU_T2_WARP.indexOf(k2)>=0){                   /* (6c-) */
+          if(!stGpuWarpOn()) return false;
           continue;
         }
         if(ST_GPU_T2_FS.indexOf(k2)>=0){                     /* (4b) */
@@ -16800,6 +17067,24 @@ function stGpuBoot(){
       gl.uniform1i(gl.getUniformLocation(pr,"fsA"),8);
       gl.uniform1i(gl.getUniformLocation(pr,"fsB"),9);
     }
+    /* v6.60.0 — STAGE (6c-)'s OWN PROGRAM, BUILT THE SAME WAY THE BANDS ARE
+       SPLICED: as an attempt. If this driver will not take it, warpCap stays
+       false, the reshape sliders keep going to the CPU, and the program above —
+       every other stage — is exactly what it would have been. */
+    try{
+      var wp=build(ST_GPU_WARP_FS);
+      gl.useProgram(wp);
+      var wap=gl.getAttribLocation(wp,"p");
+      if(wap>=0){ gl.enableVertexAttribArray(wap); gl.vertexAttribPointer(wap,2,gl.FLOAT,false,0,0); }
+      gl.uniform1i(gl.getUniformLocation(wp,"src"),0);
+      gl.uniform1i(gl.getUniformLocation(wp,"noise"),3);
+      ST_GPU.warpProg=wp; ST_GPU.warpAp=wap; ST_GPU.warpCap=true;
+      gl.useProgram(pr);
+    }catch(eW){
+      ST_GPU.warpCap=false;
+      ST_GPU.warpBuildErr=String((eW&&eW.message)||eW);
+      gl.useProgram(pr);
+    }
     ST_GPU.cv=cv; ST_GPU.gl=gl; ST_GPU.prog=pr;
     return gl;
   }catch(e){
@@ -16811,6 +17096,12 @@ function stGpuBoot(){
 }
 function stGpuU(n){
   var g=ST_GPU.loc; if(!(n in g)) g[n]=ST_GPU.gl.getUniformLocation(ST_GPU.prog,n);
+  return g[n];
+}
+/* the same, for stage (6c-)'s own program */
+function stGpuWU(n){
+  var g=ST_GPU.wloc||(ST_GPU.wloc={});
+  if(!(n in g)) g[n]=ST_GPU.gl.getUniformLocation(ST_GPU.warpProg,n);
   return g[n];
 }
 /* returns the GL canvas (drawn at W x H) or null — null always means "the
@@ -17009,6 +17300,15 @@ function stGpuRender(srcImg,W,H,o){
        gate promised — a wrong picture, silently, which is the one outcome this
        whole path exists to prevent. Returning null sends the frame to the CPU. */
     if(!ST_GPU.fsCap && t2 && (((t2.freqHi||0)!==0) || ((t2.freqLo||0)>0))) return null;
+    /* v6.60.0 — stage (6c-). Same shape of question, asked in the same place
+       and for the same reason: the CONTROLS say a reshape is wanted, so a frame
+       drawn without it would be a wrong picture rather than a slow one. */
+    var wplan=null;
+    if(stWarpActive(t2)){
+      if(!ST_GPU.warpCap||ST_GPU.warpOff) return null;
+      wplan=stGpuWarpPlan(W,H,o.lm,t2);
+      if(wplan===false) return null;
+    }
     var cv=ST_GPU.cv;
     if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
     gl.viewport(0,0,W,H);
@@ -17118,7 +17418,9 @@ function stGpuRender(srcImg,W,H,o){
     /* the frame the CPU hands to (6b) is the canvas as it stands after (5), so
        a glow recipe stops the first draw before the vignette and comes back as
        a third pass. Without glow nothing changes and this is 0. */
-    gl.uniform1i(stGpuU("stopTail"),glowV?1:0);
+    /* v6.60.0 — and a reshape stops it at the same place, because stage (6c-)
+       reads the frame as (6b) left it, one draw later */
+    gl.uniform1i(stGpuU("stopTail"),(glowV||wplan)?1:0);
     gl.uniform1f(stGpuU("shpA"),0);
     gl.uniform1f(stGpuU("claA"),0);
     gl.uniform2f(stGpuU("wh"),W,H);
@@ -17201,7 +17503,15 @@ function stGpuRender(srcImg,W,H,o){
     }
     gl.uniform1f(stGpuU("smA"),smA);
     gl.uniform1f(stGpuU("evenA"),evenA);
+    /* v6.60.0 — when a reshape follows and no glow does, the LAST pass of the
+       main program is the one stage (6c-) reads, so it is drawn straight into
+       a texture instead of onto the canvas: the warp then samples it with no
+       readback at all. A glow recipe keeps the old road, because (6b) has to go
+       out to Skia anyway and comes back as a 2D canvas the upload can take. */
+    var useFbo = !!(wplan && !glowV && stGpuFbo(gl,W,H));
+    if(useFbo&&!s5) gl.bindFramebuffer(gl.FRAMEBUFFER,ST_GPU.fbo);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    if(useFbo&&!s5) gl.bindFramebuffer(gl.FRAMEBUFFER,null);
     var RS=(typeof o.rs==="number"&&o.rs>0)?o.rs:1;
     /* the current GL frame, copied to a 2D canvas so Skia can be asked to blur
        it. Both stage (5) and stage (6b) need exactly this, at different points
@@ -17246,7 +17556,10 @@ function stGpuRender(srcImg,W,H,o){
       gl.uniform1i(stGpuU("bwOn"),0);
       gl.uniform1f(stGpuU("shpA"),shpA);
       gl.uniform1f(stGpuU("claA"),claA);
+      /* with a reshape after it, THIS is the pass the warp reads */
+      if(useFbo) gl.bindFramebuffer(gl.FRAMEBUFFER,ST_GPU.fbo);
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      if(useFbo) gl.bindFramebuffer(gl.FRAMEBUFFER,null);
       /* stopTail is still set from the first draw when a glow follows, so this
          pass ends at (6b) and mode 3 finishes the frame */
       /* the blurs above were bound over the smoothing planes' own units, so the
@@ -17276,7 +17589,50 @@ function stGpuRender(srcImg,W,H,o){
       gpx.restore();
       glowOut=gp;
     }
-    if(glowV>0&&((t1.vig||0)>0||(t1.grn||0)>0)){
+    /* (6c-) LIVE FACE RESHAPE. What is on the canvas now is the frame at exactly
+       the point stRunPipeline reaches stWarpApply — (1b)(2)(3)(3b)(4)(4b), then
+       (5) and (6b) when they ran — because stopTail held the vignette and the
+       grain back. stWarpApply reads that canvas with getImageData, so it reads
+       8-BIT pixels; a texture uploaded from the same canvas is the same bytes,
+       which is what lets the second program's bilinear be the CPU's bilinear
+       rather than a resemblance of it. The tail then runs inside that program,
+       from the shared source, so (7) and (8) land once and in order. */
+    if(wplan){
+      if(useFbo){
+        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.fb);
+      }else{
+        var wsrc=glowOut||grabP1();
+        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.src);
+        gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,wsrc);
+      }
+      gl.useProgram(ST_GPU.warpProg);
+      if(ST_GPU.warpAp>=0){ gl.enableVertexAttribArray(ST_GPU.warpAp); gl.vertexAttribPointer(ST_GPU.warpAp,2,gl.FLOAT,false,0,0); }
+      /* held rather than allocated: a reshape drag renders these every frame,
+         and the tail beyond wN is never read (the loop breaks at it) */
+      var wA=ST_GPU.wA||(ST_GPU.wA=new Float32Array(ST_GPU_WARP_MAX*4));
+      var wB=ST_GPU.wB||(ST_GPU.wB=new Float32Array(ST_GPU_WARP_MAX*2)), wi;
+      for(wi=0;wi<wplan.K.length;wi++){
+        var kq=wplan.K[wi];
+        wA[wi*4]=kq.x; wA[wi*4+1]=kq.y; wA[wi*4+2]=kq.r; wA[wi*4+3]=kq.s||0;
+        wB[wi*2]=kq.dx||0; wB[wi*2+1]=kq.dy||0;
+      }
+      gl.uniform4fv(stGpuWU("wA"),wA);
+      gl.uniform2fv(stGpuWU("wB"),wB);
+      gl.uniform1i(stGpuWU("wN"),wplan.K.length);
+      gl.uniform4f(stGpuWU("wBox"),wplan.bx0,wplan.by0,wplan.bx1,wplan.by1);
+      gl.uniform4f(stGpuWU("wRect"),wplan.rx0,wplan.ry0,wplan.rw,wplan.rh);
+      /* the CPU's own two clamp limits, computed in float64 where it computes
+         them, so the shader compares against the number it actually used */
+      gl.uniform2f(stGpuWU("wLim"),wplan.rw-1.001,wplan.rh-1.001);
+      gl.uniform2f(stGpuWU("wh"),W,H);
+      gl.uniform2f(stGpuWU("wFlipY"),useFbo?1:0,useFbo?-1:1);
+      gl.uniform1f(stGpuWU("rs"),RS);
+      gl.uniform1f(stGpuWU("vig"),t1.vig||0);
+      gl.uniform1f(stGpuWU("grn"),t1.grn||0);
+      gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      gl.useProgram(ST_GPU.prog);
+      glowOut=null;
+    } else if(glowV>0&&((t1.vig||0)>0||(t1.grn||0)>0)){
       /* (7) and (8) still belong to the shader — mode 3 reads the composited
          frame as finished pixels, so every earlier stage must be off or it
          would land a second time */
@@ -17315,7 +17671,11 @@ function stGpuTryPaint(c,W,H){
     t2.blushC=stHexRgb(svGet("mu_blushLocHex",null));
     if(t2.lipC||t2.blushC) return false;
     var _t0=stNow();
-    var out=stGpuRender(stGeoSource(),W,H,{t1:t1,t2:t2,pv:pv,curve:stCurveVals(),rs:stPreviewRS(W,H)});
+    /* v6.60.0 — the landmarks travel with the frame now, because stage (6c-)
+       is measured on them exactly as stRunPipeline's own call at the top of the
+       preview is (see stPvPaint's lm:ST.faceLM||null). Without them the shader
+       would draw a frame with the reshape silently missing. */
+    var out=stGpuRender(stGeoSource(),W,H,{t1:t1,t2:t2,pv:pv,curve:stCurveVals(),rs:stPreviewRS(W,H),lm:ST.faceLM||null});
     if(!out) return false;
     var cc=c.getContext("2d");
     cc.clearRect(0,0,c.width,c.height);
@@ -17370,6 +17730,18 @@ function stGpuTryPaint(c,W,H){
         ST_GPU.fsSlow=(ST_GPU.fsSlow||0)+1;
         if(ST_GPU.fsSlow>=2) ST_GPU.fsOff=true;
       } else ST_GPU.fsSlow=0;
+    }
+    /* v6.60.0 — stage (6c-) buys a round trip of its own whenever nothing else
+       already paid for one, so it is judged on its own frames like (6b) and
+       (4b). Two strikes, cleared by any win, for the same reason: a reshape
+       slider dragged with every other control at zero is a frame the CPU can
+       almost skip, and one such frame must not take the stage away from the
+       full recipes where it pays. */
+    if(stWarpActive(t2)&&!ST_GPU.warpOff){
+      if(stGpuS5Spent(_ms,(ST.q&&ST.q.last&&ST.q.last.settle)||0)){
+        ST_GPU.warpSlow=(ST_GPU.warpSlow||0)+1;
+        if(ST_GPU.warpSlow>=2) ST_GPU.warpOff=true;
+      } else ST_GPU.warpSlow=0;
     }
     if(ST_GPU.t4paid&&!ST_GPU.t4off){
       if(stGpuS5Spent(_ms,(ST.q&&ST.q.last&&ST.q.last.settle)||0)){
@@ -28591,7 +28963,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.59.0";
+var APP_VER="6.60.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
