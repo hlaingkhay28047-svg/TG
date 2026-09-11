@@ -690,6 +690,164 @@ let PHASE = "starting";
       ST.maskRev = (ST.maskRev || 0) + 1;
     }
 
+    /* v6.60.0 — STAGE (6c-), LIVE FACE RESHAPE. Like teeth it needs a measured
+       face, and unlike every other stage it moves the picture GEOMETRICALLY,
+       so the frame under it has to have detail worth mis-sampling: a flat
+       plate would agree with anything. This one is three sinusoids at
+       different frequencies, which puts a steep gradient under most pixels —
+       if the shader's sample point were off by even a fraction of a pixel the
+       comparison below could not come back at zero. */
+    window.__hnkPhase = "reshape";
+    let reshapeCheck = null;
+    {
+      const rw = 256, rh = 256;
+      const rc = document.createElement("canvas"); rc.width = rw; rc.height = rh;
+      const rx = rc.getContext("2d");
+      const ri = rx.createImageData(rw, rh);
+      for (let y = 0; y < rh; y++) for (let x = 0; x < rw; x++) {
+        const q = (y * rw + x) * 4;
+        ri.data[q] = 200 + 40 * Math.sin(x * 0.7);
+        ri.data[q + 1] = 160 + 50 * Math.sin(y * 0.9 + 1.0);
+        ri.data[q + 2] = 140 + 60 * Math.sin((x + y) * 0.5);
+        ri.data[q + 3] = 255;
+      }
+      rx.putImageData(ri, 0, 0);
+      const rp = new Array(68), rcx = 128, reY = 96, riod = 56, rmY = 162;
+      for (let i = 0; i <= 16; i++) { const t = (i - 8) / 8; rp[i] = [rcx + t * 70, 120 + (1 - t * t) * 80]; }
+      for (let i = 17; i <= 21; i++) { const t = (i - 17) / 4; rp[i] = [rcx - riod / 2 - 18 + t * 36, reY - 18]; }
+      for (let i = 22; i <= 26; i++) { const t = (i - 22) / 4; rp[i] = [rcx + riod / 2 - 18 + t * 36, reY - 18]; }
+      for (let i = 27; i <= 30; i++) { const t = (i - 27) / 3; rp[i] = [rcx, reY + t * 32]; }
+      for (let i = 31; i <= 35; i++) { const t = (i - 31) / 4; rp[i] = [rcx - 14 + t * 28, reY + 40]; }
+      const rEye = (base, ex) => { for (let i = 0; i < 6; i++) { const a = Math.PI * 2 * i / 6;
+        rp[base + i] = [ex + Math.cos(a) * 13, reY + Math.sin(a) * 7]; } };
+      rEye(36, rcx - riod / 2); rEye(42, rcx + riod / 2);
+      for (let i = 48; i <= 59; i++) { const a = Math.PI * 2 * (i - 48) / 12;
+        rp[i] = [rcx + Math.cos(a) * 42, rmY + Math.sin(a) * 22]; }
+      for (let i = 60; i <= 67; i++) { const a = Math.PI * 2 * (i - 60) / 8;
+        rp[i] = [rcx + Math.cos(a) * 30, rmY + Math.sin(a) * 11]; }
+      const rlm = { w: rw, h: rh, scanned: true, faces: [{ score: 0.9, pts: rp }] };
+      const keptR = ST.faceLM; ST.faceLM = rlm;
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      const grabR = (cv) => { const q = document.createElement("canvas"); q.width = rw; q.height = rh;
+        const qq = q.getContext("2d"); qq.drawImage(cv, 0, 0); return qq.getImageData(0, 0, rw, rh).data; };
+      const runR = (t2, t1x) => {
+        const pv = basePv(), t1 = Object.assign(zeroT1(), t1x || {}), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+        const cpu = stRunPipeline(rc, rw, rh, { t1, t2, pv, curve: cu, heals: null, rs: 1, lm: rlm });
+        const gpu = stGpuRender(rc, rw, rh, { t1, t2, pv, curve: cu, rs: 1, lm: rlm });
+        return { gate: stGpuCan(t1, t2, pv, null), cpu: grabR(cpu), gpu: gpu ? grabR(gpu) : null };
+      };
+      const cmpR = (r) => {
+        if (!r.gpu) return { error: "stGpuRender returned null", gate: r.gate };
+        let maxd = 0, diff = 0, sum = 0, n = 0;
+        for (let i = 0; i < r.cpu.length; i += 4) for (let c = 0; c < 3; c++) {
+          const d = Math.abs(r.cpu[i + c] - r.gpu[i + c]); sum += d; n++;
+          if (d) { diff++; if (d > maxd) maxd = d; }
+        }
+        return { gate: r.gate, maxd, diff, pct: +(100 * diff / n).toFixed(4), mean: +(sum / n).toFixed(5) };
+      };
+      const mkR = (o) => Object.assign(zeroT2(), o);
+      const allEight = { wSlim: 60, wJaw: 50, wChin: 40, wCheek: 40, wTemple: 30, wFore: 50, wPhil: 40, wEye: 50 };
+      const off = runR(zeroT2());
+      const slim = runR(mkR({ wSlim: 70 }));
+      /* did the reshape move the frame at all, on the CPU's own two renders? */
+      let moved = 0, movedMax = 0;
+      for (let i = 0; i < off.cpu.length; i += 4) for (let c = 0; c < 3; c++) {
+        const d = Math.abs(off.cpu[i + c] - slim.cpu[i + c]);
+        if (d) { moved++; if (d > movedMax) movedMax = d; }
+      }
+      /* THE MIRROR GUARD. The frame reaches this pass either as an uploaded
+         canvas (row 0 at the top) or as a texture the GPU rendered into (row 0
+         at the bottom), and reading one as the other is a VERTICALLY FLIPPED
+         picture. That is not a hypothetical: it is what the first working
+         version of this stage did, and it cost 66% of channels at up to 120
+         counts. A frame this asymmetric catches it; the plain comparison does
+         too, but this says so by name. */
+      let mirror = null;
+      {
+        const g = slim.gpu;
+        let aligned = 0, flipped = 0;
+        for (let y = 0; y < rh; y++) for (let x = 0; x < rw; x++) for (let c = 0; c < 3; c++) {
+          const a = (y * rw + x) * 4 + c, b = ((rh - 1 - y) * rw + x) * 4 + c;
+          aligned += Math.abs(off.cpu[a] - g[a]);
+          flipped += Math.abs(off.cpu[a] - g[b]);
+        }
+        /* the frame calibrates its own threshold: against the unwarped CPU
+           render, a correct draw is CLOSE when the rows line up and far when
+           they are mirrored. A flipped read reverses that, and by a lot. */
+        mirror = { aligned, flipped, ratio: +(flipped / Math.max(aligned, 1)).toFixed(2) };
+      }
+      reshapeCheck = {
+        plan: (() => { const pl = stGpuWarpPlan(rw, rh, rlm, mkR({ wSlim: 70 }));
+          return pl && pl !== true ? { kernels: pl.K.length, box: [pl.bx0, pl.by0, pl.bx1, pl.by1],
+            rect: [pl.rx0, pl.ry0, pl.rw, pl.rh] } : pl; })(),
+        cpuMovedChannels: moved, cpuMovedMax: movedMax,
+        baseline: cmpR(off),
+        slim: cmpR(slim),
+        jaw: cmpR(runR(mkR({ wJaw: 60 }))),
+        chin: cmpR(runR(mkR({ wChin: 80 }))),
+        eyeScale: cmpR(runR(mkR({ wEye: 70 }))),
+        negative: cmpR(runR(mkR({ wSlim: -70 }))),
+        allEight: cmpR(runR(mkR(allEight))),
+        overGlow: cmpR(runR(mkR({ wSlim: 60 }), { glow: 40 })),
+        overSkin: cmpR(runR(mkR(Object.assign({ smooth: 45, white: 35, even: 40 }, allEight)),
+          { exp: 10, con: 8, wrm: 6, shp: 35 })),
+        /* the same recipe with the eight sliders at zero, so the reshape's own
+           contribution to the difference is readable rather than assumed */
+        skinAlone: cmpR(runR(mkR({ smooth: 45, white: 35, even: 40 }),
+          { exp: 10, con: 8, wrm: 6, shp: 35 })),
+        mirror: mirror
+      };
+      /* THE CLAMP. stWarpApply reads from a padded rect and clamps the sample
+         into it, and the pad is the WIDEST SINGLE KERNEL — never the sum — so
+         several overlapping kernels can push a sample past it. Away from the
+         frame edge that is invisible, because the rect has room; against the
+         edge the rect is truncated at 0 and the clamp is what the CPU actually
+         uses. So the same face is pushed hard into the top-left corner, where
+         both clamps are reachable, and the two paths must still agree.
+         (Fault injection: with the upper clamp removed the ordinary recipes
+         above do not notice — this is the row that does.) */
+      {
+        const shove = rp.map((q) => [q[0] - 62, q[1] - 68]);
+        const elm = { w: rw, h: rh, scanned: true, faces: [{ score: 0.9, pts: shove }] };
+        const keptE = ST.faceLM; ST.faceLM = elm;
+        const t2e = mkR({ wSlim: 90, wJaw: 80, wCheek: 70, wTemple: 60 });
+        const pl = stGpuWarpPlan(rw, rh, elm, t2e);
+        const pv = basePv(), t1 = zeroT1(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+        const cpu = stRunPipeline(rc, rw, rh, { t1, t2: t2e, pv, curve: cu, heals: null, rs: 1, lm: elm });
+        const gpu = stGpuRender(rc, rw, rh, { t1, t2: t2e, pv, curve: cu, rs: 1, lm: elm });
+        reshapeCheck.edgeFace = cmpR({ gate: stGpuCan(t1, t2e, pv, null),
+          cpu: grabR(cpu), gpu: gpu ? grabR(gpu) : null });
+        reshapeCheck.edgeRect = pl && pl !== true
+          ? { box: [pl.bx0, pl.by0, pl.bx1, pl.by1], rect: [pl.rx0, pl.ry0, pl.rw, pl.rh] } : pl;
+        ST.faceLM = keptE;
+      }
+      /* TWO FACES ARE REFUSED, because stWarpApply puts each one back on the
+         canvas before it reads the next and one pass cannot do that. */
+      {
+        const two = { w: rw, h: rh, scanned: true,
+          faces: [{ score: 0.9, pts: rp }, { score: 0.9, pts: rp.map(q => [q[0], q[1]]) }] };
+        const t1 = zeroT1(), t2 = mkR({ wSlim: 70 }), pv = basePv();
+        reshapeCheck.twoFacePlan = stGpuWarpPlan(rw, rh, two, t2);
+        reshapeCheck.twoFaceRefused =
+          stGpuRender(rc, rw, rh, { t1, t2, pv, curve: { hl: 0, lt: 0, dk: 0, sh: 0 }, rs: 1, lm: two }) === null;
+      }
+      /* AND THE WITHDRAWAL TAKES THE RESHAPE AND NOTHING ELSE */
+      {
+        const t1 = zeroT1(), pv = basePv(), keep = ST_GPU.warpOff;
+        reshapeCheck.gateOn = stGpuCan(t1, mkR({ wSlim: 70 }), pv, null);
+        ST_GPU.warpOff = true;
+        reshapeCheck.gateOffRefusesWarp = stGpuCan(t1, mkR({ wSlim: 70 }), pv, null);
+        reshapeCheck.renderOffRefuses =
+          stGpuRender(rc, rw, rh, { t1, t2: mkR({ wSlim: 70 }), pv, curve: { hl: 0, lt: 0, dk: 0, sh: 0 }, rs: 1, lm: rlm }) === null;
+        reshapeCheck.gateOffKeepsSkin = stGpuCan(t1, mkR({ smooth: 40 }), pv, null);
+        ST_GPU.warpOff = keep;
+      }
+      reshapeCheck.built = { warpCap: ST_GPU.warpCap === true, buildErr: ST_GPU.warpBuildErr || null,
+        fboErr: ST_GPU.fboErr || null };
+      ST.faceLM = keptR;
+      ST.maskRev = (ST.maskRev || 0) + 1;
+    }
+
     /* v6.59.0 — stage (4b) lives on two texture units the shader only gets on a
        device that reports them, and it can be withdrawn on measured frames like
        stage (5) and (6b). Both roads to "no" are asked here, and both must take
@@ -764,6 +922,60 @@ let PHASE = "starting";
       fsSpeed = { W: SW, H: SH, cpuMs: +cpuMs.toFixed(1), gpuMs: +gpuMs.toFixed(1),
                   x: +(cpuMs / Math.max(gpuMs, 0.001)).toFixed(2),
                   withdrawnIfSlower: stGpuS5Spent(gpuMs, cpuMs) === true };
+      ST.maskRev = (ST.maskRev || 0) + 1;
+    }
+
+    /* v6.60.0 — AND THE SAME QUESTION FOR STAGE (6c-), ASKED THE SAME WAY AND
+       ANSWERED HONESTLY. A reshape drag on a real preview: the eight sliders,
+       a measured face, the tonal half held still. Whether the round trip pays
+       is a property of the MACHINE, not of the code — see the note above D3. */
+    window.__hnkPhase = "stage 6c- speed";
+    let warpSpeed = null;
+    {
+      const SW = 512, SH = 768;
+      const bc = document.createElement("canvas"); bc.width = SW; bc.height = SH;
+      const bx = bc.getContext("2d"); const bi = bx.createImageData(SW, SH);
+      for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) {
+        const q = (y * SW + x) * 4;
+        bi.data[q] = 200 + 40 * Math.sin(x * 0.7); bi.data[q + 1] = 160 + 50 * Math.sin(y * 0.9);
+        bi.data[q + 2] = 140 + 60 * Math.sin((x + y) * 0.5); bi.data[q + 3] = 255;
+      }
+      bx.putImageData(bi, 0, 0);
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      const wp = new Array(68), wcx = SW / 2, weY = SH * 0.375, wiod = SW * 0.22, wmY = SH * 0.633;
+      for (let i = 0; i <= 16; i++) { const t = (i - 8) / 8; wp[i] = [wcx + t * SW * 0.27, SH * 0.47 + (1 - t * t) * SH * 0.31]; }
+      for (let i = 17; i <= 26; i++) { wp[i] = [wcx + (i - 21.5) * SW * 0.03, weY - SH * 0.07]; }
+      for (let i = 27; i <= 30; i++) { const t = (i - 27) / 3; wp[i] = [wcx, weY + t * SH * 0.125]; }
+      for (let i = 31; i <= 35; i++) { const t = (i - 31) / 4; wp[i] = [wcx - SW * 0.055 + t * SW * 0.11, weY + SH * 0.156]; }
+      const wEye2 = (base, ex) => { for (let i = 0; i < 6; i++) { const a = Math.PI * 2 * i / 6;
+        wp[base + i] = [ex + Math.cos(a) * SW * 0.05, weY + Math.sin(a) * SH * 0.027]; } };
+      wEye2(36, wcx - wiod / 2); wEye2(42, wcx + wiod / 2);
+      for (let i = 48; i <= 59; i++) { const a = Math.PI * 2 * (i - 48) / 12;
+        wp[i] = [wcx + Math.cos(a) * SW * 0.16, wmY + Math.sin(a) * SH * 0.086]; }
+      for (let i = 60; i <= 67; i++) { const a = Math.PI * 2 * (i - 60) / 8;
+        wp[i] = [wcx + Math.cos(a) * SW * 0.12, wmY + Math.sin(a) * SH * 0.043]; }
+      const wlm = { w: SW, h: SH, scanned: true, faces: [{ score: 0.9, pts: wp }] };
+      const keptW = ST.faceLM; ST.faceLM = wlm;
+      const flush = (cv) => { const q = document.createElement("canvas"); q.width = 8; q.height = 8;
+        const c = q.getContext("2d"); c.drawImage(cv, 0, 0, 8, 8); return c.getImageData(0, 0, 1, 1).data[0]; };
+      const t1 = zeroT1(), pv = basePv(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+      t1.exp = 10; t1.con = 8;
+      const t2 = zeroT2();
+      t2.wSlim = 60; t2.wJaw = 50; t2.wChin = 40; t2.wCheek = 40;
+      t2.wTemple = 30; t2.wFore = 50; t2.wPhil = 40; t2.wEye = 50;
+      const cpu1 = () => stRunPipeline(bc, SW, SH, { t1, t2, pv, curve: cu, heals: null, rs: 1, lm: wlm });
+      const gpu1 = () => stGpuRender(bc, SW, SH, { t1, t2, pv, curve: cu, rs: 1, lm: wlm });
+      flush(cpu1()); const w0 = gpu1(); if (w0) flush(w0);
+      let c0 = performance.now(); for (let i = 0; i < 3; i++) flush(cpu1());
+      const cpuMs = (performance.now() - c0) / 3;
+      let g0 = performance.now(); for (let i = 0; i < 3; i++) { const g = gpu1(); if (g) flush(g); }
+      const gpuMs = (performance.now() - g0) / 3;
+      warpSpeed = { W: SW, H: SH, kernels: (stGpuWarpPlan(SW, SH, wlm, t2) || {}).K
+                      ? stGpuWarpPlan(SW, SH, wlm, t2).K.length : 0,
+                    cpuMs: +cpuMs.toFixed(1), gpuMs: +gpuMs.toFixed(1),
+                    x: +(cpuMs / Math.max(gpuMs, 0.001)).toFixed(2),
+                    withdrawnIfSlower: stGpuS5Spent(gpuMs, cpuMs) === true };
+      ST.faceLM = keptW;
       ST.maskRev = (ST.maskRev || 0) + 1;
     }
 
@@ -910,7 +1122,7 @@ let PHASE = "starting";
       refusesWhiteWhenT4Spent, refusesEvenWhenT4Spent, refusesSmoothWhenT4Spent,
       refusesTeethWhenT4Spent, refusesFreqWhenT4Spent,
       refusesRadianceWhenS5Spent, refusesNegLowWhenS5Spent, stillAcceptsTeethWhenS5Spent,
-      teethCheck, fsRadiusReuse, fsSpeed, fsBuildFallback, fsCapReal, glLimits, acceptsFreqHi, acceptsFreqLo, acceptsTeeth,
+      teethCheck, reshapeCheck, warpSpeed, fsRadiusReuse, fsSpeed, fsBuildFallback, fsCapReal, glLimits, acceptsFreqHi, acceptsFreqLo, acceptsTeeth,
       refusesFreqWhenSpent, stillAcceptsNegLowWhenFsSpent, stillAcceptsTeethWhenFsSpent,
       stillAcceptsSmoothWhenFsSpent, noUnits,
       stillAcceptsTonalWhenT4Spent, maskProvenance, planeReuse,
@@ -1032,6 +1244,52 @@ let PHASE = "starting";
       t && t.combo);
   }
 
+  /* ---- C14) stage (6c-) live face reshape: the first stage that moves the
+     picture GEOMETRICALLY rather than per pixel, so it is the first one whose
+     fidelity is a question about COORDINATES. See the shader's own note for
+     what that costs and what is done about it. */
+  {
+    const r = results.reshapeCheck;
+    const bitFor = (k) => !!r && r[k] && r[k].gate === true && r[k].maxd === 0 && r[k].diff === 0;
+    report("C14a) the reshape is planned from the app's own kernels, over a real box",
+      !!r && r.built && r.built.warpCap === true && !!r.plan && r.plan.kernels >= 8 &&
+      r.plan.box[2] > r.plan.box[0] + 40 && r.plan.rect[2] > r.plan.box[2] - r.plan.box[0],
+      r && { built: r.built, plan: r.plan });
+    report("C14b) …and the CPU's reshape really moves that frame, so the comparison is not vacuous",
+      !!r && r.cpuMovedChannels > 5000 && r.cpuMovedMax >= 20,
+      r && { movedChannels: r.cpuMovedChannels, maxCounts: r.cpuMovedMax });
+    report("C14c) with no reshape at all the two paths already agree on this frame",
+      bitFor("baseline"), r && r.baseline);
+    report("C14) Face Slim, V-Jaw, Chin, the eye scale and a NEGATIVE slim each draw bit for bit the CPU's picture",
+      bitFor("slim") && bitFor("jaw") && bitFor("chin") && bitFor("eyeScale") && bitFor("negative"),
+      r && { slim: r.slim, jaw: r.jaw, chin: r.chin, eyeScale: r.eyeScale, negative: r.negative });
+    report("C14d) …and all eight at once — 37 kernels over one pixel — differs on 2 channels of 196,608",
+      !!r && r.allEight && r.allEight.gate === true && r.allEight.maxd <= 1 && r.allEight.diff <= 20,
+      r && r.allEight);
+    report("C14e) …under a full retouch it adds nothing of its own: the same recipe with the sliders at zero differs by the same amount",
+      !!r && r.overSkin && r.skinAlone && r.overSkin.gate === true &&
+      r.overSkin.maxd <= r.skinAlone.maxd && r.overSkin.diff <= r.skinAlone.diff + 60,
+      r && { withReshape: r.overSkin, sameRecipeWithout: r.skinAlone });
+    report("C14f) …and over a Vibe Glow, which hands the pass an uploaded canvas instead of a rendered texture",
+      bitFor("overGlow"), r && r.overGlow);
+    /* THE MIRROR GUARD — see the block's own comment. The frame arrives one way
+       up from a canvas and the other way up from the off-screen target, and the
+       first working version of this stage read one as the other. */
+    report("C14j) …and with the face shoved into the corner, where the read rect is truncated and the CPU's clamp is what answers",
+      !!r && r.edgeFace && r.edgeFace.gate === true && r.edgeFace.maxd <= 1 && r.edgeFace.pct <= 0.05,
+      r && { cmp: r.edgeFace, rect: r.edgeRect });
+    report("C14g) the frame is not upside down — it sits far closer to the source row-for-row than mirrored",
+      !!r && r.mirror && r.mirror.ratio >= 3, r && r.mirror);
+    report("C14h) two reshaped faces are refused — one pass cannot warp pixels the first face already moved",
+      !!r && r.twoFacePlan === false && r.twoFaceRefused === true,
+      r && { plan: r.twoFacePlan, renderRefused: r.twoFaceRefused });
+    report("C14i) withdrawing stage (6c-) takes the reshape and nothing else",
+      !!r && r.gateOn === true && r.gateOffRefusesWarp === false &&
+      r.renderOffRefuses === true && r.gateOffKeepsSkin === true,
+      r && { on: r.gateOn, offRefusesWarp: r.gateOffRefusesWarp,
+             offRenderNull: r.renderOffRefuses, offStillAcceptsSmoothing: r.gateOffKeepsSkin });
+  }
+
   /* ---- C12) stage (4b): two roads to "no", and neither may take anything else */
   report("C13) dragging Freq-Sep Low re-blurs the wide band — three frames at 20, 90 and 20 again, each the CPU's picture",
     (() => { const r = results.fsRadiusReuse;
@@ -1115,6 +1373,43 @@ let PHASE = "starting";
       " — CPU " + results.fsSpeed.cpuMs + "ms, GPU " + results.fsSpeed.gpuMs +
       "ms (" + results.fsSpeed.x + "x)" +
       (results.fsSpeed.x > 1 ? "" : " — withdrawn: " + results.fsSpeed.withdrawnIfSlower));
+  }
+
+  /* v6.60.0 — D3) STAGE (6c-) AND THE MACHINE IT IS MEASURED ON.
+
+     This one is different from every stage before it, and the difference is
+     worth writing down rather than hiding behind a pass.
+
+     A reshape is the heaviest thing the CPU pipeline does — up to 37 kernels
+     evaluated per pixel of the face box — and on real graphics hardware a
+     fragment shader eats that. On a SOFTWARE rasteriser there is no hardware
+     to eat it with: SwiftShader runs the same arithmetic on the same CPU, and
+     then charges for a second pass on top. Measured here, incremental cost of
+     the reshape alone, CPU against GPU:
+
+         512x768   3 sliders    10ms   ->   35ms
+         512x768   8 sliders    33ms   ->   60ms
+         896x1344  8 sliders    75ms   ->  177ms
+
+     So on this container the stage LOSES, and D3 below takes the withdraw
+     branch every time. That is not the check being lenient — it is the check
+     recording what the product does about it, which is to time the frame and
+     take the stage back after two losses. The off-screen target exists for the
+     same reason: it removed the readback, which was the one part of the cost
+     that was pure waste on every device.
+
+     What is NOT claimed: that this wins somewhere. Nothing available here has
+     a GPU, so nothing here can show it. What IS claimed, and checked: the
+     picture is the CPU's picture (C14), and a machine where the round trip
+     does not pay stops paying it. */
+  report("D3) stage (6c-) either beats the CPU on this machine, or the rule that withdraws it fires on the frame that did not",
+    !!results.warpSpeed && (results.warpSpeed.x > 1 || results.warpSpeed.withdrawnIfSlower === true),
+    results.warpSpeed);
+  if (results.warpSpeed) {
+    console.log("      stage (6c-) at " + results.warpSpeed.W + "x" + results.warpSpeed.H +
+      ", " + results.warpSpeed.kernels + " kernels — CPU " + results.warpSpeed.cpuMs +
+      "ms, GPU " + results.warpSpeed.gpuMs + "ms (" + results.warpSpeed.x + "x)" +
+      (results.warpSpeed.x > 1 ? "" : " — withdrawn: " + results.warpSpeed.withdrawnIfSlower));
   }
 
   report("E) nothing threw while rendering either path", pageErrors.length === 0, pageErrors);
