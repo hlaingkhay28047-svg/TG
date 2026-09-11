@@ -104,7 +104,15 @@ for (const f of panelFiles()) {
   const allowed = f.endsWith("panel-selftest.js") ? 1 : 0;
   if (hits.length > allowed) svgRefs.push({ file: path.relative(ROOT, f), hits: hits.slice(0, 4) });
 }
-report("B1) no panel surface draws an icon from a .svg — UXP would paint it black",
+/* v6.64.0 — THIS CHECK WAS TRUE AND THE CLAIM WAS NOT. The regex above
+   matches a LITERAL "icons/ui/<name>.svg", and eight of the panel's icon
+   builders assemble the path — "icons/ui/" + name + "-" + tint + ".svg" —
+   so Retouch A/B, Home, the Workflows page and the shell rail all went on
+   fetching the stroke SVG while this line reported that none of them did.
+   The owner kept photographing exactly those screens. The shape-of-the-line
+   check that actually closes it is verify_panel_glyphs.js D1; this one keeps
+   its narrower, literal job and says so. */
+report("B1) no panel surface names an icon .svg outright (the concatenated form is verify_panel_glyphs D1)",
   svgRefs.length === 0, svgRefs.slice(0, 6));
 
 const MAIN = fs.readFileSync(path.join(PANEL, "main.js"), "utf8");

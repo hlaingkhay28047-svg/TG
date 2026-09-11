@@ -144,20 +144,31 @@ var TINT_LETTER = { cream: "i2c", gold: "i2g", ink: "i2k", muted: "i2m" };
 function icn(name, cls) {
   var c = cls || "ic-s";
   /* a class that fixes the colour outright needs one file, not a set */
-  if (c.indexOf("ic-car") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-gold.svg">';
-  if (c.indexOf("ic-xl") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-muted.svg">';
-  if (c.indexOf("ic-h2") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-gold.svg">';
+  /* v6.64.0 — .png, like every other icon in the panel since 6.63.0. These four
+     builders assemble the path by concatenation, and the raster wave's own gate
+     matched only a LITERAL "icons/ui/<name>.svg", so it reported "no panel
+     surface draws an icon from a .svg" while Retouch A and Retouch B — the two
+     screens the owner photographed with black marks still in them — drew every
+     one of theirs from the stroke SVG that Photoshop paints as a black
+     silhouette. The gate now matches the concatenated form too. */
+  if (c.indexOf("ic-car") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-gold.png">';
+  if (c.indexOf("ic-xl") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-muted.png">';
+  if (c.indexOf("ic-h2") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-gold.png">';
   var tints = tintsFor(name);
   var out = "";
   for (var i = 0; i < tints.length; i++) {
-    out += '<img class="' + c + " " + TINT_LETTER[tints[i]] + '" src="icons/ui/' + name + "-" + tints[i] + '.svg">';
+    out += '<img class="' + c + " " + TINT_LETTER[tints[i]] + '" src="icons/ui/' + name + "-" + tints[i] + '.png">';
   }
   return out;
 }
 function escH(s) {
   return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
 }
-var ICN_LEAD = /^(?:[←-⇿☀-➿⬀-⯿〰■-◿⭐️‍]|[\uD83C-\uD83E][\uDC00-\uDFFF])+\s*/;
+/* v6.64.0 — the class is written with \uXXXX escapes, not with the characters
+   themselves (main.js has always written the same regex that way). A file that
+   carries the glyphs it is stripping needs a waiver from the glyph gate, and a
+   waiver is how the next one gets in. Identical set, identical behaviour. */
+var ICN_LEAD = /^(?:[\u2190-\u21FF\u2600-\u27BF\u2B00-\u2BFF\u3030\u25A0-\u25FF\u2B50\uFE0F\u200D]|[\uD83C-\uD83E][\uDC00-\uDFFF])+\s*/;
 function stripIcn(s) { return String(s == null ? "" : s).replace(ICN_LEAD, ""); }
 function setIcnText(elm, name, text, opts) {
   opts = opts || {};

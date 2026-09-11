@@ -57,17 +57,30 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
   report("A) the panel ships the same number of entries as the app",
     panel.LIST.length === app.length, { app: app.length, panel: panel.LIST.length });
 
+  /* v6.64.0 — THE ONE PERMITTED DIFFERENCE, STATED. The panel's copy of a row
+     is the app's, character for character, EXCEPT for the characters Adobe's
+     UI font has no glyph for: it draws a black box for those, and the owner
+     photographed a screenful of them on 6.134.0. tools/lib/uxp_safe_text.js
+     removes them where the text is lifted (the panel shows its own sprite
+     instead), so the contract this test holds is "the panel says the same
+     thing, minus what this renderer cannot draw" — and it is checked by
+     running the app's text through the same pass rather than by excusing a
+     mismatch. Everything else is still exact. */
+  const { uxpSafeText } = require("../tools/lib/uxp_safe_text.js");
   const drift = [];
   app.forEach((a, i) => {
     const p = panel.LIST[i];
     if (!p) { drift.push({ i, missing: a.ref }); return; }
     if (p.v !== a.v || p.kind !== a.kind || p.ref !== a.ref) drift.push({ i, app: a.v + "/" + a.ref, panel: p.v + "/" + p.ref });
     LANGS.forEach(l => {
-      if ((a.t || {})[l] !== (p.t || {})[l]) drift.push({ i, ref: a.ref, field: "t." + l });
-      if ((a.s || {})[l] !== (p.s || {})[l]) drift.push({ i, ref: a.ref, field: "s." + l });
+      const at = uxpSafeText((a.t || {})[l], "whats-new t." + l);
+      const as = uxpSafeText((a.s || {})[l], "whats-new s." + l);
+      if (at !== (p.t || {})[l]) drift.push({ i, ref: a.ref, field: "t." + l });
+      if (as !== (p.s || {})[l]) drift.push({ i, ref: a.ref, field: "s." + l });
     });
   });
-  report("A2) every entry matches the app's — version, kind, target, and all nine languages of both lines",
+  report("A2) every entry matches the app's — version, kind, target, and all nine languages of both lines, " +
+    "less only the characters this renderer has no glyph for",
     drift.length === 0, drift.slice(0, 5));
 
   /* v5.91.1 — major.minor, matching the app-side gate and for the same

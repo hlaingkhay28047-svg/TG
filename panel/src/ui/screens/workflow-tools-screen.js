@@ -123,12 +123,15 @@ function create(deps) {
   function l9(m) { var k = _lang(); return (m && m[k] != null) ? m[k] : (m && m.en) || ""; }
 
   /* the app's icn(): a sprite symbol; the panel draws the same symbol from
-     icons/ui/<name>-<tint>.svg as an <img> (UXP has no <svg><use>) */
+     icons/ui/<name>-<tint>.png as an <img> (UXP has no <svg><use>, and since
+     6.63.0 no .svg either — this renderer draws a stroke icon as a black
+     silhouette; v6.64.0 caught these two, which build the path by
+     concatenation and so slipped past the raster gate's literal match) */
   function icon(name, cls, w) {
     var im = doc.createElement("img");
     im.className = cls || "ic-s";
     im.alt = "";
-    im.src = "icons/ui/" + name + ".svg";
+    im.src = "icons/ui/" + name + ".png";
     if (w) { im.style.width = w + "px"; im.style.height = w + "px"; }
     return im;
   }
@@ -249,7 +252,7 @@ function create(deps) {
       var on = i < 0;
       fav.className = on ? "fav on" : "fav";
       fav.setAttribute("aria-pressed", on ? "true" : "false");
-      favIc.src = "icons/ui/" + (on ? "i-star-fill-hi" : "i-star-fill-muted") + ".svg";
+      favIc.src = "icons/ui/" + (on ? "i-star-fill-hi" : "i-star-fill-muted") + ".png";
       renderFavRecent();
     });
     m.appendChild(fav);
@@ -760,10 +763,29 @@ function create(deps) {
     root.appendChild(back);
 
     root.appendChild(dom.el(doc, "div", { class: "hnk-h-title", text: wf.title }));
-    // Signature visual hero for the selected workflow
+    /* Signature visual hero for the selected workflow.
+
+       v6.64.0 — AS AN <img> THROUGH remoteArt, NOT A CSS BACKGROUND. The
+       owner photographed the Reference Scenes detail on panel 6.134.0: an
+       empty gold-bordered rectangle where the picture belongs, with the
+       SAME workflow's card drawn correctly in the grid one tap earlier.
+       Both facts are right. The grid goes through hnkArtCard -> setArt ->
+       HNK.remoteArt, which 6.107.0 introduced because this renderer will
+       not load a remote https picture and does not even raise an error
+       when it fails; the detail hero assigned the licensed host's URL
+       straight into background-image, which no fetch can rescue. remoteArt
+       has carried a paintBg() for exactly this since 6.107.0 and nothing
+       ever called it — so the hero now takes the same <img> path the grid
+       card takes, byte for byte, rather than a second path that has to be
+       right on its own. */
     if (wf.visual) {
       var hero = dom.el(doc, "div", { class: "hnk-wf-hero" });
-      hero.style.backgroundImage = 'url("' + wf.visual + '")';
+      var heroIm = doc.createElement("img");
+      heroIm.alt = "";
+      setArt(heroIm, wf.visual, function () {
+        try { hero.parentNode && hero.parentNode.removeChild(hero); } catch (e) { }
+      });
+      hero.appendChild(heroIm);
       root.appendChild(hero);
     }
     // What this workflow protects / uses — meaning at a glance

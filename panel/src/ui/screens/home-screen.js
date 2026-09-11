@@ -57,7 +57,7 @@ function l9(m) {
 /* The app's six dashboard destinations, in the app's order, with the app's
    art, badge glyph and label maps. `page` is the panel page key that holds
    the same surface (the app's page id is named beside it). `ic` is the app's
-   sprite symbol; the panel draws it from icons/ui/<ic>-cream.svg because a
+   sprite symbol; the panel draws it from icons/ui/<ic>-cream.png because a
    UXP <img> paints where an inline <svg><use> does not. */
 var DASH_CARDS = [
   { page: "retouch", app: "pgRetouch", ic: "i-gem", img: "icons/dash/retouch.jpg",
@@ -118,14 +118,17 @@ var L_LIB_MORE = { my: "နောက်ထပ်ကြည့်မယ်", en: "
 /* The app's setIcnText(): an icon and a label on one baseline row. main.js
    owns the panel's own copy, but this screen can render before main.js has
    loaded, so the row is built here from the same two parts — an <img> of
-   the sprite symbol (icons/ui/<name>-<tint>.svg) and the text. `after`
-   mirrors the app's {after:true}: label first, arrow last. */
+   the sprite symbol (icons/ui/<name>-<tint>.png) and the text. `after`
+   mirrors the app's {after:true}: label first, arrow last.
+   v6.64.0 — .png. 6.63.0 rasterised the icon set because UXP paints `fill`
+   and ignores `stroke`, but its gate only saw literal paths, so this builder
+   and the tile one below kept asking for the SVG. */
 function iconRow(doc, name, tint, text, after) {
   var row = dom.el(doc, "div", { class: "btn-in" });
   var im = doc.createElement("img");
   im.className = after ? "ic-s ic-after" : "ic-s";
   im.alt = "";
-  im.src = "icons/ui/" + name + "-" + tint + ".svg";
+  im.src = "icons/ui/" + name + "-" + tint + ".png";
   var tx = doc.createTextNode(text);
   if (after) { row.appendChild(tx); row.appendChild(im); }
   else { row.appendChild(im); row.appendChild(tx); }
@@ -159,7 +162,14 @@ function dashInfo() {
    minutes, silent when there is nothing to show. verify_greet_clock_weather
    holds these to the app's byte for byte. */
 var WX_COORDS={"Asia/Yangon":[16.87,96.2],"Asia/Rangoon":[16.87,96.2],"Asia/Bangkok":[13.75,100.5],"Asia/Singapore":[1.35,103.82],"Asia/Kuala_Lumpur":[3.14,101.69],"Asia/Jakarta":[-6.21,106.85],"Asia/Ho_Chi_Minh":[10.82,106.63],"Asia/Saigon":[10.82,106.63],"Asia/Shanghai":[31.23,121.47],"Asia/Hong_Kong":[22.32,114.17],"Asia/Macau":[22.2,113.54],"Asia/Tokyo":[35.68,139.69],"Asia/Seoul":[37.57,126.98],"Asia/Taipei":[25.03,121.57],"Asia/Manila":[14.6,120.98],"Asia/Phnom_Penh":[11.56,104.92],"Asia/Vientiane":[17.97,102.6],"Asia/Dhaka":[23.81,90.41],"Asia/Kolkata":[22.57,88.36],"Asia/Kathmandu":[27.72,85.32],"Asia/Colombo":[6.93,79.85],"Asia/Karachi":[24.86,67.01],"Asia/Dubai":[25.2,55.27],"Asia/Riyadh":[24.71,46.68],"Asia/Tehran":[35.69,51.39],"Asia/Kabul":[34.53,69.17],"Asia/Tashkent":[41.3,69.24],"Asia/Almaty":[43.24,76.89],"Asia/Ulaanbaatar":[47.89,106.91],"Asia/Brunei":[4.94,114.95],"Asia/Kuching":[1.55,110.35],"Asia/Makassar":[-5.15,119.43],"Asia/Jayapura":[-2.53,140.72],"Europe/London":[51.51,-0.13],"Europe/Paris":[48.86,2.35],"Europe/Berlin":[52.52,13.41],"Europe/Moscow":[55.76,37.62],"Australia/Sydney":[-33.87,151.21],"Australia/Melbourne":[-37.81,144.96],"Pacific/Auckland":[-36.85,174.76],"America/Los_Angeles":[34.05,-118.24],"America/New_York":[40.71,-74.01],"America/Chicago":[41.88,-87.63],"America/Toronto":[43.65,-79.38]};
-var WX_ICON={clear:"☀️",night:"🌙",partly:"⛅",cloud:"☁️",fog:"🌫️",drizzle:"🌦️",rain:"🌧️",snow:"🌨️",storm:"⛈️"};
+var WX_ICON={clear:"☀️",night:"🌙",partly:"⛅",cloud:"☁️",fog:"🌫️",drizzle:"🌦️",rain:"🌧️",snow:"🌨️",storm:"⛈️"};  /* uxp-glyph-ok: the app's table, kept byte for byte because
+   verify_greet_clock_weather pins it — the PANEL never paints it. Adobe's UI font has no
+   glyph for any of these nine and drew nine black boxes on the Home greeting; wxNode()
+   below draws the sprite instead, and wxLine() returns the words alone. */
+/* v6.64.0 — the sprite the panel shows in the emoji's place. Five pictures cover the nine
+   skies (the translated word beside them carries the precision the picture does not), and
+   every one of them is a file this renderer is known to draw. */
+var WX_SPRITE={clear:"i-sun",night:"i-moon",partly:"i-sky",cloud:"i-sky",fog:"i-sky",drizzle:"i-drop",rain:"i-drop",snow:"i-drop",storm:"i-bolt"};
 var WX_WORD={
   clear:{my:"နေသာ",en:"Clear",shn:"ၾႃႉၸႅင်ႈ",kac:"Jan pru",th:"ท้องฟ้าแจ่มใส",zh:"晴",vi:"Trời quang",id:"Cerah",ms:"Cerah"},
   night:{my:"ကြည်လင်တဲ့ည",en:"Clear night",shn:"ၶမ်ႈၸႅင်ႈ",kac:"Shana san",th:"คืนฟ้าใส",zh:"夜晴",vi:"Đêm quang",id:"Malam cerah",ms:"Malam cerah"},
@@ -203,7 +213,22 @@ function wxSave(v) {
 function wxLine(w) {
   if (!w) return "";
   var k = wxKind(w.code, w.isDay);
-  return WX_ICON[k] + " " + Math.round(w.temp) + "°C · " + l9(WX_WORD[k]);
+  return Math.round(w.temp) + "°C · " + l9(WX_WORD[k]);
+}
+/* the whole weather line as the panel draws it: sprite, then the words. The
+   app writes WX_ICON[k] into the string and Chromium paints the emoji; this
+   shell paints a black box for all nine, so the picture arrives as an <img>
+   the way every other icon in the panel does. */
+function wxNode(doc, w) {
+  var node = dom.el(doc, "div", { class: "wx" });
+  if (!w) return node;
+  var k = wxKind(w.code, w.isDay);
+  var im = doc.createElement("img");
+  im.className = "ic-s"; im.alt = "";
+  im.src = "icons/ui/" + (WX_SPRITE[k] || "i-sun") + "-cream.png";
+  node.appendChild(im);
+  node.appendChild(doc.createTextNode(" " + wxLine(w)));
+  return node;
 }
 var _wxBusy = false, _wxFailAt = 0, WX_RETRY = 5 * 60000;
 /* onReady(reading) is called only when a NEW reading has landed; a failed or
@@ -278,11 +303,11 @@ function render(root, deps) {
   /* v6.11.0 — the weather line, as the app's renderDashGreet: from the
      reading on hand now, renewed in the background, silent offline */
   var wxNow = wxLoad();
-  if (wxNow) greet.appendChild(dom.el(doc, "div", { class: "wx", text: wxLine(wxNow) }));
+  if (wxNow) greet.appendChild(wxNode(doc, wxNow));
   wxRefresh(function (w) {
     try {
       if (!greet.parentNode) return;
-      var node = dom.el(doc, "div", { class: "wx", text: wxLine(w) });
+      var node = wxNode(doc, w);
       var old = greet.querySelector(".wx");
       if (old) { greet.replaceChild(node, old); return; }
       var pill = greet.querySelector(".pill");
@@ -422,7 +447,7 @@ function render(root, deps) {
     artBox.appendChild(im);
     var bdg = dom.el(doc, "div", { class: "bdg" });
     var bic = doc.createElement("img");
-    bic.className = "ic-m"; bic.alt = ""; bic.src = "icons/ui/" + c.ic + "-cream.svg";
+    bic.className = "ic-m"; bic.alt = ""; bic.src = "icons/ui/" + c.ic + "-cream.png";
     bdg.appendChild(bic);
     artBox.appendChild(bdg);
     var card = dom.el(doc, "button", { class: "dash-card", id: "hnkDash_" + c.page }, [

@@ -21,6 +21,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 
 const ROOT = path.join(__dirname, "..");
 const APP = path.join(ROOT, "docs/app/index.html");
@@ -93,7 +94,7 @@ else {
 })();
 `;
 
-function build() { return HEAD + lift(fs.readFileSync(APP, "utf8")) + TAIL; }
+function build() { return uxpSafeCode(HEAD + lift(fs.readFileSync(APP, "utf8")) + TAIL, "build_panel_finish_engines"); }
 module.exports = { build };
 
 if (require.main === module) {

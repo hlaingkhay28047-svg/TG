@@ -13,6 +13,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 
 const ROOT = path.join(__dirname, "..");
 const APP = path.join(ROOT, "docs/app/index.html");
@@ -62,7 +63,7 @@ else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.videoWizard = API; 
 
 function build() {
   const html = fs.readFileSync(APP, "utf8");
-  return HEAD + lift(html) + TAIL;
+  return uxpSafeCode(HEAD + lift(html) + TAIL, "build_panel_video_wizard");
 }
 
 module.exports = { build };

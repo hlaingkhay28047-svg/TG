@@ -11,6 +11,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 
 const ROOT = path.join(__dirname, "..");
 const APP = path.join(ROOT, "docs", "app", "index.html");
@@ -34,7 +35,7 @@ function build() {
   const lit = block(fs.readFileSync(APP, "utf8"), "var WHATS_NEW = [");
   const cur = fs.readFileSync(OUT, "utf8");
   const old = block(cur, "var WHATS_NEW = [");
-  return cur.replace(old, lit);
+  return uxpSafeCode(cur.replace(old, lit), "build_panel_whats_new");
 }
 
 if (require.main === module) {

@@ -22,6 +22,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 const { APP_INIT, APP_PORT } = require("./build_panel_studio_suites.js");
 
 const ROOT = path.join(__dirname, "..");
@@ -166,7 +167,7 @@ function render(d) {
   lines.push("else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.pathLooks = PATH; }");
   lines.push("})();");
   lines.push("");
-  return lines.join("\n");
+  return uxpSafeCode(lines.join("\n"), "build_panel_path_looks");
 }
 
 async function generate() {
