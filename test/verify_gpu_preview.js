@@ -148,8 +148,24 @@ let failures = 0;
    log. Only on a runner; locally it would just be noise. */
 function ann(text) {
   if (!process.env.GITHUB_ACTIONS) return;
-  console.log("::error title=GPU preview::" + String(text).replace(/[\r\n]+/g, " ").slice(0, 900));
+  const one = String(text).replace(/[\r\n]+/g, " ").slice(0, 900);
+  console.log("::error title=GPU preview::" + one);
+  /* AND into the step summary, which is the ONE place a red run's reason can be
+     read back through the API: it lands in the check run's output. The job log
+     cannot be used — its tail is the PostgreSQL container's own dump, hundreds
+     of lines of schema, and the line that matters sits before all of it. */
+  try {
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, "- " + one + "\n");
+    }
+  } catch (e) { }
 }
+process.on("unhandledRejection", (e) => {
+  const line = "FAIL — the run threw during: " + PHASE + "  :: " + (e && e.stack || e);
+  console.log(line);
+  ann(line);
+  process.exit(1);
+});
 function report(name, ok, detail) {
   const line = (ok ? "PASS" : "FAIL") + " — " + name +
     (ok ? "" : "  :: " + String(typeof detail === "string" ? detail : JSON.stringify(detail)).slice(0, 500));
@@ -165,14 +181,6 @@ function report(name, ok, detail) {
    exit code is unchanged — a throw is still a failure — but the next one names
    itself in the first line instead of costing a cycle to find. */
 let PHASE = "starting";
-process.on("unhandledRejection", (e) => {
-  const line = "FAIL — the run threw during: " + PHASE + "  :: " + (e && e.stack || e);
-  console.log(line);
-  if (process.env.GITHUB_ACTIONS) {
-    console.log("::error title=GPU preview::" + String(line).replace(/[\r\n]+/g, " ").slice(0, 900));
-  }
-  process.exit(1);
-});
 (async () => {
   const browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] });
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
@@ -194,6 +202,7 @@ process.on("unhandledRejection", (e) => {
   });
   report("A) the page can boot a WebGL context for the fast path", gl === true, { gl });
   if (gl !== true) {
+    ann("FAIL — no GL context, so the comparison below cannot run :: " + JSON.stringify(gl));
     console.log("\nFAIL — no GL context, so the comparison below cannot run");
     await browser.close();
     process.exit(1);
