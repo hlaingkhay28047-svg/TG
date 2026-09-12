@@ -384,6 +384,44 @@ function capabilities() {
     host.appendChild(b7);
     caps.rulers = "pending";
 
+    /* F9 — IS getComputedStyle A RULER, OR AN ECHO? v6.66.1.
+
+       6.137.0's card answered the bake-off: rect 0, client 0, scroll 0,
+       offset 0, computed 100px. One number out of five — except the calc()
+       row came back "computed calc(50px + 10px)", the raw expression rather
+       than the 60px a real computed value would be. A renderer that resolved
+       layout would have resolved that. So getComputedStyle here hands back
+       what was SET, not what was drawn: it is an echo, not an instrument, and
+       the 100px proves only that the string survived the trip. Said plainly
+       on the card, because a number that looks like a measurement and is not
+       is worse than no number at all. */
+    caps.cssEcho = /^calc\(/.test(String(caps.cssCalcC || "")) ? "echo (calc came back unresolved)"
+      : (caps.cssCalcC === "60px" ? "resolved" : String(caps.cssCalcC || "?"));
+
+    /* F10 — DOES THE PAGE STILL CARRY ITS SCOPE CLASSES?
+
+       The owner photographed Retouch A's caret and section-reset drawn at
+       72px — the raw size of the icon file. Every icon whose size came only
+       from a ".stpg ..." rule was wrong; the one with an unscoped rule was
+       right. The same shape of failure hid the icon tripling 6.65.0 fixed,
+       where all eight hiding rules were .stpg-scoped. Two explanations fit:
+       the shell drops those rules, or the page element lost the class the
+       rules hang off — switchPage rebuilds className from a READ of itself,
+       and 6.53.0 established that UXP can answer null there. This row reads
+       the class both ways and prints it, which separates them for good. */
+    try {
+      var pg = doc.getElementById ? doc.getElementById("pageMeitu") : null;
+      if (pg) {
+        var viaAttr = "";
+        try { viaAttr = String(pg.getAttribute("class") || ""); } catch (e) { viaAttr = "?"; }
+        var viaProp = "";
+        try { viaProp = (pg.className == null) ? "null" : String(pg.className); } catch (e2) { viaProp = "?"; }
+        caps.scopeAttr = viaAttr || "(empty)";
+        caps.scopeProp = viaProp || "(empty)";
+        caps.scopeOk = (/\bstpg\b/.test(viaAttr) && /\bapg\b/.test(viaAttr)) ? "yes" : "LOST";
+      } else { caps.scopeOk = "no page"; }
+    } catch (e3) { caps.scopeOk = "?"; }
+
     /* G — WHICH SYMBOLS DOES THIS FONT ACTUALLY HAVE?
 
        Every character a font is missing is drawn as `.notdef`, and every

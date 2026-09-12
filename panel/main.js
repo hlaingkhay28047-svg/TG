@@ -6419,7 +6419,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.137.0";
+const PANEL_VERSION = "6.138.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9268,8 +9268,22 @@ function selfTestRowsInner() {
   /* the bake-off: one 100px box, five rulers. The row that shows a 100 names
      the instrument this renderer actually answers on. */
   if (caps.rulers) {
+    /* v6.66.1 — the 100px in that row is not a measurement. calc() came back
+       as its own unresolved text, so getComputedStyle is echoing what was set
+       rather than reporting what was drawn. Say so on the row itself. */
     rows.push({ label: "rulers (100px box)", detail: String(caps.rulers),
-      level: /\b100\b/.test(String(caps.rulers)) ? "ok" : "warn" });
+      level: "warn" });
+    if (caps.cssEcho) {
+      rows.push({ label: "\u21b3 computed is", detail: String(caps.cssEcho),
+        level: caps.cssEcho === "resolved" ? "ok" : "warn" });
+    }
+  }
+  /* v6.66.1 — do the pages still carry the classes 300-odd rules hang off? */
+  if (caps.scopeOk) {
+    rows.push({ label: "page scope", level: caps.scopeOk === "yes" ? "ok" : "warn",
+      detail: caps.scopeOk === "yes" ? ("yes \u00b7 " + (caps.scopeAttr || ""))
+        : (String(caps.scopeOk) + " \u00b7 attr " + (caps.scopeAttr || "?")
+           + " \u00b7 prop " + (caps.scopeProp || "?")) });
   }
 
   /* --- v6.64.0: THE BLACK SQUARES, MEASURED AND THEN DRAWN.
@@ -9296,12 +9310,16 @@ function selfTestRowsInner() {
     level: gMiss === undefined ? "pend" : gMiss === "none" ? "ok" : "warn" });
   if (caps.glyphRef) rows.push({ label: "glyph ruler", detail: caps.glyphRef, level: "ok" });
   /* v6.66.0 — three cells, four times the size: the guaranteed .notdef first,
-     then the two the strip keeps printing as a coloured square. If they match
-     cell 1 they are missing; if they do not, they draw. */
+     then the two the strip kept printing as a coloured square.
+     v6.66.1 — AND IT ANSWERED. Cell 1 draws an empty outlined box; cells 2
+     and 3 draw a white arrow and white circular arrows on a blue plate. They
+     are nothing alike. Both glyphs are PRESENT, and calling them .notdef from
+     the 15px strip was my mistake. The row stays as the panel's one working
+     glyph instrument — no ruler needed, just a control beside the question. */
   if (caps.glyphTrio && caps.glyphTrio.length === 3) {
     rows.push({ label: "notdef / 27A1 / 1F504", level: "pend", big: true,
       chars: caps.glyphTrio,
-      detail: "cell 1 is the control \u2014 nothing maps E0FF. Same as cell 1 = missing." });
+      detail: "cell 1 is the control \u2014 nothing maps E0FF. 6.137.0: cells 2 and 3 DRAW." });
   }
   const glist = caps.glyphList || [];
   for (let gi = 0, part = 1; gi < glist.length; gi += 12, part++) {
@@ -17974,6 +17992,8 @@ function subFadePaint() {
 /* the app's scrollMem: each page keeps its own scroll position across
    switches (window.scrollY there, .pages.scrollTop here) */
 const scrollMem = {};
+/* v6.66.1 — each page's scope classes, read from the markup once (see below) */
+const scopeMem = {};
 function switchPage(key) {
   try { disarm(); } catch (e) { }
   let found = false;
@@ -17988,10 +18008,23 @@ function switchPage(key) {
     /* two keys share pageAiTools (Home and Workflows), so paint by PAGE */
     if (pe) {
       /* v6.51.0 — a rebuilt page keeps its scope classes (.apg app-parity,
-         .stpg the studio suites); only .on toggles */
-      const apg = /\bapg\b/.test(clsOf(pe)) ? " apg" : "";
-      const stpg = /\bstpg\b/.test(clsOf(pe)) ? " stpg" : "";
-      pe.className = "page" + apg + stpg + (active && p.page === active.page ? " on" : "");
+         .stpg the studio suites); only .on toggles.
+         v6.66.1 — AND IT READS THEM ONCE, NOT EVERY TIME. This line used to
+         re-derive both scopes from clsOf(pe) on every page switch, which asks
+         the element to tell us something we wrote into index.html ourselves.
+         6.53.0 established that UXP can answer null for a class read, and a
+         null here would silently drop .apg and .stpg — taking 300-odd scoped
+         rules with them — from the first switch onward, with no error. The
+         scopes are captured from the markup the first time each page is seen
+         and kept in scopeMem after that, so a bad read can cost nothing. */
+      let scope = scopeMem[p.page];
+      if (scope === undefined) {
+        let raw = "";
+        try { raw = String((pe.getAttribute && pe.getAttribute("class")) || clsOf(pe) || ""); } catch (e) { raw = ""; }
+        scope = (/\bapg\b/.test(raw) ? " apg" : "") + (/\bstpg\b/.test(raw) ? " stpg" : "");
+        scopeMem[p.page] = scope;
+      }
+      pe.className = "page" + scope + (active && p.page === active.page ? " on" : "");
     }
   }
   for (let i = 0; i < GROUPS.length; i++) {
