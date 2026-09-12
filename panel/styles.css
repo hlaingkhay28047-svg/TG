@@ -2046,6 +2046,32 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    in the app's flex containers (.chip/.subtab) the " " after the icon is
    trimmed, in its inline contexts (.btn/.gen/.subh) it stays a ~0.275em gap. */
 .ic-s { flex: none; display: block; width: 13.2px; height: 13.2px; }
+
+/* ---- v6.66.1 — EVERY ICON GETS A SIZE THAT NO SCOPE CAN TAKE AWAY.
+
+   The owner photographed Retouch A with the group-header caret and the
+   section reset drawn ENORMOUS — a chevron and a circle-arrow the height of
+   the row. Every panel icon PNG is compiled at 72×72 (3×, so it stays sharp
+   at any size), and an <img> with no width falls back to its intrinsic size.
+   So the question was only which icons had no width, and the answer had a
+   pattern: `.ic-s` above is UNSCOPED, and it is the one that came out right.
+   Eight other icon classes had their size ONLY from a `.stpg ...` or
+   `.apg ...` rule — and whatever Photoshop does with those scoped rules, it
+   is not applying them. (The same shape of failure hid the icon tripling
+   6.65.0 fixed: eight display:none rules, all `.stpg`-scoped.)
+
+   These eight fallbacks carry the same numbers as the scoped rules below,
+   at (0,1,0) specificity so every scoped rule still wins wherever it does
+   apply — a browser renders exactly what it rendered before. What changes is
+   the floor: an icon can now be the wrong tint, but never 72px. ---- */
+.ic-car { display: block; width: 12px; height: 12px; }
+.ic-h2 { flex: none; display: block; width: 14.4px; height: 14.4px; margin-right: 7px; }
+.ic-sa { display: block; width: 14px; height: 14px; }
+.ic-xl { flex: 0 0 auto; width: 32px; height: 32px; }
+.hsl-caret { flex: 0 0 auto; display: block; width: 9px; height: 9px; }
+.hsl-glyph-img { display: block; width: 15px; height: 15px; }
+.st-tgi { display: block; width: 14px; height: 14px; }
+.st-thph { display: block; width: 100%; height: 100%; }
 .apg .btn .ic-s, #genDock .btn .ic-s { width: 14.3px; height: 14.3px; margin-right: 3.6px; }
 .apg .gen .ic-s, #genDock .gen .ic-s { width: 17.6px; height: 17.6px; margin-right: 4.4px; }
 .apg .subh { display: flex; flex-direction: row; align-items: center; }

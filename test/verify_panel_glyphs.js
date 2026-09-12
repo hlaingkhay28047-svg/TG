@@ -66,6 +66,20 @@
    "unsettled" and the card now prints those two at 52px beside a private-use
    codepoint nothing maps. The sprite swap stands on its own merit either way.
 
+   v6.66.1 — THE 6.137.0 PHOTOGRAPHS SETTLED BOTH QUESTIONS, AND I WAS WRONG
+   ABOUT ONE OF THEM. At 52px the control cell draws an empty outlined box
+   while U+27A1 and U+1F504 draw a white arrow and white circular arrows on a
+   blue plate: they are PRESENT, and reading the 15px strip's coloured square
+   as .notdef was my mistake. The sprite swap stays, now as a choice.
+   The ruler bake-off read rect 0 · client 0 · scroll 0 · computed 100px ·
+   offset 0 — and calc() came back unresolved, so that lone 100px is an ECHO
+   of what was set, not a measurement. There is no ruler in this renderer.
+   And the same pictures showed Retouch A drawing its caret and section reset
+   at 72px, the raw size of the icon file: every icon sized only by a .stpg or
+   .apg rule was wrong, the one with an unscoped rule was right. Eight
+   unscoped fallbacks are the floor now, and switchPage no longer re-derives
+   the scope classes from a read of the element it wrote them onto.
+
    Run: node test/verify_panel_glyphs.js */
 
 "use strict";
@@ -388,11 +402,55 @@ report("E13) the card prints the computed value beside the measured one, and the
   /cssRow\("position:fixed", caps\.cssFixed, "yes", caps\.cssFixedC\)/.test(MAIN) &&
   /label: "rulers \(100px box\)"/.test(MAIN), null);
 
-/* the rule set must not keep a claim the photograph has put in doubt */
-report("E14) the arrow's rule records that its REASON is unsettled, while the sprite swap stands",
-  /REASON UNSETTLED/.test(T.GLYPHS["\u27A1"].note || "") &&
-  T.GLYPHS["\u27A1"].icon === "i-arrow" &&
-  !/MEASURED MISSING/.test(T.GLYPHS["\u27A1"].note || ""), null);
+/* ---- E15-E19. v6.66.1 — what the 6.137.0 photographs settled.
+
+   THE GLYPHS. At 52px the control cell draws an empty outlined box and the
+   two suspects draw a white arrow and white circular arrows on a blue plate.
+   They are nothing alike: U+27A1 and U+1F504 are PRESENT. My .notdef reading
+   of the 15px strip was wrong, and the rule set now says so.
+
+   THE RULER. rect 0, client 0, scroll 0, offset 0, computed 100px — but
+   calc() came back "calc(50px + 10px)", unresolved. A renderer that had laid
+   anything out would have resolved it, so getComputedStyle is echoing the
+   value that was set. There is no ruler; there never was one.
+
+   AND THE ICONS. Retouch A's caret and section reset drew at 72px — the raw
+   size of the icon file. Every icon whose size came only from a .stpg/.apg
+   rule was wrong; the one with an unscoped rule was right. ---- */
+
+report("E15) the rule set records that both glyphs DRAW, and that the sprite is a choice",
+  /DRAWS \u2014 SETTLED on 6\.137\.0/.test(T.GLYPHS["\u27A1"].note || "") &&
+  /WRONG/.test(T.GLYPHS["\u27A1"].note || "") &&
+  T.GLYPHS["\u27A1"].icon === "i-arrow", null);
+
+report("E16) the card says the computed value is an echo, not a measurement",
+  /caps\.cssEcho = \/\^calc\\\(\//.test(STCODE) &&
+  /echo \(calc came back unresolved\)/.test(STCODE) &&
+  /label: "\\u21b3 computed is"/.test(MAIN), null);
+
+report("E17) and it reads the page's scope classes both ways, so a lost class cannot hide",
+  /caps\.scopeAttr = viaAttr/.test(STCODE) && /caps\.scopeProp = viaProp/.test(STCODE) &&
+  /caps\.scopeOk = \(\/\\bstpg\\b\/\.test\(viaAttr\)/.test(STCODE) &&
+  /label: "page scope"/.test(MAIN), null);
+
+report("E18) switchPage reads each page's scope ONCE from the markup, never re-derives it",
+  /const scopeMem = \{\};/.test(MAIN) &&
+  /let scope = scopeMem\[p\.page\];/.test(MAIN) &&
+  /scopeMem\[p\.page\] = scope;/.test(MAIN) &&
+  !/const apg = \/\\bapg\\b\/\.test\(clsOf\(pe\)\)/.test(MAIN), null);
+
+/* every icon file is compiled at 72x72, so an <img> the stylesheet misses
+   draws at 72px. The floor below is what stops that being possible. */
+{
+  const need = { "ic-car": "12px", "ic-h2": "14.4px", "ic-sa": "14px", "ic-xl": "32px",
+                 "hsl-caret": "9px", "hsl-glyph-img": "15px", "st-tgi": "14px", "st-thph": "100%" };
+  const missing = Object.keys(need).filter((c) => {
+    const rx = new RegExp("^\\." + c + "\\s*\\{[^}]*width:\\s*" + need[c].replace(".", "\\."), "m");
+    return !rx.test(CSSFILE);
+  });
+  report("E19) every icon class has an UNSCOPED size, so no missing scope can leave it at 72px",
+    missing.length === 0, { missing });
+}
 
 /* ------------------------------------------- F. the card says it, and shows it */
 
