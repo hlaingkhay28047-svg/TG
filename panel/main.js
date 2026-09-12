@@ -6419,7 +6419,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.136.0";
+const PANEL_VERSION = "6.137.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7977,7 +7977,8 @@ function renderRows(hostId, rows) {
          that checks it. A box here must appear in the "glyphs" list, and the
          codepoints are printed underneath in the same order, so the
          photograph identifies each one without counting. */
-      const strip = document.createElement("div"); strip.className = "diag-glyphs";
+      const strip = document.createElement("div");
+      strip.className = r.big ? "diag-glyphs diag-big" : "diag-glyphs";
       for (let k = 0; k < r.chars.length; k++) {
         const cell = document.createElement("span");
         cell.className = "diag-gl";
@@ -9243,16 +9244,33 @@ function selfTestRowsInner() {
      because the one rule this wave did not convert (object-fit, nine thumbs
      across Gallery, Path, the wizard and Video Tools) should be converted on
      a measurement rather than on a third round of belief. --- */
-  const cssRow = function (label, val, good) {
-    rows.push({ label: label, detail: val === undefined ? "\u2014" : String(val),
-      level: val === undefined ? "pend" : (val === good ? "ok" : "warn") });
+  /* v6.66.0 — every one of the four geometry rows came back "unmeasurable" on
+     6.136.0, which is this panel's honest word for an all-zero rect and not a
+     fact about the box. Three of those questions never needed geometry:
+     box-sizing, position and gap are COMPUTED values, resolved by the cascade
+     before layout, and getComputedStyle hands them over. So each row now
+     carries both answers — what was measured, and what the cascade computed —
+     and neither can be mistaken for the other. */
+  const cssRow = function (label, val, good, computed) {
+    const measured = val === undefined ? "\u2014" : String(val);
+    const gotIt = val !== undefined && val === good;
+    const useC = !gotIt && computed && computed !== "?" && computed !== "";
+    rows.push({ label: label,
+      detail: useC ? (measured + "  \u00b7  computed " + computed) : measured,
+      level: val === undefined ? "pend" : gotIt ? "ok" : "warn" });
   };
-  cssRow("box-sizing", caps.cssBox, "border-box");
-  cssRow("flex gap", caps.cssGap, "yes");
-  cssRow("calc()", caps.cssCalc, "yes");
-  cssRow("position:fixed", caps.cssFixed, "yes");
+  cssRow("box-sizing", caps.cssBox, "border-box", caps.cssBoxC);
+  cssRow("flex gap", caps.cssGap, "yes", caps.cssGapC);
+  cssRow("calc()", caps.cssCalc, "yes", caps.cssCalcC);
+  cssRow("position:fixed", caps.cssFixed, "yes", caps.cssFixedC);
   cssRow("object-fit", caps.cssObjectFit, "kept");
   cssRow("background-size", caps.cssBgSize, "kept");
+  /* the bake-off: one 100px box, five rulers. The row that shows a 100 names
+     the instrument this renderer actually answers on. */
+  if (caps.rulers) {
+    rows.push({ label: "rulers (100px box)", detail: String(caps.rulers),
+      level: /\b100\b/.test(String(caps.rulers)) ? "ok" : "warn" });
+  }
 
   /* --- v6.64.0: THE BLACK SQUARES, MEASURED AND THEN DRAWN.
 
@@ -9277,6 +9295,14 @@ function selfTestRowsInner() {
           : (caps.glyphN || "") + " missing: " + gMiss),
     level: gMiss === undefined ? "pend" : gMiss === "none" ? "ok" : "warn" });
   if (caps.glyphRef) rows.push({ label: "glyph ruler", detail: caps.glyphRef, level: "ok" });
+  /* v6.66.0 — three cells, four times the size: the guaranteed .notdef first,
+     then the two the strip keeps printing as a coloured square. If they match
+     cell 1 they are missing; if they do not, they draw. */
+  if (caps.glyphTrio && caps.glyphTrio.length === 3) {
+    rows.push({ label: "notdef / 27A1 / 1F504", level: "pend", big: true,
+      chars: caps.glyphTrio,
+      detail: "cell 1 is the control \u2014 nothing maps E0FF. Same as cell 1 = missing." });
+  }
   const glist = caps.glyphList || [];
   for (let gi = 0, part = 1; gi < glist.length; gi += 12, part++) {
     const chunk = glist.slice(gi, gi + 12);

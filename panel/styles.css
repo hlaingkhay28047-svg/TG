@@ -839,6 +839,13 @@ input[type="range"] { min-width: 0; }
   font-size: 15px; line-height: 20px; text-align: center;
   color: var(--text); background-color: var(--panel); border: 1px solid var(--line); border-radius: 5px;
 }
+/* v6.66.0 — the three-cell verdict row. At 15px a white arrow on a blue
+   emoji plate and a blank .notdef box photograph identically; at 52px they
+   cannot. Only three cells wear this, so the height it costs is paid once. */
+.diag-big .diag-gl {
+  min-width: 62px; padding: 6px 8px;
+  font-size: 52px; line-height: 64px;
+}
 
 /* ============================================================
    HNK AI Tools — Free Generate + Smart Workflow UI

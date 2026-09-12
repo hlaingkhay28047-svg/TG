@@ -50,6 +50,22 @@
         returns. And HNK.herr, which the host has always called, was never
         published — so the log the owner photographed could not fill.
 
+   v6.66.0 — 6.136.0 ANSWERED, AND PUT ONE OF MY READINGS IN DOUBT.
+   The after-layout probe worked exactly as written and the verdict is final:
+   every geometry row reads "unmeasurable" and the ruler reads
+   "notdef -1 · n -1" — this renderer does not hand geometry to script, two
+   frames and a 120 ms timer included. So the panel stops asking the layout
+   for what the CASCADE already knows (box-sizing, position and gap are
+   computed values), and one 100px box is now measured five ways so a single
+   photograph names whatever ruler does work.
+
+   And the two cells I called .notdef photograph as a solid CYAN square, while
+   the boxes on 6.134.0 were black. Noto draws U+27A1 and U+1F504 as a white
+   arrow on a blue plate; at 15px, inside a photograph of a screen, that is
+   indistinguishable from an empty blue box. So the claim is withdrawn to
+   "unsettled" and the card now prints those two at 52px beside a private-use
+   codepoint nothing maps. The sprite swap stands on its own merit either way.
+
    Run: node test/verify_panel_glyphs.js */
 
 "use strict";
@@ -126,9 +142,8 @@ report("A4) tidying the removed glyph's space does not touch any other space in 
    symbol on the card except these two, so they are the only additions the
    picture licenses — and ⚠, which the earlier deduction-by-elimination had
    condemned, draws as a yellow triangle and is kept out by choice, not need. */
-report("A5) the two glyphs the photograph proved missing have rules, and the arrow names its sprite",
+report("A5) both glyphs under suspicion have rules, and the arrow names a sprite no font can fail to have",
   T.GLYPHS["\u27A1"] && T.GLYPHS["\u27A1"].icon === "i-arrow" &&
-  /MEASURED MISSING on 6\.135\.0/.test(T.GLYPHS["\u27A1"].note || "") &&
   !!T.GLYPHS["\uD83D\uDD04"] &&
   T.uxpSafeText("\u27A1 next") === "next", null);
 
@@ -291,8 +306,15 @@ report("E1) the probe host is ON SCREEN at the origin, where the one working pro
 report("E2) box() no longer positions a probe box, so the flex children are in flow and can differ",
   !/function box\(doc2, css\) \{\s*var d = doc2\.createElement\("div"\);\s*d\.style\.position/.test(STCODE) &&
   !/c1\.style\.position = "static"/.test(STCODE), null);
-report("E3) nothing measures with offsetWidth/offsetLeft, which answer 0 here",
-  !/offsetWidth|offsetLeft/.test(STCODE) && /getBoundingClientRect/.test(STCODE), null);
+/* v6.66.0 — offsetWidth is now MEASURED, on purpose, as the known-zero control
+   in the ruler bake-off. The rule it was always standing for is the one kept
+   here: no probe may DECIDE anything on it. Its only appearance is the one
+   labelled line inside rulers(), and no caps.* verdict reads it. */
+report("E3) no probe decides on offsetWidth/offsetLeft \u2014 they appear only as the bake-off's control",
+  /getBoundingClientRect/.test(STCODE) &&
+  (STCODE.match(/offsetWidth|offsetLeft/g) || []).length === 1 &&
+  /out\.push\("offset " \+ num\(el\.offsetWidth\)\)/.test(STCODE) &&
+  !/caps\.[A-Za-z]+\s*=\s*[^;\n]*offset(Width|Left)/.test(STCODE), null);
 report("E4) the three probes that read 0 twice still measure what they claim to",
   /r1\.width - 100/.test(STCODE) && /rc2\.left - rc1\.left/.test(STCODE) &&
   /r3\.width - 60/.test(STCODE), null);
@@ -326,6 +348,51 @@ report("E9) the measurement waits for a laid-out frame, and fixed is probed AWAY
   /setTimeout\(measure, 120\)/.test(STCODE) &&
   /position: "fixed", top: "12px", left: "7px"/.test(STCODE) &&
   /Math\.abs\(r4\.top - 12\) <= 1 && Math\.abs\(r4\.left - 7\) <= 1/.test(STCODE), null);
+
+/* ---- E10-E12. v6.66.0 — the ruler is the blocker, so stop guessing at it.
+
+   6.136.0 answered honestly and the answer was "nothing": four geometry rows
+   unmeasurable, the ruler "notdef -1 · n -1". Two frames and a timer did not
+   help, so getBoundingClientRect does not work in this renderer. Three of the
+   four questions never needed it — box-sizing, position and gap are computed
+   values — and one 100px box measured five ways will name whatever ruler does
+   work, or prove there is none. ---- */
+
+report("E10) the cascade is asked as well as the layout, for the three that need no geometry",
+  /var computed = function \(el, prop\)/.test(STCODE) &&
+  /caps\.cssBoxC = computed\(b1, "boxSizing"\)/.test(STCODE) &&
+  /caps\.cssGapC = computed\(f2, "gap"\)/.test(STCODE) &&
+  /caps\.cssCalcC = computed\(b3, "width"\)/.test(STCODE) &&
+  /caps\.cssFixedC = computed\(b4, "position"\)/.test(STCODE), null);
+
+report("E11) one 100px box is measured five ways, offsetWidth among them as the known-zero control",
+  /var rulers = function \(el\)/.test(STCODE) &&
+  /getBoundingClientRect/.test(STCODE) &&
+  /"client " \+ num\(el\.clientWidth\)/.test(STCODE) &&
+  /"scroll " \+ num\(el\.scrollWidth\)/.test(STCODE) &&
+  /"computed " \+ \(computed\(el, "width"\)/.test(STCODE) &&
+  /"offset " \+ num\(el\.offsetWidth\)/.test(STCODE) &&
+  /var b7 = box\(doc, \{ width: "100px", height: "20px" \}\)/.test(STCODE) &&
+  /caps\.rulers = rulers\(b7\)/.test(STCODE), null);
+
+report("E12) and the two glyphs under suspicion get a control cell, so a photograph can settle them",
+  /caps\.glyphTrio = \[chOf\(0xE0FF\), chOf\(0x27A1\), chOf\(0x1F504\)\]/.test(STCODE) &&
+  /caps\.glyphTrio && caps\.glyphTrio\.length === 3/.test(MAIN) &&
+  /big: true/.test(MAIN) && /diag-glyphs diag-big/.test(MAIN) &&
+  /\.diag-big \.diag-gl \{/.test(CSSFILE) &&
+  /font-size: 52px/.test(CSSFILE), null);
+
+report("E13) the card prints the computed value beside the measured one, and the bake-off row",
+  /const cssRow = function \(label, val, good, computed\)/.test(MAIN) &&
+  /cssRow\("box-sizing", caps\.cssBox, "border-box", caps\.cssBoxC\)/.test(MAIN) &&
+  /cssRow\("position:fixed", caps\.cssFixed, "yes", caps\.cssFixedC\)/.test(MAIN) &&
+  /label: "rulers \(100px box\)"/.test(MAIN), null);
+
+/* the rule set must not keep a claim the photograph has put in doubt */
+report("E14) the arrow's rule records that its REASON is unsettled, while the sprite swap stands",
+  /REASON UNSETTLED/.test(T.GLYPHS["\u27A1"].note || "") &&
+  T.GLYPHS["\u27A1"].icon === "i-arrow" &&
+  !/MEASURED MISSING/.test(T.GLYPHS["\u27A1"].note || ""), null);
 
 /* ------------------------------------------- F. the card says it, and shows it */
 

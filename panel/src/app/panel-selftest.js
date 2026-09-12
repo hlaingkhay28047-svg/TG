@@ -331,6 +331,59 @@ function capabilities() {
     try { b6.style.backgroundSize = "cover"; } catch (e) { }
     caps.cssBgSize = (b6.style && b6.style.backgroundSize === "cover") ? "kept" : "DROPPED";
 
+    /* F7 — THE COMPUTED VALUE, WHICH NEEDS NO LAYOUT AT ALL. v6.66.0.
+
+       6.136.0's card read "unmeasurable" on all four geometry rows and
+       "notdef -1 · n -1" on the ruler, which is this file's own honest answer
+       for an all-zero rect — so the after-layout fix worked and the verdict
+       stands: THIS RENDERER DOES NOT HAND GEOMETRY TO SCRIPT. Two frames and
+       a 120 ms timer did not change it.
+
+       But three of those four questions never needed geometry. box-sizing,
+       position and gap are COMPUTED values: the cascade resolves them before
+       anything is laid out, and getComputedStyle reads them straight out.
+       calc() is resolved there too when the renderer can resolve it against a
+       definite containing block. So ask the cascade rather than the layout.
+       This is weaker than a measurement in one specific way — a renderer may
+       compute a value it then fails to honour — and stronger in another: it
+       cannot report a broken instrument as a fact about the box. Both numbers
+       are printed side by side on the card so neither can pass for the other. */
+    var computed = function (el, prop) {
+      try {
+        var g = (typeof getComputedStyle === "function") ? getComputedStyle(el) : null;
+        if (!g) return "";
+        var v = g[prop];
+        if (!v && typeof g.getPropertyValue === "function") v = g.getPropertyValue(prop);
+        return v ? String(v) : "";
+      } catch (e) { return ""; }
+    };
+    caps.cssBoxC = computed(b1, "boxSizing") || "?";
+    caps.cssGapC = computed(f2, "gap") || computed(f2, "columnGap") || "?";
+    caps.cssCalcC = computed(b3, "width") || "?";
+    caps.cssFixedC = computed(b4, "position") || "?";
+
+    /* F8 — THE RULER BAKE-OFF. Five ways to ask one 100px box how wide it is.
+
+       getBoundingClientRect and offsetWidth are both known to answer nothing
+       here; clientWidth, scrollWidth and getComputedStyle().width have never
+       been tried. One photograph of this row names the ruler that works in
+       this renderer, or proves there is none — and every geometry question
+       the panel has left is waiting on that one answer. */
+    var rulers = function (el) {
+      var num = function (v) { return (typeof v === "number" && isFinite(v)) ? String(Math.round(v)) : "-"; };
+      var r = null;
+      try { r = el.getBoundingClientRect ? el.getBoundingClientRect() : null; } catch (e) { r = null; }
+      var out = ["rect " + (r ? num(r.width) : "-")];
+      try { out.push("client " + num(el.clientWidth)); } catch (e2) { out.push("client -"); }
+      try { out.push("scroll " + num(el.scrollWidth)); } catch (e3) { out.push("scroll -"); }
+      out.push("computed " + (computed(el, "width") || "-"));
+      try { out.push("offset " + num(el.offsetWidth)); } catch (e4) { out.push("offset -"); }
+      return out.join(" · ");
+    };
+    var b7 = box(doc, { width: "100px", height: "20px" });
+    host.appendChild(b7);
+    caps.rulers = "pending";
+
     /* G — WHICH SYMBOLS DOES THIS FONT ACTUALLY HAVE?
 
        Every character a font is missing is drawn as `.notdef`, and every
@@ -356,6 +409,23 @@ function capabilities() {
     var GLYPHS = [];
     for (var gc = 0; gc < GLYPH_CP.length; gc++) GLYPHS.push(chOf(GLYPH_CP[gc]));
     caps.glyphList = GLYPHS;
+    /* v6.66.0 — THE VERDICT ROW, BECAUSE THE STRIP IS TOO SMALL TO READ.
+
+       On 6.135.0 and again on 6.136.0 exactly two cells of the strip come out
+       as a solid coloured square: U+27A1 and U+1F504. I read those as .notdef
+       and said so. They may not be. Noto draws both of those emoji as a white
+       arrow on a BLUE ROUNDED SQUARE, and at the size the strip prints them,
+       inside a photograph of a screen, a white arrow on blue and a blank blue
+       box look the same. The rest of the row settles nothing either way: the
+       coloured emoji beside them (a red pin, a yellow bolt) have no background
+       plate to confuse.
+
+       So this row prints three cells only, at four times the size, in a fixed
+       order: a private-use codepoint NOTHING maps — the guaranteed .notdef —
+       and then the two under suspicion. If they match the control they are
+       missing. If they do not, they draw, and my earlier note was wrong. One
+       photograph, no arithmetic, no ruler. */
+    caps.glyphTrio = [chOf(0xE0FF), chOf(0x27A1), chOf(0x1F504)];
     var gs = doc.createElement("span");
     gs.style.fontSize = "64px";
     gs.style.whiteSpace = "pre";
@@ -396,6 +466,8 @@ function capabilities() {
           : (Math.abs(r3.width - 60) <= 1) ? "yes"
           : (Math.round(r3.width) + "px");
 
+        caps.rulers = rulers(b7);
+
         var r4 = rect(b4);
         caps.cssFixed = !r4 ? "unmeasurable"
           : ((Math.abs(r4.top - 12) <= 1 && Math.abs(r4.left - 7) <= 1) ? "yes"
@@ -426,6 +498,7 @@ function capabilities() {
         caps.cssBox = "unmeasurable"; caps.cssGap = "unmeasurable";
         caps.cssCalc = "unmeasurable"; caps.cssFixed = "unmeasurable";
         caps.glyphMiss = "unmeasurable";
+        if (caps.rulers === "pending") caps.rulers = "unmeasurable";
       }
       try { if (host.parentNode) host.parentNode.removeChild(host); } catch (e) { }
     };

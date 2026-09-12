@@ -230,7 +230,8 @@ for (const [key, why] of [
    rect gives for free: "position:fixed yes" on 6.135.0 was a false positive. */
 report("D7) every geometric probe measures with getBoundingClientRect, and none with offsetWidth/offsetLeft (UXP answers 0)",
   /getBoundingClientRect/.test(SELFTEST) &&
-  !/offsetWidth|offsetLeft/.test(SELFTEST.replace(/\/\*[\s\S]*?\*\//g, "")) &&
+  ((SELFTEST.replace(/\/\*[\s\S]*?\*\//g, "").match(/offsetWidth|offsetLeft/g) || []).length === 1) &&
+  !/caps\.[A-Za-z]+\s*=\s*[^;\n]*offset(Width|Left)/.test(SELFTEST) &&
   /r1\.width - 100/.test(SELFTEST) && /rc2\.left - rc1\.left/.test(SELFTEST) &&
   /r3\.width - 60/.test(SELFTEST), null);
 

@@ -104,7 +104,7 @@ const GLYPHS = {
   "⭐": { word: "", icon: "i-star-fill", note: "⭐ Favorites / starred preset" },
   "⚡": { word: "", icon: "i-bolt", note: "⚡ One-shot merge" },
   "⚠": { word: "", icon: "i-warn", note: "⚠ DRAWS (yellow triangle, photographed on 6.135.0) — kept out by choice, not by need: the render sites carry an i-warn sprite now" },
-  "➡": { word: "", icon: "i-arrow", note: "➡ MEASURED MISSING on 6.135.0 — a .notdef box beside every glyph that drew" },
+  "➡": { word: "", icon: "i-arrow", note: "➡ REASON UNSETTLED — 6.135.0 and 6.136.0 both photograph it as a solid coloured square, which I read as .notdef; but Noto draws this emoji as a white arrow on a blue plate, and a photograph of a 15px cell cannot tell those apart. The 6.137.0 card prints it at 52px beside a control nothing maps. Kept out either way: the render sites carry an i-arrow sprite, which no font can fail to have" },
   "⛅": { word: "", icon: null, note: "⛅ weather" },
   "⛈": { word: "", icon: null, note: "⛈ weather" },
   "⛓": { word: "", icon: "i-link", note: "⛓ chained" },
