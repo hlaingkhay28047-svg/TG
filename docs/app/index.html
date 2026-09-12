@@ -5273,6 +5273,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.72.0", kind:"page", ref:"pgMeitu",
+    t:{my:"Retouch A / B — မျက်ကွင်းညို နဲ့ မျက်ရစ် လည်း GPU ပေါ် ရောက်ပြီ၊ မျက်လုံး slider ၄ ခုလုံး ပြီးပါပြီ",en:"Retouch A / B — Dark Circles and Eye Bags moved onto the GPU too, so all four eye sliders are done",shn:"Retouch A / B — Dark Circles လႄႈ Eye Bags ၶိုၼ်ႈ GPU ယဝ်ႉ, slider မၢၵ်ႇတႃ 4 ဢၼ်ယဝ်ႉတူဝ်ႈ",kac:"Retouch A / B — Dark Circles hte Eye Bags mung GPU de lung sai, myi slider 4 yawng ngut sai",th:"Retouch A / B — Dark Circles และ Eye Bags ย้ายขึ้น GPU แล้ว ครบทั้งสี่สไลเดอร์ดวงตา",zh:"Retouch A / B — 黑眼圈和眼袋也搬到了 GPU，四个眼部滑杆全部完成",vi:"Retouch A / B — Quầng thâm và Bọng mắt cũng đã lên GPU, đủ cả bốn thanh trượt mắt",id:"Retouch A / B — Lingkaran Hitam dan Kantung Mata ikut pindah ke GPU, keempat slider mata lengkap",ms:"Retouch A / B — Lingkaran Hitam dan Beg Mata turut berpindah ke GPU, keempat-empat slider mata lengkap"},
+    s:{my:"ပြီးခဲ့တဲ့တစ်ခေါက်က မျက်လုံး slider ၂ ခုပဲ ရသေးတယ်၊ ကျန် ၂ ခုက **GPU မှာ နေရာ မကျန်တော့လို့** ချန်ထားခဲ့ပါတယ်။ ခုတော့ **နေရာ ဝယ်လိုက်ပြီ** — texture unit ၂ ခု အသစ် ထပ်ယူလိုက်ပါတယ် (တစ်ခုက မျက်ကွင်း၏ ပုံသဏ္ဌာန်၊ တစ်ခုက မျက်ရစ် ဖျော့ဖို့ သုံးတဲ့ ဝါးပုံ)။ ဒါကြောင့် **မျက်ကွင်းညို (Dark Circles)** နဲ့ **မျက်ရစ် (Eye Bags)** လည်း GPU မှာ ဆွဲပြပါပြီ — **မျက်လုံး ၄ ခုလုံး ပြီးပါပြီ**။ ပုံက အတိအကျ တူပါတယ် — test မှာ CPU နဲ့ GPU ကို pixel တစ်လုံးချင်း တိုက်စစ်ရာ **နှစ်ခုစလုံး တစ်လုံးမှ မကွာဘဲ တူ**ပါတယ်။ ဒီအတွက် **texture unit ၁၂ ခု** လိုပါတယ်။ ကွန်ပျူတာ/ဖုန်း အများစုမှာ ၁၆ ခု ရှိလို့ ဘာမှ မဖြစ်ပါဘူး၊ မလုံလောက်တဲ့ စက်မှာတော့ ဒီ ၂ ခုကိုပဲ CPU က ဆွဲပြီး ကျန်တာအားလုံး GPU မှာ ဆက်လုပ်ပါတယ် — တိတ်တိတ်လေး မှားမပြပါဘူး။",en:"The last wave moved two of the four eye sliders and left the other two behind, because the GPU had **no spare room** for them. This one buys the room: stage (4d) takes two new texture units — one for the under-eye contour, one for the blur Eye Bags softens toward — so **Dark Circles** and **Eye Bags** now draw on the GPU as well, and **the eye group is complete**. The picture is the same one it always was: the test renders the same source through the CPU pipeline and through the shader and compares them channel by channel, and **both come back bit for bit identical**. That costs twelve texture units, which almost every machine reports; a device that has fewer keeps the whole rest of the fast path and quietly sends only these two sliders back to the CPU, which is a slower drag and never a different photograph.",shn:"ပွၵ်ႈၵွၼ်ႇ slider မၢၵ်ႇတႃ 2 ဢၼ်ၵူၺ်း ၶိုၼ်ႈ GPU, 2 ဢၼ်လိူဝ်ဢမ်ႇမီးတီႈယူႇ။ ပွၵ်ႈၼႆႉ သိုဝ်ႉတီႈယူႇမႃးယဝ်ႉ — texture unit 2 ဢၼ်မႂ်ႇ, ၸင်ႇဝႃႈ Dark Circles လႄႈ Eye Bags ၶိုၼ်ႈ GPU ယဝ်ႉ။ ႁၢင်ႈၶဵင်ႇမိူၼ်ၵၼ်တဵမ်တဵမ် — CPU လႄႈ GPU တဵၵ်းတႅၵ်ႈ pixel ၵူႈဢၼ်, ဢမ်ႇပႅၵ်ႈသေဢၼ်။",kac:"Nnan na lam hta myi slider 4 kaw na 2 sha GPU de lung wa ai, GPU hta shara n nga ai majaw. Ya gaw shara mari la sai — texture unit 2 nnan la nna, Dark Circles hte Eye Bags mung GPU hta ka sai. Sumla gaw ndai raw sha re: CPU hte GPU pixel langai hpra jahkrum yu yang, lahkawng yawng gaw hkum tsawm hkrak bung ai.",th:"รอบก่อนย้ายสไลเดอร์ดวงตาได้แค่สองตัว อีกสองตัวต้องรอเพราะ GPU **ไม่เหลือที่ว่าง** รอบนี้ซื้อที่เพิ่ม — ใช้ texture unit ใหม่สองช่อง ช่องหนึ่งเก็บรูปทรงใต้ตา อีกช่องเก็บภาพเบลอที่ Eye Bags ใช้กลบ — ตอนนี้ **Dark Circles** และ **Eye Bags** วาดบน GPU แล้ว ครบทั้งสี่ตัว ภาพเหมือนเดิมทุกจุด: ทดสอบเทียบ CPU กับ GPU ทีละแชนเนล **ทั้งสองตัวตรงกันทุกบิต** ต้องใช้ 12 texture unit ซึ่งเครื่องส่วนใหญ่มี 16 เครื่องที่มีน้อยกว่าจะส่งเฉพาะสองสไลเดอร์นี้กลับไปให้ CPU วาด ช้าลงนิดเดียว แต่ภาพไม่เพี้ยน",zh:"上一波只把四个眼部滑杆中的两个搬上 GPU，另外两个留下了，因为 GPU **没有多余的位置**。这一波把位置买下来了：新增两个纹理单元，一个放眼下轮廓，一个放眼袋要柔化的模糊图 —— 于是**黑眼圈**和**眼袋**也在 GPU 上绘制，四个眼部滑杆全部完成。画面完全一致：测试把同一张源图分别走 CPU 管线和着色器，逐通道比对，**两者都逐位相同**。这需要 12 个纹理单元，绝大多数设备都有 16 个；少于此数的设备会把这两个滑杆交回 CPU，只是拖动稍慢，绝不会画出另一张照片。",vi:"Đợt trước mới đưa hai trong bốn thanh trượt mắt lên GPU, hai cái còn lại phải chờ vì GPU **không còn chỗ**. Đợt này mua thêm chỗ: lấy hai texture unit mới — một cho đường viền dưới mắt, một cho ảnh mờ mà Bọng mắt hòa tới — nên **Quầng thâm** và **Bọng mắt** cũng vẽ trên GPU, đủ cả bốn. Ảnh vẫn y hệt: bài kiểm tra dựng cùng một nguồn qua CPU và qua shader rồi so từng kênh, **cả hai trùng khớp từng bit**. Việc này cần 12 texture unit, gần như máy nào cũng có 16; máy ít hơn sẽ trả riêng hai thanh trượt này về CPU — kéo chậm hơn một chút, không bao giờ ra một tấm ảnh khác.",id:"Gelombang lalu baru memindahkan dua dari empat slider mata; dua sisanya tertinggal karena GPU **tidak punya tempat kosong**. Kali ini tempatnya dibeli: dua texture unit baru — satu untuk kontur bawah mata, satu untuk gambar buram yang dituju Kantung Mata — sehingga **Lingkaran Hitam** dan **Kantung Mata** kini digambar di GPU, dan keempatnya lengkap. Gambarnya tetap sama persis: pengujian merender sumber yang sama lewat jalur CPU dan lewat shader lalu membandingkannya kanal demi kanal, dan **keduanya identik bit demi bit**. Ini menuntut 12 texture unit, yang hampir semua perangkat punya 16; perangkat yang kurang akan mengembalikan dua slider ini saja ke CPU — sedikit lebih lambat, tidak pernah foto yang berbeda.",ms:"Gelombang lalu baru memindahkan dua daripada empat slider mata; dua lagi tertinggal kerana GPU **tiada ruang lebih**. Kali ini ruangnya dibeli: dua texture unit baharu — satu untuk kontur bawah mata, satu untuk imej kabur yang dituju Beg Mata — jadi **Lingkaran Hitam** dan **Beg Mata** kini dilukis pada GPU, dan keempat-empatnya lengkap. Gambarnya tetap sama: ujian merender sumber yang sama melalui laluan CPU dan melalui shader lalu membandingkannya saluran demi saluran, dan **kedua-duanya serupa bit demi bit**. Ia memerlukan 12 texture unit, dan hampir semua peranti melaporkan 16; peranti yang kurang akan memulangkan dua slider ini sahaja kepada CPU — seretan sedikit perlahan, bukan foto yang berbeza."} },
   { v:"6.71.0", kind:"page", ref:"pgMeitu",
     t:{my:"Retouch A / B — မျက်လုံး slider ၂ ခု GPU ပေါ် တက်သွားပြီ၊ ဆွဲတဲ့အခါ ပိုမြန်ပါပြီ",en:"Retouch A / B — two eye sliders moved onto the GPU, so dragging them is faster",shn:"Retouch A / B — မၢၵ်ႇတႃ slider 2 ဢၼ်ၶိုၼ်ႈ GPU, လၢၵ်ႈဝႆးလိူဝ်",kac:"Retouch A / B — myi slider 2 gaw GPU de lung sai, garai yang lawan sai",th:"Retouch A / B — สไลเดอร์ดวงตาสองตัวย้ายขึ้น GPU ลากแล้วเร็วขึ้น",zh:"Retouch A / B — 两个眼睛滑杆搬到了 GPU，拖动更快了",vi:"Retouch A / B — hai thanh trượt mắt đã lên GPU, kéo mượt hơn",id:"Retouch A / B — dua slider mata pindah ke GPU, menggesernya jadi lebih cepat",ms:"Retouch A / B — dua slider mata berpindah ke GPU, menyeretnya jadi lebih pantas"},
     s:{my:"**မျက်လုံးတောက်ပ (Eye Brighten)** နဲ့ **မျက်လုံးထင်ရှား (Eye Definition)** နှစ်ခုကို GPU ပေါ် တင်လိုက်ပါပြီ။ Preset ၁၆ ခုစလုံးမှာ ဒီနှစ်ခု ပါတာမို့ **preset တစ်ခုခု ဖွင့်ပြီး slider ဆွဲရင် ပိုချောမွေ့** ပါလိမ့်မယ်။ အရေးအကြီးဆုံးက — **ပုံက အတိအကျ တူရမယ်**။ GPU က ဆွဲပြတဲ့ပုံနဲ့ ထွက်လာမယ့် ဖိုင်ဟာ မတူရင် ဆရာ့အတွက် အဆိုးဆုံးပါ။ ဒါကြောင့် test မှာ CPU နဲ့ GPU ကို pixel တစ်လုံးချင်း တိုက်စစ်ပါတယ် — **Eye Brighten က တစ်လုံးမှ မကွာဘဲ တူ**ပါတယ်၊ Eye Definition က channel ၁% အောက်မှာ ၁ ယူနစ်ပဲ ကွာပါတယ် (float32 နဲ့ float64 ကွာခြင်း သက်သက်ပါ)။ **မျက်ကွင်းညို (Dark Circles)** နဲ့ **မျက်ရစ် (Eye Bags)** ကတော့ CPU မှာပဲ ရှိနေဆဲပါ — GPU မှာ နေရာ (texture unit) ကုန်နေလို့ပါ။ တမင် ချန်ထားတာဖြစ်ပြီး၊ နောက်တစ်ကြိမ် သီးသန့် တိုင်းတာပြီးမှ ထည့်ပါမယ်။ ဖျောက်မထားပါ။",en:"**Eye Brighten** and **Eye Definition** now draw on the GPU. Every one of the sixteen shipped presets sets both, so opening a preset and dragging is smoother than it was. What matters more than the speed is that **the picture is the same one**: a preview that does not match the delivered file is the worst defect this studio can ship, so the test renders the same source through the CPU pipeline and through the shader and compares them channel by channel. **Eye Brighten comes back bit for bit identical**; Eye Definition is within a single count on under 1% of channels, which is float32 against float64 and nothing else. **Dark Circles** and **Eye Bags** are still drawn by the CPU and are refused by name rather than quietly skipped: their contour is a third full-frame plane and there is no byte left to carry it — 0 through 7 are all WebGL guarantees, and they are already spoken for. That one gets its own measurement in its own release.",shn:"Eye Brighten လႄႈ Eye Definition ၶိုၼ်ႈ GPU ယဝ်ႉ။ Preset 16 ဢၼ်မီးၶဝ်သွင်ဢၼ်ၼႆႉမူတ်း, လၢၵ်ႈဝႆးလိူဝ်။ ႁၢင်ႈတႄႉ မိူၼ်ၵၼ်: Eye Brighten ဢမ်ႇပႅၵ်ႇသေဢိတ်း။ Dark Circles လႄႈ Eye Bags ပႆႇလႆႈ — ဢမ်ႇမီးတီႈဝႆႉထႅင်ႈ, တေႁဵတ်းပွၵ်ႈၼႃႈ။",kac:"Eye Brighten hte Eye Definition gaw GPU de lung sai. Preset 16 yawng lahkawng yen hpe bang da ai majaw garai yang lawan sai. Sumla gaw maren sha: Eye Brighten gaw kachyi mi mung n shai ai. Dark Circles hte Eye Bags gaw CPU kaw naw nga ai — shara n nga sai, hpang de galaw na.",th:"Eye Brighten และ Eye Definition วาดบน GPU แล้ว พรีเซ็ตทั้งสิบหกชุดตั้งค่าทั้งสองตัว การลากจึงลื่นขึ้น ที่สำคัญกว่าคือภาพต้องเหมือนเดิม: Eye Brighten ตรงกันทุกบิต ส่วน Eye Definition ต่างกันไม่เกินหนึ่งหน่วย บนช่องสัญญาณไม่ถึง 1% ส่วน Dark Circles และ Eye Bags ยังอยู่บน CPU เพราะไม่มีที่ว่างเหลือแล้ว",zh:"**眼睛提亮**和**眼睛清晰**现在由 GPU 绘制。十六套预设每一套都设置了这两项，所以打开预设再拖动会更顺。比速度更要紧的是**画面必须一模一样**：预览与交付文件不一致是这个工作室能犯的最严重错误，所以测试把同一张源图分别走 CPU 管线和着色器，逐通道比对。**眼睛提亮逐位完全一致**；眼睛清晰在不到 1% 的通道上相差一个计数，这只是 float32 与 float64 的差别。**黑眼圈**和**眼袋**仍由 CPU 绘制，并且是**按名字明确拒绝**而不是悄悄跳过：它们的轮廓是第三张全幅平面，而已经没有字节可以承载了——WebGL 保证的 0 到 7 号单元全部名花有主。那一项会在它自己的版本里，带着自己的测量一起做。",vi:"Eye Brighten và Eye Definition nay vẽ trên GPU. Cả mười sáu preset đều đặt hai giá trị này nên kéo mượt hơn. Quan trọng hơn tốc độ là ảnh phải y hệt: Eye Brighten khớp từng bit, Eye Definition lệch tối đa một đơn vị trên chưa tới 1% kênh. Dark Circles và Eye Bags vẫn do CPU vẽ vì không còn chỗ.",id:"Eye Brighten dan Eye Definition kini digambar GPU. Keenam belas preset menyetel keduanya, jadi menggesernya lebih mulus. Yang lebih penting: gambarnya harus sama persis — Eye Brighten identik bit demi bit, Eye Definition beda paling banyak satu hitungan di bawah 1% kanal. Dark Circles dan Eye Bags masih di CPU karena tidak ada tempat tersisa.",ms:"Eye Brighten dan Eye Definition kini dilukis GPU. Kesemua enam belas praset menetapkan kedua-duanya, jadi menyeretnya lebih lancar. Yang lebih penting: gambarnya mesti sama — Eye Brighten serupa bit demi bit, Eye Definition beza paling banyak satu kiraan pada bawah 1% saluran. Dark Circles dan Eye Bags masih pada CPU kerana tiada ruang tinggal."} },
@@ -16203,7 +16206,7 @@ function stNeedsProxy(){
  * same points. test/verify_gpu_preview.js renders the same photo down both
  * paths and compares the pixels; it does not ask whether a flag is set.
  * =========================================================================== */
-var ST_GPU = { tried:false, gl:null, prog:null, cv:null, lost:false, loc:{}, tex:{}, fsCap:null };
+var ST_GPU = { tried:false, gl:null, prog:null, cv:null, lost:false, loc:{}, tex:{}, fsCap:null, ueCap:null };
 
 /* the shader's whole vocabulary. Anything outside it must send the frame back
    to the CPU, so the list lives next to the gate that reads it. */
@@ -16277,6 +16280,9 @@ var ST_GPU_T2_FS = ["freqHi","freqLo"];
    this one. Until then the gate refuses them by name and the CPU draws. */
 var ST_GPU_T2_EYE = ["eyeb"];
 var ST_GPU_T2_EYEDEF = ["eyeDef"];
+/* v6.72.0 — (4d). The pair is one control group in the UI and one rung of the
+   ladder here, so they are accepted and refused together. */
+var ST_GPU_T2_UE = ["ueDark","ueBags"];
 /* the only budget available before a settle has ever been timed on this device:
    a drag frame slower than this is not a fast path by any reading */
 var ST_GPU_S5_CEIL = 120;
@@ -16407,6 +16413,10 @@ var ST_GPU_FS = [
       shader compiled is byte for byte the one 6.58.x shipped and stGpuCan
       refuses the two sliders. Measured here: SwiftShader reports 32. */
 "/*HNK_FS_DECL*/",
+   /* v6.72.0 — stage (4d)'s samplers and its seven floats, spliced at the rung
+      above stage (4b)'s for exactly the same reason: a device without units 10
+      and 11 compiles a source with no trace of them in it. */
+"/*HNK_FS_UEDECL*/",
 /* the CPU rounds to 8 bits between stage (3) and stage (3b) because
    putImageData does; without this the two paths drift on the second loop.
 
@@ -16643,6 +16653,14 @@ var ST_GPU_FS = [
       skin and gpC, and eight is all WebGL 1 guarantees.
       Definition also needs the LOW BAND, which lives on unit 8, so it is
       spliced in with stage (4b) rather than written here. */
+   /* v6.72.0 — (4d) THE UNDER-EYE PAIR, AT THE POINT stApplySkin RUNS IT.
+      Its own block sits inside `if(zones)` between blush and smile lines, so it
+      is HERE: past the mask gate, before Eye Definition (the last thing in that
+      block) and before Eye Brighten (the first thing after it). Ordering is not
+      cosmetic — Dark Circles reads the pixel's luma to decide how far to pull
+      it, so running it after a brightening pass would read a luma the CPU had
+      not yet produced. */
+"/*HNK_FS_UE*/",
 "/*HNK_FS_EYE*/",
 "    if(ebV>0.0){",
 "      float ebA=sk.b;",
@@ -16722,6 +16740,42 @@ var ST_GPU_FS_EYE = [
 "        float kE=edefV/100.0*0.6*edA;",
 "        vec3 loE=texture2D(fsA,uv).rgb*255.0;",
 "        R+=(R-loE.r)*kE; G+=(G-loE.g)*kE; B+=(B-loE.b)*kE;",
+"      }",
+"    }"
+].join("\n");
+/* v6.72.0 — (4d) DARK CIRCLES AND EYE BAGS.
+   ueP is the under-eye contour: stEyeShapes' own ellipses, rasterised by
+   stShapeBytes and feathered by the same fe*2.5 stApplySkin feathers them by.
+   It is a LUMINANCE plane on unit 10 — one byte a pixel, because a contour is
+   one alpha — and ueB on unit 11 is the frame blurred at 8*rs, the array
+   stApplySkin gets from stBlurData with the same Skia call at the same radius.
+   ueRefOn is what stUeRef ANSWERED, not whether Dark Circles is on: the CPU
+   skips the pull when fewer than twenty-one cheek samples passed the mask, and
+   a shader that pulled anyway would draw a different photo on exactly the
+   frames where the measurement failed. */
+var ST_GPU_FS_UEDECL = [
+"uniform sampler2D ueP,ueB;",
+"uniform float ueDkV,ueBgV,ueRr,ueRg,ueRb,ueRl,ueRefOn;"
+].join("\n");
+var ST_GPU_FS_UE = [
+"    if(ueDkV>0.0||ueBgV>0.0){",
+"      float ua=texture2D(ueP,uv).r;",
+"      if(ua>0.01){",
+"        if(ueDkV>0.0&&ueRefOn>0.5){",
+"          float lumU=0.299*R+0.587*G+0.114*B;",
+"          float gapU=ueRl-lumU;",
+        /* only a pixel DARKER than the cheek mean is a dark circle, and the
+           pull tapers with how much darker — stApplySkin's own min(1,gap/40) */
+"          if(gapU>2.0){",
+"            float aU=ueDkV/100.0*0.55*ua*min(1.0,gapU/40.0);",
+"            R+=(ueRr-R)*aU; G+=(ueRg-G)*aU; B+=(ueRb-B)*aU;",
+"          }",
+"        }",
+"        if(ueBgV>0.0){",
+"          float aBg=ueBgV/100.0*0.85*ua;",
+"          vec3 bgU=texture2D(ueB,uv).rgb*255.0;",
+"          R+=(bgU.r-R)*aBg; G+=(bgU.g-G)*aBg; B+=(bgU.b-B)*aBg;",
+"        }",
 "      }",
 "    }"
 ].join("\n");
@@ -17003,6 +17057,14 @@ function stGpuWarpPlan(W,H,lm,t2){
 function stGpuFsOn(){
   return !ST_GPU.fsOff && !ST_GPU.t4off;
 }
+/* v6.72.0 — the same shape of question for stage (4d), and deliberately NOT a
+   question about stage (4b): the under-eye pair reads its own plane and its own
+   blur, so a device that lost the two bands to a compile failure has not lost
+   this. The capability itself is asked in stGpuRender, where every other
+   "the units are not here" refusal is asked. */
+function stGpuUeOn(){
+  return !ST_GPU.ueOff && !ST_GPU.t4off;
+}
 /* THE HONESTY GATE. Every stage this shader does not implement is listed as a
    reason to refuse, by the control that switches it on. Anything unknown also
    refuses: a control added later must be taught to the shader deliberately,
@@ -17058,6 +17120,10 @@ function stGpuCan(t1,t2,pv,heals){
         if(ST_GPU_T2_EYEDEF.indexOf(k2)>=0){                 /* (4c) definition */
           /* the low band it lifts against is stage (4b)'s, so it needs both */
           if(ST_GPU.t4off||!stGpuFsOn()) return false;
+          continue;
+        }
+        if(ST_GPU_T2_UE.indexOf(k2)>=0){                     /* (4d) under-eye */
+          if(ST_GPU.t4off||!stGpuUeOn()) return false;
           continue;
         }
         if(ST_GPU_T2_FS.indexOf(k2)>=0){                     /* (4b) */
@@ -17116,6 +17182,17 @@ function stGpuBoot(){
     var tuF=gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)||0;
     var tuC=gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)||0;
     ST_GPU.fsCap=(Math.min(tuF,tuC)>=10);
+    /* v6.72.0 — AND CAN IT HOLD STAGE (4d)? The under-eye pair needs a unit for
+       its contour plane and a unit for the 8px blur Eye Bags blends toward, and
+       both are read in the SAME pass as the mask, the three smoothing planes and
+       stage (4b)'s two bands. So they are units 10 and 11, and this is the
+       question above asked two units further out.
+       ueCap therefore IMPLIES fsCap, and the two are a LADDER rather than a
+       matrix: yes here compiles both splices, no here and yes there compiles
+       stage (4b)'s alone, no to both compiles what 6.58.x shipped. Four
+       combinations of two independent flags would be four shaders to keep
+       honest; three rungs are three. */
+    ST_GPU.ueCap=(Math.min(tuF,tuC)>=12);
     /* a lost context must not keep handing back a blank frame — one loss and
        the whole session goes back to the CPU, which is always correct */
     cv.addEventListener("webglcontextlost",function(ev){ ev.preventDefault(); ST_GPU.lost=true; ST_GPU.gl=null; },false);
@@ -17144,18 +17221,39 @@ function stGpuBoot(){
        the program is losing the whole fast path for every stage, and no new
        stage is worth that risk on a student's machine. */
     var pr=null;
-    if(ST_GPU.fsCap){
+    /* v6.72.0 — the two upper rungs share stage (4b)'s splices, so the source is
+       built once and the under-eye pair added on top. A marker left unreplaced
+       is a GLSL block comment, which is exactly why the lower rungs compile a
+       source with no trace of the stage above them. */
+    function fsSrc(withUe){
+      var sTxt=ST_GPU_FS.replace("/*HNK_FS_DECL*/",ST_GPU_FS_DECL)
+                        .replace("/*HNK_FS_BODY*/",ST_GPU_FS_BODY)
+                        .replace("/*HNK_FS_EYE*/",ST_GPU_FS_EYE);
+      if(withUe) sTxt=sTxt.replace("/*HNK_FS_UEDECL*/",ST_GPU_FS_UEDECL)
+                          .replace("/*HNK_FS_UE*/",ST_GPU_FS_UE);
+      return sTxt;
+    }
+    if(ST_GPU.ueCap){
       try{
-        pr=build(ST_GPU_FS.replace("/*HNK_FS_DECL*/",ST_GPU_FS_DECL)
-                          .replace("/*HNK_FS_BODY*/",ST_GPU_FS_BODY)
-                          .replace("/*HNK_FS_EYE*/",ST_GPU_FS_EYE));
+        pr=build(fsSrc(true));
+      }catch(eUe){
+        ST_GPU.ueCap=false;
+        ST_GPU.ueBuildErr=String((eUe&&eUe.message)||eUe);
+        pr=null;
+      }
+    }
+    if(!pr&&ST_GPU.fsCap){
+      try{
+        pr=build(fsSrc(false));
       }catch(eFs){
         ST_GPU.fsCap=false;
         ST_GPU.fsBuildErr=String((eFs&&eFs.message)||eFs);
         pr=null;
       }
     }
-    if(!pr) pr=build(ST_GPU_FS);
+    /* a rung that fell through takes every rung above it with it */
+    if(!pr){ ST_GPU.ueCap=false; pr=build(ST_GPU_FS); }
+    if(!ST_GPU.fsCap) ST_GPU.ueCap=false;
     gl.useProgram(pr);
     var buf=gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER,buf);
@@ -17200,6 +17298,20 @@ function stGpuBoot(){
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,one);
       gl.uniform1i(gl.getUniformLocation(pr,"fsA"),8);
       gl.uniform1i(gl.getUniformLocation(pr,"fsB"),9);
+    }
+    /* v6.72.0 — stage (4d)'s two units, complete from the first draw for the
+       same reason the two above are: a Dark-Circles-only recipe never uploads
+       the blur. ueP is a LUMINANCE plane, one byte a pixel and not four —
+       the contour is a single alpha and there is nothing else to carry in it. */
+    if(ST_GPU.ueCap){
+      ST_GPU.tex.ueP=mkTex(10); ST_GPU.tex.ueB=mkTex(11);
+      var oneU=new Uint8Array([0,0,0,255]);
+      gl.activeTexture(gl.TEXTURE10); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.ueP);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.LUMINANCE,1,1,0,gl.LUMINANCE,gl.UNSIGNED_BYTE,new Uint8Array([0]));
+      gl.activeTexture(gl.TEXTURE11); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.ueB);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,oneU);
+      gl.uniform1i(gl.getUniformLocation(pr,"ueP"),10);
+      gl.uniform1i(gl.getUniformLocation(pr,"ueB"),11);
     }
     /* v6.60.0 — STAGE (6c-)'s OWN PROGRAM, BUILT THE SAME WAY THE BANDS ARE
        SPLICED: as an attempt. If this driver will not take it, warpCap stays
@@ -17261,10 +17373,10 @@ function stGpuWU(n){
    whether a teeth plane is wanted, because turning teeth on does not move the
    tonal half: the readback, the mask and the mean stay cached and only the
    texture is rebuilt. */
-function stGpuSkinPass(gl,W,H,sig,teethOn,eyeOn){
-  var tkey=sig+"|t"+(teethOn?1:0)+"|e"+(eyeOn?1:0);
+function stGpuSkinPass(gl,W,H,sig,teethOn,eyeOn,ueOn){
+  var tkey=sig+"|t"+(teethOn?1:0)+"|e"+(eyeOn?1:0)+"|u"+(ueOn?1:0);
   if(ST_GPU.t4key===sig&&ST_GPU.t4tkey===tkey) return true;
-  if(ST_GPU.t4key===sig&&ST_GPU.t4mi) return stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn);
+  if(ST_GPU.t4key===sig&&ST_GPU.t4mi) return stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn,ueOn);
   var buf=ST_GPU.t4buf;
   if(!buf||buf.length!==W*H*4) buf=ST_GPU.t4buf=new Uint8Array(W*H*4);
   gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,buf);
@@ -17291,7 +17403,7 @@ function stGpuSkinPass(gl,W,H,sig,teethOn,eyeOn){
   }
   ST_GPU.t4mean = n ? {cb:sCb/n,cr:sCr/n} : {cb:128,cr:128};
   ST_GPU.t4key=sig;
-  return stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn);
+  return stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn,ueOn);
 }
 /* v6.59.0 — ONE TEXEL PER PIXEL, TWO ANSWERS IN IT.
    R is the skin mask, exactly the byte the LUMINANCE texture carried before
@@ -17300,7 +17412,7 @@ function stGpuSkinPass(gl,W,H,sig,teethOn,eyeOn){
    one-byte texture, but a second full-frame texture would want a ninth unit
    this shader has no room for — and the shader was already sampling this texel
    for m, so the green byte is free. */
-function stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn){
+function stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn,ueOn){
   var mi=ST_GPU.t4mi, px=ST_GPU.t4px;
   if(!mi||!mi.mask||!px) return false;
   var teeth=null, zn=null;
@@ -17320,16 +17432,44 @@ function stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn){
      cannot run, and without measured eye zones its Brighten thresholds are the
      other pair (80/180/30, no sclera de-yellow). Either way the shader would be
      drawing a different photo, so the frame goes to the CPU instead. */
+  /* v6.72.0 — one call for all three contours, memoised, because stEyeShapes
+     re-derives the feather from the whole face set and two calls could not
+     disagree without one of them being wrong. */
+  var fsSet=null, esh=null;
+  function eyeSh(){
+    if(esh===null){ fsSet=stFaceSetOf(zones()); esh=stEyeShapes(fsSet); }
+    return esh;
+  }
   var e135=null, e160=null;
   if(eyeOn){
     try{
-      var fs=stFaceSetOf(zones()), esh=stEyeShapes(fs), anyEyes=false;
-      for(var fz=0;fz<fs.length;fz++) if(fs[fz]&&fs[fz].eyes) anyEyes=true;
-      if(!anyEyes||!esh.e135.length||!esh.e160.length) return false;
-      e135=stShapeBytes(W,H,esh.e135,esh.fe);
-      e160=stShapeBytes(W,H,esh.e160,esh.fe);
+      var es=eyeSh(), anyEyes=false;
+      for(var fz=0;fz<fsSet.length;fz++) if(fsSet[fz]&&fsSet[fz].eyes) anyEyes=true;
+      if(!anyEyes||!es.e135.length||!es.e160.length) return false;
+      e135=stShapeBytes(W,H,es.e135,es.fe);
+      e160=stShapeBytes(W,H,es.e160,es.fe);
     }catch(e){ return false; }
     if(!e135||!e160) return false;
+  }
+  /* v6.72.0 — (4d)'s CONTOUR, AND WHY AN EMPTY ONE IS NOT A REFUSAL.
+     Eye Brighten has an ellipse fallback the shader cannot run, so a frame with
+     no polygons has to go to the CPU. The under-eye pair has NO fallback:
+     stApplySkin builds ueA only `if(...&&shp.ue.length)` and there is no else,
+     so a face with no under-eye ellipses is a face where the CPU draws nothing
+     either. An empty plane is agreement, not a wrong picture.
+     The reference follows the same rule for the same reason — the CPU measures
+     it only when the plane exists — and it is measured off t4px, which IS the
+     array stApplySkin is handed (px.data, before the pass writes a byte). */
+  var uePl=null;
+  ST_GPU.ueRef=null;
+  if(ueOn){
+    try{
+      var eu=eyeSh();
+      if(eu.ue.length){
+        uePl=stShapeBytes(W,H,eu.ue,eu.fe*2.5);
+        ST_GPU.ueRef=stUeRef(px.data,W,H,mi.mask,fsSet);
+      }
+    }catch(e){ return false; }
   }
   var n=W*H, tx=ST_GPU.t4tex;
   if(!tx||tx.length!==n*4) tx=ST_GPU.t4tex=new Uint8Array(n*4);
@@ -17339,7 +17479,46 @@ function stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn){
   }
   gl.activeTexture(gl.TEXTURE6); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.skin);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,W,H,0,gl.RGBA,gl.UNSIGNED_BYTE,tx);
+  /* one byte a pixel, so UNPACK_ALIGNMENT has to come down: a LUMINANCE row of
+     an odd width is not a multiple of four and the default would read the rows
+     skewed. It goes straight back up — every other upload here is RGBA. */
+  if(ueOn&&ST_GPU.tex.ueP){
+    var uz=ST_GPU.ueZero;
+    if(!uePl&&(!uz||uz.length!==W*H)) uz=ST_GPU.ueZero=new Uint8Array(W*H);
+    gl.activeTexture(gl.TEXTURE10); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.ueP);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.LUMINANCE,W,H,0,gl.LUMINANCE,gl.UNSIGNED_BYTE,uePl||uz);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT,4);
+  }
   ST_GPU.t4tkey=tkey;
+  return true;
+}
+/* v6.72.0 — THE 8px BLUR EYE BAGS BLENDS TOWARD.
+   stApplySkin gets it from stBlurData(cv, 8*rs): a fresh canvas, one Skia
+   blur, one getImageData. This is that call with the readback deleted — the
+   blurred canvas goes to the GPU as a texture, which is the bargain stage (4b)
+   already struck for its two bands, on the same source canvas and keyed the
+   same way so a Bags drag re-blurs nothing at all. */
+function stGpuUeBlur(gl,W,H,rs,sig){
+  var px=ST_GPU.t4px;
+  if(!px||px.width!==W||px.height!==H) return false;
+  if(!ST_GPU.tex.ueB) return false;
+  var key=sig+"|"+W+"x"+H+"|"+rs;
+  var src=ST_GPU.fsSrcCv||(ST_GPU.fsSrcCv=document.createElement("canvas"));
+  if(ST_GPU.fsSrcKey!==key){
+    if(src.width!==W||src.height!==H){ src.width=W; src.height=H; }
+    src.getContext("2d").putImageData(px,0,0);
+    ST_GPU.fsSrcKey=key; ST_GPU.fsAKey=""; ST_GPU.fsBKey=""; ST_GPU.ueBKey="";
+  }
+  if(ST_GPU.ueBKey===key) return true;
+  var b=ST_GPU.ueBcv||(ST_GPU.ueBcv=document.createElement("canvas"));
+  if(b.width!==W||b.height!==H){ b.width=W; b.height=H; }
+  var bx=b.getContext("2d");
+  bx.filter="none"; bx.clearRect(0,0,W,H);
+  bx.filter="blur("+(8*rs)+"px)"; bx.drawImage(src,0,0,W,H); bx.filter="none";
+  gl.activeTexture(gl.TEXTURE11); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.ueB);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,b);
+  ST_GPU.ueBKey=key;
   return true;
 }
 /* v6.59.0 — THE TWO BANDS STAGE (4b) READS, AND WHERE THEY COME FROM.
@@ -17371,7 +17550,7 @@ function stGpuFsPlanes(gl,W,H,rs,lo,sig,needWide){
   if(ST_GPU.fsSrcKey!==key){
     if(src.width!==W||src.height!==H){ src.width=W; src.height=H; }
     src.getContext("2d").putImageData(px,0,0);
-    ST_GPU.fsSrcKey=key; ST_GPU.fsAKey=""; ST_GPU.fsBKey="";
+    ST_GPU.fsSrcKey=key; ST_GPU.fsAKey=""; ST_GPU.fsBKey=""; ST_GPU.ueBKey="";
   }
   function blurTo(slot,unit,tex,r){
     var b=ST_GPU[slot]||(ST_GPU[slot]=document.createElement("canvas"));
@@ -17457,6 +17636,8 @@ function stGpuRender(srcImg,W,H,o){
        gate promised — a wrong picture, silently, which is the one outcome this
        whole path exists to prevent. Returning null sends the frame to the CPU. */
     if(!ST_GPU.fsCap && t2 && (((t2.freqHi||0)!==0) || ((t2.freqLo||0)>0))) return null;
+    /* v6.72.0 — stage (4d), asked the same way and in the same place */
+    if(!ST_GPU.ueCap && t2 && (((t2.ueDark||0)>0) || ((t2.ueBags||0)>0))) return null;
     /* v6.60.0 — stage (6c-). Same shape of question, asked in the same place
        and for the same reason: the CONTROLS say a reshape is wanted, so a frame
        drawn without it would be a wrong picture rather than a slow one. */
@@ -17551,9 +17732,16 @@ function stGpuRender(srcImg,W,H,o){
     var ebV    = (!ST_GPU.t4off && (t2.eyeb||0)>0) ? (t2.eyeb||0) : 0;
     var edefV  = (!ST_GPU.t4off && fsOn && (t2.eyeDef||0)>0) ? (t2.eyeDef||0) : 0;
     var eyeOn  = (ebV>0 || edefV>0);
+    /* v6.72.0 — (4d). Both read the contour plane; Eye Bags also reads the 8px
+       blur, so only IT buys that upload — a Dark-Circles drag pays for nothing
+       it does not use, exactly as the wide band is the Low slider's alone. */
+    var ueGo   = stGpuUeOn();
+    var ueDkV  = (ueGo && (t2.ueDark||0)>0) ? (t2.ueDark||0) : 0;
+    var ueBgV  = (ueGo && (t2.ueBags||0)>0) ? (t2.ueBags||0) : 0;
+    var ueOn   = (ueDkV>0 || ueBgV>0);
     var skinOn = (whiteAmt>0 || (t2.rosy||0)!==0 || (t2.deshine||0)>0 ||
                   (t2.gloss||0)!==0 || (t2.deyellow||0)>0 || evenA>0 || smA>0 ||
-                  teethV>0 || fsLoA!==0 || fsHiA!==0 || eyeOn);
+                  teethV>0 || fsLoA!==0 || fsHiA!==0 || eyeOn || ueOn);
     /* the mask itself is not uploaded here any more — it comes off the tonal
        draw below, because that is the array the CPU asks stSkinMask about */
     gl.uniform1i(stGpuU("skinOn"),skinOn?1:0);
@@ -17572,6 +17760,13 @@ function stGpuRender(srcImg,W,H,o){
     if(ST_GPU.fsCap){
       gl.uniform1f(stGpuU("fsLoA"),fsLoA); gl.uniform1f(stGpuU("fsHiA"),fsHiA);
       gl.uniform1f(stGpuU("edefV"),edefV);
+    }
+    /* v6.72.0 — (4d)'s two sliders. The cheek reference they pull toward is not
+       written here: stUeRef measures it off the tonal readback, which the skin
+       pass below has not taken yet, so those four go with meanCb/meanCr. */
+    if(ST_GPU.ueCap){
+      gl.uniform1f(stGpuU("ueDkV"),ueDkV); gl.uniform1f(stGpuU("ueBgV"),ueBgV);
+      gl.uniform1f(stGpuU("ueRefOn"),0);
     }
     /* v6.54.0 — RADIANCE DRIVES CLARITY TOO. stApplySkin is not the only place
        t2.radiance is read: stage (5)'s claA is (cla + radiance*0.3 + ...), so a
@@ -17630,7 +17825,7 @@ function stGpuRender(srcImg,W,H,o){
         JSON.stringify(pv.gradeZones||null)+"|"+(pv.anyGrade?1:0)+"|"+(pv.gradeSat||0)+"|"+
         (pv.bwOn?1:0)+","+pv.bwR+","+pv.bwG+","+pv.bwB+"|"+
         (pv.wbOn?1:0)+","+(pv.wbGr||0)+","+(pv.wbGb||0);
-      var t4tkey=evenSig+"|t"+(teethV>0?1:0)+"|e"+(eyeOn?1:0);
+      var t4tkey=evenSig+"|t"+(teethV>0?1:0)+"|e"+(eyeOn?1:0)+"|u"+(ueOn?1:0);
       if(ST_GPU.t4key!==evenSig || ST_GPU.t4tkey!==t4tkey){
         /* the tonal draw. mode 1 returns before the finishing stages and
            skinOn 0 skips stage (4), so what lands in the buffer is the array
@@ -17646,7 +17841,7 @@ function stGpuRender(srcImg,W,H,o){
           gl.uniform1i(stGpuU("skinOn"),0);
           gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
         }
-        var okT4=stGpuSkinPass(gl,W,H,evenSig,teethV>0,eyeOn);
+        var okT4=stGpuSkinPass(gl,W,H,evenSig,teethV>0,eyeOn,ueOn);
         if(redraw){
           gl.uniform1i(stGpuU("mode"),s5?1:0);
           gl.uniform1i(stGpuU("skinOn"),1);
@@ -17656,6 +17851,19 @@ function stGpuRender(srcImg,W,H,o){
       }
       gl.uniform1f(stGpuU("meanCb"),ST_GPU.t4mean.cb);
       gl.uniform1f(stGpuU("meanCr"),ST_GPU.t4mean.cr);
+      /* v6.72.0 — the cheek reference stUeRef measured off that same readback.
+         It is null when the plane was empty or fewer than twenty-one samples
+         passed the mask, and ueRefOn carries that null across rather than a
+         zero colour, because the CPU does not pull toward black — it does not
+         pull at all. */
+      if(ST_GPU.ueCap){
+        var uref=(ueDkV>0)?ST_GPU.ueRef:null;
+        gl.uniform1f(stGpuU("ueRefOn"),uref?1:0);
+        gl.uniform1f(stGpuU("ueRr"),uref?uref.r:0);
+        gl.uniform1f(stGpuU("ueRg"),uref?uref.g:0);
+        gl.uniform1f(stGpuU("ueRb"),uref?uref.b:0);
+        gl.uniform1f(stGpuU("ueRl"),uref?uref.l:0);
+      }
       /* v6.56.0 — the smoothing planes are solved from the SAME readback the
          mask and the mean came off, which is the array stGuidedRGB is handed.
          Radius and eps are stApplySkin's own expressions, not a restatement:
@@ -17675,6 +17883,13 @@ function stGpuRender(srcImg,W,H,o){
       if(fsLoA!==0||fsHiA!==0||edefV>0){
         var fsRS=(typeof o.rs==="number"&&o.rs>0)?o.rs:1;
         if(!stGpuFsPlanes(gl,W,H,fsRS,t2.freqLo||0,evenSig,fsLoA!==0)) return null;
+        ST_GPU.t4paid=true;
+      }
+      /* v6.72.0 — stage (4d)'s blur, off the same source canvas stage (4b)
+         prepares, at the radius stApplySkin's own blurUE uses */
+      if(ueBgV>0){
+        var ueRS=(typeof o.rs==="number"&&o.rs>0)?o.rs:1;
+        if(!stGpuUeBlur(gl,W,H,ueRS,evenSig)) return null;
         ST_GPU.t4paid=true;
       }
     }
@@ -29238,7 +29453,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.71.0";
+var APP_VER="6.72.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

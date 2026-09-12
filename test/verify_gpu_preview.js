@@ -75,11 +75,29 @@
  *     both, over white + smoothing + teeth + the high band
  *                          within 1 count on under 5% of channels
  *
- * DARK CIRCLES and EYE BAGS are still the CPU's, and C13f pins that they are
- * refused BY NAME. The reason is arithmetic: the under-eye ellipses are a third
- * plane and there is no third byte, and Eye Bags needs a third full-frame blur
- * on top of that. Both fit if the leftover bytes of two planes are split, which
- * is worth doing with its own measurement rather than folded in here.
+ * DARK CIRCLES and EYE BAGS were the CPU's until 6.72.0, and 6.71.0's header
+ * said exactly why: the under-eye ellipses are a THIRD plane and there is no
+ * third byte, and Eye Bags needs a third full-frame blur on top of that.
+ *
+ * v6.72.0 — SO THEY STOPPED LOOKING FOR A SPARE BYTE, and stage (4d) buys the
+ * units instead: unit 10 carries the contour as a LUMINANCE plane, one byte a
+ * pixel, and unit 11 carries the frame blurred at 8*rs, the array stApplySkin
+ * gets from stBlurData. Twelve units is one rung above stage (4b)'s ten, asked
+ * the same way — a reported count, then a compile, then a fallback that costs
+ * this stage and nothing above it — and refused the same way, in the renderer
+ * where GL is in hand, never in the gate. Dark Circles only pulls a pixel that
+ * is DARKER than the cheek mean stUeRef measured, and ueRefOn carries the case
+ * where that measurement FAILED (fewer than twenty-one cheek samples through
+ * the mask) rather than a zero colour, because the CPU does not pull toward
+ * black there — it does not pull at all. Measured, on a plate painted twice so
+ * the ellipses really are darker than the cheeks around them:
+ *
+ *     Dark Circles         within 1 count on under 1% of channels
+ *     Eye Bags             within 1 count on under 1% of channels
+ *     all four eye controls, over white + smoothing + teeth + the high band
+ *                          within 1 count on under 5% of channels
+ *
+ * That completes the eye group: 4 of 4. See C15.
  *
  * v6.59.0 — THE LAST TWO TIER-2 CONTROLS, AND WHAT EACH OF THEM COSTS.
  *
@@ -821,6 +839,146 @@ let PHASE = "starting";
       ST.maskRev = (ST.maskRev || 0) + 1;
     }
 
+    /* v6.72.0 — (4d) THE UNDER-EYE PAIR, AND WHY THE PLATE IS PAINTED TWICE.
+       Dark Circles only moves a pixel DARKER than the cheek mean, so a flat
+       plate would have the two paths agreeing about doing nothing. The contour
+       comes from the landmarks, not from the pixels, so the plate is painted
+       once, asked where the under-eye ellipses landed, and painted again with
+       those ellipses darkened — which is the photograph this control exists
+       for. Eye Bags then has a hard edge to blur against. */
+    window.__hnkPhase = "under-eye";
+    let ueCheck = null;
+    {
+      const uc = document.createElement("canvas"); uc.width = W; uc.height = H;
+      const ux = uc.getContext("2d");
+      const ui = ux.createImageData(W, H);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const q = (y * W + x) * 4;
+        ui.data[q] = 206 + ((x >> 4) & 7);
+        ui.data[q + 1] = 166 + ((y >> 4) & 7);
+        ui.data[q + 2] = 146 + ((x + y) & 7);
+        ui.data[q + 3] = 255;
+      }
+      const cx = 128, eyeY = 96, iod = 56;
+      const pts = new Array(68), mouthY = 162;
+      for (let i = 0; i <= 16; i++) { const t = (i - 8) / 8; pts[i] = [cx + t * 70, 120 + (1 - t * t) * 80]; }
+      for (let i = 17; i <= 21; i++) { const t = (i - 17) / 4; pts[i] = [cx - iod / 2 - 18 + t * 36, eyeY - 18]; }
+      for (let i = 22; i <= 26; i++) { const t = (i - 22) / 4; pts[i] = [cx + iod / 2 - 18 + t * 36, eyeY - 18]; }
+      for (let i = 27; i <= 30; i++) { const t = (i - 27) / 3; pts[i] = [cx, eyeY + t * 32]; }
+      for (let i = 31; i <= 35; i++) { const t = (i - 31) / 4; pts[i] = [cx - 14 + t * 28, eyeY + 40]; }
+      const eyeP = (base, exc) => { for (let i = 0; i < 6; i++) { const a2 = Math.PI * 2 * i / 6;
+        pts[base + i] = [exc + Math.cos(a2) * 13, eyeY + Math.sin(a2) * 7]; } };
+      eyeP(36, cx - iod / 2); eyeP(42, cx + iod / 2);
+      for (let i = 48; i <= 59; i++) { const a2 = Math.PI * 2 * (i - 48) / 12;
+        pts[i] = [cx + Math.cos(a2) * 42, mouthY + Math.sin(a2) * 22]; }
+      for (let i = 60; i <= 67; i++) { const a2 = Math.PI * 2 * (i - 60) / 8;
+        pts[i] = [cx + Math.cos(a2) * 30, mouthY + Math.sin(a2) * 11]; }
+      const lmU = { w: W, h: H, scanned: true, faces: [{ score: 0.9, pts: pts }] };
+      const keptLM = ST.faceLM; ST.faceLM = lmU;
+      ux.putImageData(ui, 0, 0);
+      /* pass one: where did the under-eye ellipses land? */
+      const umi0 = stSkinMask(ux.getImageData(0, 0, W, H), W, H, lmU);
+      const ufs0 = stFaceSetOf(stFaceZones(ux.getImageData(0, 0, W, H), W, H, umi0, lmU));
+      const ush0 = stEyeShapes(ufs0);
+      /* pass two: darken inside them, which is what a dark circle IS — and
+         darken them by a RANGE, deepest at the centre and fading to nothing at
+         the rim. A flat shadow would put every pixel past the min(1,gap/40)
+         ceiling, and a comparison where the taper never runs cannot tell a
+         taper of 40 from a taper of 41: injecting exactly that changed nothing
+         until this gradient replaced the flat patch. */
+      let shaded = 0, gapLo = 1e9, gapHi = -1e9;
+      for (let k = 0; k < ush0.ue.length; k++) {
+        const e = ush0.ue[k].ell; if (!e) continue;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          if (!stInEllipse(x, y, e, 1)) continue;
+          const rx = (x - e.cx) / Math.max(1, e.rx), ry = (y - e.cy) / Math.max(1, e.ry);
+          const t = Math.max(0, 1 - Math.sqrt(rx * rx + ry * ry));   /* 0 at the rim, 1 at the centre */
+          const q = (y * W + x) * 4;
+          const dr = Math.round(58 * t), dg = Math.round(50 * t), db = Math.round(38 * t);
+          ui.data[q] = Math.max(0, ui.data[q] - dr);
+          ui.data[q + 1] = Math.max(0, ui.data[q + 1] - dg);
+          ui.data[q + 2] = Math.max(0, ui.data[q + 2] - db);
+          const dl = 0.299 * dr + 0.587 * dg + 0.114 * db;
+          if (dl < gapLo) gapLo = dl;
+          if (dl > gapHi) gapHi = dl;
+          shaded++;
+        }
+      }
+      ux.putImageData(ui, 0, 0);
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      /* the plane and the reference the shader is handed, measured here the way
+         stGpuSkinTex measures them, so "the plane was empty" and "the cheek
+         samples never reached twenty-one" cannot pass as agreement */
+      const umi = stSkinMask(ux.getImageData(0, 0, W, H), W, H, lmU);
+      const ufs = stFaceSetOf(stFaceZones(ux.getImageData(0, 0, W, H), W, H, umi, lmU));
+      const ush = stEyeShapes(ufs);
+      const pUE = ush.ue.length ? stShapeBytes(W, H, ush.ue, ush.fe * 2.5) : null;
+      let onUE = 0;
+      if (pUE) for (let i = 0; i < pUE.length; i++) if (pUE[i] > 12) onUE++;
+      const uref = stUeRef(ux.getImageData(0, 0, W, H).data, W, H, umi.mask, ufs);
+      const grabU = (cv) => { const q = document.createElement("canvas"); q.width = W; q.height = H;
+        const qq = q.getContext("2d"); qq.drawImage(cv, 0, 0); return qq.getImageData(0, 0, W, H).data; };
+      /* the landmarks go to BOTH paths or the comparison is a lie: stRunPipeline
+         is handed them as an argument and stGpuRender reads ST.faceLM, and the
+         first draft of the no-face check below set only the second — so it
+         compared a CPU that still had a face against a GPU that did not, and
+         reported 24 counts of "disagreement" that were nothing of the kind. */
+      const runU = (t2, lmArg) => {
+        const lmUse = (lmArg === undefined) ? lmU : lmArg;
+        const pv = basePv(), t1 = zeroT1(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+        const cpu = stRunPipeline(uc, W, H, { t1, t2, pv, curve: cu, heals: null, rs: 1, lm: lmUse });
+        const gpu = stGpuRender(uc, W, H, { t1, t2, pv, curve: cu, rs: 1 });
+        return { gate: stGpuCan(t1, t2, pv, null), cpu: grabU(cpu), gpu: gpu ? grabU(gpu) : null };
+      };
+      const cmpU = (r) => {
+        if (!r.gpu) return { error: "stGpuRender returned null", gate: r.gate };
+        let maxd = 0, diff = 0, sum = 0, n = 0, worst = null;
+        for (let i = 0; i < r.cpu.length; i += 4) for (let c = 0; c < 3; c++) {
+          const d = Math.abs(r.cpu[i + c] - r.gpu[i + c]); sum += d; n++;
+          if (d) { diff++; if (d > maxd) { maxd = d; worst = { px: i / 4, ch: c, cpu: r.cpu[i + c], gpu: r.gpu[i + c] }; } }
+        }
+        return { gate: r.gate, maxd, diff, pct: +(100 * diff / n).toFixed(4), mean: +(sum / n).toFixed(5), worst };
+      };
+      const movedU = (a2, b2) => { let mv = 0, mx = 0;
+        for (let i = 0; i < a2.length; i += 4) for (let c = 0; c < 3; c++) {
+          const d = Math.abs(a2[i + c] - b2[i + c]); if (d) { mv++; if (d > mx) mx = d; } }
+        return { ch: mv, max: mx }; };
+      const offU = runU(zeroT2());
+      const t2dk = zeroT2(); t2dk.ueDark = 70;        const dkR = runU(t2dk);
+      const t2bg = zeroT2(); t2bg.ueBags = 70;        const bgR = runU(t2bg);
+      const t2ub = zeroT2(); t2ub.ueDark = 70; t2ub.ueBags = 70;
+      t2ub.white = 30; t2ub.smooth = 35; t2ub.teeth = 40; t2ub.eyeb = 50;
+      t2ub.eyeDef = 40; t2ub.freqHi = 40;
+      const bothU = runU(t2ub);
+      /* v6.72.0 — AND THE FRAME WITH NO FACE IN IT. Eye Brighten REFUSES such a
+         frame, because stApplySkin falls back to an ellipse predicate the
+         fragment cannot run. The under-eye pair has no fallback at all —
+         stApplySkin builds ueA only `if(...&&shp.ue.length)` and there is no
+         else — so an empty plane is the CPU drawing nothing either. That makes
+         it agreement rather than a wrong picture, and the shader must draw the
+         frame rather than send it back. This is the check that says so. */
+      ST.faceLM = null;
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      const t2nf = zeroT2(); t2nf.ueDark = 70; t2nf.ueBags = 70;
+      const noFace = runU(t2nf, null);
+      const noFaceCmp = cmpU(noFace);
+      const noFaceZero = runU(zeroT2(), null);
+      const noFaceMoved = movedU(noFaceZero.cpu, noFace.cpu);
+      ST.faceLM = lmU;
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      ueCheck = {
+        shadedPixels: shaded, planeUE: onUE,
+        noFace: noFaceCmp, noFaceCpuMoved: noFaceMoved,
+        shadeSpread: { lo: +gapLo.toFixed(2), hi: +gapHi.toFixed(2) },
+        refMeasured: !!uref, ref: uref ? { l: +uref.l.toFixed(2) } : null,
+        cpuMovedUeDark: movedU(offU.cpu, dkR.cpu),
+        cpuMovedUeBags: movedU(offU.cpu, bgR.cpu),
+        baseline: cmpU(offU), ueDark: cmpU(dkR), ueBags: cmpU(bgR), both: cmpU(bothU)
+      };
+      ST.faceLM = keptLM;
+      ST.maskRev = (ST.maskRev || 0) + 1;
+    }
+
     /* v6.60.0 — STAGE (6c-), LIVE FACE RESHAPE. Like teeth it needs a measured
        face, and unlike every other stage it moves the picture GEOMETRICALLY,
        so the frame under it has to have detail worth mis-sampling: a flat
@@ -1141,9 +1299,40 @@ let PHASE = "starting";
     ST_GPU.fsOff = false;
     const acceptsEyeb = stGpuCan(zeroT1(), fsFrom("eyeb", 40), basePv(), null) === true;
     const acceptsEyeDef = stGpuCan(zeroT1(), fsFrom("eyeDef", 40), basePv(), null) === true;
-    /* and the two of the four that are still the CPU's, refused by name */
-    const refusesUeDark = stGpuCan(zeroT1(), fsFrom("ueDark", 40), basePv(), null) === false;
-    const refusesUeBags = stGpuCan(zeroT1(), fsFrom("ueBags", 40), basePv(), null) === false;
+    /* v6.72.0 — and the last two of the four, which are stage (4d)'s. They are
+       NOT stage (4b)'s: the pair reads its own plane and its own blur, so a
+       device that lost the two bands to a compile failure keeps these — which
+       is why the eyeDef road above and this road are asked separately. */
+    const acceptsUeDark = stGpuCan(zeroT1(), fsFrom("ueDark", 40), basePv(), null) === true;
+    const acceptsUeBags = stGpuCan(zeroT1(), fsFrom("ueBags", 40), basePv(), null) === true;
+    ST_GPU.ueOff = true;
+    const refusesUeDarkWhenSpent = stGpuCan(zeroT1(), fsFrom("ueDark", 40), basePv(), null) === false;
+    const refusesUeBagsWhenSpent = stGpuCan(zeroT1(), fsFrom("ueBags", 40), basePv(), null) === false;
+    const stillAcceptsEyebWhenUeSpent = stGpuCan(zeroT1(), fsFrom("eyeb", 40), basePv(), null) === true;
+    const stillAcceptsEyeDefWhenUeSpent = stGpuCan(zeroT1(), fsFrom("eyeDef", 40), basePv(), null) === true;
+    ST_GPU.ueOff = false;
+    ST_GPU.fsOff = true;
+    const stillAcceptsUeWhenFsSpent = stGpuCan(zeroT1(), fsFrom("ueDark", 40), basePv(), null) === true &&
+                                      stGpuCan(zeroT1(), fsFrom("ueBags", 40), basePv(), null) === true;
+    ST_GPU.fsOff = false;
+    const ueCapReal = ST_GPU.ueCap;
+    /* the capability road for stage (4d), asked as BEHAVIOUR exactly as stage
+       (4b)'s is: without the units an under-eye recipe comes back null and the
+       CPU draws it, while the eye pair and teeth still render on the GPU. */
+    const keptUeCap = ST_GPU.ueCap;
+    ST_GPU.ueCap = false;
+    const noUeUnits = (() => {
+      const t1 = zeroT1(), pv = basePv(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      const dark = stGpuRender(sc, W, H, { t1, t2: fsFrom("ueDark", 40), pv, curve: cu, rs: 1 });
+      const bags = stGpuRender(sc, W, H, { t1, t2: fsFrom("ueBags", 40), pv, curve: cu, rs: 1 });
+      const teethOnly = stGpuRender(sc, W, H, { t1, t2: fsFrom("teeth", 40), pv, curve: cu, rs: 1 });
+      const freq = stGpuRender(sc, W, H, { t1, t2: fsFrom("freqHi", 40), pv, curve: cu, rs: 1 });
+      return { darkIsNull: dark === null, bagsIsNull: bags === null,
+               teethStillDraws: !!teethOnly, bandsStillDraw: !!freq, stillBooted: !!ST_GPU.gl };
+    })();
+    ST_GPU.ueCap = keptUeCap;
+    ST.maskRev = (ST.maskRev || 0) + 1;
     /* and the capability road. It is the RENDERER that owns this question, not
        the gate: the gate must never boot GL to answer it (see stGpuFsOn), so on
        a device without the units the frame is refused where GL is in hand and
@@ -1266,7 +1455,9 @@ let PHASE = "starting";
       teethCheck, eyeCheck, reshapeCheck, warpSpeed, fsRadiusReuse, fsSpeed, fsBuildFallback, fsCapReal, glLimits, acceptsFreqHi, acceptsFreqLo, acceptsTeeth,
       refusesFreqWhenSpent, stillAcceptsNegLowWhenFsSpent, stillAcceptsTeethWhenFsSpent,
       acceptsEyeb, acceptsEyeDef, stillAcceptsEyebWhenFsSpent, refusesEyeDefWhenFsSpent,
-      refusesUeDark, refusesUeBags,
+      acceptsUeDark, acceptsUeBags, refusesUeDarkWhenSpent, refusesUeBagsWhenSpent,
+      stillAcceptsEyebWhenUeSpent, stillAcceptsEyeDefWhenUeSpent, stillAcceptsUeWhenFsSpent,
+      ueCapReal, noUeUnits, ueCheck,
       stillAcceptsSmoothWhenFsSpent, noUnits,
       stillAcceptsTonalWhenT4Spent, maskProvenance, planeReuse,
       acceptsGlow, refusesGlowWhenSpent, stillAcceptsTonalWhenGlowSpent, glowCoverage };
@@ -1387,14 +1578,12 @@ let PHASE = "starting";
       t && t.combo);
   }
 
-  report("C13f) the gate accepts the eye pair, sends Definition down the bands' road, and still refuses the other two by name",
+  report("C13f) the gate accepts the eye pair and sends Definition down the bands' road, while Brighten survives it",
     results.acceptsEyeb === true && results.acceptsEyeDef === true &&
-    results.stillAcceptsEyebWhenFsSpent === true && results.refusesEyeDefWhenFsSpent === true &&
-    results.refusesUeDark === true && results.refusesUeBags === true,
+    results.stillAcceptsEyebWhenFsSpent === true && results.refusesEyeDefWhenFsSpent === true,
     { eyeb: results.acceptsEyeb, eyeDef: results.acceptsEyeDef,
       eyebSurvivesFsSpent: results.stillAcceptsEyebWhenFsSpent,
-      eyeDefGoesWithBands: results.refusesEyeDefWhenFsSpent,
-      ueDark: results.refusesUeDark, ueBags: results.refusesUeBags });
+      eyeDefGoesWithBands: results.refusesEyeDefWhenFsSpent });
 
   /* ---- C13) stage (4c) the eye pair: two measured contours on the free bytes
      of a texel the shader was already sampling. Eye Brighten is the only stage
@@ -1421,6 +1610,93 @@ let PHASE = "starting";
     report("C13e) …and both still hold with whitening, smoothing, teeth and the high band on top",
       !!e && e.both && e.both.gate === true && e.both.maxd <= 1 && e.both.pct <= 5,
       e && e.both);
+  }
+
+  /* ---- C15) stage (4d) the under-eye pair: the last two of the four, and the
+     first stage that could not be bought with a byte anyone else was carrying.
+     Its contour is a THIRD full-frame plane and every byte of the skin texel is
+     spoken for, so it takes a unit of its own; Eye Bags takes a second for the
+     8px blur it blends toward. That is units 10 and 11, and the rung is asked
+     the way stage (4b)'s is: a reported count, then a compile, then a fallback
+     that costs this stage and nothing above it. */
+  {
+    const u = results.ueCheck;
+    report("C15a) the plate really has dark circles in it, they shade from nothing to well past the taper's ceiling, the contour covers real pixels, and the cheek reference measured",
+      !!u && u.shadedPixels > 400 && u.planeUE > 300 && u.refMeasured === true &&
+      u.shadeSpread && u.shadeSpread.lo < 4 && u.shadeSpread.hi > 40,
+      u && { shaded: u.shadedPixels, spread: u.shadeSpread, plane: u.planeUE, ref: u.ref });
+    report("C15b) …and the CPU's own two renders move that frame, so neither comparison is vacuous",
+      !!u && u.cpuMovedUeDark.ch > 500 && u.cpuMovedUeDark.max >= 4 &&
+      u.cpuMovedUeBags.ch > 500 && u.cpuMovedUeBags.max >= 4,
+      u && { darkCircles: u.cpuMovedUeDark, eyeBags: u.cpuMovedUeBags });
+    report("C15c) with no skin control at all the two paths already agree on this frame",
+      !!u && u.baseline && u.baseline.maxd === 0 && u.baseline.diff === 0, u && u.baseline);
+    /* BIT-IDENTICAL, not "within a count" — because that is what these two
+       measured, and a ceiling set above what a stage achieves is a ceiling that
+       lets the next edit drift under it. Injection said so: at the 1-count bar
+       a taper of 41 instead of 40 and a coefficient of 0.56 instead of 0.55
+       both passed, and only a 13% error was caught. Neither branch here is
+       fragile at its own boundary — the gap>2 test decides a pull of well under
+       one count, and the ua>0.01 test an effect of six thousandths of one — so
+       zero is the honest bar and not a lucky one. */
+    report("C15) Dark Circles draws on the GPU against the cheek reference the CPU measured, bit for bit",
+      !!u && u.ueDark && u.ueDark.gate === true && u.ueDark.maxd === 0 && u.ueDark.diff === 0,
+      u && u.ueDark);
+    report("C15d) Eye Bags draws on the GPU against the same 8px blur the CPU blends toward, bit for bit",
+      !!u && u.ueBags && u.ueBags.gate === true && u.ueBags.maxd === 0 && u.ueBags.diff === 0,
+      u && u.ueBags);
+    report("C15e) …and all four eye controls at once, over whitening, smoothing, teeth and the high band",
+      !!u && u.both && u.both.gate === true && u.both.maxd <= 1 && u.both.pct <= 5,
+      u && u.both);
+    report("C15f) the pair is one rung: spending stage (4d) refuses both and takes nothing else, and spending stage (4b) does not touch them",
+      results.acceptsUeDark === true && results.acceptsUeBags === true &&
+      results.refusesUeDarkWhenSpent === true && results.refusesUeBagsWhenSpent === true &&
+      results.stillAcceptsEyebWhenUeSpent === true && results.stillAcceptsEyeDefWhenUeSpent === true &&
+      results.stillAcceptsUeWhenFsSpent === true,
+      { ueDark: results.acceptsUeDark, ueBags: results.acceptsUeBags,
+        bothRefusedWhenSpent: results.refusesUeDarkWhenSpent && results.refusesUeBagsWhenSpent,
+        eyePairKept: results.stillAcceptsEyebWhenUeSpent && results.stillAcceptsEyeDefWhenUeSpent,
+        survivesFsSpent: results.stillAcceptsUeWhenFsSpent });
+    report("C15i) a frame with NO face is drawn rather than refused — the plane is empty, which is the CPU doing nothing too",
+      !!u && u.noFace && u.noFace.gate === true && u.noFace.maxd === 0 && u.noFace.diff === 0 &&
+      !!u.noFaceCpuMoved && u.noFaceCpuMoved.ch === 0,
+      u && { cmp: u.noFace, cpuMovedAgainstTheSameFrameWithNoRecipe: u.noFaceCpuMoved });
+    report("C15g) this device reports the twelve units stage (4d) needs, so the checks above rendered it",
+      results.ueCapReal === true, { ueCap: results.ueCapReal, gl: results.glLimits });
+    report("C15h) without those units both come back null and the CPU draws them — while teeth, the bands and the program itself are untouched",
+      !!results.noUeUnits && results.noUeUnits.darkIsNull === true &&
+      results.noUeUnits.bagsIsNull === true && results.noUeUnits.teethStillDraws === true &&
+      results.noUeUnits.bandsStillDraw === true && results.noUeUnits.stillBooted === true,
+      results.noUeUnits);
+    /* C15j — THE ONE PROPERTY THE PIXELS CANNOT SEE, PINNED IN THE SOURCE.
+       stApplySkin runs the under-eye pair inside `if(zones)` BEFORE Eye
+       Definition (the last thing in that block) and before Eye Brighten (the
+       first thing after it), and Dark Circles reads the pixel's own luma to
+       decide how far to pull — so running it after either would read a luma the
+       CPU had not produced yet. Moving the splice below Eye Definition and
+       re-running changed NOTHING on the plate above: the under-eye ellipses and
+       the 1.60 eye contour barely meet, so no comparison here can catch it.
+       That makes this a source check rather than a pixel one, which is the
+       honest place for it — and the reason is written here so the next person
+       moving a marker knows what they are moving. */
+    const src4d = await (await fetch("http://127.0.0.1:" + PORT + "/index.html")).text();
+    const iGate = src4d.indexOf('"      } else if(gloss<0.0&&lum2>200.0){"');
+    const iUe = src4d.indexOf('"/*HNK_FS_UE*/"');
+    const iEye = src4d.indexOf('"/*HNK_FS_EYE*/"');
+    const iEb = src4d.indexOf('"    if(ebV>0.0){"');
+    report("C15j) the splice order is stApplySkin's order: the under-eye pair, then Eye Definition, then Eye Brighten — and all three past the mask gate",
+      iGate > 0 && iUe > iGate && iEye > iUe && iEb > iEye,
+      { maskGateEnds: iGate, underEye: iUe, eyeDefinition: iEye, eyeBrighten: iEb });
+    /* the numbers this wave claims, printed rather than only asserted — the
+       bars above are ceilings, and a run should say where it actually landed */
+    if (u && u.ueDark && u.ueBags && u.both) {
+      const fm = (c, label) => "      " + (c.diff === 0 ? "bit-identical" :
+        c.diff + "/" + (256 * 256 * 3) + " channels differ (" + c.pct + "%), max " + c.maxd +
+        (c.maxd === 1 ? " count" : " counts")) + "  —  " + label;
+      console.log(fm(u.ueDark, "stage (4d): Dark Circles, against the cheek reference"));
+      console.log(fm(u.ueBags, "stage (4d): Eye Bags, against the 8px blur"));
+      console.log(fm(u.both, "stage (4d): all four eye controls over white + smoothing + teeth + the high band"));
+    }
   }
 
   /* ---- C14) stage (6c-) live face reshape: the first stage that moves the
