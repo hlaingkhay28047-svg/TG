@@ -74,10 +74,28 @@ check("premium execution gates honor cached suspension and Web App disable verdi
 const refreshSrc = (app.slice(app.indexOf("async function unifiedRefresh(force)"),
                               app.indexOf("var REL_TXT =")) || "")
   .replace(/\/\*[\s\S]*?\*\//g, "");
-check("an entitlement answer that is not an entitlement clears the cached verdict at once",
+/* v6.70.0 — and the same branch now clears the STORED copy too. A boot may
+   start from the last verified answer, so a refusal the server actually sent
+   has to reach the disk as well; leaving it would let a reload resurrect
+   exactly the access that answer just took away. The property is unchanged and
+   the demand on the code is strictly larger. */
+check("an entitlement answer that is not an entitlement clears the cached verdict at once, in memory AND on disk",
   /var answered = false;/.test(refreshSrc) &&
   /answered = true;\s*if \(!r\.ok\) throw/.test(refreshSrc) &&
-  /if \(answered\)\{\s*unified\.entitlement = null; unified\.fails = 0;\s*return null;/.test(refreshSrc));
+  /if \(answered\)\{\s*unified\.entitlement = null; unified\.fails = 0;[\s\S]{0,80}?unifiedForget\(\);\s*return null;/.test(refreshSrc));
+/* the other three doors out of the stored verdict: no session, a legacy server
+   that has no entitlement layer at all, and signing out */
+check("the stored verdict is written only on a verified answer, and every exit deletes it",
+  /unified\.fails = 0;\s*unifiedRemember\(\);/.test(refreshSrc) &&
+  /if \(!acc\.sess\)\{[^}]*unifiedForget\(\);/.test(refreshSrc) &&
+  (refreshSrc.match(/unified\.legacy = true; unified\.enforced = false; unified\.error = false; unifiedForget\(\);/g) || []).length === 2 &&
+  /accLSDel\(ACC_LS_SESS\); accLSDel\(ACC_LS_PROF\); accLSDel\(ACC_LS_ENT\);/.test(app));
+/* and it can never outlive the window it was measured in, nor cross accounts */
+check("a stored verdict is bounded by the same six-hour clock and belongs to one account",
+  /if \(!acc\.sess \|\| rec\.uid !== acc\.sess\.uid\)\{ unifiedForget\(\); return false; \}/.test(app) &&
+  /now - last > UNIFIED_GRACE_MS\)\{ unifiedForget\(\); return false; \}/.test(app) &&
+  /unified\.error = true;/.test(app.slice(app.indexOf("function unifiedRecall()"),
+                                           app.indexOf("async function unifiedRefresh(force)"))));
 check("the access wall is fail-closed with no verdict, and again once one goes stale",
   /if \(!unified\.entitlement\) return ["']checking["'];/.test(app) &&
   /if \(unified\.error && Date\.now\(\) - unified\.last > UNIFIED_GRACE_MS\) return ["']checking["'];/.test(app) &&
