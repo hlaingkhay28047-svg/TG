@@ -52,6 +52,35 @@
  * "smooth" needs its guided filter re-solved every time the slider moves. The
  * gate refuses both, and check C5 proves it still does.
  *
+ * v6.71.0 — STAGE (4c), THE EYE PAIR, AND THE TWO IT LEAVES BEHIND.
+ *
+ * EYE BRIGHTEN and EYE DEFINITION are measured contours, like teeth, so they
+ * ride the same texel: the skin plane's BLUE byte is the eye polygons at 1.35
+ * and its ALPHA byte the same polygons at 1.60. No new texture and no new unit,
+ * and there is none to be had — 0 through 7 are src, lut, zw, noise, b1/gpA,
+ * b8/gpB, skin and gpC, and eight is all WebGL 1 guarantees.
+ *
+ * Brighten is the ONLY stage in this shader that runs outside the mask gate,
+ * and stApplySkin says why in its own comment: pupils and sclera are exactly
+ * the pixels the skin mask rejects. Definition is a high-band lift, so it reads
+ * stage (4b)'s low band and is spliced in with it — a device that cannot have
+ * units 8 and 9 loses Definition along with the two Freq-Sep sliders and keeps
+ * Brighten, which C13f asserts as behaviour rather than as a flag.
+ *
+ * Measured here, on a fabricated face with a dark iris and a bright sclera so
+ * both of Brighten's branches fire:
+ *
+ *     Eye Brighten         0 channels differ   (bit for bit)
+ *     Eye Definition       within 1 count on under 1% of channels
+ *     both, over white + smoothing + teeth + the high band
+ *                          within 1 count on under 5% of channels
+ *
+ * DARK CIRCLES and EYE BAGS are still the CPU's, and C13f pins that they are
+ * refused BY NAME. The reason is arithmetic: the under-eye ellipses are a third
+ * plane and there is no third byte, and Eye Bags needs a third full-frame blur
+ * on top of that. Both fit if the leftover bytes of two planes are split, which
+ * is worth doing with its own measurement rather than folded in here.
+ *
  * v6.59.0 — THE LAST TWO TIER-2 CONTROLS, AND WHAT EACH OF THEM COSTS.
  *
  * TEETH needs a MEASURED MOUTH. Neither the skin mask nor the pixel alone can
@@ -690,6 +719,108 @@ let PHASE = "starting";
       ST.maskRev = (ST.maskRev || 0) + 1;
     }
 
+    /* v6.71.0 — (4c) THE EYE PAIR. Same bargain as teeth: a measured contour
+       riding the skin texel's free bytes. Brighten reads the blue byte and is
+       the only stage in the shader that runs OUTSIDE the mask gate on purpose
+       (pupils and sclera are exactly what the skin mask rejects); Definition
+       reads the alpha byte and lifts against stage (4b)'s low band.
+       The plate below is painted so BOTH of Brighten's branches can fire: a
+       dark iris under the 95 floor, and a bright, near-neutral sclera over the
+       150 ceiling and inside the 45 spread. Without that the check would be
+       comparing two renders that agree about doing nothing. */
+    window.__hnkPhase = "eye";
+    let eyeCheck = null;
+    {
+      const ec = document.createElement("canvas"); ec.width = W; ec.height = H;
+      const ex2 = ec.getContext("2d");
+      const ei = ex2.createImageData(W, H);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const q = (y * W + x) * 4;
+        ei.data[q] = 208 + ((x >> 4) & 7);
+        ei.data[q + 1] = 168 + ((y >> 4) & 7);
+        ei.data[q + 2] = 148 + ((x + y) & 7);
+        ei.data[q + 3] = 255;
+      }
+      const cx = 128, eyeY = 96, iod = 56;
+      const paintEye = (exc) => {
+        for (let y = eyeY - 9; y <= eyeY + 9; y++) for (let x = exc - 16; x <= exc + 16; x++) {
+          if (x < 0 || y < 0 || x >= W || y >= H) continue;
+          const q = (y * W + x) * 4;
+          const r2 = (x - exc) * (x - exc) / 169 + (y - eyeY) * (y - eyeY) / 49;
+          if (r2 > 1.1) continue;
+          if ((x - exc) * (x - exc) + (y - eyeY) * (y - eyeY) < 20) {
+            ei.data[q] = 40; ei.data[q + 1] = 42; ei.data[q + 2] = 45;      /* iris, under the floor */
+          } else {
+            ei.data[q] = 230; ei.data[q + 1] = 228; ei.data[q + 2] = 226;   /* sclera, over the ceiling */
+          }
+        }
+      };
+      paintEye(cx - iod / 2); paintEye(cx + iod / 2);
+      ex2.putImageData(ei, 0, 0);
+      const pts = new Array(68), mouthY = 162;
+      for (let i = 0; i <= 16; i++) { const t = (i - 8) / 8; pts[i] = [cx + t * 70, 120 + (1 - t * t) * 80]; }
+      for (let i = 17; i <= 21; i++) { const t = (i - 17) / 4; pts[i] = [cx - iod / 2 - 18 + t * 36, eyeY - 18]; }
+      for (let i = 22; i <= 26; i++) { const t = (i - 22) / 4; pts[i] = [cx + iod / 2 - 18 + t * 36, eyeY - 18]; }
+      for (let i = 27; i <= 30; i++) { const t = (i - 27) / 3; pts[i] = [cx, eyeY + t * 32]; }
+      for (let i = 31; i <= 35; i++) { const t = (i - 31) / 4; pts[i] = [cx - 14 + t * 28, eyeY + 40]; }
+      const eye = (base, exc) => { for (let i = 0; i < 6; i++) { const a2 = Math.PI * 2 * i / 6;
+        pts[base + i] = [exc + Math.cos(a2) * 13, eyeY + Math.sin(a2) * 7]; } };
+      eye(36, cx - iod / 2); eye(42, cx + iod / 2);
+      for (let i = 48; i <= 59; i++) { const a2 = Math.PI * 2 * (i - 48) / 12;
+        pts[i] = [cx + Math.cos(a2) * 42, mouthY + Math.sin(a2) * 22]; }
+      for (let i = 60; i <= 67; i++) { const a2 = Math.PI * 2 * (i - 60) / 8;
+        pts[i] = [cx + Math.cos(a2) * 30, mouthY + Math.sin(a2) * 11]; }
+      const lm = { w: W, h: H, scanned: true, faces: [{ score: 0.9, pts: pts }] };
+      const keptLM = ST.faceLM; ST.faceLM = lm;
+      ST.maskRev = (ST.maskRev || 0) + 1;
+      /* the two contours the shader is handed, measured here the way the plane
+         builder measures them, so "the planes were empty" cannot pass as "the
+         two paths agree" */
+      const emi = stSkinMask(ex2.getImageData(0, 0, W, H), W, H, lm);
+      const efs = stFaceSetOf(stFaceZones(ex2.getImageData(0, 0, W, H), W, H, emi, lm));
+      const esh = stEyeShapes(efs);
+      const p135 = esh.e135.length ? stShapeBytes(W, H, esh.e135, esh.fe) : null;
+      const p160 = esh.e160.length ? stShapeBytes(W, H, esh.e160, esh.fe) : null;
+      let on135 = 0, on160 = 0;
+      if (p135) for (let i = 0; i < p135.length; i++) if (p135[i] > 12) on135++;
+      if (p160) for (let i = 0; i < p160.length; i++) if (p160[i] > 12) on160++;
+      const grabE = (cv) => { const q = document.createElement("canvas"); q.width = W; q.height = H;
+        const qq = q.getContext("2d"); qq.drawImage(cv, 0, 0); return qq.getImageData(0, 0, W, H).data; };
+      const runE = (t2) => {
+        const pv = basePv(), t1 = zeroT1(), cu = { hl: 0, lt: 0, dk: 0, sh: 0 };
+        const cpu = stRunPipeline(ec, W, H, { t1, t2, pv, curve: cu, heals: null, rs: 1, lm });
+        const gpu = stGpuRender(ec, W, H, { t1, t2, pv, curve: cu, rs: 1 });
+        return { gate: stGpuCan(t1, t2, pv, null), cpu: grabE(cpu), gpu: gpu ? grabE(gpu) : null };
+      };
+      const cmpE = (r) => {
+        if (!r.gpu) return { error: "stGpuRender returned null", gate: r.gate };
+        let maxd = 0, diff = 0, sum = 0, n = 0, worst = null;
+        for (let i = 0; i < r.cpu.length; i += 4) for (let c = 0; c < 3; c++) {
+          const d = Math.abs(r.cpu[i + c] - r.gpu[i + c]); sum += d; n++;
+          if (d) { diff++; if (d > maxd) { maxd = d; worst = { px: i / 4, ch: c, cpu: r.cpu[i + c], gpu: r.gpu[i + c] }; } }
+        }
+        return { gate: r.gate, maxd, diff, pct: +(100 * diff / n).toFixed(4), mean: +(sum / n).toFixed(5), worst };
+      };
+      const movedBy = (a2, b2) => { let mv = 0, mx = 0;
+        for (let i = 0; i < a2.length; i += 4) for (let c = 0; c < 3; c++) {
+          const d = Math.abs(a2[i + c] - b2[i + c]); if (d) { mv++; if (d > mx) mx = d; } }
+        return { ch: mv, max: mx }; };
+      const offE = runE(zeroT2());
+      const t2b = zeroT2(); t2b.eyeb = 70;            const ebR = runE(t2b);
+      const t2d = zeroT2(); t2d.eyeDef = 70;          const edR = runE(t2d);
+      const t2be = zeroT2(); t2be.eyeb = 70; t2be.eyeDef = 70;
+      t2be.white = 30; t2be.smooth = 35; t2be.teeth = 40; t2be.freqHi = 40;
+      const bothR = runE(t2be);
+      eyeCheck = {
+        plane135: on135, plane160: on160,
+        cpuMovedEyeb: movedBy(offE.cpu, ebR.cpu),
+        cpuMovedEyeDef: movedBy(offE.cpu, edR.cpu),
+        baseline: cmpE(offE), eyeb: cmpE(ebR), eyeDef: cmpE(edR), both: cmpE(bothR)
+      };
+      ST.faceLM = keptLM;
+      ST.maskRev = (ST.maskRev || 0) + 1;
+    }
+
     /* v6.60.0 — STAGE (6c-), LIVE FACE RESHAPE. Like teeth it needs a measured
        face, and unlike every other stage it moves the picture GEOMETRICALLY,
        so the frame under it has to have detail worth mis-sampling: a flat
@@ -1002,7 +1133,17 @@ let PHASE = "starting";
     const stillAcceptsNegLowWhenFsSpent = stGpuCan(zeroT1(), fsFrom("freqLo", -60), basePv(), null) === true;
     const stillAcceptsTeethWhenFsSpent = stGpuCan(zeroT1(), fsFrom("teeth", 40), basePv(), null) === true;
     const stillAcceptsSmoothWhenFsSpent = stGpuCan(zeroT1(), fsFrom("smooth", 40), basePv(), null) === true;
+    /* v6.71.0 — the eye pair follows the same two roads. Brighten needs only
+       the contour, so a device that gave up on the bands keeps it; Definition
+       lifts against one of those bands, so it goes with them. */
+    const stillAcceptsEyebWhenFsSpent = stGpuCan(zeroT1(), fsFrom("eyeb", 40), basePv(), null) === true;
+    const refusesEyeDefWhenFsSpent = stGpuCan(zeroT1(), fsFrom("eyeDef", 40), basePv(), null) === false;
     ST_GPU.fsOff = false;
+    const acceptsEyeb = stGpuCan(zeroT1(), fsFrom("eyeb", 40), basePv(), null) === true;
+    const acceptsEyeDef = stGpuCan(zeroT1(), fsFrom("eyeDef", 40), basePv(), null) === true;
+    /* and the two of the four that are still the CPU's, refused by name */
+    const refusesUeDark = stGpuCan(zeroT1(), fsFrom("ueDark", 40), basePv(), null) === false;
+    const refusesUeBags = stGpuCan(zeroT1(), fsFrom("ueBags", 40), basePv(), null) === false;
     /* and the capability road. It is the RENDERER that owns this question, not
        the gate: the gate must never boot GL to answer it (see stGpuFsOn), so on
        a device without the units the frame is refused where GL is in hand and
@@ -1122,8 +1263,10 @@ let PHASE = "starting";
       refusesWhiteWhenT4Spent, refusesEvenWhenT4Spent, refusesSmoothWhenT4Spent,
       refusesTeethWhenT4Spent, refusesFreqWhenT4Spent,
       refusesRadianceWhenS5Spent, refusesNegLowWhenS5Spent, stillAcceptsTeethWhenS5Spent,
-      teethCheck, reshapeCheck, warpSpeed, fsRadiusReuse, fsSpeed, fsBuildFallback, fsCapReal, glLimits, acceptsFreqHi, acceptsFreqLo, acceptsTeeth,
+      teethCheck, eyeCheck, reshapeCheck, warpSpeed, fsRadiusReuse, fsSpeed, fsBuildFallback, fsCapReal, glLimits, acceptsFreqHi, acceptsFreqLo, acceptsTeeth,
       refusesFreqWhenSpent, stillAcceptsNegLowWhenFsSpent, stillAcceptsTeethWhenFsSpent,
+      acceptsEyeb, acceptsEyeDef, stillAcceptsEyebWhenFsSpent, refusesEyeDefWhenFsSpent,
+      refusesUeDark, refusesUeBags,
       stillAcceptsSmoothWhenFsSpent, noUnits,
       stillAcceptsTonalWhenT4Spent, maskProvenance, planeReuse,
       acceptsGlow, refusesGlowWhenSpent, stillAcceptsTonalWhenGlowSpent, glowCoverage };
@@ -1242,6 +1385,42 @@ let PHASE = "starting";
     report("C11d) …and still does with whitening, smoothing and both frequency bands on top of it",
       !!t && t.combo && t.combo.gate === true && t.combo.maxd <= 1 && t.combo.pct <= 5,
       t && t.combo);
+  }
+
+  report("C13f) the gate accepts the eye pair, sends Definition down the bands' road, and still refuses the other two by name",
+    results.acceptsEyeb === true && results.acceptsEyeDef === true &&
+    results.stillAcceptsEyebWhenFsSpent === true && results.refusesEyeDefWhenFsSpent === true &&
+    results.refusesUeDark === true && results.refusesUeBags === true,
+    { eyeb: results.acceptsEyeb, eyeDef: results.acceptsEyeDef,
+      eyebSurvivesFsSpent: results.stillAcceptsEyebWhenFsSpent,
+      eyeDefGoesWithBands: results.refusesEyeDefWhenFsSpent,
+      ueDark: results.refusesUeDark, ueBags: results.refusesUeBags });
+
+  /* ---- C13) stage (4c) the eye pair: two measured contours on the free bytes
+     of a texel the shader was already sampling. Eye Brighten is the only stage
+     that runs OUTSIDE the mask gate — pupils and sclera are exactly the pixels
+     the skin mask rejects — and Eye Definition lifts against stage (4b)'s low
+     band, which is why it is spliced with the bands and refused with them. */
+  {
+    const e = results.eyeCheck;
+    report("C13a) both eye contours cover real pixels, and the wider one is wider",
+      !!e && e.plane135 > 300 && e.plane160 > e.plane135,
+      e && { at135: e.plane135, at160: e.plane160 });
+    report("C13b) …and the CPU's own two renders move that frame, so neither comparison is vacuous",
+      !!e && e.cpuMovedEyeb.ch > 500 && e.cpuMovedEyeb.max >= 4 &&
+      e.cpuMovedEyeDef.ch > 200 && e.cpuMovedEyeDef.max >= 2,
+      e && { brighten: e.cpuMovedEyeb, definition: e.cpuMovedEyeDef });
+    report("C13c) with no skin control at all the two paths already agree on this frame",
+      !!e && e.baseline && e.baseline.maxd === 0 && e.baseline.diff === 0, e && e.baseline);
+    report("C13) Eye Brighten draws on the GPU, bit for bit the CPU's picture",
+      !!e && e.eyeb && e.eyeb.gate === true && e.eyeb.maxd === 0 && e.eyeb.diff === 0,
+      e && e.eyeb);
+    report("C13d) Eye Definition draws on the GPU against the same low band the CPU lifts against",
+      !!e && e.eyeDef && e.eyeDef.gate === true && e.eyeDef.maxd <= 1 && e.eyeDef.pct <= 1,
+      e && e.eyeDef);
+    report("C13e) …and both still hold with whitening, smoothing, teeth and the high band on top",
+      !!e && e.both && e.both.gate === true && e.both.maxd <= 1 && e.both.pct <= 5,
+      e && e.both);
   }
 
   /* ---- C14) stage (6c-) live face reshape: the first stage that moves the
