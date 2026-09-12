@@ -610,7 +610,12 @@ function create(deps) {
      sources the classic tabs do (Active Layer · File · Web Link · Library).
      One applier so all four sources land in the slot identically. */
   function applySlot(inp, slot) {
-    wstate.setInput(state, inp.key, { source: slot.source, role: inp.role, ref: slot.ref, valid: slot.valid, reason: slot.reason });
+    /* v6.68.0 — carry the DETAIL too. reasonMessage prints Photoshop's own
+       words in brackets after a capture-failed, and this rebuild was dropping
+       them: 6.138.0's photograph shows the bare sentence with nothing after
+       it, which is exactly the message the panel is supposed to have stopped
+       giving. */
+    wstate.setInput(state, inp.key, { source: slot.source, role: inp.role, ref: slot.ref, valid: slot.valid, reason: slot.reason, detail: slot.detail });
     refresh();
   }
 

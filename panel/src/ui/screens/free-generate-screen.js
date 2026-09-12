@@ -125,7 +125,7 @@ function create(deps) {
        v6.59.0 — five now: Paste joins them, through the same applier. */
     var atLimit = function () { return state.images.length >= evaluate().maxSlots; }; // dynamic limit (§5)
     var applySlot = function (slot) {
-      fstate.addImage(state, { source: slot.source, ref: slot.ref, valid: slot.valid, reason: slot.reason });
+      fstate.addImage(state, { source: slot.source, ref: slot.ref, valid: slot.valid, reason: slot.reason, detail: slot.detail });
       refresh();
     };
     nodes.addRef = dom.el(doc, "button", { class: "hnk-btn", id: "hnkAddRef", text: dom.t("ai_add_ref", "+ Add Reference Image") });
