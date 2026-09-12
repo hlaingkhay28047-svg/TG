@@ -220,10 +220,25 @@ for (const [key, why] of [
    that used getBoundingClientRect. The check now demands the ruler that works
    and forbids the one that does not — which is a stronger assertion than the
    line it replaces, not a looser one. */
+/* v6.65.0 — and the ruler that works still answers nothing if you read it too
+   early. 6.135.0's card printed "glyph ruler: notdef 0 · n 0": an ALL-ZERO
+   rect, which is not a zero-sized box but a box that was never laid out. So
+   the check now demands three things of every probe — the right ruler, a
+   laid-out frame to read it on, and a refusal to treat an all-zero rect as a
+   measurement. It also demands that position:fixed be probed AWAY from the
+   origin, because the old row accepted top≈0 && left≈0, which an all-zero
+   rect gives for free: "position:fixed yes" on 6.135.0 was a false positive. */
 report("D7) every geometric probe measures with getBoundingClientRect, and none with offsetWidth/offsetLeft (UXP answers 0)",
   /getBoundingClientRect/.test(SELFTEST) &&
   !/offsetWidth|offsetLeft/.test(SELFTEST.replace(/\/\*[\s\S]*?\*\//g, "")) &&
-  /w1 - 100/.test(SELFTEST) && /x2 - x1/.test(SELFTEST) && /w3 - 60/.test(SELFTEST), null);
+  /r1\.width - 100/.test(SELFTEST) && /rc2\.left - rc1\.left/.test(SELFTEST) &&
+  /r3\.width - 60/.test(SELFTEST), null);
+
+report("D8) it reads that ruler on a laid-out frame, and refuses an all-zero rect as a measurement",
+  /if \(!r\.width && !r\.height && !r\.top && !r\.left\) return null;/.test(SELFTEST) &&
+  /raf\(function \(\) \{ raf\(measure\); \}\)/.test(SELFTEST) &&
+  /setTimeout\(measure, 120\)/.test(SELFTEST) &&
+  /position: "fixed", top: "12px", left: "7px"/.test(SELFTEST), null);
 
 /* ----------------------------------------------------- E. the rules are written */
 
