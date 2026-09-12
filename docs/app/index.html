@@ -5273,6 +5273,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.71.0", kind:"page", ref:"pgMeitu",
+    t:{my:"Retouch A / B — မျက်လုံး slider ၂ ခု GPU ပေါ် တက်သွားပြီ၊ ဆွဲတဲ့အခါ ပိုမြန်ပါပြီ",en:"Retouch A / B — two eye sliders moved onto the GPU, so dragging them is faster",shn:"Retouch A / B — မၢၵ်ႇတႃ slider 2 ဢၼ်ၶိုၼ်ႈ GPU, လၢၵ်ႈဝႆးလိူဝ်",kac:"Retouch A / B — myi slider 2 gaw GPU de lung sai, garai yang lawan sai",th:"Retouch A / B — สไลเดอร์ดวงตาสองตัวย้ายขึ้น GPU ลากแล้วเร็วขึ้น",zh:"Retouch A / B — 两个眼睛滑杆搬到了 GPU，拖动更快了",vi:"Retouch A / B — hai thanh trượt mắt đã lên GPU, kéo mượt hơn",id:"Retouch A / B — dua slider mata pindah ke GPU, menggesernya jadi lebih cepat",ms:"Retouch A / B — dua slider mata berpindah ke GPU, menyeretnya jadi lebih pantas"},
+    s:{my:"**မျက်လုံးတောက်ပ (Eye Brighten)** နဲ့ **မျက်လုံးထင်ရှား (Eye Definition)** နှစ်ခုကို GPU ပေါ် တင်လိုက်ပါပြီ။ Preset ၁၆ ခုစလုံးမှာ ဒီနှစ်ခု ပါတာမို့ **preset တစ်ခုခု ဖွင့်ပြီး slider ဆွဲရင် ပိုချောမွေ့** ပါလိမ့်မယ်။ အရေးအကြီးဆုံးက — **ပုံက အတိအကျ တူရမယ်**။ GPU က ဆွဲပြတဲ့ပုံနဲ့ ထွက်လာမယ့် ဖိုင်ဟာ မတူရင် ဆရာ့အတွက် အဆိုးဆုံးပါ။ ဒါကြောင့် test မှာ CPU နဲ့ GPU ကို pixel တစ်လုံးချင်း တိုက်စစ်ပါတယ် — **Eye Brighten က တစ်လုံးမှ မကွာဘဲ တူ**ပါတယ်၊ Eye Definition က channel ၁% အောက်မှာ ၁ ယူနစ်ပဲ ကွာပါတယ် (float32 နဲ့ float64 ကွာခြင်း သက်သက်ပါ)။ **မျက်ကွင်းညို (Dark Circles)** နဲ့ **မျက်ရစ် (Eye Bags)** ကတော့ CPU မှာပဲ ရှိနေဆဲပါ — GPU မှာ နေရာ (texture unit) ကုန်နေလို့ပါ။ တမင် ချန်ထားတာဖြစ်ပြီး၊ နောက်တစ်ကြိမ် သီးသန့် တိုင်းတာပြီးမှ ထည့်ပါမယ်။ ဖျောက်မထားပါ။",en:"**Eye Brighten** and **Eye Definition** now draw on the GPU. Every one of the sixteen shipped presets sets both, so opening a preset and dragging is smoother than it was. What matters more than the speed is that **the picture is the same one**: a preview that does not match the delivered file is the worst defect this studio can ship, so the test renders the same source through the CPU pipeline and through the shader and compares them channel by channel. **Eye Brighten comes back bit for bit identical**; Eye Definition is within a single count on under 1% of channels, which is float32 against float64 and nothing else. **Dark Circles** and **Eye Bags** are still drawn by the CPU and are refused by name rather than quietly skipped: their contour is a third full-frame plane and there is no byte left to carry it — 0 through 7 are all WebGL guarantees, and they are already spoken for. That one gets its own measurement in its own release.",shn:"Eye Brighten လႄႈ Eye Definition ၶိုၼ်ႈ GPU ယဝ်ႉ။ Preset 16 ဢၼ်မီးၶဝ်သွင်ဢၼ်ၼႆႉမူတ်း, လၢၵ်ႈဝႆးလိူဝ်။ ႁၢင်ႈတႄႉ မိူၼ်ၵၼ်: Eye Brighten ဢမ်ႇပႅၵ်ႇသေဢိတ်း။ Dark Circles လႄႈ Eye Bags ပႆႇလႆႈ — ဢမ်ႇမီးတီႈဝႆႉထႅင်ႈ, တေႁဵတ်းပွၵ်ႈၼႃႈ။",kac:"Eye Brighten hte Eye Definition gaw GPU de lung sai. Preset 16 yawng lahkawng yen hpe bang da ai majaw garai yang lawan sai. Sumla gaw maren sha: Eye Brighten gaw kachyi mi mung n shai ai. Dark Circles hte Eye Bags gaw CPU kaw naw nga ai — shara n nga sai, hpang de galaw na.",th:"Eye Brighten และ Eye Definition วาดบน GPU แล้ว พรีเซ็ตทั้งสิบหกชุดตั้งค่าทั้งสองตัว การลากจึงลื่นขึ้น ที่สำคัญกว่าคือภาพต้องเหมือนเดิม: Eye Brighten ตรงกันทุกบิต ส่วน Eye Definition ต่างกันไม่เกินหนึ่งหน่วย บนช่องสัญญาณไม่ถึง 1% ส่วน Dark Circles และ Eye Bags ยังอยู่บน CPU เพราะไม่มีที่ว่างเหลือแล้ว",zh:"**眼睛提亮**和**眼睛清晰**现在由 GPU 绘制。十六套预设每一套都设置了这两项，所以打开预设再拖动会更顺。比速度更要紧的是**画面必须一模一样**：预览与交付文件不一致是这个工作室能犯的最严重错误，所以测试把同一张源图分别走 CPU 管线和着色器，逐通道比对。**眼睛提亮逐位完全一致**；眼睛清晰在不到 1% 的通道上相差一个计数，这只是 float32 与 float64 的差别。**黑眼圈**和**眼袋**仍由 CPU 绘制，并且是**按名字明确拒绝**而不是悄悄跳过：它们的轮廓是第三张全幅平面，而已经没有字节可以承载了——WebGL 保证的 0 到 7 号单元全部名花有主。那一项会在它自己的版本里，带着自己的测量一起做。",vi:"Eye Brighten và Eye Definition nay vẽ trên GPU. Cả mười sáu preset đều đặt hai giá trị này nên kéo mượt hơn. Quan trọng hơn tốc độ là ảnh phải y hệt: Eye Brighten khớp từng bit, Eye Definition lệch tối đa một đơn vị trên chưa tới 1% kênh. Dark Circles và Eye Bags vẫn do CPU vẽ vì không còn chỗ.",id:"Eye Brighten dan Eye Definition kini digambar GPU. Keenam belas preset menyetel keduanya, jadi menggesernya lebih mulus. Yang lebih penting: gambarnya harus sama persis — Eye Brighten identik bit demi bit, Eye Definition beda paling banyak satu hitungan di bawah 1% kanal. Dark Circles dan Eye Bags masih di CPU karena tidak ada tempat tersisa.",ms:"Eye Brighten dan Eye Definition kini dilukis GPU. Kesemua enam belas praset menetapkan kedua-duanya, jadi menyeretnya lebih lancar. Yang lebih penting: gambarnya mesti sama — Eye Brighten serupa bit demi bit, Eye Definition beza paling banyak satu kiraan pada bawah 1% saluran. Dark Circles dan Eye Bags masih pada CPU kerana tiada ruang tinggal."} },
   { v:"6.70.0", kind:"page", ref:"pgAccount",
     t:{my:"အင်တာနက် မကောင်းတဲ့အချိန် App ဖွင့်ရင် စောင့်ရတဲ့ စာမျက်နှာ မတက်တော့ပါ",en:"Opening the app on a bad line no longer puts up the waiting screen",shn:"ပိုတ်ႇ app မိူဝ်ႈဢိၼ်ႇတိူဝ်ႇၼႅတ်ႉဢမ်ႇလီ ဢမ်ႇပႂ်ႉထႅင်ႈ",kac:"Internet n hkrak ai ten app hpaw yang la nga ai shara n pru sai",th:"เปิดแอปตอนเน็ตไม่ดี จะไม่ขึ้นหน้าจอรออีกต่อไป",zh:"网络不好时打开应用，不再出现等待画面",vi:"Mở ứng dụng khi mạng yếu không còn hiện màn hình chờ",id:"Membuka aplikasi saat jaringan buruk tidak lagi memunculkan layar tunggu",ms:"Membuka aplikasi ketika talian teruk tidak lagi memaparkan skrin menunggu"},
     s:{my:"6.43.0 က **App ဖွင့်ထားစဉ်** လိုင်းကျရင် မပိတ်တော့အောင် လုပ်ခဲ့ပါတယ်။ ဒါပေမဲ့ **App ကို ပိတ်ပြီး ပြန်ဖွင့်တဲ့အခါ** ကျန်နေပါသေးတယ် — ဖွင့်လိုက်တာနဲ့ ခဏ ရပြီး **“အကောင့် စစ်ဆေးနေပါတယ်…”** တက်လာတာမျိုးပါ။ အကြောင်းရင်းက app က ဖွင့်တိုင်း **ဘာမှ မမှတ်ထားဘဲ အစကနေ** ပြန်စလို့ပါ — server က မိနစ်အနည်းငယ်က “ရပါတယ်” လို့ ပြောထားပေမဲ့လည်း။ အခု **server ပေးခဲ့တဲ့ နောက်ဆုံး အဖြေ** ကို မှတ်ထားပြီး ဖွင့်တာနဲ့ အဲဒါကနေ စပါတယ်။ **လုံခြုံရေး အတိအကျ အတူတူပါပဲ** — (၁) server က တကယ် ဟုတ်တယ်လို့ ဖြေမှသာ မှတ်ပါတယ်၊ 403 / server error / legacy ဆိုရင် **ဖျက်**ပါတယ်၊ (၂) နာရီက **အဖြေရတဲ့အချိန်** ကနေ တွက်တာမို့ offline နေလို့ ၆ နာရီထက် ပိုမရပါ — ၇ နာရီ ပိတ်ထားပြီး ပြန်ဖွင့်ရင် စောင့်ရတဲ့ စာမျက်နှာ တန်းတက်ပါတယ်၊ (၃) **အကောင့် တစ်ခုတည်း** အတွက်ပဲ၊ **sign out လုပ်ရင် ဖျက်**ပါတယ်၊ (၄) “အတည်မပြုရသေးပါ” လို့ card မှာ ပြပါတယ်၊ (၅) ပြီးတော့ ဒါက **ဘာမှ ခွင့်မပြုပါ** — download / panel / generate အားလုံးကို server ကပဲ ဆုံးဖြတ်နေဆဲပါ။",en:"6.43.0 stopped the app dropping WHILE a student is working. This is the other half: the app CLOSED, and opened again on the same bad line — it worked for a moment and then put up “Checking your account…”, because unified.entitlement starts null on every boot, so “no answer has ever arrived” was true in the only sense the code could see, even though the server had said yes twenty minutes earlier. The last VERIFIED answer is now written down and a boot starts from it. **The exposure is deliberately identical to what 6.43.0 already accepts:** only a real 2xx is ever stored — a 403, a 5xx, an unparseable body or a legacy server all DELETE it; the six-hour clock runs from the moment of that success, not from boot, so a machine dark for seven hours boots straight into the wall and staying offline cannot extend anything; the record carries its own account id and is ignored for any other; signing out deletes it; it comes back marked unconfirmed so the card says so; and it authorizes nothing — download, panel lease and generate are all still decided by the server when they are asked.",shn:"6.43.0 ႁဵတ်းႁႂ်ႈ app ဢမ်ႇပိၵ်ႉမိူဝ်ႈၸႂ်ႉယူႇ။ ၼႆႉပဵၼ်ထႅင်ႈၶိုင်ႈ — ပိၵ်ႉသေပိုတ်ႇမႂ်ႇ။ ယၢမ်းလဵဝ်မၢႆတွင်းဝႆႉၶေႃႈတွပ်ႇလိုၼ်းသုတ်းၼႆႉ။ ၶၢဝ်းယၢမ်း 6 ၸူဝ်ႈမူင်း ၼပ်ႉတီႈၶၢဝ်းယၢမ်းလႆႈတွပ်ႇ, ဢမ်ႇၸႂ်ႈတီႈပိုတ်ႇ။ Sign out ၸိုင် ဢွၵ်ႇမူတ်း။",kac:"6.43.0 gaw app hpe hpaw da nga ai ten hta n pat ai hpe galaw sai. Ndai gaw kaga chyen: app hpe pat na bai hpaw ai ten. Ya gaw server jaw da ai hpang jahtum na mahtai hpe mahkrum da na, hpaw ai ten dai kaw na hpang ai. Nawku 6 gaw mahtai lu ai ten kaw na hti ai, hpaw ai ten kaw na n re. Sign out yang mat mat ai.",th:"6.43.0 หยุดไม่ให้แอปตัดขณะกำลังใช้งาน นี่คืออีกครึ่งหนึ่ง: ปิดแอปแล้วเปิดใหม่บนเน็ตเดิม ตอนนี้คำตอบที่ยืนยันแล้วล่าสุดจะถูกบันทึกไว้ และการเปิดแอปจะเริ่มจากคำตอบนั้น นาฬิกาหกชั่วโมงนับจากเวลาที่ได้คำตอบ ไม่ใช่เวลาเปิดแอป การออกจากระบบจะลบทิ้ง และมันไม่อนุญาตอะไรเลย — เซิร์ฟเวอร์ยังเป็นผู้ตัดสินทุกอย่าง",zh:"6.43.0 解决了**使用过程中**掉线就把应用关上的问题。这是另一半：应用**已关闭**，在同样糟糕的网络下重新打开——先能用一下，然后弹出“正在检查账户…”，因为每次启动 unified.entitlement 都是空的，在代码看得见的意义上“从未收到过答复”确实成立，哪怕服务器二十分钟前刚说过可以。现在会把**最后一次经过验证的答复**记下来，启动就从它开始。**风险与 6.43.0 已经接受的完全相同：**只有真正的 2xx 才会被写入，403、5xx、无法解析的响应和旧版服务器都会**删除**它；六小时从那次成功的时刻起算，而不是从启动起算，所以关机七小时后开机会直接进入等待页，离线并不能延长；记录带着自己的账户 id，对其他账户无效；退出登录会删除它；恢复时标记为未确认；而且它**不授权任何东西**——下载、面板租约、生成，仍然全部由服务器在被询问时决定。",vi:"6.43.0 ngăn ứng dụng sập trong lúc đang dùng. Đây là nửa còn lại: đóng ứng dụng rồi mở lại trên cùng đường truyền yếu. Nay câu trả lời đã xác minh gần nhất được ghi lại và lần mở bắt đầu từ đó. Đồng hồ sáu giờ tính từ lúc nhận được câu trả lời, không phải lúc khởi động; đăng xuất sẽ xoá nó; và nó không cấp quyền gì cả — máy chủ vẫn quyết định tất cả.",id:"6.43.0 menghentikan aplikasi terputus saat sedang dipakai. Ini paruh lainnya: aplikasi ditutup lalu dibuka lagi di jaringan yang sama. Kini jawaban terverifikasi terakhir dicatat dan boot dimulai dari sana. Jam enam jam dihitung dari saat jawaban itu tiba, bukan dari boot; keluar akun menghapusnya; dan ia tidak memberi izin apa pun — server tetap yang memutuskan.",ms:"6.43.0 menghentikan aplikasi terputus semasa sedang digunakan. Ini separuh yang lagi satu: aplikasi ditutup lalu dibuka semula pada talian yang sama. Kini jawapan disahkan yang terakhir dicatat dan but bermula daripadanya. Jam enam jam dikira dari saat jawapan itu tiba, bukan dari but; log keluar memadamkannya; dan ia tidak membenarkan apa-apa — pelayan tetap yang memutuskan."} },
@@ -16255,6 +16258,25 @@ var ST_GPU_T2_TEETH = ["teeth"];
    are stApplySkin's, not the warp's, and the shader still refuses them. */
 var ST_GPU_T2_WARP = ["wSlim","wJaw","wChin","wCheek","wTemple","wFore","wPhil","wEye"];
 var ST_GPU_T2_FS = ["freqHi","freqLo"];
+/* v6.71.0 — THE EYE PAIR, AND THE TWO OF THE FOUR THAT ARE STILL REFUSED.
+
+   EYE BRIGHTEN and EYE DEFINITION are the two the shipped presets actually
+   carry (every one of the sixteen sets eyeb and eyeDef; none sets the two
+   below), and both are per-pixel functions of the pixel and a measured
+   contour — the shape teeth already proved rides the skin texel for free.
+   Brighten takes the blue byte and asks only stage (4); Definition takes the
+   alpha byte and asks stage (4b) as well, because it is a high-band lift and
+   the low band lives on unit 8.
+
+   DARK CIRCLES and EYE BAGS are NOT here, and the reason is arithmetic, not
+   effort. There is no third byte and no ninth guaranteed unit: 0-7 are src,
+   lut, zw, noise, b1/gpA, b8/gpB, skin and gpC, and the under-eye ellipses are
+   a third plane. Eye Bags needs a THIRD full-frame blur on top of that. Both
+   fit if the leftover bytes of two planes are split between them, and that is
+   worth doing — with its own measurement, in its own wave, not folded into
+   this one. Until then the gate refuses them by name and the CPU draws. */
+var ST_GPU_T2_EYE = ["eyeb"];
+var ST_GPU_T2_EYEDEF = ["eyeDef"];
 /* the only budget available before a settle has ever been timed on this device:
    a drag frame slower than this is not a fast path by any reading */
 var ST_GPU_S5_CEIL = 120;
@@ -16365,6 +16387,10 @@ var ST_GPU_FS = [
       (see stGpuSkinPass), so the whitening costs no texture unit at all: the
       shader was already sampling that pixel for m. */
 "uniform float teethV;",
+/* v6.71.0 — (4c) EYE BRIGHTEN. ebV is the slider; the four thresholds are
+   stApplySkin's own measured-face branch, handed over rather than restated so
+   the shader cannot drift from it if the numbers ever move. */
+"uniform float ebV,ebLo,ebHi,ebSpr,ebDeY;",
    /* v6.59.0 — stage (4b) FREQUENCY SEPARATION, and why these two lines are a
       marker rather than a declaration.
 
@@ -16604,6 +16630,36 @@ var ST_GPU_FS = [
 "        float ds2=(lum2-200.0)*(-gloss/100.0)*0.8*m; R-=ds2; G-=ds2; B-=ds2;",
 "      }",
 "    }",
+   /* v6.71.0 — THE EYE PAIR, AND WHY BOTH SIT OUTSIDE THE MASK GATE.
+      stApplySkin runs Eye Definition under `if(zones)` and Eye Brighten after
+      it, both PAST the `if(m>0.02)` block that has just closed above — and for
+      Eye Brighten the reason is written in its own comment: pupils and sclera
+      are exactly the pixels the skin mask rejects. Skin-gating either of them
+      would draw a different photo.
+      The two contours ride the skin texel's free bytes, the same bargain teeth
+      made with the green one: sk.b is the eye polygons at 1.35 (Brighten) and
+      sk.a the same polygons at 1.60 (Definition). No new texture, no new unit —
+      and there is none to be had: 0-7 are src, lut, zw, noise, b1/gpA, b8/gpB,
+      skin and gpC, and eight is all WebGL 1 guarantees.
+      Definition also needs the LOW BAND, which lives on unit 8, so it is
+      spliced in with stage (4b) rather than written here. */
+"/*HNK_FS_EYE*/",
+"    if(ebV>0.0){",
+"      float ebA=sk.b;",
+"      if(ebA>0.02){",
+"        float lumE=0.299*R+0.587*G+0.114*B;",
+"        if(lumE<ebLo){",
+"          float eb=ebV*0.25*ebA; R+=eb; G+=eb; B+=eb;",
+"        } else {",
+"          float mx1=max(R,max(G,B)), mn1=min(R,min(G,B));",
+"          if(lumE>ebHi&&(mx1-mn1)<ebSpr){",
+"            float eb2=ebV*0.2*ebA; R+=eb2; G+=eb2; B+=eb2;",
+        /* the sclera de-yellow, which stApplySkin runs only on a measured face */
+"            B+=(mx1-B)*ebV/100.0*0.3*ebA*ebDeY;",
+"          }",
+"        }",
+"      }",
+"    }",
      /* the CPU writes the frame back to the canvas after stApplySkin */
 "    R=quant8(R); G=quant8(G); B=quant8(B);",
 "  }",
@@ -16651,7 +16707,23 @@ var ST_GPU_FS = [
    the units compiles is the one 6.58.x shipped, not a variant of it. */
 var ST_GPU_FS_DECL = [
 "uniform sampler2D fsA,fsB;",
-"uniform float fsLoA,fsHiA;"
+"uniform float fsLoA,fsHiA;",
+/* v6.71.0 — Eye Definition is a high-band lift, so it reads the same low band
+   stage (4b) uploads and is spliced with it: on a device without units 8 and 9
+   the gate refuses it exactly as it refuses the two Freq-Sep sliders. */
+"uniform float edefV;"
+].join("\n");
+/* v6.71.0 — (4c) EYE DEFINITION, at the point stApplySkin runs it: past the
+   mask gate, before the write-back, on the 1.60 eye contour in sk.a. */
+var ST_GPU_FS_EYE = [
+"    if(edefV>0.0){",
+"      float edA=sk.a;",
+"      if(edA>0.02){",
+"        float kE=edefV/100.0*0.6*edA;",
+"        vec3 loE=texture2D(fsA,uv).rgb*255.0;",
+"        R+=(R-loE.r)*kE; G+=(G-loE.g)*kE; B+=(B-loE.b)*kE;",
+"      }",
+"    }"
 ].join("\n");
 var ST_GPU_FS_BODY = [
    /* stApplySkin's own two blocks. fsA is this frame blurred at r=6 — the LOW
@@ -16979,6 +17051,15 @@ function stGpuCan(t1,t2,pv,heals){
           if(!stGpuWarpOn()) return false;
           continue;
         }
+        if(ST_GPU_T2_EYE.indexOf(k2)>=0){                    /* (4c) brighten */
+          if(ST_GPU.t4off) return false;
+          continue;
+        }
+        if(ST_GPU_T2_EYEDEF.indexOf(k2)>=0){                 /* (4c) definition */
+          /* the low band it lifts against is stage (4b)'s, so it needs both */
+          if(ST_GPU.t4off||!stGpuFsOn()) return false;
+          continue;
+        }
         if(ST_GPU_T2_FS.indexOf(k2)>=0){                     /* (4b) */
           /* a negative Low is only stage (5)'s clarity: no band, no plane, no
              mask — stApplySkin is not even called for it (needSkin reads
@@ -17066,7 +17147,8 @@ function stGpuBoot(){
     if(ST_GPU.fsCap){
       try{
         pr=build(ST_GPU_FS.replace("/*HNK_FS_DECL*/",ST_GPU_FS_DECL)
-                          .replace("/*HNK_FS_BODY*/",ST_GPU_FS_BODY));
+                          .replace("/*HNK_FS_BODY*/",ST_GPU_FS_BODY)
+                          .replace("/*HNK_FS_EYE*/",ST_GPU_FS_EYE));
       }catch(eFs){
         ST_GPU.fsCap=false;
         ST_GPU.fsBuildErr=String((eFs&&eFs.message)||eFs);
@@ -17179,10 +17261,10 @@ function stGpuWU(n){
    whether a teeth plane is wanted, because turning teeth on does not move the
    tonal half: the readback, the mask and the mean stay cached and only the
    texture is rebuilt. */
-function stGpuSkinPass(gl,W,H,sig,teethOn){
-  var tkey=sig+"|t"+(teethOn?1:0);
+function stGpuSkinPass(gl,W,H,sig,teethOn,eyeOn){
+  var tkey=sig+"|t"+(teethOn?1:0)+"|e"+(eyeOn?1:0);
   if(ST_GPU.t4key===sig&&ST_GPU.t4tkey===tkey) return true;
-  if(ST_GPU.t4key===sig&&ST_GPU.t4mi) return stGpuSkinTex(gl,W,H,teethOn,tkey);
+  if(ST_GPU.t4key===sig&&ST_GPU.t4mi) return stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn);
   var buf=ST_GPU.t4buf;
   if(!buf||buf.length!==W*H*4) buf=ST_GPU.t4buf=new Uint8Array(W*H*4);
   gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,buf);
@@ -17209,7 +17291,7 @@ function stGpuSkinPass(gl,W,H,sig,teethOn){
   }
   ST_GPU.t4mean = n ? {cb:sCb/n,cr:sCr/n} : {cb:128,cr:128};
   ST_GPU.t4key=sig;
-  return stGpuSkinTex(gl,W,H,teethOn,tkey);
+  return stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn);
 }
 /* v6.59.0 — ONE TEXEL PER PIXEL, TWO ANSWERS IN IT.
    R is the skin mask, exactly the byte the LUMINANCE texture carried before
@@ -17218,19 +17300,42 @@ function stGpuSkinPass(gl,W,H,sig,teethOn){
    one-byte texture, but a second full-frame texture would want a ninth unit
    this shader has no room for — and the shader was already sampling this texel
    for m, so the green byte is free. */
-function stGpuSkinTex(gl,W,H,teethOn,tkey){
+function stGpuSkinTex(gl,W,H,teethOn,tkey,eyeOn){
   var mi=ST_GPU.t4mi, px=ST_GPU.t4px;
   if(!mi||!mi.mask||!px) return false;
-  var teeth=null;
+  var teeth=null, zn=null;
+  function zones(){
+    if(zn===null){
+      try{ zn=stFaceZones(px,W,H,mi,(typeof ST!=="undefined"&&ST.faceLM)||null); }
+      catch(e){ zn=false; }
+    }
+    return zn||null;
+  }
   if(teethOn){
+    try{ teeth=stTeethPlane(W,H,zones()); }catch(e){ teeth=null; }
+  }
+  /* v6.71.0 — THE TWO EYE CONTOURS, from stEyeShapes so they are the arrays
+     stApplySkin reads. REFUSING is the whole point of the null returns below:
+     without polygons the CPU falls back to an ellipse predicate this fragment
+     cannot run, and without measured eye zones its Brighten thresholds are the
+     other pair (80/180/30, no sclera de-yellow). Either way the shader would be
+     drawing a different photo, so the frame goes to the CPU instead. */
+  var e135=null, e160=null;
+  if(eyeOn){
     try{
-      teeth=stTeethPlane(W,H,stFaceZones(px,W,H,mi,(typeof ST!=="undefined"&&ST.faceLM)||null));
-    }catch(e){ teeth=null; }
+      var fs=stFaceSetOf(zones()), esh=stEyeShapes(fs), anyEyes=false;
+      for(var fz=0;fz<fs.length;fz++) if(fs[fz]&&fs[fz].eyes) anyEyes=true;
+      if(!anyEyes||!esh.e135.length||!esh.e160.length) return false;
+      e135=stShapeBytes(W,H,esh.e135,esh.fe);
+      e160=stShapeBytes(W,H,esh.e160,esh.fe);
+    }catch(e){ return false; }
+    if(!e135||!e160) return false;
   }
   var n=W*H, tx=ST_GPU.t4tex;
   if(!tx||tx.length!==n*4) tx=ST_GPU.t4tex=new Uint8Array(n*4);
   for(var i=0,o=0;i<n;i++,o+=4){
-    tx[o]=mi.mask[i]; tx[o+1]=teeth?teeth[i]:0; tx[o+2]=0; tx[o+3]=255;
+    tx[o]=mi.mask[i]; tx[o+1]=teeth?teeth[i]:0;
+    tx[o+2]=e135?e135[i]:0; tx[o+3]=e160?e160[i]:255;
   }
   gl.activeTexture(gl.TEXTURE6); gl.bindTexture(gl.TEXTURE_2D,ST_GPU.tex.skin);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,W,H,0,gl.RGBA,gl.UNSIGNED_BYTE,tx);
@@ -17439,9 +17544,16 @@ function stGpuRender(srcImg,W,H,o){
     var fsOn   = stGpuFsOn();
     var fsLoA  = (fsOn && (t2.freqLo||0)>0) ? ((t2.freqLo||0)/100*0.85) : 0;
     var fsHiA  = (fsOn && (t2.freqHi||0)!==0) ? ((t2.freqHi||0)/100*0.55) : 0;
+    /* v6.71.0 — (4c). Brighten needs only the contour, so it asks stage (4);
+       Definition needs the low band as well, so it asks stage (4b) too — the
+       same question the gate asked, so a control the gate promised is never
+       the control this frame silently drops. */
+    var ebV    = (!ST_GPU.t4off && (t2.eyeb||0)>0) ? (t2.eyeb||0) : 0;
+    var edefV  = (!ST_GPU.t4off && fsOn && (t2.eyeDef||0)>0) ? (t2.eyeDef||0) : 0;
+    var eyeOn  = (ebV>0 || edefV>0);
     var skinOn = (whiteAmt>0 || (t2.rosy||0)!==0 || (t2.deshine||0)>0 ||
                   (t2.gloss||0)!==0 || (t2.deyellow||0)>0 || evenA>0 || smA>0 ||
-                  teethV>0 || fsLoA!==0 || fsHiA!==0);
+                  teethV>0 || fsLoA!==0 || fsHiA!==0 || eyeOn);
     /* the mask itself is not uploaded here any more — it comes off the tonal
        draw below, because that is the array the CPU asks stSkinMask about */
     gl.uniform1i(stGpuU("skinOn"),skinOn?1:0);
@@ -17451,7 +17563,16 @@ function stGpuRender(srcImg,W,H,o){
     gl.uniform1f(stGpuU("gloss"),t2.gloss||0);
     gl.uniform1f(stGpuU("deyellow"),t2.deyellow||0);
     gl.uniform1f(stGpuU("teethV"),teethV);
-    if(ST_GPU.fsCap){ gl.uniform1f(stGpuU("fsLoA"),fsLoA); gl.uniform1f(stGpuU("fsHiA"),fsHiA); }
+    /* stApplySkin's measured-face branch, verbatim: the plane only exists when
+       a face measured, and stGpuSkinTex refuses the frame when it did not, so
+       the other pair (80/180/30, no de-yellow) can never be the one in force */
+    gl.uniform1f(stGpuU("ebV"),ebV);
+    gl.uniform1f(stGpuU("ebLo"),95); gl.uniform1f(stGpuU("ebHi"),150);
+    gl.uniform1f(stGpuU("ebSpr"),45); gl.uniform1f(stGpuU("ebDeY"),1);
+    if(ST_GPU.fsCap){
+      gl.uniform1f(stGpuU("fsLoA"),fsLoA); gl.uniform1f(stGpuU("fsHiA"),fsHiA);
+      gl.uniform1f(stGpuU("edefV"),edefV);
+    }
     /* v6.54.0 — RADIANCE DRIVES CLARITY TOO. stApplySkin is not the only place
        t2.radiance is read: stage (5)'s claA is (cla + radiance*0.3 + ...), so a
        recipe with radiance and no clarity slider STILL runs an unsharp pass.
@@ -17509,7 +17630,7 @@ function stGpuRender(srcImg,W,H,o){
         JSON.stringify(pv.gradeZones||null)+"|"+(pv.anyGrade?1:0)+"|"+(pv.gradeSat||0)+"|"+
         (pv.bwOn?1:0)+","+pv.bwR+","+pv.bwG+","+pv.bwB+"|"+
         (pv.wbOn?1:0)+","+(pv.wbGr||0)+","+(pv.wbGb||0);
-      var t4tkey=evenSig+"|t"+(teethV>0?1:0);
+      var t4tkey=evenSig+"|t"+(teethV>0?1:0)+"|e"+(eyeOn?1:0);
       if(ST_GPU.t4key!==evenSig || ST_GPU.t4tkey!==t4tkey){
         /* the tonal draw. mode 1 returns before the finishing stages and
            skinOn 0 skips stage (4), so what lands in the buffer is the array
@@ -17525,7 +17646,7 @@ function stGpuRender(srcImg,W,H,o){
           gl.uniform1i(stGpuU("skinOn"),0);
           gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
         }
-        var okT4=stGpuSkinPass(gl,W,H,evenSig,teethV>0);
+        var okT4=stGpuSkinPass(gl,W,H,evenSig,teethV>0,eyeOn);
         if(redraw){
           gl.uniform1i(stGpuU("mode"),s5?1:0);
           gl.uniform1i(stGpuU("skinOn"),1);
@@ -17547,7 +17668,11 @@ function stGpuRender(srcImg,W,H,o){
         ST_GPU.t4paid=true;
       }
       /* v6.59.0 — stage (4b)'s two bands, off the same readback */
-      if(fsLoA!==0||fsHiA!==0){
+      /* v6.71.0 — Eye Definition reads the LOW band, so the upload has to fire
+         for it too. stApplySkin builds the same array for the same reason: its
+         fsLo guard is (freqLo>0 || freqHi || hairShine>0 || eyeDef>0). Only the
+         narrow band is asked for — the wide one is the Low slider's alone. */
+      if(fsLoA!==0||fsHiA!==0||edefV>0){
         var fsRS=(typeof o.rs==="number"&&o.rs>0)?o.rs:1;
         if(!stGpuFsPlanes(gl,W,H,fsRS,t2.freqLo||0,evenSig,fsLoA!==0)) return null;
         ST_GPU.t4paid=true;
@@ -29113,7 +29238,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.70.0";
+var APP_VER="6.71.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
