@@ -41,6 +41,16 @@ function _herr(msg, err) {
   try { console.error("[HNK]", msg, err); } catch (e2) {}
 }
 
+/* v6.65.0 — the one line of an error worth showing a student. Photoshop's
+   rejections arrive in three shapes (Error, {message}, a bare string) and the
+   panel used to keep none of them. */
+function _emsg(e) {
+  try {
+    var m = (e && (e.message || e.description)) || String(e || "");
+    return String(m).replace(/\s+/g, " ").trim().slice(0, 140) || "unknown error";
+  } catch (e2) { return "unknown error"; }
+}
+
 function _bytesToBase64(bytes) {
   var bin = "";
   var chunk = 0x8000;
@@ -154,13 +164,37 @@ async function readClipboardImage() {
   } catch (e) { return null; }
 }
 
-/* ---- needs in-panel verify: capture the active layer as an image ref ----
-   Export the active layer's pixels to PNG bytes. Wrapped so any failure returns
-   null and the import service reports "no-active-layer" instead of crashing. */
+/* ---- v6.65.0: capture the active layer as an image ref, INSIDE A MODAL ----
+
+   THE PHOTOGRAPH THAT SETTLED IT. On panel 6.135.0 the owner opened a photo,
+   selected its layer, tapped "+ Layer" on the Reference Scenes slot and got
+   "No document/layer selected — open the photo and select its layer, then try
+   again." In the SAME session, the SELF-TEST card read
+
+       Document      DSCF0152.jpg · 4160×6240
+       Active layer  1 · Background
+
+   Both cannot be true. The document and the layer were there; the capture was
+   failing for some other reason and the panel was blaming the student for
+   something they had done correctly.
+
+   THE REASON. ps.imaging.getPixels() touches the document, and Photoshop only
+   permits that from inside ps.core.executeAsModal — the same scope createGroup
+   and placeAsLayer have used since 6.9.0. These two capture functions never
+   had it. Outside a modal Photoshop rejects the call, the catch below turned
+   the rejection into a bare null, and the import service turned the null into
+   its one generic reason.
+
+   TWO CHANGES, and the second matters as much as the first:
+     · the work runs inside executeAsModal;
+     · a failure now SAYS WHAT FAILED. It returns { error } instead of null, so
+       image-import-service can separate "there is genuinely no document or
+       layer" from "the capture threw", and the student is told the truth. */
 async function captureActiveLayer() {
   var ps = _ps();
-  if (!ps || !hasActiveDocument()) return null;
-  try {
+  if (!ps) return { error: "Photoshop connection not available" };
+  if (!hasActiveDocument()) return null;   /* genuinely no document — the old meaning */
+  var run = async function () {
     var imaging = ps.imaging;
     var doc = ps.app.activeDocument;
     var layer = doc.activeLayers && doc.activeLayers[0];
@@ -168,9 +202,16 @@ async function captureActiveLayer() {
     var jpg = await imaging.encodeImageData({ imageData: pix.imageData, base64: true });
     if (pix.imageData && pix.imageData.dispose) pix.imageData.dispose();
     return { ref: "data:image/jpeg;base64," + jpg, width: pix.width || 0, height: pix.height || 0 };
+  };
+  try {
+    if (ps.core && typeof ps.core.executeAsModal === "function") {
+      return await ps.core.executeAsModal(run, { commandName: "HNK: read the active layer" });
+    }
+    /* no modal API at all (an older host): try it plainly rather than refuse */
+    return await run();
   } catch (e) {
     _herr("captureActiveLayer failed", e);
-    return null;
+    return { error: _emsg(e) };
   }
 }
 
@@ -201,7 +242,9 @@ async function getSelectionBounds() {
 async function captureRegion(bounds) {
   var ps = _ps();
   if (!ps || !hasActiveDocument() || !bounds) return null;
-  try {
+  /* v6.65.0 — inside a modal, for the same reason captureActiveLayer is: this
+     is the identical getPixels call on the identical document. */
+  var run = async function () {
     var imaging = ps.imaging;
     var pix = await imaging.getPixels({
       sourceBounds: { left: bounds.x, top: bounds.y, right: bounds.x + bounds.width, bottom: bounds.y + bounds.height }
@@ -209,9 +252,15 @@ async function captureRegion(bounds) {
     var jpg = await imaging.encodeImageData({ imageData: pix.imageData, base64: true });
     if (pix.imageData && pix.imageData.dispose) pix.imageData.dispose();
     return { ref: "data:image/jpeg;base64," + jpg, width: bounds.width, height: bounds.height };
+  };
+  try {
+    if (ps.core && typeof ps.core.executeAsModal === "function") {
+      return await ps.core.executeAsModal(run, { commandName: "HNK: read the selected region" });
+    }
+    return await run();
   } catch (e) {
     _herr("captureRegion failed", e);
-    return null;
+    return { error: _emsg(e) };
   }
 }
 

@@ -243,121 +243,87 @@ function capabilities() {
     caps.docH = (doc.body && doc.body.scrollHeight) || (de && de.scrollHeight) || 0;
   } catch (e8) { }
 
-  /* F. v6.62.0 — WHICH OF THE STYLESHEET'S ASSUMPTIONS ARE TRUE HERE?
+  /* F+G. v6.65.0 — THE RULER, THIRD ATTEMPT, AND THIS TIME THE FAILURE IS
+     NAMED RATHER THAN GUESSED AT.
 
-        styles.css calls itself UXP-SAFE and lists what UXP cannot do, and the
-        audit that opened this wave found the file breaking its own list in
-        forty-five places: one `*` selector (the box-model reset, the FIRST
-        rule in the file), twenty-nine `gap` declarations (the header three
-        lines below the list says "UXP has no gap"), nine `object-fit` and six
-        `pointer-events`. Every one of those was believed, never measured.
+     THE PROOF, from the owner's photographs of panel 6.135.0:
 
-        Four of these are geometry, so they are decided here rather than
-        argued: build the case off-screen, read one number back. The other two
-        are property read-backs — weaker evidence (a renderer may store a
-        property it does not honour) but a blank read-back is conclusive the
-        other way. The wave removed all six kinds from the stylesheet, so the
-        panel no longer depends on any answer; the card reports them because
-        the next question (the nine object-fit thumbs) turns on them. */
-  /* v6.64.0 — A PROBE BOX IS NOW AN ORDINARY BOX, AND THE HOST IS ON SCREEN.
+         glyph ruler    notdef 0 · n 0
 
-     6.63.0 replaced offsetWidth with getBoundingClientRect and the owner's
-     6.134.0 photograph STILL reads `box-sizing 0px · flex gap 0px ·
-     calc() NO`. The ruler was necessary and not sufficient, and the second
-     half of the fault was in this function: every probe box was created
-     `position:absolute; left:-9999px`. Two things follow from that, and
-     both are fatal to a measurement:
+     That row measures the advance width of the letter "n". A font that cannot
+     draw "n" does not exist. The reading is not about fonts at all:
+     getBoundingClientRect() hands back an ALL-ZERO rect in this renderer for a
+     node the panel has just created. box-sizing 0px, flex gap 0px and calc()
+     NO are the same one fact, reported three times.
 
-       · the box is nine thousand pixels outside the window, and this
-         renderer answers 0 for the rect of a node laid out there;
-       · every CHILD was absolutely positioned too, so the flex-gap probe
-         measured two out-of-flow boxes stacked at the same coordinate —
-         a difference of 0 no matter what `gap` does.
+     AND ONE OF MY OWN ROWS WAS A FALSE POSITIVE THE WHOLE TIME. "position:
+     fixed  yes" was decided by `Math.abs(r.top) <= 1 && Math.abs(r.left) <= 1`
+     — which an all-zero rect satisfies perfectly. It never proved that fixed
+     positioning works; it proved that the rect was zero, and I read it as the
+     one probe that was working and moved the others to match it. Twice now the
+     instrument has been the broken thing, and twice I have believed a number
+     that only meant "no measurement".
 
-     F4 has always worked, and F4 is the one probe that placed itself
-     ON SCREEN at top:0 left:0 (position:fixed). That is the only placement
-     this renderer has ever measured, so it is the placement all of them
-     use now. The host is fixed at the origin, transparent, and taken out
-     of the document in the same synchronous turn it was put in — it cannot
-     paint a frame — and the probe boxes inside it are plain in-flow divs
-     with no positioning of their own. */
+     TWO CHANGES, both about WHEN and about WHAT COUNTS AS AN ANSWER:
+
+       WHEN. Everything used to be built, measured and removed inside one
+       synchronous turn. A browser forces a layout when you ask for a rect;
+       this renderer evidently does not, so every measurement was taken before
+       anything had been laid out. The boxes are built now, left in the
+       document, and measured on a later frame (two animation frames, with a
+       timer as the fallback), then removed.
+
+       WHAT COUNTS. `rect()` returns null for an all-zero rect instead of a
+       number, so a probe that cannot measure says "unmeasurable" and NOTHING
+       ELSE. position:fixed is decided at top:12px left:7px rather than at the
+       origin, so zeros can no longer masquerade as a pass.
+
+     If the card still reads "unmeasurable" after this, that is a real answer:
+     this renderer does not expose geometry to script at all, and every layout
+     question has to be settled by photograph. It will not be a broken ruler
+     reported as a fact. */
   function box(doc2, css) {
     var d = doc2.createElement("div");
     for (var k in css) if (css.hasOwnProperty(k)) { try { d.style[k] = css[k]; } catch (e) { } }
     return d;
   }
+  caps.cssBox = "pending"; caps.cssGap = "pending"; caps.cssCalc = "pending";
+  caps.cssFixed = "pending"; caps.glyphMiss = "pending";
   try {
-    var host = box(doc, { width: "200px", height: "80px" });
+    var host = box(doc, { width: "200px", height: "120px" });
     host.style.position = "fixed"; host.style.top = "0"; host.style.left = "0";
     host.style.opacity = "0"; host.style.overflow = "hidden";
     (doc.body || doc.documentElement).appendChild(host);
 
-    /* v6.63.0 — EVERY MEASUREMENT BELOW READS getBoundingClientRect(), AND
-       THAT IS THE WHOLE CORRECTION. 6.62.0 wrote F1-F3 with offsetWidth and
-       offsetLeft, and the owner's Photoshop answered `box-sizing 0px`,
-       `flex gap 0`, `calc() NO`. None of those was a CSS answer: UXP returns
-       0 from offsetWidth and offsetLeft for these nodes, so all three probes
-       reported the failure of the ruler rather than the size of the box.
-       F4 was the only one that worked, and F4 was the only one that used
-       getBoundingClientRect. I built the instrument that was supposed to end
-       the guessing and did not check the instrument — the exact mistake this
-       panel's SVG probe made for five waves. `w()` is now the only ruler. */
-    var w = function (el) {
-      try { var r = el.getBoundingClientRect(); return r ? r.width : -1; } catch (e) { return -1; }
-    };
-    var x = function (el) {
-      try { var r = el.getBoundingClientRect(); return r ? r.left : -1; } catch (e) { return -1; }
-    };
-
     /* F1 — is the box-model reset in force? 100px wide, 10px padding, 1px
        border: border-box measures 100, content-box measures 122. A "no" here
-       means every padded box in the panel is 22px wider than its rule says,
-       which is what a panel that will not fit its column looks like. */
+       means every padded box in the panel is 22px wider than its rule says. */
     var b1 = box(doc, { width: "100px", padding: "10px", border: "1px solid #000" });
     host.appendChild(b1);
-    var w1 = w(b1);
-    caps.cssBox = (w1 < 0) ? "unmeasurable"
-      : (Math.abs(w1 - 100) <= 1) ? "border-box"
-      : (Math.abs(w1 - 122) <= 2) ? "content-box"
-      : (Math.round(w1) + "px");
 
     /* F2 — flex gap. Two 10px children in a row with gap:20px: the second
        starts 30 from the first if gap is honoured, 10 if it is dropped. */
     var f2 = box(doc, { display: "flex", flexDirection: "row", width: "180px" });
     try { f2.style.gap = "20px"; } catch (e) { }
-    /* the two children carried an explicit position:static in 6.62.0, to undo
-       the absolute box() gave them. box() no longer positions anything, so
-       they are in flow because that is what a div is. */
     var c1 = box(doc, { width: "10px", height: "10px" });
     var c2 = box(doc, { width: "10px", height: "10px" });
     f2.appendChild(c1); f2.appendChild(c2); host.appendChild(f2);
-    var x1 = x(c1), x2 = x(c2), d2 = (x1 < 0 || x2 < 0) ? -1 : (x2 - x1);
-    caps.cssGap = (d2 < 0) ? "unmeasurable"
-      : (d2 >= 28 && d2 <= 32) ? "yes"
-      : (d2 >= 9 && d2 <= 11) ? "NO"
-      : (Math.round(d2) + "px");
 
     /* F3 — calc(). #pageAiTools already ships a plain percentage before every
        calc() width, which is the shape of a codebase that suspected this. */
     var b3 = box(doc, { width: "calc(50px + 10px)", height: "10px" });
     host.appendChild(b3);
-    var w3 = w(b3);
-    caps.cssCalc = (w3 < 0) ? "unmeasurable"
-      : (Math.abs(w3 - 60) <= 1) ? "yes"
-      : (w3 > 0) ? (Math.round(w3) + "px") : "NO";
 
-    /* F4 — position:fixed. The toast, the Freeform sheet and the video wizard
-       sheet are all fixed; if it degrades to static they land in the flow. */
-    var b4 = box(doc, { position: "fixed", top: "0px", left: "0px", width: "8px", height: "8px" });
+    /* F4 — position:fixed, at 12/7 and NOT at the origin. The toast, the
+       Freeform sheet and the video wizard sheet are all fixed; if it degrades
+       to static they land in the flow, and the rect then reports the flow
+       position rather than 12/7. Zeros fail this, which is the whole point. */
+    var b4 = box(doc, { position: "fixed", top: "12px", left: "7px", width: "8px", height: "8px" });
     host.appendChild(b4);
-    var r4 = b4.getBoundingClientRect ? b4.getBoundingClientRect() : null;
-    caps.cssFixed = r4 ? ((Math.abs(r4.top) <= 1 && Math.abs(r4.left) <= 1) ? "yes" : "NO") : "?";
 
-    /* F5/F6 — read-backs. object-fit is the one rule this wave did NOT
-       remove (nine thumbs across Gallery, Path, the wizard and the Video
-       Tools strip), so its answer decides whether that conversion is worth
-       three generators of churn. background-size is the substitute the
-       stylesheet's own header names, so it is asked in the same breath. */
+    /* F5/F6 — read-backs, which need no layout and can be taken now. Weaker
+       evidence (a renderer may store a property it does not honour) but a
+       blank read-back is conclusive the other way. */
     var b5 = box(doc, {});
     try { b5.style.objectFit = "cover"; } catch (e) { }
     caps.cssObjectFit = (b5.style && b5.style.objectFit === "cover") ? "kept" : "DROPPED";
@@ -365,41 +331,21 @@ function capabilities() {
     try { b6.style.backgroundSize = "cover"; } catch (e) { }
     caps.cssBgSize = (b6.style && b6.style.backgroundSize === "cover") ? "kept" : "DROPPED";
 
-    /* G. v6.64.0 — WHICH SYMBOLS DOES THIS FONT ACTUALLY HAVE?
+    /* G — WHICH SYMBOLS DOES THIS FONT ACTUALLY HAVE?
 
-       The owner's photographs of 6.134.0 show black rounded squares in UI
-       text on Retouch A, Retouch B, Path and Recipes. A square like that is
-       `.notdef`: what a font draws when it is asked for a character it does
-       not carry. The same photographs show → ← and ✓ drawn correctly, so
-       the panel cannot simply replace every symbol it uses — 1,131 of them
-       already work — and it must not go on guessing which ones do not.
-
-       So measure. Every glyph in a font has an advance width, and every
-       character the font is MISSING gets the same one: .notdef's. Put one
-       character in a span, read its width, and compare it with the width of
-       U+E0FF — a private-use codepoint no font maps, so it is .notdef by
-       construction. Equal widths mean the renderer has nothing for that
-       character either, and it is drawing the box.
-
-       Two guards, because a measurement that cannot fail is not a
-       measurement: if the reference width is 0 the ruler is broken and every
-       row reads "unmeasurable" rather than "all missing"; and if .notdef
-       happens to be exactly as wide as a real letter the test cannot
-       separate them and says so. The card also DRAWS the whole strip, so one
-       photograph checks the arithmetic — the same two-facts discipline that
-       finally settled the icons. */
-    /* the list is written as CODEPOINTS, not as characters. A source file
-       that carries the very glyphs it is investigating is a source file the
-       gate has to make an exception for, and an exception is how the next
-       one gets in. It also survives every editor and every encoding on the
-       way to Photoshop, which a diagnostic must. */
+       Every character a font is missing is drawn as `.notdef`, and every
+       .notdef has the same advance width, so a private-use codepoint no font
+       maps supplies that width to compare against. The card ALSO draws the
+       whole strip, and on 6.135.0 the picture answered what this arithmetic
+       could not: U+27A1 and U+1F504 come back as boxes, everything else draws,
+       several of them in colour. The measurement stays because it can cover
+       characters the strip has no room for — but it is the second witness
+       now, not the first. */
     var GLYPH_CP = [
       0x2192, 0x2713, 0x2190, 0x25B8, 0x2715, 0x26A0, 0x270E, 0x21BA,
       0x2605, 0x25B6, 0x2665, 0x2B07, 0x25BE, 0x25C0, 0x27A1, 0x22EE,
       0x2B06, 0x2295, 0x2726, 0x25B4, 0x21C4, 0x2194, 0x267B, 0x26D3,
       0x2717, 0x27F3, 0x25C9, 0x2248, 0x2264, 0x263D,
-      /* and the six this wave removed from the panel, as the control: if the
-         measurement is right at all, these must come back missing. */
       0x1F504, 0x2B50, 0x1F4CC, 0x26A1, 0x1F4BE, 0x1F558
     ];
     var chOf = function (cp) {
@@ -410,42 +356,91 @@ function capabilities() {
     var GLYPHS = [];
     for (var gc = 0; gc < GLYPH_CP.length; gc++) GLYPHS.push(chOf(GLYPH_CP[gc]));
     caps.glyphList = GLYPHS;
-    try {
-      var gs = doc.createElement("span");
-      gs.style.fontSize = "64px";
-      gs.style.whiteSpace = "pre";
-      host.appendChild(gs);
-      var gw = function (ch) {
-        while (gs.firstChild) gs.removeChild(gs.firstChild);
-        gs.appendChild(doc.createTextNode(ch));
-        try { var r = gs.getBoundingClientRect(); return r ? r.width : -1; } catch (e) { return -1; }
-      };
-      var miss = gw(chOf(0xE0FF));    /* private use: nothing maps it */
-      var have = gw("n");             /* a glyph every font carries */
-      caps.glyphRef = "notdef " + Math.round(miss) + " · n " + Math.round(have);
-      if (!(miss > 0) || !(have > 0)) {
-        caps.glyphMiss = "unmeasurable";
-      } else if (Math.abs(miss - have) <= 0.5) {
-        /* the two references are the same width, so nothing below can be
-           told apart from nothing. Say that, rather than a list. */
-        caps.glyphMiss = "indistinguishable";
-      } else {
-        var gone = [];
-        for (var gi = 0; gi < GLYPHS.length; gi++) {
-          var gwv = gw(GLYPHS[gi]);
-          if (gwv >= 0 && Math.abs(gwv - miss) <= 0.5) gone.push(GLYPH_CP[gi].toString(16).toUpperCase());
-        }
-        caps.glyphMiss = gone.length ? gone.join(" ") : "none";
-        caps.glyphN = gone.length + "/" + GLYPHS.length;
-      }
-      try { if (gs.parentNode) gs.parentNode.removeChild(gs); } catch (e) { }
-    } catch (eG) { caps.glyphMiss = "unmeasurable"; }
+    var gs = doc.createElement("span");
+    gs.style.fontSize = "64px";
+    gs.style.whiteSpace = "pre";
+    gs.appendChild(doc.createTextNode("n"));
+    host.appendChild(gs);
 
-    try { if (host.parentNode) host.parentNode.removeChild(host); } catch (e) { }
+    /* ---- the measurement, taken once a frame has been laid out ---- */
+    /* an all-zero rect is NOT a zero-sized box; it is a box that was never
+       laid out. Saying so is the correction this whole section is about. */
+    var rect = function (el) {
+      try {
+        var r = el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+        if (!r) return null;
+        if (!r.width && !r.height && !r.top && !r.left) return null;
+        return r;
+      } catch (e) { return null; }
+    };
+    var measured = false;
+    var measure = function () {
+      if (measured) return;
+      measured = true;
+      try {
+        var r1 = rect(b1);
+        caps.cssBox = !r1 ? "unmeasurable"
+          : (Math.abs(r1.width - 100) <= 1) ? "border-box"
+          : (Math.abs(r1.width - 122) <= 2) ? "content-box"
+          : (Math.round(r1.width) + "px");
+
+        var rc1 = rect(c1), rc2 = rect(c2);
+        var d2 = (rc1 && rc2) ? (rc2.left - rc1.left) : -1;
+        caps.cssGap = (!rc1 || !rc2) ? "unmeasurable"
+          : (d2 >= 28 && d2 <= 32) ? "yes"
+          : (d2 >= 9 && d2 <= 11) ? "NO"
+          : (Math.round(d2) + "px");
+
+        var r3 = rect(b3);
+        caps.cssCalc = !r3 ? "unmeasurable"
+          : (Math.abs(r3.width - 60) <= 1) ? "yes"
+          : (Math.round(r3.width) + "px");
+
+        var r4 = rect(b4);
+        caps.cssFixed = !r4 ? "unmeasurable"
+          : ((Math.abs(r4.top - 12) <= 1 && Math.abs(r4.left - 7) <= 1) ? "yes"
+            : (Math.round(r4.left) + "," + Math.round(r4.top)));
+
+        /* the glyph ruler, on the same laid-out frame */
+        var gw = function (ch) {
+          while (gs.firstChild) gs.removeChild(gs.firstChild);
+          gs.appendChild(doc.createTextNode(ch));
+          var r = rect(gs);
+          return r ? r.width : -1;
+        };
+        var have = gw("n");
+        var miss = gw(chOf(0xE0FF));   /* private use: nothing maps it */
+        caps.glyphRef = "notdef " + Math.round(miss) + " · n " + Math.round(have);
+        if (!(miss > 0) || !(have > 0)) caps.glyphMiss = "unmeasurable";
+        else if (Math.abs(miss - have) <= 0.5) caps.glyphMiss = "indistinguishable";
+        else {
+          var gone = [];
+          for (var gi = 0; gi < GLYPHS.length; gi++) {
+            var w = gw(GLYPHS[gi]);
+            if (w >= 0 && Math.abs(w - miss) <= 0.5) gone.push(GLYPH_CP[gi].toString(16).toUpperCase());
+          }
+          caps.glyphMiss = gone.length ? gone.join(" ") : "none";
+          caps.glyphN = gone.length + "/" + GLYPHS.length;
+        }
+      } catch (eM) {
+        caps.cssBox = "unmeasurable"; caps.cssGap = "unmeasurable";
+        caps.cssCalc = "unmeasurable"; caps.cssFixed = "unmeasurable";
+        caps.glyphMiss = "unmeasurable";
+      }
+      try { if (host.parentNode) host.parentNode.removeChild(host); } catch (e) { }
+    };
+    /* two frames, because the first one may be the frame the nodes were added
+       in; a timer behind it in case this shell has no rAF at all */
+    var raf = (typeof requestAnimationFrame === "function") ? requestAnimationFrame : null;
+    if (raf) raf(function () { raf(measure); });
+    if (typeof setTimeout === "function") setTimeout(measure, 120);
+    else if (!raf) measure();
   } catch (e9) {
-    caps.glyphMiss = caps.glyphMiss || "?";
-    caps.cssBox = caps.cssBox || "?"; caps.cssGap = caps.cssGap || "?";
-    caps.cssCalc = caps.cssCalc || "?"; caps.cssFixed = caps.cssFixed || "?";
+    caps.glyphMiss = caps.glyphMiss === "pending" ? "?" : caps.glyphMiss;
+    caps.cssBox = caps.cssBox === "pending" ? "?" : caps.cssBox;
+    caps.cssGap = caps.cssGap === "pending" ? "?" : caps.cssGap;
+    caps.cssCalc = caps.cssCalc === "pending" ? "?" : caps.cssCalc;
+    caps.cssFixed = caps.cssFixed === "pending" ? "?" : caps.cssFixed;
     caps.cssObjectFit = caps.cssObjectFit || "?"; caps.cssBgSize = caps.cssBgSize || "?";
   }
 

@@ -97,7 +97,7 @@ function create(deps) {
       // (kept OUT of the compact wrapping .hnk-slot pill itself, whose
       // width is meant to stay small).
       if (!slot.valid && slot.reason && imageImport) {
-        var msg = imageImport.reasonMessage(dom, slot.reason);
+        var msg = imageImport.reasonMessage(dom, slot.reason, slot.detail);
         if (msg) failMsgs.push(msg);
       }
     });

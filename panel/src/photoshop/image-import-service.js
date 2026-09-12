@@ -15,8 +15,11 @@
 (function () {
 "use strict";
 
-function _fail(source, reason) {
-  return { source: source, ref: null, valid: false, width: 0, height: 0, reason: reason };
+/* v6.65.0 — `detail` carries what actually went wrong when the reason alone
+   cannot say it (a Photoshop rejection message). Every existing caller passes
+   two arguments and gets undefined here, exactly as before. */
+function _fail(source, reason, detail) {
+  return { source: source, ref: null, valid: false, width: 0, height: 0, reason: reason, detail: detail || "" };
 }
 function _ok(source, res) {
   return {
@@ -60,16 +63,39 @@ function isPageLink(url) {
   return false;
 }
 
-/* host.captureActiveLayer() -> { ref, width, height } | throws/null */
+/* host.captureActiveLayer() -> { ref, width, height } | { error } | null
+
+   v6.65.0 — TWO OUTCOMES, NOT ONE. This used to collapse every possible
+   failure — a throw, a rejection, a null, a host that is not there — into the
+   single reason "no-active-layer", whose message tells the student to open a
+   photo and select its layer. The owner's photographs of 6.135.0 show that
+   message on the Reference Scenes slot while the SELF-TEST card, in the same
+   session, reads "Document DSCF0152.jpg · 4160×6240" and "Active layer 1 ·
+   Background". The photo was open. The layer was selected. The panel accused
+   the student of the one thing they had not got wrong, and the real fault —
+   getPixels outside a modal scope — was invisible.
+
+   So the two cases are now separate:
+     null      the host genuinely has no document -> "open a photo…", as before
+     {error}   the capture ran and failed -> say so, and carry the reason up
+   `capture-failed` keeps the detail, so the slot can print what Photoshop
+   actually said instead of a guess about what the student did. */
 function fromActiveLayer(host) {
+  var judge = function (r) {
+    if (r && r.ref) return _ok("active-layer", r);
+    if (r && r.error) return _fail("active-layer", "capture-failed", r.error);
+    return _fail("active-layer", "no-active-layer");
+  };
   try {
     if (!host || !host.captureActiveLayer) return _fail("active-layer", "no-host");
     var res = host.captureActiveLayer();
-    if (res && typeof res.then === "function") return res.then(function (r) {
-      return r && r.ref ? _ok("active-layer", r) : _fail("active-layer", "no-active-layer");
-    }, function () { return _fail("active-layer", "no-active-layer"); });
-    return res && res.ref ? _ok("active-layer", res) : _fail("active-layer", "no-active-layer");
-  } catch (e) { return _fail("active-layer", "no-active-layer"); }
+    if (res && typeof res.then === "function") return res.then(judge, function (e) {
+      return _fail("active-layer", "capture-failed", (e && e.message) || String(e || ""));
+    });
+    return judge(res);
+  } catch (e) {
+    return _fail("active-layer", "capture-failed", (e && e.message) || String(e || ""));
+  }
 }
 
 /* host.readImageFile(file) -> { ref, width, height } */
@@ -117,7 +143,7 @@ function fromWebLink(host, url) {
    slot. dom is passed in so the message can go through dom.t() (i18n) with
    this English text as the fallback, matching how every other panel string
    is looked up. */
-function reasonMessage(dom, reason) {
+function reasonMessage(dom, reason, detail) {
   var MAP = {
     "no-host":            ["slot_reason_no_host", "Photoshop connection not available — try again."],
     "no-active-layer":    ["slot_reason_no_active_layer", "No document/layer selected — open the photo and select its layer, then try again."],
@@ -125,11 +151,16 @@ function reasonMessage(dom, reason) {
     "no-clipboard-image": ["slot_reason_no_clipboard", "No image on the clipboard — copy an image first."],
     "invalid-url":        ["slot_reason_invalid_url", "That doesn't look like a valid image link (must start with http/https)."],
     "fetch-failed":       ["slot_reason_fetch_failed", "Could not load that image link — check the URL and try again."],
-    "page-link":          ["slot_reason_page_link", "That is a link to the page, not to the picture — open the image, then copy the IMAGE address (it ends .jpg / .png / .webp)."]
+    "page-link":          ["slot_reason_page_link", "That is a link to the page, not to the picture — open the image, then copy the IMAGE address (it ends .jpg / .png / .webp)."],
+    /* v6.65.0 — the capture ran and Photoshop refused it. Never blame the
+       student's document for this: it is the panel's own problem, and the
+       detail is appended so it can be photographed and fixed. */
+    "capture-failed":     ["slot_reason_capture_failed", "Photoshop would not hand over the layer's pixels."]
   };
   var e = MAP[reason];
   if (!e) return "";
-  return dom && typeof dom.t === "function" ? dom.t(e[0], e[1]) : e[1];
+  var msg = dom && typeof dom.t === "function" ? dom.t(e[0], e[1]) : e[1];
+  return (reason === "capture-failed" && detail) ? (msg + " (" + String(detail).slice(0, 120) + ")") : msg;
 }
 
 var API = {
