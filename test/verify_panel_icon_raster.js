@@ -166,8 +166,13 @@ report("E3) the stroke-vs-fill row shows the shipped PNGs, so one photograph sti
    because offsetWidth and offsetLeft return 0 in UXP, not because the CSS
    failed. getBoundingClientRect is the only ruler that worked. */
 const SELFTEST_CODE = SELFTEST.replace(/\/\*[\s\S]*?\*\//g, "");
-report("E4) no probe measures with offsetWidth/offsetLeft again — UXP answers 0 and the reading is worthless",
-  !/offsetWidth|offsetLeft/.test(SELFTEST_CODE) &&
+/* v6.66.0 — offsetWidth is measured once now, ON PURPOSE, as the known-zero
+   control in the five-ruler bake-off. What this row always meant is what it
+   says now: no probe may DECIDE anything on it. */
+report("E4) no probe decides on offsetWidth/offsetLeft — its one use is the bake-off's known-zero control",
+  ((SELFTEST_CODE.match(/offsetWidth|offsetLeft/g) || []).length === 1) &&
+  /out\.push\("offset " \+ num\(el\.offsetWidth\)\)/.test(SELFTEST_CODE) &&
+  !/caps\.[A-Za-z]+\s*=\s*[^;\n]*offset(Width|Left)/.test(SELFTEST_CODE) &&
   /getBoundingClientRect/.test(SELFTEST_CODE), null);
 
 const CI = fs.readFileSync(path.join(ROOT, ".github/workflows/test.yml"), "utf8");
