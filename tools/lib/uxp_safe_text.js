@@ -16,7 +16,26 @@
    "everything above U+2000" would rewrite 1,131 strings that already work.
    The rule set below is therefore narrow and each entry has a reason.
 
-   WHICH CHARACTERS, AND HOW THEY WERE CHOSEN:
+   v6.65.0 — AND NOW IT HAS BEEN PHOTOGRAPHED, SO THE REASON ABOVE IS TOO
+   BROAD AND THE LIST BELOW IS TOO LONG. panel 6.135.0's SELF-TEST card drew
+   all thirty-six candidate symbols at readable size, and Photoshop 27.10.0
+   answered: everything renders EXCEPT U+27A1 and U+1F504, which come back as
+   .notdef boxes. Several render as COLOUR EMOJI — ⚠ a yellow triangle, ♻
+   green, 📌 a red pin, ⚡ a yellow bolt. So the shell does carry an emoji
+   font; it carries one with holes in it.
+
+   That corrects two things I wrote:
+     · "Adobe's UI font has no colour emoji" is wrong as a reason.
+     · ⚠ U+26A0 was deduced by elimination from the Path screen and it DRAWS.
+       The deduction was wrong. It stays on the list because the panel now
+       shows an i-warn sprite in its place and putting the character back
+       would be churn for no gain — but it is listed as a decision, not as a
+       renderer limitation, and the note says so.
+
+   U+27A1 joins the list on the same evidence that cleared ⚠: the picture.
+
+   WHICH CHARACTERS, AND HOW THEY WERE CHOSEN (as written in 6.64.0, kept for
+   the record; the measured truth is the paragraph above):
 
      · every pictograph at U+1F000 and above — no UI font ships these, and
        there is nothing to measure. 🔄 ⭐-adjacent 📌 🎂 🎬 🎓 💾 🕘 🌙 …
@@ -84,7 +103,8 @@ const GLYPHS = {
   "\u{1F328}": { word: "", icon: null, note: "🌨 weather" },
   "⭐": { word: "", icon: "i-star-fill", note: "⭐ Favorites / starred preset" },
   "⚡": { word: "", icon: "i-bolt", note: "⚡ One-shot merge" },
-  "⚠": { word: "", icon: "i-warn", note: "⚠ the lead character of every refusal message" },
+  "⚠": { word: "", icon: "i-warn", note: "⚠ DRAWS (yellow triangle, photographed on 6.135.0) — kept out by choice, not by need: the render sites carry an i-warn sprite now" },
+  "➡": { word: "", icon: "i-arrow", note: "➡ MEASURED MISSING on 6.135.0 — a .notdef box beside every glyph that drew" },
   "⛅": { word: "", icon: null, note: "⛅ weather" },
   "⛈": { word: "", icon: null, note: "⛈ weather" },
   "⛓": { word: "", icon: "i-link", note: "⛓ chained" },

@@ -73,6 +73,22 @@ function pushLog(level, argv) {
 function hlog() { return pushLog("INFO", arguments); }
 function hwarn() { return pushLog("WARN", arguments); }
 function herr() { return pushLog("ERR", arguments); }
+/* v6.65.0 — AND THE MODULES CAN REACH IT NOW.
+
+   panel/src/photoshop/photoshop-host.js has logged its failures through
+   `globalThis.HNK.herr` since 6.19. That function has never existed. Every
+   host error for four months — a failed layer capture, a failed place, a
+   failed group — fell through to console.error, which nobody in Photoshop can
+   read, and the SELF-TEST card went on reporting "Panel log: clean".
+
+   That is exactly why the owner's 6.135.0 photographs show a green Panel log
+   beside a slot refusing to read a document that was plainly open. The log was
+   not clean; it was disconnected. Three lines, published before anything else
+   runs, and the card can see what the host sees. */
+globalThis.HNK = globalThis.HNK || {};
+globalThis.HNK.herr = function () { return pushLog("ERR", arguments); };
+globalThis.HNK.hwarn = function () { return pushLog("WARN", arguments); };
+globalThis.HNK.hlog = function () { return pushLog("INFO", arguments); };
 function logText() {
   if (!HNK_LOG.length) return "(log is empty)";
   return HNK_LOG.map(function (e) { return "[" + e.ts + "] " + e.level + "  " + e.msg; }).join("\n");
@@ -441,7 +457,7 @@ const FF_L = {
   credits: { my: " · RH credit သုံးမယ်", en: " · uses RH credits", shn: " · ၸႂ်ႉ RH credit", kac: " · RH credit lang na", th: " · ใช้เครดิต RH", zh: " · 消耗 RH 额度", vi: " · dùng credit RH", id: " · pakai kredit RH", ms: " · guna kredit RH" },
   addonsNone: { my: "ဘာမှ မဖွင့်ရသေး — မဖွင့်လည်း ရတယ်", en: "Nothing enabled — that’s fine too" },
   modelSet: { my: "RunningHub model → {m} ✓ — ဒီ model နဲ့ generate လုပ်ပါမယ်", en: "RunningHub model → {m} ✓ — generates will use this model" },
-  chainH: { my: "➡ ရလဒ်ကို ဆက်ပြင်မယ်", en: "➡ Continue editing this result", shn: "➡ သိုပ်ႇမႄးထတ်း ၽွၼ်းလႆႈၼႆႉ", kac: "➡ Ndai pru sumla hpe matut galaw", th: "➡ แก้ไขผลลัพธ์นี้ต่อ", zh: "➡ 继续编辑此结果", vi: "➡ Tiếp tục chỉnh sửa kết quả này", id: "➡ Lanjutkan mengedit hasil ini", ms: "➡ Terus sunting hasil ini" },
+  chainH: { my: "ရလဒ်ကို ဆက်ပြင်မယ်", en: "Continue editing this result", shn: "သိုပ်ႇမႄးထတ်း ၽွၼ်းလႆႈၼႆႉ", kac: "Ndai pru sumla hpe matut galaw", th: "แก้ไขผลลัพธ์นี้ต่อ", zh: "继续编辑此结果", vi: "Tiếp tục chỉnh sửa kết quả này", id: "Lanjutkan mengedit hasil ini", ms: "Terus sunting hasil ini" },
   /* the app's Generate run feedback (btnGen.onclick): ticker, Stop, Retry,
      the card's own done / stopped / timed-out lines */
   spinGen: { my: "တိုက်ရိုက် ထုတ်နေပါတယ် — စက္ကန့် ၂၀-၆၀ လောက် စောင့်ပါ…", en: "Generating — allow 20-60 seconds…", shn: "တိုၵ်ႉႁဵတ်းယူႇ — ပႂ်ႉ 20-60 ဝိၼၢထီး…", kac: "Galaw nga ai — 20-60 second la u…", th: "กำลังสร้าง — รอ 20-60 วินาที…", zh: "正在生成 — 请等待 20-60 秒…", vi: "Đang tạo — chờ 20-60 giây…", id: "Sedang membuat — tunggu 20-60 detik…", ms: "Sedang menjana — tunggu 20-60 saat…" },
@@ -6403,7 +6419,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.135.0";
+const PANEL_VERSION = "6.136.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);

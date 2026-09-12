@@ -670,7 +670,7 @@ function create(deps) {
         // used to look identical to "never touched this slot" — both said
         // "Missing". Show the specific reason when there was an actual
         // failed attempt.
-        var failReason = (!okk && inp.image && inp.image.reason && imageImport) ? imageImport.reasonMessage(dom, inp.image.reason) : "";
+        var failReason = (!okk && inp.image && inp.image.reason && imageImport) ? imageImport.reasonMessage(dom, inp.image.reason, inp.image.detail) : "";
         mark.textContent = okk ? "✓" : (failReason || "Missing");
         mark.className = "hnk-req-mark " + (okk ? "ok" : "miss");
       }

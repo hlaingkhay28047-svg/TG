@@ -29,6 +29,27 @@
         the owner kept photographing. That is checked here by the shape of
         the line, not by the shape of one string.
 
+   v6.65.0 — THE SIXTEEN PICTURES OF 6.135.0 ANSWERED IT, and corrected me.
+   The strip drew almost everything: ⚠ is a yellow triangle, ♻ green, 📌 a
+   red pin, ⚡ a yellow bolt. So "the host UI font has no colour emoji" was
+   too broad, and condemning ⚠ by elimination was simply wrong — it draws.
+   Only U+27A1 and U+1F504 come back as boxes; U+27A1 joins the rule set here.
+   The same pictures showed three more things, and this file now pins them all:
+
+     4. "glyph ruler: notdef 0 · n 0" — getBoundingClientRect answers an
+        ALL-ZERO rect for a node created moments before. Not a zero-sized box:
+        a box never laid out. The probe now measures on a later frame and
+        refuses an all-zero rect, and "position:fixed yes" is retired as the
+        false positive it always was (it accepted top≈0 && left≈0);
+     5. Retouch A drew the SAME ICON TWO AND THREE TIMES down every feature
+        row, because icn() wrote one <img> per tint and asked the stylesheet
+        to hide the rest. It writes one now, and picks the tint itself;
+     6. "+ Layer" refused with "no active layer" over a document that had one.
+        ps.imaging.getPixels() must run inside executeAsModal; the throw was
+        being swallowed into the same bare null the no-document branch
+        returns. And HNK.herr, which the host has always called, was never
+        published — so the log the owner photographed could not fill.
+
    Run: node test/verify_panel_glyphs.js */
 
 "use strict";
@@ -101,6 +122,16 @@ const innocent = 'var x = a + " (" + n + ") \u26A0 hey";';
 report("A4) tidying the removed glyph's space does not touch any other space in the line",
   T.uxpSafeCode(innocent, "u") === 'var x = a + " (" + n + ") hey";', T.uxpSafeCode(innocent, "u"));
 
+/* v6.65.0 — the two the 6.135.0 photograph caught. The strip drew every
+   symbol on the card except these two, so they are the only additions the
+   picture licenses — and ⚠, which the earlier deduction-by-elimination had
+   condemned, draws as a yellow triangle and is kept out by choice, not need. */
+report("A5) the two glyphs the photograph proved missing have rules, and the arrow names its sprite",
+  T.GLYPHS["\u27A1"] && T.GLYPHS["\u27A1"].icon === "i-arrow" &&
+  /MEASURED MISSING on 6\.135\.0/.test(T.GLYPHS["\u27A1"].note || "") &&
+  !!T.GLYPHS["\uD83D\uDD04"] &&
+  T.uxpSafeText("\u27A1 next") === "next", null);
+
 /* ------------------------------------- B. nothing on a panel surface ships one */
 
 const offenders = [], waived = [];
@@ -165,9 +196,9 @@ const RETOUCH = fs.readFileSync(path.join(PANEL, "src/ui/screens/retouch-studio-
 const HOME = fs.readFileSync(path.join(PANEL, "src/ui/screens/home-screen.js"), "utf8");
 const WFT = fs.readFileSync(path.join(PANEL, "src/ui/screens/workflow-tools-screen.js"), "utf8");
 const MAIN = fs.readFileSync(path.join(PANEL, "main.js"), "utf8");
+const CSSFILE = fs.readFileSync(path.join(PANEL, "styles.css"), "utf8");
 report("D2) Retouch A/B builds all four of its icon shapes from the raster",
-  (RETOUCH.match(/src="icons\/ui\/' \+ name[^\n]*\.png/g) || []).length >= 3 &&
-  /tints\[i\] \+ '\.png"/.test(RETOUCH), null);
+  (RETOUCH.match(/src="icons\/ui\/' \+ name[^\n]*\.png/g) || []).length >= 4, null);
 report("D3) Home's sprite row and tile, the Workflows icon and its favourite star, and the shell rail",
   /im\.src = "icons\/ui\/" \+ name \+ "-" \+ tint \+ "\.png";/.test(HOME) &&
   /"icons\/ui\/" \+ c\.ic \+ "-cream\.png"/.test(HOME) &&
@@ -191,6 +222,59 @@ report("D5) the theme button paints a sprite, and the moon beside the sun exists
   /ffIcon\(\(th === "light" \|\| th === "porcelain"\) \? "i-moon" : "i-sun", "cream"\)/.test(MAIN) &&
   ["cream", "gold", "ink", "muted"].every((t) => have.has("i-moon-" + t + ".png")), null);
 
+/* ------------------- D6-D9. ONE icon, not three. v6.65.0.
+
+   The owner's photographs of 6.135.0 show Retouch A with the same icon drawn
+   two and three times down every feature row. icn() had been writing every
+   tint an icon can wear — cream, gold, ink, sometimes muted — as overlapping
+   <img> elements and leaving the stylesheet to hide the ones the context did
+   not want. A browser does that exactly; Photoshop does not. The panel now
+   decides in JavaScript and writes one. -------------------------------- */
+
+report("D6) icn() writes ONE <img>, and no loop over a tint list survives",
+  !/for \(var i = 0; i < tints\.length; i\+\+\)/.test(RETOUCH) &&
+  !/var TINTS_ALL/.test(RETOUCH) &&
+  /function iconTag\(name, cls, tint\)/.test(RETOUCH) &&
+  /return iconTag\(name, c, "cream"\);/.test(RETOUCH) &&
+  /^  return '<img class="'[\s\S]*?\n\}/m.test(RETOUCH) &&
+  (RETOUCH.match(/function icn\(name, cls\) \{[\s\S]*?\n\}/) || [""])[0]
+    .split("<img").length - 1 === 3, null);
+
+report("D7) the tint comes from the context the icon actually sits in, and the walk stops at the page",
+  /function ctxTint\(node\)/.test(RETOUCH) &&
+  /=== "stPendCount"\) return "muted"/.test(RETOUCH) &&
+  /" grp-h "\) >= 0\) return "gold"/.test(RETOUCH) &&
+  /" btn-gold "\) >= 0\) return "ink"/.test(RETOUCH) &&
+  /" chip "\) >= 0 && c\.indexOf\(" on "\) >= 0\) return "ink"/.test(RETOUCH) &&
+  /indexOf\(" stpg "\) >= 0\) break;/.test(RETOUCH) &&
+  /return "cream";/.test(RETOUCH), null);
+
+/* an icon whose gold file was never compiled must keep cream rather than
+   fetch a 404 and draw nothing — the 6.128.0 failure, in a new place */
+{
+  const listed = new Set(((RETOUCH.match(/"i-bandage[\s\S]*?\.split\(" "\)\)/) || [""])[0]
+    .match(/i-[a-z0-9-]+/g) || []));
+  const onDisk = new Set();
+  for (const f of fs.readdirSync(path.join(PANEL, "icons/ui"))) {
+    const m = /^(i-[a-z0-9-]+)-cream\.png$/.exec(f);
+    if (m && ["gold", "ink", "muted"].every((t) => fs.existsSync(path.join(PANEL, "icons/ui", m[1] + "-" + t + ".png"))))
+      onDisk.add(m[1]);
+  }
+  const extra = [...listed].filter((n) => !onDisk.has(n));
+  const missing = [...onDisk].filter((n) => !listed.has(n));
+  report("D8) TINT4 names exactly the icons that have all four tints on disk (" + onDisk.size + ")",
+    listed.size > 0 && extra.length === 0 && missing.length === 0, { extra, missing });
+}
+
+report("D9) and no rule in the stylesheet can hide a studio icon any more",
+  !/\.stpg[^{\n]*\bi2[cgkm]\b[^{\n]*\{[^}]*display:\s*none/.test(CSSFILE), null);
+
+report("D10) the icon is retinted where it lands: on write, on mount, and on the frame after a tap",
+  /elm\.innerHTML = opts\.after[\s\S]{0,240}?retint\(elm\);/.test(RETOUCH) &&
+  (RETOUCH.match(/retint\(doc\(\)\);/g) || []).length >= 2 &&
+  /addEventListener\("click", retintSoon, true\)/.test(RETOUCH) &&
+  /requestAnimationFrame/.test(RETOUCH), null);
+
 /* ------------------------------------------------- E. the probe, and its ruler */
 
 const SELFTEST = fs.readFileSync(path.join(PANEL, "src/app/panel-selftest.js"), "utf8");
@@ -210,7 +294,8 @@ report("E2) box() no longer positions a probe box, so the flex children are in f
 report("E3) nothing measures with offsetWidth/offsetLeft, which answer 0 here",
   !/offsetWidth|offsetLeft/.test(STCODE) && /getBoundingClientRect/.test(STCODE), null);
 report("E4) the three probes that read 0 twice still measure what they claim to",
-  /w1 - 100/.test(STCODE) && /x2 - x1/.test(STCODE) && /w3 - 60/.test(STCODE), null);
+  /r1\.width - 100/.test(STCODE) && /rc2\.left - rc1\.left/.test(STCODE) &&
+  /r3\.width - 60/.test(STCODE), null);
 
 report("E5) the glyph probe measures an advance width against a codepoint no font maps",
   /gw\(chOf\(0xE0FF\)\)/.test(STCODE) && /caps\.glyphMiss/.test(STCODE), null);
@@ -223,6 +308,24 @@ report("E7) it measures the symbols the panel actually uses, and the emoji this 
   /caps\.glyphList = GLYPHS/.test(STCODE) && /var GLYPH_CP = \[/.test(STCODE) &&
   /0x26A0/.test(STCODE) && /0x2192/.test(STCODE) && /0x1F504/.test(STCODE) &&
   !/GLYPH_CP = \[[^\]]*"/.test(STCODE), null);
+
+/* ---- E8/E9. v6.65.0 — what 6.135.0's photograph actually proved.
+
+   "glyph ruler: notdef 0 · n 0" means getBoundingClientRect answered an
+   ALL-ZERO rect for a node created moments earlier: not a zero-sized box, a
+   box that was never laid out. And "position:fixed yes" was a FALSE POSITIVE
+   — the old probe accepted top≈0 && left≈0, which an all-zero rect gives
+   for free. Both corrections are pinned here. ---- */
+
+report("E8) an all-zero rect is refused as never-laid-out instead of read as a measurement",
+  /if \(!r\.width && !r\.height && !r\.top && !r\.left\) return null;/.test(STCODE) &&
+  (STCODE.match(/"unmeasurable"/g) || []).length >= 5, null);
+
+report("E9) the measurement waits for a laid-out frame, and fixed is probed AWAY from the origin",
+  /raf\(function \(\) \{ raf\(measure\); \}\)/.test(STCODE) &&
+  /setTimeout\(measure, 120\)/.test(STCODE) &&
+  /position: "fixed", top: "12px", left: "7px"/.test(STCODE) &&
+  /Math\.abs\(r4\.top - 12\) <= 1 && Math\.abs\(r4\.left - 7\) <= 1/.test(STCODE), null);
 
 /* ------------------------------------------- F. the card says it, and shows it */
 
@@ -242,6 +345,42 @@ report("G1) the workflow detail hero paints through remoteArt, like the grid car
   /setArt\(heroIm, wf\.visual/.test(WFT) && !/hero\.style\.backgroundImage/.test(WFT), null);
 report("G2) and its rule holds an <img> instead of a background it could never fetch",
   /\.hnk-wf-hero img \{/.test(CSS) && !/\.hnk-wf-hero \{[^}]*background-size/.test(CSS), null);
+
+/* ------------------- I. the three defects the same photographs showed. v6.65.0.
+
+   "+ Layer" refused with "no active layer" over a document that plainly had
+   one, and the panel's own log stayed empty while it happened. Two separate
+   faults: ps.imaging.getPixels() must run inside executeAsModal or it throws,
+   and the throw was swallowed into the same bare null the no-document branch
+   returns — so the panel could only report the one thing that was not true.
+   The host has always called HNK.herr/hwarn/hlog; main.js never published
+   them, so every one of those calls went nowhere. -------------------------- */
+
+const HOST = fs.readFileSync(path.join(PANEL, "src/photoshop/photoshop-host.js"), "utf8");
+const IMPORTS = fs.readFileSync(path.join(PANEL, "src/photoshop/image-import-service.js"), "utf8");
+const FREEGEN = fs.readFileSync(path.join(PANEL, "src/ui/screens/free-generate-screen.js"), "utf8");
+
+report("I1) both captures read pixels inside executeAsModal, which is the only way Photoshop allows it",
+  (HOST.match(/ps\.core\.executeAsModal\(run, \{ commandName:/g) || []).length === 2 &&
+  /function captureActiveLayer\(\)/.test(HOST) && /function captureRegion\(/.test(HOST) &&
+  (HOST.match(/typeof ps\.core\.executeAsModal === "function"/g) || []).length >= 2, null);
+
+report("I2) a capture that THREW is no longer reported as a document with no layer",
+  /return \{ error: _emsg\(e\) \};/.test(HOST) && /function _emsg\(e\)/.test(HOST) &&
+  /if \(r && r\.error\) return _fail\("active-layer", "capture-failed", r\.error\);/.test(IMPORTS) &&
+  /return _fail\("active-layer", "no-active-layer"\);/.test(IMPORTS) &&
+  /slot_reason_capture_failed/.test(IMPORTS), null);
+
+report("I3) and the reason carries Photoshop's own words to the two screens that print it",
+  /function reasonMessage\(dom, reason, detail\)/.test(IMPORTS) &&
+  /reasonMessage\(dom, slot\.reason, slot\.detail\)/.test(FREEGEN) &&
+  /reasonMessage\(dom, inp\.image\.reason, inp\.image\.detail\)/.test(WFT), null);
+
+report("I4) HNK.herr / hwarn / hlog exist, so the host's log calls reach the card",
+  /globalThis\.HNK\.herr\s*=\s*function/.test(MAIN) &&
+  /globalThis\.HNK\.hwarn\s*=\s*function/.test(MAIN) &&
+  /globalThis\.HNK\.hlog\s*=\s*function/.test(MAIN) &&
+  /_herr\(/.test(HOST), null);
 
 /* -------------------------------------------------------------------- H. CI */
 

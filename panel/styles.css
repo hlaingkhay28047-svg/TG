@@ -2483,16 +2483,20 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    ====================================================================== */
 
 /* ---- icon tints. An <img> has no currentColor, so each icon ships as one
-   file per tint it can wear and the rules below reveal exactly one: cream in
-   a chip, ink on the gold active pill and inside a gold button, gold at the
-   head of a group, muted in the queue tally. ---- */
-.stpg .i2g, .stpg .i2k, .stpg .i2m { display: none; }
-.stpg .grp-h .i2c { display: none; }
-.stpg .chip.on .i2c, .stpg .btn-gold .i2c, .stpg .chip.on .i2g { display: none; }
+   file per tint it can wear: cream in a chip, ink on the gold active pill and
+   inside a gold button, gold at the head of a group, muted in the queue tally.
+   v6.65.0 — THE STYLESHEET NO LONGER CHOOSES. It used to: icn() wrote all
+   three or four files as overlapping <img> elements and eight display:none
+   rules here hid the ones the context did not want. A browser obeys that
+   exactly; Photoshop does not, and the owner photographed Retouch A with the
+   same icon drawn two and three times down every feature row. retouch-studio-
+   screen.js now picks the file in JavaScript and writes ONE <img>, tagged with
+   the tint letter it chose — so what is left below sets only how that single
+   icon sits on the line (inline inside a sentence, block in a flex button).
+   Nothing here can hide an icon any more, in any renderer. ---- */
 .stpg .chip.on .i2k, .stpg .btn-gold .i2k { display: block; }
 /* a chip inside a sentence-flow row keeps its icon inline */
 .stpg .chip.on .i2k { display: inline; }
-.stpg #stPendCount .i2c, .stpg #stPendCount .i2g, .stpg #stPendCount .i2k { display: none; }
 .stpg #stPendCount .i2m { display: inline; }
 /* the app's svg.ic-s has no width of its own — it measures 1.1em from the
    text it sits in (13.2px in a 12px chip, 14.3px in a 13px button) */

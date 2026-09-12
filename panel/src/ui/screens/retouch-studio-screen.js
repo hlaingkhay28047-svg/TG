@@ -128,22 +128,69 @@ function shim() {
 }
 
 /* ------------------------------------------------------------- icons */
-/* One <img> per tint the icon's contexts need; styles.css shows exactly one.
-   Group-header titles are gold, chips are cream and turn ink on the gold
-   active pill, and the two counters in the generate bar are muted. */
-/* Every icon ships in the three tints its contexts can call for — cream in a
-   sentence or an idle chip, ink on the gold active pill, gold at the head of
-   a group — plus muted for the two the generate bar prints in its tally. The
-   stylesheet reveals exactly one; a per-symbol table would only mean a
-   missing file (an invisible icon) the day a chip gains an icon it never had. */
-var TINTS_ALL = ["cream", "gold", "ink"];
-var TINTS_MUTED = ["cream", "gold", "ink", "muted"];
-var MUTED_TOO = { "i-eye": 1, "i-bolt": 1, "i-search": 1 };
-function tintsFor(name) { return MUTED_TOO[name] ? TINTS_MUTED : TINTS_ALL; }
+/* ONE <img>, in the one tint its context asks for. An <img> has no
+   currentColor, so each icon ships as a file per tint: cream in a sentence or
+   an idle chip, ink on the gold active pill and inside a gold button, gold at
+   the head of a group, muted in the queue tally. Until v6.65.0 every one of
+   those files was written into the document at once and the stylesheet was
+   asked to reveal one; the panel now picks the file itself. See the long note
+   on ctxTint() below for the photograph that forced the change. */
 var TINT_LETTER = { cream: "i2c", gold: "i2g", ink: "i2k", muted: "i2m" };
+/* Every icon whose gold, ink AND muted files all exist on disk. An icon
+   outside this set has only its cream file, so a context that asks for gold
+   would fetch a 404 and draw nothing — it keeps cream instead.
+   verify_panel_glyphs reads panel/icons/ui/ and pins this list. */
+var TINT4 = {};
+(function (s) { for (var i = 0; i < s.length; i++) TINT4[s[i]] = 1; })(
+  ("i-bandage i-body i-bolt i-brain i-brush i-camera i-caret i-check i-clapper "
+    + "i-close i-compare i-doc i-download i-dress i-drop i-eye i-face i-folder "
+    + "i-frame i-gallery i-gem i-hair i-hand i-heart i-home i-lips i-makeup "
+    + "i-mirror i-moon i-nose i-palette i-restore i-retry i-rocket i-save i-search "
+    + "i-shuffle i-sky i-sliders i-smile i-sparkle i-stack i-star i-star-fill "
+    + "i-sun i-target i-tools i-tooth i-trash i-type i-wand i-wrinkle").split(" "));
+
+/* v6.65.0 — ONE <img>, NOT A SET OF THREE OR FOUR.
+   Until now icn() wrote every tint an icon could ever wear — cream, gold, ink,
+   sometimes muted — as three or four overlapping <img> elements, and left the
+   choice to the stylesheet: ".stpg .i2g, .stpg .i2k, .stpg .i2m {display:none}"
+   plus a reveal rule per context. In a browser that is exact (the probe shows
+   one visible copy in all seven contexts). In Photoshop the owner photographed
+   Retouch A with the SAME ICON DRAWN TWO OR THREE TIMES down every feature row:
+   whatever UXP does with those rules, it is not hiding the extra copies.
+   Rather than guess which part of that cascade the shell drops, the panel stops
+   depending on it. The tint is decided HERE, in JavaScript, by walking up from
+   the icon to the first context that names one — the same four contexts the
+   stylesheet named — and exactly one <img> is written. It still carries the
+   context's tint letter, so every existing rule in styles.css matches what it
+   always matched and a browser renders precisely what it rendered before; but
+   if UXP ignores the whole block, what is left on screen is one icon in the
+   right colour rather than a stack of three.
+   A chip that turns .on after it was painted is retinted by retint(): once per
+   setIcnText, and once on the frame after any tap. */
+function ctxTint(node) {
+  var n = node, hops = 0;
+  while (n && n.getAttribute && hops++ < 24) {
+    var id = "";
+    try { id = n.getAttribute("id") || ""; } catch (e) { id = ""; }
+    if (id === "stPendCount") return "muted";
+    var c = "";
+    try { c = " " + String(n.getAttribute("class") || "").replace(/\s+/g, " ") + " "; } catch (e2) { c = " "; }
+    if (c.indexOf(" grp-h ") >= 0) return "gold";
+    if (c.indexOf(" btn-gold ") >= 0) return "ink";
+    if (c.indexOf(" chip ") >= 0 && c.indexOf(" on ") >= 0) return "ink";
+    /* the page itself is the ceiling — never walk out of the studio */
+    if (c.indexOf(" stpg ") >= 0) break;
+    n = n.parentNode;
+  }
+  return "cream";
+}
+function iconTag(name, cls, tint) {
+  return '<img class="' + cls + " " + TINT_LETTER[tint] + ' icn-t" data-icn="' + name
+    + '" src="icons/ui/' + name + "-" + tint + '.png">';
+}
 function icn(name, cls) {
   var c = cls || "ic-s";
-  /* a class that fixes the colour outright needs one file, not a set */
+  /* a class that fixes the colour outright needs no context at all */
   /* v6.64.0 — .png, like every other icon in the panel since 6.63.0. These four
      builders assemble the path by concatenation, and the raster wave's own gate
      matched only a LITERAL "icons/ui/<name>.svg", so it reported "no panel
@@ -154,13 +201,49 @@ function icn(name, cls) {
   if (c.indexOf("ic-car") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-gold.png">';
   if (c.indexOf("ic-xl") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-muted.png">';
   if (c.indexOf("ic-h2") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-gold.png">';
-  var tints = tintsFor(name);
-  var out = "";
-  for (var i = 0; i < tints.length; i++) {
-    out += '<img class="' + c + " " + TINT_LETTER[tints[i]] + '" src="icons/ui/' + name + "-" + tints[i] + '.png">';
-  }
-  return out;
+  /* no element to walk up from yet: cream, then retint() corrects it in place */
+  return iconTag(name, c, "cream");
 }
+/* re-decide one already-placed icon's tint from where it actually sits */
+function tintImg(im) {
+  try {
+    var name = im.getAttribute && im.getAttribute("data-icn");
+    if (!name) return;
+    var t = ctxTint(im.parentNode || im);
+    if (t !== "cream" && !TINT4[name]) t = "cream";
+    var want = "icons/ui/" + name + "-" + t + ".png";
+    if ((im.getAttribute("src") || "") === want) return;
+    var base = String(im.getAttribute("class") || "")
+      .replace(/\bi2[cgkm]\b/g, "").replace(/\bicn-t\b/g, "").replace(/\s+/g, " ").replace(/^ | $/g, "");
+    im.className = base + " " + TINT_LETTER[t] + " icn-t";
+    im.src = want;
+  } catch (e) { }
+}
+function retint(root) {
+  try {
+    var r = (root && root.querySelectorAll) ? root : doc();
+    if (!r || !r.querySelectorAll) return;
+    var list = r.querySelectorAll(".icn-t");
+    for (var i = 0; i < list.length; i++) tintImg(list[i]);
+  } catch (e) { }
+}
+/* a chip only becomes .on after a tap, and the tap is the one event UXP is
+   known to deliver (the self-test counts them at the document in capture) */
+var retintQueued = false;
+function retintSoon() {
+  if (retintQueued) return;
+  retintQueued = true;
+  var run = function () { retintQueued = false; retint(doc()); };
+  try {
+    if (typeof requestAnimationFrame === "function") { requestAnimationFrame(run); return; }
+  } catch (e) { }
+  try { setTimeout(run, 0); } catch (e2) { retintQueued = false; }
+}
+try {
+  var _d = doc();
+  if (_d && _d.addEventListener) _d.addEventListener("click", retintSoon, true);
+} catch (e) { }
+
 function escH(s) {
   return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
 }
@@ -174,6 +257,9 @@ function setIcnText(elm, name, text, opts) {
   opts = opts || {};
   var txt = escH(stripIcn(text));
   elm.innerHTML = opts.after ? txt + " " + icn(name, opts.cls) : icn(name, opts.cls) + " " + txt;
+  /* v6.65.0 — the icon was written cream because a string has no ancestors;
+     now that it is in the document, give it the tint its context asks for */
+  retint(elm);
 }
 
 /* --------------------------------------------------------------- el() */
@@ -471,7 +557,7 @@ function makeH() {
     /* D and byKey are the APP's own tables, captured by the build tool with
        the slices that read them — never the panel's near-equivalents. */
     $: $, D: (suites && suites.DATA && suites.DATA.D) || {}, L9: L9, lang: lang, langFallback: langFallback,
-    el: el, escH: escH, icn: icn, stripIcn: stripIcn, setIcnText: setIcnText,
+    el: el, escH: escH, icn: icn, stripIcn: stripIcn, setIcnText: setIcnText, retint: retint,
     state: hstate(), saveState: saveState, toast: toast, switchPage: switchPage, curPage: curPage,
     byKey: (suites && suites.DATA && suites.DATA.byKey) || {},
     ptSetWorkflow: (bridge() && bridge().ptSetWorkflow) || noop,
@@ -527,6 +613,7 @@ function mount(pageKey) {
     takeResultCard("rsResultSlot");
     try { if (API.renderRsPicker) API.renderRsPicker(); } catch (e) { }
     try { if (API.renderV2Hero) API.renderV2Hero(); } catch (e) { }
+    retint(doc());
     return;
   }
   var pageId = (pageKey === "evoto") ? "pageEvoto" : "pageMeitu";
@@ -555,6 +642,9 @@ function mount(pageKey) {
   renderStPicker();
   if (API && API.stRenderPend) { try { API.stRenderPend(); } catch (e) { } }
   if (API && API.stSyncSuiteChips) { try { API.stSyncSuiteChips(); } catch (e) { } }
+  /* v6.65.0 — the suite card was just written from strings that had no
+     ancestors to read; every icon in it now learns where it landed */
+  retint(doc());
 }
 
 /* The panel has ONE result card (#resultBox, with Photoshop's Place and Save
