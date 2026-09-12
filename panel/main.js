@@ -558,7 +558,7 @@ const SETUP_L = {
   money_never:{"my":"မစစ်ရသေးပါ","en":"never checked","shn":"ပႆႇလႆႈတူၺ်း","kac":"n yu shi ai","th":"ยังไม่เคยตรวจ","zh":"尚未查询","vi":"chưa kiểm tra","id":"belum dicek","ms":"belum disemak"},
   money_checked:{"my":"နောက်ဆုံးစစ်ချိန် — {T}","en":"last checked {T}","shn":"တူၺ်းလိုၼ်းသုတ်း — {T}","kac":"hpang jahtum yu ai {T}","th":"ตรวจล่าสุด {T}","zh":"最近查询 {T}","vi":"kiểm tra lần cuối {T}","id":"terakhir dicek {T}","ms":"disemak {T}"},
   money_queue:{"my":"အလုပ်လုပ်နေဆဲ {R} · စောင့်နေ {Q} · တစ်ပြိုင်နက် {L}","en":"{R} running · {Q} queued · limit {L}","shn":"ႁဵတ်းယူႇ {R} · ပႂ်ႉ {Q} · ႁူမ်ႈ {L}","kac":"{R} galaw nga · {Q} la nga · limit {L}","th":"กำลังทำ {R} · รอคิว {Q} · จำกัด {L}","zh":"运行中 {R} · 排队 {Q} · 并发上限 {L}","vi":"{R} đang chạy · {Q} chờ · giới hạn {L}","id":"{R} berjalan · {Q} antre · batas {L}","ms":"{R} berjalan · {Q} beratur · had {L}"},
-  money_fail:{"my":"လက်ကျန်ငွေ မဆွဲယူနိုင်ပါ — RunningHub က browser ကနေ တိုက်ရိုက်မေးတာကို ပိတ်ထားနိုင်ပါတယ်။ အောက်က မှတ်တမ်းကတော့ မှန်နေဆဲပါ။","en":"Could not read the balance — RunningHub may block this call from a browser. The ledger below is still exact.","shn":"ဢမ်ႇလႆႈငိုၼ်းလိူဝ် — RunningHub ဢမ်ႇပၼ်ထၢမ်တီႈ browser။ မၢႆတွင်းတႂ်ႈၼႆႉ ထုၵ်ႇမႅၼ်ႈယူႇ","kac":"Ngun ngam n la lu — RunningHub gaw browser kaw na san ai hpe pat na re. Npu na mahkrum gaw teng nga ai","th":"อ่านยอดคงเหลือไม่ได้ — RunningHub อาจบล็อกการเรียกจากเบราว์เซอร์ แต่บันทึกด้านล่างยังแม่นยำ","zh":"无法读取余额 — RunningHub 可能禁止浏览器直接调用。下方的账本仍然准确。","vi":"Không đọc được số dư — RunningHub có thể chặn gọi từ trình duyệt. Sổ chi bên dưới vẫn chính xác.","id":"Saldo tidak terbaca — RunningHub mungkin memblokir panggilan dari browser. Buku di bawah tetap akurat.","ms":"Baki tidak dapat dibaca — RunningHub mungkin menyekat panggilan dari pelayar. Lejar di bawah tetap tepat."},
+  money_fail:{"my":"လက်ကျန်ငွေ မဆွဲယူနိုင်ပါ — အောက်က မှတ်တမ်းကတော့ မှန်နေဆဲပါ။ RunningHub ပြန်ဖြေတဲ့ အကြောင်းရင်း —","en":"Could not read the balance — the ledger below is still exact. RunningHub answered:","shn":"ဢမ်ႇလႆႈငိုၼ်းလိူဝ် — မၢႆတွင်းတႂ်ႈၼႆႉ ထုၵ်ႇမႅၼ်ႈယူႇ။ RunningHub တွပ်ႇဝႃႈ —","kac":"Ngun ngam n la lu — npu na mahkrum gaw teng nga ai. RunningHub tsun ai gaw:","th":"อ่านยอดคงเหลือไม่ได้ — บันทึกด้านล่างยังแม่นยำ RunningHub ตอบว่า:","zh":"无法读取余额 — 下方的账本仍然准确。RunningHub 的回应：","vi":"Không đọc được số dư — sổ chi bên dưới vẫn chính xác. RunningHub trả lời:","id":"Saldo tidak terbaca — buku di bawah tetap akurat. RunningHub menjawab:","ms":"Baki tidak dapat dibaca — lejar di bawah tetap tepat. RunningHub menjawab:"},
   money_nokey:{"my":"RunningHub key ထည့်ပြီးမှ လက်ကျန်ငွေ စစ်လို့ရပါမယ်။","en":"Save a RunningHub key first, then the balance can be read.","shn":"သႂ်ႇ RunningHub key ဢွၼ်တၢင်း ၸင်ႇတူၺ်းငိုၼ်းလိူဝ်လႆႈ","kac":"RunningHub key bang ngut jang ngun ngam yu lu na","th":"บันทึกคีย์ RunningHub ก่อน จึงจะอ่านยอดคงเหลือได้","zh":"先保存 RunningHub 密钥，才能查询余额。","vi":"Lưu khóa RunningHub trước thì mới đọc được số dư.","id":"Simpan kunci RunningHub dulu, baru saldo bisa dibaca.","ms":"Simpan kunci RunningHub dahulu, barulah baki boleh dibaca."},
   money_empty:{"my":"RunningHub GENERATE မလုပ်ရသေးပါ — တစ်ခါလုပ်တာနဲ့ ဒီမှာ ကုန်ကျစရိတ် ပေါ်လာပါမယ်။","en":"No RunningHub GENERATE yet — the first one will show its cost here.","shn":"ပႆႇလႆႈ GENERATE — ပွၵ်ႈဢွၼ်တၢင်း တေပေႃႇတီႈၼႆႈ","kac":"GENERATE n galaw shi ai — langai galaw jang ndai kaw pru na","th":"ยังไม่มี GENERATE — ครั้งแรกจะแสดงค่าใช้จ่ายที่นี่","zh":"还没有 RunningHub 生成 — 第一次的花费会显示在这里。","vi":"Chưa có lần GENERATE nào — lần đầu sẽ hiện chi phí ở đây.","id":"Belum ada GENERATE — yang pertama akan tampil biayanya di sini.","ms":"Belum ada GENERATE — yang pertama akan papar kosnya di sini."},
   money_unknown:{"my":"ကုန်ကျစရိတ် မပြပါ","en":"cost not reported","shn":"ဢမ်ႇပွင်ႇၵႃႈ","kac":"manu n tsun ai","th":"ไม่ได้แจ้งค่าใช้จ่าย","zh":"未报告费用","vi":"không báo chi phí","id":"biaya tidak dilaporkan","ms":"kos tidak dilaporkan"},
@@ -660,7 +660,7 @@ const I18N = {
     money_bal: "Balance",
     money_refresh: "Check balance",
     money_nokey: "Save a RunningHub key first, then the balance can be read.",
-    money_fail: "Could not read the balance — RunningHub may block this call from a browser. The ledger below is still exact.",
+    money_fail: "Could not read the balance — the ledger below is still exact. RunningHub answered:",
     money_never: "never checked",
     btn_export_backup: "Export backup",
     btn_import_backup: "Restore backup",
@@ -1303,7 +1303,7 @@ const I18N = {
     money_bal: "လက်ကျန်",
     money_refresh: "လက်ကျန်ငွေ စစ်မယ်",
     money_nokey: "RunningHub key ထည့်ပြီးမှ လက်ကျန်ငွေ စစ်လို့ရပါမယ်။",
-    money_fail: "လက်ကျန်ငွေ မဆွဲယူနိုင်ပါ — RunningHub က browser ကနေ တိုက်ရိုက်မေးတာကို ပိတ်ထားနိုင်ပါတယ်။ အောက်က မှတ်တမ်းကတော့ မှန်နေဆဲပါ။",
+    money_fail: "လက်ကျန်ငွေ မဆွဲယူနိုင်ပါ — အောက်က မှတ်တမ်းကတော့ မှန်နေဆဲပါ။ RunningHub ပြန်ဖြေတဲ့ အကြောင်းရင်း —",
     money_never: "မစစ်ရသေးပါ",
     btn_export_backup: "Backup ထုတ်မယ်",
     btn_import_backup: "Backup ပြန်သွင်းမယ်",
@@ -1946,7 +1946,7 @@ const I18N = {
     money_bal: "ငိုၼ်းလိူဝ်",
     money_refresh: "တူၺ်းငိုၼ်းလိူဝ်",
     money_nokey: "သႂ်ႇ RunningHub key ဢွၼ်တၢင်း ၸင်ႇတူၺ်းငိုၼ်းလိူဝ်လႆႈ",
-    money_fail: "ဢမ်ႇလႆႈငိုၼ်းလိူဝ် — RunningHub ဢမ်ႇပၼ်ထၢမ်တီႈ browser။ မၢႆတွင်းတႂ်ႈၼႆႉ ထုၵ်ႇမႅၼ်ႈယူႇ",
+    money_fail: "ဢမ်ႇလႆႈငိုၼ်းလိူဝ် — မၢႆတွင်းတႂ်ႈၼႆႉ ထုၵ်ႇမႅၼ်ႈယူႇ။ RunningHub တွပ်ႇဝႃႈ —",
     money_never: "ပႆႇလႆႈတူၺ်း",
     btn_export_backup: "ဢွၵ်ႇ backup",
     btn_import_backup: "သႂ်ႇၶိုၼ်း backup",
@@ -2587,7 +2587,7 @@ const I18N = {
     money_bal: "Ngam ai",
     money_refresh: "Ngun ngam yu na",
     money_nokey: "RunningHub key bang ngut jang ngun ngam yu lu na",
-    money_fail: "Ngun ngam n la lu — RunningHub gaw browser kaw na san ai hpe pat na re. Npu na mahkrum gaw teng nga ai",
+    money_fail: "Ngun ngam n la lu — npu na mahkrum gaw teng nga ai. RunningHub tsun ai gaw:",
     money_never: "n yu shi ai",
     btn_export_backup: "Backup shapraw u",
     btn_import_backup: "Backup bai bang u",
@@ -3228,7 +3228,7 @@ const I18N = {
     money_bal: "คงเหลือ",
     money_refresh: "ตรวจยอดคงเหลือ",
     money_nokey: "บันทึกคีย์ RunningHub ก่อน จึงจะอ่านยอดคงเหลือได้",
-    money_fail: "อ่านยอดคงเหลือไม่ได้ — RunningHub อาจบล็อกการเรียกจากเบราว์เซอร์ แต่บันทึกด้านล่างยังแม่นยำ",
+    money_fail: "อ่านยอดคงเหลือไม่ได้ — บันทึกด้านล่างยังแม่นยำ RunningHub ตอบว่า:",
     money_never: "ยังไม่เคยตรวจ",
     btn_export_backup: "ส่งออกสำรอง",
     btn_import_backup: "กู้คืนสำรอง",
@@ -3869,7 +3869,7 @@ const I18N = {
     money_bal: "余额",
     money_refresh: "查询余额",
     money_nokey: "先保存 RunningHub 密钥，才能查询余额。",
-    money_fail: "无法读取余额 — RunningHub 可能禁止浏览器直接调用。下方的账本仍然准确。",
+    money_fail: "无法读取余额 — 下方的账本仍然准确。RunningHub 的回应：",
     money_never: "尚未查询",
     btn_export_backup: "导出备份",
     btn_import_backup: "恢复备份",
@@ -4510,7 +4510,7 @@ const I18N = {
     money_bal: "Số dư",
     money_refresh: "Kiểm tra số dư",
     money_nokey: "Lưu khóa RunningHub trước thì mới đọc được số dư.",
-    money_fail: "Không đọc được số dư — RunningHub có thể chặn gọi từ trình duyệt. Sổ chi bên dưới vẫn chính xác.",
+    money_fail: "Không đọc được số dư — sổ chi bên dưới vẫn chính xác. RunningHub trả lời:",
     money_never: "chưa kiểm tra",
     btn_export_backup: "Xuất bản sao lưu",
     btn_import_backup: "Khôi phục sao lưu",
@@ -5151,7 +5151,7 @@ const I18N = {
     money_bal: "Saldo",
     money_refresh: "Cek saldo",
     money_nokey: "Simpan kunci RunningHub dulu, baru saldo bisa dibaca.",
-    money_fail: "Saldo tidak terbaca — RunningHub mungkin memblokir panggilan dari browser. Buku di bawah tetap akurat.",
+    money_fail: "Saldo tidak terbaca — buku di bawah tetap akurat. RunningHub menjawab:",
     money_never: "belum dicek",
     btn_export_backup: "Ekspor cadangan",
     btn_import_backup: "Pulihkan cadangan",
@@ -5792,7 +5792,7 @@ const I18N = {
     money_bal: "Baki",
     money_refresh: "Semak baki",
     money_nokey: "Simpan kunci RunningHub dahulu, barulah baki boleh dibaca.",
-    money_fail: "Baki tidak dapat dibaca — RunningHub mungkin menyekat panggilan dari pelayar. Lejar di bawah tetap tepat.",
+    money_fail: "Baki tidak dapat dibaca — lejar di bawah tetap tepat. RunningHub menjawab:",
     money_never: "belum disemak",
     btn_export_backup: "Eksport sandaran",
     btn_import_backup: "Pulihkan sandaran",
@@ -6419,7 +6419,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.139.0";
+const PANEL_VERSION = "6.140.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8183,6 +8183,33 @@ function rhFriendly(e) {
   if (st === 401 || st === 403 || (e && e.code === "invalid-key")) return sl("rh_badkey");
   return sl("rh_err").replace("{S}", String(st || "?"));
 }
+/* v6.69.0 — WHY THE BALANCE COULD NOT BE READ.
+   COST & BALANCE used to print one sentence and nothing else, and that
+   sentence blamed a browser. In Photoshop there is no browser to blame, and
+   the owner's 6.139.0 photograph has "Key works" in green two cards above:
+   the SAME host answered the key check moments earlier. So the refusal now
+   carries what RunningHub actually said — its HTTP status, its own code, its
+   message — or, when nothing reached it at all, the transport's reason. The
+   same discipline 6.68.0 gave "+ Layer": a refusal that cannot name a cause
+   is a refusal nobody can fix. */
+function rhWhy(e) {
+  if (!e) return "";
+  const bits = [];
+  if (e.status) bits.push("HTTP " + e.status);
+  const b = (e.body && typeof e.body === "object") ? e.body : null;
+  let code = "";
+  if (e.code !== undefined && e.code !== null && e.code !== "") code = e.code;
+  else if (b && b.code !== undefined && b.code !== null && b.code !== "") code = b.code;
+  if (code !== "") bits.push("code " + code);
+  const msg = String(e.msg || (b && (b.msg || b.message)) || "").trim();
+  if (msg) bits.push(msg.slice(0, 120));
+  if (!bits.length) {
+    const raw = String((e && e.message) || e);
+    const hm = /^HNKERR:[a-z_]+:([\s\S]*)$/.exec(raw);
+    bits.push(String(hm ? hm[1] : raw).slice(0, 120));
+  }
+  return bits.join(" \u00b7 ");
+}
 
 /* ---------------- RunningHub usage → spend ledger (the app's hnk_rh_spend) ---------------- */
 function rhUnwrap(j) {
@@ -8231,8 +8258,10 @@ async function rhAccountStatus(apiKey) {
     body: JSON.stringify({ apiKey: apiKey })
   }, 25000);
   const j = await r.json().catch(function () { return null; });
-  if (!r.ok) { const e = new Error("account-failed"); e.status = r.status; throw e; }
-  if (j && ("code" in j) && Number(j.code) !== 0) throw new Error("account-rejected");
+  if (!r.ok) { const e = new Error("account-failed"); e.status = r.status; e.body = j; throw e; }
+  if (j && ("code" in j) && Number(j.code) !== 0) {
+    const e2 = new Error("account-rejected"); e2.code = j.code; e2.msg = j.msg || j.message; throw e2;
+  }
   const d = rhUnwrap(j);
   if (d.currency) state.rhLastCur = String(d.currency);
   return {
@@ -8250,8 +8279,10 @@ async function rhQueueStatus(apiKey) {
     headers: { "Authorization": "Bearer " + apiKey }
   }, 25000);
   const j = await r.json().catch(function () { return null; });
-  if (!r.ok) { const e = new Error("queue-failed"); e.status = r.status; throw e; }
-  if (j && ("code" in j) && Number(j.code) !== 0) throw new Error("queue-rejected");
+  if (!r.ok) { const e = new Error("queue-failed"); e.status = r.status; e.body = j; throw e; }
+  if (j && ("code" in j) && Number(j.code) !== 0) {
+    const e2 = new Error("queue-rejected"); e2.code = j.code; e2.msg = j.msg || j.message; throw e2;
+  }
   const d = rhUnwrap(j);
   return {
     keyType: String(d.apiKeyType || ""),
@@ -8458,14 +8489,21 @@ async function moneyRefresh() {
   btnOff(btn, true);
   stSet("stMoney", "");
   let ok = false;
+  /* v6.69.0 — the queue is asked on its own, BEFORE the balance can end the
+     attempt. It answers a different endpoint and it names the key's type,
+     which is the first thing worth knowing when a balance read is refused:
+     a key that cannot see an account balance is not a broken key. */
+  let q = null, qWhy = "";
+  try { q = await rhQueueStatus(key); } catch (e0) { q = null; qWhy = rhWhy(e0); }
   try {
     const a = await rhAccountStatus(key);
-    let q = null;
-    try { q = await rhQueueStatus(key); } catch (e) { q = null; }
     balSave({ money: a.money, coins: a.coins, currency: a.currency, apiType: a.apiType, ts: a.ts, queue: q });
     ok = true;
   } catch (e) {
-    stSet("stMoney", sl("money_fail"), "err");
+    const bits = [rhWhy(e)];
+    if (q && q.keyType) bits.push("key " + q.keyType);
+    else if (qWhy) bits.push("queue: " + qWhy);
+    stSet("stMoney", sl("money_fail") + " \u00b7 " + bits.filter(Boolean).join(" \u00b7 "), "err");
   }
   btnOff(btn, false);
   renderSpend();

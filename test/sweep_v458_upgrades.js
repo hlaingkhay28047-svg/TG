@@ -235,6 +235,47 @@ const near = (a, b) => Math.abs(a - b) < 1e-6;
   report("G) the ledger is separate from the 12h job registry and every paid surface books through one hook",
     r.G_sep && r.G_hook, { separate: r.G_sep, hook: r.G_hook });
 
+  /* H) v6.69.0 — A REFUSED BALANCE NAMES ITS REASON.
+     The card printed one sentence and threw the cause away, so a 403, a
+     RunningHub error code and a dead socket all looked identical. Both
+     readers are stubbed here so the sentence can be read back: what matters
+     is that RunningHub's own words reach the screen, and that the queue —
+     which answers a different endpoint and names the key's TYPE — is asked
+     on its own rather than skipped the moment the balance fails. */
+  const h = await page.evaluate(async () => {
+    const out = {};
+    const acct = window.rhAccountStatus, queue = window.rhQueueStatus;
+    const key = state.rhKey; state.rhKey = "stub-key";
+    try {
+      window.rhAccountStatus = async () => {
+        const e = new Error("account-failed"); e.status = 403;
+        e.body = { code: 803, msg: "APIKEY_INVALID_NODE_INFO" }; throw e;
+      };
+      window.rhQueueStatus = async () => ({ keyType: "SHARED", limit: 5, running: 0, queued: 0, total: 0 });
+      out.H_ok = await moneyRefresh();
+      out.H_said = (document.getElementById("stMoney") || {}).textContent || "";
+
+      /* nothing reached RunningHub at all: the transport's own reason, and
+         the queue's reason with it — neither may vanish */
+      window.rhQueueStatus = async () => { throw new Error("HNKERR:err_net:socket closed"); };
+      window.rhAccountStatus = async () => { throw new Error("HNKERR:err_net:socket closed"); };
+      await moneyRefresh();
+      out.H_net = (document.getElementById("stMoney") || {}).textContent || "";
+    } finally {
+      window.rhAccountStatus = acct; window.rhQueueStatus = queue; state.rhKey = key;
+    }
+    return out;
+  });
+  report("H) a refused balance prints RunningHub's status, its code and its message",
+    h.H_ok === false && h.H_said.indexOf("HTTP 403") >= 0 && h.H_said.indexOf("code 803") >= 0 &&
+    h.H_said.indexOf("APIKEY_INVALID_NODE_INFO") >= 0,
+    { ok: h.H_ok, said: h.H_said });
+  report("H) and the key's type comes from the queue, which is asked on its own",
+    h.H_said.indexOf("key SHARED") >= 0, { said: h.H_said });
+  report("H) a request that never arrived says so, and the queue's reason survives too",
+    h.H_net.indexOf("socket closed") >= 0 && h.H_net.indexOf("queue:") >= 0 &&
+    h.H_net.indexOf("HNKERR") < 0, { said: h.H_net });
+
   report("no page errors", pageErrors.length === 0, pageErrors);
   console.log("\n" + (failures === 0 ? "PASS" : "FAIL (" + failures + ")"));
   await browser.close();
