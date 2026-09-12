@@ -34,6 +34,13 @@
        running language
    F ) a re-check in flight does not blank a card that already has an answer
    G ) the panel keeps a live lease through a dropout, and its beat is gated
+   I ) v6.70.0 — THE OTHER HALF: the app CLOSED, and opened again on the same
+       dead line. 6.43.0 held a verdict in memory; a cold boot had none, so the
+       waiting screen went up over an account the server had approved minutes
+       earlier. The last VERIFIED answer is now written down with the account it
+       belongs to and the moment it arrived, and a boot starts from it — marked
+       unconfirmed, on the same six-hour clock measured from that success, gone
+       the instant the server refuses or the student signs out.
    H ) CI runs this test
 */
 "use strict";
@@ -162,6 +169,117 @@ const hasBurmese = s => /[က-႟]/.test(String(s || ""));
     unifiedRender();
     out.inFlightWebTile = document.getElementById("unifiedWebPermission").textContent;
     unified.loading = false;
+
+    /* ---- I : v6.70.0 — the cold boot ----
+       6.43.0 held a verdict while the app was OPEN. Everything here is about
+       the app being CLOSED and opened again on the same dead line. */
+    const okFetch = function (ent) {
+      return async function () {
+        return { ok: true, status: 200, headers: { get: () => "application/json" },
+                 json: async () => ent };
+      };
+    };
+    const wipe = () => { try { localStorage.removeItem(ACC_LS_ENT); } catch (e) {} };
+    const rec = () => { try { return JSON.parse(localStorage.getItem(ACC_LS_ENT) || "null"); } catch (e) { return null; } };
+    /* a fresh boot: nothing in memory, exactly as every page load starts */
+    const coldBoot = function () {
+      unified.entitlement = null; unified.enforced = false; unified.legacy = false;
+      unified.error = false; unified.loading = false; unified.last = 0; unified.fails = 0;
+      unified.inFlight = null;
+    };
+
+    wipe();
+    acc.sess = { access: "a", refresh: "r", uid: "u", exp: Math.floor(Date.now() / 1000) + 3600 };
+    /* an approved, paid-up student — the wall must be the ONLY thing this
+       section can be measuring */
+    acc.profile = { plan_status: "active", plan_expires_at: "2027-01-01" };
+    unified.enforced = true; unified.legacy = false; unified.loading = false; unified.inFlight = null;
+    window.accFetch = okFetch(granted());
+    await unifiedRefresh(true);
+    const wrote = rec();
+    out.I_wroteUid = wrote && wrote.uid;
+    out.I_wroteLast = !!(wrote && Math.abs(wrote.last - unified.last) < 5);
+    out.I_wroteEnt = !!(wrote && wrote.ent && wrote.ent.permissions.web_app === true);
+    const successAt = unified.last;
+
+    /* THE COLD BOOT ITSELF. The real sequence is what matters, and it is the
+       one the owner photographed as "works for a moment, then Access blocked":
+       the page loads with nothing verified, the first entitlement call goes out
+       and never lands, its catch marks the server as enforcing, and THAT is the
+       moment the wall decides. So the boot is driven through the real call with
+       a dead line, once without the record and once with it. */
+    const deadLine = async function () { throw new Error("net"); };
+    coldBoot();
+    window.accFetch = deadLine;
+    await unifiedRefresh(true);
+    out.I_wallWithoutRecall = appWallState();          /* what 6.43.0 left: the wall */
+
+    coldBoot();
+    out.I_recalled = unifiedRecall();
+    out.I_recallStale = unified.error === true && unified.enforced === true;
+    /* the clock is the SUCCESS, not the boot — the window cannot be extended
+       by staying offline */
+    out.I_recallKeepsLast = unified.last === successAt;
+    window.accFetch = deadLine;
+    unified.inFlight = null;
+    await unifiedRefresh(true);                        /* the same dead first call */
+    out.I_recallOpens = appWallState();                /* what 6.70.0 gives: open */
+    out.I_recallSurvivesBeat = !!unified.entitlement;
+
+    /* a record past the window is refused AND deleted, so it cannot be retried */
+    coldBoot();
+    accLSSet(ACC_LS_ENT, { uid: "u", ent: granted(), last: Date.now() - (UNIFIED_GRACE_MS + 60000) });
+    out.I_staleRefused = unifiedRecall() === false && !unified.entitlement;
+    out.I_staleDeleted = rec() === null;
+    window.accFetch = deadLine;
+    unified.inFlight = null;
+    await unifiedRefresh(true);
+    out.I_staleWalls = appWallState();
+
+    /* another account's record is not this account's verdict */
+    coldBoot();
+    accLSSet(ACC_LS_ENT, { uid: "SOMEONE-ELSE", ent: granted(), last: Date.now() - 60000 });
+    out.I_otherUidRefused = unifiedRecall() === false && !unified.entitlement;
+    out.I_otherUidDeleted = rec() === null;
+
+    /* a record stamped in the future is a moved clock, not a verdict */
+    coldBoot();
+    accLSSet(ACC_LS_ENT, { uid: "u", ent: granted(), last: Date.now() + 3600000 });
+    out.I_futureRefused = unifiedRecall() === false && !unified.entitlement;
+
+    /* and a record with no session at all is never read */
+    coldBoot();
+    accLSSet(ACC_LS_ENT, { uid: "u", ent: granted(), last: Date.now() - 60000 });
+    const keepSess = acc.sess; acc.sess = null;
+    out.I_noSessRefused = unifiedRecall() === false;
+    acc.sess = keepSess;
+
+    /* A REFUSAL DELETES IT. Otherwise a reload would resurrect exactly the
+       access the server just took away. */
+    wipe();
+    unified.enforced = true; unified.inFlight = null;
+    window.accFetch = okFetch(granted());
+    await unifiedRefresh(true);
+    out.I_recordBefore403 = !!rec();
+    unified.inFlight = null;
+    window.accFetch = async function () {
+      return { ok: false, status: 403, headers: { get: () => "application/json" },
+               json: async () => ({ error: "forbidden" }) };
+    };
+    await unifiedRefresh(true);
+    out.I_recordAfter403 = rec();
+
+    /* signing out takes it with everything else */
+    wipe();
+    unified.enforced = true; unified.inFlight = null;
+    window.accFetch = okFetch(granted());
+    await unifiedRefresh(true);
+    out.I_recordBeforeSignOut = !!rec();
+    accSignOutLocal("quiet");
+    out.I_recordAfterSignOut = rec();
+
+    window.accFetch = realFetch;
+    wipe();
     return out;
   });
 
@@ -224,6 +342,33 @@ const hasBurmese = s => /[က-႟]/.test(String(s || ""));
     /gateS\.nextBeat = 0;/.test(main.slice(main.indexOf("async function gateCheck"),
                                            main.indexOf("async function gateCheck") + 400)),
     "gateCheck");
+
+  /* ---- I : v6.70.0 — the cold boot ---- */
+  report("I1) a verified answer is written down with the account it belongs to and when it arrived",
+    R.I_wroteUid === "u" && R.I_wroteLast === true && R.I_wroteEnt === true,
+    { uid: R.I_wroteUid, last: R.I_wroteLast, ent: R.I_wroteEnt });
+  report("I2) a cold boot on a dead line opens on that answer instead of the waiting screen",
+    R.I_wallWithoutRecall === "checking" && R.I_recalled === true && R.I_recallOpens === ""
+      && R.I_recallSurvivesBeat === true,
+    { before: R.I_wallWithoutRecall, recalled: R.I_recalled, after: R.I_recallOpens,
+      keptThroughBeat: R.I_recallSurvivesBeat });
+  report("I3) it comes back marked UNCONFIRMED, and its clock is the success, not the boot",
+    R.I_recallStale === true && R.I_recallKeepsLast === true,
+    { stale: R.I_recallStale, keptLast: R.I_recallKeepsLast });
+  report("I4) an answer older than the grace window is refused, deleted, and walls",
+    R.I_staleRefused === true && R.I_staleDeleted === true && R.I_staleWalls === "checking",
+    { refused: R.I_staleRefused, deleted: R.I_staleDeleted, wall: R.I_staleWalls });
+  report("I5) another account's answer is never this account's, and a moved clock is not a verdict",
+    R.I_otherUidRefused === true && R.I_otherUidDeleted === true && R.I_futureRefused === true
+      && R.I_noSessRefused === true,
+    { otherUid: R.I_otherUidRefused, deleted: R.I_otherUidDeleted,
+      future: R.I_futureRefused, noSess: R.I_noSessRefused });
+  report("I6) a refusal the server DID send deletes it, so a reload cannot resurrect the access",
+    R.I_recordBefore403 === true && R.I_recordAfter403 === null,
+    { before: R.I_recordBefore403, after: R.I_recordAfter403 });
+  report("I7) and signing out takes it with everything else",
+    R.I_recordBeforeSignOut === true && R.I_recordAfterSignOut === null,
+    { before: R.I_recordBeforeSignOut, after: R.I_recordAfterSignOut });
 
   /* ---- H : CI ---- */
   const wf = fs.readFileSync(path.join(ROOT, ".github", "workflows", "test.yml"), "utf8");
