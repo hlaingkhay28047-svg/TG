@@ -80,6 +80,21 @@
    unscoped fallbacks are the floor now, and switchPage no longer re-derives
    the scope classes from a read of the element it wrote them onto.
 
+   v6.68.0 — AND THE CAPTURE ITSELF. 6.138.0 gave the first honest refusal:
+   "Photoshop would not hand over the layer's pixels." over an open 4672x7008
+   document. executeAsModal was necessary and not sufficient — getPixels was
+   being asked for 32.7 megapixels at once. The request is bounded to 2048 on
+   the long edge now, with three routes behind it ending in one that never
+   touches ps.imaging: Photoshop saves a flattened JPEG copy and the panel
+   reads the bytes back. Every failed route keeps its reason. And the reason
+   reaches the screen: the slot rebuild was dropping `detail`, which is why
+   that photograph shows the sentence with nothing in brackets after it.
+
+   Also settled by the same card: "page scope: yes · page apg stpg". The class
+   is on the element, so the 72px icons were not a lost class — this renderer
+   simply does not honour those scoped rules, and 6.67.0's unscoped floor is
+   the permanent answer rather than a workaround.
+
    Run: node test/verify_panel_glyphs.js */
 
 "use strict";
@@ -506,6 +521,43 @@ report("I4) HNK.herr / hwarn / hlog exist, so the host's log calls reach the car
   /globalThis\.HNK\.hwarn\s*=\s*function/.test(MAIN) &&
   /globalThis\.HNK\.hlog\s*=\s*function/.test(MAIN) &&
   /_herr\(/.test(HOST), null);
+
+/* ---- J. v6.68.0 — THE CAPTURE ITSELF, NOT JUST ITS EXCUSE.
+
+   6.138.0's photograph is the first honest refusal: "Photoshop would not hand
+   over the layer's pixels." over a document that was plainly open. So 6.65.0
+   worked and executeAsModal was not the whole story. The document is
+   SAM02346.ARW at 4672 x 7008 — 32.7 megapixels — and getPixels was being
+   asked for all of it. It is bounded now, with three more routes behind it,
+   the last of which never touches ps.imaging at all. ---- */
+
+report("J1) the capture asks for a bounded picture first, not all 32 megapixels",
+  /var CAP_MAX = 2048;/.test(HOST) && /function _capSize\(w, h\)/.test(HOST) &&
+  /if \(cap && id != null\) reqs\.push\(\{ layerID: id, targetSize: cap \}\)/.test(HOST) &&
+  /_capSize\(bounds\.width, bounds\.height\)/.test(HOST), null);
+
+report("J2) and when imaging refuses, Photoshop writes the file itself",
+  /async function _viaSavedCopy\(ps, uxp\)/.test(HOST) &&
+  /_obj: "save"/.test(HOST) && /copy: true/.test(HOST) &&
+  /createSessionToken\(file\)/.test(HOST) &&
+  /via: "saved-copy"/.test(HOST), null);
+
+/* a region has bounds a flattened save would ignore — answering with the
+   whole page would be worse than refusing */
+report("J3) the saved copy is offered for the whole document, never for a region",
+  /_captureRoutes\(ps, uxp, reqs, w, h, true\)/.test(HOST) &&
+  /_captureRoutes\(ps, uxp, reqs, bounds\.width, bounds\.height, false\)/.test(HOST), null);
+
+report("J4) every route that fails keeps its own reason, so no refusal is silent again",
+  /why\.push\("getPixels " \+ \(i \+ 1\)/.test(HOST) &&
+  /why\.push\("saved copy: "/.test(HOST) &&
+  /throw new Error\(why\.join\(" \| "\)/.test(HOST), null);
+
+/* 6.138.0 printed the sentence with nothing after it: the detail existed and
+   was dropped rebuilding the slot */
+report("J5) and the detail survives the slot rebuild on both screens that print it",
+  /reason: slot\.reason, detail: slot\.detail \}\);/.test(WFT) &&
+  /reason: slot\.reason, detail: slot\.detail \}\);/.test(FREEGEN), null);
 
 /* -------------------------------------------------------------------- H. CI */
 

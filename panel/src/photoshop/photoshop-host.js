@@ -190,18 +190,136 @@ async function readClipboardImage() {
      · a failure now SAYS WHAT FAILED. It returns { error } instead of null, so
        image-import-service can separate "there is genuinely no document or
        layer" from "the capture threw", and the student is told the truth. */
+/* ---- v6.68.0: THE CAPTURE, WITH A ROUTE THAT CANNOT FAIL THE SAME WAY.
+
+   6.138.0's photograph is the first time this refusal told the truth: the slot
+   printed "Photoshop would not hand over the layer's pixels." over a document
+   that was plainly open. So 6.65.0's honesty fix worked and executeAsModal was
+   NOT the whole story — the capture still fails.
+
+   The document in that photograph is SAM02346.ARW at 4672 x 7008. That is
+   32.7 megapixels; getPixels was being asked for all of it at once, which is
+   about 131 MB of RGBA, and the panel does not want a single pixel of that
+   detail — it uploads a reference photograph and the workflow returns 2K.
+   So the request is bounded now. And because "bounded" is still a guess about
+   why one machine refused, three more routes sit behind it, ending with one
+   that never touches ps.imaging at all: Photoshop writes a flattened JPEG
+   copy itself and the panel reads the bytes back.
+
+   Every route that fails appends its own reason, so a refusal can never again
+   arrive without saying which step produced it. ---- */
+
+var CAP_MAX = 2048;
+
+function _capSize(w, h) {
+  w = Math.round(Number(w) || 0);
+  h = Math.round(Number(h) || 0);
+  var m = Math.max(w, h);
+  if (!(m > CAP_MAX)) return null;
+  var k = CAP_MAX / m;
+  return { width: Math.max(1, Math.round(w * k)), height: Math.max(1, Math.round(h * k)) };
+}
+
+async function _encodeJpeg(imaging, pix) {
+  var err = "";
+  try {
+    var a = await imaging.encodeImageData({ imageData: pix.imageData, base64: true });
+    if (a) return a;
+  } catch (e) { err = _emsg(e); }
+  try {
+    var b = await imaging.encodeImageData({ imageData: pix.imageData, base64: true, format: "jpg", quality: 90 });
+    if (b) return b;
+  } catch (e2) { err = err || _emsg(e2); }
+  throw new Error("encode " + (err || "returned nothing"));
+}
+
+/* one getPixels attempt, disposing the buffer whichever way it ends */
+async function _viaGetPixels(ps, req, fallbackW, fallbackH) {
+  var imaging = ps.imaging;
+  var pix = await imaging.getPixels(req);
+  try {
+    var jpg = await _encodeJpeg(imaging, pix);
+    var d = pix.imageData || {};
+    return {
+      ref: "data:image/jpeg;base64," + jpg,
+      width: Math.round(d.width || pix.width || fallbackW || 0),
+      height: Math.round(d.height || pix.height || fallbackH || 0),
+      via: "getPixels"
+    };
+  } finally {
+    try { if (pix && pix.imageData && pix.imageData.dispose) pix.imageData.dispose(); } catch (eD) { }
+  }
+}
+
+/* the last route. Photoshop saves a flattened JPEG copy to the temporary
+   folder and the panel reads it back as bytes — the same round trip
+   placeAsLayer has used since 6.9.0, in the other direction. It is the
+   COMPOSITE, which is what the student is looking at, and it goes nowhere
+   near ps.imaging, so whatever imaging refuses on a machine cannot refuse
+   here. `copy: true` means the open document is never modified. */
+async function _viaSavedCopy(ps, uxp) {
+  var lfs = uxp.storage.localFileSystem;
+  var formats = uxp.storage.formats;
+  var folder = null;
+  try { folder = await lfs.getTemporaryFolder(); } catch (e0) { }
+  if (!folder) folder = await lfs.getDataFolder();
+  var file = await folder.createFile("hnk_capture.jpg", { overwrite: true });
+  var token = lfs.createSessionToken(file);
+  await ps.action.batchPlay([{
+    _obj: "save",
+    as: { _obj: "JPEG", extendedQuality: 10, matteColor: { _enum: "matteColor", _value: "none" } },
+    "in": { _path: token, _kind: "local" },
+    copy: true,
+    lowerCase: true,
+    _options: { dialogOptions: "dontDisplay" }
+  }], { synchronousExecution: false });
+  var buf = await file.read({ format: formats.binary });
+  var bytes = new Uint8Array(buf);
+  if (!bytes.length) throw new Error("saved-copy came back empty");
+  var doc = ps.app.activeDocument;
+  return {
+    ref: "data:image/jpeg;base64," + _bytesToBase64(bytes),
+    width: Math.round((doc && doc.width) || 0),
+    height: Math.round((doc && doc.height) || 0),
+    via: "saved-copy"
+  };
+}
+
+/* walk the routes in order and keep every reason. `reqs` is the getPixels
+   request list; the saved copy is appended for the whole-document captures
+   only, because a region has bounds a flattened save would ignore. */
+async function _captureRoutes(ps, uxp, reqs, w, h, allowSavedCopy) {
+  var why = [];
+  for (var i = 0; i < reqs.length; i++) {
+    try { return await _viaGetPixels(ps, reqs[i], w, h); }
+    catch (e) { why.push("getPixels " + (i + 1) + "/" + reqs.length + ": " + _emsg(e)); }
+  }
+  if (allowSavedCopy && uxp) {
+    try { return await _viaSavedCopy(ps, uxp); }
+    catch (e2) { why.push("saved copy: " + _emsg(e2)); }
+  }
+  throw new Error(why.join(" | ") || "every route failed without saying why");
+}
+
 async function captureActiveLayer() {
   var ps = _ps();
   if (!ps) return { error: "Photoshop connection not available" };
   if (!hasActiveDocument()) return null;   /* genuinely no document — the old meaning */
+  var uxp = _uxp();
   var run = async function () {
-    var imaging = ps.imaging;
     var doc = ps.app.activeDocument;
     var layer = doc.activeLayers && doc.activeLayers[0];
-    var pix = await imaging.getPixels({ layerID: layer && layer.id });
-    var jpg = await imaging.encodeImageData({ imageData: pix.imageData, base64: true });
-    if (pix.imageData && pix.imageData.dispose) pix.imageData.dispose();
-    return { ref: "data:image/jpeg;base64," + jpg, width: pix.width || 0, height: pix.height || 0 };
+    var id = layer && layer.id;
+    var w = doc && doc.width, h = doc && doc.height;
+    var cap = _capSize(w, h);
+    var reqs = [];
+    /* smallest ask first: this document is 32 megapixels and the panel wants
+       a reference photograph, not the master */
+    if (cap && id != null) reqs.push({ layerID: id, targetSize: cap });
+    if (cap) reqs.push({ targetSize: cap });
+    if (id != null) reqs.push({ layerID: id });
+    reqs.push({});
+    return await _captureRoutes(ps, uxp, reqs, w, h, true);
   };
   try {
     if (ps.core && typeof ps.core.executeAsModal === "function") {
@@ -244,14 +362,17 @@ async function captureRegion(bounds) {
   if (!ps || !hasActiveDocument() || !bounds) return null;
   /* v6.65.0 — inside a modal, for the same reason captureActiveLayer is: this
      is the identical getPixels call on the identical document. */
+  var uxp = _uxp();
   var run = async function () {
-    var imaging = ps.imaging;
-    var pix = await imaging.getPixels({
-      sourceBounds: { left: bounds.x, top: bounds.y, right: bounds.x + bounds.width, bottom: bounds.y + bounds.height }
-    });
-    var jpg = await imaging.encodeImageData({ imageData: pix.imageData, base64: true });
-    if (pix.imageData && pix.imageData.dispose) pix.imageData.dispose();
-    return { ref: "data:image/jpeg;base64," + jpg, width: bounds.width, height: bounds.height };
+    var sb = { left: bounds.x, top: bounds.y, right: bounds.x + bounds.width, bottom: bounds.y + bounds.height };
+    var cap = _capSize(bounds.width, bounds.height);
+    var reqs = [];
+    if (cap) reqs.push({ sourceBounds: sb, targetSize: cap });
+    reqs.push({ sourceBounds: sb });
+    /* no saved copy here: a flattened save would ignore the bounds, and a
+       region edit that quietly returned the whole page would be worse than
+       an honest refusal */
+    return await _captureRoutes(ps, uxp, reqs, bounds.width, bounds.height, false);
   };
   try {
     if (ps.core && typeof ps.core.executeAsModal === "function") {
