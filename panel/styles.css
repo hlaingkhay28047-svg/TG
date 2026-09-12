@@ -810,14 +810,25 @@ input[type="range"] { min-width: 0; }
 
 /* v5.0 Diagnostics / installation checker */
 .diag { display: flex; flex-direction: column; }
+/* v6.69.0 — A LONG VALUE DROPS TO ITS OWN LINE INSTEAD OF LANDING ON THE
+   LABEL. The status used to be `white-space: nowrap` inside a row that could
+   not fit it, and the two renderers disagreed about what to do with the
+   overflow: a browser squeezed the label and let the value spill off the
+   right, Photoshop drew the value straight over the label ("rulers (100px
+   0 · client 0 · scroll 0 …" in the owner's 6.139.0 photograph). Neither is
+   readable, and both were the same missing decision. So the row WRAPS: the
+   label keeps a real flex basis, the value may break, and when the pair
+   cannot share a line the value takes the next one. Nothing can overlap in
+   either renderer, and a short row still reads label-left / value-right
+   exactly as it always has. */
 .diagrow {
-  display: flex; flex-direction: row; align-items: center;
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: center;
   border: 1px solid var(--line); border-radius: 8px;
   padding: 6px 9px; margin-bottom: 6px; background-color: var(--panel-2);
 }
 .diag-ic { width: 18px; font-size: 12px; text-align: center; margin-right: 8px; }
-.diag-nm { flex: 1; min-width: 0; font-size: 11px; color: var(--text); }
-.diag-st { font-size: 10px; color: var(--muted-2); margin-left: 8px; white-space: nowrap; }
+.diag-nm { flex: 1 1 auto; min-width: 0; font-size: 11px; color: var(--text); }
+.diag-st { flex: 0 1 auto; min-width: 0; font-size: 10px; color: var(--muted-2); margin-left: 8px; }
 .diag-ic.ok { color: var(--ok); }
 .diag-ic.warn { color: var(--warn); }
 .diag-ic.err { color: var(--err); }

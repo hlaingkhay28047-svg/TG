@@ -559,6 +559,70 @@ report("J5) and the detail survives the slot rebuild on both screens that print 
   /reason: slot\.reason, detail: slot\.detail \}\);/.test(WFT) &&
   /reason: slot\.reason, detail: slot\.detail \}\);/.test(FREEGEN), null);
 
+/* ---- K. v6.69.0 — A ROW THAT CANNOT FIT ITS VALUE PUTS IT ON THE NEXT LINE,
+   AND A BALANCE THAT CANNOT BE READ SAYS WHY.
+
+   Two of the four photographs of 6.139.0 caught the same missing decision in
+   two places. `.diag-st` was `white-space: nowrap` inside a row that could not
+   always hold it, and the two renderers disagreed about the overflow: Chromium
+   squeezed the label and spilled the value off the right edge (the glyph
+   trio's caption ran past the panel), Photoshop drew the value straight over
+   the label ("rulers (100px0 · client 0 · scroll 0 …"). The row wraps now, so
+   neither is possible in either renderer.
+
+   The third was COST & BALANCE: one red sentence, no cause, and the sentence
+   blamed a browser — in Photoshop there is none, and "Key works ✓" is green
+   two cards above it, so the same host answered moments earlier. This is the
+   rule 6.68.0 gave "+ Layer", applied to the other refusal that could not name
+   itself. ---- */
+
+report("K1) the SELF-TEST row wraps instead of letting the value land on the label",
+  /\.diagrow \{\s*\n\s*display: flex; flex-direction: row; flex-wrap: wrap; align-items: center;/.test(CSS) &&
+  /\.diag-nm \{ flex: 1 1 auto; min-width: 0;/.test(CSS) &&
+  /\.diag-st \{ flex: 0 1 auto; min-width: 0;/.test(CSS), null);
+
+/* the caption under the 52px trio is a <div> inside .diag-st, so it inherited
+   the nowrap that ran it off the right edge of the panel */
+report("K2) and nothing in that row forbids a line break any more",
+  !/\.diag-st \{[^}]*white-space: nowrap/.test(CSS) &&
+  /\.diag-glyphs \{ display: flex; flex-direction: row; flex-wrap: wrap;/.test(CSS), null);
+
+report("K3) a refused balance carries what RunningHub answered, not just that it failed",
+  /function rhWhy\(e\) \{/.test(MAIN) &&
+  /bits\.push\("HTTP " \+ e\.status\)/.test(MAIN) &&
+  /bits\.push\("code " \+ code\)/.test(MAIN) &&
+  /\^HNKERR:\[a-z_\]\+:/.test(MAIN), null);
+
+/* rhAccountStatus threw a bare Error("account-rejected") — RunningHub's own
+   code and message were read off the envelope and dropped on the floor */
+report("K4) and the two RunningHub readers keep the code and the message they were given",
+  /const e = new Error\("account-failed"\); e\.status = r\.status; e\.body = j; throw e;/.test(MAIN) &&
+  /const e2 = new Error\("account-rejected"\); e2\.code = j\.code; e2\.msg = j\.msg \|\| j\.message; throw e2;/.test(MAIN) &&
+  /const e = new Error\("queue-failed"\); e\.status = r\.status; e\.body = j; throw e;/.test(MAIN), null);
+
+/* the queue answers a different endpoint and names the key's TYPE — a key that
+   cannot see an account balance is not a broken key */
+report("K5) the queue is asked on its own, before the balance can end the attempt",
+  /let q = null, qWhy = "";/.test(MAIN) &&
+  /try \{ q = await rhQueueStatus\(key\); \} catch \(e0\) \{ q = null; qWhy = rhWhy\(e0\); \}/.test(MAIN) &&
+  /if \(q && q\.keyType\) bits\.push\("key " \+ q\.keyType\);/.test(MAIN) &&
+  /stSet\("stMoney", sl\("money_fail"\) \+ [^;]*bits\.filter\(Boolean\)\.join\([^;]*\), "err"\);/.test(MAIN), null);
+
+/* the sentence itself was untrue on this surface. All nine of the panel's
+   languages carried it, in two tables each. */
+report("K6) and no panel language still blames a browser for it",
+  !/money_fail[\s\S]{0,400}?browser/i.test(MAIN) &&
+  !/money_fail[\s\S]{0,400}?(pelayar|trình duyệt|浏览器|เบราว์เซอร์|peramban)/.test(MAIN) &&
+  (MAIN.match(/money_fail/g) || []).length === 11, null);
+
+/* the app is the other half: it kept its wording (a browser CAN be blocked
+   there) but it threw the cause away exactly the same way */
+const APPSRC = fs.readFileSync(path.join(ROOT, "docs/app/index.html"), "utf8");
+report("K7) the web app names the reason too, and asks the queue first",
+  /function rhWhy\(e\)\{/.test(APPSRC) &&
+  /var q=null, qWhy="";/.test(APPSRC) &&
+  /st\.textContent=t\("money_fail"\)\+[^;]*bits\.filter\(Boolean\)\.join\([^;]*\);/.test(APPSRC), null);
+
 /* -------------------------------------------------------------------- H. CI */
 
 const CI = fs.readFileSync(path.join(ROOT, ".github/workflows/test.yml"), "utf8");
