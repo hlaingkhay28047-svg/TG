@@ -18585,6 +18585,48 @@ function stTeethShape(faceSet){
   }
   return lipIn.length ? {shapes:lipIn, feather:Math.max(1,iodM*0.06)*0.5} : null;
 }
+/* v6.71.0 — THE EYE GROUP'S THREE CONTOURS, DERIVED IN ONE PLACE.
+   stApplySkin built these inline; the shader needs the same three planes, and
+   two derivations of one number is how a fast path starts drawing a different
+   picture. This is stTeethShape's bargain again: the loop below IS the loop
+   stApplySkin ran (a face with no polygon contributes nothing at all, not even
+   its under-eye ellipses, and does not raise iodM), and stApplySkin now calls
+   this instead of repeating it.
+     e135  eye polygons at 1.35  — Eye Brighten reads it
+     e160  eye polygons at 1.60  — Eye Definition reads it
+     ue    the two under-eye ellipses — Dark Circles and Eye Bags read it
+   The feather is the shared fe = max(1, iod*0.06); ue is drawn at fe*2.5. */
+function stEyeShapes(faceSet){
+  var iodM=0, e135=[], e160=[], ue=[], i;
+  for(i=0;i<faceSet.length;i++){
+    var fq=faceSet[i], P=fq&&fq.r&&fq.r.poly; if(!P) continue;
+    iodM=Math.max(iodM,(fq.frame&&fq.frame.iod)||0);
+    if(P.eyeL){ e135.push({poly:stPolyScale(P.eyeL,1.35)}); e160.push({poly:stPolyScale(P.eyeL,1.6)}); }
+    if(P.eyeR){ e135.push({poly:stPolyScale(P.eyeR,1.35)}); e160.push({poly:stPolyScale(P.eyeR,1.6)}); }
+    if(fq.r.underEyeL) ue.push({ell:fq.r.underEyeL});
+    if(fq.r.underEyeR) ue.push({ell:fq.r.underEyeR});
+  }
+  return { e135:e135, e160:e160, ue:ue, fe:Math.max(1,iodM*0.06) };
+}
+/* v6.71.0 — THE COLOUR A DARK CIRCLE IS LIFTED TOWARDS: the cheeks, measured
+   on the frame as it stands, skin-gated, every second pixel. Lifted out of
+   stApplySkin unchanged — same ellipses, same stride, same >128 gate, same
+   20-pixel floor below which there is no answer and the pass does nothing. */
+function stUeRef(d,W,H,mask,faceSet){
+  var sr=0,sg=0,sb=0,sc=0;
+  for(var fk=0;fk<faceSet.length;fk++){
+    var cz=faceSet[fk].r, ells=[cz&&cz.cheekL,cz&&cz.cheekR];
+    for(var ek=0;ek<2;ek++){
+      var e=ells[ek]; if(!e) continue;
+      var x0=Math.max(0,Math.floor(e.cx-e.rx)),x1=Math.min(W-1,Math.ceil(e.cx+e.rx)),y0=Math.max(0,Math.floor(e.cy-e.ry)),y1=Math.min(H-1,Math.ceil(e.cy+e.ry));
+      for(var yy=y0;yy<=y1;yy+=2) for(var xx=x0;xx<=x1;xx+=2){
+        if(mask[yy*W+xx]<128||!stInEllipse(xx,yy,e,1)) continue;
+        var qq=(yy*W+xx)*4; sr+=d[qq]; sg+=d[qq+1]; sb+=d[qq+2]; sc++;
+      }
+    }
+  }
+  return sc>20 ? {r:sr/sc,g:sg/sc,b:sb/sc,l:(0.299*sr+0.587*sg+0.114*sb)/sc} : null;
+}
 /* THE PLANE THE SHADER IS HANDED. Byte for byte what stApplySkin's teeth pass
    reads: stShapeBytes' own alpha where the net traced the inner lip, and the
    ellipse test's own answer where it did not — the fallback is rasterised by
@@ -18714,12 +18756,14 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
       iodM=Math.max(iodM,(fq.frame&&fq.frame.iod)||0);
       if(P.lips) shp.lips.push({poly:P.lips});
       if(P.lipInner) shp.lipIn.push({poly:stPolyScale(P.lipInner,1.08)});
-      if(P.eyeL){ shp.eye135.push({poly:stPolyScale(P.eyeL,1.35)}); shp.eye160.push({poly:stPolyScale(P.eyeL,1.6)}); }
-      if(P.eyeR){ shp.eye135.push({poly:stPolyScale(P.eyeR,1.35)}); shp.eye160.push({poly:stPolyScale(P.eyeR,1.6)}); }
-      if(fq.r.underEyeL) shp.ue.push({ell:fq.r.underEyeL}); if(fq.r.underEyeR) shp.ue.push({ell:fq.r.underEyeR});
       if(P.smileL) shp.sm.push({poly:P.smileL}); if(P.smileR) shp.sm.push({poly:P.smileR});
       if(P.browL) shp.brow.push({poly:P.browL}); if(P.browR) shp.brow.push({poly:P.browR});
     }
+    /* v6.71.0 — the eye group's three contours and their feather come from
+       stEyeShapes, which is the loop above with the eye lines still in it; the
+       shader is handed planes built from the same call. */
+    var eyeShp=stEyeShapes(faceSet);
+    shp.eye135=eyeShp.e135; shp.eye160=eyeShp.e160; shp.ue=eyeShp.ue;
     var fe=Math.max(1,iodM*0.06);
     if(t2.lipV>0&&shp.lips.length) lipA=stShapeAlpha(W,H,shp.lips,fe*0.6);
     /* v6.59.0 — through stTeethShape, so the shader's plane and this array are
@@ -18734,22 +18778,7 @@ function stApplySkin(cv,cx,px,W,H,t2,mi,um,umInv,rs,lm){
     if(t2.browFill>0&&shp.brow.length) browA=stShapeAlpha(W,H,shp.brow,fe*0.8);
     if(ueA&&t2.ueBags>0) blurUE=stBlurData(cv,W,H,8*rs);
     if(smA) blurSM=stBlurData(cv,W,H,7*rs);
-    if(ueA&&t2.ueDark>0){
-      /* the skin the hollow should match: the cheeks, measured, skin-gated */
-      var sr=0,sg=0,sb=0,sc=0;
-      for(var fk=0;fk<faceSet.length;fk++){
-        var cz=faceSet[fk].r, ells=[cz&&cz.cheekL,cz&&cz.cheekR];
-        for(var ek=0;ek<2;ek++){
-          var e=ells[ek]; if(!e) continue;
-          var x0=Math.max(0,Math.floor(e.cx-e.rx)),x1=Math.min(W-1,Math.ceil(e.cx+e.rx)),y0=Math.max(0,Math.floor(e.cy-e.ry)),y1=Math.min(H-1,Math.ceil(e.cy+e.ry));
-          for(var yy=y0;yy<=y1;yy+=2) for(var xx=x0;xx<=x1;xx+=2){
-            if(mask[yy*W+xx]<128||!stInEllipse(xx,yy,e,1)) continue;
-            var qq=(yy*W+xx)*4; sr+=d[qq]; sg+=d[qq+1]; sb+=d[qq+2]; sc++;
-          }
-        }
-      }
-      if(sc>20) ueRef={r:sr/sc,g:sg/sc,b:sb/sc,l:(0.299*sr+0.587*sg+0.114*sb)/sc};
-    }
+    if(ueA&&t2.ueDark>0) ueRef=stUeRef(d,W,H,mask,faceSet);
   }
   var meanCb=0,meanCr=0;
   if(t2.even>0){
@@ -19657,7 +19686,7 @@ function stWorker(){
        surfaced two tests away as "the true-detail zoom never lands" —
        verify_retouch_precision check G, which is what caught it. Read this
        comment before adding a helper stApplySkin calls. */
-    var fns=[stClamp,stComputeLut,stBoxBlurMask,stBoxF32,stGuidedPlanes,stGuidedRGB,stSkinWindow,stSkinMask,stBlurData,stHeadBox,stFaceFrame,stFaceRegions,stLmEll,stLmRange,stLmPoly,stLmBand,stLmQuad,stPolyScale,stShapeBytes,stShapeAlpha,stFaceSetOf,stMouthsOf,stTeethShape,stZonesOneFace,stZonesFromLM,stFaceZones,stInEllipse,stInAny,stApplySkin,stHealApply,stDrawLeak,stDrawFrame,stNoiseTile,stWarpActive,stWarpKernels,stWarpApply,stRunPipeline];
+    var fns=[stClamp,stComputeLut,stBoxBlurMask,stBoxF32,stGuidedPlanes,stGuidedRGB,stSkinWindow,stSkinMask,stBlurData,stHeadBox,stFaceFrame,stFaceRegions,stLmEll,stLmRange,stLmPoly,stLmBand,stLmQuad,stPolyScale,stShapeBytes,stShapeAlpha,stFaceSetOf,stMouthsOf,stTeethShape,stEyeShapes,stUeRef,stZonesOneFace,stZonesFromLM,stFaceZones,stInEllipse,stInAny,stApplySkin,stHealApply,stDrawLeak,stDrawFrame,stNoiseTile,stWarpActive,stWarpKernels,stWarpApply,stRunPipeline];
     var src='var document={createElement:function(){return new OffscreenCanvas(1,1);}};\n'
       + fns.map(function(f){ return f.toString(); }).join("\n")
       + '\nvar _pc=new OffscreenCanvas(4,4).getContext("2d");var FILTER_OK=false;'
