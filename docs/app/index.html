@@ -5273,6 +5273,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.70.0", kind:"page", ref:"pgAccount",
+    t:{my:"အင်တာနက် မကောင်းတဲ့အချိန် App ဖွင့်ရင် စောင့်ရတဲ့ စာမျက်နှာ မတက်တော့ပါ",en:"Opening the app on a bad line no longer puts up the waiting screen",shn:"ပိုတ်ႇ app မိူဝ်ႈဢိၼ်ႇတိူဝ်ႇၼႅတ်ႉဢမ်ႇလီ ဢမ်ႇပႂ်ႉထႅင်ႈ",kac:"Internet n hkrak ai ten app hpaw yang la nga ai shara n pru sai",th:"เปิดแอปตอนเน็ตไม่ดี จะไม่ขึ้นหน้าจอรออีกต่อไป",zh:"网络不好时打开应用，不再出现等待画面",vi:"Mở ứng dụng khi mạng yếu không còn hiện màn hình chờ",id:"Membuka aplikasi saat jaringan buruk tidak lagi memunculkan layar tunggu",ms:"Membuka aplikasi ketika talian teruk tidak lagi memaparkan skrin menunggu"},
+    s:{my:"6.43.0 က **App ဖွင့်ထားစဉ်** လိုင်းကျရင် မပိတ်တော့အောင် လုပ်ခဲ့ပါတယ်။ ဒါပေမဲ့ **App ကို ပိတ်ပြီး ပြန်ဖွင့်တဲ့အခါ** ကျန်နေပါသေးတယ် — ဖွင့်လိုက်တာနဲ့ ခဏ ရပြီး **“အကောင့် စစ်ဆေးနေပါတယ်…”** တက်လာတာမျိုးပါ။ အကြောင်းရင်းက app က ဖွင့်တိုင်း **ဘာမှ မမှတ်ထားဘဲ အစကနေ** ပြန်စလို့ပါ — server က မိနစ်အနည်းငယ်က “ရပါတယ်” လို့ ပြောထားပေမဲ့လည်း။ အခု **server ပေးခဲ့တဲ့ နောက်ဆုံး အဖြေ** ကို မှတ်ထားပြီး ဖွင့်တာနဲ့ အဲဒါကနေ စပါတယ်။ **လုံခြုံရေး အတိအကျ အတူတူပါပဲ** — (၁) server က တကယ် ဟုတ်တယ်လို့ ဖြေမှသာ မှတ်ပါတယ်၊ 403 / server error / legacy ဆိုရင် **ဖျက်**ပါတယ်၊ (၂) နာရီက **အဖြေရတဲ့အချိန်** ကနေ တွက်တာမို့ offline နေလို့ ၆ နာရီထက် ပိုမရပါ — ၇ နာရီ ပိတ်ထားပြီး ပြန်ဖွင့်ရင် စောင့်ရတဲ့ စာမျက်နှာ တန်းတက်ပါတယ်၊ (၃) **အကောင့် တစ်ခုတည်း** အတွက်ပဲ၊ **sign out လုပ်ရင် ဖျက်**ပါတယ်၊ (၄) “အတည်မပြုရသေးပါ” လို့ card မှာ ပြပါတယ်၊ (၅) ပြီးတော့ ဒါက **ဘာမှ ခွင့်မပြုပါ** — download / panel / generate အားလုံးကို server ကပဲ ဆုံးဖြတ်နေဆဲပါ။",en:"6.43.0 stopped the app dropping WHILE a student is working. This is the other half: the app CLOSED, and opened again on the same bad line — it worked for a moment and then put up “Checking your account…”, because unified.entitlement starts null on every boot, so “no answer has ever arrived” was true in the only sense the code could see, even though the server had said yes twenty minutes earlier. The last VERIFIED answer is now written down and a boot starts from it. **The exposure is deliberately identical to what 6.43.0 already accepts:** only a real 2xx is ever stored — a 403, a 5xx, an unparseable body or a legacy server all DELETE it; the six-hour clock runs from the moment of that success, not from boot, so a machine dark for seven hours boots straight into the wall and staying offline cannot extend anything; the record carries its own account id and is ignored for any other; signing out deletes it; it comes back marked unconfirmed so the card says so; and it authorizes nothing — download, panel lease and generate are all still decided by the server when they are asked.",shn:"6.43.0 ႁဵတ်းႁႂ်ႈ app ဢမ်ႇပိၵ်ႉမိူဝ်ႈၸႂ်ႉယူႇ။ ၼႆႉပဵၼ်ထႅင်ႈၶိုင်ႈ — ပိၵ်ႉသေပိုတ်ႇမႂ်ႇ။ ယၢမ်းလဵဝ်မၢႆတွင်းဝႆႉၶေႃႈတွပ်ႇလိုၼ်းသုတ်းၼႆႉ။ ၶၢဝ်းယၢမ်း 6 ၸူဝ်ႈမူင်း ၼပ်ႉတီႈၶၢဝ်းယၢမ်းလႆႈတွပ်ႇ, ဢမ်ႇၸႂ်ႈတီႈပိုတ်ႇ။ Sign out ၸိုင် ဢွၵ်ႇမူတ်း။",kac:"6.43.0 gaw app hpe hpaw da nga ai ten hta n pat ai hpe galaw sai. Ndai gaw kaga chyen: app hpe pat na bai hpaw ai ten. Ya gaw server jaw da ai hpang jahtum na mahtai hpe mahkrum da na, hpaw ai ten dai kaw na hpang ai. Nawku 6 gaw mahtai lu ai ten kaw na hti ai, hpaw ai ten kaw na n re. Sign out yang mat mat ai.",th:"6.43.0 หยุดไม่ให้แอปตัดขณะกำลังใช้งาน นี่คืออีกครึ่งหนึ่ง: ปิดแอปแล้วเปิดใหม่บนเน็ตเดิม ตอนนี้คำตอบที่ยืนยันแล้วล่าสุดจะถูกบันทึกไว้ และการเปิดแอปจะเริ่มจากคำตอบนั้น นาฬิกาหกชั่วโมงนับจากเวลาที่ได้คำตอบ ไม่ใช่เวลาเปิดแอป การออกจากระบบจะลบทิ้ง และมันไม่อนุญาตอะไรเลย — เซิร์ฟเวอร์ยังเป็นผู้ตัดสินทุกอย่าง",zh:"6.43.0 解决了**使用过程中**掉线就把应用关上的问题。这是另一半：应用**已关闭**，在同样糟糕的网络下重新打开——先能用一下，然后弹出“正在检查账户…”，因为每次启动 unified.entitlement 都是空的，在代码看得见的意义上“从未收到过答复”确实成立，哪怕服务器二十分钟前刚说过可以。现在会把**最后一次经过验证的答复**记下来，启动就从它开始。**风险与 6.43.0 已经接受的完全相同：**只有真正的 2xx 才会被写入，403、5xx、无法解析的响应和旧版服务器都会**删除**它；六小时从那次成功的时刻起算，而不是从启动起算，所以关机七小时后开机会直接进入等待页，离线并不能延长；记录带着自己的账户 id，对其他账户无效；退出登录会删除它；恢复时标记为未确认；而且它**不授权任何东西**——下载、面板租约、生成，仍然全部由服务器在被询问时决定。",vi:"6.43.0 ngăn ứng dụng sập trong lúc đang dùng. Đây là nửa còn lại: đóng ứng dụng rồi mở lại trên cùng đường truyền yếu. Nay câu trả lời đã xác minh gần nhất được ghi lại và lần mở bắt đầu từ đó. Đồng hồ sáu giờ tính từ lúc nhận được câu trả lời, không phải lúc khởi động; đăng xuất sẽ xoá nó; và nó không cấp quyền gì cả — máy chủ vẫn quyết định tất cả.",id:"6.43.0 menghentikan aplikasi terputus saat sedang dipakai. Ini paruh lainnya: aplikasi ditutup lalu dibuka lagi di jaringan yang sama. Kini jawaban terverifikasi terakhir dicatat dan boot dimulai dari sana. Jam enam jam dihitung dari saat jawaban itu tiba, bukan dari boot; keluar akun menghapusnya; dan ia tidak memberi izin apa pun — server tetap yang memutuskan.",ms:"6.43.0 menghentikan aplikasi terputus semasa sedang digunakan. Ini separuh yang lagi satu: aplikasi ditutup lalu dibuka semula pada talian yang sama. Kini jawapan disahkan yang terakhir dicatat dan but bermula daripadanya. Jam enam jam dikira dari saat jawapan itu tiba, bukan dari but; log keluar memadamkannya; dan ia tidak membenarkan apa-apa — pelayan tetap yang memutuskan."} },
   { v:"6.69.0", kind:"page", ref:"pgAccount",
     t:{my:"လက်ကျန်ငွေ မရရင် ဘာကြောင့်လဲ ဆိုတာ အခု ပြောပြပါပြီ",en:"When the balance cannot be read, the card now says why",shn:"မိူဝ်ႈဢမ်ႇလႆႈငိုၼ်းလိူဝ်, ယၢမ်းလဵဝ်ဝႃႈလွင်ႈတၢင်းမၼ်း",kac:"Ngun ngam n la lu yang, ya gaw hpa majaw re ngu tsun sai",th:"เมื่ออ่านยอดคงเหลือไม่ได้ การ์ดจะบอกเหตุผลแล้ว",zh:"读不到余额时，卡片现在会说明原因",vi:"Khi không đọc được số dư, thẻ nay nói rõ lý do",id:"Saat saldo tak terbaca, kartu kini menyebutkan alasannya",ms:"Apabila baki tidak dapat dibaca, kad kini menyatakan sebabnya"},
     s:{my:"COST & BALANCE မှာ အနီရောင် စာတစ်ကြောင်းပဲ ပေါ်ပြီး **အကြောင်းရင်း ဘာမှ မပါ**ခဲ့ပါဘူး။ ဆိုးတာက အဲဒီစာက “browser ကနေ ပိတ်ထားလို့” လို့ ပြောနေတာပါ — Photoshop panel မှာ **browser မရှိပါဘူး**၊ ပြီးတော့ အပေါ်က card မှာ “**Key အလုပ်လုပ်ပါတယ် ✓**” လို့ စိမ်းနေတယ်ဆိုတော့ **အဲဒီ host ကိုပဲ** အောင်မြင်စွာ ဆက်သွယ်နိုင်ခဲ့တာပါ။ အခု RunningHub ပြန်ဖြေတဲ့ အရာအားလုံး — **HTTP status · သူ့ကိုယ်ပိုင် code · သူ့စာသား** — ကို ရေးပြပါတယ်။ ဘာမှ မရောက်ခဲ့ရင်လည်း လိုင်းက ဘာပြောလဲ ရေးပါတယ်။ ထို့အပြင် **queue status ကို သီးသန့် အရင်မေး**ပါတယ် — အဲဒါက key ရဲ့ **အမျိုးအစား** ကို ပြောပြီး balance မမြင်ရတဲ့ key က ပျက်နေတဲ့ key မဟုတ်ဘူးဆိုတာ သိရပါတယ်။ 6.68.0 က “+ Layer” ကို လုပ်ခဲ့တဲ့ စည်းမျဉ်းအတိုင်းပါပဲ — **အကြောင်းရင်း မပြောနိုင်တဲ့ ငြင်းချက်ဟာ ဘယ်သူမှ မပြင်နိုင်တဲ့ ငြင်းချက်ပါ**။",en:"COST & BALANCE showed one red sentence and threw the cause away — and that sentence blamed a browser. In the Photoshop panel there is no browser to blame, and two cards above it “Key works ✓” is green: the SAME host answered moments earlier. The refusal now carries everything RunningHub actually said — **the HTTP status, its own code, its message** — or, when nothing reached it at all, the transport's own reason. The **queue status is also asked separately, first**: it answers a different endpoint and it names the key's **type**, which is the first thing worth knowing when a balance read is refused — a key that cannot see an account balance is not a broken key. Same rule 6.68.0 gave “+ Layer”: **a refusal that cannot name a cause is a refusal nobody can fix.**",shn:"COST & BALANCE ၼႄႉၶေႃႈလဵဝ်သီလႅင် ဢမ်ႇမီးလွင်ႈတၢင်း, လႄႈဝႃႈပဵၼ်ယွၼ်ႉ browser — Photoshop panel ဢမ်ႇမီး browser။ ယၢမ်းလဵဝ် RunningHub တွပ်ႇမႃးသင် (HTTP status, code, ၶေႃႈၵႂၢမ်း) တႅမ်ႈဝႆႉမူတ်း။ လႄႈထၢမ် queue status ဢွၼ်တၢင်း ႁႂ်ႈႁူႉၸိူဝ်ႉၽၼ်း key။",kac:"COST & BALANCE gaw ahkyak ai lam n tsun ai sha ahkyeng ga langai sha madun ai, dai gaw browser hpe mara jaw ai — Photoshop panel kaw browser nnga ai. Ya gaw RunningHub tsun ai yawng (HTTP status, code, ga) hpe madun ai, hte queue status hpe shawng san na key a amyu hpe madun ai.",th:"COST & BALANCE เคยแสดงข้อความสีแดงบรรทัดเดียวโดยทิ้งสาเหตุ และยังโทษเบราว์เซอร์ ทั้งที่ในแผง Photoshop ไม่มีเบราว์เซอร์ ตอนนี้จะบอกทุกอย่างที่ RunningHub ตอบ — สถานะ HTTP, โค้ดของมันเอง, ข้อความ — และถามสถานะคิวแยกก่อน เพื่อบอกชนิดของคีย์",zh:"COST & BALANCE 以前只显示一行红字并丢掉原因，而且把责任推给浏览器——Photoshop 面板里根本没有浏览器，上面两张卡片的“密钥可用 ✓”还是绿色的。现在会写出 RunningHub 实际回应的一切：**HTTP 状态、它自己的代码、它的消息**；若请求根本没到达，则写出传输层的原因。**队列状态也会先单独询问**，它会说明密钥的**类型**——看不到账户余额的密钥并不是坏密钥。",vi:"COST & BALANCE chỉ hiện một dòng đỏ và vứt bỏ nguyên nhân, lại còn đổ lỗi cho trình duyệt — trong bảng Photoshop không có trình duyệt nào cả. Nay nó ghi đúng những gì RunningHub trả lời: mã HTTP, mã riêng của nó, thông điệp của nó. Trạng thái hàng đợi cũng được hỏi riêng trước, vì nó cho biết loại khóa.",id:"COST & BALANCE hanya menampilkan satu baris merah dan membuang penyebabnya, bahkan menyalahkan peramban — di panel Photoshop tidak ada peramban. Kini ia mencatat apa pun yang dijawab RunningHub: status HTTP, kodenya sendiri, pesannya. Status antrean juga ditanyakan terpisah lebih dulu karena menyebutkan jenis kuncinya.",ms:"COST & BALANCE hanya menunjukkan satu baris merah dan membuang puncanya, malah menyalahkan pelayar — dalam panel Photoshop tiada pelayar. Kini ia mencatat apa jua yang dijawab RunningHub: status HTTP, kodnya sendiri, mesejnya. Status baris gilir juga ditanya berasingan dahulu kerana ia menamakan jenis kunci."} },
@@ -26639,6 +26642,10 @@ var SB_ANON = "anon";
 var ACC_LS_SESS = "hnk_acc_sess_v1";     /* {access,refresh,exp,uid,email}   */
 var ACC_LS_PROF = "hnk_acc_profile_v1";  /* last-known profiles row, offline */
 var ACC_LS_DEV  = "hnk_acc_device_v1";   /* random UUID, this browser        */
+/* v6.70.0 — the last entitlement the server actually GAVE, and when it gave it.
+   Written only on a verified 2xx, read only at boot, and only for the same uid.
+   {uid, ent, last} — see unifiedRemember / unifiedRecall. */
+var ACC_LS_ENT  = "hnk_acc_ent_v1";
 
 /* Burmese sentences in this panel already carry Burmese numerals in their
    fixed parts (the plan chips read "၁ လ / ၃ လ / ၆ လ"), so a substituted
@@ -26901,7 +26908,7 @@ function accSignOutLocal(reason){
   if (!acc.sess) return;
   acc.sess = null; acc.profile = null; acc.devices = [];
   unified.entitlement = null; unified.enforced = false; unified.legacy = false; unified.loading = false; unified.error = false; unified.last = 0;
-  accLSDel(ACC_LS_SESS); accLSDel(ACC_LS_PROF);
+  accLSDel(ACC_LS_SESS); accLSDel(ACC_LS_PROF); accLSDel(ACC_LS_ENT);
   try { localStorage.removeItem(WALL_LS_SINCE); } catch(e){}   /* v5.30 */
   /* ACC_LS_DEV survives on purpose — logging out then back in on the same
      browser must NOT consume a second device slot. */
@@ -28036,8 +28043,60 @@ function unifiedRender(){
     legacyPanel.className = "grp" + (unifiedCanDownload() ? "" : " hide") + (unifiedCanDownload() && open ? " open" : "");
   }
 }
+/* v6.70.0 — A COLD BOOT ON A DEAD LINE STARTS FROM THE LAST VERDICT.
+
+   6.43.0 stopped the app dropping WHILE a student is working: a re-check that
+   never reached the server no longer discards the answer already in hand, and
+   appWallState re-walls by itself once that answer is older than
+   UNIFIED_GRACE_MS. It left the other half of the owner's situation untouched
+   — a bad line, the app CLOSED, and the student opens it. unified.entitlement
+   starts null on every boot, so "no answer has EVER arrived" was true in the
+   only sense the code could see, and the waiting screen went up even though
+   the server had said yes twenty minutes earlier.
+
+   The exposure is deliberately IDENTICAL to what 6.43.0 already accepts, and
+   that is the whole reason this is safe to do:
+
+     - only a VERIFIED 2xx is ever written here. A 403, a 5xx, a body that
+       will not parse, or a legacy server all DELETE the record instead;
+     - `last` is the moment of that success, not the moment of boot, so the
+       six-hour window cannot be extended by staying offline. A machine that
+       has been dark for seven hours boots straight into the wall;
+     - the record carries the uid it belongs to and is ignored for any other
+       account, and sign-out deletes it;
+     - it is restored with error:true, so the card says the answer is
+       unconfirmed and appWallState applies the same grace clock it applies to
+       an answer that went stale while the app was open;
+     - and nothing here authorizes anything. Every protected operation —
+       download, panel lease, generate — is decided by the server when it is
+       asked, whatever this wall does. */
+function unifiedForget(){ try { localStorage.removeItem(ACC_LS_ENT); } catch(e){} }
+function unifiedRemember(){
+  try {
+    if (!acc.sess || !acc.sess.uid || !unified.entitlement) return;
+    accLSSet(ACC_LS_ENT, { uid: acc.sess.uid, ent: unified.entitlement, last: unified.last || Date.now() });
+  } catch(e){}
+}
+function unifiedRecall(){
+  var rec = null;
+  try { rec = accLSGet(ACC_LS_ENT); } catch(e){ rec = null; }
+  if (!rec || typeof rec !== "object" || !rec.ent || !rec.uid){ unifiedForget(); return false; }
+  if (!acc.sess || rec.uid !== acc.sess.uid){ unifiedForget(); return false; }
+  var last = Number(rec.last) || 0, now = Date.now();
+  /* a record stamped in the future is a clock that has been moved, not a
+     verdict; and one already past the window can never help again */
+  if (last <= 0 || last > now + 60000 || now - last > UNIFIED_GRACE_MS){ unifiedForget(); return false; }
+  unified.entitlement = rec.ent;
+  unified.last = last;
+  /* the record only exists because this server answered with an entitlement
+     once, so it enforces; and until a live call confirms it, it is stale */
+  unified.enforced = true;
+  unified.error = true;
+  unified.legacy = false;
+  return true;
+}
 async function unifiedRefresh(force){
-  if (!acc.sess){ unified.entitlement = null; unified.loading = false; unified.error = false; unifiedRender(); return null; }
+  if (!acc.sess){ unified.entitlement = null; unified.loading = false; unified.error = false; unifiedForget(); unifiedRender(); return null; }
   if (unified.inFlight) return unified.inFlight;
   if (!force && unified.last && Date.now() - unified.last < 15000) return unified.entitlement;
   unified.loading = true; unifiedRender();
@@ -28047,10 +28106,10 @@ async function unifiedRefresh(force){
     var answered = false;
     try {
       var r = await accFetch("/v1/me/entitlement", {method:"GET"}, {json:false});
-      if (r.status === 404){ unified.legacy = true; unified.enforced = false; unified.error = false; return null; }
+      if (r.status === 404){ unified.legacy = true; unified.enforced = false; unified.error = false; unifiedForget(); return null; }
       var ct = ""; try { ct = r.headers.get("content-type") || ""; } catch(e){}
       if (r.ok && !/json/i.test(ct) && location.protocol !== "https:"){
-        unified.legacy = true; unified.enforced = false; unified.error = false; return null;
+        unified.legacy = true; unified.enforced = false; unified.error = false; unifiedForget(); return null;
       }
       unified.enforced = true;
       /* a response arrived — whatever it says, it is this server's answer, and
@@ -28060,6 +28119,7 @@ async function unifiedRefresh(force){
       unified.entitlement = await accJson(r);
       unified.error = false; unified.legacy = false; unified.last = Date.now();
       unified.fails = 0;
+      unifiedRemember();
       return unified.entitlement;
     } catch(e){
       /* v6.43.0 — A DROPPED CONNECTION IS NOT A REFUSAL.
@@ -28100,6 +28160,9 @@ async function unifiedRefresh(force){
            all — the server delivers those as a 200 whose allowed/reasons say
            no, and unifiedMessage names them.) */
         unified.entitlement = null; unified.fails = 0;
+        /* v6.70.0 — and the stored copy with it. Leaving it would let a reload
+           resurrect exactly the access this answer just refused. */
+        unifiedForget();
         return null;
       }
       unified.fails++;
@@ -28481,6 +28544,9 @@ function accBoot(){
   if (sess && sess.access && sess.uid) acc.sess = sess;
   var prof = accLSGet(ACC_LS_PROF);
   if (prof) acc.profile = prof;
+  /* v6.70.0 — before the first paint, so a student on a dead line never sees
+     the waiting screen flash over an account the server approved this morning */
+  try { unifiedRecall(); } catch(e){}
   if (!navigator.onLine) acc.online = false;
 
   /* default accordion states, applied ONCE at boot (an interactive login must
@@ -29018,7 +29084,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.69.0";
+var APP_VER="6.70.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

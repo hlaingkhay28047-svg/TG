@@ -227,9 +227,15 @@ const EXPECT = [
       errs.length === 0, errs.slice(0, 4));
     report("Z2) and not one generate reached RunningHub during this test",
       posted.length === 0, posted);
+    /* v6.70.0 — queue/status joins the allowlist. 6.69.0 asks it FIRST and on
+       its own, before the balance read can end the attempt, because it answers
+       a different endpoint and it names the key's TYPE — which is the first
+       thing worth knowing when a balance read is refused. It is a GET that
+       spends nothing, and the property this check defends is untouched: not one
+       SUBMIT reached RunningHub, which Z2 asserts on its own. */
+    const READ = /accountStatus|\/uc\/openapi\/|\/openapi\/v2\/queue\/status/;
     report("Z3) the only calls that did go out were reads, not submits",
-      probed.every(u => /accountStatus|\/uc\/openapi\//.test(u)),
-      probed.filter(u => !/accountStatus|\/uc\/openapi\//.test(u)));
+      probed.every(u => READ.test(u)), probed.filter(u => !READ.test(u)));
   } finally {
     await browser.close();
   }
