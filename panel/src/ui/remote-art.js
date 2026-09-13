@@ -40,6 +40,39 @@ var inflight = {};            /* url -> Promise */
 var queue = [];
 var active = 0;
 var stats = { asked: 0, ok: 0, failed: 0, bytes: 0, lastError: "" };
+/* v6.75.0 — THE PICTURES A DEAD LINE TOOK. The owner's card after a Wi-Fi
+   drop read "121 ok · 126 failed", and the 126 stayed failed after the line
+   came back: nothing ever asked for them again short of a relaunch. Every
+   paint the fetch lost is remembered here (element + url), and retryFailed()
+   asks for each one still on screen — the panel calls it when a licence
+   validate lands (the line is provably back) and, throttled, on page switch. */
+var failedPaints = [];
+var FAILED_CAP = 600;
+var lastRetry = Date.now();  /* the first unforced retry waits a gap after launch too */
+var RETRY_GAP_MS = 15000;
+function noteFailed(rec) { if (failedPaints.length < FAILED_CAP) failedPaints.push(rec); }
+function stillShown(el) {
+  try {
+    var d = el && el.ownerDocument;
+    if (!d || !d.body || typeof d.body.contains !== "function") return true;
+    return d.body.contains(el);
+  } catch (e) { return true; }
+}
+function retryFailed(force) {
+  if (!failedPaints.length) return 0;
+  var now = Date.now();
+  if (!force && now - lastRetry < RETRY_GAP_MS) return 0;
+  lastRetry = now;
+  var list = failedPaints; failedPaints = [];
+  var n = 0;
+  for (var i = 0; i < list.length; i++) {
+    var rec = list[i];
+    if (!stillShown(rec.el)) continue;
+    n++;
+    if (rec.bg) paintBg(rec.el, rec.url, rec.onFail); else paint(rec.el, rec.url, rec.onFail);
+  }
+  return n;
+}
 
 /* v6.58.2 — THE SEVEN THE OWNER PHOTOGRAPHED THE SECOND TIME.
    6.58.1 gave the diagnostic a tongue and the next card named them:
@@ -151,6 +184,7 @@ function paint(img, url, onFail) {
   fetchArt(url).then(function (data) {
     img.src = data;
   }, function (e) {
+    noteFailed({ el: img, url: url, bg: false, onFail: onFail });
     if (typeof onFail === "function") { try { onFail(e); } catch (e2) { } }
   });
 }
@@ -164,6 +198,7 @@ function paintBg(node, url, onFail) {
   fetchArt(url).then(function (data) {
     node.style.backgroundImage = 'url("' + data + '")';
   }, function (e) {
+    noteFailed({ el: node, url: url, bg: true, onFail: onFail });
     if (typeof onFail === "function") { try { onFail(e); } catch (e2) { } }
   });
 }
@@ -174,6 +209,8 @@ var API = {
   paintBg: paintBg,
   load: fetchArt,
   isRemote: isRemote,
+  retryFailed: retryFailed,
+  failedCount: function () { return failedPaints.length; },
   stats: function () {
     return { asked: stats.asked, ok: stats.ok, failed: stats.failed,
       pending: active + queue.length, bytes: stats.bytes, lastError: stats.lastError };

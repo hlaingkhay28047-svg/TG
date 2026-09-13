@@ -426,14 +426,14 @@ const READ_CARD = () => {
       cssObjectFit: "kept", cssBgSize: "kept",
       rulers: "rect 0 \u00b7 client 0 \u00b7 scroll 0 \u00b7 computed 100px \u00b7 offset 0",
       cssEcho: "echo (calc came back unresolved)", scopeOk: "yes", scopeAttr: "stpg apg",
-      glyphMiss: "unmeasurable" };
+      glyphMiss: "unmeasurable", glyphRef: "notdef -1 \u00b7 n -1" };
     const WRONG_CAPS = { rangeRects: 40, rangeLineBoxes: false,
       cssBox: "content-box", cssBoxC: "content-box", cssGap: "no", cssGapC: "normal",
       cssCalc: "no", cssCalcC: "60px", cssFixed: "no", cssFixedC: "static",
       cssObjectFit: "DROPPED", cssBgSize: "DROPPED",
       rulers: "rect 88 \u00b7 client 88 \u00b7 scroll 88 \u00b7 computed 100px \u00b7 offset 88",
       cssEcho: "88px", scopeOk: "LOST", scopeAttr: "", scopeProp: "",
-      glyphMiss: "27A1 1F504", glyphN: 2 };
+      glyphMiss: "27A1 1F504", glyphN: 2, glyphRef: "notdef 13 \u00b7 n 9" };
     const HOST_ROWS = ["line boxes", "box-sizing", "flex gap", "calc()", "position:fixed",
       "rulers (100px box)", "\u21b3 computed is", "glyphs"];
     const levelsWith = async (caps) => page.evaluate((c) => {
@@ -455,7 +455,7 @@ const READ_CARD = () => {
     }, caps);
     const hostLv = await levelsWith(HOST_CAPS);
     report("K1) the eight answers the owner's Photoshop cannot give are marked host (~), not warn (!) — and the rows it DID answer stay ok",
-      HOST_ROWS.every(n => hostLv.levels[n] === "host") &&
+      HOST_ROWS.every(n => hostLv.levels[n] === "host") && hostLv.levels["glyph ruler"] === "host" &&
       hostLv.levels["object-fit"] === "ok" && hostLv.levels["background-size"] === "ok" && hostLv.levels["page scope"] === "ok",
       JSON.stringify(HOST_ROWS.map(n => [n, hostLv.levels[n]])));
     report("K2) the DOM draws every one of them with the host class and the ~ mark, so the stylesheet can mute them",
@@ -463,7 +463,7 @@ const READ_CARD = () => {
       JSON.stringify(HOST_ROWS.map(n => [n, hostLv.drawn[n]])));
     const wrongLv = await levelsWith(WRONG_CAPS);
     report("K3) the same rows answered WRONG stay warn (!) — the new mark is for silence, never for a bad answer",
-      HOST_ROWS.every(n => wrongLv.levels[n] === "warn") &&
+      HOST_ROWS.every(n => wrongLv.levels[n] === "warn") && wrongLv.levels["glyph ruler"] === "ok" &&
       wrongLv.levels["object-fit"] === "warn" && wrongLv.levels["background-size"] === "warn" && wrongLv.levels["page scope"] === "warn" &&
       HOST_ROWS.every(n => wrongLv.drawn[n] && wrongLv.drawn[n].cls === "diag-ic warn" && wrongLv.drawn[n].mark === "!"),
       JSON.stringify(HOST_ROWS.map(n => [n, wrongLv.levels[n], wrongLv.drawn[n] && wrongLv.drawn[n].mark])));
@@ -492,6 +492,79 @@ const READ_CARD = () => {
       !!row("Licence") && row("Licence").level === "ok" && /^live lease · \d+s left$/.test(row("Licence").detail) &&
       Number(/(\d+)s left/.exec(row("Licence").detail)[1]) > 60,
       JSON.stringify(row("Licence")));
+
+    /* L) v6.75.0 — THE FIFTEEN PHOTOGRAPHS OF 6.145.0, on the live page. */
+    /* L1: a RunningHub refusal has a line in every language, and the
+       progress strip asks for it by the normalizer's own code */
+    const BOOT = fs.readFileSync(path.join(ROOT, "panel/src/app/bootstrap.js"), "utf8");
+    const rhI18n = await page.evaluate(() => {
+      const b = window.HNK.i18n, keys = ["rh_err_network", "rh_err_timeout", "rh_err_rate_limited", "rh_err_invalid_key"];
+      const missing = [];
+      /* the nine tables that carry their own strings; the other codes in the picker fall back to one of these */
+      const tables = Object.keys(b.table).filter(function (l) { return b.table[l] && typeof b.table[l].err_net === "string"; });
+      tables.forEach(function (l) { keys.forEach(function (k) { if (!b.table[l][k] || b.table[l][k].length < 20) missing.push(l + "." + k); }); });
+      return { lang: b.lang(), tables: tables.length, missing: missing, my: b.t("rh_err_network"), en: b.table.en.rh_err_network };
+    });
+    report("L1) a dead-line refusal speaks the panel's language: four RunningHub refusals carry a line in all nine tables, the strip looks them up by code, and the Burmese line is not the English one",
+      rhI18n.tables === 9 && rhI18n.missing.length === 0 && rhI18n.lang === "my" && /RunningHub/.test(rhI18n.my) && rhI18n.my !== rhI18n.en &&
+      /"rh_err_" \+ String\(n\.code\)\.replace\(\/-\/g, "_"\)/.test(BOOT) && /if \(loc\) line = loc;/.test(BOOT),
+      JSON.stringify(rhI18n).slice(0, 300));
+
+    /* L2: a slot's name has a line of its own above the five source buttons */
+    const slotDom = await page.evaluate(async () => {
+      try { switchPage("wf"); } catch (e) { }
+      await new Promise(r => setTimeout(r, 700));
+      const cards = Array.from(document.querySelectorAll("[id^='hnkWf_']")).slice(0, 20);
+      let blocks = [];
+      for (let i = 0; i < cards.length && !blocks.length; i++) {
+        try { cards[i].click(); } catch (e) { }
+        await new Promise(r => setTimeout(r, 60));
+        blocks = Array.from(document.querySelectorAll(".hnk-req-block"));
+      }
+      const shape = blocks.map(function (b) {
+        const head = b.querySelector(".hnk-req-head"), row = b.querySelector(".hnk-req-row");
+        return {
+          headHasLabel: !!(head && head.querySelector(".hnk-req-label")),
+          headHasMark: !!(head && head.querySelector(".hnk-req-mark")),
+          headFirst: !!(head && b.firstElementChild === head),
+          /* the panel's buttons are divs the stylesheet owns (check Q), so count the row's children */
+          rowButtons: row ? row.children.length : -1,
+          rowHasLabel: !!(row && row.querySelector(".hnk-req-label")),
+          labelText: head ? String((head.querySelector(".hnk-req-label") || {}).textContent || "").trim() : ""
+        };
+      });
+      const css = Array.from(document.styleSheets).some(function (sh) {
+        try { return Array.from(sh.cssRules).some(function (r) { return r.selectorText === ".hnk-req-head"; }); } catch (e) { return false; }
+      });
+      try { switchPage("setup"); } catch (e) { }
+      return { blocks: blocks.length, shape: shape, css: css };
+    });
+    report("L2) every photo slot names itself on its own line (label + mark in .hnk-req-head, drawn first), the five source buttons follow in their own row, and the stylesheet knows the head",
+      slotDom.blocks > 0 && slotDom.css === true &&
+      slotDom.shape.every(s => s.headHasLabel && s.headHasMark && s.headFirst && s.rowButtons === 5 && !s.rowHasLabel && s.labelText.length > 0),
+      JSON.stringify(slotDom).slice(0, 400));
+
+    /* L3: an error event with nothing in it is still named, and the
+       collector counts past its cap — DONE LAST on this page, because it
+       dirties the card the checks above read clean */
+    const evErr = await page.evaluate(() => {
+      const st = window.HNK.selfTest;
+      const before = { kept: st.errors().length, total: st.errorCount() };
+      for (let i = 1; i <= 15; i++) window.dispatchEvent(new ErrorEvent("error", { lineno: 1000 + i }));
+      const after = { kept: st.errors().length, total: st.errorCount() };
+      const last = st.errors()[st.errors().length - 1] || {};
+      const rows = selfTestRows();
+      const errRow = rows.filter(r => r.label === "Errors")[0] || {};
+      const lineRows = rows.filter(r => /^error \u00b7 line \d+$/.test(r.label));
+      return { before, after, cap: st.errorCap, last: last.message, lastKind: last.kind, errRow: errRow.detail, errLevel: errRow.level, lineRows: lineRows.length,
+        firstLine: lineRows[0] ? lineRows[0].detail : "" };
+    });
+    report("L3) fifteen bare error events: twelve are kept, fifteen are counted, each row names its target and line instead of reading \"error · error\", and the Errors row confesses the cap",
+      evErr.cap === 12 && evErr.after.kept === 12 && evErr.after.total === evErr.before.total + 15 &&
+      /^error event with no message \(target window, line \d+\)$/.test(evErr.last) && evErr.lastKind === "error" &&
+      /^\d+ \u00b7 12 kept$/.test(evErr.errRow) && evErr.errLevel === "err" && evErr.lineRows >= 1 &&
+      /^error event with no message/.test(evErr.firstLine),
+      JSON.stringify(evErr));
 
     /* FAULT INJECTION. Two pages, each loaded with one renderer behaviour
        simulated, because reading the source cannot prove either claim. */
@@ -602,6 +675,80 @@ const READ_CARD = () => {
     report("H8) the fault stayed caught — no uncaught page error escaped the guards",
       B.errors.length === 0, B.errors.join(" | "));
     await B.page.close();
+
+    /* M) v6.75.0 — THE BLANK FIRST OPEN. In the owner's Photoshop every
+       element's getClientRects() is an empty list; the Imagine module's init
+       takes that as "hidden" and draws nothing, so the first entry painted a
+       hero head over an empty page and only the second drew the hub. The same
+       renderer behaviour, simulated on a fresh page. */
+    const C = await hurtPage(`Element.prototype.getClientRects = function () { return []; };`);
+    const imagineFirst = await C.page.evaluate(async () => {
+      const root = document.getElementById("imRoot");
+      const beforeKids = root ? root.children.length : -1;
+      try { switchPage("imagine"); } catch (e) { }
+      await new Promise(r => setTimeout(r, 600));
+      return { beforeKids, kids: root ? root.children.length : -1,
+        drawn: !!(window.HNK.imagine && window.HNK.imagine.drawn()),
+        hub: !!document.querySelector("#imRoot .im-hub"),
+        rects: document.body.getClientRects().length,
+        ready: (typeof imagineReady !== "undefined") ? imagineReady : null };
+    });
+    report("M1) the fault is in force — this page measures no element",
+      imagineFirst.rects === 0, JSON.stringify(imagineFirst));
+    report("M2) …and the FIRST entry to Imagine draws the hub anyway: init declined, the panel rendered",
+      imagineFirst.beforeKids === 0 && imagineFirst.kids > 0 && imagineFirst.drawn === true && imagineFirst.hub === true && imagineFirst.ready === true,
+      JSON.stringify(imagineFirst));
+    report("M3) nothing threw on the way", C.errors.length === 0 && Array.isArray(C.state.wired) && C.state.wired.length === 0,
+      JSON.stringify({ errors: C.errors, wired: C.state.wired }));
+    await C.page.close();
+
+    /* N) v6.75.0 — NO localStorage AT ALL, which is what UXP is. The What's
+       New strip forgot every dismissal at relaunch because that is the only
+       place it wrote; the owner's Home opened on "(105)" every time. With
+       localStorage absent, a dismissal must reach the settings file and come
+       back from it. */
+    const D = await hurtPage(`Object.defineProperty(window, "localStorage", { configurable: true,
+      get: function () { throw new Error("UXP-sim: no localStorage"); } });`);
+    const seenFile = await D.page.evaluate(async () => {
+      let lsGone = false;
+      try { window.localStorage; } catch (e) { lsGone = true; }
+      try { switchPage("home"); } catch (e) { }
+      await new Promise(r => setTimeout(r, 700));
+      const total = window.HNK.whatsNew.LIST.length;
+      const head = () => ((document.getElementById("hnkDashNewH2") || {}).textContent || "");
+      const h0 = head();
+      const x = document.querySelector("#hnkDashNew .nw-x");
+      if (!x) return { lsGone, h0, noX: true };
+      x.click();
+      await new Promise(r => setTimeout(r, 400));
+      const h1 = head();
+      /* the settings file, read back through the same UXP surface the panel wrote it with */
+      const uxp = window.require("uxp");
+      const folder = await uxp.storage.localFileSystem.getDataFolder();
+      const f = await folder.getEntry("settings");
+      const txt = await f.read({ format: "utf8" });
+      const onDisk = JSON.parse(txt).nwSeen;
+      /* a relaunch: forget in memory, read the file again, redraw Home */
+      const inMem = Array.isArray(state.nwSeen) ? state.nwSeen.slice() : null;
+      state.nwSeen = [];
+      await loadSettings();
+      const restored = Array.isArray(state.nwSeen) ? state.nwSeen.slice() : null;
+      try { switchPage("wf"); switchPage("home"); } catch (e) { }
+      await new Promise(r => setTimeout(r, 500));
+      return { lsGone, total, h0, h1, onDisk, inMem, restored, h2: head() };
+    });
+    report("N1) the fault is in force — localStorage throws, as in UXP — and the panel still booted with nothing unbound",
+      seenFile.lsGone === true && Array.isArray(D.state.wired) && D.state.wired.length === 0 && D.errors.length === 0,
+      JSON.stringify({ lsGone: seenFile.lsGone, wired: D.state.wired, errors: D.errors }));
+    report("N2) one × on Home counts the heading down by one, lands in the settings file, and survives a relaunch: read back from the file, Home still counts it as read",
+      !seenFile.noX && seenFile.h0.indexOf("(" + seenFile.total + ")") >= 0 &&
+      seenFile.h1.indexOf("(" + (seenFile.total - 1) + ")") >= 0 &&
+      Array.isArray(seenFile.onDisk) && seenFile.onDisk.length === 1 &&
+      Array.isArray(seenFile.inMem) && seenFile.inMem.length === 1 && seenFile.inMem[0] === seenFile.onDisk[0] &&
+      Array.isArray(seenFile.restored) && seenFile.restored.length === 1 &&
+      seenFile.h2.indexOf("(" + (seenFile.total - 1) + ")") >= 0,
+      JSON.stringify(seenFile).slice(0, 400));
+    await D.page.close();
   } finally {
     await browser.close();
     await new Promise(r => server.close(r));
@@ -742,6 +889,53 @@ const READ_CARD = () => {
   report("J9) no data: URL is assembled straight onto a .src — they go through one checked helper",
     builtRaw === 0 && /b64 \?/.test(helper2) && /IMG_BLANK/.test(helper2),
     { rawAssignments: builtRaw, helperChecksPayload: /b64 \?/.test(helper2) });
+
+  /* R) v6.75.0 — remote-art asks again for what a dead line took. The
+     owner's card after a Wi-Fi drop read "121 ok · 126 failed", and the 126
+     stayed failed after the line returned. Node, with a fetch that fails
+     and then works. */
+  {
+    const RA_PATH = path.join(ROOT, "panel/src/ui/remote-art.js");
+    delete require.cache[require.resolve(RA_PATH)];
+    const realFetch = global.fetch;
+    let lineUp = false;
+    global.fetch = () => lineUp
+      ? Promise.resolve({ ok: true, status: 200, headers: { get: () => "image/png" },
+          arrayBuffer: () => Promise.resolve(new Uint8Array([137, 80, 78, 71, 13, 10]).buffer) })
+      : Promise.reject(new Error("Network request failed"));
+    const ra = require(RA_PATH);
+    const mkImg = (doc) => ({ src: "", getAttribute() { return this.src || null; }, ownerDocument: doc || null });
+    const settle = () => new Promise(r => setTimeout(r, 30));
+    const a = mkImg(), b = mkImg({ body: { contains: () => false } }), c = mkImg();
+    const fails = [];
+    ra.paint(a, "https://hnkaistudio.com/app/lib/a.jpg", e => fails.push("a:" + e.message));
+    ra.paint(b, "https://hnkaistudio.com/app/lib/b.jpg", e => fails.push("b:" + e.message));
+    await settle();
+    const s1 = ra.stats();
+    report("R1) with the line dead both paints fail loudly, keep the placeholder, and are remembered",
+      fails.length === 2 && /Network request failed/.test(fails[0]) && s1.failed === 2 && ra.failedCount() === 2 &&
+      a.src === ra.BLANK && b.src === ra.BLANK && /b\.jpg: Network request failed$/.test(s1.lastError),
+      JSON.stringify({ fails, s1, a: a.src.slice(0, 30) }));
+    report("R2) a retry inside the throttle window, unforced, is declined — page switches cannot hammer a dead line",
+      ra.retryFailed(false) === 0 && ra.failedCount() === 2, { count: ra.failedCount() });
+    lineUp = true;
+    const n = ra.retryFailed(true);
+    await settle();
+    report("R3) forced (a validate landed): the picture still on screen is asked for again and drawn; the one no longer in the document is dropped, not fetched",
+      n === 1 && a.src.indexOf("data:image/png;base64,") === 0 && b.src === ra.BLANK && ra.failedCount() === 0 && ra.stats().ok === 1,
+      JSON.stringify({ n, a: a.src.slice(0, 40), b: b.src.slice(0, 30), s: ra.stats() }));
+    ra.paint(c, "https://hnkaistudio.com/app/lib/a.jpg");
+    await settle();
+    report("R4) a second element asking for the same url is served from the cache without another fetch",
+      c.src.indexOf("data:image/png;base64,") === 0 && ra.stats().ok === 1 && ra.stats().asked === 4,
+      JSON.stringify(ra.stats()));
+    global.fetch = realFetch;
+  }
+  /* the two hooks: a licence validate that lands forces the retry; a page
+     switch offers the throttled one */
+  report("R5) main.js asks for the lost pictures again when a validate lands (forced) and on every page switch (throttled)",
+    /gateS\.leaseExp = expires;[\s\S]{0,600}remoteArt\.retryFailed\(true\)/.test(MAIN) &&
+    /function switchPage\(key\) \{[\s\S]*?ra\.retryFailed\(false\)/.test(MAIN), null);
 
   const CI = fs.readFileSync(path.join(ROOT, ".github/workflows/test.yml"), "utf8");
   report("E) CI runs this test", CI.includes("node test/verify_panel_renderer_safety.js"), null);

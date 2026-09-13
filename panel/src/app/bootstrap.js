@@ -102,6 +102,17 @@ function create(opts) {
       // previously discarded here) instead of a bare one-line message.
       var head = (n.title && n.message && n.title === n.message) ? n.title : [n.title, n.message].filter(Boolean).join(" ");
       var line = [head].concat(n.bullets || []).filter(Boolean).join(" · ");
+      /* v6.75.0 — IN THE PANEL'S OWN LANGUAGE. The owner pressed GENERATE on
+         a dead line and the Burmese panel answered in English ("Could not
+         reach RunningHub Enterprise…"): the normalizer speaks English only.
+         The refusals a student actually meets carry a nine-language line in
+         main.js's table (rh_err_<code>); anything without one keeps the
+         normalizer's English. */
+      try {
+        var lk = n.code && n.code !== "ready" ? ("rh_err_" + String(n.code).replace(/-/g, "_")) : "";
+        var loc = lk ? dom.t(lk, "") : "";
+        if (loc) line = loc;
+      } catch (eL) { }
       try { if (n.code === "ready") strip.setDone(line); else strip.setError(line); } catch (e) {}
     }
     if (typeof opts.onStatus === "function") opts.onStatus(n);

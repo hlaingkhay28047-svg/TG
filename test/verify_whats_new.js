@@ -122,6 +122,15 @@ function report(name, ok, detail) {
   });
   report("C) with nothing read yet, the strip is visible and sits above every other card on Home",
     C.visible && C.index === 1 && C.before.every(b => /dash-greet|dashGreet/.test(b)), C);
+  /* v6.75.0 — the owner's Home photograph showed the excerpt with its raw
+     **bold** marks. The strip is plain text; the marks are authoring. */
+  const md = await page.evaluate(() => ({
+    authored: WHATS_NEW.slice(0, (typeof NW_STRIP_MAX === "number" ? NW_STRIP_MAX : 3)).filter(e => /\*\*/.test(JSON.stringify(e.s))).length,
+    rows: document.querySelectorAll("#dashNewList .nw-s").length,
+    leaked: [...document.querySelectorAll("#dashNewList .nw-s")].filter(el => el.textContent.indexOf("**") >= 0).length
+  }));
+  report("C5) v6.75.0 — an entry's **bold** marks never reach the strip: at least one drawn entry is authored with them, and no excerpt shows them",
+    md.authored > 0 && md.rows > 0 && md.leaked === 0, md);
   /* v6.0.0 — the strip draws the newest three, not one row per unread
      entry: WHATS_NEW reached seventeen and a first-ever launch met a wall
      of changelog above the studio (and pushed two of Home's own tiles below

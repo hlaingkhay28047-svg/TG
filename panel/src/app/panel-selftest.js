@@ -25,9 +25,14 @@
 
 var MAX_ERRORS = 12;
 var errors = [];
+/* v6.75.0 — every error is COUNTED; only the first MAX_ERRORS are kept. The
+   owner's card read "Errors 12" while 126 pictures had failed: 12 was the
+   cap, and the card could not say so. */
+var total = 0;
 var started = Date.now();
 
 function push(kind, message, source, line, col) {
+  total++;
   if (errors.length >= MAX_ERRORS) return;
   var msg = String(message == null ? "" : message).slice(0, 220);
   var src = String(source == null ? "" : source);
@@ -96,7 +101,20 @@ try {
         push("load", t.tagName.toLowerCase() + " failed to load", who, 0, 0);
         return;
       }
-      push("error", ev.message || String(ev.error || "error"), ev.filename, ev.lineno, ev.colno);
+      /* v6.75.0 — SIX ROWS THAT SAID "error · error". An error event with no
+         message, no file and no target element reached this line and was
+         recorded as the word "error" twice, which tells the reader nothing.
+         Name what the event does carry — its target's kind and its line —
+         so the next photograph says something a person can act on. */
+      var msg = ev.message || (ev.error && (ev.error.message || String(ev.error))) || "";
+      if (!msg) {
+        var tk = "";
+        try {
+          tk = (t === window) ? "window" : (t && t.constructor && t.constructor.name) || (t ? typeof t : "no target");
+        } catch (e5) { tk = "?"; }
+        msg = "error event with no message (target " + tk + (ev.lineno ? ", line " + ev.lineno : "") + ")";
+      }
+      push("error", msg, ev.filename, ev.lineno, ev.colno);
     }, true);
     window.addEventListener("unhandledrejection", function (ev) {
       var r = ev && ev.reason;
@@ -605,7 +623,9 @@ try {
 
 var API = {
   errors: function () { return errors.slice(); },
-  errorCount: function () { return errors.length; },
+  /* the true count, past the cap */
+  errorCount: function () { return total; },
+  errorCap: MAX_ERRORS,
   note: function (message, source) { push("note", message, source || "", 0, 0); },
   capabilities: capabilities,
   taps: function () { return { count: taps, last: lastTap }; }
