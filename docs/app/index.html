@@ -5282,6 +5282,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.77.0", kind:"page", ref:"pgImagine",
+    t:{my:"Photoshop Panel — ရှိပြီး အလုပ်မလုပ်တဲ့ ခလုတ်တွေ အကုန်ရှာပြီး ပြင်ထားပါတယ် (recipes · logo · favourites · brush · Path)",en:"Photoshop Panel — every control that drew but did nothing, found and fixed (recipes · logo · favourites · brush · Path)",shn:"Photoshop Panel — ၶႅပ်းၼဵၵ်း ဢၼ်မီးသေ ဢမ်ႇႁဵတ်းၵၢၼ် ႁႃႁၼ်လႄႈ မႄးယဝ်ႉ (recipes · logo · favourites · brush · Path)",kac:"Photoshop Panel — nga ai retim bungli n galaw ai button ni yawng tam la nna jahkrat sai (recipes · logo · favourites · brush · Path)",th:"Photoshop Panel — ปุ่มที่มีอยู่แต่ไม่ทำงาน หาเจอและแก้ครบ (recipes · logo · favourites · brush · Path)",zh:"Photoshop 面板 — 找出并修复了所有“有按钮却不起作用”的地方（recipes · logo · favourites · brush · Path）",vi:"Photoshop Panel — mọi nút có mà không chạy đã được tìm ra và sửa (recipes · logo · favourites · brush · Path)",id:"Photoshop Panel — semua kontrol yang tampil tapi tidak bekerja ditemukan dan diperbaiki (recipes · logo · favourites · brush · Path)",ms:"Photoshop Panel — semua kawalan yang ada tetapi tidak berfungsi dijumpai dan dibaiki (recipes · logo · favourites · brush · Path)"},
+    s:{my:"ဆရာ မေးတဲ့ \"UI ရှိပြီး အလုပ်မလုပ်တာ ရှိလား\" ကို panel ရဲ့ စာမျက်နှာ ၁၆ ခုလုံးက ခလုတ် ၂,၄၀၀ ကျော်ကို တစ်ခုချင်း နှိပ်စစ်ပြီး Photoshop ဓာတ်ပုံတွေက သက်သေပြထားတဲ့ အချက်တွေနဲ့ တိုက်စစ်ပါတယ်။ တွေ့တာ ၅ မျိုး —\n\n(1) **သိမ်းပေမယ့် မမှတ်တဲ့ ခလုတ် ၄၁ နေရာ** — Photoshop မှာ localStorage မရှိလို့ Retouch A/B ရဲ့ Recipe save/pin/default၊ Logo တံဆိပ် (Pick logo ပြီး Stamp logo က \"Logo ပုံ အရင်ထည့်ပါ\" လို့ ထာဝရ ပြောနေတာ)၊ Style 880 favourites/recent၊ Library ★ favourites၊ Smart Workflow favourites၊ Imagine ရဲ့ ပုံတွေ — အားလုံး တိတ်တဆိတ် ပျောက်နေပါတယ်။ အခု panel က ကိုယ်ပိုင် storage ဖိုင်တစ်ခု (settings folder ထဲ) နဲ့ ၄၁ နေရာလုံးကို တစ်ခါတည်း ပြင်ပါတယ်။\n\n(2) **Imagine ရဲ့ brush (Object Remove · Object Add · Text & Sign Edit)** — Photoshop က geometry မပေးလို့ (rect 0) brush က ဘာမှ မဆွဲနိုင်ခဲ့ပါ။ အခု pointer ရဲ့ offsetX/Y နဲ့ ဆွဲပါတယ်။ Before|After slider နှစ်ခုလည်း အတူတူပါ။\n\n(3) **Video page ရဲ့ ရလဒ်** — Photoshop panel က ဗီဒီယို ဖွင့်မရလို့ အနက်ရောင် အကွက်ပဲ ပေါ်ခဲ့ပါတယ်။ အခု \"ဗီဒီယို အဆင်သင့် — Download / Open\" လို့ ပြောပြီး take တိုင်း နံပါတ်ကတ် ဖြစ်ပါတယ်။\n\n(4) **Path page ရဲ့ Effects နဲ့ Prompt preview ခေါင်းစီး** — နှိပ်လို့ မပွင့်ခဲ့ပါ (handler မရှိ)။ အခု ပွင့်ပါပြီ။\n\n(5) **Style 880 catalog** — အဖြေ မှားရင် click တိုင်း error ဖြစ်နေတာ ပြင်ထားပါတယ်။\n\nSELF-TEST မှာ Storage · Pointer · Viewport · scrollTop row ၄ ခု ထပ်ပါလာလို့ ဓာတ်ပုံ တစ်ပုံနဲ့ Photoshop ရဲ့ အဖြေ သိနိုင်ပါတယ်။ Test 212 ခုမြောက် (verify_panel_dead_controls) က အကုန် ပင်ထားပါတယ်။",en:"The owner asked whether any control in the panel draws but does nothing. A crawl tapped 2,400-odd controls across all sixteen pages and cross-read the facts the Photoshop photographs had already proven. Five things came out.\n\n(1) **Forty-one places that saved and forgot** — Photoshop has no localStorage, so Retouch A/B's recipes (save · pin · default), the watermark logo (Pick logo, then Stamp logo said \"Add a logo image first\" forever), the Styles 880 favourites and recents, the Library's ★ favourites, the Smart Workflow favourites and Imagine's saved photos were all lost in silence. The panel now carries its own storage file in the settings folder, and one shim fixes all forty-one.\n\n(2) **Imagine's brush (Object Remove · Object Add · Text & Sign Edit)** — Photoshop hands script no geometry (rect 0), so the brush could not draw at all; it now reads the pointer's own offsetX/Y. Both Before|After sliders likewise.\n\n(3) **The Video page's result** — the panel cannot play video, so a finished clip was a black box; it now says the clip is ready with Download / Open, and each take is a numbered tile.\n\n(4) **Path's Effects and Prompt-preview headers** — no handler on either; they open now.\n\n(5) **The Styles 880 catalog** — a bad answer threw on every tap; refused cleanly now.\n\nSELF-TEST gains Storage · Pointer · Viewport · scrollTop rows, so one photograph settles what Photoshop answers. Test 212 (verify_panel_dead_controls) pins all of it.",shn:"ၶႅပ်းၼဵၵ်း 2,400 ပၢႆ တီႈ ၼႃႈလိၵ်ႈ 16 ၼႃႈ ၼဵၵ်းၸၢမ်းသေ ႁႃႁၼ် 5 ပိူင် — ဢၼ်သိမ်းသေ လိုမ်း 41 တီႈ (recipes · logo · favourites) မႄးဝႆႉယဝ်ႉ၊ Imagine brush ၼဵၵ်းလႆႈယဝ်ႉ၊ Video ႁၢင်ႈမၢၵ်ႇ ဝႃႈ Download / Open၊ Path ႁူဝ်ၶေႃႈ ပိုတ်ႇလႆႈယဝ်ႉ၊ Style 880 catalog ဢမ်ႇ error ယဝ်ႉ။ SELF-TEST လႆႈထႅဝ်မႂ်ႇ 4 ထႅဝ်။",kac:"Page 16 hta button 2,400 jan dip chyam nna 5 lam mu ai — makoi nna malap ai shara 41 (recipes · logo · favourites) jahkrat sai, Imagine brush dip mai sai, Video result Download / Open tsun ai, Path ninghtan hpaw mai sai, Style 880 catalog error n byin sai. SELF-TEST hta row nnan 4 lawm ai.",th:"แตะทดสอบปุ่มกว่า 2,400 จุดใน 16 หน้า พบ 5 เรื่อง — 41 จุดที่บันทึกแล้วลืม (recipes · logo · favourites) แก้แล้ว, แปรง Imagine วาดได้แล้ว, ผลวิดีโอบอก Download / Open, หัวข้อในหน้า Path เปิดได้แล้ว, แคตตาล็อก Style 880 ไม่ error แล้ว SELF-TEST เพิ่ม 4 แถว",zh:"在 16 个页面上逐一点击了 2,400 多个控件，发现 5 类问题——41 处“保存了却记不住”（recipes · logo · favourites）已修，Imagine 画笔可以画了，视频结果显示 Download / Open，Path 页的标题可以展开了，Style 880 目录不再报错。SELF-TEST 新增 4 行。",vi:"Đã bấm thử hơn 2.400 nút trên 16 trang, tìm ra 5 việc — 41 chỗ lưu mà quên (recipes · logo · favourites) đã sửa, cọ Imagine vẽ được, kết quả Video báo Download / Open, tiêu đề trang Path mở được, danh mục Style 880 hết lỗi. SELF-TEST thêm 4 dòng.",id:"Lebih dari 2.400 kontrol di 16 halaman diketuk satu per satu, 5 hal ditemukan — 41 tempat yang menyimpan lalu lupa (recipes · logo · favourites) diperbaiki, kuas Imagine bisa menggambar, hasil Video menyebut Download / Open, judul halaman Path bisa dibuka, katalog Style 880 tidak error lagi. SELF-TEST bertambah 4 baris.",ms:"Lebih 2,400 kawalan di 16 halaman diketik satu persatu, 5 perkara ditemui — 41 tempat yang menyimpan lalu lupa (recipes · logo · favourites) dibaiki, berus Imagine boleh melukis, hasil Video menyebut Download / Open, tajuk halaman Path boleh dibuka, katalog Style 880 tidak ralat lagi. SELF-TEST bertambah 4 baris."} },
   { v:"6.76.0", kind:"wf", ref:"reference-scenes",
     t:{my:"Library ထဲက Scene ပုံတွေ — Smart Workflow မှာ တစ်ချက်နှိပ် Scene Preset ကတ်",en:"Library scenes as one-tap Scene Preset cards inside the Smart Workflow wizard",shn:"ႁၢင်ႈ Scene တီႈ Library — ၶႅပ်း Scene Preset ၼဵၵ်းၵမ်းလဵဝ် ၼႂ်း Smart Workflow",kac:"Library kaw na Scene sumla ni — Smart Workflow hta kalang dip Scene Preset card",th:"ฉากจาก Library เป็นการ์ด Scene Preset แตะครั้งเดียวใน Smart Workflow",zh:"Library 场景成为 Smart Workflow 中的一键场景预设卡",vi:"Cảnh trong Library thành thẻ Scene Preset một chạm trong Smart Workflow",id:"Adegan Library menjadi kartu Scene Preset satu ketuk di Smart Workflow",ms:"Adegan Library menjadi kad Scene Preset satu ketik dalam Smart Workflow"},
     s:{my:"ဆရာ တောင်းတဲ့အတိုင်း — Library ထဲက Scene ပုံတွေကို Smart Workflow ရဲ့ scene reference အဖြစ် တစ်ချက်နှိပ်ရုံနဲ့ သုံးလို့ ရပါပြီ။\n\n**ဘယ်မှာ ပေါ်လဲ** — Scene (သို့) Background တောင်းတဲ့ slot တိုင်းအောက်မှာ (Reference Scenes ရဲ့ IMAGE 2၊ BG Replace ရဲ့ New Background၊ Scene composite တွေ) Library ရဲ့ Scene look 64 ခု (Indoor Set · Scene & Set · Background Snoot · Outdoor & Fashion · Birthday Concept) ကတ်တန်း ပေါ်ပါတယ်။ Library page ကို သွားစရာ မလိုတော့ပါ။\n\n**နှိပ်ရင်** — အဲဒီ look ရဲ့ ပုံအပြည့် IMAGE 2 ထဲ ရောက်သွားပြီး၊ prompt အဆုံးမှာ \"SCENE PRESET: Hotel Lobby — Indoor Set\" လို တစ်ကြောင်း ထပ်ပါသွားလို့ model က ဘယ် scene ကို ကြည့်ရမယ်ဆိုတာ သိပါတယ်။ ဆရာရဲ့ prompt စာသားက အတိအကျ အတိုင်း ရှိနေပါတယ်။ Slot ကို ရှင်းလိုက်ရင် အဲဒီစာကြောင်းလည်း ပျောက်ပါတယ်။\n\nWeb App နဲ့ Photoshop Panel နှစ်ခုလုံး — ပုံစာရင်း တစ်ခုတည်း၊ အစီအစဉ် တစ်ခုတည်း။",en:"As the owner asked — the Library's scene looks are now one-tap scene references inside the Smart Workflow wizard.\n\n**Where it appears** — under every slot that asks for a scene or a background (Reference Scenes' IMAGE 2, BG Replace's New Background, the scene composites) a strip of the Library's 64 scene looks is drawn (Indoor Set · Scene & Set · Background Snoot · Outdoor & Fashion · Birthday Concept). No trip to the Library page.\n\n**A tap** — loads that look's full picture into IMAGE 2 and adds one line at the end of the prompt, \"SCENE PRESET: Hotel Lobby — Indoor Set\", so the model is told which place it is looking at; the owner's own prompt text stays word for word. Clearing the slot drops the line.\n\nWeb app and Photoshop panel alike — one list, one order.",shn:"ႁၢင်ႈ Scene တီႈ Library 64 ဢၼ် ဢွၵ်ႇပဵၼ်ၶႅပ်း ၼႂ်း Smart Workflow တႂ်ႈ slot ဢၼ်ထၢမ် scene / background (Reference Scenes IMAGE 2, BG Replace)။ ၼဵၵ်းၵမ်းလဵဝ် ႁၢင်ႈတဵမ်ၶဝ်ႈ IMAGE 2 လႄႈ prompt လႆႈထႅဝ် \"SCENE PRESET: …\"။ Web App လႄႈ Panel မိူၼ်ၵၼ်။",kac:"Library kaw na Scene sumla 64 gaw Smart Workflow hta scene / background slot npu (Reference Scenes IMAGE 2, BG Replace) card hku pru wa sai. Kalang dip yang sumla kaba IMAGE 2 hta shang nna prompt hta \"SCENE PRESET: …\" laika langai lawm ai. Web App hte Panel maren sha.",th:"ฉากจาก Library 64 แบบปรากฏเป็นการ์ดใต้ช่องที่ขอฉาก/พื้นหลังใน Smart Workflow (IMAGE 2 ของ Reference Scenes, BG Replace) แตะครั้งเดียว รูปเต็มเข้า IMAGE 2 และ prompt ได้บรรทัด \"SCENE PRESET: …\" เว็บแอปและแผงเหมือนกัน",zh:"Library 的 64 个场景外观以卡片形式出现在 Smart Workflow 中要求场景/背景的槽位下方（Reference Scenes 的 IMAGE 2、BG Replace）。一键将完整图片放入 IMAGE 2，并在提示词末尾加上 \"SCENE PRESET: …\"。网页版与面板一致。",vi:"64 cảnh trong Library hiện thành thẻ dưới ô yêu cầu cảnh/nền trong Smart Workflow (IMAGE 2 của Reference Scenes, BG Replace). Một chạm đưa ảnh đầy đủ vào IMAGE 2 và thêm dòng \"SCENE PRESET: …\" vào cuối prompt. Web và bảng giống nhau.",id:"64 adegan Library muncul sebagai kartu di bawah slot yang meminta adegan/latar di Smart Workflow (IMAGE 2 Reference Scenes, BG Replace). Satu ketuk memuat gambar penuh ke IMAGE 2 dan menambah baris \"SCENE PRESET: …\" di akhir prompt. Web dan panel sama.",ms:"64 adegan Library muncul sebagai kad di bawah slot yang meminta adegan/latar dalam Smart Workflow (IMAGE 2 Reference Scenes, BG Replace). Satu ketik memuatkan gambar penuh ke IMAGE 2 dan menambah baris \"SCENE PRESET: …\" di hujung prompt. Web dan panel sama."} },
@@ -23287,6 +23290,9 @@ function st880Load(cb){
   fetch("lib/styles880/contract.json").then(function(r){ return r.json(); })
     .then(function(k){ ST880.contract=k; }).catch(function(){});
   fetch("lib/styles880/catalog.json").then(function(r){ return r.json(); }).then(function(a){
+    /* 6.77.0 — an answer that is not a list (an error page, an empty object) used to be stored as the
+       catalog and then thrown on by every filter; it is a failed load, and says so once */
+    if(!Array.isArray(a)) throw new Error("styles880 catalog is not a list");
     ST880.list=a; ST880.map={};
     a.forEach(function(r){ ST880.map[r.id]=r; });
     ST880.loading=false;
@@ -29556,7 +29562,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.76.0";
+var APP_VER="6.77.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -30099,6 +30105,53 @@ var IMAGINE = (function(){
   var D = IMAGINE_DATA;
   var H = null;                       /* the host adapter (web app or Photoshop panel) */
   var LS_KEY = "hnk_ws_imagine_v1", MAX_PHOTOS = 11, DESC_MAX = 4000;
+  /* 6.77.0 — WHERE THE POINTER IS, WITH OR WITHOUT A RULER. A browser answers
+     getBoundingClientRect and every pointer maps onto a picture through it. The
+     Photoshop panel's renderer hands script no geometry at all (rect · client ·
+     scroll · offset all 0 on the owner's 6.137.0 photographs), and until this
+     wave the brush (Object Remove · Object Add · Text & Sign Edit) and the two
+     Before | After sliders read that zero, bailed out, and drew nothing — a
+     control on screen that could not be used. Two instruments remain there:
+     the event's own offsetX/offsetY (the renderer's hit-test, in the TARGET's
+     CSS pixels — so only trusted when the target is the element asked about),
+     and the cascade, which getComputedStyle echoes without any layout: the
+     padding, border and margin each ancestor was given, in px, taken off
+     window.innerWidth. A browser never reaches the fallback. */
+  function imCssPx(cs, prop){ var v=parseFloat(cs && cs[prop]); return isFinite(v) ? v : 0; }
+  function imStageWidth(el){
+    if(H && typeof H.stageWidth==="function"){ try{ var hw=H.stageWidth(el); if(hw>0) return hw; }catch(e){} }
+    var vw=(typeof window!=="undefined" && window.innerWidth)||0; if(!(vw>0)) return 0;
+    var n=el, pad=0, guard=0;
+    while(n && n.nodeType===1 && guard++<40){
+      var cs=null; try{ cs=getComputedStyle(n); }catch(e){ cs=null; }
+      if(cs) pad+=imCssPx(cs,"paddingLeft")+imCssPx(cs,"paddingRight")+imCssPx(cs,"borderLeftWidth")+imCssPx(cs,"borderRightWidth")+imCssPx(cs,"marginLeft")+imCssPx(cs,"marginRight");
+      if(n===document.body) break;
+      n=n.parentNode;
+    }
+    return Math.max(80, vw-pad);
+  }
+  function imRect(el){ var r=null; try{ r=el.getBoundingClientRect(); }catch(e){ r=null; } return (r && r.width>0 && r.height>0) ? r : null; }
+  function imPt(ev){ var p=(ev.touches&&ev.touches[0])||ev; return [p.clientX, p.clientY]; }
+  function imClamp(v){ return Math.max(0, Math.min(1, v)); }
+  /* absolute position inside el, normalized 0..1 (the brush canvas) */
+  function imNorm(el, ev){
+    var c=imPt(ev), r=imRect(el);
+    if(r) return [imClamp((c[0]-r.left)/r.width), imClamp((c[1]-r.top)/r.height)];
+    if(ev.target!==el) return null;
+    var ox=ev.offsetX, oy=ev.offsetY;
+    if(typeof ox!=="number" || !isFinite(ox) || typeof oy!=="number" || !isFinite(oy)) return null;
+    var w=el.clientWidth||imStageWidth(el); if(!(w>0)) return null;
+    var h=el.clientHeight||0;
+    if(!(h>0)){ var ar=el.__imAspect||0; if(!(ar>0)) return null; h=w/ar; }
+    return [imClamp(ox/w), imClamp(oy/h)];
+  }
+  /* a horizontal slider: absolute through the rect, else relative to where the drag began */
+  function imDragX(el, ev, startPct, downX){
+    var c=imPt(ev), r=imRect(el);
+    if(r) return Math.max(0, Math.min(100, (c[0]-r.left)/r.width*100));
+    var w=el.clientWidth||imStageWidth(el); if(!(w>0)) return null;
+    return Math.max(0, Math.min(100, startPct + (c[0]-downX)/w*100));
+  }
   var S = { tool:null, model:"", size:"", tab:"tpl", preset:{}, desc:{}, photos:[], cur:0, busy:false, job:null, split:50, status:"", ref:{}, markMode:false, brush:1 };   /* 6.31.0 — ref: the Reference Card picture per tool (never saved to the device); 6.32.0 — markMode/brush: the brush tools' red paint */
   var root = null, refs = {};
   /* 6.32.0 — the brush needs a 2D canvas (the photo + the red strokes are composited into IMAGE 1 before the call); a host without one keeps the templates and words */
@@ -30199,8 +30252,8 @@ var IMAGINE = (function(){
     aft.onload=syncW; setTimeout(syncW,0); hubSyncs.push(syncW);
     var setHub=function(v){ v=Math.round(Math.max(0,Math.min(100,v))); S.hubSplit=S.hubSplit||{}; S.hubSplit[tool.id]=v; top.style.width=v+"%"; line.style.left=v+"%"; knob.style.left=v+"%"; };
     var drag=null;
-    var at=function(ev){ var r=art.getBoundingClientRect(); if(!r.width) return; var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX; setHub((cx-r.left)/r.width*100); };
-    var down=function(ev){ if(ev.button && ev.button!==0) return; drag={ x:(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, t:Date.now(), moved:false }; c.classList.add("lift"); if(ev.pointerId!=null && art.setPointerCapture){ try{ art.setPointerCapture(ev.pointerId); }catch(e){} } };
+    var at=function(ev){ var v=imDragX(art, ev, drag ? drag.p : split, drag ? drag.x : 0); if(v===null) return; setHub(v); };
+    var down=function(ev){ if(ev.button && ev.button!==0) return; drag={ x:(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, t:Date.now(), moved:false, p:(S.hubSplit && typeof S.hubSplit[tool.id]==="number") ? S.hubSplit[tool.id] : split }; c.classList.add("lift"); if(ev.pointerId!=null && art.setPointerCapture){ try{ art.setPointerCapture(ev.pointerId); }catch(e){} } };
     var move=function(ev){ if(!drag) return; var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX; if(!drag.moved && Math.abs(cx-drag.x)<6) return; drag.moved=true; at(ev); if(ev.cancelable) ev.preventDefault(); };
     var up=function(ev){ if(!drag) return; var d=drag; drag=null; setTimeout(function(){ c.classList.remove("lift"); },220); if(!d.moved && Date.now()-d.t<600){ ev.stopPropagation(); go(); } };
     if(window.PointerEvent){ art.onpointerdown=down; art.onpointermove=move; art.onpointerup=up; art.onpointercancel=function(){ drag=null; c.classList.remove("lift"); }; }
@@ -30314,10 +30367,10 @@ var IMAGINE = (function(){
       rng.setAttribute("aria-label", t("before")+" / "+t("after"));
       rng.oninput=function(){ setSplit(parseInt(this.value,10)); }; rng.onchange=rng.oninput;
       wrap.appendChild(rng); refs.rng=rng;
-      var drag=false;
-      var at=function(ev){ var r=cmp.getBoundingClientRect(); if(!r.width) return; var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX; setSplit(Math.round(Math.max(0,Math.min(100,(cx-r.left)/r.width*100)))); };
-      cmp.onpointerdown=function(ev){ drag=true; at(ev); }; cmp.onpointermove=function(ev){ if(drag) at(ev); };
-      cmp.onpointerup=cmp.onpointercancel=cmp.onpointerleave=function(){ drag=false; };
+      var drag=null;
+      var at=function(ev){ var v=imDragX(cmp, ev, drag ? drag.p : S.split, drag ? drag.x : 0); if(v===null) return; setSplit(Math.round(v)); };
+      cmp.onpointerdown=function(ev){ drag={ x:imPt(ev)[0], p:S.split }; at(ev); }; cmp.onpointermove=function(ev){ if(drag) at(ev); };
+      cmp.onpointerup=cmp.onpointercancel=cmp.onpointerleave=function(){ drag=null; };
     }
     if(cur.status==="busy"){
       var ov = el("div","im-busy"); ov.appendChild(el("span","im-spin")); var bt=el("span","im-busy-t", t("working",{s:cur.sec||0})); ov.appendChild(bt); cmp.appendChild(ov); refs.busyT=bt;
@@ -30437,11 +30490,18 @@ var IMAGINE = (function(){
     var wrap = el("div","im-markwrap"+(live?" on":"")); wrap.id="imMarkWrap";
     var im = el("img"); im.alt=""; im.src=p.dataUrl; wrap.appendChild(im);
     var cv = document.createElement("canvas"); cv.className="im-markcv"+(live?"":" ro"); cv.id="imMarkCv"; wrap.appendChild(cv); refs.markCv=cv;
-    var redraw=function(){ var w=wrap.clientWidth||im.clientWidth, h=im.clientHeight||wrap.clientHeight; if(!w||!h) return; if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } var x=cv.getContext("2d"); x.clearRect(0,0,w,h); paintStrokes(x, p.strokes||[], w, h, 0.55); };
+    var redraw=function(){
+      var w=wrap.clientWidth||im.clientWidth||0, h=im.clientHeight||wrap.clientHeight||0;
+      /* 6.77.0 — no geometry (Photoshop): the buffer takes the photo's own size (capped), the strokes are
+         normalized so the buffer can be any size, and CSS scales the canvas over the picture */
+      var nw=im.naturalWidth||0, nh=im.naturalHeight||0;
+      if(nw>0 && nh>0) cv.__imAspect=nw/nh;
+      if(!w||!h){ if(!(nw>0 && nh>0)) return; var sc=Math.min(1, 1600/nw); w=Math.round(nw*sc); h=Math.round(nh*sc); }
+      if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } var x=cv.getContext("2d"); x.clearRect(0,0,w,h); paintStrokes(x, p.strokes||[], w, h, 0.55); };
     im.onload=redraw; setTimeout(redraw,0); refs.markRedraw=redraw;
     if(live){
       var cur=null;
-      var at=function(ev){ var r=cv.getBoundingClientRect(); if(!r.width||!r.height) return null; var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, cy=(ev.touches&&ev.touches[0])?ev.touches[0].clientY:ev.clientY; return [Math.max(0,Math.min(1,(cx-r.left)/r.width)), Math.max(0,Math.min(1,(cy-r.top)/r.height))]; };
+      var at=function(ev){ return imNorm(cv, ev); };
       var down=function(ev){ if(ev.button && ev.button!==0) return; var q=at(ev); if(!q) return; p.strokes=p.strokes||[]; cur={ r:BRUSH[S.brush]||BRUSH[1], pts:[q] }; p.strokes.push(cur); redraw(); if(ev.pointerId!=null && cv.setPointerCapture){ try{ cv.setPointerCapture(ev.pointerId); }catch(e){} } if(ev.cancelable) ev.preventDefault(); };
       var move=function(ev){ if(!cur) return; var q=at(ev); if(!q) return; var last=cur.pts[cur.pts.length-1]; if(Math.abs(q[0]-last[0])+Math.abs(q[1]-last[1])<0.002) return; cur.pts.push(q); redraw(); if(ev.cancelable) ev.preventDefault(); };
       var up=function(){ if(!cur) return; cur=null; markChanged(); };
@@ -30626,6 +30686,8 @@ var IMAGINE = (function(){
     /* 6.32.0 — the brush: paint mode on/off, a stroke by hand (tests), undo, clear, and the composite the model receives */
     mark:function(on){ S.markMode = (on==null) ? !S.markMode : !!on; render(); }, addStroke:addStroke, undoMark:undoMark, clearMark:clearMark,
     composite:function(i){ return composite(S.photos[i==null?S.cur:i]); }, canMark:CAN_MARK,
+    /* 6.77.0 — the strokes as stored (normalized 0..1), so a test can prove where a pointer landed */
+    strokes:function(i){ var p=S.photos[i==null?S.cur:i]; return p ? (p.strokes||[]).map(function(s){ return { r:s.r, pts:(s.pts||[]).slice() }; }) : []; },
     state:S, data:D, MAX_PHOTOS:MAX_PHOTOS, DESC_MAX:DESC_MAX };
 })();
 /* ---- /IMAGINE_MODULE ---- */

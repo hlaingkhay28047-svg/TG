@@ -228,7 +228,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.147.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.148.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.png" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -1505,7 +1505,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.147.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.148.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
@@ -1565,6 +1565,13 @@
 
 </div>
 
+<!-- v6.77.0 / panel 6.148.0 — BEFORE EVERYTHING: Web Storage for a host that has
+     none. Photoshop's renderer has no working localStorage (the owner's 6.145.0
+     photographs), and forty-one call sites lifted from the web app write there in
+     silence — recipes, the watermark logo, favourites, Imagine's photos. When the
+     host's own storage does not round-trip a value, this installs one over the
+     plugin's data folder; in a browser it does nothing. It depends on nothing. -->
+<script src="src/app/uxp-local-storage.js"></script>
 <!-- v6.107.0 — FIRST, on purpose: this installs the error, rejection and
      resource-load hooks, so an exception thrown by any script below is caught
      while there is still something to catch. It depends on nothing. -->

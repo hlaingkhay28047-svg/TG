@@ -2294,6 +2294,12 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 /* app .hist video: the Video page's 64px recent-result tiles, black plate */
 .apg .hist video { width: 64px; height: 64px; margin: 0 8px 8px 0; border-radius: 9px; border: 1px solid var(--line-soft); background-color: #000; }
 .apg .hist video.sel { border-color: var(--accent); }
+/* v6.77.0 — a take in a renderer that cannot play video: the same 64px tile,
+   numbered, so the strip still selects and deletes like the app's */
+.apg .hist .hvt { display: inline-block; width: 64px; height: 64px; margin: 0 8px 8px 0; border-radius: 9px; border: 1px solid var(--line-soft);
+  background-color: #000; color: var(--text); font-size: 11px; font-weight: 800; line-height: 64px; text-align: center; cursor: pointer; }
+.apg .hist .hvt.sel { border-color: var(--accent); }
+.apg .vid-noinline { margin-top: 8px; line-height: 1.6; }
 /* app .subh + .chainrow: "continue editing this result" heading + workflow chips */
 .apg .subh { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 12px 0 2px; }
 .apg .chainrow { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 10px; }
