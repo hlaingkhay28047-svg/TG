@@ -922,6 +922,10 @@ const I18N = {
     rh_err_timeout: "The generation took too long \u2014 RunningHub did not answer in time. Try again, or reduce the size or number of variants.",
     rh_err_rate_limited: "RunningHub Enterprise is busy right now \u2014 wait a moment and try again.",
     rh_err_invalid_key: "RunningHub refused the key \u2014 check it under Setup \u25b8 RunningHub Enterprise.",
+    /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
+    wf_scene_presets: "Scene presets from the Library \u2014 one tap",
+    wf_scene_loading: "Loading the scene\u2026",
+    wf_scene_fail: "Couldn\u2019t load this Library scene \u2014 check your internet.",
     err_timeout: "Request timed out \u2014 the server took too long; please try again \u00b7 \u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_generic: "The request could not be completed \u2014 please try again",
     err_img: "No usable image was produced \u2014 please try again",
@@ -1573,6 +1577,10 @@ const I18N = {
     rh_err_timeout: "ပုံထုတ်တာ ကြာလွန်းပါတယ် — RunningHub က အချိန်မီ မဖြေပါ။ ပြန်ကြိုးစားပါ (သို့) အရွယ်အစား / အရေအတွက် လျှော့ပါ။",
     rh_err_rate_limited: "RunningHub Enterprise အလုပ်များနေပါတယ် — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ။",
     rh_err_invalid_key: "RunningHub က key ကို လက်မခံပါ — Setup ▸ RunningHub Enterprise မှာ key ပြန်စစ်ပါ။",
+    /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
+    wf_scene_presets: "Library ထဲက Scene Preset — တစ်ချက်နှိပ်ရုံ",
+    wf_scene_loading: "Scene ယူနေသည်…",
+    wf_scene_fail: "Library ပုံ မယူနိုင်ပါ — အင်တာနက် စစ်ပါ",
     err_timeout: "\u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a\u101e\u103d\u102c\u1038\u1015\u103c\u102e \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_generic: "\u1010\u1031\u102c\u1004\u103a\u1038\u1006\u102d\u102f\u1019\u103e\u102f \u1019\u1015\u103c\u102e\u1038\u1006\u102f\u1036\u1038\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_img: "\u1021\u101e\u102f\u1036\u1038\u101d\u1004\u103a\u1010\u1032\u1037 \u1015\u102f\u1036 \u1019\u101b\u101b\u103e\u102d\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
@@ -2224,6 +2232,10 @@ const I18N = {
     rh_err_timeout: "ႁဵတ်းႁၢင်ႈႁိုင်ပူၼ်ႉ — RunningHub ဢမ်ႇတွပ်ႇတၼ်း။ ၶိုၼ်းၸၢမ်း ဢမ်ႇၼၼ် လူတ်းယွမ်း ၶၼၢတ်ႈ / ၸမ်ႉ။",
     rh_err_rate_limited: "RunningHub Enterprise ယုင်ႈယူႇ — ပႂ်ႉၵမ်းၼိုင်ႈသေ ၶိုၼ်းၸၢမ်း။",
     rh_err_invalid_key: "RunningHub ဢမ်ႇႁပ်ႉ key — ၵူတ်ႇထတ်းတီႈ Setup ▸ RunningHub Enterprise။",
+    /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
+    wf_scene_presets: "Scene preset တီႈ Library — ၼဵၵ်းၵမ်းလဵဝ်",
+    wf_scene_loading: "တိုၵ်ႉဢဝ် scene…",
+    wf_scene_fail: "ဢဝ်ႁၢင်ႈ Library ဢမ်ႇလႆႈ — ၵူတ်ႇထတ်း internet",
     err_timeout: "\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1010\u1035\u1019\u103a \u2014 server \u1078\u1082\u103a\u1089\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1081\u102d\u102f\u1004\u103a\u1015\u1030\u107c\u103a\u1089; \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_generic: "\u1081\u1035\u1010\u103a\u1038\u1022\u1019\u103a\u1087\u101a\u101d\u103a\u1089 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_img: "\u1022\u1019\u103a\u1087\u101c\u1086\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u107c\u103a\u1078\u1082\u103a\u1089\u101c\u1086\u1088 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
@@ -2873,6 +2885,10 @@ const I18N = {
     rh_err_timeout: "Sumla shapraw na na ai — RunningHub aten hta n htai ai. Bai chyam yu u, n rai yang kaba / nsen hpe yawm u.",
     rh_err_rate_limited: "RunningHub Enterprise bungli law nga ai — jahkring la nna bai chyam yu u.",
     rh_err_invalid_key: "RunningHub gaw key hpe n hkap la ai — Setup ▸ RunningHub Enterprise hta bai yu u.",
+    /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
+    wf_scene_presets: "Library kaw na Scene preset — kalang dip u",
+    wf_scene_loading: "Scene la nga ai…",
+    wf_scene_fail: "Library sumla n la lu ai — internet yu u",
     err_timeout: "Ten hpring mat sai \u2014 server grau na ai; bai chyam yu u",
     err_generic: "Ndai lam n ngut lu ai \u2014 bai chyam yu u",
     err_img: "Lang mai ai sumla n pru ai \u2014 bai chyam yu u",
@@ -3522,6 +3538,10 @@ const I18N = {
     rh_err_timeout: "สร้างภาพนานเกินไป — RunningHub ไม่ตอบทันเวลา ลองใหม่ หรือลดขนาด / จำนวนภาพ",
     rh_err_rate_limited: "RunningHub Enterprise กำลังยุ่ง — รอสักครู่แล้วลองใหม่",
     rh_err_invalid_key: "RunningHub ไม่รับคีย์นี้ — ตรวจสอบที่ Setup ▸ RunningHub Enterprise",
+    /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
+    wf_scene_presets: "พรีเซ็ตฉากจาก Library — แตะครั้งเดียว",
+    wf_scene_loading: "กำลังโหลดฉาก…",
+    wf_scene_fail: "โหลดฉากจาก Library ไม่ได้ — ตรวจสอบอินเทอร์เน็ต",
     err_timeout: "\u0e04\u0e33\u0e02\u0e2d\u0e2b\u0e21\u0e14\u0e40\u0e27\u0e25\u0e32 \u2014 \u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e43\u0e0a\u0e49\u0e40\u0e27\u0e25\u0e32\u0e19\u0e32\u0e19\u0e40\u0e01\u0e34\u0e19\u0e44\u0e1b \u0e01\u0e23\u0e38\u0e13\u0e32\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
     err_generic: "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e14\u0e33\u0e40\u0e19\u0e34\u0e19\u0e01\u0e32\u0e23\u0e15\u0e32\u0e21\u0e04\u0e33\u0e02\u0e2d\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
     err_img: "\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
@@ -4171,6 +4191,10 @@ const I18N = {
     rh_err_timeout: "生成耗时过长 — RunningHub 未及时响应。请重试，或减小尺寸 / 数量。",
     rh_err_rate_limited: "RunningHub Enterprise 正忙 — 请稍候再试。",
     rh_err_invalid_key: "RunningHub 拒绝了该 key — 请到 Setup ▸ RunningHub Enterprise 检查。",
+    /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
+    wf_scene_presets: "来自 Library 的场景预设 — 一键",
+    wf_scene_loading: "正在加载场景…",
+    wf_scene_fail: "无法加载此 Library 场景 — 请检查网络",
     err_timeout: "\u8bf7\u6c42\u8d85\u65f6 \u2014 \u670d\u52a1\u5668\u8017\u65f6\u8fc7\u957f\uff0c\u8bf7\u91cd\u8bd5",
     err_generic: "\u8bf7\u6c42\u672a\u80fd\u5b8c\u6210 \u2014 \u8bf7\u91cd\u8bd5",
     err_img: "\u672a\u751f\u6210\u53ef\u7528\u7684\u56fe\u7247 \u2014 \u8bf7\u91cd\u8bd5",
@@ -4820,6 +4844,10 @@ const I18N = {
     rh_err_timeout: "Tạo ảnh quá lâu — RunningHub không trả lời kịp. Thử lại, hoặc giảm kích thước / số lượng.",
     rh_err_rate_limited: "RunningHub Enterprise đang bận — đợi một lát rồi thử lại.",
     rh_err_invalid_key: "RunningHub từ chối key — kiểm tra tại Setup ▸ RunningHub Enterprise.",
+    /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
+    wf_scene_presets: "Preset cảnh từ Library — một chạm",
+    wf_scene_loading: "Đang tải cảnh…",
+    wf_scene_fail: "Không tải được cảnh từ Library — kiểm tra mạng",
     err_timeout: "Y\u00eau c\u1ea7u qu\u00e1 h\u1ea1n \u2014 m\u00e1y ch\u1ee7 ph\u1ea3n h\u1ed3i qu\u00e1 l\u00e2u; vui l\u00f2ng th\u1eed l\u1ea1i",
     err_generic: "Kh\u00f4ng th\u1ec3 ho\u00e0n t\u1ea5t y\u00eau c\u1ea7u \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
     err_img: "Kh\u00f4ng t\u1ea1o \u0111\u01b0\u1ee3c \u1ea3nh d\u00f9ng \u0111\u01b0\u1ee3c \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
@@ -5469,6 +5497,10 @@ const I18N = {
     rh_err_timeout: "Pembuatan terlalu lama — RunningHub tidak menjawab tepat waktu. Coba lagi, atau kurangi ukuran / jumlah.",
     rh_err_rate_limited: "RunningHub Enterprise sedang sibuk — tunggu sebentar lalu coba lagi.",
     rh_err_invalid_key: "RunningHub menolak key — periksa di Setup ▸ RunningHub Enterprise.",
+    /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
+    wf_scene_presets: "Preset adegan dari Library — satu ketuk",
+    wf_scene_loading: "Memuat adegan…",
+    wf_scene_fail: "Tidak bisa memuat adegan Library — periksa internet",
     err_timeout: "Permintaan kehabisan waktu \u2014 server terlalu lama merespons; silakan coba lagi",
     err_generic: "Permintaan tidak dapat diselesaikan \u2014 silakan coba lagi",
     err_img: "Tidak ada gambar yang dapat dipakai \u2014 silakan coba lagi",
@@ -6118,6 +6150,10 @@ const I18N = {
     rh_err_timeout: "Penjanaan terlalu lama — RunningHub tidak menjawab tepat pada masanya. Cuba lagi, atau kurangkan saiz / bilangan.",
     rh_err_rate_limited: "RunningHub Enterprise sibuk sekarang — tunggu sebentar dan cuba lagi.",
     rh_err_invalid_key: "RunningHub menolak key — semak di Setup ▸ RunningHub Enterprise.",
+    /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
+    wf_scene_presets: "Preset adegan dari Library — satu ketik",
+    wf_scene_loading: "Memuatkan adegan…",
+    wf_scene_fail: "Tidak dapat memuatkan adegan Library — semak internet",
     err_timeout: "Permintaan tamat masa \u2014 pelayan mengambil masa terlalu lama; sila cuba lagi",
     err_generic: "Permintaan tidak dapat diselesaikan \u2014 sila cuba lagi",
     err_img: "Tiada imej yang boleh digunakan dihasilkan \u2014 sila cuba lagi",
@@ -6501,7 +6537,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.146.1";
+const PANEL_VERSION = "6.147.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);

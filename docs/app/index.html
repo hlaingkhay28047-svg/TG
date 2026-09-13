@@ -580,6 +580,15 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 .wslot.filled{border-style:solid}
 .wslot .th{width:64px;height:64px;border-radius:9px;background:var(--ink);overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:22px}
 .wslot .th img{width:100%;height:100%;object-fit:contain}
+/* v6.76.0 — the Library scene presets under a scene slot */
+.wscene{margin:-4px 0 12px}
+.wscene-h{font-size:12px;color:var(--muted);margin:0 0 6px}
+.wscene-strip{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain;padding-bottom:4px}
+.wscene-tile{flex:none;width:84px;padding:0;border:2px solid transparent;border-radius:12px;background:var(--panel-2);cursor:pointer;text-align:center;color:var(--text)}
+.wscene-tile img{display:block;width:84px;height:105px;object-fit:cover;border-radius:10px}
+.wscene-tile .wscene-t{display:block;font-size:10px;line-height:1.25;padding:4px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wscene-tile.on{border-color:var(--gold)}
+.wscene-tile.busy{opacity:.6}
 .wslot .th video{width:100%;height:100%;object-fit:cover}
 .wslot .nm{font-size:13px;font-weight:800}
 .wslot .rq{font-size:11px;color:var(--gold-hi)}
@@ -5273,6 +5282,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.76.0", kind:"wf", ref:"reference-scenes",
+    t:{my:"Library ထဲက Scene ပုံတွေ — Smart Workflow မှာ တစ်ချက်နှိပ် Scene Preset ကတ်",en:"Library scenes as one-tap Scene Preset cards inside the Smart Workflow wizard",shn:"ႁၢင်ႈ Scene တီႈ Library — ၶႅပ်း Scene Preset ၼဵၵ်းၵမ်းလဵဝ် ၼႂ်း Smart Workflow",kac:"Library kaw na Scene sumla ni — Smart Workflow hta kalang dip Scene Preset card",th:"ฉากจาก Library เป็นการ์ด Scene Preset แตะครั้งเดียวใน Smart Workflow",zh:"Library 场景成为 Smart Workflow 中的一键场景预设卡",vi:"Cảnh trong Library thành thẻ Scene Preset một chạm trong Smart Workflow",id:"Adegan Library menjadi kartu Scene Preset satu ketuk di Smart Workflow",ms:"Adegan Library menjadi kad Scene Preset satu ketik dalam Smart Workflow"},
+    s:{my:"ဆရာ တောင်းတဲ့အတိုင်း — Library ထဲက Scene ပုံတွေကို Smart Workflow ရဲ့ scene reference အဖြစ် တစ်ချက်နှိပ်ရုံနဲ့ သုံးလို့ ရပါပြီ။\n\n**ဘယ်မှာ ပေါ်လဲ** — Scene (သို့) Background တောင်းတဲ့ slot တိုင်းအောက်မှာ (Reference Scenes ရဲ့ IMAGE 2၊ BG Replace ရဲ့ New Background၊ Scene composite တွေ) Library ရဲ့ Scene look 64 ခု (Indoor Set · Scene & Set · Background Snoot · Outdoor & Fashion · Birthday Concept) ကတ်တန်း ပေါ်ပါတယ်။ Library page ကို သွားစရာ မလိုတော့ပါ။\n\n**နှိပ်ရင်** — အဲဒီ look ရဲ့ ပုံအပြည့် IMAGE 2 ထဲ ရောက်သွားပြီး၊ prompt အဆုံးမှာ \"SCENE PRESET: Hotel Lobby — Indoor Set\" လို တစ်ကြောင်း ထပ်ပါသွားလို့ model က ဘယ် scene ကို ကြည့်ရမယ်ဆိုတာ သိပါတယ်။ ဆရာရဲ့ prompt စာသားက အတိအကျ အတိုင်း ရှိနေပါတယ်။ Slot ကို ရှင်းလိုက်ရင် အဲဒီစာကြောင်းလည်း ပျောက်ပါတယ်။\n\nWeb App နဲ့ Photoshop Panel နှစ်ခုလုံး — ပုံစာရင်း တစ်ခုတည်း၊ အစီအစဉ် တစ်ခုတည်း။",en:"As the owner asked — the Library's scene looks are now one-tap scene references inside the Smart Workflow wizard.\n\n**Where it appears** — under every slot that asks for a scene or a background (Reference Scenes' IMAGE 2, BG Replace's New Background, the scene composites) a strip of the Library's 64 scene looks is drawn (Indoor Set · Scene & Set · Background Snoot · Outdoor & Fashion · Birthday Concept). No trip to the Library page.\n\n**A tap** — loads that look's full picture into IMAGE 2 and adds one line at the end of the prompt, \"SCENE PRESET: Hotel Lobby — Indoor Set\", so the model is told which place it is looking at; the owner's own prompt text stays word for word. Clearing the slot drops the line.\n\nWeb app and Photoshop panel alike — one list, one order.",shn:"ႁၢင်ႈ Scene တီႈ Library 64 ဢၼ် ဢွၵ်ႇပဵၼ်ၶႅပ်း ၼႂ်း Smart Workflow တႂ်ႈ slot ဢၼ်ထၢမ် scene / background (Reference Scenes IMAGE 2, BG Replace)။ ၼဵၵ်းၵမ်းလဵဝ် ႁၢင်ႈတဵမ်ၶဝ်ႈ IMAGE 2 လႄႈ prompt လႆႈထႅဝ် \"SCENE PRESET: …\"။ Web App လႄႈ Panel မိူၼ်ၵၼ်။",kac:"Library kaw na Scene sumla 64 gaw Smart Workflow hta scene / background slot npu (Reference Scenes IMAGE 2, BG Replace) card hku pru wa sai. Kalang dip yang sumla kaba IMAGE 2 hta shang nna prompt hta \"SCENE PRESET: …\" laika langai lawm ai. Web App hte Panel maren sha.",th:"ฉากจาก Library 64 แบบปรากฏเป็นการ์ดใต้ช่องที่ขอฉาก/พื้นหลังใน Smart Workflow (IMAGE 2 ของ Reference Scenes, BG Replace) แตะครั้งเดียว รูปเต็มเข้า IMAGE 2 และ prompt ได้บรรทัด \"SCENE PRESET: …\" เว็บแอปและแผงเหมือนกัน",zh:"Library 的 64 个场景外观以卡片形式出现在 Smart Workflow 中要求场景/背景的槽位下方（Reference Scenes 的 IMAGE 2、BG Replace）。一键将完整图片放入 IMAGE 2，并在提示词末尾加上 \"SCENE PRESET: …\"。网页版与面板一致。",vi:"64 cảnh trong Library hiện thành thẻ dưới ô yêu cầu cảnh/nền trong Smart Workflow (IMAGE 2 của Reference Scenes, BG Replace). Một chạm đưa ảnh đầy đủ vào IMAGE 2 và thêm dòng \"SCENE PRESET: …\" vào cuối prompt. Web và bảng giống nhau.",id:"64 adegan Library muncul sebagai kartu di bawah slot yang meminta adegan/latar di Smart Workflow (IMAGE 2 Reference Scenes, BG Replace). Satu ketuk memuat gambar penuh ke IMAGE 2 dan menambah baris \"SCENE PRESET: …\" di akhir prompt. Web dan panel sama.",ms:"64 adegan Library muncul sebagai kad di bawah slot yang meminta adegan/latar dalam Smart Workflow (IMAGE 2 Reference Scenes, BG Replace). Satu ketik memuatkan gambar penuh ke IMAGE 2 dan menambah baris \"SCENE PRESET: …\" di hujung prompt. Web dan panel sama."} },
   { v:"6.75.1", kind:"page", ref:"pgImagine",
     t:{my:"Photoshop Panel — Imagine ရဲ့ ပုံရွေး sheet စာသား ၃ ခု ပြင်ပြီ",en:"Photoshop Panel — three lines on Imagine's photo sheet, corrected",shn:"Photoshop Panel — လိၵ်ႈ 3 ထႅဝ် ၼိူဝ် sheet လိူၵ်ႈႁၢင်ႈ Imagine မႄးယဝ်ႉ",kac:"Photoshop Panel — Imagine sumla lata sheet a laika 3 hpe jahkrak sai",th:"Photoshop Panel — แก้ข้อความ 3 บรรทัดบนแผ่นเลือกรูปของ Imagine",zh:"Photoshop Panel — Imagine 选图面板的三行文字已更正",vi:"Photoshop Panel — sửa ba dòng chữ trên bảng chọn ảnh của Imagine",id:"Photoshop Panel — tiga baris pada lembar pilih foto Imagine diperbaiki",ms:"Photoshop Panel — tiga baris pada helaian pilih gambar Imagine dibetulkan"},
     s:{my:"ဆရာ ပို့တဲ့ 6.146.0 screenshot ၅ ပုံမှာ Imagine က ပထမအကြိမ်ကတည်းက ပေါ်နေပြီ၊ Pictures 247 ok · 0 failed၊ glyph ruler \"~\" ဖြစ်နေပြီ။ ပုံရွေး sheet မှာပဲ စာသား ၃ ခု မှားနေတယ် — (၁) ခေါင်းစဉ်က \"ဘယ်ကယူမလဲ — ဘယ်ကယူမလဲ\" လို့ နှစ်ခါ ပြနေတာ၊ (၂) ကွန်ပျူတာပေါ်က Panel မှာ \"ဖုန်းထဲက ပုံတင်မယ်\" လို့ ရေးထားတာ (အခု \"ဒီစက်ထဲက ဖိုင် ရွေးမယ်\")၊ (၃) Layer ကို ပုံအဖြစ် ထည့်တာကို \"reference အဖြစ် ထည့်ပြီ\" လို့ ပြောနေတာ (အခု \"ပုံအဖြစ် ထည့်ပြီ\"၊ Reference Card ကမှ reference လို့ ပြောပါမယ်)။",en:"The owner's five screenshots of 6.146.0: Imagine draws on the first open, Pictures 247 ok · 0 failed, the glyph ruler reads \"~\". Three lines on the photo sheet were wrong — the heading read \"Where from? — Where from?\"; a computer panel offered \"upload from your phone\" (now \"choose a file on this device\"); and a layer added as the photo was announced as a reference (now \"added as the photo\"; only the Reference Card says reference).",shn:"Imagine ပိုတ်ႇပွၵ်ႈဢွၼ်တၢင်းၵေႃႈဢွၵ်ႇယဝ်ႉ၊ Pictures 247 ok။ လိၵ်ႈ 3 ထႅဝ်ၼိူဝ် sheet လိူၵ်ႈႁၢင်ႈ မႄးယဝ်ႉ: ႁူဝ်ၶေႃႈဢမ်ႇသွင်ပွၵ်ႈ၊ \"ၾူၼ်း\" ပဵၼ် \"ၶိူင်ႈၼႆႉ\"၊ layer ဢၼ်သႂ်ႇပဵၼ်ႁၢင်ႈ ဢမ်ႇၸႂ်ႈ reference။",kac:"Imagine shawng lang hpaw yang pru sai, Pictures 247 ok. Sumla lata sheet a laika 3: ga baw n hkrum hkrum, \"phone\" gaw \"ndai jak\" rai sai, layer hpe sumla hku bang ai gaw reference n re sai.",th:"Imagine แสดงตั้งแต่เปิดครั้งแรก Pictures 247 ok แก้ข้อความ 3 บรรทัดบนแผ่นเลือกรูป: หัวข้อไม่ซ้ำสองครั้ง \"จากโทรศัพท์\" เป็น \"จากเครื่องนี้\" และเลเยอร์ที่เพิ่มเป็นรูปไม่ถูกเรียกว่า reference อีก",zh:"Imagine 首次打开即显示，Pictures 247 ok。选图面板三行文字已更正：标题不再重复两次，\"手机\"改为\"本设备\"，作为照片添加的图层不再被称为参考图。",vi:"Imagine hiện ngay lần mở đầu, Pictures 247 ok. Sửa ba dòng trên bảng chọn ảnh: tiêu đề không lặp hai lần, \"điện thoại\" thành \"thiết bị này\", layer thêm làm ảnh không còn gọi là tham chiếu.",id:"Imagine tampil sejak pertama dibuka, Pictures 247 ok. Tiga baris lembar pilih foto diperbaiki: judul tak lagi dobel, \"ponsel\" menjadi \"perangkat ini\", layer yang ditambahkan sebagai foto tak lagi disebut referensi.",ms:"Imagine dipaparkan sejak pembukaan pertama, Pictures 247 ok. Tiga baris helaian pilih gambar dibetulkan: tajuk tidak lagi berganda, \"telefon\" menjadi \"peranti ini\", layer yang ditambah sebagai gambar tidak lagi dipanggil rujukan."} },
@@ -10913,6 +10925,81 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     return w.req.map(function(l){ return { label: l, req: true }; })
       .concat(w.opt.map(function(l){ return { label: l, req: false }; }));
   }
+  /* ---- v6.76.0 — LIBRARY SCENE PRESETS (owner: "Library ထဲက ပုံတွေကို scenes
+     reference prompt Preset ကတ်အဖြစ် သုံးလို့ရအောင်"). Under every slot that
+     asks for a scene or a background — Reference Scenes' IMAGE 2, BG Replace's
+     new background, the scene composites — the wizard draws the Library's own
+     scene looks as a strip of one-tap cards. A tap loads the look's full plate
+     into that slot exactly as the Library page's "Use as IMAGE 2" does, and
+     the prompt gains one line naming the preset, so the model is told which
+     place it is looking at. The rule that picks the looks is written once
+     more, byte for byte, in the panel's workflow screen; a test holds the two
+     lists equal. ---- */
+  function scenePresetList(items){
+    /* the Library's scene looks, one order on both surfaces: indoor sets first,
+       then scene & set, the background snoot, the outdoor fashion frames, and
+       the birthday concepts last; a look counts once even when it sits in two
+       lists. Family Scene / Outdoor, collection Background. */
+    var ORDER={"Indoor Set":0,"Scene & Set":1,"Background Snoot":2,"Outdoor & Fashion":3,"Birthday Concept":4};
+    var out=[], seen={};
+    for(var i=0;i<(items||[]).length;i++){
+      var it=items[i]; if(!it||!it.id||seen[it.id]) continue;
+      if(it.f==="Scene"||it.f==="Outdoor"||it.c==="Background"){ seen[it.id]=1; out.push({it:it,i:i}); }
+    }
+    out.sort(function(a,b){ var oa=ORDER[a.it.g]==null?9:ORDER[a.it.g], ob=ORDER[b.it.g]==null?9:ORDER[b.it.g]; return oa-ob || a.i-b.i; });
+    return out.slice(0,96).map(function(o){ return o.it; });
+  }
+  function isSceneLabel(label){ return /scene|background/i.test(String(label||"")); }
+  var SCENE_PRESET_L={my:"Library ထဲက Scene Preset — တစ်ချက်နှိပ်ရုံ",en:"Scene presets from the Library — one tap",shn:"Scene preset တီႈ Library — ၼဵၵ်းၵမ်းလဵဝ်",kac:"Library kaw na Scene preset — kalang dip u",th:"พรีเซ็ตฉากจาก Library — แตะครั้งเดียว",zh:"来自 Library 的场景预设 — 一键",vi:"Preset cảnh từ Library — một chạm",id:"Preset adegan dari Library — satu ketuk",ms:"Preset adegan dari Library — satu ketik"};
+  function scenePresetLine(){
+    var sp=wiz.scenePreset; if(!sp) return "";
+    /* the line belongs to the slot only while the preset is still IN it */
+    var r=state.refs[sp.slot]; if(!r||r.scenePreset!==sp.id) return "";
+    return "\nSCENE PRESET: "+sp.title+(sp.group?" — "+sp.group:"");
+  }
+  function wizSendPrompt(){ return wiz.prompt+scenePresetLine(); }
+  function wizSceneStrip(inp,i){
+    var wrap=el("div","wscene");
+    wrap.appendChild(el("div","wscene-h",L9(SCENE_PRESET_L)));
+    var strip=el("div","wscene-strip");
+    scenePresetList(LW.items).forEach(function(it){
+      var on=!!(wiz.scenePreset&&wiz.scenePreset.id===it.id&&wiz.scenePreset.slot===i);
+      var tile=el("button","wscene-tile"+(on?" on":""));
+      tile.type="button"; tile.title=it.t; tile.setAttribute("data-id",it.id);
+      var im=document.createElement("img"); im.src="lib/ui/"+it.id+".jpg"; im.loading="lazy"; im.alt=it.t; tile.appendChild(im);
+      tile.appendChild(el("span","wscene-t",it.t));
+      tile.onclick=function(){ wizPickScene(it,i,tile); };
+      strip.appendChild(tile);
+    });
+    wrap.appendChild(strip);
+    return wrap;
+  }
+  async function wizPickScene(it,slot,tile){
+    if(wiz.sceneBusy) return; wiz.sceneBusy=true;
+    try{ tile.className="wscene-tile busy"; }catch(e){}
+    try{
+      var r=await fetch("lib/full/"+it.id+".jpg");
+      if(!r||!r.ok) throw new Error("HTTP "+(r&&r.status));
+      var bl=await r.blob();
+      var b64=await new Promise(function(res,rej){
+        var rd=new FileReader();
+        rd.onload=function(){ res(String(rd.result).split(",")[1]); };
+        rd.onerror=rej; rd.readAsDataURL(bl);
+      });
+      refsClobberGuard(slot);
+      refSet(slot,{mime:"image/jpeg", b64:b64, label:it.t, scenePreset:it.id});
+      wiz.scenePreset={id:it.id,title:it.t,group:it.g||"",slot:slot};
+      state.imgRoles=null;
+      renderRefs(); renderWiz();
+      toast(L9({my:"Scene preset · ",en:"Scene preset · ",shn:"Scene preset · ",kac:"Scene preset · ",th:"Scene preset · ",zh:"场景预设 · ",vi:"Scene preset · ",id:"Scene preset · ",ms:"Scene preset · "})+it.t+" → IMAGE "+(slot+1));
+    }catch(e){
+      toast(L9({my:"Library ပုံ မယူနိုင်ပါ — internet စစ်ပါ",en:"Couldn't load this Library scene — check your internet",shn:"ဢဝ်ႁၢင်ႈ Library ဢမ်ႇလႆႈ — ၵူတ်ႇထတ်း internet",kac:"Library sumla n la lu ai — internet yu u",th:"โหลดฉากจาก Library ไม่ได้ — ตรวจสอบอินเทอร์เน็ต",zh:"无法加载此 Library 场景 — 请检查网络",vi:"Không tải được cảnh từ Library — kiểm tra mạng",id:"Tidak bisa memuat adegan Library — periksa internet",ms:"Tidak dapat memuatkan adegan Library — semak internet"}),"err");
+      try{ renderWiz(); }catch(e2){}
+    }
+    wiz.sceneBusy=false;
+  }
+  window._wizSendPrompt=wizSendPrompt;
+  window._scenePresetIds=function(){ return scenePresetList(LW.items).map(function(it){ return it.id; }); };
   function wizReqOk(){
     for (var i=0;i<wiz.w.req.length;i++) if(!state.refs[i]) return false;
     return true;
@@ -11006,6 +11093,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     wiz.prompt=w.prompt+(w.negative ? "\n\nAVOID: "+w.negative+"." : "");
     wiz.avoidTail=wiz.prompt.slice(w.prompt.length); /* the tail, composed once above */
     wiz.fieldVals=wfFieldDefaults(w); /* v5.62.0 — design fields, fresh per open */
+    wiz.scenePreset=null; wiz.sceneBusy=false; /* v6.76.0 — a Library scene preset is chosen per open */
     document.body.style.overflow="hidden";
     window._wizOnPick=renderWiz;
     window._wizCurrentId=w.id; /* pending-intent context for the no-key round trip */
@@ -11038,7 +11126,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     state.imgRoles=inputs.map(function(x){ return x.label; });
     state.imgRolesFromWiz=true;
     renderRefs();
-    $("prompt").value=wiz.prompt;
+    $("prompt").value=wizSendPrompt();
     $("tapNote").textContent=w.title+" · Smart Workflow";
     saveState();
     var token=wiz.token;
@@ -11230,11 +11318,13 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
         }
         if(ref){
           var clr=el("button","btn"); setIcnText(clr,"i-close",t("wiz_clear"));
-          clr.onclick=function(){ state.refs[i]=null; renderRefs(); renderWiz(); };
+          clr.onclick=function(){ state.refs[i]=null; if(wiz.scenePreset&&wiz.scenePreset.slot===i) wiz.scenePreset=null; renderRefs(); renderWiz(); };
           act.appendChild(clr);
         }
         slot.appendChild(act);
         body.appendChild(slot);
+        /* v6.76.0 — the Library's scene looks, one tap each, under a scene or background slot */
+        if(i>0 && isSceneLabel(inp.label)) body.appendChild(wizSceneStrip(inp,i));
       });
       if(!wizReqOk()){ var rw=el("div","mut"); setIcnText(rw,"i-warn",t("wiz_reqwarn")); body.appendChild(rw); }
     }
@@ -29466,7 +29556,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.75.1";
+var APP_VER="6.76.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

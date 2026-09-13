@@ -1081,6 +1081,19 @@ input[type="range"] { min-width: 0; }
 /* v6.27.0 — every image slot offers all four sources; the Web source opens a
    small inline URL row under its slot. */
 .hnk-req-block { padding: 2px 0; }
+/* v6.76.0 — the Library scene presets under a scene / background slot: a
+   nowrap strip of 84px tiles (ui plates are 144x180, drawn at 80x100 so no
+   crop is needed — no object-fit), margins for spacing (no gap), a gold
+   border on the chosen one. */
+.hnk-scene { margin: 0 0 8px; }
+.hnk-scene-h { font-size: 11px; color: var(--muted); margin: 0 0 6px; }
+.hnk-scene-strip { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+  padding: 0 0 4px; scrollbar-width: none; }
+.hnk-scene-tile { flex: none; width: 84px; margin: 0 8px 0 0; padding: 0; box-sizing: border-box;
+  border: 2px solid transparent; border-radius: 12px; background: var(--panel-2); text-align: center; }
+.hnk-scene-tile img { display: block; width: 80px; height: 100px; border-radius: 10px; }
+.hnk-scene-tile .hnk-scene-t { display: block; font-size: 10px; line-height: 1.25; padding: 4px 2px; color: var(--muted); text-align: center; }
+.hnk-scene-tile.on { border-color: var(--gold); }
 .hnk-src-row { display: flex; align-items: center; flex-wrap: wrap; margin: 6px 0 2px; }
 .hnk-src-row > div,
 .hnk-src-row > span,

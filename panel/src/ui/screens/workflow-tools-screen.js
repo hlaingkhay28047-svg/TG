@@ -930,6 +930,51 @@ function create(deps) {
     }).catch(function () { hint(dom.t("ai_lib_load_fail", "Library image could not be loaded.")); });
   }
 
+  /* v6.76.0 — the Library's scene looks under a scene or background slot:
+     one tap loads the full plate into the slot (through remoteArt, the path
+     every remote picture in this panel takes) and remembers which look it
+     was, so the request compiler can name it to the model. */
+  function markSceneTile(strip, id) {
+    var kids = strip.children || [];
+    for (var i = 0; i < kids.length; i++) {
+      var on = !!(kids[i].getAttribute && kids[i].getAttribute("data-id") === id);
+      kids[i].className = "hnk-scene-tile" + (on ? " on" : "");
+    }
+  }
+  function pickScenePreset(inp, it, strip) {
+    var url = plateUrl("full", it.id), ra = artLoader();
+    if (!url || !ra || typeof ra.load !== "function" || strip._busy) return;
+    strip._busy = true;
+    if (nodes.readyMsg) { nodes.readyMsg.className = "hnk-status"; nodes.readyMsg.textContent = dom.t("wf_scene_loading", "Loading the scene…"); }
+    ra.load(url).then(function (dataUrl) {
+      wstate.setInput(state, inp.key, { source: "preset", role: inp.role, ref: dataUrl, valid: true,
+        preset: { id: it.id, title: it.t, group: it.g || "" } });
+      markSceneTile(strip, it.id);
+      refresh();
+    }, function () {
+      if (nodes.readyMsg) { nodes.readyMsg.className = "hnk-status"; nodes.readyMsg.textContent = dom.t("wf_scene_fail", "Couldn't load this Library scene — check your internet."); }
+    }).then(function () { strip._busy = false; });
+  }
+  function sceneStrip(inp) {
+    var items = scenePresetList(libItems());
+    if (!items.length || !plateUrl("ui", items[0].id)) return null;
+    var strip = dom.el(doc, "div", { class: "hnk-scene-strip", id: "hnkWfScene_" + inp.key });
+    items.forEach(function (it) {
+      var im = doc.createElement("img"); im.alt = "";
+      setArt(im, plateUrl("ui", it.id));
+      var tile = dom.el(doc, "div", { class: "hnk-scene-tile", attrs: { role: "button", tabindex: "0", "data-id": it.id, title: it.t } },
+        [im, dom.el(doc, "span", { class: "hnk-scene-t", text: it.t })]);
+      dom.on(tile, "click", function () { pickScenePreset(inp, it, strip); });
+      strip.appendChild(tile);
+    });
+    var cur = inp.image && inp.image.preset && inp.image.preset.id;
+    if (cur) markSceneTile(strip, cur);
+    return dom.el(doc, "div", { class: "hnk-scene" }, [
+      dom.el(doc, "div", { class: "hnk-scene-h", text: dom.t("wf_scene_presets", "Scene presets from the Library — one tap") }),
+      strip
+    ]);
+  }
+
   function inputRow(inp) {
     var mark = dom.el(doc, "span", { class: "hnk-req-mark miss", text: dom.t("ai_missing", "Missing") });
     nodes["req_" + inp.key] = mark;
@@ -996,6 +1041,7 @@ function create(deps) {
        squeezed to a sliver: the owner's photograph showed "မျက်နှာ / လူ
        reference" broken over three lines with the ✓ floating beside the
        middle one. Name first, then the row of sources. */
+    var scene = isSceneInput(inp) ? sceneStrip(inp) : null;
     return dom.el(doc, "div", { class: "hnk-req-block" }, [
       dom.el(doc, "div", { class: "hnk-req-head" }, [
         dom.el(doc, "span", { class: "hnk-req-label", text: lbl }), mark
@@ -1003,7 +1049,7 @@ function create(deps) {
       dom.el(doc, "div", { class: "hnk-req-row" }, [add, fileB, pasteB, webB, lib]),
       urlRow,
       thumb
-    ]);
+    ].concat(scene ? [scene] : []));
   }
 
   function render(mountRoot) {
@@ -1015,7 +1061,40 @@ function create(deps) {
   return { render: render, refresh: refresh, select: select, getState: function () { return state; } };
 }
 
-var API = { create: create };
+/* ---- v6.76.0 — LIBRARY SCENE PRESETS: the rule that picks the Library's
+   scene looks, byte for byte the app's (docs/app/index.html scenePresetList);
+   test/verify_scene_presets.js holds the two lists equal. ---- */
+function scenePresetList(items){
+  /* the Library's scene looks, one order on both surfaces: indoor sets first,
+     then scene & set, the background snoot, the outdoor fashion frames, and
+     the birthday concepts last; a look counts once even when it sits in two
+     lists. Family Scene / Outdoor, collection Background. */
+  var ORDER={"Indoor Set":0,"Scene & Set":1,"Background Snoot":2,"Outdoor & Fashion":3,"Birthday Concept":4};
+  var out=[], seen={};
+  for(var i=0;i<(items||[]).length;i++){
+    var it=items[i]; if(!it||!it.id||seen[it.id]) continue;
+    if(it.f==="Scene"||it.f==="Outdoor"||it.c==="Background"){ seen[it.id]=1; out.push({it:it,i:i}); }
+  }
+  out.sort(function(a,b){ var oa=ORDER[a.it.g]==null?9:ORDER[a.it.g], ob=ORDER[b.it.g]==null?9:ORDER[b.it.g]; return oa-ob || a.i-b.i; });
+  return out.slice(0,96).map(function(o){ return o.it; });
+}
+function isSceneLabel(label){ return /scene|background/i.test(String(label||"")); }
+function isSceneInput(inp) {
+  return !!inp && inp.role !== "main" && (inp.role === "background" || isSceneLabel(inp.label));
+}
+function libItems() {
+  try {
+    var d = _CJS ? require("../../../js/hnk_library_compact_data.js") : (globalThis.HNK && globalThis.HNK.LIB_WF);
+    return (d && d.items) || [];
+  } catch (e) { return []; }
+}
+function plateUrl(tier, id) {
+  var H = (typeof globalThis !== "undefined" && globalThis.HNK) || {};
+  return (typeof H.libPlateUrl === "function") ? H.libPlateUrl(tier, id) : "";
+}
+
+var API = { create: create, scenePresetList: scenePresetList, isSceneInput: isSceneInput,
+  scenePresetIds: function () { return scenePresetList(libItems()).map(function (it) { return it.id; }); } };
 
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.workflowToolsScreen = API; }
