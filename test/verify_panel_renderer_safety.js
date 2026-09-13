@@ -570,7 +570,8 @@ const READ_CARD = () => {
        it: "Where from? — Where from?", a "phone" on a computer, and a photo
        announced as a reference. */
     const sheet = await page.evaluate(() => {
-      const read = () => { const s = document.getElementById("ffSheet"); return s ? { head: (s.querySelector(".subh") || {}).textContent || "", btns: Array.from(s.querySelectorAll(".btn")).map(b => b.textContent) } : null; };
+      /* v6.78.0 — the sheet is a <dialog> with its own Cancel row; the option buttons are the ones that are not it */
+      const read = () => { const s = document.getElementById("ffSheet"); return s ? { tag: s.tagName, head: (s.querySelector(".subh") || {}).textContent || "", btns: Array.from(s.querySelectorAll(".btn:not(.ff-sheet-cancel)")).map(b => b.textContent), cancel: !!s.querySelector(".ff-sheet-cancel") } : null; };
       photoSheet(ff9(FF_L.where), { onLayer: function () { }, onFile: function () { } });
       const bare = read();
       photoSheet("IMG 1", { onLayer: function () { }, onFile: function () { } });
@@ -580,8 +581,8 @@ const READ_CARD = () => {
       const missing = tables.filter(l => !b.table[l].st_photo_layer_added || b.table[l].st_photo_layer_added === b.table[l].st_ref_layer_added);
       return { where: ff9(FF_L.where), bare, named, srcFileMy: FF_L.srcFile.my, missing, tables: tables.length, closed: !document.getElementById("ffSheet") };
     });
-    report("S1) a sheet opened with no name of its own asks \"Where from?\" once, not twice; a named slot keeps its name in front; the sheet closes",
-      !!sheet.bare && sheet.bare.head === sheet.where && sheet.bare.btns.length === 2 &&
+    report("S1) a sheet opened with no name of its own asks \"Where from?\" once, not twice; a named slot keeps its name in front; it is a <dialog> with a Cancel row (6.78.0); the sheet closes",
+      !!sheet.bare && sheet.bare.tag === "DIALOG" && sheet.bare.cancel && sheet.bare.head === sheet.where && sheet.bare.btns.length === 2 &&
       !!sheet.named && sheet.named.head === "IMG 1 \u2014 " + sheet.where && sheet.closed,
       JSON.stringify(sheet).slice(0, 300));
     report("S2) the file source names this device, not a phone; a layer added as the photo says so in all nine languages, apart from a layer added as a reference",
