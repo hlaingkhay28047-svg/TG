@@ -75,7 +75,8 @@ report("A3) the capture refuses while a run is busy, checks the bytes are really
 const surfaces = [
   ["TALK", /photoSheet\(ff9\(TK_L\.pickImg\), \{[\s\S]{0,600}?TK\.img = e;[\s\S]{0,600}?onFile/],
   ["VIDEO → VIDEO", /photoSheet\(ff9\(VT_L\.pickImg\), \{[\s\S]{0,600}?VT\.img = e;[\s\S]{0,600}?onFile/],
-  ["IMAGINE", /pickWire: function \(btn, onFiles\) \{[\s\S]{0,900}?photoSheet\(ff9\(FF_L\.where\), \{[\s\S]{0,400}?onFile: fromFiles/],
+  /* v6.75.1 — the host takes the module's third argument (which slot asked), and the layer branch grew a comment */
+  ["IMAGINE", /pickWire: function \(btn, onFiles, kind\) \{[\s\S]{0,900}?photoSheet\(ff9\(FF_L\.where\), \{[\s\S]{0,800}?onFile: fromFiles/],
   ["Batch \\(Path\\)", /function ptAdd\(\) \{[\s\S]{0,700}?photoSheet\([\s\S]{0,600}?onFile: ptAddFiles/]
 ];
 surfaces.forEach(function (s) {
