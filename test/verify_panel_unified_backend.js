@@ -42,9 +42,59 @@ check("the panel obtains a server authorization lease",
   main.includes("/v1/panel/validate") && /gateS\.lease/.test(main) &&
   /gateLeaseValid\s*\(/.test(main),
   "server lease contract missing");
-check("offline access and the seven-day grace path are removed",
-  !/GATE_GRACE_DAYS|gateGraceOk|gateOffline\(\)[\s\S]{0,600}gateUnlock\(/.test(main),
-  "offline grace can still unlock the panel");
+/* v6.73.0 — THIS CHECK USED TO BE A NAME BLACKLIST, AND A NAME BLACKLIST IS
+   THE WRONG SHAPE. It forbade GATE_GRACE_DAYS and gateGraceOk, which stops the
+   retired seven-day path coming back under its own name and stops nothing else:
+   the same code under a different name passed. The owner asked (2026-09-12) for
+   the panel to get the web app's six-hour cold-boot grace, so the retired path
+   staying dead is no longer the whole requirement — what has to hold is the
+   PROPERTY the retired path violated, and every clause below is that property.
+
+   THE PROPERTY: the offline path may open the overlay and may never hand out a
+   lease. gateRequireLease is the choke point every provider operation crosses;
+   if the grace could satisfy it, the panel would be generating without a live
+   server verdict, which is exactly what the seven-day path did. */
+check("the seven-day offline path stays gone by name",
+  !/GATE_GRACE_DAYS|gateGraceOk|7\s*\*\s*GATE_DAY[\s\S]{0,200}gateUnlock\(/.test(main),
+  "the retired seven-day grace is back");
+check("the offline grace never writes a lease — the choke point is untouched",
+  /function gateGraceOpen\s*\(/.test(main) &&
+  !/function gateGraceOpen[\s\S]{0,900}?gateS\.lease\s*=/.test(main) &&
+  !/function gateGraceLeft[\s\S]{0,900}?gateS\.lease\s*=/.test(main) &&
+  /async function gateRequireLease\s*\(\)\s*\{\s*const ok = await gateValidate\(true\);/.test(main),
+  "the grace can grant a lease, or the provider choke point moved");
+check("the grace is bounded by six hours, not seven days",
+  /const GATE_GRACE_MS = 6 \* 3600000;/.test(main) &&
+  /GATE_GRACE_MS - \(now - seen\)/.test(main),
+  "the grace window is missing or is not six hours from the last success");
+check("every refusal the server actually sent deletes the remembered verdict",
+  (main.match(/gateGraceForget\(\)/g) || []).length >= 2 &&
+  /j\.ok === false[\s\S]{0,600}?gateGraceForget\(\)/.test(main) &&
+  /gateGraceForget\(\);[\s\S]{0,140}?gateT\("gate_no_lease"\)/.test(main) &&
+  /state\.accSeenUid = ""; state\.accSeenDev = "";/.test(main),
+  "a refusal the server sent can be survived by relaunching Photoshop");
+/* Scoped to gateGraceLeft's OWN body. Both binding lines also appear in
+   gateGraceRemember, so an unscoped search passed with the guards deleted:
+   injection removed each of them in turn and this check stayed green until it
+   was anchored here. */
+const graceLeft = (() => {
+  const i = main.indexOf("function gateGraceLeft()");
+  if (i < 0) return "";
+  const j = main.indexOf("\n}", i);
+  return j > i ? main.slice(i, j) : "";
+})();
+check("the remembered verdict is bound to the account, the installation and the plan's own expiry",
+  graceLeft.length > 200 &&
+  /state\.accSeenUid !== gateS\.sess\.uid\) return 0;/.test(graceLeft) &&
+  /state\.accSeenDev !== gateS\.devId\) return 0;/.test(graceLeft) &&
+  /function gateGraceExpiry/.test(main) &&
+  /if \(!exp \|\| exp <= now\) return 0;/.test(graceLeft) &&
+  /if \(gateS\.updateRequired\) return 0;/.test(graceLeft) &&
+  /seen > now \+ 60000\) return 0;/.test(graceLeft),
+  "the grace is not bound to account, device, expiry, clock and update state");
+check("the remembered verdict never travels in a backup file",
+  /BACKUP_SKIP = \{[\s\S]{0,400}?accSeenUid: 1[\s\S]{0,60}?accSeenDev: 1/.test(main),
+  "accSeenUid/accSeenDev can be carried to another machine in a backup");
 check("minimum-version failures hard-lock with Update Required",
   /426|UPDATE_REQUIRED/.test(main) && /Update Required/i.test(main),
   "hard minimum-version handling missing");

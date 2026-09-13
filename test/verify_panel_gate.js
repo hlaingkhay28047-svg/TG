@@ -146,6 +146,8 @@ const server = http.createServer((req, res) => {
 
 const UID = "77777777-8888-4999-aaaa-bbbbbbbbbbbb";
 const future = days => new Date(Date.now() + days * 86400000).toISOString();
+const ago = ms => Date.now() - ms;
+const HOUR = 3600000;
 
 function initScript(cfg) {
   return `(function(){
@@ -255,6 +257,12 @@ async function run(browser, cfg) {
     lockedMsg: (document.getElementById("gateLockedMsg").textContent || "").trim(),
     password: document.getElementById("gatePass").value,
     validateCalls: window.__validateCalls,
+    /* v6.73.0 — the offline grace opens the OVERLAY and must never open the
+       lease, so every case can now see both. */
+    lease: typeof gateS === "undefined" ? "?" : String(gateS.lease || ""),
+    leaseValid: typeof gateLeaseValid === "function" ? gateLeaseValid() : null,
+    graceOpen: typeof gateS === "undefined" ? null : !!gateS.graceOpen,
+    saved: window.__saved || "",
     requests: window.__reqs
   }));
   return { page, state, errors };
@@ -377,10 +385,104 @@ async function run(browser, cfg) {
     result.state.view === "locked" && /Update Required/i.test(result.state.error), result.state);
   await result.page.close();
 
-  result = await run(browser, { settings: { ...saved, accProfile: { plan_status: "active", plan_expires_at: future(30) }, accSeenAt: Date.now() }, offline: true });
+  /* ====================================================================
+     v6.73.0 — THE COLD-BOOT GRACE, and the six ways it must answer NO.
+
+     G used to read "offline cache never unlocks the panel" and it was the
+     right check for the policy of the day. The owner asked (2026-09-12) for
+     the panel to get the web app's six-hour grace, so the blanket NO is not
+     the requirement any more — but almost all of it still is, and the cases
+     below are the parts that did not change plus the one that did.
+
+     WHAT DID NOT CHANGE AT ALL: the lease. gateRequireLease is the choke point
+     every provider operation crosses and the grace must never satisfy it, so
+     every case here asserts gateS.lease is empty and gateLeaseValid() is false
+     even where the overlay is open. That is the property G was really
+     protecting, and it is now asserted on MORE paths than before, not fewer.
+     ==================================================================== */
+  const graceSaved = { ...saved,
+    accProfile: { plan_status: "active", plan_expires_at: future(30),
+      license: { active: true, expires_at: future(30) } },
+    accSeenUid: UID, accSeenDev: "panel-install-a" };
+
+  result = await run(browser, { settings: { ...saved,
+    accProfile: { plan_status: "active", plan_expires_at: future(30) }, accSeenAt: Date.now() }, offline: true });
   allErrors.push(...result.errors);
-  report("G) offline cache never unlocks the panel",
-    result.state.view === "locked" && !result.state.hidden && result.state.app === "none", result.state);
+  report("G) an offline record that names neither the account nor the installation never unlocks the panel",
+    result.state.view === "locked" && !result.state.hidden && result.state.app === "none" &&
+    result.state.lease === "" && result.state.leaseValid === false, result.state);
+  await result.page.close();
+
+  result = await run(browser, { settings: { ...graceSaved, accSeenAt: ago(2 * HOUR) }, offline: true });
+  allErrors.push(...result.errors);
+  report("G2) a cold boot on a dead line opens on the last verdict the server gave — two hours ago, this account, this computer",
+    result.state.view === "open" && result.state.hidden && result.state.app !== "none" &&
+    result.state.graceOpen === true, result.state);
+  report("G3) …and it is the OVERLAY that opened, never the lease: no lease token, and gateLeaseValid stays false",
+    result.state.lease === "" && result.state.leaseValid === false, result.state);
+  /* the whole security argument in one assertion: a provider operation still
+     refuses, which costs nothing because a generate calls RunningHub and could
+     not have succeeded offline whatever this gate decided. */
+  const chokePoint = await result.page.evaluate(async () => {
+    try { await gateRequireLease(); return { threw: false, msg: "", want: "" }; }
+    catch (e) { return { threw: true, msg: String((e && e.message) || e),
+      /* the panel opens in Burmese, so the sentence is compared against the
+         key's own text in the ACTIVE language, never against English words */
+      want: gateT("gate_grace_gen"), lang: state.lang }; }
+  });
+  report("G4) …so a provider operation is STILL refused while the grace holds, and the reason names the connection rather than the licence",
+    chokePoint.threw === true && chokePoint.want.length > 20 &&
+    chokePoint.msg === "HNKERR:err_license:" + chokePoint.want &&
+    !/authorization required/i.test(chokePoint.msg), chokePoint);
+  await result.page.close();
+
+  result = await run(browser, { settings: { ...graceSaved, accSeenAt: ago(7 * HOUR) }, offline: true });
+  allErrors.push(...result.errors);
+  report("G5) seven hours dark is past the six-hour window — the clock runs from the SUCCESS, so staying offline cannot extend it",
+    result.state.view === "locked" && result.state.lease === "" && result.state.graceOpen === false, result.state);
+  await result.page.close();
+
+  result = await run(browser, { settings: { ...graceSaved, accSeenAt: ago(HOUR),
+    accProfile: { plan_status: "active", plan_expires_at: future(-1),
+      license: { active: true, expires_at: future(-1) } } }, offline: true });
+  allErrors.push(...result.errors);
+  report("G6) a plan that has run out is refused inside the window too — the expiry date still rules",
+    result.state.view === "locked" && result.state.lease === "", result.state);
+  await result.page.close();
+
+  result = await run(browser, { settings: { ...graceSaved, accSeenAt: ago(HOUR),
+    accSeenDev: "some-other-computer" }, offline: true });
+  allErrors.push(...result.errors);
+  report("G7) a verdict earned on another installation is not this one's",
+    result.state.view === "locked" && result.state.lease === "", result.state);
+  await result.page.close();
+
+  result = await run(browser, { settings: { ...graceSaved, accSeenAt: ago(HOUR),
+    accSeenUid: "99999999-8888-4999-aaaa-bbbbbbbbbbbb" }, offline: true });
+  allErrors.push(...result.errors);
+  report("G8) a verdict earned by another account is not this member's",
+    result.state.view === "locked" && result.state.lease === "", result.state);
+  await result.page.close();
+
+  /* G9 — THE ONE THAT MATTERS MOST. A refusal the server actually sent must not
+     be survivable by relaunching Photoshop offline. This runs the panel ONLINE
+     against a 403, takes the settings file it wrote, and boots a second panel
+     from that file with the line dead. */
+  result = await run(browser, { settings: { ...graceSaved, accSeenAt: ago(HOUR) }, validateStatus: 403 });
+  allErrors.push(...result.errors);
+  const afterDenial = result.state.saved ? JSON.parse(result.state.saved) : null;
+  report("G9a) a 403 from validate locks the panel and wipes the remembered verdict off disk",
+    result.state.view === "locked" && !!afterDenial &&
+    !afterDenial.accProfile && !afterDenial.accSeenAt &&
+    !afterDenial.accSeenUid && !afterDenial.accSeenDev,
+    { view: result.state.view, saved: afterDenial });
+  await result.page.close();
+
+  result = await run(browser, { settings: afterDenial || {}, offline: true });
+  allErrors.push(...result.errors);
+  report("G9b) …and relaunching offline after that refusal does NOT reopen the panel",
+    result.state.view !== "open" && result.state.lease === "" && result.state.graceOpen === false,
+    result.state);
   await result.page.close();
 
   /* 2026-08-30 owner instruction: no pairing code. Sign-in registers the
