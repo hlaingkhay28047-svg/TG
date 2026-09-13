@@ -938,6 +938,12 @@ const I18N = {
     wf_scene_loading: "Loading the scene\u2026",
     wf_scene_fail: "Couldn\u2019t load this Library scene \u2014 check your internet.",
     vid_no_inline: "Clip {n} is ready — this Photoshop panel cannot play video. Download or Open plays it in your computer\u2019s player.",
+    pick_title: "Choose",
+    pick_search: "Search\u2026",
+    pick_none: "Nothing matches",
+    wf_ready_generate: "All required inputs are ready \u2014 press GENERATE.",
+    wf_add_required: "Add the required images.",
+    wf_press_prepare: "Press Prepare to load this workflow and check your images.",
     err_timeout: "Request timed out \u2014 the server took too long; please try again \u00b7 \u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_generic: "The request could not be completed \u2014 please try again",
     err_img: "No usable image was produced \u2014 please try again",
@@ -1594,6 +1600,12 @@ const I18N = {
     wf_scene_loading: "Scene ယူနေသည်…",
     wf_scene_fail: "Library ပုံ မယူနိုင်ပါ — အင်တာနက် စစ်ပါ",
     vid_no_inline: "ဗီဒီယို {n} အဆင်သင့်ပါ — Photoshop panel ထဲမှာ ဗီဒီယို ဖွင့်ကြည့်လို့ မရပါ။ Download သို့မဟုတ် Open နှိပ်ရင် ကွန်ပျူတာရဲ့ player နဲ့ ဖွင့်ပေးပါမယ်။",
+    pick_title: "ရွေးပါ",
+    pick_search: "ရှာရန်…",
+    pick_none: "မတွေ့ပါ",
+    wf_ready_generate: "လိုအပ်တဲ့ ပုံတွေ အဆင်သင့်ပါ — GENERATE နှိပ်ပါ။",
+    wf_add_required: "လိုအပ်တဲ့ ပုံတွေ ထည့်ပါ။",
+    wf_press_prepare: "ဒီ workflow ကို ဖွင့်ပြီး ပုံတွေ စစ်ဖို့ ပြင်ဆင် ခလုတ် နှိပ်ပါ။",
     err_timeout: "\u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a\u101e\u103d\u102c\u1038\u1015\u103c\u102e \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_generic: "\u1010\u1031\u102c\u1004\u103a\u1038\u1006\u102d\u102f\u1019\u103e\u102f \u1019\u1015\u103c\u102e\u1038\u1006\u102f\u1036\u1038\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_img: "\u1021\u101e\u102f\u1036\u1038\u101d\u1004\u103a\u1010\u1032\u1037 \u1015\u102f\u1036 \u1019\u101b\u101b\u103e\u102d\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
@@ -2250,6 +2262,12 @@ const I18N = {
     wf_scene_loading: "တိုၵ်ႉဢဝ် scene…",
     wf_scene_fail: "ဢဝ်ႁၢင်ႈ Library ဢမ်ႇလႆႈ — ၵူတ်ႇထတ်း internet",
     vid_no_inline: "ဝီးတီးဢူဝ်ႉ {n} ႁၢင်ႈႁႅၼ်းယဝ်ႉ — Photoshop panel ၼႆႉ ပိုတ်ႇတူၺ်းဝီးတီးဢူဝ်ႉ ဢမ်ႇလႆႈ။ Download ဢမ်ႇၼၼ် Open ၼဵၵ်းသေ player ၶွမ်း ပိုတ်ႇပၼ်။",
+    pick_title: "လိူၵ်ႈ",
+    pick_search: "သွၵ်ႈႁႃ…",
+    pick_none: "ဢမ်ႇႁၼ်",
+    wf_ready_generate: "ႁၢင်ႈဢၼ်လူဝ်ႇ ႁၢင်ႈႁႅၼ်းယဝ်ႉ — ၼဵၵ်း GENERATE။",
+    wf_add_required: "သႂ်ႇႁၢင်ႈဢၼ်လူဝ်ႇ။",
+    wf_press_prepare: "ၼဵၵ်း ႁၢင်ႈႁႅၼ်း သေ ပိုတ်ႇ workflow ၼႆႉလႄႈ ၵူတ်ႇထတ်းႁၢင်ႈ။",
     err_timeout: "\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1010\u1035\u1019\u103a \u2014 server \u1078\u1082\u103a\u1089\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1081\u102d\u102f\u1004\u103a\u1015\u1030\u107c\u103a\u1089; \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_generic: "\u1081\u1035\u1010\u103a\u1038\u1022\u1019\u103a\u1087\u101a\u101d\u103a\u1089 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_img: "\u1022\u1019\u103a\u1087\u101c\u1086\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u107c\u103a\u1078\u1082\u103a\u1089\u101c\u1086\u1088 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
@@ -2904,6 +2922,12 @@ const I18N = {
     wf_scene_loading: "Scene la nga ai…",
     wf_scene_fail: "Library sumla n la lu ai — internet yu u",
     vid_no_inline: "Video {n} hkrum sai — ndai Photoshop panel hta video n mai yu ai. Download (n)rai Open dip yang computer player hte pyaw ya na.",
+    pick_title: "Lata u",
+    pick_search: "Tam u…",
+    pick_none: "N mu ai",
+    wf_ready_generate: "Ra ai sumla ni hkrum sai — GENERATE dip u.",
+    wf_add_required: "Ra ai sumla ni bang u.",
+    wf_press_prepare: "Ndai workflow hpaw nna sumla ni jep na matu Prepare dip u.",
     err_timeout: "Ten hpring mat sai \u2014 server grau na ai; bai chyam yu u",
     err_generic: "Ndai lam n ngut lu ai \u2014 bai chyam yu u",
     err_img: "Lang mai ai sumla n pru ai \u2014 bai chyam yu u",
@@ -3558,6 +3582,12 @@ const I18N = {
     wf_scene_loading: "กำลังโหลดฉาก…",
     wf_scene_fail: "โหลดฉากจาก Library ไม่ได้ — ตรวจสอบอินเทอร์เน็ต",
     vid_no_inline: "คลิป {n} พร้อมแล้ว — แผง Photoshop นี้เล่นวิดีโอไม่ได้ กด Download หรือ Open เพื่อเปิดด้วยโปรแกรมเล่นวิดีโอของเครื่อง",
+    pick_title: "เลือก",
+    pick_search: "ค้นหา…",
+    pick_none: "ไม่พบ",
+    wf_ready_generate: "รูปที่ต้องใช้พร้อมแล้ว — กด GENERATE",
+    wf_add_required: "เพิ่มรูปที่ต้องใช้",
+    wf_press_prepare: "กด Prepare เพื่อโหลด workflow นี้และตรวจรูปของคุณ",
     err_timeout: "\u0e04\u0e33\u0e02\u0e2d\u0e2b\u0e21\u0e14\u0e40\u0e27\u0e25\u0e32 \u2014 \u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e43\u0e0a\u0e49\u0e40\u0e27\u0e25\u0e32\u0e19\u0e32\u0e19\u0e40\u0e01\u0e34\u0e19\u0e44\u0e1b \u0e01\u0e23\u0e38\u0e13\u0e32\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
     err_generic: "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e14\u0e33\u0e40\u0e19\u0e34\u0e19\u0e01\u0e32\u0e23\u0e15\u0e32\u0e21\u0e04\u0e33\u0e02\u0e2d\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
     err_img: "\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
@@ -4212,6 +4242,12 @@ const I18N = {
     wf_scene_loading: "正在加载场景…",
     wf_scene_fail: "无法加载此 Library 场景 — 请检查网络",
     vid_no_inline: "第 {n} 段视频已完成 — 此 Photoshop 面板无法播放视频。点 Download 或 Open 用电脑的播放器打开。",
+    pick_title: "选择",
+    pick_search: "搜索…",
+    pick_none: "没有匹配项",
+    wf_ready_generate: "所需图片已就绪 — 点 GENERATE。",
+    wf_add_required: "请添加所需图片。",
+    wf_press_prepare: "点 Prepare 载入此工作流并检查图片。",
     err_timeout: "\u8bf7\u6c42\u8d85\u65f6 \u2014 \u670d\u52a1\u5668\u8017\u65f6\u8fc7\u957f\uff0c\u8bf7\u91cd\u8bd5",
     err_generic: "\u8bf7\u6c42\u672a\u80fd\u5b8c\u6210 \u2014 \u8bf7\u91cd\u8bd5",
     err_img: "\u672a\u751f\u6210\u53ef\u7528\u7684\u56fe\u7247 \u2014 \u8bf7\u91cd\u8bd5",
@@ -4866,6 +4902,12 @@ const I18N = {
     wf_scene_loading: "Đang tải cảnh…",
     wf_scene_fail: "Không tải được cảnh từ Library — kiểm tra mạng",
     vid_no_inline: "Clip {n} đã sẵn sàng — bảng Photoshop này không phát được video. Bấm Download hoặc Open để mở bằng trình phát trên máy.",
+    pick_title: "Chọn",
+    pick_search: "Tìm…",
+    pick_none: "Không có kết quả",
+    wf_ready_generate: "Ảnh cần thiết đã sẵn sàng — bấm GENERATE.",
+    wf_add_required: "Thêm các ảnh cần thiết.",
+    wf_press_prepare: "Bấm Prepare để nạp workflow này và kiểm tra ảnh.",
     err_timeout: "Y\u00eau c\u1ea7u qu\u00e1 h\u1ea1n \u2014 m\u00e1y ch\u1ee7 ph\u1ea3n h\u1ed3i qu\u00e1 l\u00e2u; vui l\u00f2ng th\u1eed l\u1ea1i",
     err_generic: "Kh\u00f4ng th\u1ec3 ho\u00e0n t\u1ea5t y\u00eau c\u1ea7u \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
     err_img: "Kh\u00f4ng t\u1ea1o \u0111\u01b0\u1ee3c \u1ea3nh d\u00f9ng \u0111\u01b0\u1ee3c \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
@@ -5520,6 +5562,12 @@ const I18N = {
     wf_scene_loading: "Memuat adegan…",
     wf_scene_fail: "Tidak bisa memuat adegan Library — periksa internet",
     vid_no_inline: "Klip {n} sudah siap — panel Photoshop ini tidak bisa memutar video. Tekan Download atau Open untuk membukanya di pemutar komputer.",
+    pick_title: "Pilih",
+    pick_search: "Cari…",
+    pick_none: "Tidak ada yang cocok",
+    wf_ready_generate: "Gambar yang diperlukan sudah siap — tekan GENERATE.",
+    wf_add_required: "Tambahkan gambar yang diperlukan.",
+    wf_press_prepare: "Tekan Prepare untuk memuat workflow ini dan memeriksa gambar.",
     err_timeout: "Permintaan kehabisan waktu \u2014 server terlalu lama merespons; silakan coba lagi",
     err_generic: "Permintaan tidak dapat diselesaikan \u2014 silakan coba lagi",
     err_img: "Tidak ada gambar yang dapat dipakai \u2014 silakan coba lagi",
@@ -6174,6 +6222,12 @@ const I18N = {
     wf_scene_loading: "Memuatkan adegan…",
     wf_scene_fail: "Tidak dapat memuatkan adegan Library — semak internet",
     vid_no_inline: "Klip {n} sudah siap — panel Photoshop ini tidak boleh memainkan video. Tekan Download atau Open untuk membukanya dengan pemain komputer.",
+    pick_title: "Pilih",
+    pick_search: "Cari…",
+    pick_none: "Tiada padanan",
+    wf_ready_generate: "Gambar yang diperlukan sudah sedia — tekan GENERATE.",
+    wf_add_required: "Tambah gambar yang diperlukan.",
+    wf_press_prepare: "Tekan Prepare untuk memuatkan workflow ini dan menyemak gambar.",
     err_timeout: "Permintaan tamat masa \u2014 pelayan mengambil masa terlalu lama; sila cuba lagi",
     err_generic: "Permintaan tidak dapat diselesaikan \u2014 sila cuba lagi",
     err_img: "Tiada imej yang boleh digunakan dihasilkan \u2014 sila cuba lagi",
@@ -6557,7 +6611,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.148.0";
+const PANEL_VERSION = "6.149.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8361,6 +8415,142 @@ function studioAskText(msg, def) {
       try { inp.focus(); } catch (e) { }
     } catch (e) { herr("studio prompt:", e); fin(null); }
   });
+}
+
+/* ============================================================
+   v6.78.0 — THE PICKER THAT OPENS IN PHOTOSHOP.
+
+   Twenty-one pickers (the Freeform, Video, VidUp, V→V, Talk and Text→Image
+   model / size / duration / count / option selects, Setup's model and
+   quality, and the header's language) were each a native <select> made
+   transparent and laid over a styled button. A browser opens the select's
+   dropdown on the tap; Photoshop's renderer opens nothing, and the owner's
+   6.148.0 photographs say so in two words: no model, no language.
+
+   The select stays — every reader and writer in the panel goes through it —
+   but it leaves the hit path (styles.css .hsl .inp) and the button does the
+   work: one listener at the document catches a tap on any .hsl-btn, finds
+   the wrapper's select, and opens a <dialog> list of its options (the
+   disabled rows the video picker uses as family headers stay headers; past
+   eight rows a search field filters). Choosing a row sets selectedIndex and
+   fires the same input + change events the native dropdown would have, so
+   every existing handler repaints exactly as before. */
+let hslPickDlg = null;
+function hslClosest(el, cls) {
+  let n = el;
+  for (let i = 0; n && i < 12; i++) {
+    try { if (n.classList && n.classList.contains(cls)) return n; } catch (e) { }
+    n = n.parentNode;
+  }
+  return null;
+}
+function hslPickClose() {
+  const d = hslPickDlg; hslPickDlg = null;
+  if (!d) return;
+  try { if (typeof d.close === "function" && d.open) d.close(); } catch (e) { }
+  try { if (d.parentNode) d.parentNode.removeChild(d); } catch (e) { }
+}
+function hslPick(sel, title) {
+  if (!sel || !sel.options) return null;
+  hslPickClose();
+  const dlg = document.createElement("dialog"); dlg.className = "hnk-dlg hnk-pick"; dlg.id = "hnkPick";
+  const body = document.createElement("div"); body.className = "hnk-dlg-body";
+  const h = document.createElement("p"); h.className = "hnk-dlg-msg"; h.textContent = String(title || t("pick_title"));
+  body.appendChild(h);
+  const opts = Array.prototype.slice.call(sel.options);
+  const rows = [];
+  let q = null;
+  if (opts.length > 8) {
+    q = document.createElement("input"); q.type = "text"; q.className = "inp hnk-pick-q";
+    q.setAttribute("placeholder", t("pick_search"));
+    body.appendChild(q);
+  }
+  const list = document.createElement("div"); list.className = "hnk-pick-list";
+  const none = document.createElement("div"); none.className = "hnk-pick-none hide"; none.textContent = t("pick_none");
+  const choose = function (i) {
+    try { sel.selectedIndex = i; } catch (e) { }
+    try { if (sel.options[i]) sel.value = sel.options[i].value; } catch (e) { }
+    hslPickClose();
+    try { sel.dispatchEvent(new Event("input", { bubbles: true })); } catch (e) { }
+    try { sel.dispatchEvent(new Event("change", { bubbles: true })); } catch (e) { }
+  };
+  opts.forEach(function (o, i) {
+    const label = String(o.textContent || o.label || o.value || "");
+    if (o.disabled) {
+      const g = document.createElement("div"); g.className = "hnk-pick-grp";
+      g.textContent = label.replace(/^\u2014\s*|\s*\u2014$/g, "");
+      list.appendChild(g); rows.push({ el: g, grp: true, text: label.toLowerCase() });
+      return;
+    }
+    const r = document.createElement("div"); r.className = "hnk-pick-row" + (i === sel.selectedIndex ? " on" : "");
+    r.setAttribute("role", "button"); r.setAttribute("tabindex", "0"); r.setAttribute("data-i", String(i));
+    r.textContent = label;
+    r.addEventListener("click", function () { choose(i); });
+    r.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); choose(i); } });
+    list.appendChild(r); rows.push({ el: r, grp: false, text: label.toLowerCase() });
+  });
+  list.appendChild(none);
+  body.appendChild(list);
+  if (q) {
+    q.addEventListener("input", function () {
+      const needle = String(q.value || "").trim().toLowerCase();
+      let shown = 0, lastGrp = null;
+      rows.forEach(function (r) {
+        if (r.grp) { r.el.className = "hnk-pick-grp" + (needle ? " hide" : ""); lastGrp = r; return; }
+        const hit = !needle || r.text.indexOf(needle) >= 0;
+        r.el.className = "hnk-pick-row" + (r.el.getAttribute("data-i") === String(sel.selectedIndex) ? " on" : "") + (hit ? "" : " hide");
+        if (hit) { shown++; if (lastGrp && needle) lastGrp.el.className = "hnk-pick-grp"; }
+      });
+      none.className = "hnk-pick-none" + (shown ? " hide" : "");
+    });
+  }
+  const row = document.createElement("div"); row.className = "hnk-dlg-row";
+  const no = document.createElement("div"); no.className = "btn"; no.setAttribute("role", "button"); no.setAttribute("tabindex", "0"); no.textContent = t("btn_cancel");
+  no.addEventListener("click", function () { hslPickClose(); });
+  row.appendChild(no); body.appendChild(row);
+  dlg.appendChild(body);
+  dlg.addEventListener("cancel", function () { hslPickClose(); });
+  dlg.addEventListener("click", function (ev) { if (ev.target === dlg) hslPickClose(); });
+  document.body.appendChild(dlg);
+  hslPickDlg = dlg;
+  try { if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", ""); }
+  catch (e) { try { dlg.setAttribute("open", ""); } catch (e2) { } }
+  try { if (q) q.focus(); } catch (e) { }
+  return dlg;
+}
+function hslPickFor(btn) {
+  const wrap = hslClosest(btn, "hsl");
+  if (!wrap) return null;
+  const sel = wrap.querySelector ? wrap.querySelector("select") : null;
+  if (!sel) return null;
+  const ctx = wrap.querySelector(".hsl-ctx");
+  let title = ctx ? String(ctx.textContent || "").trim() : "";
+  if (!title) { try { title = sel.getAttribute("aria-label") || sel.getAttribute("title") || ""; } catch (e) { title = ""; } }
+  return hslPick(sel, title);
+}
+function bindHslPickers() {
+  document.addEventListener("click", function (ev) {
+    const t0 = ev.target || ev.srcElement;
+    if (!t0) return;
+    if (hslClosest(t0, "hnk-pick")) return;            /* a tap inside the list */
+    const btn = hslClosest(t0, "hsl-btn");
+    if (!btn) return;
+    try { ev.preventDefault(); } catch (e) { }
+    hslPickFor(btn);
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter" && ev.key !== " ") return;
+    const btn = hslClosest(ev.target, "hsl-btn");
+    if (btn) { try { ev.preventDefault(); } catch (e) { } hslPickFor(btn); }
+  });
+  globalThis.HNK = globalThis.HNK || {};
+  globalThis.HNK.hslPicker = {
+    open: function (selOrId, title) { const sel = typeof selOrId === "string" ? $(selOrId) : selOrId; return hslPick(sel, title); },
+    openFor: hslPickFor,
+    close: hslPickClose,
+    isOpen: function () { return !!hslPickDlg; },
+    dialog: function () { return hslPickDlg; }
+  };
 }
 
 function setupConfirm(msg) {
@@ -14169,7 +14359,12 @@ function renderRefs() {
 /* The app's refSrcSheet: an empty slot asks where the image comes from. The
    panel's sources are Photoshop's — the selected layer, a file, a Library
    look, the last result. */
-function ffSheetClose() { const old = $("ffSheet"); if (old && old.parentNode) old.parentNode.removeChild(old); }
+function ffSheetClose() {
+  const old = $("ffSheet");
+  if (!old) return;
+  try { if (typeof old.close === "function" && old.open) old.close(); } catch (e) { }
+  if (old.parentNode) old.parentNode.removeChild(old);
+}
 
 /* ============================================================
    v6.107.2 — THE ACTIVE LAYER, ON EVERY IMAGE SLOT.
@@ -14195,7 +14390,11 @@ function ffSheetClose() { const old = $("ffSheet"); if (old && old.parentNode) o
    ============================================================ */
 function photoSheet(title, opts) {
   ffSheetClose();
-  const bd = document.createElement("div"); bd.id = "ffSheet"; bd.className = "ff-sheet";
+  /* v6.78.0 — a <dialog>, not a fixed overlay: Photoshop lays a fixed box
+     out as an ordinary block at the end of the page (the owner's 9th
+     photograph), a dialog opens where the tap was on every renderer. Same id,
+     same card, same buttons. */
+  const bd = document.createElement("dialog"); bd.id = "ffSheet"; bd.className = "ff-sheet";
   const card = document.createElement("div"); card.className = "card";
   const h = document.createElement("div"); h.className = "subh";
   /* v6.75.1 — a caller with no name of its own (Imagine's add-photo) passed
@@ -14215,9 +14414,17 @@ function photoSheet(title, opts) {
   opt(ff9(FF_L.srcLayer), opts.onLayer);
   opt(ff9(FF_L.srcFile), opts.onFile);
   if (opts.onLast && state.resultB64) opt(ff9(FF_L.srcLast), opts.onLast);
+  const cancel = document.createElement("div");
+  cancel.className = "btn ff-sheet-cancel"; cancel.setAttribute("role", "button"); cancel.setAttribute("tabindex", "0");
+  cancel.textContent = t("btn_cancel");
+  cancel.addEventListener("click", function () { ffSheetClose(); });
+  card.appendChild(cancel);
   bd.addEventListener("click", function (ev) { if (ev.target === bd) ffSheetClose(); });
+  bd.addEventListener("cancel", function () { ffSheetClose(); });
   bd.appendChild(card);
   document.body.appendChild(bd);
+  try { if (typeof bd.showModal === "function") bd.showModal(); else bd.setAttribute("open", ""); }
+  catch (e) { try { bd.setAttribute("open", ""); } catch (e2) { } }
 }
 
 /* A captured layer, in every shape the panel's photo slots read: {mime, b64}
@@ -18456,7 +18663,17 @@ function subFadePaint() {
    switches (window.scrollY there, .pages.scrollTop here) */
 const scrollMem = {};
 /* v6.66.1 — each page's scope classes, read from the markup once (see below) */
-const scopeMem = {};
+/* v6.78.0 — THE SCOPES ARE OURS TO KNOW, NOT THE RENDERER'S TO REPORT. 6.66.1
+   read each page's class attribute once and cached it; the owner's 12th and
+   13th photographs of 6.148.0 are what a bad first read looks like — Imagine's
+   hero and card art at natural size past the panel's edge, Retouch A's target
+   chips stacked full-width and its ✕ and "မူရင်း" fallen under the photo, both
+   h2 icons on a line of their own — every .apg / .stpg rule gone from those two
+   pages and only those two. The markup is index.html, which we wrote: the
+   table below IS that markup (test/verify_panel_pickers.js keeps them equal),
+   and nothing is asked of the element any more. */
+const PAGE_SCOPE_STPG = { pageMeitu: 1, pageEvoto: 1, pageRetouch: 1, stDock: 1 };
+function pageScope(pageId) { return " apg" + (PAGE_SCOPE_STPG[pageId] ? " stpg" : ""); }
 function switchPage(key) {
   try { disarm(); } catch (e) { }
   let found = false;
@@ -18471,22 +18688,9 @@ function switchPage(key) {
     /* two keys share pageAiTools (Home and Workflows), so paint by PAGE */
     if (pe) {
       /* v6.51.0 — a rebuilt page keeps its scope classes (.apg app-parity,
-         .stpg the studio suites); only .on toggles.
-         v6.66.1 — AND IT READS THEM ONCE, NOT EVERY TIME. This line used to
-         re-derive both scopes from clsOf(pe) on every page switch, which asks
-         the element to tell us something we wrote into index.html ourselves.
-         6.53.0 established that UXP can answer null for a class read, and a
-         null here would silently drop .apg and .stpg — taking 300-odd scoped
-         rules with them — from the first switch onward, with no error. The
-         scopes are captured from the markup the first time each page is seen
-         and kept in scopeMem after that, so a bad read can cost nothing. */
-      let scope = scopeMem[p.page];
-      if (scope === undefined) {
-        let raw = "";
-        try { raw = String((pe.getAttribute && pe.getAttribute("class")) || clsOf(pe) || ""); } catch (e) { raw = ""; }
-        scope = (/\bapg\b/.test(raw) ? " apg" : "") + (/\bstpg\b/.test(raw) ? " stpg" : "");
-        scopeMem[p.page] = scope;
-      }
+         .stpg the studio suites); only .on toggles. v6.78.0 — from the table
+         above, never from a class read (see PAGE_SCOPE_STPG). */
+      const scope = pageScope(p.page);
       pe.className = "page" + scope + (active && p.page === active.page ? " on" : "");
     }
   }
@@ -18675,6 +18879,7 @@ function lsReady() {
 function init() {
   installGlobalSafetyNet();
   safe("off-guard", function () { bindOffGuard(document); });
+  safe("pickers", function () { bindHslPickers(); });
   Promise.all([loadSettings(), lsReady()]).then(function () {
     /* first: the wall comes down only if the plan says so */
     safe("gate", function () { gateBoot(); });

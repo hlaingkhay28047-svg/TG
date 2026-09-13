@@ -160,9 +160,12 @@ var IMAGINE = (function(){
     var line = el("div","im-cmp-line"); line.style.left=split+"%"; art.appendChild(line);
     var knob = el("div","im-cmp-knob","⇔"); knob.style.left=split+"%"; art.appendChild(knob);
     art.appendChild(el("span","im-lb l", t("before"))); art.appendChild(el("span","im-lb r", t("after")));
-    var syncW=function(){ bef.style.width=art.clientWidth+"px"; };
+    /* 6.78.0 — the "before" picture is as wide as the whole art box: 100/v of the v%-wide clip it sits in,
+       a percentage the layout resolves by itself — a measured clientWidth read 0 in Photoshop */
+    var hubBefW=function(v){ return (v>0 ? Math.round(1000000/v)/100 : 100)+"%"; };
+    var syncW=function(){ var v=(S.hubSplit && typeof S.hubSplit[tool.id]==="number") ? S.hubSplit[tool.id] : split; bef.style.width=hubBefW(v); };
     aft.onload=syncW; setTimeout(syncW,0); hubSyncs.push(syncW);
-    var setHub=function(v){ v=Math.round(Math.max(0,Math.min(100,v))); S.hubSplit=S.hubSplit||{}; S.hubSplit[tool.id]=v; top.style.width=v+"%"; line.style.left=v+"%"; knob.style.left=v+"%"; };
+    var setHub=function(v){ v=Math.round(Math.max(0,Math.min(100,v))); S.hubSplit=S.hubSplit||{}; S.hubSplit[tool.id]=v; top.style.width=v+"%"; line.style.left=v+"%"; knob.style.left=v+"%"; bef.style.width=hubBefW(v); };
     var drag=null;
     var at=function(ev){ var v=imDragX(art, ev, drag ? drag.p : split, drag ? drag.x : 0); if(v===null) return; setHub(v); };
     var down=function(ev){ if(ev.button && ev.button!==0) return; drag={ x:(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, t:Date.now(), moved:false, p:(S.hubSplit && typeof S.hubSplit[tool.id]==="number") ? S.hubSplit[tool.id] : split }; c.classList.add("lift"); if(ev.pointerId!=null && art.setPointerCapture){ try{ art.setPointerCapture(ev.pointerId); }catch(e){} } };
@@ -273,7 +276,7 @@ var IMAGINE = (function(){
       var knob = el("div","im-cmp-knob","⇔"); knob.style.left=S.split+"%"; cmp.appendChild(knob); refs.knob=knob;
       cmp.appendChild(el("span","im-lb l", t("before"))); cmp.appendChild(el("span","im-lb r", t("after")));
       if(cur.out.size) cmp.appendChild(el("span","im-badge", String(cur.out.size).toUpperCase()));
-      var syncW=function(){ if(refs.orig && refs.cmp) refs.orig.style.width=refs.cmp.clientWidth+"px"; };
+      var syncW=function(){ if(refs.orig) refs.orig.style.width=cmpBefW(S.split); };
       base.onload=syncW; setTimeout(syncW,0); refs.syncW=syncW;
       var rng = el("input","im-range"); rng.type="range"; rng.min="0"; rng.max="100"; rng.value=String(S.split); rng.id="imSplit";
       rng.setAttribute("aria-label", t("before")+" / "+t("after"));
@@ -289,10 +292,12 @@ var IMAGINE = (function(){
     }
     return wrap;
   }
+  function cmpBefW(v){ return (v>0 ? Math.round(1000000/v)/100 : 100)+"%"; }
   function setSplit(v){
     if(!(v>=0 && v<=100)) return;
     S.split=v;
     if(refs.top) refs.top.style.width=v+"%";
+    if(refs.orig) refs.orig.style.width=cmpBefW(v);
     if(refs.line) refs.line.style.left=v+"%";
     if(refs.knob) refs.knob.style.left=v+"%";
     if(refs.rng && String(refs.rng.value)!==String(v)) refs.rng.value=String(v);

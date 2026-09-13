@@ -712,10 +712,11 @@ function create(deps) {
     }
     if (nodes.readyMsg) {
       nodes.readyMsg.className = "hnk-status " + (canGenerate ? "ok" : "");
-      nodes.readyMsg.textContent = canGenerate ? "All required inputs are ready — press GENERATE."
+      /* v6.78.0 — three lines that spoke English in a Burmese panel (photographs 5–7) */
+      nodes.readyMsg.textContent = canGenerate ? dom.t("wf_ready_generate", "All required inputs are ready \u2014 press GENERATE.")
         : (state.prepared || directMode())
-          ? (ev.reasons[0] ? ev.reasons[0].message : "Add the required images.")
-          : "Press Prepare to load this workflow and check your images.";
+          ? (ev.reasons[0] ? ev.reasons[0].message : dom.t("wf_add_required", "Add the required images."))
+          : dom.t("wf_press_prepare", "Press Prepare to load this workflow and check your images.");
     }
     return ev;
   }
