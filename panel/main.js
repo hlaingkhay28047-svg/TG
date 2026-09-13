@@ -6442,7 +6442,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.144.0";
+const PANEL_VERSION = "6.145.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8099,7 +8099,19 @@ function applyTheme() {
    `<dialog>` where it has window.confirm, the UXP shell where it has
    window.open, div controls where it has <button>. Row rendering for the
    other pages (renderRows) stays as it was. */
-const DIAG_ICON = { ok: "✓", warn: "!", err: "×", pend: "•" };
+/* v6.74.0 — A FIFTH LEVEL, AND WHY "!" WAS THE WRONG ONE FOR EIGHT ROWS.
+   The owner photographed the SELF-TEST card twice in one day and asked for
+   everything to be checked — because eight rows say "!" on every run of every
+   build, and "!" means something is wrong. Nothing was: those rows are the
+   probes this renderer CANNOT answer (no layout geometry, computed style an
+   echo, no Range.getClientRects), settled since 6.137.0 and written down
+   every time. A warning that fires forever is a warning nobody can read, and
+   it hides the day a real one appears among them.
+   `host` is "the host cannot answer this — expected", drawn muted, and it is
+   earned only by the answers that MEAN that (unmeasurable, unavailable, echo,
+   every ruler at zero). A wrong answer — content-box measured, a glyph
+   missing, one box per character — is still "!" exactly as before. */
+const DIAG_ICON = { ok: "✓", warn: "!", err: "×", pend: "•", host: "~" };
 /* v6.46.0 — one row renderer for every Setup card, because the web app's
    Setup is a column of status rows and nothing else. It used to serve only
    the diagnostics card; READINESS, ACCOUNT, COST & BALANCE, DATA & BACKUP
@@ -9322,6 +9334,7 @@ const ST_L = {
   copy:   { my: "စာသား ကူးမယ်", en: "Copy as text", shn: "ၶူတ်ႉပဵၼ်တူဝ်လိၵ်ႈ", kac: "Laika hku kaw u", th: "คัดลอกเป็นข้อความ", zh: "复制为文本", vi: "Sao chép dạng văn bản", id: "Salin sebagai teks", ms: "Salin sebagai teks" },
   copied: { my: "ကူးပြီးပါပြီ — chat ထဲ paste လုပ်ပြီး ပို့လိုက်ပါ", en: "Copied — paste it into chat", shn: "ၶူတ်ႉယဝ်ႉ", kac: "Kaw sai", th: "คัดลอกแล้ว", zh: "已复制", vi: "Đã sao chép", id: "Tersalin", ms: "Disalin" },
   copyErr:{ my: "ကူး၍မရပါ — ဓာတ်ပုံရိုက်ပြီး ပို့ပါ", en: "Couldn't copy — send a photo instead", shn: "ၶူတ်ႉဢမ်ႇလႆႈ", kac: "N mai kaw ai", th: "คัดลอกไม่ได้", zh: "无法复制", vi: "Không sao chép được", id: "Tidak dapat menyalin", ms: "Tidak dapat menyalin" },
+  legend: { my: "~ = ဒီ renderer က မတိုင်းနိုင်တာ (UXP ကန့်သတ်ချက်) — ပြဿနာ မဟုတ်ပါ။ ! = ကြည့်ရမယ့်အရာ", en: "~ = this renderer cannot measure it (a UXP limit) — not a fault. ! = needs a look", shn: "~ = renderer ၼႆႉတႅၵ်ႈဢမ်ႇလႆႈ (UXP) — ဢမ်ႇၸႂ်ႈၽိတ်း။ ! = လူဝ်ႇတူၺ်း", kac: "~ = ndai renderer n hkyen lu ai (UXP) — shut ai n re. ! = yu ra ai", th: "~ = เรนเดอเรอร์นี้วัดไม่ได้ (ข้อจำกัด UXP) — ไม่ใช่ข้อผิดพลาด ! = ต้องดู", zh: "~ = 此渲染器无法测量（UXP 限制）— 不是故障。! = 需要查看", vi: "~ = renderer này không đo được (giới hạn UXP) — không phải lỗi. ! = cần xem", id: "~ = renderer ini tidak bisa mengukurnya (batas UXP) — bukan kesalahan. ! = perlu dilihat", ms: "~ = renderer ini tidak dapat mengukurnya (had UXP) — bukan kesilapan. ! = perlu dilihat" },
   clean:  { my: "အားလုံး ကောင်းပါတယ်", en: "Everything answered", shn: "ၶဝ်ႈၸႂ်တင်းမူတ်း", kac: "Yawng hkrak ai", th: "ทุกอย่างปกติ", zh: "一切正常", vi: "Mọi thứ đều ổn", id: "Semua baik", ms: "Semua baik" }
 };
 /* every row: [label, value, level]. Absent or zero where something is expected
@@ -9351,6 +9364,25 @@ function selfTestRowsInner() {
   };
 
   rows.push({ label: "Panel", detail: "v" + PANEL_VERSION, level: "ok" });
+  /* v6.74.0 — THE LICENCE ROW. 6.73.0 gave the panel a six-hour cold-boot
+     grace, and the one photograph that can prove it is this card with the
+     line dead — which is the photograph the owner takes. So the card says
+     which of the three states the gate is in, from the same fields the gate
+     itself decides on: a live lease and how long it has, the grace and how
+     long IT has, or locked. The grace is "!" on purpose: the panel is open
+     on a remembered answer, and that is worth a look. */
+  try {
+    let lic = "", licLvl = "warn";
+    if (!gateS.sess) { lic = "signed out"; }
+    else if (gateLeaseValid()) {
+      lic = "live lease · " + Math.max(0, Math.round((gateS.leaseExp - Date.now()) / 1000)) + "s left";
+      licLvl = "ok";
+    } else if (gateS.graceOpen) {
+      const ms = gateGraceLeft(), hh = Math.floor(ms / 3600000), mm = Math.floor((ms % 3600000) / 60000);
+      lic = "offline · last verdict · " + hh + "h " + mm + "m left";
+    } else { lic = "locked"; }
+    rows.push({ label: "Licence", detail: lic, level: licLvl });
+  } catch (eLic) { rows.push({ label: "Licence", detail: String(eLic).slice(0, 80), level: "err" }); }
   /* the host's own version — the acceptance record needs exactly this and it
      has been one message away for weeks */
   /* v6.107.1 — uxp.host, not app.version. The owner's first SELF-TEST photograph
@@ -9383,7 +9415,7 @@ function selfTestRowsInner() {
   rows.push({ label: "line boxes", detail: caps.rangeRects === undefined ? "—" :
     (caps.rangeRects < 0 ? "unavailable"
       : caps.rangeLineBoxes ? "yes (" + caps.rangeRects + ")" : "per glyph (" + caps.rangeRects + ")"),
-    level: caps.rangeRects === undefined ? "pend" : (caps.rangeLineBoxes ? "ok" : "warn") });
+    level: caps.rangeRects === undefined ? "pend" : caps.rangeRects < 0 ? "host" : (caps.rangeLineBoxes ? "ok" : "warn") });
   /* v6.63.0 — the PNG is the one that matters now: every icon in the panel is
      one. The SVG row stays beside it because the pair is the whole story of
      this wave, and because "svg no · png yes" is what the fix looks like. */
@@ -9463,7 +9495,9 @@ function selfTestRowsInner() {
     const useC = !gotIt && computed && computed !== "?" && computed !== "";
     rows.push({ label: label,
       detail: useC ? (measured + "  \u00b7  computed " + computed) : measured,
-      level: val === undefined ? "pend" : gotIt ? "ok" : "warn" });
+      /* v6.74.0 — "unmeasurable" is the host declining to answer, not a wrong
+         answer; a measured value that is simply not the good one stays "!" */
+      level: val === undefined ? "pend" : gotIt ? "ok" : (val === "unmeasurable" ? "host" : "warn") });
   };
   cssRow("box-sizing", caps.cssBox, "border-box", caps.cssBoxC);
   cssRow("flex gap", caps.cssGap, "yes", caps.cssGapC);
@@ -9477,11 +9511,14 @@ function selfTestRowsInner() {
     /* v6.66.1 — the 100px in that row is not a measurement. calc() came back
        as its own unresolved text, so getComputedStyle is echoing what was set
        rather than reporting what was drawn. Say so on the row itself. */
+    /* v6.74.0 — four rulers all at zero is "no ruler here", the settled
+       answer; a ruler that reads SOMETHING other than 100 is still "!" */
+    const zeroRulers = (String(caps.rulers).match(/\b(rect|client|scroll|offset) 0\b/g) || []).length === 4;
     rows.push({ label: "rulers (100px box)", detail: String(caps.rulers),
-      level: "warn" });
+      level: zeroRulers ? "host" : "warn" });
     if (caps.cssEcho) {
       rows.push({ label: "\u21b3 computed is", detail: String(caps.cssEcho),
-        level: caps.cssEcho === "resolved" ? "ok" : "warn" });
+        level: caps.cssEcho === "resolved" ? "ok" : (/^echo/.test(String(caps.cssEcho)) ? "host" : "warn") });
     }
   }
   /* v6.66.1 — do the pages still carry the classes 300-odd rules hang off? */
@@ -9513,7 +9550,8 @@ function selfTestRowsInner() {
       : (gMiss === "none" ? "all " + (caps.glyphList ? caps.glyphList.length : "") + " present"
         : (gMiss === "unmeasurable" || gMiss === "indistinguishable" || gMiss === "?") ? gMiss
           : (caps.glyphN || "") + " missing: " + gMiss),
-    level: gMiss === undefined ? "pend" : gMiss === "none" ? "ok" : "warn" });
+    level: gMiss === undefined ? "pend" : gMiss === "none" ? "ok"
+      : (gMiss === "unmeasurable" || gMiss === "indistinguishable") ? "host" : "warn" });
   if (caps.glyphRef) rows.push({ label: "glyph ruler", detail: caps.glyphRef, level: "ok" });
   /* v6.66.0 — three cells, four times the size: the guaranteed .notdef first,
      then the two the strip kept printing as a coloured square.
@@ -9627,6 +9665,8 @@ function renderSelfTestInner() {
     h.appendChild(document.createTextNode(ff9(ST_L.h)));
   }
   const note = $("selfTestNote"); if (note) note.textContent = ff9(ST_L.note);
+  /* v6.74.0 — the legend for the two marks a photograph has to tell apart */
+  const legend = $("selfTestLegend"); if (legend) legend.textContent = ff9(ST_L.legend);
   setIcnText($("btnSelfTest"), "i-retry", "cream", ff9(ST_L.run));
   setIcnText($("btnSelfTestCopy"), "i-doc", "cream", ff9(ST_L.copy));
   renderRows("selfTestRows", selfTestRows());

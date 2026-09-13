@@ -414,6 +414,85 @@ const READ_CARD = () => {
     report("F9) the copy text carries all of it",
       !!st && ["Wiring:", "Video page:", "Labels:", "Panel log:"].every(k => st.copy.indexOf(k) > 0), !!st && st.copy.slice(-200));
 
+    /* K) v6.74.0 — THE FIFTH LEVEL. The owner's six photographs of 6.144.0
+       showed eight "!" rows that were all the same non-fact: the host declined
+       to measure. A wrong measurement and no measurement can no longer share a
+       mark. Both claims are proved on the live page by feeding selfTestRows()
+       the answers the photographs carried, then wrong ones, and reading the
+       level it assigns each row. */
+    const HOST_CAPS = { rangeRects: -1, rangeLineBoxes: false,
+      cssBox: "unmeasurable", cssBoxC: "border-box", cssGap: "unmeasurable", cssGapC: "?",
+      cssCalc: "unmeasurable", cssCalcC: "calc(50px + 10px)", cssFixed: "unmeasurable", cssFixedC: "fixed",
+      cssObjectFit: "kept", cssBgSize: "kept",
+      rulers: "rect 0 \u00b7 client 0 \u00b7 scroll 0 \u00b7 computed 100px \u00b7 offset 0",
+      cssEcho: "echo (calc came back unresolved)", scopeOk: "yes", scopeAttr: "stpg apg",
+      glyphMiss: "unmeasurable" };
+    const WRONG_CAPS = { rangeRects: 40, rangeLineBoxes: false,
+      cssBox: "content-box", cssBoxC: "content-box", cssGap: "no", cssGapC: "normal",
+      cssCalc: "no", cssCalcC: "60px", cssFixed: "no", cssFixedC: "static",
+      cssObjectFit: "DROPPED", cssBgSize: "DROPPED",
+      rulers: "rect 88 \u00b7 client 88 \u00b7 scroll 88 \u00b7 computed 100px \u00b7 offset 88",
+      cssEcho: "88px", scopeOk: "LOST", scopeAttr: "", scopeProp: "",
+      glyphMiss: "27A1 1F504", glyphN: 2 };
+    const HOST_ROWS = ["line boxes", "box-sizing", "flex gap", "calc()", "position:fixed",
+      "rulers (100px box)", "\u21b3 computed is", "glyphs"];
+    const levelsWith = async (caps) => page.evaluate((c) => {
+      const real = window.HNK.selfTest.capabilities;
+      window.HNK.selfTest.capabilities = function () { return Object.assign({}, real.call(this), c); };
+      try {
+        const out = {};
+        selfTestRows().forEach(function (r) { out[r.label] = r.level; });
+        /* and as the DOM draws it: the class the stylesheet keys on and the mark itself */
+        renderSelfTestInner();
+        const drawn = {};
+        document.querySelectorAll("#selfTestRows .diagrow").forEach(function (r) {
+          drawn[(r.querySelector(".diag-nm") || {}).textContent] = {
+            cls: (r.querySelector(".diag-ic") || {}).className || "",
+            mark: (r.querySelector(".diag-ic") || {}).textContent || "" };
+        });
+        return { levels: out, drawn: drawn };
+      } finally { window.HNK.selfTest.capabilities = real; renderSelfTestInner(); }
+    }, caps);
+    const hostLv = await levelsWith(HOST_CAPS);
+    report("K1) the eight answers the owner's Photoshop cannot give are marked host (~), not warn (!) — and the rows it DID answer stay ok",
+      HOST_ROWS.every(n => hostLv.levels[n] === "host") &&
+      hostLv.levels["object-fit"] === "ok" && hostLv.levels["background-size"] === "ok" && hostLv.levels["page scope"] === "ok",
+      JSON.stringify(HOST_ROWS.map(n => [n, hostLv.levels[n]])));
+    report("K2) the DOM draws every one of them with the host class and the ~ mark, so the stylesheet can mute them",
+      HOST_ROWS.every(n => hostLv.drawn[n] && hostLv.drawn[n].cls === "diag-ic host" && hostLv.drawn[n].mark === "~"),
+      JSON.stringify(HOST_ROWS.map(n => [n, hostLv.drawn[n]])));
+    const wrongLv = await levelsWith(WRONG_CAPS);
+    report("K3) the same rows answered WRONG stay warn (!) — the new mark is for silence, never for a bad answer",
+      HOST_ROWS.every(n => wrongLv.levels[n] === "warn") &&
+      wrongLv.levels["object-fit"] === "warn" && wrongLv.levels["background-size"] === "warn" && wrongLv.levels["page scope"] === "warn" &&
+      HOST_ROWS.every(n => wrongLv.drawn[n] && wrongLv.drawn[n].cls === "diag-ic warn" && wrongLv.drawn[n].mark === "!"),
+      JSON.stringify(HOST_ROWS.map(n => [n, wrongLv.levels[n], wrongLv.drawn[n] && wrongLv.drawn[n].mark])));
+    const hostMark = await page.evaluate(() => ({
+      icons: DIAG_ICON,
+      legend: ((document.getElementById("selfTestLegend") || {}).textContent || "").trim(),
+      want: ff9(ST_L.legend), langs: Object.keys(ST_L.legend).join(","),
+      lang: state.lang,
+      css: Array.from(document.styleSheets).some(function (sh) {
+        try { return Array.from(sh.cssRules).some(function (r) { return r.selectorText === ".diag-ic.host"; }); }
+        catch (e) { return false; }
+      })
+    }));
+    report("K4) the five marks are distinct ASCII-or-drawn glyphs, the legend under the rows says what ~ and ! mean in the panel's own language, and the stylesheet knows the class",
+      hostMark.icons.host === "~" && hostMark.icons.warn === "!" &&
+      new Set(Object.values(hostMark.icons)).size === 5 &&
+      hostMark.legend.length > 20 && hostMark.legend === hostMark.want &&
+      hostMark.langs === "my,en,shn,kac,th,zh,vi,id,ms" &&
+      Object.values(hostMark.icons).every(function (g) { return g.length === 1; }) &&
+      hostMark.css === true,
+      JSON.stringify(hostMark));
+    /* the Licence row: the harness stub signs the panel in with a live lease,
+       so the card must count that lease down rather than say anything else —
+       the gate suite covers signed out, the grace and locked */
+    report("K5) the card carries a Licence row, and on this build's live lease it counts the seconds left (ok)",
+      !!row("Licence") && row("Licence").level === "ok" && /^live lease · \d+s left$/.test(row("Licence").detail) &&
+      Number(/(\d+)s left/.exec(row("Licence").detail)[1]) > 60,
+      JSON.stringify(row("Licence")));
+
     /* FAULT INJECTION. Two pages, each loaded with one renderer behaviour
        simulated, because reading the source cannot prove either claim. */
     const hurtPage = async (poison) => {
