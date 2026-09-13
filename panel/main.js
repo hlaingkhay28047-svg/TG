@@ -101,6 +101,11 @@ const state = {
      are what the offline grace window reads. */
   accRefresh: "", accUid: "", accEmail: "", accProfile: null,
   accSeenAt: 0, accDevId: "", accAvatar: "",
+  /* v6.73.0 — WHOSE answer accProfile/accSeenAt are. Without these two the
+     record would outlive the account that earned it: gateSaveSess overwrites
+     accUid when a different member signs in on the same machine, and the old
+     member's entitlement would still be sitting in accProfile. */
+  accSeenUid: "", accSeenDev: "",
   rhKey: "", lang: "my", theme: "dark", model: "auto", size: "1K", ratio: "auto",
   autoRun: true, autoPlace: true, intensity: 60,
   refs: [null, null],
@@ -676,12 +681,14 @@ const I18N = {
     gate_wait: "Too many sign-in attempts — this is not a wrong password. Wait about 5 minutes and try again.",
     gate_busy: "The server is busy right now — wait a few seconds and press Log in again.",
     gate_offline: "No internet — your plan could not be checked. Connect, then press Check again.",
+    gate_grace_gen: "Generating needs the internet. The panel is open on its last licence check, but this step has to reach the server.",
+    gate_grace_tag: "not confirmed",
     gate_locked: "One payment covers both — the joining fee and the monthly fee open the web app AND this Photoshop panel. Buy or renew on the website, then press Check again.",
     gate_buy: "Open the website",
     gate_retry: "Check again",
     gate_signout: "Sign out",
     gate_days: "{D} days left",
-    gate_grace: "Offline — {D} days of offline use left",
+    gate_grace: "No internet — the panel opened on the last licence check that got through. Connect to keep working past it.",
     gate_open_fail: "Could not open the browser. Address: {U}",
     gate_forgot: "Forgot password?",
     gate_session_ended: "Your session has ended — sign in again.",
@@ -1319,12 +1326,14 @@ const I18N = {
     gate_wait: "ဝင်ဖို့ ကြိုးစားတာ များနေပါပြီ — စကားဝှက် မှားလို့ မဟုတ်ပါ။ ၅ မိနစ်လောက် စောင့်ပြီး ပြန်ကြိုးစားပါ။",
     gate_busy: "server အလုပ်များနေပါတယ် — စက္ကန့်အနည်းငယ် စောင့်ပြီး ပြန်နှိပ်ပါ။",
     gate_offline: "အင်တာနက် မရှိပါ — plan ကို စစ်လို့ မရပါ။ ချိတ်ဆက်ပြီး ပြန်စစ်ပါ။",
+    gate_grace_gen: "ပုံထုတ်ဖို့ အင်တာနက် လိုပါတယ်။ Panel ကို နောက်ဆုံးအဖြေနဲ့ ဖွင့်ထားပေမဲ့ ဒီအဆင့်က server ကို ရောက်ရပါမယ်။",
+    gate_grace_tag: "အတည်မပြုရသေး",
     gate_locked: "တစ်ကြိမ်ပေးရင် နှစ်ခုလုံး ရပါတယ် — ဝင်ကြေးနဲ့ လစဉ်ကြေးဟာ web app နဲ့ ဒီ Photoshop panel နှစ်ခုလုံးအတွက် ဖြစ်ပါတယ်။ website မှာ ဝယ်ပါ ဒါမှမဟုတ် သက်တမ်းတိုးပြီး ပြန်စစ်ပါ။",
     gate_buy: "website ဖွင့်ရန်",
     gate_retry: "ပြန်စစ်ရန်",
     gate_signout: "ထွက်ရန်",
     gate_days: "{D} ရက် ကျန်",
-    gate_grace: "အင်တာနက် မရှိ — အော့ဖ်လိုင်း {D} ရက် ကျန်ပါသေးတယ်",
+    gate_grace: "အင်တာနက် မရှိပါ — နောက်ဆုံး စစ်လို့ရခဲ့တဲ့ အဖြေနဲ့ panel ကို ဖွင့်ထားပါတယ်။ ဆက်သုံးဖို့ အင်တာနက် ချိတ်ပါ။",
     gate_open_fail: "browser ဖွင့်လို့ မရပါ။ လိပ်စာ — {U}",
     gate_forgot: "စကားဝှက် မေ့နေလား?",
     gate_session_ended: "သင့် session ကုန်သွားပါပြီ — ပြန်ဝင်ပါ။ (စကားဝှက် မှားလို့ မဟုတ်ပါ)",
@@ -1962,12 +1971,14 @@ const I18N = {
     gate_wait: "ၶဝ်ႈၸႂ်ႉတိုဝ်း ၼမ်ပူၼ်ႉ — ဢမ်ႇၸႂ်ႈၶေႃႈလပ်ႉၽိတ်း။ ပႂ်ႉ 5 မိၼိတ်ႉသေ ႁဵတ်းထႅင်ႈ။",
     gate_busy: "ၶိူင်ႈမေႃႈ ၵၢၼ်ၼမ်ဝႆႉ — ပႂ်ႉၵမ်းလဵဝ်သေ ၼဵၵ်းထႅင်ႈ။",
     gate_offline: "ဢမ်ႇမီးဢိၼ်ႇထႃႇၼႅတ်ႉ — ၵူတ်ႇထတ်းငဝ်းလၢႆးဢမ်ႇလႆႈ။ ၵပ်းသိုပ်ႇသေ ၵူတ်ႇထတ်းၶိုၼ်း။",
+    gate_grace_gen: "ႁဵတ်းႁၢင်ႈလူဝ်ႇဢိၼ်ႇထႃႇၼႅတ်ႉ။ Panel ပိုတ်ႇလူၺ်ႈၶေႃႈတွပ်ႇလိုၼ်းသုတ်းသေတႃႉ ၶၵ်ႉတွၼ်ႈၼႆႉလူဝ်ႇထိုင် server။",
+    gate_grace_tag: "ပႆႇယိုၼ်ယၼ်",
     gate_locked: "သိုဝ်ႉပွၵ်ႈလဵဝ် လႆႈသွင်ဢၼ် — ၵႃႈၶဝ်ႈ လႄႈ ၵႃႈလိူၼ် ပိုတ်ႇပၼ် web app လႄႈ Photoshop panel ဢၼ်ၼႆႉ သွင်ဢၼ်။ သိုဝ်ႉ ဢမ်ႇၼၼ် တေႃႇသိုပ်ႇ တီႈ website သေ ၵူတ်ႇထတ်းၶိုၼ်း။",
     gate_buy: "ပိုတ်ႇ website",
     gate_retry: "ၵူတ်ႇထတ်းၶိုၼ်း",
     gate_signout: "ဢွၵ်ႇ",
     gate_days: "ၵိုတ်း {D} ဝၼ်း",
-    gate_grace: "ဢမ်ႇမီးဢိၼ်ႇထႃႇၼႅတ်ႉ — ၸႂ်ႉလႆႈထႅင်ႈ {D} ဝၼ်း",
+    gate_grace: "ဢမ်ႇမီးဢိၼ်ႇထႃႇၼႅတ်ႉ — ပိုတ်ႇ panel လူၺ်ႈၶေႃႈတွပ်ႇလိုၼ်းသုတ်းဢၼ်လႆႈမႃး။ ၶႂ်ႈသိုပ်ႇၸႂ်ႉ ၵပ်းသိုပ်ႇဢိၼ်ႇထႃႇၼႅတ်ႉ။",
     gate_open_fail: "ပိုတ်ႇ browser ဢမ်ႇလႆႈ။ လိင်ႉ — {U}",
     gate_forgot: "လိုမ်းၶေႃႈလပ်ႉႁႃႉ?",
     gate_session_ended: "ငဝ်းလၢႆးၶဝ်ႈသူ သဵင်ႈယဝ်ႉ — ၶဝ်ႈၶိုၼ်း။",
@@ -2603,12 +2614,14 @@ const I18N = {
     gate_wait: "Shang na matu grai law sai — password shut ai n re. Minute 5 daram la nna bai shakut u.",
     gate_busy: "Server bungli law taw ai — sekan kachyi la nna bai dip u.",
     gate_offline: "Internet n nga ai — plan hpe sawn yu n lu ai. Internet hkrum nna bai sawn yu u.",
+    gate_grace_gen: "Sumla shapraw na matu internet ra ai. Panel gaw hpang jahtum na lam hte hpaw da tim, ndai lakang gaw server de du ra ai.",
+    gate_grace_tag: "n masat shi ai",
     gate_locked: "Langai mari yang lahkawng lu ai — shawng mari hte shata shagu jarik gaw web app hte ndai Photoshop panel lahkawng hpe hpaw ya ai. Website kaw mari u n rai yang matut la nna, bai sawn yu u.",
     gate_buy: "Website hpaw u",
     gate_retry: "Bai sawn yu u",
     gate_signout: "Pru u",
     gate_days: "{D} ya ngam ai",
-    gate_grace: "Internet n nga ai — {D} ya lang lu ai",
+    gate_grace: "Internet n nga ai — panel gaw hpang jahtum lu san yu ai lam hte hpaw da ai. Matut galaw na matu internet hkrum u.",
     gate_open_fail: "Browser hpaw n lu ai. Address: {U}",
     gate_forgot: "Password malap kau sai i?",
     gate_session_ended: "Na a session htum sai — bai shang u.",
@@ -3244,12 +3257,14 @@ const I18N = {
     gate_wait: "พยายามเข้าสู่ระบบบ่อยเกินไป — ไม่ใช่รหัสผ่านผิด รอประมาณ 5 นาทีแล้วลองใหม่",
     gate_busy: "เซิร์ฟเวอร์กำลังไม่ว่าง — รอสักครู่แล้วกดเข้าสู่ระบบอีกครั้ง",
     gate_offline: "ไม่มีอินเทอร์เน็ต — ตรวจสอบแพ็กเกจไม่ได้ เชื่อมต่อแล้วกดตรวจสอบอีกครั้ง",
+    gate_grace_gen: "การสร้างภาพต้องใช้อินเทอร์เน็ต แผงเปิดอยู่ด้วยผลตรวจครั้งล่าสุด แต่ขั้นตอนนี้ต้องถึงเซิร์ฟเวอร์",
+    gate_grace_tag: "ยังไม่ยืนยัน",
     gate_locked: "จ่ายครั้งเดียวได้ทั้งสอง — ค่าแรกเข้าและค่ารายเดือนเปิดใช้ทั้งเว็บแอปและแผง Photoshop นี้ ซื้อหรือต่ออายุบนเว็บไซต์ แล้วกดตรวจสอบอีกครั้ง",
     gate_buy: "เปิดเว็บไซต์",
     gate_retry: "ตรวจสอบอีกครั้ง",
     gate_signout: "ออกจากระบบ",
     gate_days: "เหลือ {D} วัน",
-    gate_grace: "ออฟไลน์ — ใช้งานแบบออฟไลน์ได้อีก {D} วัน",
+    gate_grace: "ไม่มีอินเทอร์เน็ต — แผงเปิดด้วยผลตรวจสิทธิ์ครั้งล่าสุดที่ผ่านเข้ามา เชื่อมต่อเพื่อใช้งานต่อ",
     gate_open_fail: "เปิดเบราว์เซอร์ไม่ได้ ที่อยู่: {U}",
     gate_forgot: "ลืมรหัสผ่าน?",
     gate_session_ended: "เซสชันหมดอายุแล้ว — เข้าสู่ระบบอีกครั้ง",
@@ -3885,12 +3900,14 @@ const I18N = {
     gate_wait: "登录尝试次数过多 — 并不是密码错误。请等待约 5 分钟后再试。",
     gate_busy: "服务器正忙 — 请稍候几秒后再次点击登录。",
     gate_offline: "没有网络 — 无法检查你的套餐。请联网后再次检查。",
+    gate_grace_gen: "生成需要网络。面板虽以上一次授权检查打开，但这一步必须连上服务器。",
+    gate_grace_tag: "未确认",
     gate_locked: "一次付费，两个都能用 — 入会费和月费同时开通网页应用和这个 Photoshop 面板。请在网站上购买或续费，然后再次检查。",
     gate_buy: "打开网站",
     gate_retry: "再次检查",
     gate_signout: "退出登录",
     gate_days: "剩余 {D} 天",
-    gate_grace: "离线 — 还可离线使用 {D} 天",
+    gate_grace: "没有网络 — 面板是用上一次成功的授权检查结果打开的。请联网以继续使用。",
     gate_open_fail: "无法打开浏览器。网址：{U}",
     gate_forgot: "忘记密码？",
     gate_session_ended: "登录状态已过期 — 请重新登录。",
@@ -4526,12 +4543,14 @@ const I18N = {
     gate_wait: "Đăng nhập quá nhiều lần — không phải sai mật khẩu. Hãy đợi khoảng 5 phút rồi thử lại.",
     gate_busy: "Máy chủ đang bận — đợi vài giây rồi nhấn Đăng nhập lại.",
     gate_offline: "Không có mạng — không kiểm tra được gói. Hãy kết nối rồi kiểm tra lại.",
+    gate_grace_gen: "Tạo ảnh cần mạng. Bảng đang mở bằng lần kiểm tra gần nhất, nhưng bước này phải tới được máy chủ.",
+    gate_grace_tag: "chưa xác nhận",
     gate_locked: "Một lần thanh toán dùng được cả hai — phí gia nhập và phí hàng tháng mở cả ứng dụng web VÀ bảng Photoshop này. Hãy mua hoặc gia hạn trên website, rồi bấm kiểm tra lại.",
     gate_buy: "Mở website",
     gate_retry: "Kiểm tra lại",
     gate_signout: "Đăng xuất",
     gate_days: "còn {D} ngày",
-    gate_grace: "Ngoại tuyến — còn dùng ngoại tuyến được {D} ngày",
+    gate_grace: "Không có mạng — bảng mở bằng kết quả kiểm tra bản quyền gần nhất nhận được. Hãy kết nối để dùng tiếp.",
     gate_open_fail: "Không mở được trình duyệt. Địa chỉ: {U}",
     gate_forgot: "Quên mật khẩu?",
     gate_session_ended: "Phiên đăng nhập đã hết — hãy đăng nhập lại.",
@@ -5167,12 +5186,14 @@ const I18N = {
     gate_wait: "Terlalu banyak percobaan masuk — ini bukan kata sandi salah. Tunggu sekitar 5 menit lalu coba lagi.",
     gate_busy: "Server sedang sibuk — tunggu beberapa detik lalu tekan Masuk lagi.",
     gate_offline: "Tidak ada internet — paket tidak bisa diperiksa. Sambungkan lalu periksa lagi.",
+    gate_grace_gen: "Membuat gambar butuh internet. Panel terbuka dengan pemeriksaan terakhir, tetapi langkah ini harus mencapai server.",
+    gate_grace_tag: "belum dikonfirmasi",
     gate_locked: "Satu pembayaran untuk keduanya — biaya pendaftaran dan biaya bulanan membuka aplikasi web DAN panel Photoshop ini. Beli atau perpanjang di website, lalu periksa lagi.",
     gate_buy: "Buka website",
     gate_retry: "Periksa lagi",
     gate_signout: "Keluar",
     gate_days: "sisa {D} hari",
-    gate_grace: "Offline — sisa {D} hari pemakaian offline",
+    gate_grace: "Tidak ada internet — panel dibuka dengan hasil pemeriksaan lisensi terakhir yang sampai. Sambungkan untuk terus bekerja.",
     gate_open_fail: "Tidak bisa membuka browser. Alamat: {U}",
     gate_forgot: "Lupa kata sandi?",
     gate_session_ended: "Sesi Anda berakhir — masuk lagi.",
@@ -5808,12 +5829,14 @@ const I18N = {
     gate_wait: "Terlalu banyak cubaan log masuk — ini bukan kata laluan salah. Tunggu kira-kira 5 minit dan cuba lagi.",
     gate_busy: "Pelayan sedang sibuk — tunggu beberapa saat dan tekan Log masuk lagi.",
     gate_offline: "Tiada internet — pelan tidak dapat disemak. Sambung, kemudian semak semula.",
+    gate_grace_gen: "Menjana imej memerlukan internet. Panel terbuka dengan semakan terakhir, tetapi langkah ini mesti sampai ke pelayan.",
+    gate_grace_tag: "belum disahkan",
     gate_locked: "Satu bayaran untuk kedua-duanya — yuran masuk dan yuran bulanan membuka apl web DAN panel Photoshop ini. Beli atau perbaharui di laman web, kemudian semak semula.",
     gate_buy: "Buka laman web",
     gate_retry: "Semak semula",
     gate_signout: "Log keluar",
     gate_days: "tinggal {D} hari",
-    gate_grace: "Luar talian — tinggal {D} hari penggunaan luar talian",
+    gate_grace: "Tiada internet — panel dibuka dengan semakan lesen terakhir yang sampai. Sambung untuk terus bekerja.",
     gate_open_fail: "Tidak dapat membuka pelayar. Alamat: {U}",
     gate_forgot: "Lupa kata laluan?",
     gate_session_ended: "Sesi anda tamat — log masuk semula.",
@@ -6419,7 +6442,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.143.0";
+const PANEL_VERSION = "6.144.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6498,6 +6521,9 @@ const gateS = {
   /* v6.43.0 — consecutive validates that never reached the server, and the
      earliest moment the automatic beat may try again. See gateHeartbeat. */
   netFails: 0, nextBeat: 0,
+  /* v6.73.0 — the panel is open on a remembered verdict rather than a live
+     lease. Never true at the same time as a valid lease; see gateGraceOpen. */
+  graceOpen: false,
   /* the app's acc.prof / acc.devices / profOffline — the profiles row, the
      enrolled devices list and "the profiles read failed" for the Setup card. */
   prof: null, devices: [], profOffline: false
@@ -6586,6 +6612,7 @@ function gateForget() {
   gatePaintPlan();
   state.accRefresh = ""; state.accUid = ""; state.accEmail = "";
   state.accProfile = null; state.accSeenAt = 0;
+  state.accSeenUid = ""; state.accSeenDev = ""; gateS.graceOpen = false;
   state.accAvatar = "";           /* v6.27.0 — the photo leaves with the session */
   saveSettings();
   try { gatePaintAvatar(); } catch (e) { }
@@ -6664,6 +6691,110 @@ function gateDaysLeft(p) {
   const ms = Date.parse(p.plan_expires_at) - Date.now();
   if (isNaN(ms)) return 0;
   return Math.max(0, Math.ceil(ms / GATE_DAY));
+}
+/* ==========================================================================
+   v6.73.0 — THE COLD-BOOT GRACE, AND EXACTLY WHAT IT DOES NOT GRANT.
+
+   6.70.0 gave the WEB APP a six-hour grace: a boot on a dead line starts from
+   the last verified verdict instead of the wall. The owner asked (2026-09-12)
+   for the panel to have it too, and the panel's gate is a different mechanism,
+   so this is deliberately a SMALLER grant than the web app's, not an equal one.
+
+   WHAT OPENS. The overlay, and nothing behind it that needs a server. The
+   panel's real authorization is gateRequireLease, the choke point every
+   provider operation crosses, and it still demands a live lease from
+   gateValidate — this code never writes gateS.lease and never can. So during
+   the grace a retoucher keeps Retouch A/B, the whole GPU preview, the Imagine
+   template browser and the Setup card, and a Generate is refused.
+
+   THAT REFUSAL COSTS NOTHING, which is the argument for the whole design: a
+   generate calls RunningHub. It could not succeed offline whatever this gate
+   decided. The only thing an offline grace can buy is the LOCAL work, and the
+   local work is exactly what it buys.
+
+   THE BOUNDS, each one a way for this to answer no:
+     - only a verified 2xx validate ever writes the record. Every refusal the
+       server actually sent deletes it, so a suspended account, a revoked seat
+       or a blocked build is dead the moment the panel reaches the server once;
+     - the six hours run from the SUCCESS, not from boot, so staying offline
+       cannot extend anything — a machine dark for seven hours boots to the wall;
+     - the record carries the account and the installation it was earned by and
+       is ignored for any other, and it is left out of the backup file;
+     - the plan's own expiry still rules. No readable expiry, or one that has
+       passed, is no grace — gatePremium's own comment says why a status-only
+       check grants Premium forever;
+     - a clock moved backwards is refused rather than trusted;
+     - and updateRequired is never graced: a build the server blocked stays
+       blocked.
+
+   NOT THE RETIRED PATH. A seven-day offline grace once existed and was removed;
+   retiredOfflineDaysLeft/retiredOfflineEligible just below are its tombstones,
+   dead code kept as a record of what the policy used to be. This is six hours,
+   not seven days, and it opens the overlay rather than the lease.
+   ========================================================================== */
+const GATE_GRACE_MS = 6 * 3600000;      /* the web app's UNIFIED_GRACE_MS exactly */
+
+/* The expiry the stored entitlement carries, read the way gatePaintPlan reads
+   it — the validate body may nest the licence or may not. */
+function gateGraceExpiry(p) {
+  const lic = (p && (p.license || p)) || {};
+  const raw = lic.expires_at || lic.plan_expires_at || null;
+  const t = raw ? Date.parse(raw) : NaN;
+  return isNaN(t) ? 0 : t;
+}
+/* Milliseconds of grace left, or 0 for every reason there is to refuse. */
+function gateGraceLeft() {
+  if (gateS.updateRequired) return 0;
+  if (!gateS.sess || !gateS.sess.uid) return 0;
+  const p = state.accProfile;
+  if (!p || typeof p !== "object") return 0;
+  if (!state.accSeenUid || state.accSeenUid !== gateS.sess.uid) return 0;
+  if (!state.accSeenDev || state.accSeenDev !== gateS.devId) return 0;
+  const seen = Number(state.accSeenAt) || 0, now = Date.now();
+  if (seen <= 0 || seen > now + 60000) return 0;        /* the clock moved */
+  const left = GATE_GRACE_MS - (now - seen);
+  if (left <= 0) return 0;
+  const exp = gateGraceExpiry(p);
+  if (!exp || exp <= now) return 0;                     /* the plan's own date wins */
+  return left;
+}
+/* Written only where the server actually said yes. The disk write is throttled
+   to a minute because gateRequireLease validates before EVERY provider
+   operation and this is a file on the student's disk; a timestamp up to a
+   minute stale only ever SHORTENS the grace, which is the safe direction. */
+function gateGraceRemember() {
+  try {
+    if (!gateS.sess || !gateS.sess.uid || !gateS.entitlement) return;
+    const now = Date.now();
+    const moved = state.accSeenUid !== gateS.sess.uid || state.accSeenDev !== gateS.devId;
+    if (!moved && now - (Number(state.accSeenAt) || 0) < 60000) return;
+    state.accSeenAt = now;
+    state.accSeenUid = gateS.sess.uid;
+    state.accSeenDev = gateS.devId;
+    saveSettings();
+  } catch (e) { }
+}
+/* A refusal the server actually sent must not be survivable by relaunching
+   Photoshop, so every one of them comes through here. */
+function gateGraceForget() {
+  try {
+    gateS.graceOpen = false;
+    state.accProfile = null; state.accSeenAt = 0;
+    state.accSeenUid = ""; state.accSeenDev = "";
+    saveSettings();
+  } catch (e) { }
+}
+/* Open the panel on the remembered verdict. Returns false when there is
+   nothing to open on, and the caller locks exactly as it did before. */
+function gateGraceOpen() {
+  if (gateGraceLeft() <= 0) return false;
+  gateS.graceOpen = true;
+  gateS.entitlement = state.accProfile;
+  gateUnlock();
+  try { gatePaintPlan(); } catch (e) { }
+  try { homeRefresh(); } catch (e) { }
+  try { setStatus(gateT("gate_grace"), "err"); } catch (e) { }
+  return true;
 }
 function retiredOfflineDaysLeft() {
   if (!gateS.seenAt) return 0;
@@ -6909,8 +7040,12 @@ function gatePaintPlan() {
   gatePaintAccDot(d);
   const el = gateEl("brandPlan"); if (!el) return;
   if (!d) { el.textContent = ""; return; }
-  el.textContent = gateT("gate_days").replace("{D}", String(d));
-  el.style.color = (d <= 7) ? "#f4d488" : "";
+  /* v6.73.0 — while the panel is open on a remembered verdict the header says
+     so, every frame it paints: the number is the last one the server confirmed,
+     not one this launch was told. */
+  el.textContent = gateT("gate_days").replace("{D}", String(d)) +
+    (gateS.graceOpen ? " \u00b7 " + gateT("gate_grace_tag") : "");
+  el.style.color = (gateS.graceOpen || d <= 7) ? "#f4d488" : "";
 }
 /* v6.51.0 — the app's accChipRender: the header gear carries a 9px state dot.
    Signed out: none. Signed in without an active plan: a hollow gold ring
@@ -7043,6 +7178,11 @@ async function gateValidate(force) {
     if (!r.ok || j.ok === false) {
       gateS.lease = ""; gateS.leaseExp = 0;
       gateS.updateRequired = r.status === 426 || j.code === "UPDATE_REQUIRED";
+      /* v6.73.0 — the server ANSWERED, and the answer was no. That is the one
+         thing the offline grace must never survive: relaunching Photoshop
+         after a suspension, a revoked seat or a blocked build must not reopen
+         the panel, so the remembered verdict is deleted here. */
+      gateGraceForget();
       gateShow("locked"); gateErr(gateResponseMessage(j, r.status));
       return false;
     }
@@ -7050,6 +7190,7 @@ async function gateValidate(force) {
     const expires = gateLeaseExpiry(j);
     if (!lease || !expires || expires <= Date.now()) {
       gateS.lease = ""; gateS.leaseExp = 0;
+      gateGraceForget();      /* the server answered and issued nothing */
       gateShow("locked"); gateErr(gateT("gate_no_lease"));
       return false;
     }
@@ -7057,8 +7198,12 @@ async function gateValidate(force) {
     gateS.leaseExp = expires;
     gateS.entitlement = j.entitlement || j;
     state.accProfile = gateS.entitlement;
-    state.accSeenAt = 0;
     gateS.updateRequired = false;
+    /* v6.73.0 — the only place a verdict is remembered, and it is reached only
+       after a 2xx that carried a real lease. gateS.graceOpen clears here
+       because the panel is now open on the live answer, not the stored one. */
+    gateS.graceOpen = false;
+    gateGraceRemember();
     gateErr(""); gateUnlock();
     homeRefresh();            /* the plan line can now be named */
     gateS.netFails = 0;
@@ -7089,6 +7234,12 @@ async function gateValidate(force) {
     gateS.netFails = (gateS.netFails || 0) + 1;
     if (gateLeaseValid()) return true;
     gateS.lease = ""; gateS.leaseExp = 0;
+    /* v6.73.0 — and once the lease HAS run out, the last verified verdict is
+       what answers, for up to six hours from the moment the server gave it.
+       This returns false either way: the caller asked whether there is a live
+       lease and there is not, so gateRequireLease still refuses every provider
+       operation. What changes is only whether the overlay comes down. */
+    if (gateGraceOpen()) return false;
     gateShow("locked"); gateErr(gateT("gate_offline"));
     return false;
   }
@@ -7099,7 +7250,14 @@ async function gateValidate(force) {
    time remaining. */
 async function gateRequireLease() {
   const ok = await gateValidate(true);
-  if (!ok) throw new Error("HNKERR:err_license:Panel authorization required");
+  if (!ok) {
+    /* v6.73.0 — the choke point is UNCHANGED: no live lease, no provider
+       operation, grace or no grace. Only the sentence changes, because while
+       the grace holds the panel open the reason this step cannot run is the
+       connection and not the licence. */
+    if (gateS.graceOpen) throw new Error("HNKERR:err_license:" + gateT("gate_grace_gen"));
+    throw new Error("HNKERR:err_license:Panel authorization required");
+  }
   return gateS.lease;
 }
 try {
@@ -7124,6 +7282,11 @@ async function gateCheck() {
        has rotated away, revoked or expired is not a wrong password, and telling a
        student it is sends them to change a password that was always correct. */
     if (rf === "dead") gateForget();
+    /* v6.73.0 — THE FIRST OF THE TWO COLD-BOOT DOORS, and the one that shuts
+       first: on a dead line the refresh never lands, so gateValidate below is
+       never even reached. "dead" is the server answering that the credential
+       is gone — never graced. Anything else here is the line, not a verdict. */
+    if (rf !== "dead" && gateGraceOpen()) { gateBusy(false); return; }
     gateShow(rf === "dead" ? "login" : "locked");
     gateErr(gateT(rf === "dead" ? "gate_session_ended" : "gate_service_down"));
     return;
@@ -8979,7 +9142,12 @@ function rhSaveModel() {
 }
 
 /* ---------------- DATA & BACKUP (the app's cardData) ---------------- */
-const BACKUP_SKIP = { accRefresh: 1, accUid: 1, accEmail: 1, accProfile: 1, accSeenAt: 1, accDevId: 1, accAvatar: 1 };
+/* v6.73.0 — accSeenUid/accSeenDev join the list for the reason the others are
+   on it: a backup file is carried to another machine, and an authorization
+   record that travelled with it would be an authorization record for a machine
+   the server never saw. */
+const BACKUP_SKIP = { accRefresh: 1, accUid: 1, accEmail: 1, accProfile: 1, accSeenAt: 1, accDevId: 1, accAvatar: 1,
+  accSeenUid: 1, accSeenDev: 1 };
 async function settingsFileText() {
   try {
     const folder = await fsp.getDataFolder();
@@ -13103,6 +13271,7 @@ async function saveSettings() {
       libImgCount: state.libImgCount, libLastScan: state.libLastScan, refTokens: state.refTokens,
       accRefresh: state.accRefresh, accUid: state.accUid, accEmail: state.accEmail,
       accProfile: state.accProfile, accSeenAt: state.accSeenAt, accDevId: state.accDevId,
+      accSeenUid: state.accSeenUid, accSeenDev: state.accSeenDev,
       accAvatar: state.accAvatar,
       rhModel: state.rhModel, ffRatio: state.ffRatio, ffSize: state.ffSize, ffCount: state.ffCount,
       rhCfg: state.rhCfg, spend: state.spend, rhBal: state.rhBal, rhLastCur: state.rhLastCur
@@ -13131,6 +13300,8 @@ async function loadSettings() {
       if (typeof o.accEmail === "string") state.accEmail = o.accEmail;
       if (o.accProfile && typeof o.accProfile === "object") state.accProfile = o.accProfile;
       if (typeof o.accSeenAt === "number" && isFinite(o.accSeenAt)) state.accSeenAt = o.accSeenAt;
+      if (typeof o.accSeenUid === "string") state.accSeenUid = o.accSeenUid;
+      if (typeof o.accSeenDev === "string") state.accSeenDev = o.accSeenDev;
       if (typeof o.accDevId === "string") state.accDevId = o.accDevId;
       /* v6.27.0 — the cached profile photo: re-bounded on load because the
          settings file is user-editable disk, not a trusted store. */
