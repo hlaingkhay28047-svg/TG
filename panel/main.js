@@ -459,7 +459,7 @@ const FF_L = {
      they add their photo is the one place that must not be half-translated. */
   where: { my: "ဘယ်ကယူမလဲ", en: "Where from?", shn: "ဢဝ်တီႈလႂ်?", kac: "Gara kaw na?", th: "เอามาจากไหน?", zh: "从哪里获取？", vi: "Lấy từ đâu?", id: "Ambil dari mana?", ms: "Ambil dari mana?" },
   srcLayer: { my: "Photoshop layer ကယူမယ်", en: "Use the selected Photoshop layer", shn: "ၸႂ်ႉ Photoshop layer ဢၼ်လိူၵ်ႈဝႆႉ", kac: "Photoshop layer lata da ai hpe lang u", th: "ใช้เลเยอร์ Photoshop ที่เลือกไว้", zh: "使用选中的 Photoshop 图层", vi: "Dùng layer Photoshop đang chọn", id: "Pakai layer Photoshop yang dipilih", ms: "Guna lapisan Photoshop yang dipilih" },
-  srcFile: { my: "ဖုန်းထဲက ပုံတင်မယ်", en: "Upload from this device", shn: "ဢဝ်ၶႅပ်းႁၢင်ႈ ၼႂ်းၶိူင်ႈၼႆႉ", kac: "Ndai jak kaw na sumla la u", th: "อัปโหลดจากเครื่องนี้", zh: "从本机上传", vi: "Tải lên từ máy này", id: "Unggah dari perangkat ini", ms: "Muat naik dari peranti ini" },
+  srcFile: { my: "ဒီစက်ထဲက ဖိုင် ရွေးမယ်", en: "Upload from this device", shn: "ဢဝ်ၶႅပ်းႁၢင်ႈ ၼႂ်းၶိူင်ႈၼႆႉ", kac: "Ndai jak kaw na sumla la u", th: "อัปโหลดจากเครื่องนี้", zh: "从本机上传", vi: "Tải lên từ máy này", id: "Unggah dari perangkat ini", ms: "Muat naik dari peranti ini" },
   srcLib: { my: "Library look ထဲက ယူမယ်", en: "Pick a Library look", shn: "လိူၵ်ႈ Library look", kac: "Library look langai lata u", th: "เลือกลุคจาก Library", zh: "从 Library 选择", vi: "Chọn look từ Library", id: "Pilih look dari Library", ms: "Pilih look dari Library" },
   srcLast: { my: "နောက်ဆုံးရလဒ်ကို သုံးမယ်", en: "Use the last result", shn: "ၸႂ်ႉၽွၼ်းလႆႈလိုၼ်းသုတ်း", kac: "Lachyum hpang jahtum hpe lang u", th: "ใช้ผลลัพธ์ล่าสุด", zh: "使用最近的结果", vi: "Dùng kết quả gần nhất", id: "Pakai hasil terakhir", ms: "Guna hasil terakhir" },
   resultTo: { my: "ရလဒ် → IMAGE {n} ✓", en: "Result → IMAGE {n} ✓" },
@@ -740,6 +740,7 @@ const I18N = {
     btn_ref_file: "File",
     btn_ref_web: "Web",
     st_ref_layer_added: "Layer added as reference \u2713",
+    st_photo_layer_added: "Layer added as the photo \u2713",
     st_ref_file_added: "File added as reference \u2713",
     st_importing: "Importing file",
     url_title: "Reference from URL \u2014 Chrome / Pinterest",
@@ -1390,6 +1391,7 @@ const I18N = {
     btn_ref_file: "\u1016\u102d\u102f\u1004\u103a",
     btn_ref_web: "Web",
     st_ref_layer_added: "Layer \u1000\u102d\u102f reference \u1021\u1016\u103c\u1005\u103a\u1011\u100a\u103a\u1015\u103c\u102e\u1038 \u2713",
+    st_photo_layer_added: "Layer ကို ပုံအဖြစ် ထည့်ပြီ ✓",
     st_ref_file_added: "File \u1000\u102d\u102f reference \u1021\u1016\u103c\u1005\u103a\u1011\u100a\u103a\u1015\u103c\u102e\u1038 \u2713",
     st_importing: "File \u1016\u103d\u1004\u103a\u1037\u1014\u1031\u101e\u100a\u103a",
     url_title: "URL \u1000\u1014\u1031 Reference \u2014 Chrome / Pinterest",
@@ -2040,6 +2042,7 @@ const I18N = {
     btn_ref_file: "\u107e\u1062\u1086\u1087",
     btn_ref_web: "Web",
     st_ref_layer_added: "\u101e\u1082\u103a\u1087 layer \u1015\u1035\u107c\u103a reference \u101a\u101d\u103a\u1089 \u2713",
+    st_photo_layer_added: "သႂ်ႇ layer ပဵၼ်ႁၢင်ႈယဝ်ႉ ✓",
     st_ref_file_added: "\u101e\u1082\u103a\u1087\u107e\u1062\u1086\u1087 \u1015\u1035\u107c\u103a reference \u101a\u101d\u103a\u1089 \u2713",
     st_importing: "\u1010\u102d\u102f\u1075\u103a\u1089\u1076\u101d\u103a\u1088\u107e\u1062\u1086\u1087",
     url_title: "Reference \u1010\u102e\u1088 URL \u2014 Chrome / Pinterest",
@@ -2688,6 +2691,7 @@ const I18N = {
     btn_ref_file: "Laika daw",
     btn_ref_web: "Web",
     st_ref_layer_added: "Layer hpe reference hku bang sai \u2713",
+    st_photo_layer_added: "Layer hpe sumla hku bang sai ✓",
     st_ref_file_added: "Laika daw hpe reference hku bang sai \u2713",
     st_importing: "Laika daw shang la nga ai",
     url_title: "URL kaw na reference \u2014 Chrome / Pinterest",
@@ -3336,6 +3340,7 @@ const I18N = {
     btn_ref_file: "\u0e44\u0e1f\u0e25\u0e4c",
     btn_ref_web: "\u0e40\u0e27\u0e47\u0e1a",
     st_ref_layer_added: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e40\u0e25\u0e40\u0e22\u0e2d\u0e23\u0e4c\u0e40\u0e1b\u0e47\u0e19\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e41\u0e25\u0e49\u0e27 \u2713",
+    st_photo_layer_added: "เพิ่มเลเยอร์เป็นรูปแล้ว ✓",
     st_ref_file_added: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e44\u0e1f\u0e25\u0e4c\u0e40\u0e1b\u0e47\u0e19\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e41\u0e25\u0e49\u0e27 \u2713",
     st_importing: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e19\u0e33\u0e40\u0e02\u0e49\u0e32\u0e44\u0e1f\u0e25\u0e4c",
     url_title: "\u0e42\u0e2b\u0e25\u0e14\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01 URL",
@@ -3984,6 +3989,7 @@ const I18N = {
     btn_ref_file: "\u6587\u4ef6",
     btn_ref_web: "\u7f51\u9875",
     st_ref_layer_added: "\u56fe\u5c42\u5df2\u6dfb\u52a0\u4e3a\u53c2\u8003\u56fe \u2713",
+    st_photo_layer_added: "图层已添加为照片 ✓",
     st_ref_file_added: "\u6587\u4ef6\u5df2\u6dfb\u52a0\u4e3a\u53c2\u8003\u56fe \u2713",
     st_importing: "\u6b63\u5728\u5bfc\u5165\u6587\u4ef6",
     url_title: "\u4ece URL \u52a0\u8f7d\u56fe\u7247",
@@ -4632,6 +4638,7 @@ const I18N = {
     btn_ref_file: "T\u1ec7p",
     btn_ref_web: "Web",
     st_ref_layer_added: "\u0110\u00e3 th\u00eam layer l\u00e0m tham chi\u1ebfu \u2713",
+    st_photo_layer_added: "Đã thêm layer làm ảnh ✓",
     st_ref_file_added: "\u0110\u00e3 th\u00eam t\u1ec7p l\u00e0m tham chi\u1ebfu \u2713",
     st_importing: "\u0110ang nh\u1eadp t\u1ec7p",
     url_title: "Tham chi\u1ebfu t\u1eeb URL \u2014 Chrome / Pinterest",
@@ -5280,6 +5287,7 @@ const I18N = {
     btn_ref_file: "Berkas",
     btn_ref_web: "Web",
     st_ref_layer_added: "Layer ditambahkan sebagai referensi \u2713",
+    st_photo_layer_added: "Layer ditambahkan sebagai foto ✓",
     st_ref_file_added: "Berkas ditambahkan sebagai referensi \u2713",
     st_importing: "Mengimpor berkas",
     url_title: "Referensi dari URL \u2014 Chrome / Pinterest",
@@ -5928,6 +5936,7 @@ const I18N = {
     btn_ref_file: "Fail",
     btn_ref_web: "Web",
     st_ref_layer_added: "Layer ditambah sebagai rujukan \u2713",
+    st_photo_layer_added: "Layer ditambah sebagai gambar ✓",
     st_ref_file_added: "Fail ditambah sebagai rujukan \u2713",
     st_importing: "Mengimport fail",
     url_title: "Rujukan dari URL \u2014 Chrome / Pinterest",
@@ -6492,7 +6501,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.146.0";
+const PANEL_VERSION = "6.146.1";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -14079,7 +14088,11 @@ function photoSheet(title, opts) {
   const bd = document.createElement("div"); bd.id = "ffSheet"; bd.className = "ff-sheet";
   const card = document.createElement("div"); card.className = "card";
   const h = document.createElement("div"); h.className = "subh";
-  h.textContent = title + " — " + ff9(FF_L.where);
+  /* v6.75.1 — a caller with no name of its own (Imagine's add-photo) passed
+     the question as the title and the sheet read "Where from? — Where from?"
+     in the owner's screenshot. One question, once. */
+  const where = ff9(FF_L.where);
+  h.textContent = (title && title !== where) ? title + " — " + where : where;
   card.appendChild(h);
   function opt(label, fn) {
     if (!fn) return;
@@ -17125,7 +17138,7 @@ function imagineHost() {
        The Imagine module is shared with the web app and must stay identical
        on both; a browser has no Photoshop layer, so the choice belongs here,
        in the panel's own host adapter, where it costs the module nothing. */
-    pickWire: function (btn, onFiles) {
+    pickWire: function (btn, onFiles, kind) {
       const fromFiles = async function () {
         try {
           const picked = await fsp.getFileForOpening({ allowMultiple: true, types: REF_LIB_TYPES });
@@ -17144,7 +17157,10 @@ function imagineHost() {
         photoSheet(ff9(FF_L.where), {
           onLayer: async function () {
             const e = await layerPhotoCapture();
-            if (e) { onFiles([{ dataUrl: e._url, name: e.name }]); setStatus(t("st_ref_layer_added"), "ok"); }
+            /* v6.75.1 — the module says which slot asked (its third argument, "imRefFile"
+               for the Reference Card); the photo itself is not a reference, and the
+               owner's screenshot said it was */
+            if (e) { onFiles([{ dataUrl: e._url, name: e.name }]); setStatus(t(kind === "imRefFile" ? "st_ref_layer_added" : "st_photo_layer_added"), "ok"); }
           },
           onFile: fromFiles
         });

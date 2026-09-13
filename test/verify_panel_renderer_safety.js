@@ -566,6 +566,29 @@ const READ_CARD = () => {
       /^error event with no message/.test(evErr.firstLine),
       JSON.stringify(evErr));
 
+    /* S) v6.75.1 — the Imagine photo sheet, as the owner's screenshot showed
+       it: "Where from? — Where from?", a "phone" on a computer, and a photo
+       announced as a reference. */
+    const sheet = await page.evaluate(() => {
+      const read = () => { const s = document.getElementById("ffSheet"); return s ? { head: (s.querySelector(".subh") || {}).textContent || "", btns: Array.from(s.querySelectorAll(".btn")).map(b => b.textContent) } : null; };
+      photoSheet(ff9(FF_L.where), { onLayer: function () { }, onFile: function () { } });
+      const bare = read();
+      photoSheet("IMG 1", { onLayer: function () { }, onFile: function () { } });
+      const named = read();
+      ffSheetClose();
+      const b = window.HNK.i18n, tables = Object.keys(b.table).filter(l => typeof b.table[l].err_net === "string");
+      const missing = tables.filter(l => !b.table[l].st_photo_layer_added || b.table[l].st_photo_layer_added === b.table[l].st_ref_layer_added);
+      return { where: ff9(FF_L.where), bare, named, srcFileMy: FF_L.srcFile.my, missing, tables: tables.length, closed: !document.getElementById("ffSheet") };
+    });
+    report("S1) a sheet opened with no name of its own asks \"Where from?\" once, not twice; a named slot keeps its name in front; the sheet closes",
+      !!sheet.bare && sheet.bare.head === sheet.where && sheet.bare.btns.length === 2 &&
+      !!sheet.named && sheet.named.head === "IMG 1 \u2014 " + sheet.where && sheet.closed,
+      JSON.stringify(sheet).slice(0, 300));
+    report("S2) the file source names this device, not a phone; a layer added as the photo says so in all nine languages, apart from a layer added as a reference",
+      !/ဖုန်း/.test(sheet.srcFileMy) && /ဒီစက်/.test(sheet.srcFileMy) && sheet.tables === 9 && sheet.missing.length === 0 &&
+      /pickWire: function \(btn, onFiles, kind\)/.test(MAIN) && /kind === "imRefFile" \? "st_ref_layer_added" : "st_photo_layer_added"/.test(MAIN),
+      JSON.stringify({ srcFileMy: sheet.srcFileMy, missing: sheet.missing, tables: sheet.tables }));
+
     /* FAULT INJECTION. Two pages, each loaded with one renderer behaviour
        simulated, because reading the source cannot prove either claim. */
     const hurtPage = async (poison) => {
