@@ -532,6 +532,8 @@ jobs:
         run: PORT=8931 node test/verify_scene_presets.js
       - name: Panel controls Photoshop could not honour — storage shim, pointer fallback, video fallback, Path headers, styles-880 guard
         run: PORT=8931 node test/verify_panel_dead_controls.js
+      - name: Panel pickers that open in Photoshop — <dialog> option lists over the parked native selects, the page-scope table, the photo sheet as a dialog, percentage-sized Before pictures, tidy-ups
+        run: PORT=8931 node test/verify_panel_pickers.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

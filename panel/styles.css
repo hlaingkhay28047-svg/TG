@@ -221,7 +221,13 @@ body {
    26.4px still fits inside the 40px button's 30px of room. */
 .hdr .hsl-val { font-size: 12px; font-weight: 600; line-height: 2.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hdr .hsl-caret { flex: 0 0 auto; display: block; width: 9px; height: 9px; margin-left: 7px; }
-.hdr .hsl .inp { position: absolute; left: 0; top: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; }
+/* v6.78.0 — THE SELECT IS NO LONGER THE THING YOU TAP. Every picker used to be
+   a transparent native <select> laid over its button; in Photoshop that
+   dropdown never opens (the owner's 6.148.0 photographs: no model, no language
+   could be chosen), so the select now sits off the hit path — still in the
+   document, still the value the code reads and sets — and the button opens
+   the panel's own list (main.js hslPick). */
+.hdr .hsl .inp { position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; }
 .pages {
   flex: 1;
   min-height: 0;
@@ -472,6 +478,8 @@ select, option {
   resize: none;
 }
 .pbox:focus { border-color: var(--accent); outline: none; }
+/* v6.78.0 — Photoshop drew its own heavy frame around the box (photograph 8) */
+.pbox { -webkit-appearance: none; appearance: none; outline: none; box-shadow: none; }
 .cnt { font-size: 10px; color: var(--muted-2); }
 .cnt.warn { color: var(--warn); }
 .cnt.max { color: var(--err); font-weight: 700; }
@@ -1074,6 +1082,10 @@ input[type="range"] { min-width: 0; }
 .hnk-req-row > i,
 .hnk-req-row > h2,
 .hnk-req-row > section { margin-right: 8px; }
+/* v6.78.0 — five source buttons wrapped 4 + 1 with a lone "✦ Library"
+   underneath (photographs 5–7); each takes a third of the row, so they sit
+   3 + 2 and the second row's two stretch to the same edge */
+.hnk-req-row > .hnk-btn { flex: 1 1 30%; min-width: 0; box-sizing: border-box; text-align: center; margin-bottom: 6px; }
 .hnk-req-label { flex:1; }
 .hnk-req-mark { font-size:11px; color:var(--muted); min-width:52px; }
 .hnk-todo { font-size:12px; color:var(--muted); padding:16px 0; }
@@ -1814,7 +1826,12 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    happens to draw, because the host that showed it to the owner is not this
    renderer: 7.6px of bleed under the label, 5.5px over the sub, so 14px
    between them and 12px above. */
-#pageAiTools .dash-card .lbl { display: flex; flex-direction: row; align-items: center; justify-content: center;
+/* v6.78.0 — display:block. As a flex box this label was a container with a
+   bare text node for its only child; the owner's 2nd photograph shows every
+   tile's label painted at the grid's foot, the last row's two over the Library
+   strip and the rest hidden under the tiles below them — the renderer gave the
+   box no height and painted the text past it. A block lays text out. */
+#pageAiTools .dash-card .lbl { display: block;
   width: auto; margin: 12px 0 0; padding: 0; min-height: 2.9em; height: auto; overflow: visible;
   font-weight: 800; font-size: 14.5px; line-height: 1.45; color: var(--text); text-align: center; }
 #pageAiTools .dash-card .sub { display: block; margin: 14px 0 0; height: auto; overflow: visible;
@@ -2155,7 +2172,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .hsl-caret { flex: 0 0 auto; display: block; width: 9px; height: 9px; margin-left: 7px; }
 /* app .hsl-tile svg{width:15px;height:15px}: the brand glyph (IC map) as an <img> */
 .apg .hsl-tile .hsl-glyph-img { display: block; width: 15px; height: 15px; }
-.apg .hsl .inp { position: absolute; left: 0; top: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; }
+.apg .hsl .inp { position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; }
 .apg .acc-lnk { display: flex; flex-direction: row; align-items: center; background-color: transparent; border: none;
   color: var(--accent-h); font-size: 14px; font-weight: 700; text-align: left; padding: 8px 0; min-height: 44px; width: 100%;
   box-sizing: border-box; text-decoration: underline; margin-top: 6px; }
@@ -2312,9 +2329,13 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .cmp-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: var(--accent); }
 
 /* the IMAGE-slot source sheet (app refSrcSheet): a scrim + card at the bottom */
-.ff-sheet { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.45); z-index: 70;
-  display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; padding: 0 12px 12px; box-sizing: border-box; }
-.ff-sheet .card { margin: 0; }
+/* v6.78.0 — the photo sheet is a <dialog>. It was a position:fixed overlay,
+   which Photoshop's renderer lays out as an ordinary block: the owner's
+   9th photograph shows "IMAGE 2 — ဘယ်ကယူမလဲ" printed at the bottom of the page,
+   under GENERATE, a screen away from the slot that was tapped. A dialog opens
+   in front of the panel wherever the tap was. */
+.ff-sheet { background-color: var(--panel); border: 1px solid var(--line-soft); border-radius: 14px; padding: 0; color: var(--text); width: 300px; max-width: 92vw; }
+.ff-sheet .card { margin: 0; border: 0; }
 .ff-sheet .subh { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px; }
 .ff-sheet .btn { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; width: 100%; box-sizing: border-box;
   margin: 8px 0 0; background-color: var(--panel-2); border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text);
@@ -2540,6 +2561,19 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .hnk-dlg-row { display: flex; flex-direction: row; justify-content: flex-end; align-items: center; }
 .hnk-dlg-row .btn { min-width: 76px; }
 .hnk-dlg-row .btn + .btn { margin-left: 8px; }
+/* v6.78.0 — the picker list: one row per option, group headers for the
+   disabled rows the video model picker draws, a search field past eight
+   rows, the chosen row gold. Block rows with text, never a flex box around a
+   bare text node (see .dash-card .lbl). */
+.hnk-pick { width: 320px; }
+.hnk-pick .hnk-dlg-msg { margin-bottom: 8px; font-weight: 800; }
+.hnk-pick-q { display: block; width: 100%; box-sizing: border-box; margin: 0 0 8px; }
+.hnk-pick-list { display: block; max-height: 380px; overflow-y: auto; overflow-x: hidden; border: 1px solid var(--line-soft); border-radius: 10px; margin: 0 0 12px; }
+.hnk-pick-row { display: block; padding: 9px 12px; font-size: 13px; line-height: 1.4; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--line-soft); }
+.hnk-pick-row.on { color: var(--accent-h); font-weight: 800; background-color: rgba(233, 185, 73, 0.12); }
+.hnk-pick-row.hide, .hnk-pick-grp.hide { display: none; }
+.hnk-pick-grp { display: block; padding: 8px 12px 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background-color: var(--panel-2); }
+.hnk-pick-none { display: block; padding: 12px; font-size: 12px; color: var(--muted); }
 
 /* ======================================================================
    v6.51.0 — RETOUCH A / RETOUCH B STUDIO = the web app's two suite pages,

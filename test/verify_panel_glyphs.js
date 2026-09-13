@@ -448,10 +448,13 @@ report("E17) and it reads the page's scope classes both ways, so a lost class ca
   /caps\.scopeOk = \(\/\\bstpg\\b\/\.test\(viaAttr\)/.test(STCODE) &&
   /label: "page scope"/.test(MAIN), null);
 
-report("E18) switchPage reads each page's scope ONCE from the markup, never re-derives it",
-  /const scopeMem = \{\};/.test(MAIN) &&
-  /let scope = scopeMem\[p\.page\];/.test(MAIN) &&
-  /scopeMem\[p\.page\] = scope;/.test(MAIN) &&
+/* v6.78.0 — the scopes are a table in main.js (PAGE_SCOPE_STPG), never a
+   class read: 6.66.1's read-once cache still trusted one first read, and the
+   owner's 12th–13th photographs of 6.148.0 were what that read costs. */
+report("E18) switchPage paints each page's scope from the PAGE_SCOPE_STPG table, never from a class read (no scopeMem, no clsOf derivation)",
+  /const PAGE_SCOPE_STPG = \{ pageMeitu: 1, pageEvoto: 1, pageRetouch: 1, stDock: 1 \};/.test(MAIN) &&
+  /const scope = pageScope\(p\.page\);/.test(MAIN) &&
+  !/scopeMem/.test(MAIN) &&
   !/const apg = \/\\bapg\\b\/\.test\(clsOf\(pe\)\)/.test(MAIN), null);
 
 /* every icon file is compiled at 72x72, so an <img> the stylesheet misses
