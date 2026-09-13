@@ -92,6 +92,12 @@ var _nwMem = null;
    browser keeps the app's exact behaviour (and the tests that drive it). */
 function nwLocal() {
   try {
+    /* v6.77.0 — under the storage shim (src/app/uxp-local-storage.js) a
+       localStorage EXISTS in Photoshop, but the dismissals already live in
+       the settings file since 6.75.0; keep them there, so nothing a student
+       dismissed comes back after this update. */
+    var shim = globalThis.HNK && globalThis.HNK.localStore;
+    if (shim && shim.shimmed) return null;
     var ls = globalThis.localStorage;
     if (!ls || typeof ls.getItem !== "function") return null;
     ls.getItem("hnk_new_seen_probe");

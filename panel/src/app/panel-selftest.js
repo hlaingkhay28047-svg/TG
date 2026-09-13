@@ -590,6 +590,14 @@ function capabilities() {
    Either answer removes half the search space, which is the whole job of a
    diagnostic. */
 var taps = 0, lastTap = "";
+/* v6.77.0 — WHERE IN THE ELEMENT THE POINTER LANDED. Photoshop hands script no
+   geometry at all (rect · client · scroll · offset all 0 on the 6.137.0
+   photographs), so nothing that maps a pointer onto a picture — the Imagine
+   brush, the Before | After sliders — can use getBoundingClientRect there.
+   The one instrument left is the event's own offsetX/offsetY, the renderer's
+   hit-test in the target's CSS pixels. This records the first pointer-down's
+   reading so one photograph of the card says whether that instrument exists. */
+var lastOffset = "", lastOffsetEl = "";
 function describe(el) {
   try {
     if (!el || !el.tagName) return "?";
@@ -607,6 +615,16 @@ try {
       taps++;
       lastTap = describe(ev && (ev.target || ev.srcElement));
     }, true);
+    var offsetHook = function (ev) {
+      try {
+        var t = ev && (ev.target || ev.srcElement);
+        var ox = ev ? ev.offsetX : undefined, oy = ev ? ev.offsetY : undefined;
+        lastOffset = (typeof ox === "number" && isFinite(ox)) ? (Math.round(ox) + "," + Math.round(oy)) : "no offsetX";
+        lastOffsetEl = describe(t);
+      } catch (e) { lastOffset = "?"; }
+    };
+    document.addEventListener("pointerdown", offsetHook, true);
+    document.addEventListener("mousedown", offsetHook, true);
   }
 } catch (e) { }
 
@@ -628,7 +646,7 @@ var API = {
   errorCap: MAX_ERRORS,
   note: function (message, source) { push("note", message, source || "", 0, 0); },
   capabilities: capabilities,
-  taps: function () { return { count: taps, last: lastTap }; }
+  taps: function () { return { count: taps, last: lastTap, offset: lastOffset, offsetOf: lastOffsetEl }; }
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = API;

@@ -17,6 +17,53 @@ var IMAGINE = (function(){
   var D = IMAGINE_DATA;
   var H = null;                       /* the host adapter (web app or Photoshop panel) */
   var LS_KEY = "hnk_ws_imagine_v1", MAX_PHOTOS = 11, DESC_MAX = 4000;
+  /* 6.77.0 — WHERE THE POINTER IS, WITH OR WITHOUT A RULER. A browser answers
+     getBoundingClientRect and every pointer maps onto a picture through it. The
+     Photoshop panel's renderer hands script no geometry at all (rect · client ·
+     scroll · offset all 0 on the owner's 6.137.0 photographs), and until this
+     wave the brush (Object Remove · Object Add · Text & Sign Edit) and the two
+     Before | After sliders read that zero, bailed out, and drew nothing — a
+     control on screen that could not be used. Two instruments remain there:
+     the event's own offsetX/offsetY (the renderer's hit-test, in the TARGET's
+     CSS pixels — so only trusted when the target is the element asked about),
+     and the cascade, which getComputedStyle echoes without any layout: the
+     padding, border and margin each ancestor was given, in px, taken off
+     window.innerWidth. A browser never reaches the fallback. */
+  function imCssPx(cs, prop){ var v=parseFloat(cs && cs[prop]); return isFinite(v) ? v : 0; }
+  function imStageWidth(el){
+    if(H && typeof H.stageWidth==="function"){ try{ var hw=H.stageWidth(el); if(hw>0) return hw; }catch(e){} }
+    var vw=(typeof window!=="undefined" && window.innerWidth)||0; if(!(vw>0)) return 0;
+    var n=el, pad=0, guard=0;
+    while(n && n.nodeType===1 && guard++<40){
+      var cs=null; try{ cs=getComputedStyle(n); }catch(e){ cs=null; }
+      if(cs) pad+=imCssPx(cs,"paddingLeft")+imCssPx(cs,"paddingRight")+imCssPx(cs,"borderLeftWidth")+imCssPx(cs,"borderRightWidth")+imCssPx(cs,"marginLeft")+imCssPx(cs,"marginRight");
+      if(n===document.body) break;
+      n=n.parentNode;
+    }
+    return Math.max(80, vw-pad);
+  }
+  function imRect(el){ var r=null; try{ r=el.getBoundingClientRect(); }catch(e){ r=null; } return (r && r.width>0 && r.height>0) ? r : null; }
+  function imPt(ev){ var p=(ev.touches&&ev.touches[0])||ev; return [p.clientX, p.clientY]; }
+  function imClamp(v){ return Math.max(0, Math.min(1, v)); }
+  /* absolute position inside el, normalized 0..1 (the brush canvas) */
+  function imNorm(el, ev){
+    var c=imPt(ev), r=imRect(el);
+    if(r) return [imClamp((c[0]-r.left)/r.width), imClamp((c[1]-r.top)/r.height)];
+    if(ev.target!==el) return null;
+    var ox=ev.offsetX, oy=ev.offsetY;
+    if(typeof ox!=="number" || !isFinite(ox) || typeof oy!=="number" || !isFinite(oy)) return null;
+    var w=el.clientWidth||imStageWidth(el); if(!(w>0)) return null;
+    var h=el.clientHeight||0;
+    if(!(h>0)){ var ar=el.__imAspect||0; if(!(ar>0)) return null; h=w/ar; }
+    return [imClamp(ox/w), imClamp(oy/h)];
+  }
+  /* a horizontal slider: absolute through the rect, else relative to where the drag began */
+  function imDragX(el, ev, startPct, downX){
+    var c=imPt(ev), r=imRect(el);
+    if(r) return Math.max(0, Math.min(100, (c[0]-r.left)/r.width*100));
+    var w=el.clientWidth||imStageWidth(el); if(!(w>0)) return null;
+    return Math.max(0, Math.min(100, startPct + (c[0]-downX)/w*100));
+  }
   var S = { tool:null, model:"", size:"", tab:"tpl", preset:{}, desc:{}, photos:[], cur:0, busy:false, job:null, split:50, status:"", ref:{}, markMode:false, brush:1 };   /* 6.31.0 — ref: the Reference Card picture per tool (never saved to the device); 6.32.0 — markMode/brush: the brush tools' red paint */
   var root = null, refs = {};
   /* 6.32.0 — the brush needs a 2D canvas (the photo + the red strokes are composited into IMAGE 1 before the call); a host without one keeps the templates and words */
@@ -117,8 +164,8 @@ var IMAGINE = (function(){
     aft.onload=syncW; setTimeout(syncW,0); hubSyncs.push(syncW);
     var setHub=function(v){ v=Math.round(Math.max(0,Math.min(100,v))); S.hubSplit=S.hubSplit||{}; S.hubSplit[tool.id]=v; top.style.width=v+"%"; line.style.left=v+"%"; knob.style.left=v+"%"; };
     var drag=null;
-    var at=function(ev){ var r=art.getBoundingClientRect(); if(!r.width) return; var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX; setHub((cx-r.left)/r.width*100); };
-    var down=function(ev){ if(ev.button && ev.button!==0) return; drag={ x:(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, t:Date.now(), moved:false }; c.classList.add("lift"); if(ev.pointerId!=null && art.setPointerCapture){ try{ art.setPointerCapture(ev.pointerId); }catch(e){} } };
+    var at=function(ev){ var v=imDragX(art, ev, drag ? drag.p : split, drag ? drag.x : 0); if(v===null) return; setHub(v); };
+    var down=function(ev){ if(ev.button && ev.button!==0) return; drag={ x:(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, t:Date.now(), moved:false, p:(S.hubSplit && typeof S.hubSplit[tool.id]==="number") ? S.hubSplit[tool.id] : split }; c.classList.add("lift"); if(ev.pointerId!=null && art.setPointerCapture){ try{ art.setPointerCapture(ev.pointerId); }catch(e){} } };
     var move=function(ev){ if(!drag) return; var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX; if(!drag.moved && Math.abs(cx-drag.x)<6) return; drag.moved=true; at(ev); if(ev.cancelable) ev.preventDefault(); };
     var up=function(ev){ if(!drag) return; var d=drag; drag=null; setTimeout(function(){ c.classList.remove("lift"); },220); if(!d.moved && Date.now()-d.t<600){ ev.stopPropagation(); go(); } };
     if(window.PointerEvent){ art.onpointerdown=down; art.onpointermove=move; art.onpointerup=up; art.onpointercancel=function(){ drag=null; c.classList.remove("lift"); }; }
@@ -232,10 +279,10 @@ var IMAGINE = (function(){
       rng.setAttribute("aria-label", t("before")+" / "+t("after"));
       rng.oninput=function(){ setSplit(parseInt(this.value,10)); }; rng.onchange=rng.oninput;
       wrap.appendChild(rng); refs.rng=rng;
-      var drag=false;
-      var at=function(ev){ var r=cmp.getBoundingClientRect(); if(!r.width) return; var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX; setSplit(Math.round(Math.max(0,Math.min(100,(cx-r.left)/r.width*100)))); };
-      cmp.onpointerdown=function(ev){ drag=true; at(ev); }; cmp.onpointermove=function(ev){ if(drag) at(ev); };
-      cmp.onpointerup=cmp.onpointercancel=cmp.onpointerleave=function(){ drag=false; };
+      var drag=null;
+      var at=function(ev){ var v=imDragX(cmp, ev, drag ? drag.p : S.split, drag ? drag.x : 0); if(v===null) return; setSplit(Math.round(v)); };
+      cmp.onpointerdown=function(ev){ drag={ x:imPt(ev)[0], p:S.split }; at(ev); }; cmp.onpointermove=function(ev){ if(drag) at(ev); };
+      cmp.onpointerup=cmp.onpointercancel=cmp.onpointerleave=function(){ drag=null; };
     }
     if(cur.status==="busy"){
       var ov = el("div","im-busy"); ov.appendChild(el("span","im-spin")); var bt=el("span","im-busy-t", t("working",{s:cur.sec||0})); ov.appendChild(bt); cmp.appendChild(ov); refs.busyT=bt;
@@ -355,11 +402,18 @@ var IMAGINE = (function(){
     var wrap = el("div","im-markwrap"+(live?" on":"")); wrap.id="imMarkWrap";
     var im = el("img"); im.alt=""; im.src=p.dataUrl; wrap.appendChild(im);
     var cv = document.createElement("canvas"); cv.className="im-markcv"+(live?"":" ro"); cv.id="imMarkCv"; wrap.appendChild(cv); refs.markCv=cv;
-    var redraw=function(){ var w=wrap.clientWidth||im.clientWidth, h=im.clientHeight||wrap.clientHeight; if(!w||!h) return; if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } var x=cv.getContext("2d"); x.clearRect(0,0,w,h); paintStrokes(x, p.strokes||[], w, h, 0.55); };
+    var redraw=function(){
+      var w=wrap.clientWidth||im.clientWidth||0, h=im.clientHeight||wrap.clientHeight||0;
+      /* 6.77.0 — no geometry (Photoshop): the buffer takes the photo's own size (capped), the strokes are
+         normalized so the buffer can be any size, and CSS scales the canvas over the picture */
+      var nw=im.naturalWidth||0, nh=im.naturalHeight||0;
+      if(nw>0 && nh>0) cv.__imAspect=nw/nh;
+      if(!w||!h){ if(!(nw>0 && nh>0)) return; var sc=Math.min(1, 1600/nw); w=Math.round(nw*sc); h=Math.round(nh*sc); }
+      if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } var x=cv.getContext("2d"); x.clearRect(0,0,w,h); paintStrokes(x, p.strokes||[], w, h, 0.55); };
     im.onload=redraw; setTimeout(redraw,0); refs.markRedraw=redraw;
     if(live){
       var cur=null;
-      var at=function(ev){ var r=cv.getBoundingClientRect(); if(!r.width||!r.height) return null; var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, cy=(ev.touches&&ev.touches[0])?ev.touches[0].clientY:ev.clientY; return [Math.max(0,Math.min(1,(cx-r.left)/r.width)), Math.max(0,Math.min(1,(cy-r.top)/r.height))]; };
+      var at=function(ev){ return imNorm(cv, ev); };
       var down=function(ev){ if(ev.button && ev.button!==0) return; var q=at(ev); if(!q) return; p.strokes=p.strokes||[]; cur={ r:BRUSH[S.brush]||BRUSH[1], pts:[q] }; p.strokes.push(cur); redraw(); if(ev.pointerId!=null && cv.setPointerCapture){ try{ cv.setPointerCapture(ev.pointerId); }catch(e){} } if(ev.cancelable) ev.preventDefault(); };
       var move=function(ev){ if(!cur) return; var q=at(ev); if(!q) return; var last=cur.pts[cur.pts.length-1]; if(Math.abs(q[0]-last[0])+Math.abs(q[1]-last[1])<0.002) return; cur.pts.push(q); redraw(); if(ev.cancelable) ev.preventDefault(); };
       var up=function(){ if(!cur) return; cur=null; markChanged(); };
@@ -544,6 +598,8 @@ var IMAGINE = (function(){
     /* 6.32.0 — the brush: paint mode on/off, a stroke by hand (tests), undo, clear, and the composite the model receives */
     mark:function(on){ S.markMode = (on==null) ? !S.markMode : !!on; render(); }, addStroke:addStroke, undoMark:undoMark, clearMark:clearMark,
     composite:function(i){ return composite(S.photos[i==null?S.cur:i]); }, canMark:CAN_MARK,
+    /* 6.77.0 — the strokes as stored (normalized 0..1), so a test can prove where a pointer landed */
+    strokes:function(i){ var p=S.photos[i==null?S.cur:i]; return p ? (p.strokes||[]).map(function(s){ return { r:s.r, pts:(s.pts||[]).slice() }; }) : []; },
     state:S, data:D, MAX_PHOTOS:MAX_PHOTOS, DESC_MAX:DESC_MAX };
 })();
 /* ---- /IMAGINE_MODULE ---- */

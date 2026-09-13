@@ -312,6 +312,17 @@ function stripIcn(s) { return String(s == null ? "" : s).replace(ICN_LEAD, ""); 
    <img> by another road: "data:image/png;base64," + undefined is not a
    picture. Every such expression falls back to this. */
 const IMG_BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+/* v6.77.0 — CAN THIS RENDERER PLAY A CLIP AT ALL? The Video page's result box
+   and its recent-takes strip are <video> elements, and a <video> that cannot
+   decode draws a black plate and nothing else — a finished, paid-for clip
+   photographed as an empty box. A renderer that plays video answers
+   canPlayType; one that only knows the tag name (UXP) has no such method. When
+   the answer is no, the result card says the clip is ready and points at
+   Download / Open, and each take in the strip is a numbered tile. */
+const VIDEO_OK = (function () {
+  try { const v = document.createElement("video"); return !!(v && typeof v.canPlayType === "function" && v.canPlayType("video/mp4") !== ""); }
+  catch (e) { return false; }
+})();
 /* …EXCEPT ON A <video>, which cannot decode a GIF and says so. vtThumbFor
    serves both an <img> and a <video> through the same id, and handing the
    video the blank picture traded eight image errors for one video error —
@@ -926,6 +937,7 @@ const I18N = {
     wf_scene_presets: "Scene presets from the Library \u2014 one tap",
     wf_scene_loading: "Loading the scene\u2026",
     wf_scene_fail: "Couldn\u2019t load this Library scene \u2014 check your internet.",
+    vid_no_inline: "Clip {n} is ready — this Photoshop panel cannot play video. Download or Open plays it in your computer\u2019s player.",
     err_timeout: "Request timed out \u2014 the server took too long; please try again \u00b7 \u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_generic: "The request could not be completed \u2014 please try again",
     err_img: "No usable image was produced \u2014 please try again",
@@ -1581,6 +1593,7 @@ const I18N = {
     wf_scene_presets: "Library ထဲက Scene Preset — တစ်ချက်နှိပ်ရုံ",
     wf_scene_loading: "Scene ယူနေသည်…",
     wf_scene_fail: "Library ပုံ မယူနိုင်ပါ — အင်တာနက် စစ်ပါ",
+    vid_no_inline: "ဗီဒီယို {n} အဆင်သင့်ပါ — Photoshop panel ထဲမှာ ဗီဒီယို ဖွင့်ကြည့်လို့ မရပါ။ Download သို့မဟုတ် Open နှိပ်ရင် ကွန်ပျူတာရဲ့ player နဲ့ ဖွင့်ပေးပါမယ်။",
     err_timeout: "\u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a\u101e\u103d\u102c\u1038\u1015\u103c\u102e \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_generic: "\u1010\u1031\u102c\u1004\u103a\u1038\u1006\u102d\u102f\u1019\u103e\u102f \u1019\u1015\u103c\u102e\u1038\u1006\u102f\u1036\u1038\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_img: "\u1021\u101e\u102f\u1036\u1038\u101d\u1004\u103a\u1010\u1032\u1037 \u1015\u102f\u1036 \u1019\u101b\u101b\u103e\u102d\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
@@ -2236,6 +2249,7 @@ const I18N = {
     wf_scene_presets: "Scene preset တီႈ Library — ၼဵၵ်းၵမ်းလဵဝ်",
     wf_scene_loading: "တိုၵ်ႉဢဝ် scene…",
     wf_scene_fail: "ဢဝ်ႁၢင်ႈ Library ဢမ်ႇလႆႈ — ၵူတ်ႇထတ်း internet",
+    vid_no_inline: "ဝီးတီးဢူဝ်ႉ {n} ႁၢင်ႈႁႅၼ်းယဝ်ႉ — Photoshop panel ၼႆႉ ပိုတ်ႇတူၺ်းဝီးတီးဢူဝ်ႉ ဢမ်ႇလႆႈ။ Download ဢမ်ႇၼၼ် Open ၼဵၵ်းသေ player ၶွမ်း ပိုတ်ႇပၼ်။",
     err_timeout: "\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1010\u1035\u1019\u103a \u2014 server \u1078\u1082\u103a\u1089\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1081\u102d\u102f\u1004\u103a\u1015\u1030\u107c\u103a\u1089; \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_generic: "\u1081\u1035\u1010\u103a\u1038\u1022\u1019\u103a\u1087\u101a\u101d\u103a\u1089 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_img: "\u1022\u1019\u103a\u1087\u101c\u1086\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u107c\u103a\u1078\u1082\u103a\u1089\u101c\u1086\u1088 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
@@ -2889,6 +2903,7 @@ const I18N = {
     wf_scene_presets: "Library kaw na Scene preset — kalang dip u",
     wf_scene_loading: "Scene la nga ai…",
     wf_scene_fail: "Library sumla n la lu ai — internet yu u",
+    vid_no_inline: "Video {n} hkrum sai — ndai Photoshop panel hta video n mai yu ai. Download (n)rai Open dip yang computer player hte pyaw ya na.",
     err_timeout: "Ten hpring mat sai \u2014 server grau na ai; bai chyam yu u",
     err_generic: "Ndai lam n ngut lu ai \u2014 bai chyam yu u",
     err_img: "Lang mai ai sumla n pru ai \u2014 bai chyam yu u",
@@ -3542,6 +3557,7 @@ const I18N = {
     wf_scene_presets: "พรีเซ็ตฉากจาก Library — แตะครั้งเดียว",
     wf_scene_loading: "กำลังโหลดฉาก…",
     wf_scene_fail: "โหลดฉากจาก Library ไม่ได้ — ตรวจสอบอินเทอร์เน็ต",
+    vid_no_inline: "คลิป {n} พร้อมแล้ว — แผง Photoshop นี้เล่นวิดีโอไม่ได้ กด Download หรือ Open เพื่อเปิดด้วยโปรแกรมเล่นวิดีโอของเครื่อง",
     err_timeout: "\u0e04\u0e33\u0e02\u0e2d\u0e2b\u0e21\u0e14\u0e40\u0e27\u0e25\u0e32 \u2014 \u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e43\u0e0a\u0e49\u0e40\u0e27\u0e25\u0e32\u0e19\u0e32\u0e19\u0e40\u0e01\u0e34\u0e19\u0e44\u0e1b \u0e01\u0e23\u0e38\u0e13\u0e32\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
     err_generic: "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e14\u0e33\u0e40\u0e19\u0e34\u0e19\u0e01\u0e32\u0e23\u0e15\u0e32\u0e21\u0e04\u0e33\u0e02\u0e2d\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
     err_img: "\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
@@ -4195,6 +4211,7 @@ const I18N = {
     wf_scene_presets: "来自 Library 的场景预设 — 一键",
     wf_scene_loading: "正在加载场景…",
     wf_scene_fail: "无法加载此 Library 场景 — 请检查网络",
+    vid_no_inline: "第 {n} 段视频已完成 — 此 Photoshop 面板无法播放视频。点 Download 或 Open 用电脑的播放器打开。",
     err_timeout: "\u8bf7\u6c42\u8d85\u65f6 \u2014 \u670d\u52a1\u5668\u8017\u65f6\u8fc7\u957f\uff0c\u8bf7\u91cd\u8bd5",
     err_generic: "\u8bf7\u6c42\u672a\u80fd\u5b8c\u6210 \u2014 \u8bf7\u91cd\u8bd5",
     err_img: "\u672a\u751f\u6210\u53ef\u7528\u7684\u56fe\u7247 \u2014 \u8bf7\u91cd\u8bd5",
@@ -4848,6 +4865,7 @@ const I18N = {
     wf_scene_presets: "Preset cảnh từ Library — một chạm",
     wf_scene_loading: "Đang tải cảnh…",
     wf_scene_fail: "Không tải được cảnh từ Library — kiểm tra mạng",
+    vid_no_inline: "Clip {n} đã sẵn sàng — bảng Photoshop này không phát được video. Bấm Download hoặc Open để mở bằng trình phát trên máy.",
     err_timeout: "Y\u00eau c\u1ea7u qu\u00e1 h\u1ea1n \u2014 m\u00e1y ch\u1ee7 ph\u1ea3n h\u1ed3i qu\u00e1 l\u00e2u; vui l\u00f2ng th\u1eed l\u1ea1i",
     err_generic: "Kh\u00f4ng th\u1ec3 ho\u00e0n t\u1ea5t y\u00eau c\u1ea7u \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
     err_img: "Kh\u00f4ng t\u1ea1o \u0111\u01b0\u1ee3c \u1ea3nh d\u00f9ng \u0111\u01b0\u1ee3c \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
@@ -5501,6 +5519,7 @@ const I18N = {
     wf_scene_presets: "Preset adegan dari Library — satu ketuk",
     wf_scene_loading: "Memuat adegan…",
     wf_scene_fail: "Tidak bisa memuat adegan Library — periksa internet",
+    vid_no_inline: "Klip {n} sudah siap — panel Photoshop ini tidak bisa memutar video. Tekan Download atau Open untuk membukanya di pemutar komputer.",
     err_timeout: "Permintaan kehabisan waktu \u2014 server terlalu lama merespons; silakan coba lagi",
     err_generic: "Permintaan tidak dapat diselesaikan \u2014 silakan coba lagi",
     err_img: "Tidak ada gambar yang dapat dipakai \u2014 silakan coba lagi",
@@ -6154,6 +6173,7 @@ const I18N = {
     wf_scene_presets: "Preset adegan dari Library — satu ketik",
     wf_scene_loading: "Memuatkan adegan…",
     wf_scene_fail: "Tidak dapat memuatkan adegan Library — semak internet",
+    vid_no_inline: "Klip {n} sudah siap — panel Photoshop ini tidak boleh memainkan video. Tekan Download atau Open untuk membukanya dengan pemain komputer.",
     err_timeout: "Permintaan tamat masa \u2014 pelayan mengambil masa terlalu lama; sila cuba lagi",
     err_generic: "Permintaan tidak dapat diselesaikan \u2014 sila cuba lagi",
     err_img: "Tiada imej yang boleh digunakan dihasilkan \u2014 sila cuba lagi",
@@ -6537,7 +6557,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.147.0";
+const PANEL_VERSION = "6.148.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9562,6 +9582,30 @@ function selfTestRowsInner() {
     rows.push({ label: "Taps", detail: tp ? (tp.count + (tp.last ? " \u00b7 " + tp.last : "")) : "—",
       level: tp && tp.count > 0 ? "ok" : "pend" });
   } catch (eT) { rows.push({ label: "Taps", detail: String(eT), level: "err" }); }
+  /* v6.77.0 — THE THREE QUESTIONS BEHIND THE CONTROLS THAT DID NOTHING.
+     Storage: is the Web Storage the lifted code writes to real, shimmed onto
+     the settings folder, or missing. Pointer: does a pointer event carry
+     offsetX/offsetY (the only way left to put a brush stroke on a picture in
+     a renderer with no geometry). Viewport: does window.innerWidth read, the
+     one width the pointer fallback divides by. */
+  try {
+    const lsI = globalThis.HNK && globalThis.HNK.localStore;
+    rows.push({ label: "Storage",
+      detail: !lsI ? "\u2014" : (lsI.shimmed
+        ? ("settings-folder shim (" + lsI.backend + ") \u00b7 " + lsI.keys() + " keys" + (lsI.installed ? "" : " \u00b7 NOT INSTALLED"))
+        : "native localStorage"),
+      level: !lsI ? "pend" : (lsI.installed ? "ok" : "err") });
+    const tp2 = (st && typeof st.taps === "function") ? st.taps() : null;
+    rows.push({ label: "Pointer",
+      detail: (tp2 && tp2.offset) ? (tp2.offset + (tp2.offsetOf ? " \u00b7 " + tp2.offsetOf : "")) : "tap anything, then Run again",
+      level: (tp2 && tp2.offset) ? (tp2.offset === "no offsetX" ? "host" : "ok") : "pend" });
+    const vw = (typeof window !== "undefined" && window.innerWidth) || 0, vh = (typeof window !== "undefined" && window.innerHeight) || 0;
+    rows.push({ label: "Viewport", detail: vw + "\u00d7" + vh + " (innerWidth)", level: vw > 0 ? "ok" : "host" });
+    /* the student scrolled down to press Run: a positive reading here means
+       scroll positions reach script (page-restore, the jump chips) */
+    const pgS = $("pages");
+    rows.push({ label: "scrollTop", detail: pgS ? String(pgS.scrollTop) : "\u2014", level: (pgS && pgS.scrollTop > 0) ? "ok" : "pend" });
+  } catch (eS) { rows.push({ label: "Storage", detail: String(eS), level: "err" }); }
   /* v6.132.0 — the Photoshop side, read straight rather than inferred from a
      failed action. "No document/layer selected" is the panel's own refusal;
      these two rows say whether it was right. */
@@ -10673,6 +10717,12 @@ function ptPaintLabels() {
 
 function bindPath() {
   if (!$("ptSrcChips")) return;
+  /* v6.77.0 — the crawl that walked every control found these two headers
+     with no handler on either surface of the panel: the Effects group and the
+     Prompt-preview group drew a caret, took the tap, and never opened, so the
+     look-only effects and the written prompt were unreachable on Path. */
+  wireStaticGrp("ptGrpFx", "ptFxH");
+  wireStaticGrp("ptGrpPrompt", "ptPromptH");
   const add = $("btnPtAdd"); if (add) add.addEventListener("click", ptAdd);
   const em = $("ptEmpty"); if (em) em.addEventListener("click", ptAdd);
   const clr = $("btnPtClear");
@@ -11351,6 +11401,9 @@ function vtThumbFor(entry, id, nameId, metaId, wrapId, isVideo) {
   }
   wrap.style.display = "";
   if ($(nameId)) $(nameId).textContent = entry.name || "";
+  /* v6.77.0 — a <video> this renderer cannot play is hidden; the name and
+     size lines beside it still say which clip was picked */
+  if (isVideo && el.tagName === "VIDEO") { try { el.style.display = VIDEO_OK ? "" : "none"; } catch (e) { } }
   if (entry._url) {
     if (el.getAttribute("src") !== entry._url) el.setAttribute("src", entry._url);
     if ($(metaId) && !$(metaId).textContent) $(metaId).textContent = entry._size || "";
@@ -12106,14 +12159,35 @@ function showVidResult() {
   if (!out || !box) return;
   box.className = "card result-box on";
   const vid = $("vidResultVideo");
-  if (vid) { try { vid.src = out.url; } catch (e) { } }
+  if (vid) {
+    try {
+      if (VIDEO_OK) { vid.style.display = ""; vid.src = out.url; }
+      else { vid.style.display = "none"; clearSrc(vid); }
+    } catch (e) { }
+  }
+  /* v6.77.0 — no player here: say the clip is ready and where it plays */
+  try {
+    let note = $("vidNoInline");
+    if (!VIDEO_OK) {
+      if (!note) { note = document.createElement("div"); note.id = "vidNoInline"; note.className = "mut vid-noinline"; if (vid && vid.parentNode) vid.parentNode.appendChild(note); else box.appendChild(note); }
+      note.textContent = t("vid_no_inline").replace("{n}", String(vidHistSel + 1));
+      note.style.display = "";
+    } else if (note) note.style.display = "none";
+  } catch (e) { }
   const h = $("vidHist");
   if (h) {
     while (h.firstChild) h.removeChild(h.firstChild);
     vidHist.forEach(function (e, i) {
-      const v = document.createElement("video");
-      v.src = e.url; v.muted = true; v.preload = "metadata"; v.playsInline = true;
-      v.className = i === vidHistSel ? "sel" : "";
+      let v;
+      if (VIDEO_OK) {
+        v = document.createElement("video");
+        v.src = e.url; v.muted = true; v.preload = "metadata"; v.playsInline = true;
+        v.className = i === vidHistSel ? "sel" : "";
+      } else {
+        v = document.createElement("div");
+        v.className = "hvt" + (i === vidHistSel ? " sel" : "");
+        v.textContent = "MP4 " + (i + 1);
+      }
       ffPressable(v, function () { vidHistSel = i; showVidResult(); });
       vidItemP(h, v, i);
     });
@@ -16627,9 +16701,12 @@ function spinFrame(sp, t0) {
     /* spinbar 1.3s ease-in-out: background-size 250% with background-position
        200% → -100% is, modulo the repeating tile, one 2.5-wide gradient whose
        left edge slides from -0.5 to -1.0 track widths (crest 75% → 25%) */
-    const w = bar.getBoundingClientRect().width || 0;
+    /* v6.77.0 — a percentage of the track, not a measured width: Photoshop
+       hands script no geometry (rect 0), so the measured version stood still
+       there while the ring turned. margin-left in % is relative to the
+       containing block's width, which is exactly the track. */
     const e = ffEaseInOut((el % 1300) / 1300);
-    run.style.marginLeft = Math.round((-0.5 - 0.5 * e) * w * 10) / 10 + "px";
+    run.style.marginLeft = Math.round((-0.5 - 0.5 * e) * 1000) / 10 + "%";
   }
 }
 /* CSS ease-in-out = cubic-bezier(.42,0,.58,1): solve x(t)=p for t, return y(t) */
@@ -18586,10 +18663,19 @@ function installGlobalSafetyNet() {
   } catch (e) { }
 }
 
+/* v6.77.0 — the storage shim reads its file once at load; the first render
+   waits for it the way it waits for the settings, so nothing lifted from the
+   web app reads an empty store at boot. A browser resolves at once. */
+function lsReady() {
+  try {
+    const l = globalThis.HNK && globalThis.HNK.localStore;
+    return (l && l.ready && typeof l.ready.then === "function") ? l.ready.then(function () { }, function () { }) : Promise.resolve();
+  } catch (e) { return Promise.resolve(); }
+}
 function init() {
   installGlobalSafetyNet();
   safe("off-guard", function () { bindOffGuard(document); });
-  loadSettings().then(function () {
+  Promise.all([loadSettings(), lsReady()]).then(function () {
     /* first: the wall comes down only if the plan says so */
     safe("gate", function () { gateBoot(); });
     safe("apply-settings", function () {
