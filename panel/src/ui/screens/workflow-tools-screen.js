@@ -992,10 +992,15 @@ function create(deps) {
     nodes["thumb_" + inp.key] = thumb;
     nodes["empty_" + inp.key] = empty;
 
+    /* v6.75.0 — the label gets a line of its own. Beside five buttons it was
+       squeezed to a sliver: the owner's photograph showed "မျက်နှာ / လူ
+       reference" broken over three lines with the ✓ floating beside the
+       middle one. Name first, then the row of sources. */
     return dom.el(doc, "div", { class: "hnk-req-block" }, [
-      dom.el(doc, "div", { class: "hnk-req-row" }, [
-        dom.el(doc, "span", { class: "hnk-req-label", text: lbl }), mark, add, fileB, pasteB, webB, lib
+      dom.el(doc, "div", { class: "hnk-req-head" }, [
+        dom.el(doc, "span", { class: "hnk-req-label", text: lbl }), mark
       ]),
+      dom.el(doc, "div", { class: "hnk-req-row" }, [add, fileB, pasteB, webB, lib]),
       urlRow,
       thumb
     ]);

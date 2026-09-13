@@ -85,11 +85,37 @@ var DASH_CARDS = [
 var L_NEW_H = { my: "အသစ်ရောက်ထားတာတွေ", en: "Just shipped", shn: "ၶိူင်ႈမႂ်ႇ", kac: "Nnan ai ni", th: "ของใหม่ล่าสุด", zh: "最新上线", vi: "Vừa ra mắt", id: "Baru rilis", ms: "Baru keluar" };
 var L_NEW_DISMISS = { my: "ဖျောက်မယ်", en: "Dismiss", shn: "ႁဵတ်းႁၢႆ", kac: "Kau kau u", th: "ปิด", zh: "忽略", vi: "Bỏ qua", id: "Abaikan", ms: "Abaikan" };
 var _nwMem = null;
-function nwSeen() {
+/* v6.75.0 — WHERE A DISMISSAL LIVES. A browser has localStorage; UXP has
+   none, so in Photoshop every × was forgotten at relaunch and the owner's
+   Home opened on "(105)" unread every time. The panel publishes its settings
+   file as HNK.seenStore; it is used only where localStorage is ABSENT, so a
+   browser keeps the app's exact behaviour (and the tests that drive it). */
+function nwLocal() {
   try {
-    var raw = globalThis.localStorage.getItem(whatsNew ? whatsNew.SEEN_KEY : "hnk_new_seen");
-    if (raw != null) { var v = JSON.parse(raw); if (Array.isArray(v)) return v; }
-  } catch (e) { }
+    var ls = globalThis.localStorage;
+    if (!ls || typeof ls.getItem !== "function") return null;
+    ls.getItem("hnk_new_seen_probe");
+    return ls;
+  } catch (e) { return null; }
+}
+function nwStore() {
+  try {
+    var s = globalThis.HNK && globalThis.HNK.seenStore;
+    return (s && typeof s.get === "function" && typeof s.set === "function") ? s : null;
+  } catch (e) { return null; }
+}
+function nwSeen() {
+  var key = whatsNew ? whatsNew.SEEN_KEY : "hnk_new_seen";
+  var ls = nwLocal();
+  if (ls) {
+    try {
+      var raw = ls.getItem(key);
+      if (raw != null) { var v = JSON.parse(raw); if (Array.isArray(v)) return v; }
+    } catch (e) { }
+  } else {
+    var st = nwStore();
+    if (st) { try { var w = st.get(); if (Array.isArray(w)) return w.slice(); } catch (e2) { } }
+  }
   return Array.isArray(_nwMem) ? _nwMem.slice() : [];
 }
 function nwMark(e) {
@@ -97,7 +123,9 @@ function nwMark(e) {
   var l = nwSeen(), k = whatsNew.key(e);
   if (l.indexOf(k) < 0) l.unshift(k);
   _nwMem = l.slice(0, 200);
-  try { globalThis.localStorage.setItem(whatsNew.SEEN_KEY, JSON.stringify(_nwMem)); } catch (err) { }
+  var ls = nwLocal();
+  if (ls) { try { ls.setItem(whatsNew.SEEN_KEY, JSON.stringify(_nwMem)); } catch (err) { } }
+  else { var st = nwStore(); if (st) { try { st.set(_nwMem.slice()); } catch (err2) { } } }
 }
 /* the app's page ids are not the panel's route keys; this is the only place
    the two vocabularies meet, so the mapping is here and nowhere else. */
@@ -359,7 +387,8 @@ function render(root, deps) {
         attrs: { "data-nw": whatsNew.key(e) } });
       var tx = dom.el(doc, "div", { class: "nw-tx" }, [
         dom.el(doc, "div", { class: "nw-t", text: l9(e.t) }),
-        dom.el(doc, "div", { class: "nw-s", text: l9(e.s) })
+        /* v6.75.0 — the excerpt is plain text; an entry's **bold** marks are not */
+        dom.el(doc, "div", { class: "nw-s", text: l9(e.s).replace(/\*\*/g, "") })
       ]);
       row.appendChild(tx);
       row.appendChild(dom.el(doc, "span", { class: "nw-tag", text: "NEW" }));

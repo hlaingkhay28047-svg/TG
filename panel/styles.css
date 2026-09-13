@@ -1055,7 +1055,11 @@ input[type="range"] { min-width: 0; }
 .hnk-estimate, .hnk-status, .hnk-wf-route, .hnk-wf-desc { font-size:11px; color:var(--muted); }
 .hnk-generate { background:var(--go); color:var(--go-ink); border-color:var(--go-brd); font-weight:700;
   padding:11px; font-size:13px; }
-.hnk-req-row { display:flex; align-items:center; padding:6px 0; font-size:12px; }
+/* v6.75.0 — the slot's name and its ✓ / Missing mark on their own line; the
+   five source buttons wrap beneath (the label was a three-line sliver beside them) */
+.hnk-req-head { display:flex; align-items:center; padding:6px 0 0; font-size:12px; }
+.hnk-req-head > span { margin-right: 8px; }
+.hnk-req-row { display:flex; flex-wrap:wrap; align-items:center; padding:4px 0 6px; font-size:12px; }
 .hnk-req-row > div,
 .hnk-req-row > span,
 .hnk-req-row > img,

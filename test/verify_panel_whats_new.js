@@ -200,6 +200,15 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       box.rows.length === 3 &&
       Math.max(...box.rows) <= 136 && Math.min(...box.rows) >= 60 &&
       box.offBoundary === 0, box);
+    /* v6.75.0 — the owner's Home photograph showed the excerpt with its raw
+       **bold** marks. The strip is plain text; the marks are authoring. */
+    const md = await page.evaluate(() => ({
+      authored: window.HNK.whatsNew.LIST.slice(0, 3).filter(e => /\*\*/.test(JSON.stringify(e.s))).length,
+      rows: document.querySelectorAll("#hnkDashNew .nw-s").length,
+      leaked: [...document.querySelectorAll("#hnkDashNew .nw-s")].filter(el => el.textContent.indexOf("**") >= 0).length
+    }));
+    report("B5) v6.75.0 — an entry's **bold** marks never reach the strip: at least one drawn entry is authored with them, and no excerpt shows them",
+      md.authored > 0 && md.rows > 0 && md.leaked === 0, md);
     /* v6.43.0 — THE ROWS ARE CAPPED, NOT IDENTICAL. This asked for
        `max - min <= 2`, and the note above justified it as "three rows drawn
        from the same template cannot differ in height", which is not true and

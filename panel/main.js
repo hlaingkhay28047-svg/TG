@@ -96,6 +96,11 @@ function logText() {
 
 /* ---------------- State ---------------- */
 const state = {
+  /* v6.75.0 — the What's New rows this member has dismissed. The panel has no
+     localStorage (UXP), so the strip forgot every dismissal at relaunch and
+     the owner's Home opened on "(105)" unread every time. Kept in the settings
+     file like everything else the panel remembers. */
+  nwSeen: [],
   /* v6.22.0 account gate. Only the refresh token is kept -- the access
      token is short-lived and re-minted every launch. accProfile/accSeenAt
      are what the offline grace window reads. */
@@ -528,7 +533,7 @@ const SETUP_L = {
   dev_this:{"my":"ဒီစက်","en":"This device","shn":"ၶိူင်ႈဢၼ်ၼႆႉ","kac":"Ndai device","th":"อุปกรณ์นี้","zh":"当前设备","vi":"Thiết bị này","id":"Perangkat ini","ms":"Peranti ini"},
   dev_limit:{"my":"စက် ကန့်သတ်ချက် ပြည့်နေပါပြီ — သင့်အကောင့်မှာ စက် {M} လုံးပဲ သုံးခွင့် ရှိပါတယ်။ အောက်က စာရင်းထဲက မသုံးတော့တဲ့ စက်တစ်လုံးကို ဖယ်ရှားပါ၊ ဒါမှမဟုတ် စက် ထပ်တိုးဖို့ ဝယ်ပါ","en":"Device limit reached — your account allows {M} devices. Remove an old device from the list below, or buy an extra device slot.","shn":"ၶိူင်ႈတဵမ်ယဝ်ႉ — ဢၶွင်ႉသူ ၸႂ်ႉလႆႈၶိူင်ႈ {M} လုၵ်ႈၵူၺ်း။ ဢဝ်ၶိူင်ႈၵဝ်ႇဢၼ်ဢမ်ႇၸႂ်ႉယဝ်ႉ ၼႂ်းသဵၼ်ႈမၢႆတႂ်ႈၼႆႉဢွၵ်ႇ ဢမ်ႇၼၼ် သိုဝ်ႉၶိူင်ႈထႅမ်ထႅင်ႈ။","kac":"Device tup sai — na a account gaw device {M} sha lang lu ai. Npu na list kaw na device dingga langai hpe shale kau u, n rai yang device shara langai mari u.","th":"ถึงขีดจำกัดอุปกรณ์แล้ว — บัญชีของคุณใช้ได้ {M} เครื่อง นำเครื่องเก่าออกจากรายการด้านล่าง หรือซื้อสล็อตอุปกรณ์เพิ่ม","zh":"设备数量已满 — 你的账户最多 {M} 台设备。请在下方列表移除旧设备，或购买额外设备名额。","vi":"Đã đạt giới hạn thiết bị — tài khoản của bạn cho phép {M} thiết bị. Hãy gỡ một thiết bị cũ trong danh sách bên dưới, hoặc mua thêm một suất thiết bị.","id":"Batas perangkat tercapai — akun Anda mengizinkan {M} perangkat. Hapus perangkat lama dari daftar di bawah, atau beli slot perangkat tambahan.","ms":"Had peranti telah dicapai — akaun anda membenarkan {M} peranti. Buang peranti lama daripada senarai di bawah, atau beli slot peranti tambahan."},
   rh_opt:{"my":"(ချန်ထားလို့ရ)","en":"(optional)","shn":"(ဢမ်ႇထၢင်ႇၵေႃႈလႆႈ)","kac":"(n ra ai)","th":"(ไม่บังคับ)","zh":"（可选）","vi":"(tùy chọn)","id":"(opsional)","ms":"(pilihan)"},
-  rh_intro:{"my":"RunningHub Enterprise-Shared key ကို paste ပြီး Save & Verify နှိပ်ရုံပါပဲ — Nano Banana 2 က key ချက်ချင်း အလိုအလျောက် အသုံးပြုလို့ရပါပြီ (webappId/node id ထည့်စရာမလိုပါ)။ Model တခြားများ ဆက်ချိတ်ချင်ရင် endpoint path ကို RunningHub API docs ကနေ ကူးထည့်ရုံပါပဲ — browser ထဲ (localStorage) ပဲ သိမ်းထားမှာပါ၊ ဘယ် server ကိုမှ ပို့မှာမဟုတ်ပါဘူး။","en":"Paste your RunningHub Enterprise-Shared key and tap Save & Verify — Nano Banana 2 works instantly with just the key (no webappId/node id needed). To add other models, paste the endpoint path from RunningHub's API docs. Everything stays in this browser's localStorage and is sent straight to RunningHub, never through any server.","shn":"Paste RunningHub Enterprise-Shared key သေ ၼဵၵ်း Save & Verify ၵူၺ်း — Nano Banana 2 ၸႂ်ႉလႆႈၵမ်းလဵဝ်လူၺ်ႈ key ဢၼ်လဵဝ် (ဢမ်ႇလူဝ်ႇ webappId/node id)။ ၶႂ်ႈသႂ်ႇ model တၢင်ႇဢၼ်ၼႆ ၶႅတ်ႉ endpoint path တီႈ RunningHub API docs သေမႃးပလၢတ်ႈ။ ၵူႈလွင်ႈသိမ်းဝႆႉၼႂ်း localStorage ၶွင် browser ၼႆႉၵူၺ်း — သူင်ႇၵမ်းသိုဝ်ႈထိုင် RunningHub၊ ဢမ်ႇလတ်းၽၢၼ်ႇ server လႂ်သေဢၼ်။","kac":"Na a RunningHub Enterprise-Shared key hpe paste nna Save & Verify dip u — Nano Banana 2 gaw key sha hte kalang ta galaw mai ai (webappId/node id n ra ai). Kaga model bang mayu yang RunningHub API docs kaw na endpoint path hpe copy paste u. Yawng gaw ndai browser a localStorage hta sha rawng nga ai — RunningHub de ding hkra shagun ai, server langai mi hku mung n lai ai.","th":"วางคีย์ RunningHub Enterprise-Shared แล้วกด Save & Verify — Nano Banana 2 ใช้งานได้ทันทีด้วย key อย่างเดียว (ไม่ต้องใส่ webappId/node id) หากต้องการเพิ่มโมเดลอื่น ให้คัดลอก endpoint path จากเอกสาร API ของ RunningHub มาวาง ทุกอย่างเก็บอยู่ใน localStorage ของเบราว์เซอร์นี้และส่งตรงถึง RunningHub เท่านั้น ไม่ผ่านเซิร์ฟเวอร์ใด ๆ","zh":"粘贴 RunningHub Enterprise-Shared key 并点击 Save & Verify — Nano Banana 2 只需 key 即可立即使用（无需 webappId/node id）。要接入其他模型，从 RunningHub API 文档复制 endpoint path 粘贴即可。一切只保存在本浏览器的 localStorage 中，并直接发送给 RunningHub，绝不经过任何服务器。","vi":"Dán RunningHub Enterprise-Shared key và bấm Save & Verify — Nano Banana 2 hoạt động ngay chỉ với key (không cần webappId/node id). Muốn thêm model khác, dán endpoint path từ tài liệu API của RunningHub. Mọi thứ chỉ nằm trong localStorage của trình duyệt này và gửi thẳng tới RunningHub, không bao giờ qua máy chủ nào.","id":"Tempel RunningHub Enterprise-Shared key lalu tekan Save & Verify — Nano Banana 2 langsung berfungsi hanya dengan key (tanpa webappId/node id). Untuk menambah model lain, tempel endpoint path dari dokumen API RunningHub. Semuanya hanya tersimpan di localStorage browser ini dan dikirim langsung ke RunningHub, tidak pernah lewat server mana pun.","ms":"Tampal RunningHub Enterprise-Shared key dan tekan Save & Verify — Nano Banana 2 terus berfungsi hanya dengan key (tiada webappId/node id diperlukan). Untuk menambah model lain, tampal laluan endpoint dari dokumen API RunningHub. Semuanya kekal dalam localStorage pelayar ini dan dihantar terus ke RunningHub, tidak melalui mana-mana pelayan."},
+  rh_intro:{"my":"RunningHub Enterprise-Shared key ကို paste ပြီး Save & Verify နှိပ်ရုံပါပဲ — Nano Banana 2 က key ချက်ချင်း အလိုအလျောက် အသုံးပြုလို့ရပါပြီ (webappId/node id ထည့်စရာမလိုပါ)။ Model တခြားများ ဆက်ချိတ်ချင်ရင် endpoint path ကို RunningHub API docs ကနေ ကူးထည့်ရုံပါပဲ — ဒီစက်ထဲမှာပဲ သိမ်းထားမှာပါ၊ RunningHub ကိုပဲ တိုက်ရိုက် ပို့ပြီး တခြား server ကို မပို့ပါ။","en":"Paste your RunningHub Enterprise-Shared key and tap Save & Verify — Nano Banana 2 works instantly with just the key (no webappId/node id needed). To add other models, paste the endpoint path from RunningHub's API docs. Everything stays on this device and is sent straight to RunningHub, never through any other server.","shn":"Paste RunningHub Enterprise-Shared key သေ ၼဵၵ်း Save & Verify ၵူၺ်း — Nano Banana 2 ၸႂ်ႉလႆႈၵမ်းလဵဝ်လူၺ်ႈ key ဢၼ်လဵဝ် (ဢမ်ႇလူဝ်ႇ webappId/node id)။ ၶႂ်ႈသႂ်ႇ model တၢင်ႇဢၼ်ၼႆ ၶႅတ်ႉ endpoint path တီႈ RunningHub API docs သေမႃးပလၢတ်ႈ။ ၵူႈလွင်ႈသိမ်းဝႆႉၼႂ်းၶိူင်ႈၼႆႉၵူၺ်း — သူင်ႇၵမ်းသိုဝ်ႈထိုင် RunningHub၊ ဢမ်ႇလတ်းၽၢၼ်ႇ server တၢင်ႇဢၼ်။","kac":"Na a RunningHub Enterprise-Shared key hpe paste nna Save & Verify dip u — Nano Banana 2 gaw key sha hte kalang ta galaw mai ai (webappId/node id n ra ai). Kaga model bang mayu yang RunningHub API docs kaw na endpoint path hpe copy paste u. Yawng gaw ndai machine hta sha rawng nga ai — RunningHub de ding hkra shagun ai, kaga server langai mi hku mung n lai ai.","th":"วางคีย์ RunningHub Enterprise-Shared แล้วกด Save & Verify — Nano Banana 2 ใช้งานได้ทันทีด้วย key อย่างเดียว (ไม่ต้องใส่ webappId/node id) หากต้องการเพิ่มโมเดลอื่น ให้คัดลอก endpoint path จากเอกสาร API ของ RunningHub มาวาง ทุกอย่างเก็บอยู่ในเครื่องนี้เท่านั้นและส่งตรงถึง RunningHub ไม่ผ่านเซิร์ฟเวอร์อื่นใด","zh":"粘贴 RunningHub Enterprise-Shared key 并点击 Save & Verify — Nano Banana 2 只需 key 即可立即使用（无需 webappId/node id）。要接入其他模型，从 RunningHub API 文档复制 endpoint path 粘贴即可。一切只保存在本设备上，并直接发送给 RunningHub，绝不经过其他任何服务器。","vi":"Dán RunningHub Enterprise-Shared key và bấm Save & Verify — Nano Banana 2 hoạt động ngay chỉ với key (không cần webappId/node id). Muốn thêm model khác, dán endpoint path từ tài liệu API của RunningHub. Mọi thứ chỉ nằm trên thiết bị này và gửi thẳng tới RunningHub, không bao giờ qua máy chủ nào khác.","id":"Tempel RunningHub Enterprise-Shared key lalu tekan Save & Verify — Nano Banana 2 langsung berfungsi hanya dengan key (tanpa webappId/node id). Untuk menambah model lain, tempel endpoint path dari dokumen API RunningHub. Semuanya hanya tersimpan di perangkat ini dan dikirim langsung ke RunningHub, tidak pernah lewat server lain mana pun.","ms":"Tampal RunningHub Enterprise-Shared key dan tekan Save & Verify — Nano Banana 2 terus berfungsi hanya dengan key (tiada webappId/node id diperlukan). Untuk menambah model lain, tampal laluan endpoint dari dokumen API RunningHub. Semuanya kekal pada peranti ini dan dihantar terus ke RunningHub, tidak melalui mana-mana pelayan lain."},
   rh_save_verify:{"my":"Save & Verify","en":"Save & Verify","shn":"Save & Verify","kac":"Save & Verify","th":"บันทึกและยืนยัน","zh":"保存并验证","vi":"Lưu & Xác minh","id":"Simpan & Verifikasi","ms":"Simpan & Sahkan"},
   rh_enter_key:{"my":"key ထည့်ပါ","en":"Enter a key","shn":"သႂ်ႇ key","kac":"key jaw u","th":"กรอก key","zh":"请输入 key","vi":"Nhập key","id":"Masukkan key","ms":"Masukkan key"},
   rh_checking:{"my":"စစ်နေတယ်…","en":"Checking…","shn":"တွပ်ႇထၢမ်ဝႆႉ…","kac":"Yu chyam nga ai…","th":"กำลังตรวจสอบ…","zh":"检查中…","vi":"Đang kiểm tra…","id":"Memeriksa…","ms":"Menyemak…"},
@@ -911,6 +916,11 @@ const I18N = {
     err_big: "Image too large for the API \u2014 downsize, then retry \u00b7 \u1015\u102f\u1036\u1000\u103c\u102e\u1038\u101c\u103d\u1014\u103a\u1038 \u2014 \u1001\u103b\u102f\u1036\u1037\u1015\u103c\u102e\u1038\u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_safety: "Blocked by safety filter \u2014 adjust the prompt or photo \u00b7 Safety \u1004\u103c\u1004\u103a\u1038 \u2014 prompt/\u1015\u102f\u1036 \u1015\u103c\u1004\u103a\u1015\u103c\u102e\u1038\u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_net: "Network / server problem \u2014 please try again \u00b7 \u1000\u103d\u1014\u103a\u101b\u1000\u103a/\u1006\u102c\u1017\u102c\u1015\u103c\u1005\u1014\u102c \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
+    /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
+    rh_err_network: "Could not reach RunningHub Enterprise \u2014 the line is down. Check your internet connection and try again.",
+    rh_err_timeout: "The generation took too long \u2014 RunningHub did not answer in time. Try again, or reduce the size or number of variants.",
+    rh_err_rate_limited: "RunningHub Enterprise is busy right now \u2014 wait a moment and try again.",
+    rh_err_invalid_key: "RunningHub refused the key \u2014 check it under Setup \u25b8 RunningHub Enterprise.",
     err_timeout: "Request timed out \u2014 the server took too long; please try again \u00b7 \u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_generic: "The request could not be completed \u2014 please try again",
     err_img: "No usable image was produced \u2014 please try again",
@@ -1556,6 +1566,11 @@ const I18N = {
     err_big: "\u1015\u102f\u1036 API \u1021\u1010\u103d\u1000\u103a \u1000\u103c\u102e\u1038\u101c\u103d\u1014\u103a\u1038 \u2014 \u1001\u103b\u102f\u1036\u1037\u1015\u103c\u102e\u1038 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_safety: "Safety filter \u1004\u103c\u1004\u103a\u1038 \u2014 prompt (\u101e\u102d\u102f\u1037) \u1015\u102f\u1036 \u1015\u103c\u1004\u103a\u1015\u103c\u102e\u1038 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_net: "\u1000\u103d\u1014\u103a\u101b\u1000\u103a/\u1006\u102c\u1017\u102c \u1015\u103c\u1005\u1014\u102c \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
+    /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
+    rh_err_network: "RunningHub Enterprise ကို မရောက်ပါ — အင်တာနက် ပြတ်နေပါတယ်။ ချိတ်ဆက်မှုကို စစ်ပြီး ပြန်ကြိုးစားပါ။",
+    rh_err_timeout: "ပုံထုတ်တာ ကြာလွန်းပါတယ် — RunningHub က အချိန်မီ မဖြေပါ။ ပြန်ကြိုးစားပါ (သို့) အရွယ်အစား / အရေအတွက် လျှော့ပါ။",
+    rh_err_rate_limited: "RunningHub Enterprise အလုပ်များနေပါတယ် — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ။",
+    rh_err_invalid_key: "RunningHub က key ကို လက်မခံပါ — Setup ▸ RunningHub Enterprise မှာ key ပြန်စစ်ပါ။",
     err_timeout: "\u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a\u101e\u103d\u102c\u1038\u1015\u103c\u102e \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_generic: "\u1010\u1031\u102c\u1004\u103a\u1038\u1006\u102d\u102f\u1019\u103e\u102f \u1019\u1015\u103c\u102e\u1038\u1006\u102f\u1036\u1038\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_img: "\u1021\u101e\u102f\u1036\u1038\u101d\u1004\u103a\u1010\u1032\u1037 \u1015\u102f\u1036 \u1019\u101b\u101b\u103e\u102d\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
@@ -2201,6 +2216,11 @@ const I18N = {
     err_big: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u101a\u1082\u103a\u1087\u1015\u1030\u107c\u103a\u1089\u1010\u103d\u107c\u103a\u1088\u1010\u1083\u1087 API \u2014 \u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u101c\u1035\u1075\u103a\u1089\u101e\u1031 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_safety: "\u1011\u102f\u1075\u103a\u1087 safety filter \u1081\u1062\u1019\u103a\u1088 \u2014 \u1019\u1084\u1038 prompt \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u101e\u1031 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_net: "\u1076\u103d\u1004\u103a\u1087\u101e\u1035\u1004\u103a\u1088 / server \u1019\u102e\u1038\u101c\u103d\u1004\u103a\u1088\u101a\u102f\u1075\u103a\u1038 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
+    /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
+    rh_err_network: "ထိုင် RunningHub Enterprise ဢမ်ႇလႆႈ — ဢိၼ်ႇထႃႇၼႅတ်ႉၶၢတ်ႇ။ ၵူတ်ႇထတ်းလႅင်းသေ ၶိုၼ်းၸၢမ်း။",
+    rh_err_timeout: "ႁဵတ်းႁၢင်ႈႁိုင်ပူၼ်ႉ — RunningHub ဢမ်ႇတွပ်ႇတၼ်း။ ၶိုၼ်းၸၢမ်း ဢမ်ႇၼၼ် လူတ်းယွမ်း ၶၼၢတ်ႈ / ၸမ်ႉ။",
+    rh_err_rate_limited: "RunningHub Enterprise ယုင်ႈယူႇ — ပႂ်ႉၵမ်းၼိုင်ႈသေ ၶိုၼ်းၸၢမ်း။",
+    rh_err_invalid_key: "RunningHub ဢမ်ႇႁပ်ႉ key — ၵူတ်ႇထတ်းတီႈ Setup ▸ RunningHub Enterprise။",
     err_timeout: "\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1010\u1035\u1019\u103a \u2014 server \u1078\u1082\u103a\u1089\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1081\u102d\u102f\u1004\u103a\u1015\u1030\u107c\u103a\u1089; \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_generic: "\u1081\u1035\u1010\u103a\u1038\u1022\u1019\u103a\u1087\u101a\u101d\u103a\u1089 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_img: "\u1022\u1019\u103a\u1087\u101c\u1086\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u107c\u103a\u1078\u1082\u103a\u1089\u101c\u1086\u1088 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
@@ -2844,6 +2864,11 @@ const I18N = {
     err_big: "API a matu sumla grau kaba ai \u2014 kaji shatai nna bai chyam u",
     err_safety: "Safety filter gaw pat kau ai \u2014 prompt shing nrai sumla hpe jaw nna bai chyam u",
     err_net: "Network / server jam jau ai \u2014 bai chyam yu u",
+    /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
+    rh_err_network: "RunningHub Enterprise de n du lu ai — internet hten nga ai. Internet hpe yu nna bai chyam yu u.",
+    rh_err_timeout: "Sumla shapraw na na ai — RunningHub aten hta n htai ai. Bai chyam yu u, n rai yang kaba / nsen hpe yawm u.",
+    rh_err_rate_limited: "RunningHub Enterprise bungli law nga ai — jahkring la nna bai chyam yu u.",
+    rh_err_invalid_key: "RunningHub gaw key hpe n hkap la ai — Setup ▸ RunningHub Enterprise hta bai yu u.",
     err_timeout: "Ten hpring mat sai \u2014 server grau na ai; bai chyam yu u",
     err_generic: "Ndai lam n ngut lu ai \u2014 bai chyam yu u",
     err_img: "Lang mai ai sumla n pru ai \u2014 bai chyam yu u",
@@ -3487,6 +3512,11 @@ const I18N = {
     err_big: "\u0e20\u0e32\u0e1e\u0e43\u0e2b\u0e0d\u0e48\u0e40\u0e01\u0e34\u0e19\u0e2a\u0e33\u0e2b\u0e23\u0e31\u0e1a API \u2014 \u0e22\u0e48\u0e2d\u0e02\u0e19\u0e32\u0e14\u0e41\u0e25\u0e49\u0e27\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
     err_safety: "\u0e16\u0e39\u0e01\u0e1a\u0e25\u0e47\u0e2d\u0e01\u0e42\u0e14\u0e22\u0e15\u0e31\u0e27\u0e01\u0e23\u0e2d\u0e07\u0e04\u0e27\u0e32\u0e21\u0e1b\u0e25\u0e2d\u0e14\u0e20\u0e31\u0e22 \u2014 \u0e1b\u0e23\u0e31\u0e1a prompt \u0e2b\u0e23\u0e37\u0e2d\u0e20\u0e32\u0e1e\u0e41\u0e25\u0e49\u0e27\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
     err_net: "\u0e1b\u0e31\u0e0d\u0e2b\u0e32\u0e40\u0e04\u0e23\u0e37\u0e2d\u0e02\u0e48\u0e32\u0e22 / \u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c \u2014 \u0e01\u0e23\u0e38\u0e13\u0e32\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
+    /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
+    rh_err_network: "เชื่อมต่อ RunningHub Enterprise ไม่ได้ — อินเทอร์เน็ตขาด ตรวจสอบการเชื่อมต่อแล้วลองใหม่",
+    rh_err_timeout: "สร้างภาพนานเกินไป — RunningHub ไม่ตอบทันเวลา ลองใหม่ หรือลดขนาด / จำนวนภาพ",
+    rh_err_rate_limited: "RunningHub Enterprise กำลังยุ่ง — รอสักครู่แล้วลองใหม่",
+    rh_err_invalid_key: "RunningHub ไม่รับคีย์นี้ — ตรวจสอบที่ Setup ▸ RunningHub Enterprise",
     err_timeout: "\u0e04\u0e33\u0e02\u0e2d\u0e2b\u0e21\u0e14\u0e40\u0e27\u0e25\u0e32 \u2014 \u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e43\u0e0a\u0e49\u0e40\u0e27\u0e25\u0e32\u0e19\u0e32\u0e19\u0e40\u0e01\u0e34\u0e19\u0e44\u0e1b \u0e01\u0e23\u0e38\u0e13\u0e32\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
     err_generic: "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e14\u0e33\u0e40\u0e19\u0e34\u0e19\u0e01\u0e32\u0e23\u0e15\u0e32\u0e21\u0e04\u0e33\u0e02\u0e2d\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
     err_img: "\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
@@ -4130,6 +4160,11 @@ const I18N = {
     err_big: "\u56fe\u7247\u8d85\u51fa API \u9650\u5236 \u2014 \u8bf7\u7f29\u5c0f\u540e\u91cd\u8bd5",
     err_safety: "\u88ab\u5b89\u5168\u8fc7\u6ee4\u5668\u62e6\u622a \u2014 \u8bf7\u8c03\u6574 prompt \u6216\u7167\u7247\u540e\u91cd\u8bd5",
     err_net: "\u7f51\u7edc\uff0f\u670d\u52a1\u5668\u95ee\u9898 \u2014 \u8bf7\u91cd\u8bd5",
+    /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
+    rh_err_network: "无法连接 RunningHub Enterprise — 网络已断开。请检查网络连接后重试。",
+    rh_err_timeout: "生成耗时过长 — RunningHub 未及时响应。请重试，或减小尺寸 / 数量。",
+    rh_err_rate_limited: "RunningHub Enterprise 正忙 — 请稍候再试。",
+    rh_err_invalid_key: "RunningHub 拒绝了该 key — 请到 Setup ▸ RunningHub Enterprise 检查。",
     err_timeout: "\u8bf7\u6c42\u8d85\u65f6 \u2014 \u670d\u52a1\u5668\u8017\u65f6\u8fc7\u957f\uff0c\u8bf7\u91cd\u8bd5",
     err_generic: "\u8bf7\u6c42\u672a\u80fd\u5b8c\u6210 \u2014 \u8bf7\u91cd\u8bd5",
     err_img: "\u672a\u751f\u6210\u53ef\u7528\u7684\u56fe\u7247 \u2014 \u8bf7\u91cd\u8bd5",
@@ -4773,6 +4808,11 @@ const I18N = {
     err_big: "\u1ea2nh qu\u00e1 l\u1edbn so v\u1edbi API \u2014 h\u00e3y thu nh\u1ecf r\u1ed3i th\u1eed l\u1ea1i",
     err_safety: "B\u1ecb b\u1ed9 l\u1ecdc an to\u00e0n ch\u1eb7n \u2014 h\u00e3y ch\u1ec9nh prompt ho\u1eb7c \u1ea3nh r\u1ed3i th\u1eed l\u1ea1i",
     err_net: "S\u1ef1 c\u1ed1 m\u1ea1ng / m\u00e1y ch\u1ee7 \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
+    /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
+    rh_err_network: "Không kết nối được RunningHub Enterprise — mất mạng. Kiểm tra kết nối rồi thử lại.",
+    rh_err_timeout: "Tạo ảnh quá lâu — RunningHub không trả lời kịp. Thử lại, hoặc giảm kích thước / số lượng.",
+    rh_err_rate_limited: "RunningHub Enterprise đang bận — đợi một lát rồi thử lại.",
+    rh_err_invalid_key: "RunningHub từ chối key — kiểm tra tại Setup ▸ RunningHub Enterprise.",
     err_timeout: "Y\u00eau c\u1ea7u qu\u00e1 h\u1ea1n \u2014 m\u00e1y ch\u1ee7 ph\u1ea3n h\u1ed3i qu\u00e1 l\u00e2u; vui l\u00f2ng th\u1eed l\u1ea1i",
     err_generic: "Kh\u00f4ng th\u1ec3 ho\u00e0n t\u1ea5t y\u00eau c\u1ea7u \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
     err_img: "Kh\u00f4ng t\u1ea1o \u0111\u01b0\u1ee3c \u1ea3nh d\u00f9ng \u0111\u01b0\u1ee3c \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
@@ -5416,6 +5456,11 @@ const I18N = {
     err_big: "Gambar terlalu besar untuk API \u2014 perkecil lalu coba lagi",
     err_safety: "Diblokir filter keamanan \u2014 sesuaikan prompt atau fotonya lalu coba lagi",
     err_net: "Masalah jaringan / server \u2014 silakan coba lagi",
+    /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
+    rh_err_network: "Tidak dapat menjangkau RunningHub Enterprise — koneksi terputus. Periksa internet lalu coba lagi.",
+    rh_err_timeout: "Pembuatan terlalu lama — RunningHub tidak menjawab tepat waktu. Coba lagi, atau kurangi ukuran / jumlah.",
+    rh_err_rate_limited: "RunningHub Enterprise sedang sibuk — tunggu sebentar lalu coba lagi.",
+    rh_err_invalid_key: "RunningHub menolak key — periksa di Setup ▸ RunningHub Enterprise.",
     err_timeout: "Permintaan kehabisan waktu \u2014 server terlalu lama merespons; silakan coba lagi",
     err_generic: "Permintaan tidak dapat diselesaikan \u2014 silakan coba lagi",
     err_img: "Tidak ada gambar yang dapat dipakai \u2014 silakan coba lagi",
@@ -6059,6 +6104,11 @@ const I18N = {
     err_big: "Imej terlalu besar untuk API \u2014 kecilkan, kemudian cuba lagi",
     err_safety: "Disekat penapis keselamatan \u2014 laraskan prompt atau fotonya, kemudian cuba lagi",
     err_net: "Masalah rangkaian / pelayan \u2014 sila cuba lagi",
+    /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
+    rh_err_network: "Tidak dapat mencapai RunningHub Enterprise — talian terputus. Semak internet dan cuba lagi.",
+    rh_err_timeout: "Penjanaan terlalu lama — RunningHub tidak menjawab tepat pada masanya. Cuba lagi, atau kurangkan saiz / bilangan.",
+    rh_err_rate_limited: "RunningHub Enterprise sibuk sekarang — tunggu sebentar dan cuba lagi.",
+    rh_err_invalid_key: "RunningHub menolak key — semak di Setup ▸ RunningHub Enterprise.",
     err_timeout: "Permintaan tamat masa \u2014 pelayan mengambil masa terlalu lama; sila cuba lagi",
     err_generic: "Permintaan tidak dapat diselesaikan \u2014 sila cuba lagi",
     err_img: "Tiada imej yang boleh digunakan dihasilkan \u2014 sila cuba lagi",
@@ -6442,7 +6492,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.145.0";
+const PANEL_VERSION = "6.146.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -7196,6 +7246,10 @@ async function gateValidate(force) {
     }
     gateS.lease = lease;
     gateS.leaseExp = expires;
+    /* v6.75.0 — a validate just landed, so the line is back: every picture a
+       dead line took (126 on the owner's card, still "failed" after the
+       Wi-Fi returned) is asked for again, without a relaunch. */
+    try { if (globalThis.HNK && globalThis.HNK.remoteArt && globalThis.HNK.remoteArt.retryFailed) globalThis.HNK.remoteArt.retryFailed(true); } catch (eRa) { }
     gateS.entitlement = j.entitlement || j;
     state.accProfile = gateS.entitlement;
     gateS.updateRequired = false;
@@ -7764,6 +7818,16 @@ function applyI18n() {
       langs: LANGS,
       codes: LANG_CODES,
       lang: function () { return state.lang; }
+    };
+    /* v6.75.0 — the What's New "seen" list, for the Home screen module: UXP
+       has no localStorage, so the panel's settings file is where dismissals
+       live. get() hands a copy; set() re-bounds and writes the file. */
+    g.HNK.seenStore = {
+      get: function () { return Array.isArray(state.nwSeen) ? state.nwSeen.slice() : []; },
+      set: function (list) {
+        state.nwSeen = Array.isArray(list) ? list.filter(function (k) { return typeof k === "string" && k.length < 80; }).slice(0, 200) : [];
+        try { saveSettings(); } catch (e) { }
+      }
     };
     /* v6.28.1 — ONE key home (owner: "don't duplicate"). The AI Tools stack
        persists to hnk_ai_tools.json while Setup saves the Enterprise key to
@@ -9552,7 +9616,10 @@ function selfTestRowsInner() {
           : (caps.glyphN || "") + " missing: " + gMiss),
     level: gMiss === undefined ? "pend" : gMiss === "none" ? "ok"
       : (gMiss === "unmeasurable" || gMiss === "indistinguishable") ? "host" : "warn" });
-  if (caps.glyphRef) rows.push({ label: "glyph ruler", detail: caps.glyphRef, level: "ok" });
+  /* v6.75.0 — "notdef -1 · n -1" is the ruler with no reading, the host's
+     silence again; it wore a ✓ on the owner's card. Only a measured width is ok. */
+  if (caps.glyphRef) rows.push({ label: "glyph ruler", detail: caps.glyphRef,
+    level: /(^|\s)-1(\s|$)/.test(String(caps.glyphRef)) ? "host" : "ok" });
   /* v6.66.0 — three cells, four times the size: the guaranteed .notdef first,
      then the two the strip kept printing as a coloured square.
      v6.66.1 — AND IT ANSWERED. Cell 1 draws an empty outlined box; cells 2
@@ -9635,12 +9702,17 @@ function selfTestRowsInner() {
 
   /* --- and anything that threw --- */
   const errs = st && typeof st.errors === "function" ? st.errors() : [];
-  rows.push({ label: "Errors", detail: errs.length ? String(errs.length) : ff9(ST_L.clean),
-    level: errs.length ? "err" : "ok" });
+  /* v6.75.0 — the collector keeps twelve and COUNTS the rest: "Errors 12" on
+     the owner's card was the cap, not the number. */
+  const errTotal = (st && typeof st.errorCount === "function") ? st.errorCount() : errs.length;
+  rows.push({ label: "Errors",
+    detail: errTotal ? (String(errTotal) + (errTotal > errs.length ? " · " + errs.length + " kept" : "")) : ff9(ST_L.clean),
+    level: errTotal ? "err" : "ok" });
   for (let i = 0; i < errs.length && i < 6; i++) {
     const e = errs[i];
-    const where = e.file ? (e.file + (e.line ? ":" + e.line : "")) : "";
-    rows.push({ label: where || e.kind, detail: e.message + (e.count > 1 ? " ×" + e.count : ""), level: "err" });
+    /* an event with no file still has a line and a kind — say both rather than "error" twice */
+    const where = e.file ? (e.file + (e.line ? ":" + e.line : "")) : (e.line ? e.kind + " · line " + e.line : e.kind);
+    rows.push({ label: where, detail: e.message + (e.count > 1 ? " ×" + e.count : ""), level: "err" });
   }
   /* the panel's own log, ERR and WARN only, the wire-fail lines left out
      because the Wiring rows above already carry them with their stage name */
@@ -13314,7 +13386,8 @@ async function saveSettings() {
       accSeenUid: state.accSeenUid, accSeenDev: state.accSeenDev,
       accAvatar: state.accAvatar,
       rhModel: state.rhModel, ffRatio: state.ffRatio, ffSize: state.ffSize, ffCount: state.ffCount,
-      rhCfg: state.rhCfg, spend: state.spend, rhBal: state.rhBal, rhLastCur: state.rhLastCur
+      rhCfg: state.rhCfg, spend: state.spend, rhBal: state.rhBal, rhLastCur: state.rhLastCur,
+      nwSeen: Array.isArray(state.nwSeen) ? state.nwSeen.slice(0, 200) : []
     };
     await f.write(JSON.stringify(o), { format: formats.utf8 });
   } catch (e) { hwarn("saveSettings:", e); }
@@ -13336,6 +13409,8 @@ async function loadSettings() {
         setTimeout(function () { try { saveSettings(); } catch (e) { } }, 0);
       }
       if (typeof o.accRefresh === "string") state.accRefresh = o.accRefresh;
+      /* v6.75.0 — dismissed What's New rows; strings only, re-bounded (disk is user-editable) */
+      if (Array.isArray(o.nwSeen)) state.nwSeen = o.nwSeen.filter(function (k) { return typeof k === "string" && k.length < 80; }).slice(0, 200);
       if (typeof o.accUid === "string") state.accUid = o.accUid;
       if (typeof o.accEmail === "string") state.accEmail = o.accEmail;
       if (o.accProfile && typeof o.accProfile === "object") state.accProfile = o.accProfile;
@@ -17114,6 +17189,16 @@ function imagineEnter() {
   if (head && m) paintHeroHead(head, m[state.lang] || m[LANG_FB[state.lang]] || m.en);
   if (!imagineReady) { im.init(imagineHost(), $("imRoot")); imagineReady = true; }
   else im.onEnter();
+  /* v6.75.0 — THE BLANK FIRST OPEN. The module's init() draws only when its
+     root "is visible", judged by getClientRects().length — and this renderer
+     answers that with an empty list for every element (SELF-TEST: line boxes
+     unavailable, every ruler zero). So in Photoshop the first entry painted
+     the hero head and nothing under it, and only the second entry, through
+     onEnter, drew the hub. The owner photographed both states. The page is
+     being entered, so it is drawn: if init declined, render now. The module
+     itself stays byte-identical to the app's. */
+  try { if (typeof im.drawn === "function" && !im.drawn() && typeof im.render === "function") im.render(); }
+  catch (eDraw) { hwarn("imagine:draw", eDraw); }
 }
 /* a language change repaints the page the way the app's reload would */
 REFRESHERS.push(function () { try { if (imagineReady) imagineEnter(); } catch (e) { } });
@@ -18330,6 +18415,8 @@ function switchPage(key) {
   }
   if (key === "prompt") { try { renderLightStage(); } catch (e) { } } /* v6.27.0 — the light stage lives on Edit now */
   if (key === "imagine") { try { imagineEnter(); } catch (e) { hwarn("imagine:", e); } }   /* 6.29.0 wave — paints the hub / tool view on entry */
+  /* v6.75.0 — a page switch is a cheap moment to re-ask for pictures a dead line took (throttled inside) */
+  try { const ra = globalThis.HNK && globalThis.HNK.remoteArt; if (ra && ra.retryFailed) ra.retryFailed(false); } catch (e) { }
   /* v6.51.0 — Setup repaints its readiness rows and the data-store line on entry, like the app's showPage */
   if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); renderSelfTest(); } catch (e) { } }
   /* the sticky GENERATE follows the page that owns it */
