@@ -263,6 +263,15 @@ async function run(browser, cfg) {
     leaseValid: typeof gateLeaseValid === "function" ? gateLeaseValid() : null,
     graceOpen: typeof gateS === "undefined" ? null : !!gateS.graceOpen,
     saved: window.__saved || "",
+    /* v6.74.0 — the SELF-TEST card's Licence row, read from the same function
+       the card draws with, so the photograph the owner takes says which of
+       the three states the gate is in. */
+    licence: (function () {
+      try {
+        if (typeof selfTestRows !== "function") return null;
+        return selfTestRows().filter(function (r) { return r.label === "Licence"; })[0] || null;
+      } catch (e) { return { label: "Licence", detail: "threw: " + String(e).slice(0, 80), level: "threw" }; }
+    })(),
     requests: window.__reqs
   }));
   return { page, state, errors };
@@ -282,6 +291,9 @@ async function run(browser, cfg) {
     result.state.loginRow && result.state.lockedRow && result.state.lockedMsg === "", result.state);
   report("B3) signed out, the identity square shows the HNK mark — never a stale member photo",
     !result.state.avaShown, result.state);
+  report("B5) v6.74.0 — the SELF-TEST card's Licence row says signed out, and says it as something to look at",
+    !!result.state.licence && result.state.licence.detail === "signed out" && result.state.licence.level === "warn",
+    result.state.licence);
   const panelVersion = (mainJs.match(/const PANEL_VERSION = "([^"]+)"/) || [])[1] || "";
   report("B4) 6.102.3 — the empty error line takes no room, the fields are labelled, the kicker names the panel version",
     !result.state.errShown && result.state.errClass === "gate-err" && result.state.error === "" &&
@@ -345,6 +357,11 @@ async function run(browser, cfg) {
   report("C) active account plus enrolled computer plus live lease unlocks",
     result.state.view === "open" && result.state.hidden && result.state.app !== "none" && result.state.validateCalls >= 1,
     result.state);
+  report("C4) v6.74.0 — with a live lease the Licence row is ok and counts the seconds the lease has left",
+    !!result.state.licence && result.state.licence.level === "ok" &&
+    /^live lease · \d+s left$/.test(result.state.licence.detail) &&
+    Number(/(\d+)s left/.exec(result.state.licence.detail)[1]) > 60,
+    result.state.licence);
   const avaAfter = await result.page.evaluate(() =>
     getComputedStyle(document.getElementById("gateLogoImg")).display !== "none" &&
     (document.getElementById("gateLogoImg").getAttribute("src") || "").indexOf("data:image/jpeg") === 0
@@ -420,6 +437,10 @@ async function run(browser, cfg) {
     result.state.graceOpen === true, result.state);
   report("G3) …and it is the OVERLAY that opened, never the lease: no lease token, and gateLeaseValid stays false",
     result.state.lease === "" && result.state.leaseValid === false, result.state);
+  report("G3b) v6.74.0 — the SELF-TEST card says so too: Licence is offline on the last verdict, with the hours the grace has left, marked as something to look at",
+    !!result.state.licence && result.state.licence.level === "warn" &&
+    /^offline · last verdict · 3h 5\dm left$/.test(result.state.licence.detail),
+    result.state.licence);
   /* the whole security argument in one assertion: a provider operation still
      refuses, which costs nothing because a generate calls RunningHub and could
      not have succeeded offline whatever this gate decided. */
@@ -440,6 +461,9 @@ async function run(browser, cfg) {
   allErrors.push(...result.errors);
   report("G5) seven hours dark is past the six-hour window — the clock runs from the SUCCESS, so staying offline cannot extend it",
     result.state.view === "locked" && result.state.lease === "" && result.state.graceOpen === false, result.state);
+  report("G5b) v6.74.0 — and the card's Licence row reads locked, never a stale grace",
+    !!result.state.licence && result.state.licence.detail === "locked" && result.state.licence.level === "warn",
+    result.state.licence);
   await result.page.close();
 
   result = await run(browser, { settings: { ...graceSaved, accSeenAt: ago(HOUR),

@@ -833,6 +833,8 @@ input[type="range"] { min-width: 0; }
 .diag-ic.warn { color: var(--warn); }
 .diag-ic.err { color: var(--err); }
 .diag-ic.pend { color: var(--muted-2); }
+/* v6.74.0 — the host-limit mark: muted like pend, because it is information */
+.diag-ic.host { color: var(--muted-2); }
 /* v6.132.0 — the stroke-vs-fill swatches. Drawn at the size the panel uses
    its icons, on the row's own background, so the photograph compares like
    with like. No object-fit and no pointer-events: UXP supports neither. */
