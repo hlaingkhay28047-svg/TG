@@ -18,6 +18,19 @@ function _req(p) { return (typeof module !== "undefined" && module.exports) ? re
 var registry = _req("./workflow-registry") || (globalThis.HNK && globalThis.HNK.workflowRegistry);
 var resolver = _req("../models/capability-resolver") || (globalThis.HNK && globalThis.HNK.capabilityResolver);
 
+function _scenePresetLine(state) {
+  var lists = [state && state.requiredInputs, state && state.optionalInputs];
+  for (var l = 0; l < lists.length; l++) {
+    var list = lists[l] || [];
+    for (var i = 0; i < list.length; i++) {
+      var im = list[i] && list[i].image;
+      if (im && im.source === "preset" && im.ref && im.preset && im.preset.title)
+        return "\nSCENE PRESET: " + im.preset.title + (im.preset.group ? " \u2014 " + im.preset.group : "");
+    }
+  }
+  return "";
+}
+
 function _collect(list) {
   return (list || [])
     .filter(function (s) { return s.image && s.image.ref; })
@@ -47,6 +60,10 @@ function compile(state) {
      text-logo told the model to perform "the requested edit" while no
      request existed anywhere in the payload. */
   if (state.userText) prompt += "\nUSER REQUEST: " + state.userText;
+
+  /* v6.76.0 — a Library scene preset names itself to the model, one line,
+     the same line the web app's wizard sends (wizSendPrompt). */
+  prompt += _scenePresetLine(state);
 
   var route = state.resolvedRoute || wf.route;
   // Output comes from the shared, preserved prefs — with sane fallbacks only.

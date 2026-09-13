@@ -527,6 +527,9 @@ jobs:
       # 6.32.2 — the Reference Scenes Smart Workflow card: two pictures in, the owner's prompt word for word, the card on both surfaces, Smart Workflow 194
       - name: Run Reference Scenes card check
         run: PORT=8931 node test/verify_reference_scenes.js
+      # 6.76.0 — the Library's scene looks as one-tap presets under every scene / background slot, app and panel alike, one list on both
+      - name: Library scene presets in the Smart Workflow wizard
+        run: PORT=8931 node test/verify_scene_presets.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

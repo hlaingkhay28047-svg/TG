@@ -366,6 +366,9 @@
   /* ---- public surface ---- */
   var H = global.HNK = global.HNK || {};
   H.lib = { mount: mount, repaint: repaint, layout: function () { try { layout(); } catch (e) { } }, state: lib };
+  /* v6.76.0 — where a look's plate lives, for the Smart Workflow scene
+     presets: the same host and tiers the Library itself fetches from. */
+  H.libPlateUrl = function (tier, id) { return ASSET_BASE + tier + '/' + id + '.jpg'; };
   /* Library → Smart Workflow bridge: the last-picked look as a data URL
      (null when nothing has been picked yet). */
   H.getLibraryPickDataUrl = function () {
