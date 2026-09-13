@@ -161,6 +161,35 @@ v6.108.0 immediately below.
 
 ## Acceptance record
 
+- **v6.144.0** — published as latest by panel-release run #107 from main
+  `4dd6b5a908286efddb79df45a461e9384e3bbf82`. The lane rebuilt the artifact
+  from the reviewed source and matched the tracked pins byte for byte (SHA-256
+  `95305939f5ec2024ef1577a2af4099425fa5cd0edea0b06d580a98028cbe1109`, 21,134,475 bytes), mirrored it into the private Space and enabled it;
+  minimum supported stays 6.24.0.
+  **Real-Photoshop evidence, 2026-09-13, tester: the owner** — six photographs
+  of the SELF-TEST card, the first real-Photoshop record since v6.108.0 (the
+  releases between were published on the same pins-match proof and never
+  photographed). Photoshop 27.10.0 · win32; the card reports panel v6.144.0;
+  signed in and unlocked (account dot filled, plan line painted); the open
+  document 0A6A0367.jpg 4480×6720 and its layer "HNK Result · Fix This Area"
+  read by the panel; Errors and Panel log both clean; Pictures 62 ok · 0
+  failed · 0 waiting; Wiring 61 ok · 0 failed; Labels 5/5; catalogue counts
+  188 video models · 37 tools · 2 talk · 194 Smart Workflow · 49 Text→Img ·
+  1850 Library · 229 opt · 34 cards, all matching the shipped build. Two
+  earlier findings close on this evidence: the rulers row 6.69.0 re-wrapped
+  draws its value on its own line under the label in the real renderer (the
+  6.140.0 overlap is gone), and the glyph control cell shows tofu while cells
+  2 and 3 (27A1, 1F504) DRAW exactly as 6.137.0 designed, with all 36 cells
+  of symbols 1–3 drawing. Every `!` row on the card is a documented UXP limit
+  and not a defect: no geometry API (box-sizing, flex gap, calc(),
+  position:fixed and the 100px rulers all unmeasurable, computed style an
+  echo) and no document.createRange (line boxes unavailable, glyph ruler
+  cannot measure).
+  **What the checklist still lacks on this build:** online failure — the
+  6.73.0 cold-boot grace has not been photographed with the line dead —
+  update-required behaviour, a provider operation, logout, reinstall, and the
+  UXP Developer Tool version. `adobe_acceptance` therefore stays `pending`.
+
 - **v6.108.0** — published as latest by panel-release run #68 from main
   `208c9cc`. The lane rebuilt the artifact from the reviewed source and matched
   the tracked pins byte for byte (SHA-256
