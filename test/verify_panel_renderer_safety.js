@@ -733,15 +733,19 @@ const READ_CARD = () => {
     const D = await hurtPage(`Object.defineProperty(window, "localStorage", { configurable: true,
       get: function () { throw new Error("UXP-sim: no localStorage"); } });`);
     const seenFile = await D.page.evaluate(async () => {
-      let lsGone = false;
+      /* v6.77.0 — the HOST's storage throws (the injection above); the panel's
+         own shim (src/app/uxp-local-storage.js) now stands in for it, so the
+         fault shows as the shim being installed rather than as a throw. */
+      let lsGone = false, shim = false;
       try { window.localStorage; } catch (e) { lsGone = true; }
+      try { shim = !!(window.HNK.localStore && window.HNK.localStore.shimmed && window.HNK.localStore.installed); } catch (e) { shim = false; }
       try { switchPage("home"); } catch (e) { }
       await new Promise(r => setTimeout(r, 700));
       const total = window.HNK.whatsNew.LIST.length;
       const head = () => ((document.getElementById("hnkDashNewH2") || {}).textContent || "");
       const h0 = head();
       const x = document.querySelector("#hnkDashNew .nw-x");
-      if (!x) return { lsGone, h0, noX: true };
+      if (!x) return { lsGone, shim, h0, noX: true };
       x.click();
       await new Promise(r => setTimeout(r, 400));
       const h1 = head();
@@ -758,11 +762,11 @@ const READ_CARD = () => {
       const restored = Array.isArray(state.nwSeen) ? state.nwSeen.slice() : null;
       try { switchPage("wf"); switchPage("home"); } catch (e) { }
       await new Promise(r => setTimeout(r, 500));
-      return { lsGone, total, h0, h1, onDisk, inMem, restored, h2: head() };
+      return { lsGone, shim, total, h0, h1, onDisk, inMem, restored, h2: head() };
     });
-    report("N1) the fault is in force — localStorage throws, as in UXP — and the panel still booted with nothing unbound",
-      seenFile.lsGone === true && Array.isArray(D.state.wired) && D.state.wired.length === 0 && D.errors.length === 0,
-      JSON.stringify({ lsGone: seenFile.lsGone, wired: D.state.wired, errors: D.errors }));
+    report("N1) the fault is in force — the host's localStorage throws, as in UXP, and the panel's storage shim stands in — and the panel still booted with nothing unbound",
+      (seenFile.lsGone || seenFile.shim === true) === true && Array.isArray(D.state.wired) && D.state.wired.length === 0 && D.errors.length === 0,
+      JSON.stringify({ lsGone: seenFile.lsGone, shim: seenFile.shim, wired: D.state.wired, errors: D.errors }));
     report("N2) one × on Home counts the heading down by one, lands in the settings file, and survives a relaunch: read back from the file, Home still counts it as read",
       !seenFile.noX && seenFile.h0.indexOf("(" + seenFile.total + ")") >= 0 &&
       seenFile.h1.indexOf("(" + (seenFile.total - 1) + ")") >= 0 &&

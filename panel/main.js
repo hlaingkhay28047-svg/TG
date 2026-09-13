@@ -9592,7 +9592,7 @@ function selfTestRowsInner() {
     const lsI = globalThis.HNK && globalThis.HNK.localStore;
     rows.push({ label: "Storage",
       detail: !lsI ? "\u2014" : (lsI.shimmed
-        ? ("settings-folder shim (" + lsI.backend + ") \u00b7 " + lsI.keys() + " keys" + (lsI.installed ? "" : " \u00b7 NOT INSTALLED"))
+        ? ("settings-folder shim (" + lsI.backend + ") \u00b7 " + lsI.keys() + " keys \u00b7 native " + (lsI.nativeOk ? "yes" : "no") + (lsI.installed ? "" : " \u00b7 NOT INSTALLED"))
         : "native localStorage"),
       level: !lsI ? "pend" : (lsI.installed ? "ok" : "err") });
     const tp2 = (st && typeof st.taps === "function") ? st.taps() : null;

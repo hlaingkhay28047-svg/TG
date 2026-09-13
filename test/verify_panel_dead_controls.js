@@ -75,11 +75,11 @@ report("A1) the storage shim is the FIRST script the panel loads, ahead of the s
     };
     return { uxp: { storage: { localFileSystem: { getDataFolder: () => Promise.resolve(folder) } } }, files, log };
   }
-  function run(seedText, withNative) {
+  function run(seedText, withNative, realHost) {
     const G = {}; G.globalThis = G; G.window = G;
     if (withNative) { const m = {}; G.localStorage = { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: (k) => { delete m[k]; }, get length() { return Object.keys(m).length; } }; }
     const fx = fakeUxp(seedText);
-    G.require = (n) => n === "uxp" ? fx.uxp : {};
+    G.require = (n) => n === "uxp" ? fx.uxp : (n === "photoshop" ? { app: realHost ? { version: "26.0.0" } : {} } : {});
     vm.runInNewContext(SHIM, Object.assign(G, { setTimeout, clearTimeout, Promise, Error, Object, String, JSON, Math, parseFloat, isFinite }));
     return { G, fx };
   }
@@ -108,6 +108,12 @@ report("A1) the storage shim is the FIRST script the panel loads, ahead of the s
     report("A5) a host whose own localStorage round-trips keeps it: the shim stays out (a browser, and the Chromium the tests drive)",
       t2.G.HNK.localStore.shimmed === false && t2.G.HNK.localStore.backend === "native" && typeof t2.G.localStorage.getItem === "function"
       && t2.G.localStorage.getItem("__hnk_ls_probe__") === null, t2.G.HNK.localStore);
+    /* the real Photoshop host (its API carries a version string): the shim stands in even when native
+       storage answers, because a storage wiped at relaunch answers the probe just the same */
+    const t3 = run(null, true, true);
+    report("A5b) in the real Photoshop host the shim takes over regardless, and remembers that native storage answered",
+      t3.G.HNK.localStore.shimmed === true && t3.G.HNK.localStore.nativeOk === true && t3.G.HNK.localStore.backend === "file"
+      && t3.G.localStorage === t3.G.HNK.localStore.storage, t3.G.HNK.localStore);
   });
 })().then(() => main()).catch(e => { console.error(e); process.exit(1); });
 
@@ -255,8 +261,8 @@ async function main() {
     const b3 = await B.page.evaluate(() => { let p = null; try { p = JSON.parse(window.__lsFile.text); } catch (e) { } return { writes: window.__lsFile.writes, hasLogo: !!(p && typeof p.hnk_wm_logo === "string" && p.hnk_wm_logo.indexOf("data:image/png") === 0), hasProbe: !!(p && p.hnk_probe_k === "v"), n: p ? Object.keys(p).length : -1 }; });
     report("B3) the writes reach hnk_local_storage.json in the plugin's data folder", b3.writes >= 1 && b3.hasLogo && b3.hasProbe, b3);
     const b6 = await B.page.evaluate(() => { const rows = selfTestRows(); const f = (l) => rows.find(r => r.label === l); return { storage: f("Storage"), pointer: f("Pointer"), viewport: f("Viewport"), scroll: f("scrollTop") }; });
-    report("B4) SELF-TEST names the shim on its Storage row, and carries Pointer, Viewport and scrollTop rows",
-      b6.storage && /settings-folder shim \(file\)/.test(b6.storage.detail) && b6.storage.level === "ok"
+    report("B4) SELF-TEST names the shim on its Storage row (and that native storage answered no), and carries Pointer, Viewport and scrollTop rows",
+      b6.storage && /settings-folder shim \(file\) \u00b7 \d+ keys \u00b7 native no/.test(b6.storage.detail) && b6.storage.level === "ok"
       && b6.pointer && b6.viewport && /^420×760 \(innerWidth\)$/.test(b6.viewport.detail) && b6.viewport.level === "ok" && b6.scroll, b6);
     const seed = await B.page.evaluate(() => window.__lsFile.text);
     await B.page.close();

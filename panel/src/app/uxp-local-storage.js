@@ -49,8 +49,17 @@
     } catch (e) { return false; }
   }
 
-  if (nativeOk()) {
-    G.HNK.localStore = { shimmed: false, backend: "native", installed: true, ready: Promise.resolve(), keys: function () { try { return G.localStorage.length; } catch (e) { return -1; } } };
+  /* The real Photoshop host is recognised by the version string its API
+     carries (the test harness's stub carries none). There the shim ALWAYS
+     stands in: a storage that round-trips within a session but is wiped
+     at relaunch would pass the probe above and still forget everything,
+     and the owner's photographs cannot tell those two hosts apart. What
+     native answered is kept on HNK.localStore.nativeOk for the SELF-TEST row. */
+  var native = nativeOk();
+  var realHost = false;
+  try { var psm = (typeof require === "function") ? require("photoshop") : null; realHost = !!(psm && psm.app && typeof psm.app.version === "string" && psm.app.version); } catch (e) { realHost = false; }
+  if (native && !realHost) {
+    G.HNK.localStore = { shimmed: false, backend: "native", nativeOk: true, installed: true, ready: Promise.resolve(), keys: function () { try { return G.localStorage.length; } catch (e) { return -1; } } };
     return;
   }
 
@@ -134,6 +143,7 @@
 
   G.HNK.localStore = {
     shimmed: true,
+    nativeOk: native,
     backend: lfs ? "file" : "memory",
     file: FILE,
     installed: installed,
