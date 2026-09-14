@@ -228,7 +228,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.155.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.156.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.png" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -1059,6 +1059,25 @@
         <div class="spin" id="vtSpin"></div>
         <div class="status" id="stVtGen"></div>
       </div>
+
+      <!-- v6.85.0 — the app's vtResultBox, box for box: the take plays where
+           <video> decodes and is named where it does not (vid_no_inline);
+           Download writes the saved bytes to a folder picked now; the direct
+           link opens in the system browser; the strip keeps every take until
+           the student deletes it. -->
+      <div class="card result-box" id="vtResultBox">
+        <h2 id="vtResultH2"></h2>
+        <div class="result-img"><video id="vtResultVideo" controls style="width:100%;border-radius:12px;background:#000"></video></div>
+        <div class="mut vid-noinline" id="vtNoInline" style="display:none"></div>
+        <div class="mut" id="vtSavedLine" style="margin-top:8px"></div>
+        <div class="arow" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn btn-gold grow" id="btnVtDl"></div>
+          <div role="button" tabindex="0" class="btn" id="btnVtOpen"></div>
+        </div>
+        <div class="subh" id="vtHistH" style="margin-top:12px"></div>
+        <div class="hist" id="vtHist"></div>
+        <div role="button" tabindex="0" class="chip" id="vtHistClear" style="display:none"></div>
+      </div>
     </div>
 
 
@@ -1505,7 +1524,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.155.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.156.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>

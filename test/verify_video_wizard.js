@@ -224,8 +224,8 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       await until(() => !vwiz.busy); await settle();
       out.v2v.done = { onDot: txt("#wizIn .wiz-dot.on .l"), video: !!document.querySelector("#wizIn video"),
         hist: state.vtHist.length - vtBefore, pageResult: /\bon\b/.test(document.getElementById("vtResultBox").className) };
-      /* "make another" goes back to Inputs with the page's files still in place */
-      q("#wizIn .wiz-nav .btn")[1].click(); await settle();
+      /* "make another" goes back to Inputs with the page's files still in place (v6.85.0 — found by its word: Download and the direct link sit in the row above) */
+      [...q("#wizIn .wiz-nav .btn")].find(b => b.textContent.trim() === vwizL("again")).click(); await settle();
       out.v2v.again = { onDot: txt("#wizIn .wiz-dot.on .l"), filled: q("#wizIn .wslot.filled").length };
       document.querySelector("#wizIn .wiz-x").click(); await settle();
 
@@ -269,8 +269,8 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     I.sync.picked && I.sync.page === I.sync.picked && I.sync.clone === I.sync.picked && I.taSync === true, { sync: I.sync, taSync: I.taSync });
   report("C6) GENERATE presses the page's own button — the page goes busy, the wizard shows Result running",
     same(I.busy.onDot, ["Result"]) && I.busy.spin && I.busy.pageBusy === true, I.busy);
-  report("C7) the result is the page's result: one history entry, the page's result box on, the clip playing in the wizard, three ways on",
-    same(I.done.onDot, ["Result"]) && I.done.video && I.done.hist === 1 && I.done.pageResult && I.done.navBtns === 3 &&
+  report("C7) the result is the page's result: one history entry, the page's result box on, the clip playing in the wizard, four ways on (v6.85.0: Download · Open Direct Link · Make another · See it on the page)",
+    same(I.done.onDot, ["Result"]) && I.done.video && I.done.hist === 1 && I.done.pageResult && I.done.navBtns === 4 &&
     I.done.pageFree && /hero-mermaid\.mp4$/.test(String(I.done.src)), I.done);
   report("C8) closing unwinds everything: the modal, the scroll lock and both pick hooks",
     I.closed.open === false && I.closed.hooks && I.closed.overflow === "", I.closed);
@@ -375,7 +375,7 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
       /* the page's own three inputs land: the clip, the photograph, the save folder */
       VT.video = { name: "clip.mp4", _url: "data:video/mp4;base64,AAAAHGZ0eXBpc29t", _size: "12 B" };
       VT.img = { mime: "image/png", b64: arg.px, _url: "data:image/png;base64," + arg.px };
-      VT.out = { name: "Renders" };
+      VT.out = { name: "Renders", nativePath: "/tmp/Renders" };
       renderVt(); await settle();
       out.v2v.step2b = { filled: q("#vwizIn .wslot.filled").length, nextDis: dis(lastNav()) };
       lastNav().click(); await settle();
@@ -383,10 +383,15 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
         pagePrompt: document.getElementById("vtPrompt").value, toolLine: txt("#vwizIn .wizrow .mut")[0] || "",
         clones: ["vwiz_vtOpt", "vwiz_vtOpt2"].map(id => !!document.getElementById(id)),
         pageOpts: ["vtOpt", "vtOpt2"].map(id => document.getElementById(id).style.display !== "none") };
-      vtRun = async function () { await new Promise(r => setTimeout(r, 250)); VT.rows = [{ label: "hnk-videotool-1.mp4", level: "ok", detail: "saved" }]; renderVt(); };
+      /* v6.85.0 — vtRun records the take in vtHist (url · saved bytes · file · folder) and paints the page's result box; the row stays the status line */
+      vtRun = async function () { await new Promise(r => setTimeout(r, 250));
+        vtHist.unshift({ url: arg.clip, ref: "data:video/mp4;base64,AAAAHGZ0eXBpc29t", name: "hnk-videotool-1.mp4", folder: VT.out.name, folderPath: VT.out.nativePath, tool: "x", ts: Date.now() });
+        vtHistSel = 0; showVtResult(); VT.rows = [{ label: "hnk-videotool-1.mp4", level: "ok", detail: "saved" }]; renderVt(); };
       document.getElementById("vwizGen").click(); await settle();
       await until(() => !vwiz.busy); await settle();
-      out.v2v.done = { onDot: txt("#vwizIn .wiz-dot.on .l"), rows: txt("#vwizIn .wiz-body .mut"), navBtns: q("#vwizIn .wiz-nav .btn").length };
+      out.v2v.done = { onDot: txt("#vwizIn .wiz-dot.on .l"), rows: txt("#vwizIn .wiz-body .mut"), navBtns: q("#vwizIn .wiz-nav .btn").length,
+        saved: ((document.getElementById("vwizSaved") || {}).textContent || ""), video: !!document.querySelector("#vwizIn video"),
+        pageBox: /\bon\b/.test(document.getElementById("vtResultBox").className) };
       document.querySelector("#vwizIn .wiz-x").click(); await settle();
       out.v2v.closed = !visible();
       return out;
@@ -413,17 +418,17 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     same(PI.step3.onDot, ["Generate"]) && PI.step3.gen && PI.step3.clone && PI.step3.cloneValue === PI.step3.pageValue &&
     PI.step3.ta === PI.step3.pagePrompt && PI.step3.ta.length > 40 &&
     PI.sync.picked && PI.sync.page === PI.sync.picked && PI.sync.shown.length > 0, { step3: PI.step3, sync: PI.sync });
-  report("D5) GENERATE runs the page's own vidGenerate: Result running, then the new history entry playing, three ways on, and Close hides the sheet",
-    same(PI.busy, ["Result"]) && same(PI.done.onDot, ["Result"]) && PI.done.video && PI.done.hist === 1 && PI.done.navBtns === 3 && PI.closed,
+  report("D5) GENERATE runs the page's own vidGenerate: Result running, then the new history entry playing, four ways on (v6.85.0), and Close removes the sheet",
+    same(PI.busy, ["Result"]) && same(PI.done.onDot, ["Result"]) && PI.done.video && PI.done.hist === 1 && PI.done.navBtns === 4 && PI.closed,
     { busy: PI.busy, done: PI.done, closed: PI.closed });
   report("D6) video→video on the panel asks for THREE inputs — the clip, the photograph and the save folder Photoshop writes to — all before Next",
     PV.open && same(PV.dots, D.DOTS) && PV.model === VT_PACK.WF[0].model && PV.step2.slots === 3 && PV.step2.nextDis === true &&
     PV.step2.names.some(n => n === (D.L.slotRef.my)) && PV.step2b.filled === 3 && PV.step2b.nextDis === false,
     { step2: PV.step2, step2b: PV.step2b, model: PV.model });
-  report("D7) Generate names the tool, mirrors the request, clones exactly the option selects the page shows; vtRun's saved row is the Result",
+  report("D7) Generate names the tool, mirrors the request, clones exactly the option selects the page shows; the Result is the take vtRun recorded (v6.85.0): the clip playing, the saved file named, five ways on (Download · link · folder · again · page), the page's result box on",
     PV.step3.gen && PV.step3.ta === PV.step3.pagePrompt && PV.step3.ta.length > 40 && PV.step3.toolLine.length > 5 &&
     same(PV.step3.clones, PV.step3.pageOpts) && same(PV.done.onDot, ["Result"]) &&
-    PV.done.rows.some(r => /hnk-videotool-1\.mp4 · saved/.test(r)) && PV.done.navBtns === 2 && PV.closed,
+    PV.done.video && /Renders\/hnk-videotool-1\.mp4/.test(PV.done.saved) && PV.done.navBtns === 5 && PV.done.pageBox && PV.closed,
     { step3: PV.step3, done: PV.done });
   report("D8) no page error on the panel", pan.errs.length === 0, pan.errs.slice(0, 3));
 

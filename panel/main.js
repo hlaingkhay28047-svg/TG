@@ -6673,7 +6673,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.155.0";
+const PANEL_VERSION = "6.156.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -11657,7 +11657,14 @@ const VT_L = {
   container: {my:"ဒီ tool က {L} ဖိုင်ပဲ ရပါတယ်",en:"This tool takes {L} only",shn:"Tool ၼႆႉ လႆႈ {L} ၵူၺ်း",kac:"Ndai tool gaw {L} sha la ai",th:"เครื่องมือนี้รับเฉพาะ {L}",zh:"此工具仅支持 {L}",vi:"Công cụ này chỉ nhận {L}",id:"Alat ini hanya menerima {L}",ms:"Alat ini hanya menerima {L}"},
   promptPh: { my: "Prompt (\u1011\u100a\u1037\u103a\u1001\u103b\u1004\u103a\u1019\u103e\u1011\u100a\u1037\u103a)", en: "Prompt (optional)", shn: "Prompt (\u101e\u1004\u103a\u1121\u101c\u1088\u1088\u1037\u1088)",
     kac: "Prompt (nkau)", th: "Prompt (\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)", zh: "Prompt\uff08\u53ef\u9009\uff09",
-    vi: "Prompt (t\u00f9y ch\u1ecdn)", id: "Prompt (opsional)", ms: "Prompt (pilihan)" }
+    vi: "Prompt (t\u00f9y ch\u1ecdn)", id: "Prompt (opsional)", ms: "Prompt (pilihan)" },
+  /* v6.85.0 — the result box this page never had: the app's own three
+     strings (docs/app/index.html vtResultH2, btnVtOpen, vtHistH) and the
+     panel's one line about the file it wrote, which a browser has no need of. */
+  resultH2: {my:"ရလဒ် (ဗီဒီယို)",en:"Result (video)",shn:"လွင်ႈဢွၵ်ႇမႃး (ဝီဒီရူဝ်ႈ)",kac:"Ah kyu (video)",th:"ผลลัพธ์ (วิดีโอ)",zh:"结果（视频）",vi:"Kết quả (video)",id:"Hasil (video)",ms:"Hasil (video)"},
+  openLink: {my:"Direct Link ဖွင့်မယ်",en:"Open Direct Link",shn:"ပိုတ်ႇ Direct Link",kac:"Direct Link hpaw u",th:"เปิดลิงก์ตรง",zh:"打开直链",vi:"Mở liên kết trực tiếp",id:"Buka tautan langsung",ms:"Buka pautan terus"},
+  histH: {my:"ဒီစာမျက်နှာက ထုတ်ခဲ့တဲ့ ဗီဒီယိုများ — ကိုယ်တိုင် မဖျက်မချင်း ကျန်နေပါမယ်",en:"Videos this page made — they stay until you delete them",shn:"ဝီဒီရူဝ်ႈဢၼ်ႁဵတ်းဝႆႉ — တေမီးၵႂႃႇတေႃႇထိုင်ၸဝ်ႈၵဝ်ႇလုပ်ႇ",kac:"Ndai shara galaw da ai video ni — nang mat kau ai laning du hkra naw nga na",th:"วิดีโอที่หน้านี้สร้างไว้ — อยู่จนกว่าคุณจะลบเอง",zh:"此页面生成的视频 — 在你亲自删除前都会保留",vi:"Video trang này đã tạo — vẫn còn cho tới khi bạn tự xoá",id:"Video yang dibuat halaman ini — tetap ada sampai Anda menghapusnya",ms:"Video yang dibuat halaman ini — kekal sehingga anda memadamnya"},
+  savedTo: {my:"{F} အနေနဲ့ သိမ်းပြီးပါပြီ",en:"Saved as {F}",shn:"သိမ်းဝႆႉပဵၼ် {F}",kac:"{F} hku tawn da sai",th:"บันทึกเป็น {F} แล้ว",zh:"已保存为 {F}",vi:"Đã lưu thành {F}",id:"Tersimpan sebagai {F}",ms:"Disimpan sebagai {F}"}
 };
 
 /* the app paints the file it holds and, when something is still missing, one
@@ -11687,6 +11694,12 @@ function vuPaintLabels() {
   setIcnText($("btnVtImgPick"), "i-frame", "cream", ff9(VT_L.pickImg));
   setIcnText($("btnVtSave"), "i-folder", "cream", ff9(VU_L.out));
   const pb = $("vtPrompt"); if (pb) pb.placeholder = ff9(VT_L.promptPh);
+  /* v6.85.0 — the result box */
+  set("vtResultH2", ff9(VT_L.resultH2));
+  if (!vtDl.busy) setIcnText($("btnVtDl"), "i-download", "ink", ff9(VID_L.dl));
+  setIcnText($("btnVtOpen"), "i-external", "cream", ff9(VT_L.openLink));
+  set("vtHistH", ff9(VT_L.histH));
+  try { vtClearSyncP(); } catch (e) { }
   renderVu(); renderVt(); renderVtWf();
 }
 
@@ -11921,9 +11934,10 @@ function renderVtWf() {
    the tool and the options into the page, the pickers are the page's own
    buttons, and Generate presses the page's own run. The one panel-only slot
    is the SAVE FOLDER a video tool needs before it can write its result. */
-const vwiz = { kind: "", w: null, step: 1, token: 0, busy: false, result: null, error: "", tick: null };
+const vwiz = { kind: "", w: null, step: 1, token: 0, busy: false, result: null, error: "", tick: null, sel: 0 };
 function vwizPack() { return (globalThis.HNK && globalThis.HNK.videoWizard) || null; }
 function vwizL(k) { const P = vwizPack(); return P ? P.tr(P.L[k] || { en: k }) : k; }
+function vwizClock(ts) { const d = new Date(ts || Date.now()); const p2 = function (x) { return (x < 10 ? "0" : "") + x; }; return p2(d.getHours()) + ":" + p2(d.getMinutes()); }
 function vwizNeed() {
   if (vwiz.kind === "i2v") return vwNeedFor(vwiz.w);   /* v6.21.0 */
   const P = vtWfPack(); return (P && vwiz.w && vwiz.w.need) ? stripIcn(P.tr(vwiz.w.need)) : "";
@@ -11938,27 +11952,58 @@ function vwizInputsOk() {
   return true;
 }
 function vwizPageText() { const b = $(vwiz.kind === "i2v" ? "vidPromptP" : "vtPrompt"); return (b && b.value) || ""; }
+/* v6.85.0 — THE WIZARD IS A CARD IN THE PAGE, NOT A FIXED SHEET OVER IT. It
+   was a position:fixed <div> appended to <body>: Photoshop's renderer lays a
+   fixed box out as an ordinary block at the end of the document (the 6.78.0
+   photo sheet and the 6.82.0 Freeform sheet were the same defect), so in the
+   real host a card tap put the wizard a whole page below the fold, if
+   anywhere. It now renders inside the page that was tapped — the Video page
+   for an image→video card, the V→V page for a video→video card — as that
+   page's first child, with the page's own cards hidden until the wizard
+   closes and restored exactly as they were. A photo sheet opened from a slot
+   is a <dialog> above it, never a second overlay. */
+function vwizPageEl() { return $(vwiz.kind === "v2v" ? "pageV2V" : "pageVideo"); }
 function vwizHost() {
   let sh = $("vwizSheet");
+  const pg = vwizPageEl();
+  if (sh && pg && sh.parentNode !== pg) { try { sh.parentNode.removeChild(sh); } catch (e) { } sh = null; }
   if (!sh) {
     sh = document.createElement("div"); sh.id = "vwizSheet"; sh.className = "vwiz-sheet";
     const inn = document.createElement("div"); inn.className = "wiz-in"; inn.id = "vwizIn"; sh.appendChild(inn);
-    document.body.appendChild(sh);
+    if (pg) pg.insertBefore(sh, pg.firstChild); else document.body.appendChild(sh);
   }
   return sh;
 }
+let vwizHidden = [];
+function vwizHidePage(sh) {
+  vwizShowPage();
+  const pg = sh && sh.parentNode; if (!pg) return;
+  for (let i = 0; i < pg.children.length; i++) {
+    const c = pg.children[i]; if (c === sh) continue;
+    vwizHidden.push({ el: c, prev: c.style.display });
+    c.style.display = "none";
+  }
+}
+function vwizShowPage() {
+  vwizHidden.forEach(function (h) { try { h.el.style.display = h.prev || ""; } catch (e) { } });
+  vwizHidden = [];
+}
+function vwizScrollTop() { try { const p = $("pages"); if (p) p.scrollTop = 0; } catch (e) { } }
 function openVWiz(kind, w) {
-  vwiz.kind = kind; vwiz.w = w; vwiz.step = 1; vwiz.token++; vwiz.busy = false; vwiz.result = null; vwiz.error = "";
+  vwiz.kind = kind; vwiz.w = w; vwiz.step = 1; vwiz.sel = 0; vwiz.token++; vwiz.busy = false; vwiz.result = null; vwiz.error = "";
   if (vwiz.tick) { clearInterval(vwiz.tick); vwiz.tick = null; }
-  vwizHost().style.display = "";
-  renderVWiz();
+  const sh = vwizHost(); sh.style.display = "";
+  vwizHidePage(sh);
+  renderVWiz(); vwizScrollTop();
 }
 function closeVWiz() {
   vwiz.token++; vwiz.busy = false;
   if (vwiz.tick) { clearInterval(vwiz.tick); vwiz.tick = null; }
-  const sh = $("vwizSheet"); if (sh) sh.style.display = "none";
+  vwizShowPage();
+  const sh = $("vwizSheet"); if (sh && sh.parentNode) sh.parentNode.removeChild(sh);
 }
-function vwizRepaint() { const sh = $("vwizSheet"); if (sh && sh.style.display !== "none" && vwiz.w) renderVWiz(); }
+function vwizOpen() { const sh = $("vwizSheet"); return !!(sh && sh.parentNode); }
+function vwizRepaint() { if (vwizOpen() && vwiz.w) renderVWiz(); }
 function vwizSlot(filled, thumb, name, req, onPick, onClear) {
   const slot = document.createElement("div"); slot.className = "wslot" + (filled ? " filled" : "");
   const th = document.createElement("div"); th.className = "th";
@@ -11994,7 +12039,7 @@ function renderVWiz() {
   host.appendChild(dots);
   const body = el("wiz-body"); body.id = "vwizBody";
   const nav = el("wiz-nav");
-  const goStep = function (n) { vwiz.step = n; renderVWiz(); try { vwizHost().scrollTop = 0; } catch (e) { } };
+  const goStep = function (n) { vwiz.step = n; renderVWiz(); vwizScrollTop(); };
   const d = vtDef();
   if (vwiz.step === 1) {
     if (vwizInputsOk()) { const fast = mkBtn("btn wiz-fast", ""); setIcnText(fast, "i-bolt", "cream", vwizL("fast")); ffPressable(fast, function () { goStep(3); }); body.appendChild(fast); }
@@ -12085,16 +12130,7 @@ function renderVWiz() {
       body.appendChild(el("", vwizL("running")));
       const sp = el("mut", ""); sp.id = "vwizSpin"; sp.textContent = vwizSpinLine(); body.appendChild(sp);
     } else if (vwiz.result) {
-      body.appendChild(el("", vwizL("done")));
-      if (vwiz.kind === "i2v") {
-        const v = document.createElement("video"); v.controls = true; v.src = vwiz.result.url || ""; v.style.width = "100%"; body.appendChild(v);
-        const dl = mkBtn("btn btn-gold", ""); setIcnText(dl, "i-download", "ink", vwizL("download")); ffPressable(dl, function () { vidDownload(); }); nav.appendChild(dl);
-      } else {
-        (vwiz.result.rows || []).forEach(function (r) { body.appendChild(el("mut", (r.label || "") + " · " + (r.detail || ""))); });
-      }
-      const again = mkBtn("btn", ""); setIcnText(again, "i-retry", "cream", vwizL("again")); ffPressable(again, function () { vwiz.result = null; goStep(2); });
-      const onp = mkBtn("btn", ""); setIcnText(onp, "i-caret", "cream", vwizL("onPage")); ffPressable(onp, function () { closeVWiz(); });
-      nav.appendChild(again); nav.appendChild(onp);
+      vwizResultCard(body, nav, el, goStep);   /* v6.85.0 */
     } else {
       body.appendChild(el("mut warn", vwizL("failed")));
       if (vwiz.error) body.appendChild(el("mut", vwiz.error));
@@ -12102,6 +12138,81 @@ function renderVWiz() {
     }
   }
   host.appendChild(body); host.appendChild(nav);
+}
+/* v6.85.0 — THE RESULT STEP, ON A RENDERER THAT MAY NOT PLAY VIDEO. The
+   page's history is the source of truth (vidHist / vtHist; vwiz.sel picks the
+   take, 0 = the one just made). Where <video> decodes (VIDEO_OK) the take
+   plays here; in Photoshop it does not, so the step says so in the student's
+   language (vid_no_inline), draws the takes as numbered tiles, and puts the
+   two things that DO work on top: Download (the bytes into a folder they pick)
+   and the direct link (the system browser plays it). A video→video take was
+   already written to the folder the student chose — the line names the file
+   and "Open the folder" shows it. Before 6.85.0 an image→video result here
+   was a raw <video> (black in Photoshop) and a video→video result was a text
+   row, "hnk-videotool-….mp4 · saved", with no way to see, open or re-save
+   the clip. Every earlier take of this page sits in a strip; a tap switches
+   the wizard AND the page's own selection, so Download and the link always
+   mean the clip on screen. */
+function vwizHistList() { return vwiz.kind === "i2v" ? vidHist : vtHist; }
+function vwizResultCard(body, nav, el, goStep) {
+  const hl = vwizHistList();
+  if (vwiz.sel >= hl.length) vwiz.sel = 0;
+  const cur = hl[vwiz.sel] || vwiz.result || {};
+  body.appendChild(el("", vwizL("done")));
+  /* where it came from: the page's own slot */
+  const from = el("wiz-from");
+  if (vwiz.kind === "i2v") {
+    const r0 = ffSlotGet(0);
+    if (r0) { const th = el("th"); th.appendChild(ffThumb(r0)); from.appendChild(th); from.appendChild(el("nm", vwizL("from"))); }
+  } else if (VT.video) {
+    from.appendChild(el("nm", vwizL("fromClip") + " \u00b7 " + (VT.video.name || "video")));
+  }
+  if (from.firstChild) body.appendChild(from);
+  /* the take itself: a player where one decodes, the honest line where not */
+  if (VIDEO_OK && cur.url) {
+    const v = document.createElement("video"); v.controls = true; v.src = cur.url; v.className = "wiz-clip"; body.appendChild(v);
+  } else {
+    const note = el("mut vid-noinline", t("vid_no_inline").replace("{n}", String(vwiz.sel + 1))); note.id = "vwizNoInline"; body.appendChild(note);
+  }
+  const meta = [];
+  if (cur.resolution) meta.push(String(cur.resolution));
+  if (cur.duration) meta.push(/^\d+$/.test(String(cur.duration)) ? cur.duration + "s" : String(cur.duration));
+  if (vwiz.kind === "v2v" && cur.tool) meta.push(String(cur.tool));
+  if (cur.ts) meta.push(vwizClock(cur.ts));
+  if (meta.length) body.appendChild(el("mut wiz-meta", meta.join(" \u00b7 ")));
+  if (vwiz.kind === "v2v" && cur.name) {
+    const sv = el("mut wiz-saved", vwizL("savedTo").replace("{F}", (cur.folder ? cur.folder + "/" : "") + cur.name)); sv.id = "vwizSaved"; body.appendChild(sv);
+  }
+  /* the takes strip: every take this page made, the shown one marked */
+  if (hl.length > 1 || !VIDEO_OK) {
+    if (hl.length > 1) body.appendChild(el("mut wiz-takes-h", vwizL("takes")));
+    const strip = el("hist wiz-takes"); strip.id = "vwizTakes";
+    hl.forEach(function (e, i) {
+      let tile;
+      if (VIDEO_OK && e.url) { tile = document.createElement("video"); tile.src = e.url; tile.muted = true; tile.preload = "metadata"; tile.className = i === vwiz.sel ? "sel" : ""; }
+      else { tile = el("hvt" + (i === vwiz.sel ? " sel" : ""), "MP4 " + (i + 1)); }
+      ffPressable(tile, function () {
+        vwiz.sel = i;
+        if (vwiz.kind === "i2v") { vidHistSel = i; try { showVidResult(); } catch (e2) { } }
+        else { vtHistSel = i; try { showVtResult(false); } catch (e2) { } }
+        renderVWiz();
+      });
+      strip.appendChild(tile);
+    });
+    body.appendChild(strip);
+  }
+  /* what works on every renderer: the file and the link */
+  const nav1 = el("wiz-nav wiz-nav-acts");
+  const dl = mkBtn("btn btn-gold", ""); dl.id = "vwizDl"; setIcnText(dl, "i-download", "ink", vwizL("download"));
+  ffPressable(dl, function () { if (vwiz.kind === "i2v") { vidHistSel = vwiz.sel; vidDownload(); } else { vtHistSel = vwiz.sel; vtDownload(); } });
+  nav1.appendChild(dl);
+  if (cur.url) { const lk = mkBtn("btn", ""); lk.id = "vwizOpenLink"; setIcnText(lk, "i-external", "cream", vwizL("openLink")); ffPressable(lk, function () { openUrl(cur.url); }); nav1.appendChild(lk); }
+  if (vwiz.kind === "v2v" && cur.folderPath) { const fo = mkBtn("btn", ""); fo.id = "vwizOpenFolder"; setIcnText(fo, "i-folder", "cream", vwizL("openFolder")); ffPressable(fo, function () { vtOpenFolder(cur.folderPath); }); nav1.appendChild(fo); }
+  body.appendChild(nav1);
+  const again = mkBtn("btn", ""); setIcnText(again, "i-retry", "cream", vwizL("again")); ffPressable(again, function () { vwiz.result = null; goStep(2); });
+  const onp = mkBtn("btn", ""); setIcnText(onp, "i-caret", "cream", vwizL("onPage"));
+  ffPressable(onp, function () { const k = vwiz.kind; closeVWiz(); const bx = $(k === "i2v" ? "vidResultBox" : "vtResultBox"); if (bx) { try { bx.scrollIntoView({ behavior: "smooth" }); } catch (e3) { } } });
+  nav.appendChild(again); nav.appendChild(onp);
 }
 /* the page's own progress line, read rather than re-implemented: the Video
    page paints #vidSpinTxt, the tools page paints its VT.rows */
@@ -12122,15 +12233,16 @@ async function runVWizGenerate() {
     if (vwiz.tick) { clearInterval(vwiz.tick); vwiz.tick = null; }
     if (token !== vwiz.token) return;
     vwiz.busy = false;
-    if (vidHist[0] !== before) vwiz.result = vidHist[0];
+    if (vidHist[0] !== before) { vwiz.result = vidHist[0]; vwiz.sel = 0; }
     else { const st = $("stVidGen"); vwiz.error = (st && st.textContent) || ""; }
   } else {
+    const beforeT = vtHist[0];
     try { await vtRun(); } catch (e) { }
     if (vwiz.tick) { clearInterval(vwiz.tick); vwiz.tick = null; }
     if (token !== vwiz.token) return;
     vwiz.busy = false;
-    const ok = (VT.rows || []).some(function (r) { return r.level === "ok"; });
-    if (ok) vwiz.result = { rows: VT.rows.slice() };
+    /* v6.85.0 — the run's record is the take vtRun pushed, exactly as the Video deck reads vidHist */
+    if (vtHist[0] !== beforeT) { vwiz.result = vtHist[0]; vwiz.sel = 0; }
     else { const st = $("stVtGen"); vwiz.error = (st && st.textContent) || ((VT.rows[0] && VT.rows[0].detail) || ""); }
   }
   renderVWiz();
@@ -12215,6 +12327,14 @@ async function vtRun() {
     try { rhBookUsage(res.usage, { kind: "video", label: d.label || d.id, prov: "rh" }); } catch (e) { }
     const name = "hnk-videotool-" + Date.now() + ".mp4";
     await saveResultFile(VT.out, name, res.results[0].ref);
+    /* v6.85.0 — the take is recorded like the Video page's (vtHist), so the
+       wizard's Result step, the page's result box and its strip can show,
+       re-save and re-open it; the row below stays the page's status line */
+    vtHist.unshift({ url: res.results[0].url || "", ref: res.results[0].ref, name: name, folder: VT.out.name || "", folderPath: VT.out.nativePath || "",
+      tool: d.label || d.id, prompt: promptText.slice(0, 120), ts: Date.now() });
+    while (vtHist.length > 6) vtHist.pop();
+    vtHistSel = 0;
+    try { showVtResult(); } catch (eS) { }
     VT.rows = [{ label: name, level: "ok", detail: "saved" }];
     setStatus(t("st_done") || "Done", "ok");
   } catch (e) {
@@ -12617,6 +12737,99 @@ function vidOpen() {
   if (!out || !out.url) return;
   try { require("uxp").shell.openExternal(out.url); }
   catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+/* ============================================================
+   v6.85.0 — THE V→V PAGE'S RESULT BOX, the app's vtResultBox box for box.
+   The panel wrote a video→video take to disk and said "saved" on the status
+   line — and that was all: no player, no strip, no way back to the clip. The
+   take now lands in vtHist like the Video page's in vidHist: it plays where
+   <video> decodes and is named where it does not (vid_no_inline), Download
+   writes the saved bytes to a folder picked now, the direct link opens in the
+   system browser, "Open the folder" shows the file, and the strip keeps every
+   take (✕ per take, Clear) until the student removes it.
+   ============================================================ */
+let vtHist = [];
+let vtHistSel = 0;
+function showVtResult(scroll) {
+  const out = vtHist[vtHistSel];
+  const box = $("vtResultBox");
+  if (!out || !box) return;
+  box.className = "card result-box on";
+  const vid = $("vtResultVideo");
+  if (vid) {
+    try {
+      if (VIDEO_OK && out.url) { vid.style.display = ""; vid.src = out.url; }
+      else { vid.style.display = "none"; clearSrc(vid); }
+    } catch (e) { }
+  }
+  const note = $("vtNoInline");
+  if (note) {
+    if (!VIDEO_OK) { note.textContent = t("vid_no_inline").replace("{n}", String(vtHistSel + 1)); note.style.display = ""; }
+    else note.style.display = "none";
+  }
+  const sv = $("vtSavedLine");
+  if (sv) sv.textContent = ff9(VT_L.savedTo).replace("{F}", (out.folder ? out.folder + "/" : "") + (out.name || ""));
+  const op = $("btnVtOpen"); if (op) op.style.display = out.url ? "" : "none";
+  const h = $("vtHist");
+  if (h) {
+    while (h.firstChild) h.removeChild(h.firstChild);
+    vtHist.forEach(function (e, i) {
+      let v;
+      if (VIDEO_OK && e.url) { v = document.createElement("video"); v.src = e.url; v.muted = true; v.preload = "metadata"; v.className = i === vtHistSel ? "sel" : ""; }
+      else { v = document.createElement("div"); v.className = "hvt" + (i === vtHistSel ? " sel" : ""); v.textContent = "MP4 " + (i + 1); }
+      ffPressable(v, function () { vtHistSel = i; showVtResult(false); });
+      vtItemP(h, v, i);
+    });
+    vtClearSyncP();
+  }
+  if (scroll !== false) { try { box.scrollIntoView({ behavior: "smooth" }); } catch (e) { } }
+}
+function vtItemP(h, v, i) {
+  const d = document.createElement("div"); d.className = "hitem"; d.appendChild(v);
+  d.appendChild(histXBtn(function () { vtRemoveP(i); })); h.appendChild(d);
+}
+function vtRemoveP(i) {
+  if (!vtHist[i]) return;
+  vtHist.splice(i, 1);
+  if (!vtHist.length) { vtClearP(false); setStatus(ff9(HIST_L.done), "ok"); return; }
+  if (vtHistSel > i) vtHistSel--; if (vtHistSel >= vtHist.length) vtHistSel = vtHist.length - 1;
+  showVtResult(false); setStatus(ff9(HIST_L.done), "ok");
+}
+function vtClearP(say) {
+  vtHist = []; vtHistSel = 0;
+  const h = $("vtHist"); if (h) while (h.firstChild) h.removeChild(h.firstChild);
+  const box = $("vtResultBox"); if (box) box.className = "card result-box";
+  vtClearSyncP();
+  if (say !== false) setStatus(ff9(HIST_L.cleared), "ok");
+}
+function vtClearSyncP() {
+  const b = $("vtHistClear"); if (!b) return;
+  b.style.display = vtHist.length ? "" : "none"; b.textContent = ff9(HIST_L.clear);
+  b.onclick = function () { vtClearP(true); };
+}
+/* Download again = the saved bytes, written to a folder the student picks now */
+const vtDl = { busy: false };
+async function vtDownload() {
+  const out = vtHist[vtHistSel];
+  const btn = $("btnVtDl");
+  if (!out || vtDl.busy) return;
+  vtDl.busy = true;
+  if (btn) setIcnText(btn, "i-download", "ink", ff9(VID_L.dlBusy));
+  try {
+    const folder = await pickFolder();
+    if (folder) { await saveResultFile(folder, out.name || ("hnk-videotool-" + Date.now() + ".mp4"), out.ref); setStatus(t("st_done"), "ok"); }
+  } catch (e) { setStatus(ff9(VID_L.dlFail), "err"); }
+  vtDl.busy = false;
+  if (btn) setIcnText(btn, "i-download", "ink", ff9(VID_L.dl));
+}
+function vtOpen() { const out = vtHist[vtHistSel]; if (out && out.url) openUrl(out.url); }
+/* the folder the take was written to, in Finder / Explorer (shell.openPath; older hosts have none — the path is then said on the status line) */
+async function vtOpenFolder(p) {
+  const np = String(p || "");
+  if (!np) return;
+  try { if (shell && shell.openPath) { await shell.openPath(np, "Open the folder this video was saved to."); return; } } catch (e) { }
+  try { const x = require("uxp"); if (x && x.shell && x.shell.openPath) { await x.shell.openPath(np, "Open the folder this video was saved to."); return; } } catch (e) { }
+  setStatus(np, "ok");
 }
 /* the app's label pass for this page, re-run on every language switch */
 function vidPaintLabels() {
@@ -13135,6 +13348,9 @@ function bindVideo() {
       catch (e) { setStatus(friendlyErr(e), "err"); }
     });
     const vtr = $("btnVtRun"); if (vtr) vtr.addEventListener("click", vtRun);
+    /* v6.85.0 — the result box's two controls */
+    const vtd = $("btnVtDl"); if (vtd) vtd.addEventListener("click", vtDownload);
+    const vto = $("btnVtOpen"); if (vto) vto.addEventListener("click", vtOpen);
   });
 
   /* the app's nine-language copy for both halves of this page */
