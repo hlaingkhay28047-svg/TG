@@ -213,11 +213,14 @@ function create(opts) {
           var wr = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.wfResults : null;
           if (wr && request && request.mode === "smart-workflow" && res.results) {
             var firstIn = (request.images && request.images[0] && request.images[0].ref) || "";
+            var firstSrc = (request.images && request.images[0] && request.images[0].source) || "";
             var outp = request.output || {};
             res.results.forEach(function (r) {
               wr.record({ workflowId: request.workflowId, before: firstIn, after: r && r.ref,
                 prompt: request.compiledPrompt || request.prompt || "", promptEdited: !!request.promptEdited,
                 model: res.model || request.model || "", ratio: outp.ratio || "", size: outp.size || "",
+                /* v6.84.0 — Selection Edit: the rectangle the pixels came from, and that they did */
+                regionBounds: request.regionBounds || null, inputSource: firstSrc,
                 timeLabel: (typeof opts.timeLabel === "function") ? opts.timeLabel() : (opts.timeLabel || "") });
             });
           }
@@ -278,8 +281,10 @@ function create(opts) {
 
   /* v6.83.0 — place one kept result into Photoshop again (the wizard's
      result card: "Place into Photoshop again"), the same masked-group path
-     a fresh run takes, with the same honest strip line at the end. */
-  async function placeResult(ref, workflowId, modelId) {
+     a fresh run takes, with the same honest strip line at the end.
+     v6.84.0 — with the region a Selection Edit result was cut from, so it
+     lands where the marquee was, under the same mask, not fitted to the page. */
+  async function placeResult(ref, workflowId, modelId, regionBounds) {
     if (!/^data:image\//.test(String(ref || ""))) return { ok: false, reason: "no-results" };
     if (!(opts.host && maskedPlace)) {
       status({ code: "place-failed", title: dom.t("ai_place_failed", "Generated, but could not place into Photoshop."),
@@ -292,7 +297,9 @@ function create(opts) {
       var canvas = (opts.host.canvasSize && opts.host.canvasSize()) || { width: 1024, height: 1024 };
       var placed = await maskedPlace.placeResults({
         host: opts.host, results: [{ ref: ref }], feature: featureOf({ mode: "smart-workflow", workflowId: workflowId }),
-        modelId: modelId || "", canvas: canvas, timeLabel: opts.timeLabel, regionBounds: null
+        modelId: modelId || "", canvas: canvas, timeLabel: opts.timeLabel,
+        /* v6.84.0 — a Selection Edit result goes back to its own rectangle, masked to it */
+        regionBounds: (regionBounds && regionBounds.width > 0 && regionBounds.height > 0) ? regionBounds : null
       });
       if (!placed.ok) {
         status({ code: "place-failed", title: dom.t("ai_place_failed", "Generated, but could not place into Photoshop."),

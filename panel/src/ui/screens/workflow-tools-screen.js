@@ -137,6 +137,7 @@ function create(deps) {
   var L_REMOVE = { my: "ဖျက်မယ်", en: "Remove", shn: "မွတ်ႇပႅတ်ႈ", kac: "Sa kau u", th: "ลบ", zh: "删除", vi: "Xóa", id: "Hapus", ms: "Buang" };
   var L_BOARD = { my: "ဒီ workflow ရဲ့ ရလဒ်တွေ — အကုန် ဒီမှာ ပြန်ကြည့်လို့ရတယ်", en: "Results from this workflow — every run stays here", shn: "ၽွၼ်းလႆႈ workflow ၼႆႉ — တင်းမူတ်း ၶိုၼ်းတူၺ်းလႆႈတီႈၼႆႈ", kac: "Ndai workflow na result ni — yawng ndai kaw bai yu lu ai", th: "ผลลัพธ์ของเวิร์กโฟลว์นี้ — ทุกครั้งดูย้อนได้ที่นี่", zh: "这个工作流的全部结果 — 每次生成都留在这里", vi: "Kết quả của workflow này — mọi lần chạy đều còn ở đây", id: "Hasil workflow ini — semua tetap di sini", ms: "Hasil aliran kerja ini — semuanya kekal di sini" };
   var L_EARLIER = { my: "Gallery ထဲက အရင်ရလဒ်တွေ ဖွင့်မယ် ({n})", en: "Load earlier results from Gallery ({n})", shn: "ပိုတ်ႇၽွၼ်းလႆႈၵဝ်ႇတီႈ Gallery ({n})", kac: "Gallery na moi na lachyum ni hpaw u ({n})", th: "โหลดผลลัพธ์ก่อนหน้าจาก Gallery ({n})", zh: "载入 Gallery 中的早期结果（{n}）", vi: "Mở kết quả cũ từ Gallery ({n})", id: "Muat hasil lama dari Gallery ({n})", ms: "Muat hasil lama dari Gallery ({n})" };
+  var L_SELECTION = { my: "Selection", en: "Selection", shn: "Selection", kac: "Selection", th: "Selection", zh: "选区", vi: "Vùng chọn", id: "Seleksi", ms: "Pilihan" };
   var L_HIST_ALL = { my: "History အကုန် ကြည့်မယ် →", en: "All history →", shn: "History တင်းမူတ်း →", kac: "History yawng →", th: "History ทั้งหมด →", zh: "全部 History →", vi: "Toàn bộ History →", id: "Semua History →", ms: "Semua History →" };
 
   function _lang() {
@@ -641,7 +642,9 @@ function create(deps) {
        them: 6.138.0's photograph shows the bare sentence with nothing after
        it, which is exactly the message the panel is supposed to have stopped
        giving. */
-    wstate.setInput(state, inp.key, { source: slot.source, role: inp.role, ref: slot.ref, valid: slot.valid, reason: slot.reason, detail: slot.detail });
+    wstate.setInput(state, inp.key, { source: slot.source, role: inp.role, ref: slot.ref, valid: slot.valid, reason: slot.reason, detail: slot.detail,
+      /* v6.84.0 — the picture's size and, for the Active layer, its name: the tick says what landed */
+      width: slot.width || 0, height: slot.height || 0, name: slot.name || "" });
     refresh();
   }
 
@@ -702,7 +705,18 @@ function create(deps) {
         // "Missing". Show the specific reason when there was an actual
         // failed attempt.
         var failReason = (!okk && inp.image && inp.image.reason && imageImport) ? imageImport.reasonMessage(dom, inp.image.reason, inp.image.detail) : "";
-        mark.textContent = okk ? "✓" : (failReason || "Missing");
+        /* v6.84.0 — the Active layer's tick names the layer and its size, so a
+           student who pressed "+ Layer" sees WHICH layer Photoshop handed over
+           (the owner asked whether the slots really work with the Active layer:
+           the slot now answers on its own). Other sources keep the plain tick. */
+        var im0 = inp.image || {};
+        var tickText = "\u2713";
+        if (okk && im0.source === "active-layer") {
+          var nm = String(im0.name || "").trim();
+          if (nm.length > 22) nm = nm.slice(0, 21) + "\u2026";
+          tickText += (nm ? " " + nm : "") + ((im0.width > 0 && im0.height > 0) ? " \u00b7 " + im0.width + "\u00d7" + im0.height : "");
+        }
+        mark.textContent = okk ? tickText : (failReason || "Missing");
         mark.className = "hnk-req-mark " + (okk ? "ok" : "miss");
       }
       /* v6.59.0 — SHOW THE PHOTO THAT LANDED.
@@ -777,8 +791,11 @@ function create(deps) {
         if (!b) { hint(dom.t("ai_wf_select_first", "Make a rectangular selection in Photoshop first, then press GENERATE.")); return; }
         return Promise.resolve(deps.host.captureRegion(b)).then(function (cap) {
           if (!cap || !cap.ref) { hint(dom.t("ai_wf_capture_fail", "Could not read the selected pixels — try again.")); return; }
-          if (state.requiredInputs[0]) state.requiredInputs[0].image = { source: "selection", role: state.requiredInputs[0].role, ref: cap.ref, valid: true };
+          if (state.requiredInputs[0]) state.requiredInputs[0].image = { source: "selection", role: state.requiredInputs[0].role, ref: cap.ref, valid: true,
+            width: cap.width || b.width, height: cap.height || b.height };
           state.regionBounds = { x: b.x, y: b.y, width: b.width, height: b.height };
+          /* v6.84.0 — the slot shows the pixels that were just read, before the run */
+          try { refresh(); } catch (eR) { }
           fire();
         });
       }).catch(function () { hint(dom.t("ai_wf_capture_fail", "Could not read the selected pixels — try again.")); });
@@ -1069,7 +1086,10 @@ function create(deps) {
       im.className = "hnk-wf-result-img"; im.id = "hnkWfResultImg"; im.alt = wf.title + " \u2014 result"; im.src = sel.after;
       host.appendChild(im);
       var mdl = sel.model ? (modelRegistry.getModel(sel.model) || { displayName: sel.model }).displayName : "";
-      var meta = [sel.timeLabel || (sel.ts ? fmtTime(sel.ts) : ""), mdl, sel.size ? String(sel.size).toUpperCase() : "", sel.ratio, sel.promptEdited ? "\u270E" : ""].filter(Boolean).join(" \u00b7 ");
+      /* v6.84.0 — a Selection Edit result names its rectangle */
+      var rb = sel.regionBounds;
+      var meta = [sel.timeLabel || (sel.ts ? fmtTime(sel.ts) : ""), mdl, sel.size ? String(sel.size).toUpperCase() : "", sel.ratio,
+        rb ? (l9(L_SELECTION) + " " + rb.width + "\u00d7" + rb.height) : "", sel.promptEdited ? "\u270E" : ""].filter(Boolean).join(" \u00b7 ");
       if (meta) host.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc", id: "hnkWfResultMeta", text: meta }));
       if (!sel.fromGallery) host.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc", id: "hnkWfResultSaved", text: l9(L_SAVED) }));
       var acts = dom.el(doc, "div", { class: "hnk-wf-res-acts", id: "hnkWfResActs" });
@@ -1080,7 +1100,7 @@ function create(deps) {
         acts.appendChild(cmpB);
       }
       var place = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfPlaceAgain", text: l9(L_PLACE_AGAIN) });
-      dom.on(place, "click", function () { var h = bootHandle(); if (h && h.placeResult) h.placeResult(sel.after, wf.id, sel.model); });
+      dom.on(place, "click", function () { var h = bootHandle(); if (h && h.placeResult) h.placeResult(sel.after, wf.id, sel.model, sel.regionBounds || null); });
       acts.appendChild(place);
       var again = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfRunAgain", text: l9(L_RUN_AGAIN) });
       dom.on(again, "click", function () { doGenerate(); });
@@ -1119,7 +1139,8 @@ function create(deps) {
         dom.on(range, "change", function () { setCmp(range.value); });
         wrap.appendChild(range);
         wrap.appendChild(dom.el(doc, "div", { class: "hnk-wf-cmp-tags" }, [
-          dom.el(doc, "span", { text: "\u2190 Before (IMAGE 1)" }), dom.el(doc, "span", { text: "After \u2192" })]));
+          dom.el(doc, "span", { id: "hnkWfCmpTagBefore", text: "\u2190 Before (" + (sel.inputSource === "selection" || sel.regionBounds ? l9(L_SELECTION) : "IMAGE 1") + ")" }),
+          dom.el(doc, "span", { text: "After \u2192" })]));
         nodes.cmpTop = top; nodes.cmpLine = line; nodes.cmpBefore = before;
         host.appendChild(wrap);
         setCmp(cmpPos);

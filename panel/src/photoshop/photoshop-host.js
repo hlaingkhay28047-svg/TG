@@ -332,13 +332,27 @@ async function captureActiveLayer() {
     var w = doc && doc.width, h = doc && doc.height;
     var cap = _capSize(w, h);
     var reqs = [];
+    /* v6.84.0 — a CMYK / Lab / Grayscale document: ask imaging for RGB pixels
+       first (the JPEG encoder takes RGB; the plain routes below would each
+       refuse and the saved copy would be the only way through). An RGB
+       document keeps the plain routes — the common case pays nothing. */
+    var mode = "";
+    try { mode = String((doc && doc.mode) || ""); } catch (eM) { mode = ""; }
+    var nonRgb = !!mode && !/rgb/i.test(mode);
+    if (nonRgb) {
+      if (cap && id != null) reqs.push({ layerID: id, targetSize: cap, colorSpace: "RGB" });
+      if (cap) reqs.push({ targetSize: cap, colorSpace: "RGB" });
+    }
     /* smallest ask first: this document is 32 megapixels and the panel wants
        a reference photograph, not the master */
     if (cap && id != null) reqs.push({ layerID: id, targetSize: cap });
     if (cap) reqs.push({ targetSize: cap });
     if (id != null) reqs.push({ layerID: id });
     reqs.push({});
-    return await _captureRoutes(ps, uxp, reqs, w, h, true);
+    var got = await _captureRoutes(ps, uxp, reqs, w, h, true);
+    /* v6.84.0 — which layer this was, so a slot can say so */
+    try { if (got && layer) { got.name = String(layer.name || ""); got.mode = mode; } } catch (eN) { }
+    return got;
   };
   try {
     if (ps.core && typeof ps.core.executeAsModal === "function") {
@@ -386,6 +400,13 @@ async function captureRegion(bounds) {
     var sb = { left: bounds.x, top: bounds.y, right: bounds.x + bounds.width, bottom: bounds.y + bounds.height };
     var cap = _capSize(bounds.width, bounds.height);
     var reqs = [];
+    /* v6.84.0 — the same RGB ask first on a non-RGB document (see captureActiveLayer) */
+    var mode = "";
+    try { mode = String((ps.app.activeDocument && ps.app.activeDocument.mode) || ""); } catch (eM) { mode = ""; }
+    if (mode && !/rgb/i.test(mode)) {
+      if (cap) reqs.push({ sourceBounds: sb, targetSize: cap, colorSpace: "RGB" });
+      reqs.push({ sourceBounds: sb, colorSpace: "RGB" });
+    }
     if (cap) reqs.push({ sourceBounds: sb, targetSize: cap });
     reqs.push({ sourceBounds: sb });
     /* no saved copy here: a flattened save would ignore the bounds, and a

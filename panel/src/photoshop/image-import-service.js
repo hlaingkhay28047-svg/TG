@@ -27,7 +27,9 @@ function _ok(source, res) {
     ref: res.ref,
     valid: true,
     width: (res.width | 0) || 0,
-    height: (res.height | 0) || 0
+    height: (res.height | 0) || 0,
+    /* v6.84.0 — the layer's name (Active layer) so the slot can say which one */
+    name: res.name ? String(res.name) : ""
   };
 }
 
