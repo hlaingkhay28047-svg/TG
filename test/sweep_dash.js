@@ -265,14 +265,16 @@ function check(ok, label, detail) {
     return {
       dots, resultShown, wizStillOpen, gennoteGone,
       actCount: acts.length,
+      /* v6.83.0 — the fifth action is the Before/After compare (the panel's wizard card and this one alike) */
+      hasCompare: acts.some(function (t) { return /Before\/After/.test(t); }),
       dlIsDataUrl: dl ? dl.href.indexOf("data:image") === 0 : false,
       dlHasDownload: dl ? !!dl.getAttribute("download") : false,
       histLen: state.hist.length
     };
   }, B64);
   check(!wiz4.fail && wiz4.dots === 4 && wiz4.resultShown && wiz4.wizStillOpen && wiz4.gennoteGone &&
-    wiz4.actCount === 4 && wiz4.dlIsDataUrl && wiz4.dlHasDownload && wiz4.histLen > 0,
-    "wizard step 4: 4 dots, inline result in the open wizard, 4 actions incl. a real Download, old lands-on-Freeform note gone", wiz4);
+    wiz4.actCount === 5 && wiz4.hasCompare && wiz4.dlIsDataUrl && wiz4.dlHasDownload && wiz4.histLen > 0,
+    "wizard step 4: 4 dots, inline result in the open wizard, 5 actions incl. a real Download and Before/After (6.83.0), old lands-on-Freeform note gone", wiz4);
 
   /* repeat-run fast path: reopening with inputs satisfied offers skip-to-Generate */
   const fast = await page.evaluate(async () => {
