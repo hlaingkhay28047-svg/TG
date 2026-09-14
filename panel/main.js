@@ -6691,7 +6691,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.158.0";
+const PANEL_VERSION = "6.159.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8016,7 +8016,9 @@ function applyI18n() {
       table: I18N,
       langs: LANGS,
       codes: LANG_CODES,
-      lang: function () { return state.lang; }
+      lang: function () { return state.lang; },
+      /* v6.159.0 — a nine-language dict in the panel's language, the hand-dict fallback chain (Tutorials screen) */
+      pick: function (m) { return ff9(m); }
     };
     /* v6.75.0 — the What's New "seen" list, for the Home screen module: UXP
        has no localStorage, so the panel's settings file is where dismissals
