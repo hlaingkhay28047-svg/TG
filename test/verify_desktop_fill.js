@@ -142,7 +142,7 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
         switchPage("pgTutorials"); await settle(120);
         out.tut = [...document.querySelectorAll("#pgTutorials .tutorial-card")].map(c => {
           const p = c.querySelector("p").getBoundingClientRect(), b = c.querySelector(".btn").getBoundingClientRect();
-          return { gap: Math.round(b.top - p.bottom), btnBottom: Math.round(b.bottom), chipW: Math.round(c.querySelector('.chip').getBoundingClientRect().width) };
+          return { gap: Math.round(b.top - p.bottom), btnBottom: Math.round(b.bottom), chipW: Math.round(c.querySelector('.chip').getBoundingClientRect().width), top: Math.round(c.getBoundingClientRect().top) };
         });
         switchPage("pgMeitu"); await settle(300);
         const gr = document.getElementById("stGroupChips");
@@ -175,8 +175,9 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
         E.dashTiles === 6 && E.dashCols === (w >= 1440 ? 6 : 3), JSON.stringify({ cols: E.dashCols, tiles: E.dashTiles }));
       check(`E2b) at ${w}px the Home looks strip fills its row (thumbs ≥ ${w >= 1440 ? 120 : 96}px, ≥ 80% of the width)`,
         !!E.strip && E.strip.thumbs >= 8 && E.strip.thumbW >= (w >= 1440 ? 120 : 96) && E.strip.fill >= 80, JSON.stringify(E.strip));
-      check(`E3) at ${w}px every Tutorials button sits below its text, all three on one baseline, the number still a pill`,
-        E.tut.length === 3 && E.tut.every(t => t.gap >= 8 && t.chipW < 100) && new Set(E.tut.map(t => t.btnBottom)).size === 1, JSON.stringify(E.tut));
+      check(`E3) at ${w}px every Tutorials button sits below its text, each row of cards on one baseline (ten lessons since 6.88.0), the number still a pill`,
+        E.tut.length === 10 && E.tut.every(t => t.gap >= 8 && t.chipW < 100) &&
+        Object.values(E.tut.reduce((m, t) => { (m[t.top] = m[t.top] || []).push(t.btnBottom); return m; }, {})).every(r => new Set(r).size === 1), JSON.stringify(E.tut));
       check(`E4) at ${w}px the Retouch group rail scrolls with the mouse wheel and shows a thin scrollbar`,
         !!E.wheel && E.wheel.pointer && E.wheel.after > E.wheel.before && E.wheel.prevented && (E.wheel.scrollbar === "thin" || E.wheel.honours === false), JSON.stringify(E.wheel));
       check(`E5) at ${w}px the small labels read at monitor size (kicker ≥12, card badge ≥11, select context ≥9.5)`,

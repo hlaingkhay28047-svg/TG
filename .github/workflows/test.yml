@@ -552,6 +552,8 @@ jobs:
         run: PORT=8931 node test/verify_panel_video_takes.js
       - name: Panel video takes persist — every take on Video · V→V · Talking Photo · Upscale is kept as an mp4 copy in the gallery folder plus an index (takes-store, 12 per page), the four strips come back on boot, Download again reads the copy, ✕ and Clear drop it, the Gallery page lists videos as tiles with Open the folder · Save · Delete, History gets a Videos section whose Open selects the take on its page (6.87.0 / panel 6.158.0)
         run: PORT=8931 node test/verify_panel_video_takes_persist.js
+      - name: Tutorials — ten lessons in nine languages from one table on the app (renderTutorials, language switch, every button opens its page) and the panel (lifted by tools/build_panel_tutorials.js, painted in the panel's language, app page ids mapped to panel routes) (6.88.0 / panel 6.159.0)
+        run: PORT=8931 node test/verify_tutorials.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

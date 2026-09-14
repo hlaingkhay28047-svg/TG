@@ -6,8 +6,12 @@
    panel's Home as a "HNK LEARNING" list; the app keeps it on its own page,
    so it lives on its own page here too.
 
-   The app prints this hero and its three lessons in English in every locale,
-   so the copy is carried over as written.
+   v6.159.0 — the lessons are the app's TABLE, not a copy of its markup:
+   tools/build_panel_tutorials.js lifts TUT_HERO + TUTORIALS (ten lessons,
+   nine languages) into js/hnk_tutorials.js, and this screen paints them in
+   the panel's current language (HNK.i18n.pick, the same fallback chain as
+   every other hand dict). Every card's button opens the page it teaches —
+   the app's page ids are not the panel's route keys, so PAGE maps them.
    ============================================================ */
 /* HNK-IIFE-WRAP: isolate module scope so top-level vars never collide
    under UXP shared-global <script> loading (browser-style). */
@@ -17,44 +21,46 @@
 var _CJS = (typeof module !== "undefined" && module.exports);
 var dom = _CJS ? require("../dom") : globalThis.HNK.dom;
 
-/* [number, title, body, button label, panel page key] — the app's own three
-   tutorial-card actions: Open Dashboard, Check devices, Open Setup (6.102.1:
-   the third card no longer downloads — one place, the Account card's
-   Photoshop Panel group under Setup, on both surfaces). */
-var LESSONS = [
-  ["01", "Dashboard & AI Tools",
-    "Choose Workflows, Edit or Media Lab. Add only your own provider key in Setup; HNK never stores it as your account password.",
-    "Open Dashboard", "home"],
-  ["02", "Phone + Computer",
-    "Use one Phone and one Computer. Your Computer slot is shared by the Web App and Photoshop Panel.",
-    "Check devices", "setup"],
-  ["03", "Install the Panel",
-    "Under Setup ▸ Account, open the Photoshop Panel group and press its button — the one place the Panel is downloaded from. Install it in Photoshop, then just sign in — the panel registers this computer by itself.",
-    "Open Setup", "setup"]
-];
+function data() {
+  if (_CJS) { try { return require("../../../js/hnk_tutorials.js"); } catch (e) { return null; } }
+  return (globalThis.HNK && globalThis.HNK.tutorials) || null;
+}
+/* the panel's language, with its fallback chain; English outside the panel */
+function pick(m) {
+  var b = globalThis.HNK && globalThis.HNK.i18n;
+  if (b && typeof b.pick === "function") { try { return b.pick(m); } catch (e) { } }
+  return (m && (m.en || m.my)) || "";
+}
+
+/* the app's page ids → the panel's route keys (Home is the AI Tools stack) */
+var PAGE = { pgDash: "aitools", pgAccount: "setup", pgHome: "setup", pgTutorials: "aitools",
+  pgWf: "wf", pgCreate: "prompt", pgImagine: "imagine", pgMeitu: "meitu", pgEvoto: "evoto", pgRetouch: "retouch", pgPath: "path",
+  pgText2Img: "create", pgVideo: "video", pgVideoUp: "vidup", pgV2V: "v2v", pgTalk: "talk", pgLib: "presets", pgGallery: "gallery" };
 
 function render(root, deps) {
   var doc = deps.document;
+  var d = data();
   dom.clear(root);
 
   var hero = dom.el(doc, "div", { class: "unified-hero" }, [
     dom.el(doc, "div", { class: "unified-kick", text: "HNK LEARNING" }),
-    dom.el(doc, "h1", { text: "Tutorials" }),
-    dom.el(doc, "p", { text: "Start with device registration, then learn the AI Tools and pair the Photoshop Panel on the same Computer." })
+    dom.el(doc, "h1", { text: d ? pick(d.HERO.h1) : "Tutorials" }),
+    dom.el(doc, "p", { text: d ? pick(d.HERO.lede) : "" })
   ]);
   root.appendChild(hero);
 
   var grid = dom.el(doc, "div", { class: "tutorial-grid" });
-  LESSONS.forEach(function (l) {
-    var go = dom.el(doc, "button", { class: "btn", text: l[3] });
+  (d ? d.TUTORIALS : []).forEach(function (l) {
+    var go = dom.el(doc, "button", { class: "btn", text: pick(l.b) });
+    go.setAttribute("data-tutorial-page", l.page);
     dom.on(go, "click", function () {
-      if (l[4] === "home") { if (deps.onPage) deps.onPage("aitools"); return; }
-      if (deps.onPage) deps.onPage(l[4]);
+      var key = PAGE[l.page] || "aitools";
+      if (deps.onPage) deps.onPage(key);
     });
     grid.appendChild(dom.el(doc, "div", { class: "tutorial-card" }, [
-      dom.el(doc, "div", { class: "chip on", text: l[0] }),
-      dom.el(doc, "h2", { text: l[1] }),
-      dom.el(doc, "p", { text: l[2] }),
+      dom.el(doc, "div", { class: "chip on", text: l.n }),
+      dom.el(doc, "h2", { text: pick(l.t) }),
+      dom.el(doc, "p", { text: pick(l.p) }),
       go
     ]));
   });
@@ -62,7 +68,7 @@ function render(root, deps) {
   return root;
 }
 
-var API = { render: render, LESSONS: LESSONS };
+var API = { render: render, PAGE: PAGE, data: data };
 
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.tutorialsScreen = API; }
