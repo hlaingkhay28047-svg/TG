@@ -87,7 +87,7 @@ const nineLangs = (line) => !!line && LANGS.every(l => new RegExp("[{,]" + l + '
   const CSS_RULES = CSS.replace(/\/\*[\s\S]*?\*\//g, "");   /* the rules only — the comments explain what was removed */
   report("A3) the guide box is the panel's last fixed element no more: no position:fixed rule anywhere in styles.css, .gbox shown by .on, guidePlace puts it above the tapped button's card (or the page's top) from showGuide and showPromptStage, and disarm takes it off",
     !/position:\s*fixed/.test(CSS_RULES) && !!gbox && !/fixed|bottom:|z-index/.test(gbox) && /\.gbox\.on \{ display: block; \}/.test(CSS) &&
-    /function guidePlace\(el\)/.test(MAIN) && /const card = el \? hslClosest\(el, "card"\) : null;/.test(MAIN) &&
+    /function guidePlace\(el\)/.test(MAIN) && /const card = spot \? hslClosest\(spot, "card"\) : null;/.test(MAIN) /* 6.159.1 — spot: the button, or a docked button's placeholder */ &&
     /card\.parentNode\.insertBefore\(gb, card\); done = true;/.test(MAIN) && /pg\.insertBefore\(gb, pg\.firstChild\); done = true;/.test(MAIN) &&
     (MAIN.match(/guidePlace\(state\.armedEl\);/g) || []).length === 2 && /if \(gb\) gb\.className = "gbox";\n\}/.test(MAIN) &&
     !/gb\.style\.display = "block"/.test(MAIN) && !/gb\.style\.display = "none"/.test(MAIN), { gbox });

@@ -185,6 +185,15 @@ function create(opts) {
           transport: opts.transport, configOverride: currentOverride(),
           apiKey: s.apiKey, host: opts.host, now: opts.now
         }, request, { onStage: stageAll });
+        /* v6.159.1 — BOOK WHAT IT COST. The app books every paid run inside its poll (rhPollTracked → rhBookSpend), so its
+           COST & BALANCE counts Smart Workflow runs; the panel's video pages and Freeform book their own (rhBookUsage), but
+           these runs never reached the ledger — the owner's Setup card read "0 runs · 0 USD" after five Reference Scenes
+           runs. The adapter has always returned usage:[{taskId, final}]; the host's hook writes the row. Never blocks or
+           fails the run. */
+        try {
+          var sb = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.spendBook : null;
+          if (typeof sb === "function" && res && res.usage && res.usage.length) sb(res.usage, { kind: "image", label: featureOf(request), prov: "rh" });
+        } catch (eBook) { }
         if (!res.ok) { status(res.error); return res; }
 
         /* v6.46.0 — keep what we made, the way the app keeps it. Writing to
