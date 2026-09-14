@@ -558,8 +558,11 @@ report("J4) every route that fails keeps its own reason, so no refusal is silent
 
 /* 6.138.0 printed the sentence with nothing after it: the detail existed and
    was dropped rebuilding the slot */
+/* 6.84.0 — the wizard's slot object grew width / height / name after the
+   detail (the tick names the layer); the detail is still carried, so the
+   pin reads "detail: slot.detail" followed by either the close or more fields */
 report("J5) and the detail survives the slot rebuild on both screens that print it",
-  /reason: slot\.reason, detail: slot\.detail \}\);/.test(WFT) &&
+  /reason: slot\.reason, detail: slot\.detail(,|\s*\}\);)/.test(WFT) &&
   /reason: slot\.reason, detail: slot\.detail \}\);/.test(FREEGEN), null);
 
 /* ---- K. v6.69.0 — A ROW THAT CANNOT FIT ITS VALUE PUTS IT ON THE NEXT LINE,
