@@ -419,6 +419,11 @@ function prelude() {
 
 function exportsBlock() {
   return [
+    "  /* v6.160.0 — hnk_finish_engines.js reads the student's HD Finish chip (finishPassOn) and engine / face choice",
+    "     (settings → rhFinishSettings) through globalThis.svGet, which nothing published: in Photoshop the finish pass",
+    "     always ran the default engine and the note under the rows always said HD Finish was off. The store goes",
+    "     global the moment a retouch page is built — exactly when those reads can mean something. */",
+    "  globalThis.svGet=svGet; globalThis.svSet=svSet;",
     "  return {",
     "    ST:ST, grp:grp, tapChip:tapChip, stResetSection:stResetSection,",
     "    stFeat:stFeat, stSync:stSync, stFeatReset:stFeatReset, stRenderPend:stRenderPend, stRefreshDots:stRefreshDots, stLiveCount:stLiveCount,",
