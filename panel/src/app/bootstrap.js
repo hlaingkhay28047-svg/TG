@@ -202,6 +202,27 @@ function create(opts) {
           }
         } catch (e) { }
 
+        /* v6.83.0 — THE WIZARD'S OWN RECORD. The owner's photographs of
+           6.153.0 show a Smart Workflow run end in a green "Done." and a
+           layer, with nothing on the wizard to look at: no result, no
+           Before | After, no earlier runs. Every result is recorded here
+           with the photograph that went in (IMAGE 1) and the prompt that
+           made it, so the screen can show, compare, re-place and chain it.
+           Memory only; never blocks or fails the run. */
+        try {
+          var wr = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.wfResults : null;
+          if (wr && request && request.mode === "smart-workflow" && res.results) {
+            var firstIn = (request.images && request.images[0] && request.images[0].ref) || "";
+            var outp = request.output || {};
+            res.results.forEach(function (r) {
+              wr.record({ workflowId: request.workflowId, before: firstIn, after: r && r.ref,
+                prompt: request.compiledPrompt || request.prompt || "", promptEdited: !!request.promptEdited,
+                model: res.model || request.model || "", ratio: outp.ratio || "", size: outp.size || "",
+                timeLabel: (typeof opts.timeLabel === "function") ? opts.timeLabel() : (opts.timeLabel || "") });
+            });
+          }
+        } catch (e) { }
+
         if (s.addAsNewLayer === false) {
           // The user turned placement off in Settings — say so honestly.
           status({ code: "ready", title: dom.t("ai_done", "Done."),
@@ -253,6 +274,45 @@ function create(opts) {
     })();
     lastRun = run;
     return run;
+  }
+
+  /* v6.83.0 — place one kept result into Photoshop again (the wizard's
+     result card: "Place into Photoshop again"), the same masked-group path
+     a fresh run takes, with the same honest strip line at the end. */
+  async function placeResult(ref, workflowId, modelId) {
+    if (!/^data:image\//.test(String(ref || ""))) return { ok: false, reason: "no-results" };
+    if (!(opts.host && maskedPlace)) {
+      status({ code: "place-failed", title: dom.t("ai_place_failed", "Generated, but could not place into Photoshop."),
+        message: dom.t("ai_place_failed_fix", "Open a document, then re-run from History."), bullets: ["no-host"] });
+      return { ok: false, reason: "no-host" };
+    }
+    setGenerateBusy(true);
+    try {
+      stageAll("PLACING", { label: dom.t("stage_placing", "Placing into Photoshop") });
+      var canvas = (opts.host.canvasSize && opts.host.canvasSize()) || { width: 1024, height: 1024 };
+      var placed = await maskedPlace.placeResults({
+        host: opts.host, results: [{ ref: ref }], feature: featureOf({ mode: "smart-workflow", workflowId: workflowId }),
+        modelId: modelId || "", canvas: canvas, timeLabel: opts.timeLabel, regionBounds: null
+      });
+      if (!placed.ok) {
+        status({ code: "place-failed", title: dom.t("ai_place_failed", "Generated, but could not place into Photoshop."),
+          message: dom.t("ai_place_failed_fix", "Open a document, then re-run from History."), bullets: [placed.reason || "place-failed"] });
+        return placed;
+      }
+      var msg2 = placed.outcome === "masked-group"
+        ? dom.tf("ai_placed_masked", "Placed into the \u201C{name}\u201D group as Layer + Mask \u2014 your original is untouched.", { name: placed.groupName })
+        : placed.outcome === "group-only"
+          ? dom.tf("ai_placed_group", "Placed into the \u201C{name}\u201D group as a new layer (mask unavailable on this host).", { name: placed.groupName })
+          : dom.t("ai_placed_plain", "Placed as a new layer (group/mask unavailable on this host).");
+      status({ code: "ready", title: dom.t("ai_done", "Done."), message: msg2, bullets: [] });
+      return placed;
+    } catch (e) {
+      var n3 = errorNormalizer.normalize(e);
+      status(n3);
+      return { ok: false, reason: n3.code || "place-failed" };
+    } finally {
+      setGenerateBusy(false);
+    }
   }
 
   function handleGenerate(request) {
@@ -357,6 +417,7 @@ function create(opts) {
     services: { settings: settings, history: history, presets: presets, rhSetup: rhSetup, rh: rh },
     saveDraft: saveDraft,
     runViaProvider: runViaProvider,
+    placeResult: placeResult,
     lastRun: function () { return lastRun; },
     progress: strip,
     mount: mount

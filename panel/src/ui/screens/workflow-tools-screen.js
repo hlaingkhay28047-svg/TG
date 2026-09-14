@@ -62,6 +62,11 @@ function create(deps) {
   var state = deps.state || wstate.defaultState();
   var root = null;
   var nodes = {};
+  /* v6.83.0 — the wizard's own Results card: which result is on view, whether
+     the Before | After compare is open and where its divider sits, whether the
+     Advanced prompt box is open, and the earlier runs read back from the
+     gallery folder on request. Session state, reset when a workflow is chosen. */
+  var unsubResults = null, resSel = null, cmpOpen = false, cmpPos = 50, advOpen = false, earlier = [], earlierLoaded = false;
 
   function directMode() { return !!(deps.directGenerate && deps.directGenerate()); }
 
@@ -113,6 +118,26 @@ function create(deps) {
   var MY_ALIAS = [["ဆံပင်", "hair"], ["နောက်ခံ", "background"], ["မိတ်ကပ်", "makeup"], ["ဝတ်စုံ", "dress outfit gown"], ["အလင်း", "light lighting relight"], ["မျက်နှာ", "face"], ["မင်္ဂလာ", "wedding"], ["ပန်း", "flower floral"], ["သတို့သမီး", "bride wedding"], ["ကလေး", "child baby"], ["ဓာတ်ပုံဟောင်း", "restore vintage"], ["အသားအရေ", "skin retouch"], ["ရေ", "water"], ["ကောင်းကင်", "sky"], ["လိုဂို", "logo text"], ["ပုံတူ", "pose"], ["မွေးနေ့", "birthday"], ["ဘွဲ့", "graduation"], ["ရိုးရာ", "traditional heritage"], ["စတူဒီယို", "studio"]];
   /* the app's Wedding Suite sub-group chip labels (English in every locale) */
   var WG_NAMES = { trail: "Flower Trail", veil: "Veil", gown: "Gown Train", petal: "Petal Rain", extra: "Extra" };
+
+  /* v6.83.0 — the wizard's Advanced prompt box and its Results card, the
+     app's wizard strings where the app has them (step 3's Advanced header,
+     step 4's Saved / Run again / Open in Edit / results-board lines). */
+  var L_ADV = { my: "prompt ပြင်ချင်ရင် (မပြင်လည်းရ)", en: "edit the prompt (optional)", shn: "သင်ၶႂ်ႈမႄး prompt (ဢမ်ႇမႄးၵေႃႈလႆႈ)", kac: "prompt hpe galai mai ai (n galai yang mung mai)", th: "แก้ไข prompt (ไม่บังคับ)", zh: "编辑 prompt (可选)", vi: "chỉnh sửa prompt (không bắt buộc)", id: "edit prompt (opsional)", ms: "sunting prompt (pilihan)" };
+  var L_PROMPT_RESET = { my: "မူလ prompt ပြန်ထား", en: "Reset to the workflow's prompt", shn: "ၶိုၼ်းၸႂ်ႉ prompt မူလ", kac: "Workflow a prompt hpe bai jahkrat", th: "กลับไปใช้ prompt เดิมของ Workflow", zh: "恢复工作流原 prompt", vi: "Trả lại prompt gốc của workflow", id: "Kembalikan prompt asli workflow", ms: "Kembalikan prompt asal aliran kerja" };
+  var L_PROMPT_EDITED = { my: "ပြင်ထားတဲ့ prompt ကို ပို့မယ် ✎", en: "Your edited prompt will be sent ✎", shn: "တေသူင်ႇ prompt ဢၼ်မႄးဝႆႉ ✎", kac: "Galai da ai prompt hpe shagun na ✎", th: "จะส่ง prompt ที่คุณแก้ไข ✎", zh: "将发送你编辑后的 prompt ✎", vi: "Sẽ gửi prompt bạn đã sửa ✎", id: "Prompt hasil edit Anda yang dikirim ✎", ms: "Prompt yang anda sunting akan dihantar ✎" };
+  var L_PROMPT_LIVE = { my: "Workflow ရဲ့ prompt အတိုင်း ပို့မယ်", en: "The workflow's own prompt will be sent", shn: "တေသူင်ႇ prompt ၶွင် workflow", kac: "Workflow a prompt hpe shagun na", th: "จะส่ง prompt ของ Workflow เอง", zh: "将发送工作流自身的 prompt", vi: "Sẽ gửi prompt của chính workflow", id: "Prompt milik workflow yang dikirim", ms: "Prompt aliran kerja sendiri akan dihantar" };
+  var L_RESULTS = { my: "ရလဒ်တွေ", en: "Results", shn: "ၽွၼ်းလႆႈ", kac: "Lachyum ni", th: "ผลลัพธ์", zh: "结果", vi: "Kết quả", id: "Hasil", ms: "Hasil" };
+  var L_RES_EMPTY = { my: "ရလဒ်တွေ ဒီမှာ ပေါ်မယ် — GENERATE နှိပ်ပြီးရင် Before | After နဲ့ ပြန်ကြည့်လို့ရတယ်", en: "Your results will appear here — after GENERATE you can compare Before | After", shn: "ၽွၼ်းလႆႈတေဢွၵ်ႇတီႈၼႆႈ — ၼဵၵ်း GENERATE ယဝ်ႉ တူၺ်း Before | After လႆႈ", kac: "Lachyum ni ndai kaw pru wa na — GENERATE dip ngut yang Before | After hte shingdaw yu mai ai", th: "ผลลัพธ์จะแสดงตรงนี้ — หลังกด GENERATE เทียบ Before | After ได้", zh: "结果会显示在这里 — 点 GENERATE 后可对比 Before | After", vi: "Kết quả sẽ hiện ở đây — sau GENERATE bạn có thể so Before | After", id: "Hasil akan muncul di sini — setelah GENERATE Anda bisa membandingkan Before | After", ms: "Hasil akan muncul di sini — selepas GENERATE anda boleh banding Before | After" };
+  var L_SAVED = { my: "Gallery ထဲ အလိုအလျောက် သိမ်းပြီးပါပြီ ✓", en: "Saved to your Gallery automatically ✓", shn: "သိမ်းၶဝ်ႈၼႂ်း Gallery ႁင်းၵူၺ်းယဝ်ႉ ✓", kac: "Gallery hta shi hkrai makoi da sai ✓", th: "บันทึกลง Gallery ให้อัตโนมัติแล้ว ✓", zh: "已自动保存到 Gallery ✓", vi: "Đã tự động lưu vào Gallery ✓", id: "Otomatis tersimpan ke Gallery ✓", ms: "Disimpan ke Gallery secara automatik ✓" };
+  var L_PLACE_AGAIN = { my: "Photoshop ထဲ ထပ်ထည့်မယ်", en: "Place into Photoshop again", shn: "သႂ်ႇၶဝ်ႈ Photoshop ထႅင်ႈ", kac: "Photoshop hta bai bang u", th: "วางลง Photoshop อีกครั้ง", zh: "再次放入 Photoshop", vi: "Đặt vào Photoshop lần nữa", id: "Tempatkan ke Photoshop lagi", ms: "Letak ke Photoshop sekali lagi" };
+  var L_RUN_AGAIN = { my: "ထပ်ထုတ်မယ်", en: "Run again", shn: "ထုတ်ႇထႅင်ႈ", kac: "Bai shaw u", th: "สร้างอีกครั้ง", zh: "再生成一次", vi: "Chạy lại", id: "Jalankan lagi", ms: "Jana lagi" };
+  var L_USE_AS_IN = { my: "IMAGE 1 အနေနဲ့ ဆက်သုံးမယ်", en: "Use as IMAGE 1", shn: "ၸႂ်ႉပဵၼ် IMAGE 1", kac: "IMAGE 1 hku lang u", th: "ใช้เป็น IMAGE 1", zh: "作为 IMAGE 1 继续", vi: "Dùng làm IMAGE 1", id: "Pakai sebagai IMAGE 1", ms: "Guna sebagai IMAGE 1" };
+  var L_USED_AS_IN = { my: "ရလဒ်ကို IMAGE 1 ထဲ ထည့်ပြီးပါပြီ", en: "The result is now IMAGE 1", shn: "ၽွၼ်းလႆႈပဵၼ် IMAGE 1 ယဝ်ႉ", kac: "Lachyum gaw IMAGE 1 rai sai", th: "ผลลัพธ์กลายเป็น IMAGE 1 แล้ว", zh: "结果已放入 IMAGE 1", vi: "Kết quả đã trở thành IMAGE 1", id: "Hasil kini menjadi IMAGE 1", ms: "Hasil kini menjadi IMAGE 1" };
+  var L_OPEN_EDIT = { my: "Edit မှာ ဖွင့်မယ်", en: "Open in Edit", shn: "ပိုတ်ႇတီႈ Edit", kac: "Edit kaw hpaw u", th: "เปิดใน Edit", zh: "在 Edit 中打开", vi: "Mở trong Edit", id: "Buka di Edit", ms: "Buka dalam Edit" };
+  var L_REMOVE = { my: "ဖျက်မယ်", en: "Remove", shn: "မွတ်ႇပႅတ်ႈ", kac: "Sa kau u", th: "ลบ", zh: "删除", vi: "Xóa", id: "Hapus", ms: "Buang" };
+  var L_BOARD = { my: "ဒီ workflow ရဲ့ ရလဒ်တွေ — အကုန် ဒီမှာ ပြန်ကြည့်လို့ရတယ်", en: "Results from this workflow — every run stays here", shn: "ၽွၼ်းလႆႈ workflow ၼႆႉ — တင်းမူတ်း ၶိုၼ်းတူၺ်းလႆႈတီႈၼႆႈ", kac: "Ndai workflow na result ni — yawng ndai kaw bai yu lu ai", th: "ผลลัพธ์ของเวิร์กโฟลว์นี้ — ทุกครั้งดูย้อนได้ที่นี่", zh: "这个工作流的全部结果 — 每次生成都留在这里", vi: "Kết quả của workflow này — mọi lần chạy đều còn ở đây", id: "Hasil workflow ini — semua tetap di sini", ms: "Hasil aliran kerja ini — semuanya kekal di sini" };
+  var L_EARLIER = { my: "Gallery ထဲက အရင်ရလဒ်တွေ ဖွင့်မယ် ({n})", en: "Load earlier results from Gallery ({n})", shn: "ပိုတ်ႇၽွၼ်းလႆႈၵဝ်ႇတီႈ Gallery ({n})", kac: "Gallery na moi na lachyum ni hpaw u ({n})", th: "โหลดผลลัพธ์ก่อนหน้าจาก Gallery ({n})", zh: "载入 Gallery 中的早期结果（{n}）", vi: "Mở kết quả cũ từ Gallery ({n})", id: "Muat hasil lama dari Gallery ({n})", ms: "Muat hasil lama dari Gallery ({n})" };
+  var L_HIST_ALL = { my: "History အကုန် ကြည့်မယ် →", en: "All history →", shn: "History တင်းမူတ်း →", kac: "History yawng →", th: "History ทั้งหมด →", zh: "全部 History →", vi: "Toàn bộ History →", id: "Semua History →", ms: "Semua History →" };
 
   function _lang() {
     try {
@@ -601,6 +626,7 @@ function create(deps) {
 
   function select(workflowId) {
     recentPush(workflowId);
+    resSel = null; cmpOpen = false; advOpen = false; earlier = []; earlierLoaded = false;   /* v6.83.0 */
     wstate.selectWorkflow(state, workflowId);       // Click 1
     if (directMode()) wstate.prepare(state);        // Direct: skip staging
     renderSelected();
@@ -702,6 +728,8 @@ function create(deps) {
     });
     /* v6.82.0 — the route line follows the photograph: Auto's measured shape */
     try { var rl = doc.getElementById("hnkWfRouteLine"), wfNow = registry.get(state.workflowId); if (rl && wfNow) rl.textContent = routeLine(wfNow); } catch (e) { }
+    /* v6.83.0 — the Advanced box follows the inputs (a scene preset, a typed request) until the student edits it */
+    try { paintPromptLive(); } catch (e) { }
     var ready = ev.ready;
     var canGenerate = ready && (state.prepared || directMode());
     if (nodes.prepareBtn) {
@@ -738,6 +766,7 @@ function create(deps) {
     var fire = function () {
       var request = compiler.compile(state);
       if (deps.onGenerate) deps.onGenerate(request);
+      try { renderResults(); } catch (e) { }   /* v6.83.0 — the History rows carry the run at once */
     };
     /* v6.36.0 — Selection Edit: capture the live rectangular selection as
        the subject at Generate time. The result is placed back at these exact
@@ -767,7 +796,7 @@ function create(deps) {
       if (pr) pr.className = String(pr.className).replace(/ ?hnk-root-wf/g, "");
     } catch (e) { }
     var back = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfBack", text: "\u2190 " + dom.t("ai_wf_tools", "Workflow Tools") });
-    dom.on(back, "click", function () { wstate.reset(state); renderList(); });
+    dom.on(back, "click", function () { unsubscribeResults(); wstate.reset(state); renderList(); });
     root.appendChild(back);
 
     root.appendChild(dom.el(doc, "div", { class: "hnk-h-title", text: wf.title }));
@@ -899,6 +928,8 @@ function create(deps) {
     }
 
     renderGenOpts(root, wf);
+    /* v6.83.0 — the app's step-3 "Advanced — edit the prompt (optional)" */
+    renderAdvanced(root, wf);
     var route = state.resolvedRoute || wf.route;
     var m = modelRegistry.getModel(route.modelId);
     var out = state.output || {};
@@ -917,7 +948,251 @@ function create(deps) {
     dom.on(nodes.generate, "click", doGenerate);
     root.appendChild(nodes.generate);
 
+    /* v6.83.0 — Results · Before | After · History, under GENERATE where the
+       result lands (the owner's photographs: "Done." and nothing to look at) */
+    nodes.results = dom.el(doc, "div", { class: "hnk-wf-results", id: "hnkWfResults" });
+    root.appendChild(nodes.results);
+    renderResults();
+    subscribeResults(wf.id);
+
     refresh();
+  }
+
+  /* ---- v6.83.0 — THE ADVANCED PROMPT BOX. The app's wizard shows the whole
+     prompt it will send in a collapsible textarea (step 3); the panel sent
+     its compiled prompt unseen. The box shows the live compiled text —
+     protected prompt, design fields, USER REQUEST, SCENE PRESET — and the
+     moment the student changes it, their text is what the compiler sends
+     (state.promptOverride). Reset returns to the live prompt. ---- */
+  function livePrompt() {
+    try {
+      var c = compiler.compile(Object.assign({}, state, { promptOverride: "" }));
+      return (c && c.compiledPrompt) || "";
+    } catch (e) { return ""; }
+  }
+  function paintPromptState() {
+    if (!nodes.promptState) return;
+    var edited = !!(state.promptOverride && String(state.promptOverride).trim());
+    nodes.promptState.textContent = edited ? l9(L_PROMPT_EDITED) : l9(L_PROMPT_LIVE);
+    nodes.promptState.className = "hnk-wf-prompt-state" + (edited ? " edited" : "");
+    if (nodes.promptReset) nodes.promptReset.style.display = edited ? "" : "none";
+  }
+  function paintPromptLive() {
+    var ta = nodes.promptTa;
+    if (!ta) return;
+    if (!(state.promptOverride && String(state.promptOverride).trim())) {
+      var live = livePrompt(), focused = false;
+      try { focused = doc.activeElement === ta; } catch (e) { }
+      if (!focused && ta.value !== live) ta.value = live;
+    }
+    paintPromptState();
+  }
+  function renderAdvanced(root, wf) {
+    var head = dom.el(doc, "button", { class: "hnk-btn hnk-wf-adv-h", id: "hnkWfAdvH", text: "\u2699 Advanced \u2014 " + l9(L_ADV) });
+    var body = dom.el(doc, "div", { class: "hnk-wf-adv-b" + (advOpen ? " on" : ""), id: "hnkWfAdvB" });
+    body.appendChild(dom.el(doc, "p", { class: "mut", text: dom.t("wiz_promptnote", "The workflow's protected prompt is pre-filled \u2014 add anything extra (e.g. what background/text you want) at the top.") }));
+    var ta = dom.el(doc, "textarea", { class: "hnk-inp hnk-wf-prompt", id: "hnkWfPrompt" });
+    ta.value = (state.promptOverride && String(state.promptOverride).trim()) ? state.promptOverride : livePrompt();
+    dom.on(ta, "input", function () {
+      var v = ta.value;
+      if (v === livePrompt()) wstate.setPromptOverride(state, "");
+      else wstate.setPromptOverride(state, v);
+      paintPromptState();
+    });
+    body.appendChild(ta);
+    var row = dom.el(doc, "div", { class: "hnk-wf-prompt-row" });
+    var reset = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfPromptReset", text: "\u21BA " + l9(L_PROMPT_RESET) });
+    dom.on(reset, "click", function () { wstate.setPromptOverride(state, ""); ta.value = livePrompt(); paintPromptState(); });
+    var st = dom.el(doc, "span", { class: "hnk-wf-prompt-state", id: "hnkWfPromptState" });
+    row.appendChild(reset); row.appendChild(st);
+    body.appendChild(row);
+    dom.on(head, "click", function () {
+      advOpen = !advOpen;
+      body.className = "hnk-wf-adv-b" + (advOpen ? " on" : "");
+      if (advOpen) paintPromptLive();
+    });
+    nodes.promptTa = ta; nodes.promptState = st; nodes.promptReset = reset;
+    root.appendChild(head); root.appendChild(body);
+    paintPromptState();
+  }
+
+  /* ---- v6.83.0 — RESULTS · BEFORE | AFTER · HISTORY. HNK.wfResults holds
+     every result of the session (bootstrap records them as they land); the
+     card shows the chosen one — newest by default — with the actions a
+     student needs next: compare with IMAGE 1, place it again, run again,
+     chain it as IMAGE 1, open it in Edit (Freeform), remove it; a board of
+     this workflow's runs (plus earlier ones from the gallery folder, on
+     request); and the sanitized History rows of this workflow. ---- */
+  function wr() { return (globalThis.HNK && globalThis.HNK.wfResults) || null; }
+  function bootHandle() { return (globalThis.HNK && globalThis.HNK.aiToolsBoot) || null; }
+  function subscribeResults(wfId) {
+    unsubscribeResults();
+    var w = wr(); if (!w) return;
+    unsubResults = w.subscribe(function () {
+      if (state.workflowId !== wfId || !nodes.results) return;
+      resSel = null;   /* a new result is the one to look at */
+      renderResults();
+    });
+  }
+  function unsubscribeResults() { if (unsubResults) { try { unsubResults(); } catch (e) { } unsubResults = null; } }
+  function fmtTime(ts) {
+    try { var d = new Date(ts); var h = d.getHours(), m = d.getMinutes(); return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m; } catch (e) { return ""; }
+  }
+  function setCmp(v) {
+    var pct = Math.max(0, Math.min(100, Number(v) || 0));
+    cmpPos = pct;
+    if (nodes.cmpTop) nodes.cmpTop.style.width = pct + "%";
+    if (nodes.cmpLine) nodes.cmpLine.style.left = pct + "%";
+    /* the Before picture stays the full box width inside a box pct% wide:
+       100/pct of its frame — 6.78.0's Imagine rule; UXP has no ruler to hand
+       it a pixel width */
+    if (nodes.cmpBefore) nodes.cmpBefore.style.width = (pct > 0 ? (10000 / pct) : 100) + "%";
+  }
+  function renderResults() {
+    var host = nodes.results; if (!host) return;
+    var wf = registry.get(state.workflowId); if (!wf) return;
+    dom.clear(host);
+    var w = wr();
+    var all = w ? w.list(wf.id) : [];
+    var sel = null, i;
+    if (resSel) {
+      for (i = 0; i < all.length; i++) if (all[i].id === resSel) sel = all[i];
+      if (!sel) for (i = 0; i < earlier.length; i++) if (earlier[i].id === resSel) sel = earlier[i];
+    }
+    if (!sel) sel = all[0] || null;
+    host.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: l9(L_RESULTS) }));
+    nodes.cmpTop = nodes.cmpLine = nodes.cmpBefore = null;
+    if (!sel) {
+      host.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc", id: "hnkWfResultsEmpty", text: l9(L_RES_EMPTY) }));
+    } else {
+      var im = doc.createElement("img");
+      im.className = "hnk-wf-result-img"; im.id = "hnkWfResultImg"; im.alt = wf.title + " \u2014 result"; im.src = sel.after;
+      host.appendChild(im);
+      var mdl = sel.model ? (modelRegistry.getModel(sel.model) || { displayName: sel.model }).displayName : "";
+      var meta = [sel.timeLabel || (sel.ts ? fmtTime(sel.ts) : ""), mdl, sel.size ? String(sel.size).toUpperCase() : "", sel.ratio, sel.promptEdited ? "\u270E" : ""].filter(Boolean).join(" \u00b7 ");
+      if (meta) host.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc", id: "hnkWfResultMeta", text: meta }));
+      if (!sel.fromGallery) host.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc", id: "hnkWfResultSaved", text: l9(L_SAVED) }));
+      var acts = dom.el(doc, "div", { class: "hnk-wf-res-acts", id: "hnkWfResActs" });
+      var hasBefore = !!sel.before;
+      if (hasBefore) {
+        var cmpB = dom.el(doc, "button", { class: "hnk-btn" + (cmpOpen ? " on" : ""), id: "hnkWfCmpBtn", text: "Before/After" });
+        dom.on(cmpB, "click", function () { cmpOpen = !cmpOpen; renderResults(); });
+        acts.appendChild(cmpB);
+      }
+      var place = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfPlaceAgain", text: l9(L_PLACE_AGAIN) });
+      dom.on(place, "click", function () { var h = bootHandle(); if (h && h.placeResult) h.placeResult(sel.after, wf.id, sel.model); });
+      acts.appendChild(place);
+      var again = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfRunAgain", text: l9(L_RUN_AGAIN) });
+      dom.on(again, "click", function () { doGenerate(); });
+      acts.appendChild(again);
+      if (state.requiredInputs && state.requiredInputs[0] && !wf.region) {
+        var use = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfUseAsInput", text: l9(L_USE_AS_IN) });
+        dom.on(use, "click", function () {
+          var slot0 = state.requiredInputs[0];
+          wstate.setInput(state, slot0.key, { source: "result", role: slot0.role, ref: sel.after, valid: true });
+          refresh();
+          toast(l9(L_USED_AS_IN), "ok");
+        });
+        acts.appendChild(use);
+      }
+      var edit = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfToFreeform", text: l9(L_OPEN_EDIT) });
+      dom.on(edit, "click", function () { var f = globalThis.HNK && globalThis.HNK.wfToFreeform; if (f) f(sel.before, sel.after); });
+      acts.appendChild(edit);
+      if (!sel.fromGallery) {
+        var del = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfResultDel", text: "\u2715 " + l9(L_REMOVE) });
+        dom.on(del, "click", function () { if (w) w.remove(sel.id); });   /* the subscription repaints */
+        acts.appendChild(del);
+      }
+      host.appendChild(acts);
+      if (hasBefore && cmpOpen) {
+        var wrap = dom.el(doc, "div", { class: "hnk-wf-cmp", id: "hnkWfCmpWrap" });
+        var box = dom.el(doc, "div", { class: "cmp", id: "hnkWfCmpBox" });
+        var after = doc.createElement("img"); after.id = "hnkWfImgAfter"; after.alt = "after"; after.src = sel.after;
+        var top = dom.el(doc, "div", { class: "cmp-top", id: "hnkWfCmpTop" });
+        var before = doc.createElement("img"); before.id = "hnkWfImgBefore"; before.alt = "before"; before.src = sel.before;
+        top.appendChild(before);
+        var line = dom.el(doc, "div", { class: "cmp-line", id: "hnkWfCmpLine" });
+        box.appendChild(after); box.appendChild(top); box.appendChild(line);
+        wrap.appendChild(box);
+        var range = dom.el(doc, "input", { id: "hnkWfCmpRange", attrs: { type: "range", min: "0", max: "100", value: String(cmpPos) } });
+        dom.on(range, "input", function () { setCmp(range.value); });
+        dom.on(range, "change", function () { setCmp(range.value); });
+        wrap.appendChild(range);
+        wrap.appendChild(dom.el(doc, "div", { class: "hnk-wf-cmp-tags" }, [
+          dom.el(doc, "span", { text: "\u2190 Before (IMAGE 1)" }), dom.el(doc, "span", { text: "After \u2192" })]));
+        nodes.cmpTop = top; nodes.cmpLine = line; nodes.cmpBefore = before;
+        host.appendChild(wrap);
+        setCmp(cmpPos);
+      }
+    }
+    /* the board: this workflow's runs this session, then the earlier ones read from the gallery folder */
+    var items = all.concat(earlier);
+    if (items.length > 1) {
+      host.appendChild(dom.el(doc, "div", { class: "subh", text: l9(L_BOARD) }));
+      var board = dom.el(doc, "div", { class: "hnk-wf-board", id: "hnkWfBoard" });
+      items.slice(0, 24).forEach(function (e, idx) {
+        var th = dom.el(doc, "div", { class: "hnk-wf-board-th" + (sel && e.id === sel.id ? " on" : ""), attrs: { role: "button", tabindex: "0", "data-id": e.id } });
+        if ((idx + 1) % 3 === 0) th.style.marginRight = "0";
+        var ti = doc.createElement("img"); ti.alt = ""; ti.src = e.after; th.appendChild(ti);
+        dom.on(th, "click", function () { resSel = e.id; renderResults(); });
+        board.appendChild(th);
+      });
+      host.appendChild(board);
+    }
+    renderEarlierDoor(host, wf, all);
+    renderWfHistory(host, wf);
+  }
+  /* the gallery folder keeps every result across restarts (6.46.0); the door
+     lists this workflow's files and reads at most twelve, only when asked —
+     a result is a multi-megabyte PNG. Files the session already shows are
+     skipped by their timestamp. */
+  function renderEarlierDoor(host, wf, sessionList) {
+    var gs = globalThis.HNK && globalThis.HNK.galleryStore;
+    if (!gs || !gs.listFor || earlierLoaded) return;
+    var door = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfEarlier", text: l9(L_EARLIER).replace("{n}", "\u2026") });
+    door.style.display = "none";
+    host.appendChild(door);
+    var oldest = 0;
+    (sessionList || []).forEach(function (e) { if (e.ts && (!oldest || e.ts < oldest)) oldest = e.ts; });
+    Promise.resolve(gs.listFor(wf.id)).then(function (files) {
+      files = (files || []).filter(function (f) {
+        var m = /-(\d+)\.[a-z0-9]+$/i.exec(String(f && f.name || ""));
+        return !(oldest && m && Number(m[1]) >= oldest - 5000);
+      });
+      if (!files.length || state.workflowId !== wf.id) return;
+      door.textContent = l9(L_EARLIER).replace("{n}", String(files.length));
+      door.style.display = "";
+      dom.on(door, "click", function () {
+        door.className = "hnk-btn is-busy";
+        Promise.all(files.slice(0, 12).map(function (f) {
+          return Promise.resolve(gs.readDataUrl(f.name)).then(function (ref) {
+            return ref ? { id: "g:" + f.name, after: ref, before: "", fromGallery: true, ts: 0, timeLabel: "", model: "", ratio: "", size: "", name: f.name } : null;
+          });
+        })).then(function (list) { earlier = list.filter(Boolean); earlierLoaded = true; renderResults(); });
+      });
+    }).catch(function () { });
+  }
+  function renderWfHistory(host, wf) {
+    var h = bootHandle(); var svc = h && h.services && h.services.history;
+    var rows = [];
+    try { rows = (svc ? svc.list() : []).filter(function (e) { return e && e.mode === "smart-workflow" && e.workflowId === wf.id; }); } catch (e) { rows = []; }
+    host.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_history", "History") }));
+    var wrap = dom.el(doc, "div", { class: "hnk-wf-hist", id: "hnkWfHistory" });
+    if (!rows.length) wrap.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc", id: "hnkWfHistoryEmpty", text: dom.t("ai_no_gen", "No generations yet.") }));
+    rows.slice(0, 8).forEach(function (e, i) {
+      var card = dom.el(doc, "div", { class: "hnk-hist", id: "hnkWfHist_" + i });
+      card.appendChild(dom.el(doc, "div", { class: "hnk-hist-meta", text: [e.timeLabel, e.modelName, e.size, e.ratio].filter(Boolean).join(" \u00b7 ") || e.badge || "WORKFLOW" }));
+      var acts = dom.el(doc, "div", { class: "hnk-hist-actions" });
+      var rr = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfHistRerun_" + i, text: dom.t("ai_rerun", "Re-run") });
+      dom.on(rr, "click", function () { doGenerate(); });
+      acts.appendChild(rr); card.appendChild(acts); wrap.appendChild(card);
+    });
+    if (rows.length) {
+      var allB = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfHistAll", text: l9(L_HIST_ALL) });
+      dom.on(allB, "click", function () { var app = globalThis.HNK && globalThis.HNK.aiToolsApp; if (app && app.navigate) app.navigate("history"); });
+      wrap.appendChild(allB);
+    }
+    host.appendChild(wrap);
   }
 
   /* v6.79.0 — MODEL · RATIO · COUNT · SIZE, PICKABLE. The app's wizard clones

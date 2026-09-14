@@ -39,6 +39,10 @@ function defaultState() {
     resolvedRoute: null,
     fieldVals: {},           // v6.35.0 — per-workflow design fields (text/colour/toggles)
     regionBounds: null,      // v6.36.0 — Selection Edit: live rectangle captured at Generate
+    /* v6.83.0 — the student's own wording of the whole prompt. Empty means
+       "the workflow's compiled prompt, live"; any text is sent verbatim in
+       its place (owner: "smartworkflow prompts ကို ဖြည့်ပြင် ဖြုတ်လို့ရအောင်"). */
+    promptOverride: "",
     output: {}               // shared prefs — set by the app, preserved on switch
   };
 }
@@ -67,6 +71,7 @@ function selectWorkflow(state, workflowId) {
   state.negativePrompt = "";
   state.protectionRules = [];
   state.userText = "";
+  state.promptOverride = "";   /* v6.83.0 — an edit belongs to one workflow */
   /* v6.35.0 — design fields start at the workflow's own defaults */
   state.fieldVals = {};
   (wf.fields || []).forEach(function (f) { state.fieldVals[f.key] = f.type === "toggle" ? f.default !== false : (f.default || ""); });
@@ -93,6 +98,14 @@ function prepare(state) {
    wording, watermark targets). Travels with the protected prompt at compile. */
 function setUserText(state, text) {
   state.userText = String(text == null ? "" : text).slice(0, 2000);
+  return state;
+}
+
+/* v6.83.0 — the wizard's Advanced box: the whole prompt, in the student's
+   words. Whitespace-only text clears the override (the live prompt returns). */
+function setPromptOverride(state, text) {
+  var t = String(text == null ? "" : text);
+  state.promptOverride = t.trim() ? t.slice(0, 6000) : "";
   return state;
 }
 
@@ -134,6 +147,7 @@ var API = {
   setField: setField,
   setOutput: setOutput,
   setUserText: setUserText,
+  setPromptOverride: setPromptOverride,
   reset: reset
 };
 

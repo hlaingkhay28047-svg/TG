@@ -86,7 +86,38 @@ async function clear() {
   } catch (e) { return false; }
 }
 
-var API = { save: save, list: list, remove: remove, clear: clear, MAX: MAX };
+/* v6.83.0 — READ ONE BACK. The Smart Workflow wizard's results board lists
+   the earlier runs of the same workflow from this folder (save() prefixes
+   every file with the workflow id), and opens one as a data: URL on demand —
+   never all of them at once: a result is a multi-megabyte PNG. */
+function _prefix(workflowId) { return String(workflowId || "hnk").replace(/[^a-z0-9-]+/gi, "-").slice(0, 24) + "-"; }
+async function listFor(workflowId) {
+  var files = await list();
+  var pre = _prefix(workflowId);
+  return files.filter(function (f) {
+    var n = String(f && f.name || "");
+    return n.indexOf(pre) === 0 && /^\d+\.[a-z0-9]+$/i.test(n.slice(pre.length));
+  });
+}
+async function readDataUrl(name) {
+  try {
+    var uxp = _uxp();
+    var toB64 = globalThis.HNK && globalThis.HNK.bufToB64;
+    if (!uxp || !toB64) return "";
+    var files = await list();
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].name !== name) continue;
+      var buf = await files[i].read({ format: uxp.storage.formats.binary });
+      var ext = String(name).split(".").pop().toLowerCase();
+      var mime = (ext === "jpg" || ext === "jpeg") ? "image/jpeg" : ext === "webp" ? "image/webp" : "image/png";
+      var b64 = toB64(buf);
+      return b64 ? "data:" + mime + ";base64," + b64 : "";
+    }
+  } catch (e) { }
+  return "";
+}
+
+var API = { save: save, list: list, remove: remove, clear: clear, listFor: listFor, readDataUrl: readDataUrl, MAX: MAX };
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.galleryStore = API; }
 })();

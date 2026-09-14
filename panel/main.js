@@ -767,6 +767,8 @@ const I18N = {
     btn_paste: "Paste",
     btn_load: "Load",
     btn_cancel: "Cancel",
+    btn_ok: "OK",
+    wiz_promptnote: "The workflow's protected prompt is pre-filled — add anything extra (e.g. what background/text you want) at the top.",
     st_url_loading: "Downloading web image",
     st_ref_web_added: "Web image added as reference \u2713",
     st_url_bad: "Could not load an image from this URL \u2014 copy the image address and try again",
@@ -1433,6 +1435,8 @@ const I18N = {
     btn_paste: "Paste",
     btn_load: "\u101a\u1030\u1019\u101a\u103a",
     btn_cancel: "\u1019\u101c\u102f\u1015\u103a\u1010\u1031\u102c\u1037",
+    btn_ok: "အိုကေ",
+    wiz_promptnote: "Workflow ရဲ့ protected prompt အသင့်ပါပြီးသား — ထပ်ဖြည့်ချင်တာ (ဥပမာ ဘယ်လိုနောက်ခံ/စာသား) အပေါ်ဆုံးမှာ ရေးထည့်လို့ရတယ်",
     st_url_loading: "Web \u1015\u102f\u1036 \u1006\u103d\u1032\u101a\u1030\u1014\u1031\u101e\u100a\u103a",
     st_ref_web_added: "Web \u1015\u102f\u1036\u1000\u102d\u102f reference \u1021\u1016\u103c\u1005\u103a\u1011\u100a\u103a\u1015\u103c\u102e\u1038 \u2713",
     st_url_bad: "\u1012\u102e URL \u1000\u1014\u1031 \u1015\u102f\u1036\u1019\u101b\u1015\u102b \u2014 \u1015\u102f\u1036\u1015\u1031\u102b\u103a Copy image address \u1014\u1032\u1037 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
@@ -2099,6 +2103,8 @@ const I18N = {
     btn_paste: "\u1015\u1062\u1075\u103a\u1088",
     btn_load: "\u101c\u1030\u1010\u103a\u1087",
     btn_cancel: "\u1075\u102d\u102f\u1010\u103a\u1038",
+    btn_ok: "OK",
+    wiz_promptnote: "Protected prompt ၶွင် Workflow မီးဝႆႉယဝ်ႉ — ဢၼ်ၶႂ်ႈထႅမ် (ဥပမႃႇ ပိုၼ်ႉလင်/တူဝ်လိၵ်ႈ) တႅမ်ႈသႂ်ႇတီႈၼိူဝ်သုတ်းလႆႈ",
     st_url_loading: "\u1010\u102d\u102f\u1075\u103a\u1089\u1022\u101d\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1010\u102e\u1088 web",
     st_ref_web_added: "\u101e\u1082\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 web \u1015\u1035\u107c\u103a reference \u101a\u101d\u103a\u1089 \u2713",
     st_url_bad: "\u1022\u101d\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1010\u102e\u1088 URL \u107c\u1086\u1089\u1022\u1019\u103a\u1087\u101c\u1086\u1088 \u2014 \u1075\u1031\u1083\u1087\u1022\u103d\u1004\u103a\u1088\u1010\u102e\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u101e\u1031 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
@@ -2763,6 +2769,8 @@ const I18N = {
     btn_paste: "Kap da",
     btn_load: "La",
     btn_cancel: "Hkring",
+    btn_ok: "OK",
+    wiz_promptnote: "Workflow a protected prompt gaw jahkrat da sai — jat mayu ai (ga shadawn hpang lam/laika) ntsa dik kaw ka bang mai ai",
     st_url_loading: "Web sumla hpe la nga ai",
     st_ref_web_added: "Web sumla hpe reference hku bang sai \u2713",
     st_url_bad: "Ndai URL kaw na sumla n lu la ai \u2014 sumla shara hpe copy nna bai chyam u",
@@ -3427,6 +3435,8 @@ const I18N = {
     btn_paste: "\u0e27\u0e32\u0e07",
     btn_load: "\u0e42\u0e2b\u0e25\u0e14",
     btn_cancel: "\u0e22\u0e01\u0e40\u0e25\u0e34\u0e01",
+    btn_ok: "ตกลง",
+    wiz_promptnote: "prompt ที่ป้องกันของ Workflow ใส่ไว้ให้แล้ว — เพิ่มสิ่งที่ต้องการ (เช่น พื้นหลัง/ข้อความ) ไว้ด้านบนสุดได้",
     st_url_loading: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01\u0e40\u0e27\u0e47\u0e1a",
     st_ref_web_added: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e20\u0e32\u0e1e\u0e40\u0e27\u0e47\u0e1a\u0e40\u0e1b\u0e47\u0e19\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e41\u0e25\u0e49\u0e27 \u2713",
     st_url_bad: "\u0e42\u0e2b\u0e25\u0e14\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01 URL \u0e19\u0e35\u0e49\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49 \u2014 \u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e02\u0e2d\u0e07\u0e20\u0e32\u0e1e\u0e41\u0e25\u0e49\u0e27\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
@@ -4091,6 +4101,8 @@ const I18N = {
     btn_paste: "\u7c98\u8d34",
     btn_load: "\u52a0\u8f7d",
     btn_cancel: "\u53d6\u6d88",
+    btn_ok: "确定",
+    wiz_promptnote: "Workflow 的受保护 prompt 已预先填好 — 想补充的内容（如背景/文字）可写在最上方",
     st_url_loading: "\u6b63\u5728\u4e0b\u8f7d\u7f51\u7edc\u56fe\u7247",
     st_ref_web_added: "\u7f51\u7edc\u56fe\u7247\u5df2\u6dfb\u52a0\u4e3a\u53c2\u8003\u56fe \u2713",
     st_url_bad: "\u65e0\u6cd5\u4ece\u8be5 URL \u8f7d\u5165\u56fe\u7247 \u2014 \u8bf7\u590d\u5236\u56fe\u7247\u5730\u5740\u540e\u91cd\u8bd5",
@@ -4755,6 +4767,8 @@ const I18N = {
     btn_paste: "D\u00e1n",
     btn_load: "T\u1ea3i",
     btn_cancel: "H\u1ee7y",
+    btn_ok: "OK",
+    wiz_promptnote: "Prompt bảo vệ của workflow đã được điền sẵn — thêm điều bạn muốn (ví dụ nền/chữ) ở đầu",
     st_url_loading: "\u0110ang t\u1ea3i \u1ea3nh t\u1eeb web",
     st_ref_web_added: "\u0110\u00e3 th\u00eam \u1ea3nh web l\u00e0m tham chi\u1ebfu \u2713",
     st_url_bad: "Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c \u1ea3nh t\u1eeb URL n\u00e0y \u2014 h\u00e3y copy \u0111\u1ecba ch\u1ec9 \u1ea3nh r\u1ed3i th\u1eed l\u1ea1i",
@@ -5419,6 +5433,8 @@ const I18N = {
     btn_paste: "Tempel",
     btn_load: "Muat",
     btn_cancel: "Batal",
+    btn_ok: "OK",
+    wiz_promptnote: "Prompt terlindungi workflow sudah terisi — tambahkan yang Anda mau (mis. latar/teks) di bagian atas",
     st_url_loading: "Mengunduh gambar dari web",
     st_ref_web_added: "Gambar web ditambahkan sebagai referensi \u2713",
     st_url_bad: "Gagal memuat gambar dari URL ini \u2014 salin alamat gambarnya lalu coba lagi",
@@ -6083,6 +6099,8 @@ const I18N = {
     btn_paste: "Tampal",
     btn_load: "Muat",
     btn_cancel: "Batal",
+    btn_ok: "OK",
+    wiz_promptnote: "Prompt terlindung aliran kerja sudah diisi — tambah apa yang anda mahu (cth. latar/teks) di bahagian atas",
     st_url_loading: "Memuat turun imej web",
     st_ref_web_added: "Imej web ditambah sebagai rujukan \u2713",
     st_url_bad: "Tidak dapat memuatkan imej dari URL ini \u2014 salin alamat imej dan cuba lagi",
@@ -6655,7 +6673,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.153.0";
+const PANEL_VERSION = "6.154.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8001,6 +8019,30 @@ function applyI18n() {
     /* v6.46.0 — the gallery store writes binary files and must not carry its
        own base64 decoder; this is main.js's, already used by every save. */
     g.HNK.b64ToBuf = b64ToBuf;
+    /* v6.83.0 — and its inverse, so the gallery store can read a saved
+       result back for the Smart Workflow wizard's results board. */
+    g.HNK.bufToB64 = bufToB64;
+    /* v6.83.0 — "Open in Edit" on the wizard's result card: IMAGE 1 becomes
+       Freeform's Before and the result its After, entered into Freeform's own
+       results history, so everything Freeform does with a result (compare,
+       save, place, chain into IMG 1, Retouch, Path) works on a workflow's. */
+    g.HNK.wfToFreeform = function (beforeRef, afterRef) {
+      const parse = function (ref) {
+        const m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(String(ref || ""));
+        return m ? { mime: m[1].toLowerCase(), b64: m[2] } : null;
+      };
+      const a = parse(afterRef); if (!a) return false;
+      const b = parse(beforeRef);
+      state.resultB64 = a.b64; state.resultMime = a.mime;
+      state.beforeB64 = b ? b.b64 : null; state.beforeMime = b ? b.mime : null;
+      try {
+        pushHistory({ after: a.b64, afterMime: a.mime, before: state.beforeB64, beforeMime: state.beforeMime,
+          userText: "", finalPrompt: "", action: "workflow", ts: Date.now(), ratio: state.previewRatio });
+      } catch (e) { }
+      try { refreshCompare(); } catch (e) { }
+      try { switchPage("prompt"); } catch (e) { }
+      return true;
+    };
     g.HNK.studioKey = function () { return (state && state.rhKey) || ""; };
     /* A key Setup has SAVED is the studio's working key (the classic stack
        keeps no separate verified flag — Test Key only gates the save), so a

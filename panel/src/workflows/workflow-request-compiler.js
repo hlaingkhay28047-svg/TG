@@ -65,6 +65,18 @@ function compile(state) {
      the same line the web app's wizard sends (wizSendPrompt). */
   prompt += _scenePresetLine(state);
 
+  /* v6.83.0 — THE STUDENT'S OWN PROMPT WINS, WHOLE. The wizard's Advanced
+     box shows exactly the text assembled above (protected prompt + design
+     fields + USER REQUEST + SCENE PRESET); once the student edits it, what
+     they see is what is sent — nothing is appended behind their back, and
+     "Reset" brings the live prompt back. The negative prompt and the
+     protection rules still travel: they are the workflow's, not the text's. */
+  var promptEdited = false;
+  if (state.promptOverride && String(state.promptOverride).trim()) {
+    prompt = String(state.promptOverride);
+    promptEdited = true;
+  }
+
   var route = state.resolvedRoute || wf.route;
   // Output comes from the shared, preserved prefs — with sane fallbacks only.
   var out = Object.assign({ size: "2k", ratio: "source", quality: "high" }, state.output || {});
@@ -82,6 +94,7 @@ function compile(state) {
     workflowId: wf.id,
     regionBounds: state.regionBounds || null,
     compiledPrompt: prompt,
+    promptEdited: promptEdited,
     negativePrompt: negative || "",
     requiredImages: requiredImages,
     optionalImages: optionalImages,
