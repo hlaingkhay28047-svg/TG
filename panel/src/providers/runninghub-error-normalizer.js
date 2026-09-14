@@ -22,13 +22,47 @@ function _bodyMsg(raw) {
   try {
     var bb = raw && raw.body;
     if (!bb) return "";
-    return String(bb.msg || bb.message || (bb.error && (bb.error.message || bb.error)) || bb.code || "").slice(0, 120);
+    /* v6.80.0 — the app's own field list (rhFriendly): a FAILED job names its
+       reason under failReason / reason / errorMessage, and an answer with no
+       known field is quoted as it came, so a refusal never reads blank. */
+    var m = String(bb.msg || bb.message || (bb.error && (bb.error.message || bb.error)) || bb.failReason || bb.reason || bb.errorMessage || bb.detail || bb.code || "").slice(0, 120);
+    if (!m && typeof bb === "object") m = JSON.stringify(bb).slice(0, 120);
+    return m;
   } catch (e) { return ""; }
+}
+/* v6.80.0 — WHY, IN ONE LINE. The same discipline 6.69.0 gave the balance
+   refusal (rhWhy in main.js): a refusal that cannot name a cause is a
+   refusal nobody can fix. HTTP status (never a plain 200), the code, the
+   server's own words, the platform's message with every URL cut down to its
+   host, and the host the transport was talking to. */
+function _hostsOnly(s) { return String(s).replace(/https?:\/\/([^\/\s?#]+)[^\s)]*/gi, "$1"); }
+function why(raw) {
+  if (!raw) return "";
+  var bits = [];
+  try {
+    var status = raw.status;
+    if (status && status !== 200) bits.push("HTTP " + status);
+    var code = (raw.code !== undefined && raw.code !== null && raw.code !== "") ? String(raw.code) : "";
+    var bm = _bodyMsg(raw);
+    var m = String(raw.message || (typeof raw === "string" ? raw : "") || "").trim();
+    if (code && code !== m) bits.push("code " + code);
+    if (bm) bits.push(bm);
+    if (m && m !== bm) bits.push(_hostsOnly(m).slice(0, 120));
+    if (raw.host && bits.join(" ").indexOf(raw.host) === -1) bits.push(raw.host);
+  } catch (e) { }
+  return bits.join(" \u00b7 ").slice(0, 220);
 }
 
 /* raw can be: an Error, a { status, code, message } object, or a string.
    ctx can carry { modelName, size, imageCount, maxImages } for richer copy. */
 function normalize(raw, ctx) {
+  var out = _classify(raw, ctx);
+  /* v6.80.0 — every refusal carries its one-line reason beside the friendly
+     sentence (the UI prints it after the localized line) */
+  try { if (out && out.code !== "cancelled") { var w = why(raw); if (w) out.detail = w; } } catch (e) { }
+  return out;
+}
+function _classify(raw, ctx) {
   ctx = ctx || {};
   var status = (raw && raw.status) || 0;
   var code = _lc(raw && raw.code);
@@ -103,8 +137,23 @@ function normalize(raw, ctx) {
     };
   }
 
-  // Network
-  if (code === "network" || status === 0 || msg.indexOf("network") !== -1 ||
+  // v6.80.0 — a task RunningHub itself marked FAILED (status 0, code "failed")
+  // used to fall through to the network branch below on `status === 0` and
+  // blame the line. It is the server's verdict on the job — moderation, a
+  // bad reference, a dead node — and the app's own sentence for it, with
+  // the reason the body carried.
+  if (code === "failed") {
+    var fm = _bodyMsg(raw);
+    return {
+      code: "task-failed",
+      title: "The RunningHub task failed \u2014 try a different prompt or photo.",
+      message: "The RunningHub task failed \u2014 try a different prompt or photo.",
+      bullets: fm ? [fm] : []
+    };
+  }
+
+  // Network — a bare status 0 only counts when nothing else names the failure
+  if (code === "network" || (status === 0 && !code) || msg.indexOf("network") !== -1 ||
       msg.indexOf("fetch") !== -1 || msg.indexOf("econn") !== -1) {
     return {
       code: "network",
@@ -151,7 +200,7 @@ function toText(n) {
   return out;
 }
 
-var API = { normalize: normalize, toText: toText };
+var API = { normalize: normalize, toText: toText, why: why };
 
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.errorNormalizer = API; }

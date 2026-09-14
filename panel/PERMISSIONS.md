@@ -17,6 +17,14 @@ city named by the device's own IANA time zone — never a geolocation prompt,
 never an address, nothing about the member. The reading is kept thirty
 minutes; offline, the line is simply absent.
 
+`https://*.xiaoyaoyou.com` (v6.151.0) is RunningHub's own file storage. Every
+reference the panel uploads and every finished picture RunningHub hands back
+is a URL on that host (the probe lane's upload answer names
+`rh-hk-images-switch.xiaoyaoyou.com`), and a UXP plugin may only fetch the
+hosts its manifest lists. Without it the panel could submit and pay for a task
+and never be allowed to download its result — which is exactly what the
+owner's 6.150.0 photograph showed as "cannot reach RunningHub".
+
 Clipboard access supports explicit Copy/Paste actions for prompts, diagnostic
 logs, and image URLs. Remote webviews remain user-initiated and are restricted
 to the domains listed in `manifest.json`. No HNK admin key, service credential,

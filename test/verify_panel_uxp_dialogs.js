@@ -124,7 +124,7 @@ function sourcePins() {
 
   /* A6 — the width probe and the hub range, app + lifted panel module */
   const im = (src) => ({
-    probe: /function imViewportW\(\)\{/.test(src) && /window\.matchMedia\("\(min-width: "\+mid\+"px\)"\)\.matches/.test(src) && /var vw=imViewportW\(\); if\(!\(vw>0\)\) return 0;/.test(src),
+    probe: /function imViewportW\(\)\{/.test(src) && /window\.matchMedia\("\(min-width: "\+mid\+"px\)"\)\.matches/.test(src) && /var vw=imViewportW\(\); if\(!\(vw>0\)\) return imStageW\(\);/.test(src),
     range: /var rng = el\("input","im-hubrange"\); rng\.type="range";/.test(src) && /var rngSync=function\(\)\{ rng\.style\.display = imRect\(art\) \? "none" : ""; \};/.test(src) && /c\.appendChild\(rng\);/.test(src),
     api: /viewportW:imViewportW, stageWidth:imStageWidth,/.test(src)
   });

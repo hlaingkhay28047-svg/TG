@@ -930,6 +930,7 @@ const I18N = {
     err_net: "Network / server problem \u2014 please try again \u00b7 \u1000\u103d\u1014\u103a\u101b\u1000\u103a/\u1006\u102c\u1017\u102c\u1015\u103c\u1005\u1014\u102c \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "Could not reach RunningHub Enterprise \u2014 the line is down. Check your internet connection and try again.",
+    rh_err_task_failed: "The RunningHub task failed \u2014 try a different prompt or photo.",
     rh_err_timeout: "The generation took too long \u2014 RunningHub did not answer in time. Try again, or reduce the size or number of variants.",
     rh_err_rate_limited: "RunningHub Enterprise is busy right now \u2014 wait a moment and try again.",
     rh_err_invalid_key: "RunningHub refused the key \u2014 check it under Setup \u25b8 RunningHub Enterprise.",
@@ -1594,6 +1595,7 @@ const I18N = {
     err_net: "\u1000\u103d\u1014\u103a\u101b\u1000\u103a/\u1006\u102c\u1017\u102c \u1015\u103c\u1005\u1014\u102c \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "RunningHub Enterprise ကို မရောက်ပါ — အင်တာနက် ပြတ်နေပါတယ်။ ချိတ်ဆက်မှုကို စစ်ပြီး ပြန်ကြိုးစားပါ။",
+    rh_err_task_failed: "RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",
     rh_err_timeout: "ပုံထုတ်တာ ကြာလွန်းပါတယ် — RunningHub က အချိန်မီ မဖြေပါ။ ပြန်ကြိုးစားပါ (သို့) အရွယ်အစား / အရေအတွက် လျှော့ပါ။",
     rh_err_rate_limited: "RunningHub Enterprise အလုပ်များနေပါတယ် — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ။",
     rh_err_invalid_key: "RunningHub က key ကို လက်မခံပါ — Setup ▸ RunningHub Enterprise မှာ key ပြန်စစ်ပါ။",
@@ -2258,6 +2260,7 @@ const I18N = {
     err_net: "\u1076\u103d\u1004\u103a\u1087\u101e\u1035\u1004\u103a\u1088 / server \u1019\u102e\u1038\u101c\u103d\u1004\u103a\u1088\u101a\u102f\u1075\u103a\u1038 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "ထိုင် RunningHub Enterprise ဢမ်ႇလႆႈ — ဢိၼ်ႇထႃႇၼႅတ်ႉၶၢတ်ႇ။ ၵူတ်ႇထတ်းလႅင်းသေ ၶိုၼ်းၸၢမ်း။",
+    rh_err_task_failed: "RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",
     rh_err_timeout: "ႁဵတ်းႁၢင်ႈႁိုင်ပူၼ်ႉ — RunningHub ဢမ်ႇတွပ်ႇတၼ်း။ ၶိုၼ်းၸၢမ်း ဢမ်ႇၼၼ် လူတ်းယွမ်း ၶၼၢတ်ႈ / ၸမ်ႉ။",
     rh_err_rate_limited: "RunningHub Enterprise ယုင်ႈယူႇ — ပႂ်ႉၵမ်းၼိုင်ႈသေ ၶိုၼ်းၸၢမ်း။",
     rh_err_invalid_key: "RunningHub ဢမ်ႇႁပ်ႉ key — ၵူတ်ႇထတ်းတီႈ Setup ▸ RunningHub Enterprise။",
@@ -2920,6 +2923,7 @@ const I18N = {
     err_net: "Network / server jam jau ai \u2014 bai chyam yu u",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "RunningHub Enterprise de n du lu ai — internet hten nga ai. Internet hpe yu nna bai chyam yu u.",
+    rh_err_task_failed: "RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",
     rh_err_timeout: "Sumla shapraw na na ai — RunningHub aten hta n htai ai. Bai chyam yu u, n rai yang kaba / nsen hpe yawm u.",
     rh_err_rate_limited: "RunningHub Enterprise bungli law nga ai — jahkring la nna bai chyam yu u.",
     rh_err_invalid_key: "RunningHub gaw key hpe n hkap la ai — Setup ▸ RunningHub Enterprise hta bai yu u.",
@@ -3582,6 +3586,7 @@ const I18N = {
     err_net: "\u0e1b\u0e31\u0e0d\u0e2b\u0e32\u0e40\u0e04\u0e23\u0e37\u0e2d\u0e02\u0e48\u0e32\u0e22 / \u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c \u2014 \u0e01\u0e23\u0e38\u0e13\u0e32\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "เชื่อมต่อ RunningHub Enterprise ไม่ได้ — อินเทอร์เน็ตขาด ตรวจสอบการเชื่อมต่อแล้วลองใหม่",
+    rh_err_task_failed: "งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",
     rh_err_timeout: "สร้างภาพนานเกินไป — RunningHub ไม่ตอบทันเวลา ลองใหม่ หรือลดขนาด / จำนวนภาพ",
     rh_err_rate_limited: "RunningHub Enterprise กำลังยุ่ง — รอสักครู่แล้วลองใหม่",
     rh_err_invalid_key: "RunningHub ไม่รับคีย์นี้ — ตรวจสอบที่ Setup ▸ RunningHub Enterprise",
@@ -4244,6 +4249,7 @@ const I18N = {
     err_net: "\u7f51\u7edc\uff0f\u670d\u52a1\u5668\u95ee\u9898 \u2014 \u8bf7\u91cd\u8bd5",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "无法连接 RunningHub Enterprise — 网络已断开。请检查网络连接后重试。",
+    rh_err_task_failed: "RunningHub 任务失败 — 请更换 prompt 或图片",
     rh_err_timeout: "生成耗时过长 — RunningHub 未及时响应。请重试，或减小尺寸 / 数量。",
     rh_err_rate_limited: "RunningHub Enterprise 正忙 — 请稍候再试。",
     rh_err_invalid_key: "RunningHub 拒绝了该 key — 请到 Setup ▸ RunningHub Enterprise 检查。",
@@ -4906,6 +4912,7 @@ const I18N = {
     err_net: "S\u1ef1 c\u1ed1 m\u1ea1ng / m\u00e1y ch\u1ee7 \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "Không kết nối được RunningHub Enterprise — mất mạng. Kiểm tra kết nối rồi thử lại.",
+    rh_err_task_failed: "Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",
     rh_err_timeout: "Tạo ảnh quá lâu — RunningHub không trả lời kịp. Thử lại, hoặc giảm kích thước / số lượng.",
     rh_err_rate_limited: "RunningHub Enterprise đang bận — đợi một lát rồi thử lại.",
     rh_err_invalid_key: "RunningHub từ chối key — kiểm tra tại Setup ▸ RunningHub Enterprise.",
@@ -5568,6 +5575,7 @@ const I18N = {
     err_net: "Masalah jaringan / server \u2014 silakan coba lagi",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "Tidak dapat menjangkau RunningHub Enterprise — koneksi terputus. Periksa internet lalu coba lagi.",
+    rh_err_task_failed: "Tugas RunningHub gagal — coba prompt/foto lain",
     rh_err_timeout: "Pembuatan terlalu lama — RunningHub tidak menjawab tepat waktu. Coba lagi, atau kurangi ukuran / jumlah.",
     rh_err_rate_limited: "RunningHub Enterprise sedang sibuk — tunggu sebentar lalu coba lagi.",
     rh_err_invalid_key: "RunningHub menolak key — periksa di Setup ▸ RunningHub Enterprise.",
@@ -6230,6 +6238,7 @@ const I18N = {
     err_net: "Masalah rangkaian / pelayan \u2014 sila cuba lagi",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "Tidak dapat mencapai RunningHub Enterprise — talian terputus. Semak internet dan cuba lagi.",
+    rh_err_task_failed: "Tugas RunningHub gagal — cuba prompt/foto lain",
     rh_err_timeout: "Penjanaan terlalu lama — RunningHub tidak menjawab tepat pada masanya. Cuba lagi, atau kurangkan saiz / bilangan.",
     rh_err_rate_limited: "RunningHub Enterprise sibuk sekarang — tunggu sebentar dan cuba lagi.",
     rh_err_invalid_key: "RunningHub menolak key — semak di Setup ▸ RunningHub Enterprise.",
@@ -6629,7 +6638,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.150.0";
+const PANEL_VERSION = "6.151.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9848,6 +9857,8 @@ function selfTestRowsInner() {
        other rulers, each printed: whichever answers is the one to build on. */
     const wp = hnkWidthProbes();
     rows.push({ label: "width probes", detail: wp.detail, level: wp.best > 0 ? "ok" : "host" });
+    /* v6.80.0 — RunningHub and its file storage, each reached or not (see hnkNetProbeStart) */
+    rows.push(hnkNetProbeRow());
     /* the student scrolled down to press Run: a positive reading here means
        scroll positions reach script (page-restore, the jump chips) */
     const pgS = $("pages");
@@ -10205,7 +10216,7 @@ function bindSetup() {
     const cpy = $("btnCopyLink"); if (cpy) cpy.addEventListener("click", function () { shareCopy(); });
     const cu = $("btnCheckUpdate"); if (cu) cu.addEventListener("click", function () { aboutCheckUpdate(); });
     const hr = $("btnHardRefresh"); if (hr) hr.addEventListener("click", function () { aboutHardRefresh(); });
-    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { renderSelfTest(); });
+    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { try { hnkNetProbeStart(true); } catch (eN) { } renderSelfTest(); });
     const stc = $("btnSelfTestCopy"); if (stc) stc.addEventListener("click", function () { selfTestCopy(); });
     const about = $("cardAbout");
     if (about) {
@@ -16106,7 +16117,10 @@ function rhTransport() {
 function friendlyErr(e) {
   const m = e && e.message ? e.message : String(e);
   const hm = /^HNKERR:([a-z_]+):/.exec(m);
-  if (hm && I18N.en[hm[1]]) return t(hm[1]);
+  /* v6.80.0 — the adapter's stage and one-line reason (e.why, set by rhErrToHnk)
+     follow the translated sentence; a refusal that cannot name a cause is a
+     refusal nobody can fix */
+  if (hm && I18N.en[hm[1]]) return t(hm[1]) + ((e && e.why) ? " \u00b7 " + e.why : "");
   /* AUDIT-FIX #10: strip any internal HNKERR:code: prefix from the fallback so a
      raw token (e.g. err_generic / err_img) never leaks into the status bar. */
   return t("st_err") + ": " + m.replace(/^HNKERR:[a-z_]+:/, "");
@@ -16123,7 +16137,14 @@ function rhErrToHnk(err) {
   else if (code === "quota" || code === "rate-limited") er = new Error("HNKERR:err_quota:" + msg);
   else er = new Error("HNKERR:err_generic:" + msg);
   er.code = code; /* the app's Freeform card names a `timeout` by its own line */
+  /* v6.80.0 — where it stopped and what the host said (adapter error.stage / error.detail) */
+  const why = [err && err.stage ? rhStageWord(err.stage) : "", err && err.detail].filter(Boolean).join(" \u00b7 ");
+  if (why) er.why = why;
   return er;
+}
+function rhStageWord(stage) {
+  const k = { UPLOADING: "stage_uploading", SUBMITTING: "stage_generating", PROCESSING: "stage_generating", DOWNLOADING_RESULT: "stage_downloading" }[stage];
+  return k ? t(k) : String(stage || "").toLowerCase().replace(/_/g, " ");
 }
 
 /* the app's Count select: upscale models always run one take */
@@ -18889,7 +18910,11 @@ function switchPage(key) {
   /* v6.75.0 — a page switch is a cheap moment to re-ask for pictures a dead line took (throttled inside) */
   try { const ra = globalThis.HNK && globalThis.HNK.remoteArt; if (ra && ra.retryFailed) ra.retryFailed(false); } catch (e) { }
   /* v6.51.0 — Setup repaints its readiness rows and the data-store line on entry, like the app's showPage */
-  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); renderSelfTest(); } catch (e) { } }
+  /* v6.80.0 — the Network row's two probes start when the Setup page is
+     opened (and on Run again), never on the boot path: renderSelfTest also
+     runs from setupApplyStatics at boot, and a probe there would reach out
+     to RunningHub on every panel start. The row re-paints when they answer. */
+  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); renderSelfTest(); } catch (e) { } }
   /* the sticky GENERATE follows the page that owns it */
   try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
 }
@@ -19036,6 +19061,63 @@ function hnkWidthProbes() {
   const best = inner || outer || vv || mm || 0;
   return { inner: inner, outer: outer, vv: vv, screen: scr, mm: mm, best: best,
     detail: "inner " + inner + " \u00b7 outer " + outer + " \u00b7 vv " + vv + " \u00b7 mm " + mm + " \u00b7 screen " + scr };
+}
+/* v6.80.0 — CAN THIS PANEL REACH THE TWO HOSTS A GENERATE NEEDS? The owner's
+   photograph of 6.150.0 read "cannot reach RunningHub" under a Setup card
+   that had just verified the key against the same RunningHub — so the host
+   that failed was not RunningHub. Every reference upload and every finished
+   picture lives on RunningHub's file storage (*.xiaoyaoyou.com — the probe
+   lane's own upload answer names rh-hk-images-switch), and a UXP plugin
+   may fetch only the hosts its manifest lists. Two reachability probes, no
+   key, eight seconds each: an answer of ANY status means the host is
+   allowed and up; a throw names what stood in the way. The row re-paints
+   itself when both have answered. */
+const RH_NET_PROBES = [
+  { id: "RunningHub", url: "https://www.runninghub.ai/openapi/v2/query", method: "POST", body: "{}" },
+  { id: "files", url: "https://rh-hk-images-switch.xiaoyaoyou.com/", method: "GET" }
+];
+let netProbe = { state: "idle", at: 0, rows: [] };
+function hnkNetProbeStart(force) {
+  const now = Date.now();
+  if (netProbe.state === "running") return;
+  if (!force && netProbe.state === "done" && now - netProbe.at < 15000) return;
+  if (typeof fetch !== "function") { netProbe = { state: "done", at: now, rows: [{ id: "fetch", ok: false, why: "no fetch" }] }; return; }
+  netProbe = { state: "running", at: now, rows: [] };
+  const one = function (p) {
+    return new Promise(function (resolve) {
+      let ctl = null; try { ctl = new AbortController(); } catch (e) { ctl = null; }
+      const tm = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) { } }, 8000);
+      const t0 = Date.now();
+      let pr;
+      try {
+        pr = fetch(p.url, { method: p.method || "GET", headers: p.body ? { "Content-Type": "application/json" } : {},
+          body: p.body || undefined, signal: ctl ? ctl.signal : undefined });
+      } catch (e) { pr = Promise.reject(e); }
+      Promise.resolve(pr).then(function (r) {
+        clearTimeout(tm);
+        resolve({ id: p.id, ok: true, status: (r && r.status) || 0, ms: Date.now() - t0 });
+      }, function (e) {
+        clearTimeout(tm);
+        const aborted = !!(ctl && ctl.signal && ctl.signal.aborted);
+        resolve({ id: p.id, ok: false, why: aborted ? "no answer in 8s" : String((e && e.message) || e).replace(/https?:\/\/\S+/g, "").trim().slice(0, 80), ms: Date.now() - t0 });
+      });
+    });
+  };
+  Promise.all(RH_NET_PROBES.map(one)).then(function (rows) {
+    netProbe = { state: "done", at: Date.now(), rows: rows };
+    try { renderSelfTest(); } catch (e) { }
+  });
+}
+function hnkNetProbeRow() {
+  if (netProbe.state === "idle") return { label: "Network", detail: "\u2014", level: "pend" };
+  if (netProbe.state === "running") return { label: "Network", detail: "checking RunningHub \u00b7 files\u2026", level: "pend" };
+  const bits = [], bad = [];
+  netProbe.rows.forEach(function (r) {
+    if (r.ok) bits.push(r.id + " ok (" + (r.status || "?") + " \u00b7 " + r.ms + "ms)");
+    else { bits.push(r.id + " BLOCKED \u2014 " + (r.why || "?")); bad.push(r); }
+  });
+  const allBad = netProbe.rows.length && bad.length === netProbe.rows.length;
+  return { label: "Network", detail: bits.join(" \u00b7 "), level: !bad.length ? "ok" : (allBad ? "warn" : "err") };
 }
 function hostIsPhotoshop() {
   try { const m = require("photoshop"); if (m && m.app && typeof m.app.version === "string" && m.app.version) return true; } catch (e) { }
