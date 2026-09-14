@@ -92,8 +92,12 @@ function create(deps) {
      hero strip over the card, favourites/recents, the per-group reset, the
      batch shortcut into Path, the "n found" line and the empty state. The
      kick line is the app's literal in every locale. */
-  var L_KICK = "No Install · Panel Data · RunningHub AI";
-  var L_HERO = { my: "Photoshop panel ထဲက <em>One-Tap တွေ</em> browser ရောက်လာပြီ", en: "The panel's <em>One-Taps</em>, now in your browser", shn: "One-Tap ၶွင် Photoshop panel ႁွတ်ႈမႃး ၼႂ်း browser ယဝ်ႉ", kac: "Photoshop panel a One-Tap ni gaw browser hta du sai", th: "One-Tap จากแผง Photoshop มาอยู่ในเบราว์เซอร์แล้ว", zh: "Photoshop 面板的 One-Tap 功能，现已进入浏览器", vi: "One-Tap của bảng Photoshop nay đã có trên trình duyệt", id: "One-Tap dari panel Photoshop kini hadir di browser", ms: "One-Tap panel Photoshop kini di pelayar anda" };
+  /* v6.79.0 — the app's hero says its One-Taps reached the browser; read
+     inside Photoshop (the owner's 3rd photograph) that sentence is about
+     somewhere else. The panel's own line, nine languages. */
+  var L_KICK = "Panel Data · RunningHub AI · Photoshop";
+  var L_HERO = { my: "<em>One-Tap တွေ</em> Photoshop ထဲမှာ တိုက်ရိုက် သုံးလို့ရပြီ", en: "The <em>One-Taps</em>, right inside Photoshop", shn: "<em>One-Tap</em> ၸႂ်ႉလႆႈ ၼႂ်း Photoshop ၵမ်းလဵဝ်", kac: "<em>One-Tap</em> ni Photoshop hta tinang lang mai sai", th: "<em>One-Tap</em> ใช้ได้ทันทีใน Photoshop", zh: "<em>One-Tap</em> 功能，直接在 Photoshop 中使用", vi: "<em>One-Tap</em> dùng ngay trong Photoshop", id: "<em>One-Tap</em> langsung di dalam Photoshop", ms: "<em>One-Tap</em> terus di dalam Photoshop" };
+  var L_HERO_APP = { my: "Photoshop panel ထဲက <em>One-Tap တွေ</em> browser ရောက်လာပြီ", en: "The panel's <em>One-Taps</em>, now in your browser", shn: "One-Tap ၶွင် Photoshop panel ႁွတ်ႈမႃး ၼႂ်း browser ယဝ်ႉ", kac: "Photoshop panel a One-Tap ni gaw browser hta du sai", th: "One-Tap จากแผง Photoshop มาอยู่ในเบราว์เซอร์แล้ว", zh: "Photoshop 面板的 One-Tap 功能，现已进入浏览器", vi: "One-Tap của bảng Photoshop nay đã có trên trình duyệt", id: "One-Tap dari panel Photoshop kini hadir di browser", ms: "One-Tap panel Photoshop kini di pelayar anda" };
   var L_NOTE = { my: "Card နှိပ်ရင် wizard ပွင့်မယ် — Guide → Images → Generate · သင် setup လုပ်ထားတဲ့ AI engine (RunningHub Enterprise) နဲ့ အလုပ်လုပ်တယ်", en: "Tap any card to open its wizard — Guide → Images → Generate · runs on your configured AI engines (RunningHub Enterprise)", shn: "ၼဵၵ်း card ဢၼ်လႂ်သေဢမ်ႇဝႃႈ wizard တေပိုတ်ႇ — Guide → Images → Generate · ႁဵတ်းၵၢၼ်လူၺ်ႈ AI engine ဢၼ်ၸဝ်ႈၵဝ်ႇ setup ဝႆႉ (RunningHub Enterprise)", kac: "Card langai mi dip yang wizard hpaw na — Guide → Images → Generate · nang setup da ai AI engine (RunningHub Enterprise) hte galaw ai", th: "แตะการ์ดใดก็ได้เพื่อเปิด wizard — Guide → Images → Generate · ทำงานบน AI engine ที่คุณตั้งค่าไว้ (RunningHub Enterprise)", zh: "点击任意卡片即可打开向导 — Guide → Images → Generate · 由你配置的 AI engine 驱动（RunningHub Enterprise）", vi: "Chạm vào card bất kỳ để mở wizard — Guide → Images → Generate · chạy trên engine AI bạn đã cấu hình (RunningHub Enterprise)", id: "Ketuk kartu mana pun untuk membuka wizard-nya — Guide → Images → Generate · berjalan dengan engine AI yang Anda konfigurasi (RunningHub Enterprise)", ms: "Ketik mana-mana kad untuk membuka wizard — Guide → Images → Generate · berjalan pada enjin AI yang anda konfigurasikan (RunningHub Enterprise)" };
   var L_FAV_HINT = { my: "ကတ်ပေါ်က ★ ကို နှိပ်ပြီး အကြိုက်ဆုံး workflow တွေ ဒီမှာ စုထားနိုင်တယ်", en: "Tap ★ on a card to pin your favorite workflows here", shn: "ၼဵၵ်း ★ ၼိူဝ်ၵၢတ်ႈသေ သိမ်း workflow ဢၼ်လႆႈၸႂ်တီႈၼႆႈ", kac: "Card ntsa na ★ hpe dip nna ra ai workflow ni ndai kaw da u", th: "แตะ ★ บนการ์ดเพื่อปักหมุดเวิร์กโฟลว์โปรดไว้ที่นี่", zh: "点按卡片上的 ★ 把常用工作流固定在这里", vi: "Chạm ★ trên thẻ để ghim workflow yêu thích tại đây", id: "Ketuk ★ pada kartu untuk menyematkan workflow favorit di sini", ms: "Ketik ★ pada kad untuk semat aliran kerja kegemaran di sini" };
   var L_FAVS = { my: "အကြိုက်ဆုံးများ", en: "Favorites", shn: "ဢၼ်လႆႈၸႂ်", kac: "Ra dik ai ni", th: "รายการโปรด", zh: "收藏", vi: "Yêu thích", id: "Favorit", ms: "Kegemaran" };
@@ -896,12 +900,11 @@ function create(deps) {
       root.appendChild(uTxt);
     }
 
+    renderGenOpts(root, wf);
     var route = state.resolvedRoute || wf.route;
     var m = modelRegistry.getModel(route.modelId);
     var out = state.output || {};
-    root.appendChild(dom.el(doc, "div", { class: "hnk-wf-route",
-      text: dom.t("ai_model_lbl", "Model") + ": " + (route.auto ? dom.t("qual_auto", "Auto") + " \u00B7 " : "") + (m ? m.displayName : route.modelId) +
-            "   ·   Output: " + String(out.size || "2k").toUpperCase() + " · " + (out.ratio || "source") }));
+    root.appendChild(dom.el(doc, "div", { class: "hnk-wf-route", id: "hnkWfRouteLine", text: routeLine(wf) }));
 
     // Click 2 — Prepare
     nodes.prepareBtn = dom.el(doc, "button", { class: "hnk-btn hnk-prepare", id: "hnkWfPrepare", text: dom.t("ai_prepare", "Prepare (load & check)") });
@@ -917,6 +920,129 @@ function create(deps) {
     root.appendChild(nodes.generate);
 
     refresh();
+  }
+
+  /* v6.79.0 — MODEL · RATIO · COUNT · SIZE, PICKABLE. The app's wizard clones
+     the Create card's four selects into its last step (buildWizGenRow) and
+     writes each change back; the panel printed them as a sentence. These are
+     the panel's own .hsl pickers — a button that opens the panel's list
+     (main.js hslPick) over a parked select, the visual ratio rail the
+     Freeform card has — fed by HNK.genOpts (Freeform's lists) and written to
+     both places: the workflow state the compiler reads (resolvedRoute,
+     output.ratio / size / variants) and Freeform itself, so the two cards
+     never disagree, exactly as the app's clones and their originals. */
+  function genOptsBridge() { var g = (typeof globalThis !== "undefined") ? globalThis : {}; return g.HNK && g.HNK.genOpts; }
+  function hslPicker(id, ctx, glyph) {
+    var wrap = dom.el(doc, "div", { class: "hsl", id: id + "Hsl" });
+    var btn = dom.el(doc, "button", { class: "hsl-btn", id: id + "Btn" });
+    var tile = dom.el(doc, "span", { class: "hsl-tile t-plain" });
+    var im = doc.createElement("img"); im.className = "hsl-glyph-img"; im.alt = ""; im.src = "icons/ui/" + glyph + ".png";
+    tile.appendChild(im); btn.appendChild(tile);
+    var lab = dom.el(doc, "span", { class: "hsl-lab" }, [
+      dom.el(doc, "span", { class: "hsl-ctx", text: ctx }),
+      dom.el(doc, "span", { class: "hsl-val", id: id + "Val", text: "" })
+    ]);
+    btn.appendChild(lab);
+    var car = doc.createElement("img"); car.className = "hsl-caret"; car.alt = ""; car.src = "icons/ui/hsl-caret-gold.png";
+    btn.appendChild(car);
+    var sel = dom.el(doc, "select", { class: "inp", id: id });
+    wrap.appendChild(btn); wrap.appendChild(sel);
+    return { wrap: wrap, sel: sel, val: lab.lastChild, btn: btn };
+  }
+  function fillSel(sel, items, cur) {
+    dom.clear(sel);
+    var found = false;
+    items.forEach(function (it) {
+      var o = doc.createElement("option"); o.value = it.v; o.textContent = it.label;
+      if (it.v === cur) { o.selected = true; found = true; }
+      sel.appendChild(o);
+    });
+    if (!found && items.length) { sel.selectedIndex = 0; }
+    return sel.value;
+  }
+  function paintVal(p) { var o = p.sel.options[p.sel.selectedIndex]; p.val.textContent = o ? String(o.textContent || "") : "\u2014"; }
+  function normRatio(r) { r = String(r || ""); return (r === "auto" || r === "source") ? "" : r; }
+  function renderGenOpts(root, wf) {
+    var go = genOptsBridge();
+    if (!go) return;
+    var cur = go.current();
+    var out = state.output || {};
+    var route = state.resolvedRoute || wf.route || {};
+    var chosen = (route && route.auto === false && route.modelId) ? route.modelId : "";
+    var modelId = chosen || cur.model;
+    var box = dom.el(doc, "div", { class: "hnk-wf-opts", id: "hnkWfOpts" });
+    box.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("wf_opts", "Model \u00b7 Ratio \u00b7 Count \u00b7 Size") }));
+
+    /* Model — "Auto" is the workflow's own route; a name is a pick that also becomes Freeform's model */
+    var mp = hslPicker("wfModel", "Model", "brand-banana");
+    mp.wrap.className = "hsl hsl-span2";
+    var models = [{ v: "", label: dom.t("wf_model_auto", "Auto \u2014 the workflow's choice") }].concat(go.models().map(function (m) { return { v: m.id, label: m.label }; }));
+    fillSel(mp.sel, models, chosen); paintVal(mp);
+    var row1 = dom.el(doc, "div", { class: "arow gen-opts" }, [mp.wrap]);
+    box.appendChild(row1);
+
+    /* Ratio — the parked select + the visual rail the Freeform card has */
+    var rp = hslPicker("wfRatio", "Ratio", "hsl-size");
+    rp.wrap.className = "hsl hsl-span2";
+    var rail = dom.el(doc, "div", { class: "ratio-rail", id: "wfRatioRail" });
+    /* Count · Size */
+    var cp = hslPicker("wfCount", "Count", "hsl-count");
+    var sp = hslPicker("wfSize", "Size", "hsl-size");
+    var row2 = dom.el(doc, "div", { class: "arow gen-opts" }, [cp.wrap, sp.wrap]);
+
+    var g = (typeof globalThis !== "undefined") ? globalThis : {};
+    function paintRail() {
+      if (typeof g.paintRatioRail === "function") {
+        try { g.paintRatioRail("wfRatioRail", "wfRatio", function (v) { rp.sel.value = v; onRatio(); }); } catch (e) { }
+        rp.wrap.style.display = "none"; rail.style.display = rp.sel.options.length ? "flex" : "none";
+      } else { rp.wrap.style.display = rp.sel.options.length ? "" : "none"; rail.style.display = "none"; }
+    }
+    function fillForModel(id) {
+      var ratios = go.ratios(id), sizes = go.sizes(id), counts = go.counts(id);
+      var wantR = normRatio(out.ratio != null ? out.ratio : cur.ratio);
+      var r = fillSel(rp.sel, ratios.map(function (v) { return { v: v, label: v || "Ratio: Auto" }; }), wantR);
+      var wantS = String(out.size || cur.size || "").toUpperCase();
+      var sz = fillSel(sp.sel, sizes.map(function (v) { return { v: v, label: v || "Size: Auto" }; }), wantS === "2K" && sizes.indexOf("2K") < 0 ? "" : wantS);
+      var wantC = String(out.variants || cur.count || 1);
+      var c = fillSel(cp.sel, counts.map(function (n) { return { v: String(n), label: "\u00d7" + n }; }), wantC);
+      cp.wrap.style.display = counts.length > 1 ? "" : "none";
+      sp.wrap.style.display = sizes.length ? "" : "none";
+      paintVal(rp); paintVal(sp); paintVal(cp); paintRail();
+      return { ratio: r, size: sz, count: c };
+    }
+    function apply() {
+      var ratio = rp.sel.value || "", size = sp.sel.value || "", count = parseInt(cp.sel.value, 10) || 1;
+      wstate.setOutput(state, { ratio: ratio || "auto", size: size ? size.toLowerCase() : "2k", variants: count });
+      try { go.set({ model: mp.sel.value || null, ratio: ratio, count: count, size: size }); } catch (e) { }
+      out = state.output || {};
+      var line = doc.getElementById("hnkWfRouteLine");
+      if (line) line.textContent = routeLine(wf);
+    }
+    function onModel() {
+      var v = mp.sel.value;
+      state.resolvedRoute = v ? { modelId: v, auto: false } : (wf.route ? Object.assign({}, wf.route) : null);
+      paintVal(mp);
+      fillForModel(v || cur.model);
+      apply();
+    }
+    function onRatio() { paintVal(rp); paintRail(); apply(); }
+    dom.on(mp.sel, "change", onModel);
+    dom.on(rp.sel, "change", onRatio);
+    dom.on(cp.sel, "change", function () { paintVal(cp); apply(); });
+    dom.on(sp.sel, "change", function () { paintVal(sp); apply(); });
+    box.appendChild(rp.wrap); box.appendChild(rail); box.appendChild(row2);
+    root.appendChild(box);
+    /* the rail paints by id, so the box is in the document first */
+    fillForModel(modelId);
+    /* the prefs the wizard shows are the prefs it will send */
+    wstate.setOutput(state, { ratio: rp.sel.value || "auto", size: sp.sel.value ? sp.sel.value.toLowerCase() : (out.size || "2k"), variants: parseInt(cp.sel.value, 10) || 1 });
+  }
+  function routeLine(wf) {
+    var route = state.resolvedRoute || wf.route;
+    var m = modelRegistry.getModel(route.modelId);
+    var out = state.output || {};
+    return dom.t("ai_model_lbl", "Model") + ": " + (route.auto ? dom.t("qual_auto", "Auto") + " \u00B7 " : "") + (m ? m.displayName : route.modelId) +
+      "   \u00b7   Output: " + String(out.size || "2k").toUpperCase() + " \u00b7 " + (normRatio(out.ratio) || "auto") + (out.variants > 1 ? " \u00b7 \u00d7" + out.variants : "");
   }
 
   function addFromLibrary(inp) {

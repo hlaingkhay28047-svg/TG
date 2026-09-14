@@ -485,14 +485,22 @@ function render(root, deps) {
     bic.className = "ic-m"; bic.alt = ""; bic.src = "icons/ui/" + c.ic + "-cream.png";
     bdg.appendChild(bic);
     artBox.appendChild(bdg);
-    var card = dom.el(doc, "button", { class: "dash-card", id: "hnkDash_" + c.page }, [
-      artBox,
+    /* v6.79.0 — THE LABEL RIDES INSIDE THE PICTURE BOX. Two photographs
+       (6.148.0's 2nd, 6.149.0's 2nd) show every tile's label painted at the
+       grid's foot, over the Library strip, whatever the label's own display:
+       the host ends the card at the picture box and paints what follows past
+       it. The badge in the top-left corner — absolute inside the same box —
+       has always been where it belongs, so the label and its sub-line take
+       the same route: a caption pinned to the box's bottom edge, over a
+       scrim. The app's sub-line rule stands: Burmese readers get the English
+       term, everyone else gets English too — except English readers, who get
+       the Burmese as local flavour. */
+    var cap = dom.el(doc, "div", { class: "cap" }, [
       dom.el(doc, "div", { class: "lbl", text: l9(c.lbl) }),
-      /* the app's sub-line is a translation aid: Burmese readers get the
-         English term, everyone else gets English too — except English
-         readers, who get the Burmese as local flavour */
       dom.el(doc, "div", { class: "sub", text: lang() === "en" ? c.lbl.my : c.lbl.en })
     ]);
+    artBox.appendChild(cap);
+    var card = dom.el(doc, "button", { class: "dash-card", id: "hnkDash_" + c.page }, [artBox]);
     dom.on(card, "click", function () { if (deps.onPage) deps.onPage(c.page); });
     grid.appendChild(card);
   });

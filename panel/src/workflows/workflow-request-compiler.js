@@ -69,6 +69,11 @@ function compile(state) {
   // Output comes from the shared, preserved prefs — with sane fallbacks only.
   var out = Object.assign({ size: "2k", ratio: "source", quality: "high" }, state.output || {});
   var size = resolver.clampSize(route.modelId, out.size);
+  /* v6.79.0 — the wizard's Count is the request's variants (the app's cloned
+     selCount); the provider adapter takes the request count it implies */
+  var variants = Math.max(1, Math.min(4, parseInt(out.variants, 10) || 1));
+  var requestCount = 1;
+  try { requestCount = resolver.requestCountForVariants(route.modelId, variants) || variants; } catch (e) { requestCount = variants; }
 
   var requiredImages = _collect(state.requiredInputs);
   var optionalImages = _collect(state.optionalInputs);
@@ -91,8 +96,9 @@ function compile(state) {
       requestedSize: out.size,
       ratio: out.ratio,
       quality: out.quality,
-      variants: 1
-    }
+      variants: variants
+    },
+    requestCount: requestCount
   };
 }
 

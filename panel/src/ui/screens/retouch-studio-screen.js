@@ -465,7 +465,9 @@ function renderStPicker() {
     add.onclick = function () { var b = bridge(); if (b && b.pickPhoto) b.pickPhoto(); };
     d.appendChild(add);
   }
-  d.appendChild(el("span", "tag", L9({ my: "မူရင်း", en: "Before" })));
+  /* v6.79.0 — the "Before" tag belongs to a photo; with the slot empty it sat
+     under the add button on the owner's 15th and 16th photographs */
+  if (ref) d.appendChild(el("span", "tag", L9({ my: "မူရင်း", en: "Before" })));
   host.appendChild(d);
   var tg = $("stTarget"); if (tg) tg.style.display = ref ? "" : "none";
 }
@@ -620,7 +622,7 @@ function mount(pageKey) {
   var page = $(pageId), dock = $("stDock"), cols = $("stCols");
   if (!page || !dock || !cols) return;
   var mnt = page.querySelector ? page.querySelector(".st-mount") : null;
-  if (mnt && cols.parentNode !== mnt) mnt.appendChild(cols);
+  if (mnt && cols.parentNode !== mnt) { mnt.appendChild(cols); stRelayoutSoon(cols); }
   var colR = $("stColR"), keepId = SUITE_CARD[pageId];
   /* the card goes back above the result card. The app inserts it before
      #stResultBox — an id the panel REPLACES with a void element, and
@@ -645,6 +647,31 @@ function mount(pageKey) {
   /* v6.65.0 — the suite card was just written from strings that had no
      ancestors to read; every icon in it now learns where it landed */
   retint(doc());
+}
+
+/* v6.79.0 — A SECOND LAYOUT PASS FOR A MOVED BLOCK. On Retouch A the owner's
+   15th photograph shows the jump bar's two suite tabs stacked full-width,
+   the search field at part width beside its own toggle, fifteen group chips
+   one per line, and the photo slot as a one-line button — every rule that
+   hangs off the block's ancestors ignored — while Retouch B, the same block
+   moved into the other page, is right. The block is built parked in #stDock
+   and moved here on the first visit; this asks the host to lay it out once
+   more after the move (a detach and re-insert, then a display flip), which
+   costs a browser nothing it can see. */
+function stRelayoutSoon(node) {
+  try {
+    setTimeout(function () {
+      try {
+        var p = node.parentNode; if (!p) return;
+        var next = node.nextSibling;
+        p.removeChild(node);
+        if (next) p.insertBefore(node, next); else p.appendChild(node);
+        node.style.display = "none";
+        void node.offsetHeight;
+        node.style.display = "";
+      } catch (e) { }
+    }, 40);
+  } catch (e2) { }
 }
 
 /* The panel has ONE result card (#resultBox, with Photoshop's Place and Save

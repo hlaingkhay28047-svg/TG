@@ -56,12 +56,28 @@
      and the owner's photographs cannot tell those two hosts apart. What
      native answered is kept on HNK.localStore.nativeOk for the SELF-TEST row. */
   var native = nativeOk();
-  var realHost = false;
-  try { var psm = (typeof require === "function") ? require("photoshop") : null; realHost = !!(psm && psm.app && typeof psm.app.version === "string" && psm.app.version); } catch (e) { realHost = false; }
+  /* v6.79.0 — TWO SIGNALS, AND A SECOND CHANCE. The owner's SELF-TEST on
+     6.149.0 read "Storage · native localStorage" in real Photoshop: the one
+     signal above (app.version) had not answered when this first script ran,
+     so the forty-one call sites went to the host's own storage after all.
+     The host's uxp module names itself too, and main.js — certain of the
+     host by the time it boots — can call HNK.localStore.adopt() to install
+     the shim late, carrying every key already written across. */
+  function realHostNow() {
+    try { var psm = (typeof require === "function") ? require("photoshop") : null; if (psm && psm.app && typeof psm.app.version === "string" && psm.app.version) return true; } catch (e) { }
+    try { var ux = (typeof require === "function") ? require("uxp") : null; if (ux && ux.host && typeof ux.host.name === "string" && /photoshop/i.test(ux.host.name)) return true; } catch (e2) { }
+    return false;
+  }
+  var realHost = realHostNow();
   if (native && !realHost) {
-    G.HNK.localStore = { shimmed: false, backend: "native", nativeOk: true, installed: true, ready: Promise.resolve(), keys: function () { try { return G.localStorage.length; } catch (e) { return -1; } } };
+    G.HNK.localStore = { shimmed: false, backend: "native", nativeOk: true, installed: true, ready: Promise.resolve(),
+      keys: function () { try { return G.localStorage.length; } catch (e) { return -1; } },
+      adopt: function () { install(true); return G.HNK.localStore; } };
     return;
   }
+  install(false);
+
+  function install(seedFromNative) {
 
   /* ---- the file behind the map (UXP data folder; memory-only elsewhere) ---- */
   var lfs = null;
@@ -69,8 +85,23 @@
   var mem = {};          /* key -> string */
   var order = [];        /* insertion order, for key(i) */
   var loaded = false, dirty = false, timer = null, size = 0;
+  /* a late adopt starts from what the session wrote to the host's storage;
+     the file then merges UNDER these, exactly as it merges under early writes */
+  if (seedFromNative) {
+    try {
+      var ns = G.localStorage;
+      if (ns && typeof ns.key === "function") {
+        for (var si = 0; si < ns.length; si++) {
+          var sk = ns.key(si); if (sk == null) continue;
+          var sv = ns.getItem(sk); if (typeof sv !== "string") continue;
+          mem[String(sk)] = sv; order.push(String(sk));
+        }
+      }
+    } catch (e) { }
+  }
 
   function recount() { size = 0; for (var i = 0; i < order.length; i++) size += order[i].length + mem[order[i]].length; }
+  if (seedFromNative && order.length) { recount(); dirty = true; }
   function quota(msg) { var e = new Error(msg || "QuotaExceededError: hnk_local_storage is full"); e.name = "QuotaExceededError"; e.code = 22; return e; }
   function schedule() {
     dirty = true;
@@ -144,12 +175,15 @@
   G.HNK.localStore = {
     shimmed: true,
     nativeOk: native,
+    adopted: !!seedFromNative,
     backend: lfs ? "file" : "memory",
     file: FILE,
     installed: installed,
     storage: shim,
     ready: preload(),
     flush: flush,
-    keys: function () { return order.length; }
+    keys: function () { return order.length; },
+    adopt: function () { return G.HNK.localStore; }
   };
+  }
 })();

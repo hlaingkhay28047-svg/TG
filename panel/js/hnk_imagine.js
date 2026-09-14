@@ -30,9 +30,25 @@ var IMAGINE = (function(){
      padding, border and margin each ancestor was given, in px, taken off
      window.innerWidth. A browser never reaches the fallback. */
   function imCssPx(cs, prop){ var v=parseFloat(cs && cs[prop]); return isFinite(v) ? v : 0; }
+  /* 6.79.0 — innerWidth itself read 0 in Photoshop (the owner's 9th photograph, "Viewport 0×0"), so the fallback
+     above it was built on nothing. Four more rulers, in order: outerWidth, the visual viewport, and a media-query
+     binary search — matchMedia asks the engine "is the panel at least N px wide?" and needs no layout read; sixteen
+     questions pin the width to a pixel. Self-checking: a host that says yes to 20000px or no to 1px is skipped. */
+  function imViewportW(){
+    var w=(typeof window!=="undefined" && window.innerWidth)||0; if(w>0) return w;
+    try{ w=window.outerWidth||0; if(w>0) return w; }catch(e){}
+    try{ w=(window.visualViewport && window.visualViewport.width)||0; if(w>0) return w; }catch(e){}
+    try{
+      if(typeof window.matchMedia!=="function") return 0;
+      if(!window.matchMedia("(min-width: 1px)").matches || window.matchMedia("(min-width: 20000px)").matches) return 0;
+      var lo=1, hi=20000;
+      for(var i=0;i<16 && hi-lo>1;i++){ var mid=Math.floor((lo+hi)/2); if(window.matchMedia("(min-width: "+mid+"px)").matches) lo=mid; else hi=mid; }
+      return lo;
+    }catch(e2){ return 0; }
+  }
   function imStageWidth(el){
     if(H && typeof H.stageWidth==="function"){ try{ var hw=H.stageWidth(el); if(hw>0) return hw; }catch(e){} }
-    var vw=(typeof window!=="undefined" && window.innerWidth)||0; if(!(vw>0)) return 0;
+    var vw=imViewportW(); if(!(vw>0)) return 0;
     var n=el, pad=0, guard=0;
     while(n && n.nodeType===1 && guard++<40){
       var cs=null; try{ cs=getComputedStyle(n); }catch(e){ cs=null; }
@@ -164,8 +180,17 @@ var IMAGINE = (function(){
        a percentage the layout resolves by itself — a measured clientWidth read 0 in Photoshop */
     var hubBefW=function(v){ return (v>0 ? Math.round(1000000/v)/100 : 100)+"%"; };
     var syncW=function(){ var v=(S.hubSplit && typeof S.hubSplit[tool.id]==="number") ? S.hubSplit[tool.id] : split; bef.style.width=hubBefW(v); };
-    aft.onload=syncW; setTimeout(syncW,0); hubSyncs.push(syncW);
-    var setHub=function(v){ v=Math.round(Math.max(0,Math.min(100,v))); S.hubSplit=S.hubSplit||{}; S.hubSplit[tool.id]=v; top.style.width=v+"%"; line.style.left=v+"%"; knob.style.left=v+"%"; bef.style.width=hubBefW(v); };
+    aft.onload=function(){ syncW(); if(typeof rngSync==="function") rngSync(); }; setTimeout(syncW,0); hubSyncs.push(syncW);
+    /* 6.79.0 — where the art box cannot be measured (Photoshop: rect 0, innerWidth 0) a drag has no width to map
+       onto; a native range under the picture moves the same line with no measurement at all. It draws only there:
+       a browser measures the box and keeps the drag. */
+    var rng = el("input","im-hubrange"); rng.type="range"; rng.min="0"; rng.max="100"; rng.value=String(split);
+    rng.setAttribute("aria-label", t("before")+" / "+t("after")); rng.style.display="none";
+    var setHub=function(v){ v=Math.round(Math.max(0,Math.min(100,v))); S.hubSplit=S.hubSplit||{}; S.hubSplit[tool.id]=v; top.style.width=v+"%"; line.style.left=v+"%"; knob.style.left=v+"%"; bef.style.width=hubBefW(v); if(String(rng.value)!==String(v)) rng.value=String(v); };
+    rng.oninput=function(){ setHub(parseInt(this.value,10)); }; rng.onchange=rng.oninput;
+    rng.onclick=function(ev){ ev.stopPropagation(); }; rng.onpointerdown=function(ev){ ev.stopPropagation(); };
+    var rngSync=function(){ rng.style.display = imRect(art) ? "none" : ""; };
+    setTimeout(rngSync,0); setTimeout(rngSync,300); hubSyncs.push(rngSync);
     var drag=null;
     var at=function(ev){ var v=imDragX(art, ev, drag ? drag.p : split, drag ? drag.x : 0); if(v===null) return; setHub(v); };
     var down=function(ev){ if(ev.button && ev.button!==0) return; drag={ x:(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, t:Date.now(), moved:false, p:(S.hubSplit && typeof S.hubSplit[tool.id]==="number") ? S.hubSplit[tool.id] : split }; c.classList.add("lift"); if(ev.pointerId!=null && art.setPointerCapture){ try{ art.setPointerCapture(ev.pointerId); }catch(e){} } };
@@ -176,6 +201,7 @@ var IMAGINE = (function(){
     art.onclick=function(ev){ ev.stopPropagation(); };   /* the pointer handlers decide between a drag and a tap */
     /* the lift: on hover through CSS, on a finger through this class */
     c.onpointerdown=function(){ c.classList.add("lift"); }; c.onpointerup=c.onpointerleave=c.onpointercancel=function(){ setTimeout(function(){ c.classList.remove("lift"); },220); };
+    c.appendChild(rng);
     var body = el("div","im-card-body"); c.appendChild(body);
     var nm = el("div","im-card-name"); var ic=ico(tool.ic); if(ic) nm.appendChild(ic); nm.appendChild(text((ic?" ":"")+H.t9(tool.name))); body.appendChild(nm);
     body.appendChild(el("div","im-card-sum mut", H.t9(tool.sum)));
@@ -605,6 +631,7 @@ var IMAGINE = (function(){
     composite:function(i){ return composite(S.photos[i==null?S.cur:i]); }, canMark:CAN_MARK,
     /* 6.77.0 — the strokes as stored (normalized 0..1), so a test can prove where a pointer landed */
     strokes:function(i){ var p=S.photos[i==null?S.cur:i]; return p ? (p.strokes||[]).map(function(s){ return { r:s.r, pts:(s.pts||[]).slice() }; }) : []; },
+    viewportW:imViewportW, stageWidth:imStageWidth,
     state:S, data:D, MAX_PHOTOS:MAX_PHOTOS, DESC_MAX:DESC_MAX };
 })();
 /* ---- /IMAGINE_MODULE ---- */

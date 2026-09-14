@@ -197,7 +197,11 @@ body {
 .nav-gear.acc-soon .nav-dot { display: block; border: 2px solid var(--err); background-color: var(--accent); }
 /* the language picker: the app's .hsl-for-selLang (max-width 132, 40px button,
    padding 5px 8px 5px 6px, letter glyph · native name · gold caret) */
-.hdr .hsl { position: relative; flex: 0 1 auto; display: flex; flex-direction: row; max-width: 132px; min-width: 0; }
+/* v6.79.0 — at a narrower panel the button shrank and "မြန်မာ" wrapped into
+   two clipped lines (the owner's 6th, 9th–12th photographs); the wordmark
+   yields instead */
+.hdr .hsl { position: relative; flex: 0 0 auto; display: flex; flex-direction: row; max-width: 132px; min-width: 108px; }
+.nav-name { overflow: hidden; }
 .hdr .hsl-btn {
   display: flex; flex-direction: row; align-items: center; min-height: 40px; width: 100%; min-width: 0;
   box-sizing: border-box; padding: 5px 8px 5px 6px;
@@ -480,6 +484,9 @@ select, option {
 .pbox:focus { border-color: var(--accent); outline: none; }
 /* v6.78.0 — Photoshop drew its own heavy frame around the box (photograph 8) */
 .pbox { -webkit-appearance: none; appearance: none; outline: none; box-shadow: none; }
+/* v6.79.0 — the Freeform prompt (an .inp textarea) still wore the host's
+   heavy frame on photograph 12; the box's own 1px line is the only frame */
+textarea { -webkit-appearance: none; appearance: none; outline: none; box-shadow: none; border-width: 1px; border-style: solid; }
 .cnt { font-size: 10px; color: var(--muted-2); }
 .cnt.warn { color: var(--warn); }
 .cnt.max { color: var(--err); font-weight: 700; }
@@ -1061,6 +1068,14 @@ input[type="range"] { min-width: 0; }
 .hnk-variants > section { margin-right: 6px; }
 .hnk-variant { flex:1; }
 .hnk-estimate, .hnk-status, .hnk-wf-route, .hnk-wf-desc { font-size:11px; color:var(--muted); }
+/* v6.79.0 — the wizard's model · ratio · count · size pickers (the app clones
+   its Create selects here); the Freeform card's own picker and rail rules apply */
+.hnk-wf-opts { display: block; margin: 8px 0 10px; }
+.hnk-wf-opts .arow { display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start; margin-top: 6px; }
+.hnk-wf-opts .arow .hsl { flex: 0 0 auto; width: 49%; width: calc(50% - 4px); margin-right: 8px; margin-bottom: 8px; }
+.hnk-wf-opts .arow .hsl:last-child { margin-right: 0; }
+.hnk-wf-opts .arow .hsl.hsl-span2 { width: 100%; margin-right: 0; }
+.hnk-wf-opts .ratio-rail { margin-top: 0; margin-bottom: 8px; }
 .hnk-generate { background:var(--go); color:var(--go-ink); border-color:var(--go-brd); font-weight:700;
   padding:11px; font-size:13px; }
 /* v6.75.0 — the slot's name and its ✓ / Missing mark on their own line; the
@@ -1831,11 +1846,21 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    tile's label painted at the grid's foot, the last row's two over the Library
    strip and the rest hidden under the tiles below them — the renderer gave the
    box no height and painted the text past it. A block lays text out. */
+/* v6.79.0 — THE CAPTION IS INSIDE THE PICTURE BOX. 6.78.0 made the label a
+   block and the owner's next photograph (6.149.0, 2nd) showed the same thing:
+   every tile's label at the grid's foot, over the Library strip — whatever the
+   label's display, this host ends the card at the picture box and paints what
+   follows past it. The badge in the box's top-left corner has always been
+   right, so the label and its sub-line take the badge's route: absolute, at
+   the box's bottom edge, on a scrim (the app's .lbl metrics kept). */
+#pageAiTools .dash-card { display: block; }
+#pageAiTools .dash-card .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 7px 8px 8px;
+  background-color: rgba(11, 13, 20, 0.74); text-align: center; }
 #pageAiTools .dash-card .lbl { display: block;
-  width: auto; margin: 12px 0 0; padding: 0; min-height: 2.9em; height: auto; overflow: visible;
-  font-weight: 800; font-size: 14.5px; line-height: 1.45; color: var(--text); text-align: center; }
-#pageAiTools .dash-card .sub { display: block; margin: 14px 0 0; height: auto; overflow: visible;
-  font-size: 11px; color: var(--muted); line-height: 1.5; }
+  width: auto; margin: 0; padding: 0; min-height: 0; height: auto; overflow: visible;
+  font-weight: 800; font-size: 13.5px; line-height: 1.35; color: var(--text); text-align: center; }
+#pageAiTools .dash-card .sub { display: block; margin: 3px 0 0; height: auto; overflow: visible;
+  font-size: 10.5px; color: var(--muted); line-height: 1.4; }
 #pageAiTools .dash-card:hover .art { border-color: var(--accent); }
 
 /* ---- the Library teaser (app .dash-strip{flex;gap 8;overflow-x auto;no scrollbar;
@@ -2088,6 +2113,8 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    right/bottom margins, since UXP flex draws no gap */
 .apg .chips { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 8px; }
 .apg .chips .chip { margin: 0 6px 6px 0; }
+/* v6.79.0 — forty-nine chips two to a row ran two screens long (photographs 7–8) */
+#rhConfiguredList .chip { font-size: 10.5px; padding: 4px 9px; min-height: 0; margin: 0 5px 5px 0; }
 /* app sprite icons (svg.ic-s = 1.1em, flex:none) as pre-tinted <img> files —
    UXP draws no inline <svg>. Sizes are the app's 1.1em resolved per context;
    in the app's flex containers (.chip/.subtab) the " " after the icon is
@@ -2135,6 +2162,9 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 /* app #vidOpts #selVidModel{grid-column:1/-1}: the model picker owns the first
    grid row, the 8px row gap sits under it, Res and Dur share the second */
 .apg .gen-opts .hsl-span2 { width: 100%; margin-right: 0; margin-bottom: 8px; }
+/* v6.79.0 — the ratio select beside it is the rail's parked native, so the
+   model picker had half a row and "Nano Banan…" (photograph 12) */
+.apg #genOpts .hsl { width: 100%; }
 /* app #vidOpts: the aspect select (shown by the few models that take one)
    wraps onto the grid's third row, first column, under the 8px row gap */
 .apg .gen-opts .rr-native { display: none; }
@@ -2335,7 +2365,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    under GENERATE, a screen away from the slot that was tapped. A dialog opens
    in front of the panel wherever the tap was. */
 .ff-sheet { background-color: var(--panel); border: 1px solid var(--line-soft); border-radius: 14px; padding: 0; color: var(--text); width: 300px; max-width: 92vw; }
-.ff-sheet .card { margin: 0; border: 0; }
+.ff-sheet .card { margin: 0; border: 0; width: 300px; max-width: 92vw; box-sizing: border-box; background-color: var(--panel); color: var(--text); }
 .ff-sheet .subh { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px; }
 .ff-sheet .btn { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; width: 100%; box-sizing: border-box;
   margin: 8px 0 0; background-color: var(--panel-2); border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text);
@@ -2549,7 +2579,13 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   width: 300px;
   max-width: 92vw;
 }
-.hnk-dlg-body { display: block; padding: 16px; }
+/* v6.79.0 — THE CONTENT CARRIES THE SIZE. UXP sizes a <dialog> from its first
+   child's explicit dimensions and paints the dialog's own frame in the host's
+   theme (the owner's 6th and 14th photographs: an eighty-pixel strip on a
+   light frame). The body is the thing with a width, a background and a
+   colour; main.js hnkShowDialog hands the same size to showModal. */
+.hnk-dlg-body { display: block; padding: 16px; width: 300px; max-width: 92vw; box-sizing: border-box; background-color: var(--panel); color: var(--text); }
+.hnk-pick .hnk-dlg-body { width: 320px; }
 .hnk-dlg-msg {
   display: block;
   margin: 0 0 14px 0;
@@ -2850,6 +2886,32 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .stpg #stGroupChips .chip.edited { border-color: var(--accent); color: var(--accent-h); }
 .stpg #stGroupChips .chip.here { background-color: var(--accent); color: #1a1408; border-color: var(--accent); }
 .stpg #stSearchTgl { display: none; }
+/* v6.79.0 — UNSCOPED TWINS. On Retouch A (the owner's 15th photograph) the
+   rules above, every one hung off the .stpg ancestor, were not applied: two
+   suite tabs stacked full-width, the search at part width beside its own
+   toggle, fifteen chips one per line — while Retouch B, the same block moved
+   into the other page, was right. These ids are unique to the studio dock,
+   so the same rules stand once more with no ancestor to depend on. */
+#stJumpBar { display: block; padding: 2px 0 4px; background-color: var(--bg); }
+#stJumpTop { display: flex; flex-direction: column; align-items: stretch; margin-top: 4px; }
+#stSuiteTabs { display: flex; flex-direction: row; flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; overflow-x: auto; margin-top: 0; }
+#stSuiteTabs .chip { flex: 0 0 auto; white-space: nowrap; margin-bottom: 0; padding-left: 8px; padding-right: 8px; font-size: 10.5px; }
+#stSearch { box-sizing: border-box; width: 100%; min-width: 0; min-height: 38px; height: 38px; margin-left: 0; margin-top: 6px; padding: 6px 10px; font-size: 11px; }
+#stGroupChips { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; margin-top: 8px; padding-bottom: 2px; }
+#stGroupChips .chip { flex: 0 0 auto; white-space: nowrap; min-height: 34px; padding: 4px 11px; font-size: 10px; margin-bottom: 0; }
+#stSearchTgl { display: none; }
+#stPicker .ref { position: relative; display: block; width: 100%; min-height: 120px;
+  border: 1px dashed var(--line); border-radius: 12px; background-color: var(--panel-2); overflow: hidden; }
+#stPicker .ref.filled { border-style: solid; }
+#stPicker .ref.filled img { display: block; width: 100%; }
+#stPicker .ref .add { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 120px; font-size: 12px; line-height: normal; color: var(--text); text-align: center; padding: 0; }
+#stPicker .ref .add span:first-child { margin-bottom: 6px; }
+#stPicker .ref .x { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 8px;
+  border: 1px solid var(--line-soft); background-color: rgba(11, 13, 20, 0.8); display: flex; flex-direction: row; align-items: center; justify-content: center; }
+#stPicker .ref .tag { position: absolute; left: 4px; bottom: 4px; background-color: rgba(11, 13, 20, 0.8);
+  border-radius: 6px; padding: 1px 7px; font-size: 10px; font-weight: 800; line-height: 17px; color: var(--accent-h); }
+#stColL, #stColR, #stCols, .st-mount { display: block; }
 .stpg .st-find { width: 100%; margin-top: 8px; }
 
 /* ---- the generate bar (app: .st-genbar, sticky above the tab bar; the
@@ -3141,6 +3203,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .im-hubcmp{position:relative;overflow:hidden;background:#050b10;user-select:none;-webkit-user-select:none;touch-action:pan-y pinch-zoom;cursor:ew-resize}
 .im-hubcmp img.im-base{display:block;width:100%;height:auto;max-width:100%}
 .im-hubcmp .im-cmp-knob{width:34px;height:34px;margin:-17px 0 0 -17px;line-height:34px}
+.im-hubrange{display:block;width:100%;box-sizing:border-box;margin:6px 0 0}
 @media (min-width:1100px){.im-card{flex:1 1 20%;min-width:0;max-width:calc(25% - 10px)}}
 .im-card-body{padding:10px 12px 12px;display:flex;flex-direction:column;flex:1 1 auto}
 .im-card-name{font-weight:800;font-size:14px;display:flex;align-items:center;color:var(--text)}
