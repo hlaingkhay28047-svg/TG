@@ -1258,6 +1258,8 @@ const I18N = {
     ai_nav_tools: "Tools",
     ai_history: "History",
     ai_no_gen: "No generations yet.",
+    ai_videos: "Videos",
+    ai_open: "Open",
     ai_rerun: "Re-run",
     ai_reuse: "Reuse",
     ai_clear_hist: "Clear history",
@@ -1926,6 +1928,8 @@ const I18N = {
     ai_nav_tools: "\u1000\u102d\u101b\u102d\u101a\u102c",
     ai_history: "\u1019\u103e\u1010\u103a\u1010\u1019\u103a\u1038",
     ai_no_gen: "\u1016\u1014\u103a\u1010\u102e\u1038\u1011\u102c\u1038\u1010\u102c \u1019\u101b\u103e\u102d\u101e\u1031\u1038\u1015\u102b\u104b",
+    ai_videos: "ဗီဒီယိုများ",
+    ai_open: "ဖွင့်",
     ai_rerun: "\u1015\u103c\u1014\u103a\u101c\u102f\u1015\u103a",
     ai_reuse: "\u1015\u103c\u1014\u103a\u101e\u102f\u1036\u1038",
     ai_clear_hist: "\u1019\u103e\u1010\u103a\u1010\u1019\u103a\u1038 \u101b\u103e\u1004\u103a\u1038\u101c\u1004\u103a\u1038",
@@ -2592,6 +2596,8 @@ const I18N = {
     ai_nav_tools: "\u1076\u102d\u1030\u1004\u103a\u1088\u1019\u102d\u102f\u101d\u103a\u1038",
     ai_history: "\u1019\u1062\u1086\u1010\u103d\u1004\u103a\u1038",
     ai_no_gen: "\u1015\u1086\u1087\u1019\u102e\u1038\u1022\u107c\u103a\u101e\u1062\u1004\u103a\u1088\u101d\u1086\u1089\u104b",
+    ai_videos: "ဝီဒီရူဝ်ႈ",
+    ai_open: "ပိုတ်ႇ",
     ai_rerun: "\u1081\u1035\u1010\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     ai_reuse: "\u1078\u1082\u103a\u1089\u1076\u102d\u102f\u107c\u103a\u1038",
     ai_clear_hist: "\u1019\u103d\u1010\u103a\u1087\u1019\u1062\u1086\u1010\u103d\u1004\u103a\u1038",
@@ -3258,6 +3264,8 @@ const I18N = {
     ai_nav_tools: "Arung arai",
     ai_history: "Labau",
     ai_no_gen: "Galaw da ai n nga shi ai.",
+    ai_videos: "Video ni",
+    ai_open: "Hpaw",
     ai_rerun: "Bai galaw",
     ai_reuse: "Bai lang",
     ai_clear_hist: "Labau kasat kau",
@@ -3924,6 +3932,8 @@ const I18N = {
     ai_nav_tools: "\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e21\u0e37\u0e2d",
     ai_history: "\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34",
     ai_no_gen: "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e1c\u0e25\u0e07\u0e32\u0e19",
+    ai_videos: "วิดีโอ",
+    ai_open: "เปิด",
     ai_rerun: "\u0e23\u0e31\u0e19\u0e43\u0e2b\u0e21\u0e48",
     ai_reuse: "\u0e43\u0e0a\u0e49\u0e0b\u0e49\u0e33",
     ai_clear_hist: "\u0e25\u0e49\u0e32\u0e07\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34",
@@ -4590,6 +4600,8 @@ const I18N = {
     ai_nav_tools: "\u5de5\u5177",
     ai_history: "\u5386\u53f2\u8bb0\u5f55",
     ai_no_gen: "\u8fd8\u6ca1\u6709\u751f\u6210\u8bb0\u5f55\u3002",
+    ai_videos: "视频",
+    ai_open: "打开",
     ai_rerun: "\u91cd\u65b0\u8fd0\u884c",
     ai_reuse: "\u518d\u6b21\u4f7f\u7528",
     ai_clear_hist: "\u6e05\u9664\u5386\u53f2\u8bb0\u5f55",
@@ -5256,6 +5268,8 @@ const I18N = {
     ai_nav_tools: "C\u00f4ng c\u1ee5",
     ai_history: "L\u1ecbch s\u1eed",
     ai_no_gen: "Ch\u01b0a c\u00f3 k\u1ebft qu\u1ea3 n\u00e0o.",
+    ai_videos: "Video",
+    ai_open: "Mở",
     ai_rerun: "Ch\u1ea1y l\u1ea1i",
     ai_reuse: "D\u00f9ng l\u1ea1i",
     ai_clear_hist: "X\u00f3a l\u1ecbch s\u1eed",
@@ -5922,6 +5936,8 @@ const I18N = {
     ai_nav_tools: "Alat",
     ai_history: "Riwayat",
     ai_no_gen: "Belum ada hasil.",
+    ai_videos: "Video",
+    ai_open: "Buka",
     ai_rerun: "Jalankan Ulang",
     ai_reuse: "Pakai Lagi",
     ai_clear_hist: "Hapus riwayat",
@@ -6588,6 +6604,8 @@ const I18N = {
     ai_nav_tools: "Alat",
     ai_history: "Sejarah",
     ai_no_gen: "Belum ada hasil.",
+    ai_videos: "Video",
+    ai_open: "Buka",
     ai_rerun: "Jalan Semula",
     ai_reuse: "Guna Semula",
     ai_clear_hist: "Kosongkan sejarah",
@@ -6673,7 +6691,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.157.0";
+const PANEL_VERSION = "6.158.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8022,6 +8040,7 @@ function applyI18n() {
     /* v6.83.0 — and its inverse, so the gallery store can read a saved
        result back for the Smart Workflow wizard's results board. */
     g.HNK.bufToB64 = bufToB64;
+  g.HNK.openTake = takesOpenP;   /* v6.87.0 — History ▸ Videos ▸ Open */
     /* v6.83.0 — "Open in Edit" on the wizard's result card: IMAGE 1 becomes
        Freeform's Before and the result its After, entered into Freeform's own
        results history, so everything Freeform does with a result (compare,
@@ -12347,9 +12366,10 @@ async function vtRun() {
        re-save and re-open it; the row below stays the page's status line */
     vtHist.unshift({ url: res.results[0].url || "", ref: res.results[0].ref, name: name, folder: VT.out.name || "", folderPath: VT.out.nativePath || "",
       tool: d.label || d.id, prompt: promptText.slice(0, 120), ts: Date.now() });
-    while (vtHist.length > 6) vtHist.pop();
+    while (vtHist.length > 12) vtHist.pop();
     vtHistSel = 0;
     try { showVtResult(); } catch (eS) { }
+    takesRecordP("v2v", vtHist[0]);   /* v6.87.0 — kept across reloads */
     VT.rows = [{ label: name, level: "ok", detail: "saved" }];
     setStatus(t("st_done") || "Done", "ok");
   } catch (e) {
@@ -12635,6 +12655,7 @@ function showVidResult() {
       note.style.display = "";
     } else if (note) note.style.display = "none";
   } catch (e) { }
+  const fo = $("btnVidFolder"); if (fo) fo.style.display = out.galleryFile ? "" : "none";   /* v6.87.0 — the gallery copy's folder */
   const h = $("vidHist");
   if (h) {
     while (h.firstChild) h.removeChild(h.firstChild);
@@ -12714,9 +12735,11 @@ async function vidGenerate() {
     } else {
       try { rhBookUsage(res.usage, { kind: "video", label: m.label || m.id, prov: "rh" }); } catch (e) { }
       vidHist.unshift({ url: outs[0].url, ref: outs[0].ref, prompt: text.slice(0, 120), resolution: resolution, duration: duration, ts: Date.now() });
-      while (vidHist.length > 6) vidHist.pop();
+      while (vidHist.length > 12) vidHist.pop();
       vidHistSel = 0;
       showVidResult();
+      /* v6.87.0 — kept across reloads; the folder button comes on once the copy is written */
+      takesRecordP("video", vidHist[0]).then(function () { const fo = $("btnVidFolder"); if (fo && vidHist[vidHistSel] && vidHist[vidHistSel].galleryFile) fo.style.display = ""; });
       stSet("stVidGen", t("st_done"), "ok");
     }
   } catch (e) {
@@ -12744,7 +12767,7 @@ async function vidDownload() {
     if (folder) {
       const d = new Date(); const p2 = function (x) { return (x < 10 ? "0" : "") + x; };
       const stamp = "" + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate());
-      await saveResultFile(folder, "hnk-video-" + (out.resolution || "") + "-" + stamp + ".mp4", out.ref);
+      await saveResultFile(folder, "hnk-video-" + (out.resolution || "") + "-" + stamp + ".mp4", await takesRefP(out));
       setStatus(t("st_done"), "ok");
     }
   } catch (e) {
@@ -12813,13 +12836,13 @@ function vtItemP(h, v, i) {
 }
 function vtRemoveP(i) {
   if (!vtHist[i]) return;
-  vtHist.splice(i, 1);
+  takesForgetP(vtHist.splice(i, 1)[0]);   /* v6.87.0 */
   if (!vtHist.length) { vtClearP(false); setStatus(ff9(HIST_L.done), "ok"); return; }
   if (vtHistSel > i) vtHistSel--; if (vtHistSel >= vtHist.length) vtHistSel = vtHist.length - 1;
   showVtResult(false); setStatus(ff9(HIST_L.done), "ok");
 }
 function vtClearP(say) {
-  vtHist = []; vtHistSel = 0;
+  vtHist = []; vtHistSel = 0; takesClearP("v2v");
   const h = $("vtHist"); if (h) while (h.firstChild) h.removeChild(h.firstChild);
   const box = $("vtResultBox"); if (box) box.className = "card result-box";
   vtClearSyncP();
@@ -12840,7 +12863,7 @@ async function vtDownload() {
   if (btn) setIcnText(btn, "i-download", "ink", ff9(VID_L.dlBusy));
   try {
     const folder = await pickFolder();
-    if (folder) { await saveResultFile(folder, out.name || ("hnk-videotool-" + Date.now() + ".mp4"), out.ref); setStatus(t("st_done"), "ok"); }
+    if (folder) { await saveResultFile(folder, out.name || ("hnk-videotool-" + Date.now() + ".mp4"), await takesRefP(out)); setStatus(t("st_done"), "ok"); }
   } catch (e) { setStatus(ff9(VID_L.dlFail), "err"); }
   vtDl.busy = false;
   if (btn) setIcnText(btn, "i-download", "ink", ff9(VID_L.dl));
@@ -12864,11 +12887,11 @@ async function vtOpenFolder(p) {
    folder picked now, the direct link where the app has one, Open the folder,
    a strip with ✕ per take and Clear. tk = Talking Photo, vu = Video Upscale.
    ============================================================ */
-function mkTakes(pre, L) {
+function mkTakes(pre, L, page) {
   const Pre = pre.charAt(0).toUpperCase() + pre.slice(1);
   const id = function (s) { return pre + s; };
   const T = { list: [], sel: 0, dl: false };
-  T.record = function (e) { T.list.unshift(e); while (T.list.length > 6) T.list.pop(); T.sel = 0; try { T.show(); } catch (x) { } };
+  T.record = function (e) { T.list.unshift(e); while (T.list.length > 12) T.list.pop(); T.sel = 0; try { T.show(); } catch (x) { } takesRecordP(page, e); };
   T.show = function (scroll) {
     const out = T.list[T.sel]; const box = $(id("ResultBox")); if (!out || !box) return;
     box.className = "card result-box on";
@@ -12896,13 +12919,13 @@ function mkTakes(pre, L) {
   };
   T.remove = function (i) {
     if (!T.list[i]) return;
-    T.list.splice(i, 1);
+    takesForgetP(T.list.splice(i, 1)[0]);
     if (!T.list.length) { T.clear(false); setStatus(ff9(HIST_L.done), "ok"); return; }
     if (T.sel > i) T.sel--; if (T.sel >= T.list.length) T.sel = T.list.length - 1;
     T.show(false); setStatus(ff9(HIST_L.done), "ok");
   };
   T.clear = function (say) {
-    T.list = []; T.sel = 0;
+    T.list = []; T.sel = 0; takesClearP(page);
     const h = $(id("Hist")); if (h) while (h.firstChild) h.removeChild(h.firstChild);
     const box = $(id("ResultBox")); if (box) box.className = "card result-box";
     T.syncClear();
@@ -12920,7 +12943,7 @@ function mkTakes(pre, L) {
     if (btn) setIcnText(btn, "i-download", "ink", ff9(VID_L.dlBusy));
     try {
       const folder = await pickFolder();
-      if (folder) { await saveResultFile(folder, out.name || ("hnk-" + pre + "-" + Date.now() + ".mp4"), out.ref); setStatus(t("st_done"), "ok"); }
+      if (folder) { await saveResultFile(folder, out.name || ("hnk-" + pre + "-" + Date.now() + ".mp4"), await takesRefP(out)); setStatus(t("st_done"), "ok"); }
     } catch (e) { setStatus(ff9(VID_L.dlFail), "err"); }
     T.dl = false;
     if (btn) setIcnText(btn, "i-download", "ink", ff9(VID_L.dl));
@@ -12942,8 +12965,69 @@ function mkTakes(pre, L) {
   };
   return T;
 }
-const tkTakes = mkTakes("tk", TK_L);
-const vuTakes = mkTakes("vu", VU_L);
+const tkTakes = mkTakes("tk", TK_L, "talk");
+const vuTakes = mkTakes("vu", VU_L, "upscale");
+
+/* ============================================================
+   v6.87.0 — THE TAKES SURVIVE A RELOAD. Every finished take on the four
+   video pages goes through the takes store (src/app/takes-store.js): a copy
+   of the bytes in the gallery folder and a record in the index. At boot the
+   store is read back and each page's strip is painted from it; Download
+   again reads the copy when the in-memory bytes are gone; ✕ and Clear drop
+   the copy with the record; the Gallery page lists the copies as tiles and
+   History lists the takes under "Videos".
+   ============================================================ */
+function takesStoreP() { return (globalThis.HNK && globalThis.HNK.takesStore) || null; }
+const TAKE_PAGE_KEY = { video: "video", v2v: "v2v", talk: "talk", upscale: "vidup" };
+async function takesRecordP(page, live) {
+  const ts = takesStoreP(); if (!ts || !live) return null;
+  try {
+    const rec = await ts.record({ page: page, url: live.url, ref: live.ref, name: live.name, folder: live.folder, folderPath: live.folderPath,
+      tool: live.tool, resolution: live.resolution, duration: live.duration, prompt: live.prompt, ts: live.ts });
+    live.id = rec.id; live.galleryFile = rec.galleryFile;
+    return rec;
+  } catch (e) { hwarn("takes:", e); return null; }
+}
+function takesForgetP(live) { const ts = takesStoreP(); if (ts && live && live.id) { ts.remove(live.id).catch(function () { }); } }
+function takesClearP(page) { const ts = takesStoreP(); if (ts) { ts.clear(page).catch(function () { }); } }
+function takesForgetFileP(name) { const ts = takesStoreP(); if (ts && /\.mp4$/i.test(String(name || ""))) { ts.forgetFile(name).catch(function () { }); } }
+/* the bytes for Download again: this session's, or the gallery copy */
+async function takesRefP(out) {
+  if (out && out.ref) return out.ref;
+  const ts = takesStoreP();
+  if (ts && out && out.galleryFile) { const u = await ts.readDataUrl(out); if (u) return u; }
+  throw new Error("no saved copy");
+}
+async function takesOpenGalleryP() {
+  const ts = takesStoreP(); if (!ts) return;
+  try { const p = await ts.galleryPath(); if (p) await vtOpenFolder(p); } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+async function takesRestoreP() {
+  const ts = takesStoreP(); if (!ts) return;
+  let all = [];
+  try { all = await ts.load(); } catch (e) { hwarn("takes:", e); return; }
+  if (!all.length) return;
+  const by = function (p) { return all.filter(function (e) { return e.page === p; }).map(function (e) { return Object.assign({}, e); }); };
+  vidHist = by("video"); vidHistSel = 0; if (vidHist.length) { try { showVidResult(); } catch (e) { } }
+  vtHist = by("v2v"); vtHistSel = 0; if (vtHist.length) { try { showVtResult(false); } catch (e) { } }
+  tkTakes.list = by("talk"); tkTakes.sel = 0; if (tkTakes.list.length) { try { tkTakes.show(false); } catch (e) { } }
+  vuTakes.list = by("upscale"); vuTakes.sel = 0; if (vuTakes.list.length) { try { vuTakes.show(false); } catch (e) { } }
+}
+/* History ▸ Videos ▸ Open: the page, with that take selected */
+function takesOpenP(id) {
+  const ts = takesStoreP(); if (!ts) return false;
+  const e = ts.list().filter(function (x) { return x.id === id; })[0]; if (!e) return false;
+  const key = TAKE_PAGE_KEY[e.page]; if (!key) return false;
+  switchPage(key);
+  const pick = function (list, show, setSel) {
+    for (let i = 0; i < list.length; i++) { if (list[i].id === id) { setSel(i); try { show(); } catch (x) { } return; } }
+  };
+  if (e.page === "video") pick(vidHist, showVidResult, function (i) { vidHistSel = i; });
+  else if (e.page === "v2v") pick(vtHist, function () { showVtResult(true); }, function (i) { vtHistSel = i; });
+  else if (e.page === "talk") pick(tkTakes.list, function () { tkTakes.show(true); }, function (i) { tkTakes.sel = i; });
+  else pick(vuTakes.list, function () { vuTakes.show(true); }, function (i) { vuTakes.sel = i; });
+  return true;
+}
 /* the app's label pass for this page, re-run on every language switch */
 function vidPaintLabels() {
   const set = function (id, txt) { const el = $(id); if (el) el.textContent = txt; };
@@ -12955,6 +13039,7 @@ function vidPaintLabels() {
   set("vidHistH", ff9(VID_L.histH));
   if (!vidRun.dl) setIcnText($("btnVidDl"), "i-download", "ink", ff9(VID_L.dl));
   setIcnText($("btnVidOpen"), "i-external", "cream", ff9(VID_L.open));
+  setIcnText($("btnVidFolder"), "i-folder", "cream", ff9(VT_L.openFolder));   /* v6.87.0 */
   setIcnText($("btnVidRetry"), "i-retry", "cream", ff9(VID_L.retry));
   setIcnText($("btnVidCancel"), "i-close", "cream", t("btn_cancel"));
   const sp = ffSpinEnsure("vidSpin");
@@ -13116,7 +13201,18 @@ function galClearSync() {
   setIcnText(b, "i-trash", armed ? "ink" : "cream", ff9(armed ? GAL_L.clearArmed : GAL_L.clear));
 }
 
+/* v6.87.0 — a video take's copy: no thumbnail is read (Photoshop decodes no video; the file is megabytes), the tile names its page and time */
+function galIsVideo(name) { return /\.mp4$/i.test(String(name || "")); }
+function galVideoLabel(name) {
+  const ts = takesStoreP();
+  const e = ts ? ts.list().filter(function (x) { return x.galleryFile === name; })[0] : null;
+  const pageOf = function (p) { return ({ video: "Video", v2v: "V\u2192V", talk: "Talking Photo", upscale: "Upscale" })[p] || p; };
+  if (e) return pageOf(e.page) + " \u00b7 " + vwizClock(e.ts);
+  const mm = /^([a-z0-9]+)-(\d+)\.mp4$/i.exec(String(name || ""));
+  return mm ? pageOf(mm[1]) + " \u00b7 " + vwizClock(parseInt(mm[2], 10)) : "MP4";
+}
 async function galThumb(f) {
+  if (galIsVideo(f.name)) return "";
   if (GAL.thumbs[f.name]) return GAL.thumbs[f.name];
   try {
     const url = await fileToDataUrl(f);
@@ -13140,15 +13236,7 @@ function renderGal() {
   if (!grid) return;
   grid.innerHTML = "";
   GAL.files.forEach(function (f) {
-    const im = document.createElement("img");
-    im.alt = f.name;
-    im.className = ((GAL.selMode && GAL.sel[f.name]) || GAL.pick === f.name) ? "sel" : "";
-    /* v6.58.1 — the thumbnail enters the document long before galThumb answers,
-       and this renderer raises a load error for every <img> it finds without a
-       src. Seven gallery items, seven errors on the owner's card. */
-    im.src = IMG_BLANK;
-    galThumb(f).then(function (url) { if (url) im.src = url; });
-    im.addEventListener("click", function () {
+    const onTap = function () {
       if (GAL.selMode) {
         if (GAL.sel[f.name]) delete GAL.sel[f.name]; else GAL.sel[f.name] = true;
         renderGal();
@@ -13157,7 +13245,25 @@ function renderGal() {
       GAL.pick = f.name;
       galPaintPick();
       renderGal();
-    });
+    };
+    if (galIsVideo(f.name)) {   /* v6.87.0 */
+      const tile = document.createElement("div");
+      tile.className = "gal-vid" + (((GAL.selMode && GAL.sel[f.name]) || GAL.pick === f.name) ? " sel" : "");
+      const t1 = document.createElement("div"); t1.textContent = "MP4"; tile.appendChild(t1);
+      const t2 = document.createElement("div"); t2.className = "gal-vid-n"; t2.textContent = galVideoLabel(f.name); tile.appendChild(t2);
+      ffPressable(tile, onTap);
+      grid.appendChild(tile);
+      return;
+    }
+    const im = document.createElement("img");
+    im.alt = f.name;
+    im.className = ((GAL.selMode && GAL.sel[f.name]) || GAL.pick === f.name) ? "sel" : "";
+    /* v6.58.1 — the thumbnail enters the document long before galThumb answers,
+       and this renderer raises a load error for every <img> it finds without a
+       src. Seven gallery items, seven errors on the owner's card. */
+    im.src = IMG_BLANK;
+    galThumb(f).then(function (url) { if (url) im.src = url; });
+    im.addEventListener("click", onTap);
     grid.appendChild(im);
   });
 }
@@ -13172,9 +13278,15 @@ function galPaintPick() {
   if (!f) { if (box) box.style.display = "none"; return; }
   if (box) box.style.display = "";
   const im = $("galPickImg");
-  galThumb(f).then(function (url) { if (im && url) im.src = url; });
+  const isVid = galIsVideo(f.name);   /* v6.87.0 — a video: no picture, its page + time, Open the folder, no IMAGE slots */
+  if (im) { im.style.display = isVid ? "none" : ""; if (isVid) im.src = IMG_BLANK; }
+  if (!isVid) galThumb(f).then(function (url) { if (im && url) im.src = url; });
   const info = $("galPickInfo");
-  if (info) info.textContent = f.name;
+  if (info) info.textContent = isVid ? (galVideoLabel(f.name) + " \u00b7 " + f.name) : f.name;
+  const s1 = $("galToImg1"), s2 = $("galToImg2"), fo = $("galOpenFolder");
+  if (s1) s1.style.display = isVid ? "none" : "";
+  if (s2) s2.style.display = isVid ? "none" : "";
+  if (fo) { fo.style.display = isVid ? "" : "none"; setIcnText(fo, "i-folder", "cream", ff9(VT_L.openFolder)); }
   const keep = $("galKeep");
   if (keep) {
     keep.className = "btn" + (GAL.keep[f.name] ? " btn-gold" : "");
@@ -13218,7 +13330,7 @@ async function galDeleteSelected() {
   const gs = globalThis.HNK && globalThis.HNK.galleryStore;
   const names = Object.keys(GAL.sel);
   if (!gs || !names.length) { setStatus(ff9(GAL_L.pickNone), "err"); return; }
-  for (let i = 0; i < names.length; i++) { await gs.remove(names[i]); delete GAL.keep[names[i]]; delete GAL.thumbs[names[i]]; }
+  for (let i = 0; i < names.length; i++) { await gs.remove(names[i]); delete GAL.keep[names[i]]; delete GAL.thumbs[names[i]]; takesForgetFileP(names[i]); }
   GAL.sel = {};
   await galKeepSave();
   await galRefresh();
@@ -13234,7 +13346,7 @@ async function galSavePick() {
 }
 async function galToSlot(idx) {
   const f = galPickFile();
-  if (!f) { setStatus(ff9(GAL_L.pickNone), "err"); return; }
+  if (!f || galIsVideo(f.name)) { setStatus(ff9(GAL_L.pickNone), "err"); return; }
   try {
     const url = await galThumb(f);
     if (!url) throw new Error("unreadable");
@@ -13258,6 +13370,7 @@ async function galDeletePick() {
   await gs.remove(f.name);
   delete GAL.keep[f.name];
   delete GAL.thumbs[f.name];
+  takesForgetFileP(f.name);   /* v6.87.0 */
   GAL.pick = null;
   await galKeepSave();
   await galRefresh();
@@ -13285,7 +13398,7 @@ function bindGallery() {
       for (let i = 0; i < GAL.files.length; i++) {
         const n = GAL.files[i].name;
         if (GAL.keep[n]) { kept++; continue; }
-        await gs.remove(n); dropped++;
+        await gs.remove(n); dropped++; takesForgetFileP(n);
       }
     }
     GAL.sel = {}; GAL.pick = null; GAL.thumbs = {};
@@ -13298,6 +13411,7 @@ function bindGallery() {
   const i1 = $("galToImg1"); if (i1) i1.addEventListener("click", function () { galToSlot(0); });
   const i2 = $("galToImg2"); if (i2) i2.addEventListener("click", function () { galToSlot(1); });
   const kp = $("galKeep"); if (kp) kp.addEventListener("click", galToggleKeep);
+  const gof = $("galOpenFolder"); if (gof) gof.addEventListener("click", function () { takesOpenGalleryP(); });   /* v6.87.0 */
   const dp = $("galDel"); if (dp) dp.addEventListener("click", galDeletePick);
   galPaintLabels();
   REFRESHERS.push(function () { try { galPaintLabels(); } catch (e) { hwarn("gallery:", e); } });
@@ -13346,6 +13460,7 @@ function bindVideo() {
     });
     const dl = $("btnVidDl"); if (dl) dl.addEventListener("click", vidDownload);
     const open = $("btnVidOpen"); if (open) open.addEventListener("click", vidOpen);
+    const vfo = $("btnVidFolder"); if (vfo) vfo.addEventListener("click", function () { takesOpenGalleryP(); });   /* v6.87.0 */
     const box = $("vidPromptP");
     if (box) box.addEventListener("input", vidPaintPromptCount);
   });
@@ -17265,13 +17380,13 @@ function vidItemP(h, v, i) {
 }
 function vidRemoveP(i) {
   if (!vidHist[i]) return;
-  vidHist.splice(i, 1);
+  takesForgetP(vidHist.splice(i, 1)[0]);   /* v6.87.0 */
   if (!vidHist.length) { vidClearP(false); setStatus(ff9(HIST_L.done), "ok"); return; }
   if (vidHistSel > i) vidHistSel--; if (vidHistSel >= vidHist.length) vidHistSel = vidHist.length - 1;
   showVidResult(); setStatus(ff9(HIST_L.done), "ok");
 }
 function vidClearP(say) {
-  vidHist = []; vidHistSel = 0;
+  vidHist = []; vidHistSel = 0; takesClearP("video");
   const h = $("vidHist"); if (h) while (h.firstChild) h.removeChild(h.firstChild);
   const box = $("vidResultBox"); if (box) box.className = "card result-box";
   vidClearSyncP();
@@ -19759,6 +19874,7 @@ function init() {
     safe("version", function () { paintPanelVersion(); checkPanelUpdate(); });
     safe("ck-paint", function () { paintClean(); paintChecks(RMIX_CK, state.rmix); paintChecks(I2P_CK, state.i2p); paintChecks(I2P_OPT_CK, state.i2p); paintChains(); paintRest(); paintChecks([["lgEquip", "lightEquip"]], state); paintRoTarget(); paintChecks([["ckRefMk", "refMkOn"], ["ckRefHair", "refHairOn"]], state); paintChecks(MATCH_CK, state.match); });
     safe("page-restore", function () { switchPage(state.page || "aitools"); });
+    safe("takes-restore", function () { takesRestoreP(); });   /* v6.87.0 — the video strips come back */
     safe("meta", function () { refreshPromptMeta(); renderRefs(); refreshCompare(); });
     safe("reflib-restore", function () { try { refLibRestoreSlots(); } catch (e) { hwarn("lib restore:", e); } });
     safe("ready", function () { setStatus(t("st_ready")); });
