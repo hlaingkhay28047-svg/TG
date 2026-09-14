@@ -103,7 +103,7 @@ function sourcePins() {
     INDEX.indexOf('<script src="src/app/wf-results.js"></script>') < INDEX.indexOf('<script src="src/app/bootstrap.js"></script>'), null);
   report("A2) bootstrap records every smart-workflow result as it lands — the IMAGE 1 that went in, the prompt that made it, promptEdited, model, ratio, size — never blocking the run, and the handle carries placeResult",
     /wr\.record\(\{ workflowId: request\.workflowId, before: firstIn, after: r && r\.ref,/.test(BOOT) && /promptEdited: !!request\.promptEdited/.test(BOOT) &&
-    /request\.mode === "smart-workflow" && res\.results/.test(BOOT) && /async function placeResult\(ref, workflowId, modelId\)/.test(BOOT) && /placeResult: placeResult,/.test(BOOT) &&
+    /request\.mode === "smart-workflow" && res\.results/.test(BOOT) && /async function placeResult\(ref, workflowId, modelId(, regionBounds)?\)/.test(BOOT) && /placeResult: placeResult,/.test(BOOT) &&
     BOOT.indexOf("wr.record(") > BOOT.indexOf("gs.save(") && BOOT.indexOf("wr.record(") < BOOT.indexOf("if (s.addAsNewLayer === false)"), null);
   report("A3) the state carries promptOverride (empty = the live prompt; cleared when a workflow is chosen; setPromptOverride exported, whitespace clears) and the compiler sends it verbatim, flagging promptEdited on the request",
     /promptOverride: "",/.test(STATE) && /state\.promptOverride = "";\s*\/\* v6\.83\.0/.test(STATE) && /function setPromptOverride\(state, text\)/.test(STATE) && /setPromptOverride: setPromptOverride,/.test(STATE) &&

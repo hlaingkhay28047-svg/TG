@@ -6673,7 +6673,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.154.0";
+const PANEL_VERSION = "6.155.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9918,6 +9918,8 @@ function selfTestRowsInner() {
     rows.push({ label: "width probes", detail: wp.detail, level: wp.best > 0 ? "ok" : "host" });
     /* v6.80.0 — RunningHub and its file storage, each reached or not (see hnkNetProbeStart) */
     rows.push(hnkNetProbeRow());
+    /* v6.84.0 — the Active-layer read every image slot uses, on the open document (see hnkLayerProbeStart) */
+    rows.push(hnkLayerProbeRow());
     /* the student scrolled down to press Run: a positive reading here means
        scroll positions reach script (page-restore, the jump chips) */
     const pgS = $("pages");
@@ -10275,7 +10277,7 @@ function bindSetup() {
     const cpy = $("btnCopyLink"); if (cpy) cpy.addEventListener("click", function () { shareCopy(); });
     const cu = $("btnCheckUpdate"); if (cu) cu.addEventListener("click", function () { aboutCheckUpdate(); });
     const hr = $("btnHardRefresh"); if (hr) hr.addEventListener("click", function () { aboutHardRefresh(); });
-    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { try { hnkNetProbeStart(true); } catch (eN) { } renderSelfTest(); });
+    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { try { hnkNetProbeStart(true); } catch (eN) { } try { hnkLayerProbeStart(true); } catch (eL) { } renderSelfTest(); });
     const stc = $("btnSelfTestCopy"); if (stc) stc.addEventListener("click", function () { selfTestCopy(); });
     const about = $("cardAbout");
     if (about) {
@@ -14085,7 +14087,32 @@ async function captureDocumentB64(maxSide) {
   return out;
 }
 
+/* v6.84.0 — EVERY "Active layer" BUTTON GETS THE SAME PICTURE. The Freeform
+   IMG tiles, the classic reference slots, Retouch A/B and the Path page all
+   read the layer through this one getPixels shape; the Smart Workflow slots
+   read it through photoshop-host's captureActiveLayer, which walks four
+   getPixels shapes and a flattened saved copy. A layer group, a CMYK or Lab
+   document, a machine whose imaging refuses one shape: the wizard got the
+   picture and Freeform got a red line. When the single route refuses, the
+   host's routes run; only when they refuse too does the original refusal
+   reach the student, with the host's reasons appended. */
 async function captureLayerB64(maxSide) {
+  try { return await captureLayerB64Direct(maxSide); }
+  catch (e) {
+    const H = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK : {};
+    const host = H.photoshopHost;
+    if (!(host && typeof host.captureActiveLayer === "function")) throw e;
+    let r = null;
+    try { r = await host.captureActiveLayer(); } catch (e2) { throw e; }
+    if (r === null) throw e;                                   /* no document — the original words stand */
+    if (!r || !r.ref) throw new Error(String((e && e.message) || e) + " | " + String((r && r.error) || "no picture"));
+    const m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(String(r.ref));
+    if (!m) throw e;
+    try { hwarn("layer capture: direct route refused (" + String((e && e.message) || e).slice(0, 120) + "), host route " + (r.via || "?") + " answered"); } catch (eW) { }
+    return { b64: m[2], mime: m[1].toLowerCase(), label: "Layer: " + String(r.name || ""), w: r.width || 0, h: r.height || 0, via: r.via || "" };
+  }
+}
+async function captureLayerB64Direct(maxSide) {
   let out = null;
   await psCore.executeAsModal(async function () {
     const doc = app.activeDocument;
@@ -19082,7 +19109,7 @@ function switchPage(key) {
      opened (and on Run again), never on the boot path: renderSelfTest also
      runs from setupApplyStatics at boot, and a probe there would reach out
      to RunningHub on every panel start. The row re-paints when they answer. */
-  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); renderSelfTest(); } catch (e) { } }
+  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); hnkLayerProbeStart(false); renderSelfTest(); } catch (e) { } }
   /* the sticky GENERATE follows the page that owns it */
   try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
 }
@@ -19282,6 +19309,50 @@ function hnkNetProbeStart(force) {
     netProbe = { state: "done", at: Date.now(), rows: rows };
     try { renderSelfTest(); } catch (e) { }
   });
+}
+/* v6.84.0 — SELF-TEST "Layer capture". The owner asked whether the image
+   slots really work with the Active layer inside the CCX. The panel can
+   answer that itself: this runs the very capture every slot uses
+   (photoshop-host.captureActiveLayer — four getPixels shapes, then a
+   flattened saved copy) on the open document when Setup is opened (throttled)
+   and on Run again, and prints the layer's name, the size, the route that
+   answered and the time — or the exact refusal, which is what a photograph
+   of the card then carries. Never on the boot path; never while a job runs. */
+let layerProbe = { state: "idle", at: 0, res: null };
+function hnkLayerProbeStart(force) {
+  const now = Date.now();
+  if (layerProbe.state === "running") return;
+  if (!force && layerProbe.state === "done" && now - layerProbe.at < 60000) return;
+  if (!hostIsPhotoshop()) { layerProbe = { state: "done", at: now, res: { level: "host", detail: "not Photoshop \u2014 no layer to read" } }; return; }
+  const H = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK : {};
+  const host = H.photoshopHost;
+  if (!(host && typeof host.captureActiveLayer === "function")) {
+    layerProbe = { state: "done", at: now, res: { level: "err", detail: "photoshop-host has no captureActiveLayer" } }; return;
+  }
+  if (state && state.busy) { layerProbe = { state: "done", at: now, res: { level: "pend", detail: "a job is running \u2014 Run again when it ends" } }; return; }
+  layerProbe = { state: "running", at: now, res: null };
+  const t0 = Date.now();
+  Promise.resolve().then(function () { return host.captureActiveLayer(); }).then(function (r) {
+    const ms = Date.now() - t0;
+    let res;
+    if (r === null) res = { level: "host", detail: "no document open \u2014 open a photo, select its layer, then Run again" };
+    else if (r && r.error) res = { level: "err", detail: "REFUSED \u2014 " + String(r.error).slice(0, 140) + " (" + ms + "ms)" };
+    else if (r && r.ref) {
+      const kb = Math.round(String(r.ref).length * 3 / 4 / 1024);
+      res = { level: "ok", detail: (r.name ? "\u201C" + String(r.name).slice(0, 24) + "\u201D \u00b7 " : "") + (r.width || 0) + "\u00d7" + (r.height || 0) +
+        (r.mode && !/rgb/i.test(String(r.mode)) ? " \u00b7 " + String(r.mode).replace(/ColorMode$/i, "") : "") + " \u00b7 via " + (r.via || "?") + " \u00b7 " + ms + "ms \u00b7 " + kb + " KB" };
+    } else res = { level: "err", detail: "empty answer from the capture" };
+    layerProbe = { state: "done", at: Date.now(), res: res };
+    try { renderSelfTest(); } catch (e) { }
+  }, function (e) {
+    layerProbe = { state: "done", at: Date.now(), res: { level: "err", detail: "threw \u2014 " + String((e && e.message) || e).slice(0, 140) } };
+    try { renderSelfTest(); } catch (e2) { }
+  });
+}
+function hnkLayerProbeRow() {
+  if (layerProbe.state === "idle") return { label: "Layer capture", detail: "\u2014", level: "pend" };
+  if (layerProbe.state === "running") return { label: "Layer capture", detail: "reading the active layer\u2026", level: "pend" };
+  return { label: "Layer capture", detail: (layerProbe.res && layerProbe.res.detail) || "\u2014", level: (layerProbe.res && layerProbe.res.level) || "pend" };
 }
 function hnkNetProbeRow() {
   if (netProbe.state === "idle") return { label: "Network", detail: "\u2014", level: "pend" };

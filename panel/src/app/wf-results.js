@@ -49,6 +49,13 @@ function record(r) {
     ratio: String(r.ratio || ""),
     size: String(r.size || ""),
     timeLabel: String(r.timeLabel || ""),
+    /* v6.84.0 — a Selection Edit result remembers the rectangle it was cut
+       from, so "Place into Photoshop again" lands it there under the same
+       mask, and the compare can say "Selection" instead of "IMAGE 1". */
+    regionBounds: (r.regionBounds && r.regionBounds.width > 0 && r.regionBounds.height > 0)
+      ? { x: Number(r.regionBounds.x) || 0, y: Number(r.regionBounds.y) || 0, width: Number(r.regionBounds.width), height: Number(r.regionBounds.height) }
+      : null,
+    inputSource: String(r.inputSource || ""),
     ts: Date.now()
   };
   _list.unshift(e);

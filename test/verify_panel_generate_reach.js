@@ -99,7 +99,8 @@ function sourcePins() {
     Object.values(a5).every(Boolean), a5);
   const a6 = { keys: (MAIN.match(/^    rh_err_task_failed: /mg) || []).length, row: MAIN.includes("rows.push(hnkNetProbeRow());"), probe: /function hnkNetProbeStart\(force\)/.test(MAIN),
     hosts: MAIN.includes('url: "https://www.runninghub.ai/openapi/v2/query"') && MAIN.includes('url: "https://' + STORAGE_HOST + '/"') && MAIN.includes('url: "https://' + RESULT_HOST + '/"'),
-    stage: /function rhStageWord\(stage\)/.test(MAIN), why: MAIN.includes('((e && e.why) ? " \\u00b7 " + e.why : "")'), run: MAIN.includes("hnkNetProbeStart(true); } catch (eN) { } renderSelfTest();") };
+    stage: /function rhStageWord\(stage\)/.test(MAIN), why: MAIN.includes('((e && e.why) ? " \\u00b7 " + e.why : "")'), /* 6.84.0 — the Layer capture probe re-arms on the same button, between the Network probe and the repaint */
+    run: /hnkNetProbeStart\(true\); \} catch \(eN\) \{ \}( try \{ hnkLayerProbeStart\(true\); \} catch \(eL\) \{ \})? renderSelfTest\(\);/.test(MAIN) };
   report("A6) main.js: rh_err_task_failed in nine languages, the SELF-TEST Network row over RunningHub · uploads · results (probe re-armed by Run again), the classic status line prints the stage and reason (e.why)",
     a6.keys === 9 && a6.row && a6.probe && a6.hosts && a6.stage && a6.why && a6.run, a6);
   const imPins = (src) => src.includes('el("input","im-stagerange")') && /function imStageW\(\)\{ return S\.stageW>0 \? S\.stageW : IM_STAGE_W; \}/.test(src)
