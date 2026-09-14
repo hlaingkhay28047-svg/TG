@@ -115,11 +115,12 @@ function sourcePins() {
     { table, markupStpg, allApg, pages: Object.keys(scopes).length, scopeMem: MAIN.indexOf("scopeMem") });
 
   /* A3 — the photo sheet is a dialog, and its CSS no longer fixes it to the viewport */
-  report("A3) photoSheet builds a <dialog id=ffSheet class=ff-sheet> (showModal, a Cancel row, backdrop + cancel close) and .ff-sheet is no longer position:fixed",
+  report("A3) photoSheet builds a <dialog id=ffSheet class=ff-sheet> (opened through hnkShowDialog with its size, a Cancel row, backdrop + cancel close) and .ff-sheet is no longer position:fixed",
     /const bd = document\.createElement\("dialog"\); bd\.id = "ffSheet"; bd\.className = "ff-sheet";/.test(MAIN)
     && /cancel\.className = "btn ff-sheet-cancel";/.test(MAIN)
     && /bd\.addEventListener\("cancel", function \(\) \{ ffSheetClose\(\); \}\);/.test(MAIN)
-    && /if \(typeof bd\.showModal === "function"\) bd\.showModal\(\); else bd\.setAttribute\("open", ""\);/.test(MAIN)
+    /* v6.79.0 — the sheet opens through hnkShowDialog (explicit size for UXP), no bare showModal */
+    && /hnkShowDialog\(bd, \{ title: h\.textContent, width: 300, height: 74 \+ nBtn \* 52 \}\);/.test(MAIN)
     && /\.ff-sheet \{ background-color: var\(--panel\); border: 1px solid var\(--line-soft\); border-radius: 14px; padding: 0;/.test(CSS)
     && !/\.ff-sheet \{ position: fixed;/.test(CSS),
     { fixed: /\.ff-sheet \{ position: fixed;/.test(CSS) });
