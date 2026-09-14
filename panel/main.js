@@ -6691,7 +6691,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.159.0";
+const PANEL_VERSION = "6.159.1";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8043,6 +8043,8 @@ function applyI18n() {
        result back for the Smart Workflow wizard's results board. */
     g.HNK.bufToB64 = bufToB64;
   g.HNK.openTake = takesOpenP;   /* v6.87.0 — History ▸ Videos ▸ Open */
+    /* v6.159.1 — the Smart Workflow wizard's runs reach COST & BALANCE: bootstrap hands the adapter's usage here */
+    g.HNK.spendBook = function (usage, meta) { try { rhBookUsage(usage, meta); } catch (e) { } };
     /* v6.83.0 — "Open in Edit" on the wizard's result card: IMAGE 1 becomes
        Freeform's Before and the result its After, entered into Freeform's own
        results history, so everything Freeform does with a result (compare,
@@ -16561,13 +16563,35 @@ function disarm() {
    card (or the top of the active page) and shown there; disarm() hides it. */
 function guidePlace(el) {
   const gb = $("guideBox"); if (!gb) return;
-  const card = el ? hslClosest(el, "card") : null;
+  /* v6.159.1 — the owner's photographs: tap 1 put the box above the GENERATE card, tap 2 put it at the TOP of the page.
+     The only road to the page top is the fallback below, so the move failed: on the second tap the box is already the
+     card's previous sibling and the host refuses that no-op move. A box already in place is left alone; any move
+     detaches it first; a button repainted since the first tap is found again by its id. */
+  let live = el;
+  try { if (live && live.id && !elInDoc(live)) live = $(live.id) || live; } catch (e) { }
+  /* the sticky GENERATE (STICKY_GENS) is lifted into #genDock while its card is below the fold — the owner's second tap
+     came from the dock, where no card is above it; its natural spot (the placeholder) is still in the card */
+  let spot = live;
+  try { if (live && typeof stickyGenNatural === "function") spot = stickyGenNatural(live) || live; } catch (e) { }
+  const card = spot ? hslClosest(spot, "card") : null;
   let done = false;
-  try { if (card && card.parentNode) { card.parentNode.insertBefore(gb, card); done = true; } } catch (e) { }
+  try {
+    if (card && card.parentNode) {
+      if (gb.parentNode === card.parentNode && (gb.nextSibling === card || gb.nextElementSibling === card)) done = true;
+      else { if (gb.parentNode) gb.parentNode.removeChild(gb); card.parentNode.insertBefore(gb, card); done = true; }
+    }
+  } catch (e) { }
   if (!done) {
-    try { const pe = pageEntry(state.page); const pg = pe && $(pe.page); if (pg) { pg.insertBefore(gb, pg.firstChild); done = true; } } catch (e) { }
+    try {
+      const pe = pageEntry(state.page); const pg = pe && $(pe.page);
+      if (pg) { if (pg.firstChild === gb) done = true; else { if (gb.parentNode) gb.parentNode.removeChild(gb); pg.insertBefore(gb, pg.firstChild); done = true; } }
+    } catch (e) { }
   }
   gb.className = "gbox on";
+}
+/* is the element still in the document? (isConnected where the host has it, contains elsewhere; "yes" when neither can be asked) */
+function elInDoc(e) {
+  try { if (typeof e.isConnected === "boolean") return e.isConnected; return !!(document.body && document.body.contains(e)); } catch (x) { return true; }
 }
 
 function greenFlash(el) {
@@ -17882,7 +17906,9 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
     const imageConfig = {};
     const ratio = resolveRatio(base);
     if (ratio) imageConfig.aspectRatio = ratio;
-    if (model === MODEL_PRO_IMG && state.size !== "1K") imageConfig.imageSize = state.size;
+    /* v6.159.1 — the Gemini-era "Pro image size" comparison stood here until the owner's photograph: MODEL_PRO_IMG left with
+       that engine in 6.26.0 and a ReferenceError on this line ended EVERY Freeform run since. model is null on this path;
+       callImageAPI shapes the size by tier (state.model / state.size), so nothing is lost. */
 
     startBusy("st_gen");
     const img = await callImageAPI(model, parts, imageConfig, ffSig);

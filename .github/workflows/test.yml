@@ -554,6 +554,8 @@ jobs:
         run: PORT=8931 node test/verify_panel_video_takes_persist.js
       - name: Tutorials — ten lessons in nine languages from one table on the app (renderTutorials, language switch, every button opens its page) and the panel (lifted by tools/build_panel_tutorials.js, painted in the panel's language, app page ids mapped to panel routes) (6.88.0 / panel 6.159.0)
         run: PORT=8931 node test/verify_tutorials.js
+      - name: Panel Freeform generate — the sixteen photographs of 6.159.0 (Freeform GENERATE threw MODEL_PRO_IMG is not defined since 6.26.0, the Learn Mode guide box jumped to the page top on the second tap, Smart Workflow runs never reached COST & BALANCE) — the real runGenerate, the three-tap cycle with the host's move refusal simulated, the real runViaProvider booking its usage (6.88.1 / panel 6.159.1)
+        run: PORT=8931 node test/verify_panel_freeform_generate.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
