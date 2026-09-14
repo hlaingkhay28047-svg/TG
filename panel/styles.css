@@ -1105,6 +1105,43 @@ input[type="range"] { min-width: 0; }
 .hnk-req-mark { font-size:11px; color:var(--muted); min-width:52px; }
 .hnk-todo { font-size:12px; color:var(--muted); padding:16px 0; }
 
+/* v6.83.0 — the Smart Workflow wizard's Advanced prompt box (the app's
+   .wizadv-h / .wizadv-b) and its Results card: the result picture, the
+   Before | After compare (percent widths only — UXP hands no pixel ruler;
+   the Before picture inside a pct%-wide window is drawn 100/pct % wide, the
+   Imagine rule of 6.78.0), a wrapping action row, a three-up board with
+   margins (no gap, no grid) and the History rows in the History screen's
+   own card style. */
+.hnk-wf-adv-h { display: block; width: 100%; box-sizing: border-box; text-align: left; margin-top: 10px;
+  color: var(--accent); font-weight: 700; }
+.hnk-wf-adv-b { display: none; margin-top: 8px; }
+.hnk-wf-adv-b.on { display: block; }
+.hnk-wf-adv-b .mut { margin-bottom: 6px; }
+.hnk-wf-prompt { display: block; width: 100%; box-sizing: border-box; min-height: 160px; font-size: 11.5px; line-height: 1.45; }
+.hnk-wf-prompt-row { display: flex; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+.hnk-wf-prompt-row > .hnk-btn { margin-right: 8px; margin-bottom: 4px; }
+.hnk-wf-prompt-state { font-size: 11px; color: var(--muted); }
+.hnk-wf-prompt-state.edited { color: var(--accent); }
+.hnk-wf-results { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+.hnk-wf-result-img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); background-color: #050b10; margin-top: 6px; }
+.hnk-wf-res-acts { display: flex; flex-wrap: wrap; margin-top: 8px; }
+.hnk-wf-res-acts > .hnk-btn { flex: 1 1 45%; min-width: 0; box-sizing: border-box; text-align: center; margin: 0 6px 6px 0; }
+.hnk-wf-res-acts > .hnk-btn.on { border-color: var(--accent); color: var(--accent); }
+.hnk-wf-cmp { margin-top: 10px; }
+.apg .hnk-wf-cmp .cmp { position: relative; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background-color: #050b10; }
+.apg .hnk-wf-cmp .cmp > img { display: block; width: 100%; height: auto; }
+.apg .hnk-wf-cmp .cmp-top { position: absolute; top: 0; left: 0; bottom: 0; height: auto; width: 50%; overflow: hidden; }
+.apg .hnk-wf-cmp .cmp-top img { position: absolute; left: 0; top: 0; display: block; width: 200%; max-width: none; height: auto; }
+.apg .hnk-wf-cmp .cmp-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background-color: var(--accent); }
+.hnk-wf-cmp input { width: 100%; margin-top: 8px; }
+.hnk-wf-cmp-tags { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 2px; }
+.hnk-wf-board { display: flex; flex-wrap: wrap; margin-top: 8px; }
+.hnk-wf-board-th { flex: none; width: 31%; margin: 0 3.5% 8px 0; padding: 0; box-sizing: border-box;
+  border: 2px solid transparent; border-radius: 10px; overflow: hidden; background-color: #050b10; }
+.hnk-wf-board-th img { display: block; width: 100%; height: auto; }
+.hnk-wf-board-th.on { border-color: var(--accent); }
+.hnk-wf-hist .hnk-hist { margin-top: 6px; }
+
 /* v6.27.0 — every image slot offers all four sources; the Web source opens a
    small inline URL row under its slot. */
 .hnk-req-block { padding: 2px 0; }

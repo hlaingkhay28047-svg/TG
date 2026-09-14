@@ -542,6 +542,8 @@ jobs:
         run: PORT=8931 node test/verify_panel_result_host.js
       - name: Panel Freeform sources — the IMG slot sheet is a dialog with Layer · File · Paste · Web · Library · last result, a web picture Photoshop's host list refuses comes through the studio API (SSRF-guarded /v1/image), Auto ratio = IMAGE 1's own shape on both surfaces, the wizard's Library button opens the Library and takes the look back
         run: PORT=8931 node test/verify_panel_freeform_sources.js
+      - name: Panel Smart Workflow results — the wizard's Results card (picture · Before | After percent slider · Place again · Run again · Use as IMAGE 1 · Open in Edit · Remove · board · History), the Advanced prompt box (live compiled prompt, an edit sent verbatim, Reset), Reference Scenes keeps IMAGE 1's frame and ignores IMAGE 2's person, btn_ok in nine languages
+        run: PORT=8931 node test/verify_panel_wf_results.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
