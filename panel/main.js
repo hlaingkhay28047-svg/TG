@@ -10088,7 +10088,6 @@ function renderSelfTestInner() {
   const legend = $("selfTestLegend"); if (legend) legend.textContent = ff9(ST_L.legend);
   setIcnText($("btnSelfTest"), "i-retry", "cream", ff9(ST_L.run));
   setIcnText($("btnSelfTestCopy"), "i-doc", "cream", ff9(ST_L.copy));
-  try { hnkNetProbeStart(false); } catch (eN) { }   /* v6.80.0 — the Network row's probes; the row re-paints when they answer */
   renderRows("selfTestRows", selfTestRows());
 }
 function selfTestText() {
@@ -18911,7 +18910,11 @@ function switchPage(key) {
   /* v6.75.0 — a page switch is a cheap moment to re-ask for pictures a dead line took (throttled inside) */
   try { const ra = globalThis.HNK && globalThis.HNK.remoteArt; if (ra && ra.retryFailed) ra.retryFailed(false); } catch (e) { }
   /* v6.51.0 — Setup repaints its readiness rows and the data-store line on entry, like the app's showPage */
-  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); renderSelfTest(); } catch (e) { } }
+  /* v6.80.0 — the Network row's two probes start when the Setup page is
+     opened (and on Run again), never on the boot path: renderSelfTest also
+     runs from setupApplyStatics at boot, and a probe there would reach out
+     to RunningHub on every panel start. The row re-paints when they answer. */
+  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); renderSelfTest(); } catch (e) { } }
   /* the sticky GENERATE follows the page that owns it */
   try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
 }
