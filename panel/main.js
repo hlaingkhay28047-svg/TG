@@ -931,6 +931,7 @@ const I18N = {
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "Could not reach RunningHub Enterprise \u2014 the line is down. Check your internet connection and try again.",
     rh_err_task_failed: "The RunningHub task failed \u2014 try a different prompt or photo.",
+    rh_err_host_blocked: "Photoshop refused this host \u2014 the panel\u2019s manifest does not allow it. Install the newest panel build.",
     rh_err_timeout: "The generation took too long \u2014 RunningHub did not answer in time. Try again, or reduce the size or number of variants.",
     rh_err_rate_limited: "RunningHub Enterprise is busy right now \u2014 wait a moment and try again.",
     rh_err_invalid_key: "RunningHub refused the key \u2014 check it under Setup \u25b8 RunningHub Enterprise.",
@@ -1596,6 +1597,7 @@ const I18N = {
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "RunningHub Enterprise ကို မရောက်ပါ — အင်တာနက် ပြတ်နေပါတယ်။ ချိတ်ဆက်မှုကို စစ်ပြီး ပြန်ကြိုးစားပါ။",
     rh_err_task_failed: "RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",
+    rh_err_host_blocked: "Photoshop က ဒီ host ကို ခွင့်မပြုပါ — panel manifest ထဲ မပါလို့ပါ။ Panel အသစ်ဆုံး ထည့်ပါ။",
     rh_err_timeout: "ပုံထုတ်တာ ကြာလွန်းပါတယ် — RunningHub က အချိန်မီ မဖြေပါ။ ပြန်ကြိုးစားပါ (သို့) အရွယ်အစား / အရေအတွက် လျှော့ပါ။",
     rh_err_rate_limited: "RunningHub Enterprise အလုပ်များနေပါတယ် — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ။",
     rh_err_invalid_key: "RunningHub က key ကို လက်မခံပါ — Setup ▸ RunningHub Enterprise မှာ key ပြန်စစ်ပါ။",
@@ -2261,6 +2263,7 @@ const I18N = {
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "ထိုင် RunningHub Enterprise ဢမ်ႇလႆႈ — ဢိၼ်ႇထႃႇၼႅတ်ႉၶၢတ်ႇ။ ၵူတ်ႇထတ်းလႅင်းသေ ၶိုၼ်းၸၢမ်း။",
     rh_err_task_failed: "RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",
+    rh_err_host_blocked: "Photoshop ဢမ်ႇပၼ် host ၼႆႉ — ဢမ်ႇမီးၼႂ်း manifest panel။ သႂ်ႇ panel မႂ်ႇသုတ်း။",
     rh_err_timeout: "ႁဵတ်းႁၢင်ႈႁိုင်ပူၼ်ႉ — RunningHub ဢမ်ႇတွပ်ႇတၼ်း။ ၶိုၼ်းၸၢမ်း ဢမ်ႇၼၼ် လူတ်းယွမ်း ၶၼၢတ်ႈ / ၸမ်ႉ။",
     rh_err_rate_limited: "RunningHub Enterprise ယုင်ႈယူႇ — ပႂ်ႉၵမ်းၼိုင်ႈသေ ၶိုၼ်းၸၢမ်း။",
     rh_err_invalid_key: "RunningHub ဢမ်ႇႁပ်ႉ key — ၵူတ်ႇထတ်းတီႈ Setup ▸ RunningHub Enterprise။",
@@ -2924,6 +2927,7 @@ const I18N = {
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "RunningHub Enterprise de n du lu ai — internet hten nga ai. Internet hpe yu nna bai chyam yu u.",
     rh_err_task_failed: "RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",
+    rh_err_host_blocked: "Photoshop gaw ndai host hpe n hkap la ai — panel manifest hta n rawng ai. Panel nnan htum bang u.",
     rh_err_timeout: "Sumla shapraw na na ai — RunningHub aten hta n htai ai. Bai chyam yu u, n rai yang kaba / nsen hpe yawm u.",
     rh_err_rate_limited: "RunningHub Enterprise bungli law nga ai — jahkring la nna bai chyam yu u.",
     rh_err_invalid_key: "RunningHub gaw key hpe n hkap la ai — Setup ▸ RunningHub Enterprise hta bai yu u.",
@@ -3587,6 +3591,7 @@ const I18N = {
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "เชื่อมต่อ RunningHub Enterprise ไม่ได้ — อินเทอร์เน็ตขาด ตรวจสอบการเชื่อมต่อแล้วลองใหม่",
     rh_err_task_failed: "งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",
+    rh_err_host_blocked: "Photoshop ปฏิเสธโฮสต์นี้ — ไม่อยู่ใน manifest ของแผง ติดตั้งแผงเวอร์ชันล่าสุด",
     rh_err_timeout: "สร้างภาพนานเกินไป — RunningHub ไม่ตอบทันเวลา ลองใหม่ หรือลดขนาด / จำนวนภาพ",
     rh_err_rate_limited: "RunningHub Enterprise กำลังยุ่ง — รอสักครู่แล้วลองใหม่",
     rh_err_invalid_key: "RunningHub ไม่รับคีย์นี้ — ตรวจสอบที่ Setup ▸ RunningHub Enterprise",
@@ -4250,6 +4255,7 @@ const I18N = {
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "无法连接 RunningHub Enterprise — 网络已断开。请检查网络连接后重试。",
     rh_err_task_failed: "RunningHub 任务失败 — 请更换 prompt 或图片",
+    rh_err_host_blocked: "Photoshop 拒绝了此主机 — 面板 manifest 未允许。请安装最新面板。",
     rh_err_timeout: "生成耗时过长 — RunningHub 未及时响应。请重试，或减小尺寸 / 数量。",
     rh_err_rate_limited: "RunningHub Enterprise 正忙 — 请稍候再试。",
     rh_err_invalid_key: "RunningHub 拒绝了该 key — 请到 Setup ▸ RunningHub Enterprise 检查。",
@@ -4913,6 +4919,7 @@ const I18N = {
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "Không kết nối được RunningHub Enterprise — mất mạng. Kiểm tra kết nối rồi thử lại.",
     rh_err_task_failed: "Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",
+    rh_err_host_blocked: "Photoshop từ chối host này — manifest của panel không cho phép. Hãy cài panel mới nhất.",
     rh_err_timeout: "Tạo ảnh quá lâu — RunningHub không trả lời kịp. Thử lại, hoặc giảm kích thước / số lượng.",
     rh_err_rate_limited: "RunningHub Enterprise đang bận — đợi một lát rồi thử lại.",
     rh_err_invalid_key: "RunningHub từ chối key — kiểm tra tại Setup ▸ RunningHub Enterprise.",
@@ -5576,6 +5583,7 @@ const I18N = {
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "Tidak dapat menjangkau RunningHub Enterprise — koneksi terputus. Periksa internet lalu coba lagi.",
     rh_err_task_failed: "Tugas RunningHub gagal — coba prompt/foto lain",
+    rh_err_host_blocked: "Photoshop menolak host ini — manifest panel tidak mengizinkannya. Pasang panel terbaru.",
     rh_err_timeout: "Pembuatan terlalu lama — RunningHub tidak menjawab tepat waktu. Coba lagi, atau kurangi ukuran / jumlah.",
     rh_err_rate_limited: "RunningHub Enterprise sedang sibuk — tunggu sebentar lalu coba lagi.",
     rh_err_invalid_key: "RunningHub menolak key — periksa di Setup ▸ RunningHub Enterprise.",
@@ -6239,6 +6247,7 @@ const I18N = {
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
     rh_err_network: "Tidak dapat mencapai RunningHub Enterprise — talian terputus. Semak internet dan cuba lagi.",
     rh_err_task_failed: "Tugas RunningHub gagal — cuba prompt/foto lain",
+    rh_err_host_blocked: "Photoshop menolak hos ini — manifest panel tidak membenarkannya. Pasang panel terkini.",
     rh_err_timeout: "Penjanaan terlalu lama — RunningHub tidak menjawab tepat pada masanya. Cuba lagi, atau kurangkan saiz / bilangan.",
     rh_err_rate_limited: "RunningHub Enterprise sibuk sekarang — tunggu sebentar dan cuba lagi.",
     rh_err_invalid_key: "RunningHub menolak key — semak di Setup ▸ RunningHub Enterprise.",
@@ -6638,7 +6647,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.151.0";
+const PANEL_VERSION = "6.152.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -19074,7 +19083,14 @@ function hnkWidthProbes() {
    itself when both have answered. */
 const RH_NET_PROBES = [
   { id: "RunningHub", url: "https://www.runninghub.ai/openapi/v2/query", method: "POST", body: "{}" },
-  { id: "files", url: "https://rh-hk-images-switch.xiaoyaoyou.com/", method: "GET" }
+  /* v6.81.0 — TWO STORAGE HOSTS, NOT ONE. The 6.151.0 photograph's Network row
+     read "files ok (403)" for xiaoyaoyou while the same panel's GENERATE was
+     refused "Permission denied to the url rh-hk-images-1252422369.cos.
+     ap-hongkong.myqcloud.com Manifest entry not found": uploads go to
+     xiaoyaoyou, finished pictures come back from Tencent COS. Both probed,
+     each named for what it carries. */
+  { id: "uploads", url: "https://rh-hk-images-switch.xiaoyaoyou.com/", method: "GET" },
+  { id: "results", url: "https://rh-hk-images-1252422369.cos.ap-hongkong.myqcloud.com/", method: "GET" }
 ];
 let netProbe = { state: "idle", at: 0, rows: [] };
 function hnkNetProbeStart(force) {
@@ -19099,7 +19115,7 @@ function hnkNetProbeStart(force) {
       }, function (e) {
         clearTimeout(tm);
         const aborted = !!(ctl && ctl.signal && ctl.signal.aborted);
-        resolve({ id: p.id, ok: false, why: aborted ? "no answer in 8s" : String((e && e.message) || e).replace(/https?:\/\/\S+/g, "").trim().slice(0, 80), ms: Date.now() - t0 });
+        resolve({ id: p.id, ok: false, why: aborted ? "no answer in 8s" : String((e && e.message) || e).replace(/https?:\/\/\S+/g, "").trim().slice(0, 140), ms: Date.now() - t0 });
       });
     });
   };
@@ -19110,7 +19126,7 @@ function hnkNetProbeStart(force) {
 }
 function hnkNetProbeRow() {
   if (netProbe.state === "idle") return { label: "Network", detail: "\u2014", level: "pend" };
-  if (netProbe.state === "running") return { label: "Network", detail: "checking RunningHub \u00b7 files\u2026", level: "pend" };
+  if (netProbe.state === "running") return { label: "Network", detail: "checking RunningHub \u00b7 uploads \u00b7 results\u2026", level: "pend" };
   const bits = [], bad = [];
   netProbe.rows.forEach(function (r) {
     if (r.ok) bits.push(r.id + " ok (" + (r.status || "?") + " \u00b7 " + r.ms + "ms)");

@@ -538,6 +538,8 @@ jobs:
         run: PORT=8931 node test/verify_panel_uxp_dialogs.js
       - name: Panel generate reaches its result — RunningHub's file host in the manifest, three transport budgets that say timeout not line-down, a FAILED task named as such, the failing stage + reason on the status line, a SELF-TEST Network row, the Imagine brush stage width where no ruler answers
         run: PORT=8931 node test/verify_panel_generate_reach.js
+      - name: Panel result host — RunningHub's finished pictures live on Tencent COS (the panel's own 6.151.0 refusal named it), the manifest allows it, the platform's refusal is host-blocked in nine languages, the Network row probes RunningHub · uploads · results
+        run: PORT=8931 node test/verify_panel_result_host.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
