@@ -46,9 +46,15 @@ var IMAGINE = (function(){
       return lo;
     }catch(e2){ return 0; }
   }
+  /* 6.80.0 — THE WIDTH NOTHING CAN MEASURE. The owner's 6.150.0 SELF-TEST read every ruler 0 (inner · outer · vv · mm ·
+     screen), so on that renderer the brush had no width to divide offsetX by at all. Where no ruler answers, the brush
+     stage takes an explicit px width instead — the one the student sets with the range under it, or the column's own
+     340 — and offsetX over that width is exact by construction. A browser that measures never reaches this. */
+  var IM_STAGE_W=340;
+  function imStageW(){ return S.stageW>0 ? S.stageW : IM_STAGE_W; }
   function imStageWidth(el){
     if(H && typeof H.stageWidth==="function"){ try{ var hw=H.stageWidth(el); if(hw>0) return hw; }catch(e){} }
-    var vw=imViewportW(); if(!(vw>0)) return 0;
+    var vw=imViewportW(); if(!(vw>0)) return imStageW();
     var n=el, pad=0, guard=0;
     while(n && n.nodeType===1 && guard++<40){
       var cs=null; try{ cs=getComputedStyle(n); }catch(e){ cs=null; }
@@ -80,7 +86,7 @@ var IMAGINE = (function(){
     var w=el.clientWidth||imStageWidth(el); if(!(w>0)) return null;
     return Math.max(0, Math.min(100, startPct + (c[0]-downX)/w*100));
   }
-  var S = { tool:null, model:"", size:"", tab:"tpl", preset:{}, desc:{}, photos:[], cur:0, busy:false, job:null, split:50, status:"", ref:{}, markMode:false, brush:1 };   /* 6.31.0 — ref: the Reference Card picture per tool (never saved to the device); 6.32.0 — markMode/brush: the brush tools' red paint */
+  var S = { tool:null, model:"", size:"", tab:"tpl", preset:{}, desc:{}, photos:[], cur:0, busy:false, job:null, split:50, status:"", ref:{}, markMode:false, brush:1, stageW:0 };   /* 6.80.0 — stageW: the brush stage width the student set where nothing measures (Photoshop) · 6.31.0 — ref: the Reference Card picture per tool (never saved to the device); 6.32.0 — markMode/brush: the brush tools' red paint */
   var root = null, refs = {};
   /* 6.32.0 — the brush needs a 2D canvas (the photo + the red strokes are composited into IMAGE 1 before the call); a host without one keeps the templates and words */
   var CAN_MARK = (function(){ try{ var c=document.createElement("canvas"); return !!(c && c.getContext && c.getContext("2d")); }catch(e){ return false; } })();
@@ -98,8 +104,9 @@ var IMAGINE = (function(){
     if(o.tab==="desc"||o.tab==="tpl") S.tab=o.tab;
     if(o.preset && typeof o.preset==="object") S.preset=o.preset;
     if(o.desc && typeof o.desc==="object") S.desc=o.desc;
+    if(typeof o.stageW==="number" && o.stageW>=200 && o.stageW<=900) S.stageW=o.stageW;   /* 6.80.0 */
   }
-  function save(){ lsSet(JSON.stringify({ tool:S.tool, model:S.model, size:S.size, tab:S.tab, preset:S.preset, desc:S.desc })); }
+  function save(){ lsSet(JSON.stringify({ tool:S.tool, model:S.model, size:S.size, tab:S.tab, preset:S.preset, desc:S.desc, stageW:S.stageW })); }
 
   /* ---------- small helpers ---------- */
   function t(key, vars){
@@ -430,8 +437,18 @@ var IMAGINE = (function(){
     ctx.restore();
   }
   function markView(p, live){
-    var wrap = el("div","im-markwrap"+(live?" on":"")); wrap.id="imMarkWrap";
+    var box = el("div","im-markbox");
+    var wrap = el("div","im-markwrap"+(live?" on":"")); wrap.id="imMarkWrap"; box.appendChild(wrap);
     var im = el("img"); im.alt=""; im.src=p.dataUrl; wrap.appendChild(im);
+    /* 6.80.0 — where the picture cannot be measured (Photoshop) the wrap takes the stage width in px and a range under it
+       lets the student fit it to the panel; a browser that measures the box hides the range and keeps the fluid width */
+    var srng = el("input","im-stagerange"); srng.type="range"; srng.min="200"; srng.max="900"; srng.step="10"; srng.value=String(imStageW()); srng.id="imStageW";
+    srng.setAttribute("aria-label","stage width"); srng.style.display="none";
+    srng.oninput=function(){ var v=parseInt(this.value,10); if(v>=200 && v<=900){ S.stageW=v; save(); wrap.style.width=v+"px"; } }; srng.onchange=srng.oninput;
+    srng.onclick=function(ev){ ev.stopPropagation(); }; srng.onpointerdown=function(ev){ ev.stopPropagation(); };
+    box.appendChild(srng);
+    var fitW=function(){ if(imRect(wrap)){ srng.style.display="none"; return; } wrap.style.width=imStageW()+"px"; srng.style.display=""; };
+    setTimeout(fitW,0); setTimeout(fitW,300);
     var cv = document.createElement("canvas"); cv.className="im-markcv"+(live?"":" ro"); cv.id="imMarkCv"; wrap.appendChild(cv); refs.markCv=cv;
     var redraw=function(){
       var w=wrap.clientWidth||im.clientWidth||0, h=im.clientHeight||wrap.clientHeight||0;
@@ -451,7 +468,7 @@ var IMAGINE = (function(){
       if(window.PointerEvent){ cv.onpointerdown=down; cv.onpointermove=move; cv.onpointerup=up; cv.onpointercancel=up; }
       else { cv.onmousedown=down; cv.onmousemove=move; cv.onmouseup=up; cv.onmouseleave=up; cv.ontouchstart=down; cv.ontouchmove=move; cv.ontouchend=up; }
     }
-    return wrap;
+    return box;
   }
   /* the bar and the strip follow the strokes without a full redraw of the picture (a redraw would drop the pointer capture mid-stroke) */
   function markChanged(){

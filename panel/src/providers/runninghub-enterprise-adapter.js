@@ -427,11 +427,18 @@ async function generate(deps, request, opts) {
   var model = registry.getModel(request.model);
   var count = Math.max(1, request.requestCount || 1);
   var all = [];
+  var lastSub = null; /* v6.80.0 — the stage a failure happened in */
   try {
     for (var r = 0; r < count; r++) {
       if (deps.signal && deps.signal.aborted) throw Object.assign(new Error("cancelled"), { code: "cancelled" });
       // fresh sub-machine per request so stages read correctly for the UI
-      var sub = machine.create();
+      var sub = machine.create(); lastSub = sub;
+      /* v6.80.0 — a fresh machine sits at IDLE, and _runOnce's first advance
+         only reached VALIDATING: every stage the strip was told, and the
+         stage recorded on a failure, ran one step behind the step actually
+         running ("Generating" while the download was refused). Step off
+         IDLE here so each advance in _runOnce lands on the stage it names. */
+      machine.advance(sub, deps.now ? deps.now() : 0);
       var res = await _runOnce(deps, request, onStage, sub);
       all = all.concat(res);
     }
@@ -449,6 +456,11 @@ async function generate(deps, request, opts) {
     var n = normalizer.normalize(e, { modelName: model ? model.displayName : request.model,
       size: request.output && request.output.requestedSize,
       available: model ? model.capabilities.supportedSizes : undefined });
+    /* v6.80.0 — WHERE IT STOPPED. The sub-machine was advanced into each step
+       before the step ran, so its stage at the throw is the step that failed
+       (UPLOADING · SUBMITTING · PROCESSING · DOWNLOADING_RESULT). The owner's
+       one photograph of a refusal then says whether the picture was paid for. */
+    n.stage = (lastSub && lastSub.stage) || m.stage;
     return { ok: false, model: request.model, machine: m, error: n };
   }
 }

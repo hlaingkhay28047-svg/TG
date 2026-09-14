@@ -41,9 +41,48 @@ function _bytesToDataUrl(bytes, mime) {
    every request against a bounded internal timeout — still honoring the
    caller's own signal for genuine user-triggered cancel. */
 var DEFAULT_TIMEOUT_MS = 60000;
+/* v6.80.0 — ONE CEILING WAS NOT ENOUGH. The 60 s above applied alike to a
+   200-byte query, to a reference upload and to the finished picture's
+   download. On the owner's line (2026-09-09: "အင်တာနက်ကမကောင်းဘူး ခနခနကျတယ်")
+   a 2K/4K result can take longer than that to arrive, and the abort came
+   back as a bare AbortError, which the normalizer read as a dead line —
+   "Could not reach RunningHub Enterprise" after the task had already been
+   paid for. Three budgets now: the JSON calls keep 60 s; an upload gets 60 s
+   plus its own bytes at 20 KB/s (a 1536-px layer capture is ~400 KB → 80 s;
+   capped at 8 min); a binary download gets 3 min. And when it is OUR timer
+   that fired, the throw says so — code "timeout", which every friendly path
+   already translates — while the caller's own Stop stays "cancelled", and
+   any other failure keeps its message and learns the host it was talking
+   to (a host the manifest does not allow is the one failure the message
+   alone cannot name). */
+var UPLOAD_BYTES_PER_MS = 20;          /* 20 KB/s — a poor mobile uplink */
+var UPLOAD_MAX_TIMEOUT_MS = 480000;
+var DOWNLOAD_TIMEOUT_MS = 180000;
+
+function _hostOf(url) { var m = /^https?:\/\/([^\/?#]+)/i.exec(String(url || "")); return m ? m[1].toLowerCase() : ""; }
+function _kindOf(req) {
+  if (req && req.body && typeof req.body === "object" && req.body.multipart) return "upload";
+  if (req && req.binary) return "download";
+  return "json";
+}
+function _uploadBytes(req) {
+  var n = 0, b = req && req.body;
+  if (!b || typeof b !== "object") return 0;
+  if (b.file && b.file.dataUrl) n += String(b.file.dataUrl).length;
+  if (Array.isArray(b.files)) b.files.forEach(function (f) { if (f && f.dataUrl) n += String(f.dataUrl).length; });
+  return Math.round(n * 0.75);   /* base64 → bytes */
+}
+/* The ceiling for one request. An explicit opts.timeoutMs (tests, tools)
+   stays a flat ceiling for every kind, exactly as before. */
+function budgetFor(req, opts) {
+  if (opts && opts.timeoutMs) return opts.timeoutMs;
+  var kind = _kindOf(req);
+  if (kind === "upload") return Math.min(UPLOAD_MAX_TIMEOUT_MS, DEFAULT_TIMEOUT_MS + Math.round(_uploadBytes(req) / UPLOAD_BYTES_PER_MS));
+  if (kind === "download") return DOWNLOAD_TIMEOUT_MS;
+  return DEFAULT_TIMEOUT_MS;
+}
 
 function create(opts) {
-  var timeoutMs = (opts && opts.timeoutMs) || DEFAULT_TIMEOUT_MS;
   return async function transport(req) {
     var init = { method: req.method || "GET", headers: Object.assign({}, req.headers || {}) };
     if (req.body != null) {
@@ -64,8 +103,9 @@ function create(opts) {
         delete init.headers["Content-Type"]; // let fetch set the boundary
       }
     }
-    var timeoutCtrl = new AbortController();
-    var timer = setTimeout(function () { timeoutCtrl.abort(); }, timeoutMs);
+    var kind = _kindOf(req), host = _hostOf(req.url), timeoutMs = budgetFor(req, opts);
+    var timeoutCtrl = new AbortController(), ours = false;
+    var timer = setTimeout(function () { ours = true; timeoutCtrl.abort(); }, timeoutMs);
     if (req.signal) {
       if (req.signal.aborted) timeoutCtrl.abort();
       else req.signal.addEventListener("abort", function () { timeoutCtrl.abort(); });
@@ -84,13 +124,18 @@ function create(opts) {
         out.dataUrl = _bytesToDataUrl(new Uint8Array(ab), ct);
       }
       return out;
+    } catch (e) {
+      if (ours) throw Object.assign(new Error("timeout after " + Math.round(timeoutMs / 1000) + "s (" + kind + (host ? " · " + host : "") + ")"), { code: "timeout", kind: kind, host: host });
+      if (req.signal && req.signal.aborted) throw Object.assign(new Error("cancelled"), { code: "cancelled", kind: kind, host: host });
+      try { if (e && typeof e === "object") { e.kind = kind; e.host = host; } } catch (x) { }
+      throw e;
     } finally {
       clearTimeout(timer);
     }
   };
 }
 
-var API = { create: create };
+var API = { create: create, budgetFor: budgetFor, hostOf: _hostOf, kindOf: _kindOf };
 
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.runninghubHttp = API; }

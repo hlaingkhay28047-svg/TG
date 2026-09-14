@@ -3204,6 +3204,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .im-hubcmp img.im-base{display:block;width:100%;height:auto;max-width:100%}
 .im-hubcmp .im-cmp-knob{width:34px;height:34px;margin:-17px 0 0 -17px;line-height:34px}
 .im-hubrange{display:block;width:100%;box-sizing:border-box;margin:6px 0 0}
+.im-stagerange{display:block;width:100%;box-sizing:border-box;margin:6px 0 0}
 @media (min-width:1100px){.im-card{flex:1 1 20%;min-width:0;max-width:calc(25% - 10px)}}
 .im-card-body{padding:10px 12px 12px;display:flex;flex-direction:column;flex:1 1 auto}
 .im-card-name{font-weight:800;font-size:14px;display:flex;align-items:center;color:var(--text)}

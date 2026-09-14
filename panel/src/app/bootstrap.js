@@ -93,6 +93,13 @@ function create(opts) {
     if (typeof opts.onStage === "function") { try { opts.onStage(stage, info); } catch (e2) {} }
   }
 
+  var STAGE_KEY = { UPLOADING: "stage_uploading", SUBMITTING: "stage_generating", PROCESSING: "stage_generating",
+    DOWNLOADING_RESULT: "stage_downloading", PLACING: "stage_placing" };
+  function stageWord(stage) {
+    var k = STAGE_KEY[stage]; var v = k ? dom.t(k, "") : "";
+    if (v) return v;
+    return String(stage || "").toLowerCase().replace(/_/g, " ");
+  }
   function status(n) {
     if (strip && n && typeof n === "object") {
       // v6.19: title and message are frequently the exact same sentence
@@ -113,6 +120,18 @@ function create(opts) {
         var loc = lk ? dom.t(lk, "") : "";
         if (loc) line = loc;
       } catch (eL) { }
+      /* v6.80.0 — AND WHERE IT STOPPED, AND WHAT THE HOST SAID. The owner's
+         photograph of 6.150.0 carried the nine-language "cannot reach
+         RunningHub" line and nothing else, and that line fits a dead Wi-Fi,
+         a task the server refused, a download the manifest blocked and a
+         60-second ceiling alike. The stage the adapter recorded and the
+         normalizer's one-line reason follow the sentence. */
+      if (n.code !== "ready") {
+        try {
+          var extra = [n.stage ? stageWord(n.stage) : "", n.detail].filter(Boolean).join(" \u00b7 ");
+          if (extra) line += " \u00b7 " + extra;
+        } catch (eX) { }
+      }
       try { if (n.code === "ready") strip.setDone(line); else strip.setError(line); } catch (e) {}
     }
     if (typeof opts.onStatus === "function") opts.onStatus(n);
@@ -216,6 +235,18 @@ function create(opts) {
         }
         status({ code: "ready", title: dom.t("ai_done", "Done."), message: dom.t("ai_result_ready", "Result ready."), bullets: [] });
         return res;
+      } catch (e) {
+        /* v6.80.0 — NOTHING ON THIS PATH FAILS IN SILENCE. The lease check and
+           the placement threw straight out of the promise: the spinner
+           stopped (finally) and the strip said nothing. A licence refusal
+           keeps the gate's own translated sentence; anything else goes
+           through the normalizer like a provider failure. */
+        var lic = !!(e && (e.code === "license-required" || /^HNKERR:err_license:/.test(String(e.message || ""))));
+        var n2 = lic
+          ? { code: "license", title: String(e.message || "").replace(/^HNKERR:[a-z_]+:/, "") || "Panel authorization required", message: "", bullets: [] }
+          : errorNormalizer.normalize(e);
+        status(n2);
+        return { ok: false, error: n2 };
       } finally {
         setGenerateBusy(false);
       }
@@ -311,9 +342,16 @@ function create(opts) {
     } catch (e) { }
   }
 
-  function mount() { publishApp(); app.mount(); return app; }
+  function mount() {
+    publishApp();
+    /* v6.80.0 — the boot handle itself (runViaProvider, progress) beside the
+       controller, so a test can drive the real provider path and read the
+       strip exactly as a student would see it */
+    try { globalThis.HNK.aiToolsBoot = handle; } catch (e) { }
+    app.mount(); return app;
+  }
 
-  return {
+  var handle = {
     app: app,
     store: store,
     services: { settings: settings, history: history, presets: presets, rhSetup: rhSetup, rh: rh },
@@ -323,6 +361,7 @@ function create(opts) {
     progress: strip,
     mount: mount
   };
+  return handle;
 }
 
 /* Convenience panel entry — builds the real UXP io + host, waits for the file
