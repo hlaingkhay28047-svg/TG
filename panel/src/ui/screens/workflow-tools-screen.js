@@ -896,12 +896,11 @@ function create(deps) {
       root.appendChild(uTxt);
     }
 
+    renderGenOpts(root, wf);
     var route = state.resolvedRoute || wf.route;
     var m = modelRegistry.getModel(route.modelId);
     var out = state.output || {};
-    root.appendChild(dom.el(doc, "div", { class: "hnk-wf-route",
-      text: dom.t("ai_model_lbl", "Model") + ": " + (route.auto ? dom.t("qual_auto", "Auto") + " \u00B7 " : "") + (m ? m.displayName : route.modelId) +
-            "   ·   Output: " + String(out.size || "2k").toUpperCase() + " · " + (out.ratio || "source") }));
+    root.appendChild(dom.el(doc, "div", { class: "hnk-wf-route", id: "hnkWfRouteLine", text: routeLine(wf) }));
 
     // Click 2 — Prepare
     nodes.prepareBtn = dom.el(doc, "button", { class: "hnk-btn hnk-prepare", id: "hnkWfPrepare", text: dom.t("ai_prepare", "Prepare (load & check)") });
@@ -917,6 +916,129 @@ function create(deps) {
     root.appendChild(nodes.generate);
 
     refresh();
+  }
+
+  /* v6.79.0 — MODEL · RATIO · COUNT · SIZE, PICKABLE. The app's wizard clones
+     the Create card's four selects into its last step (buildWizGenRow) and
+     writes each change back; the panel printed them as a sentence. These are
+     the panel's own .hsl pickers — a button that opens the panel's list
+     (main.js hslPick) over a parked select, the visual ratio rail the
+     Freeform card has — fed by HNK.genOpts (Freeform's lists) and written to
+     both places: the workflow state the compiler reads (resolvedRoute,
+     output.ratio / size / variants) and Freeform itself, so the two cards
+     never disagree, exactly as the app's clones and their originals. */
+  function genOptsBridge() { var g = (typeof globalThis !== "undefined") ? globalThis : {}; return g.HNK && g.HNK.genOpts; }
+  function hslPicker(id, ctx, glyph) {
+    var wrap = dom.el(doc, "div", { class: "hsl", id: id + "Hsl" });
+    var btn = dom.el(doc, "button", { class: "hsl-btn", id: id + "Btn" });
+    var tile = dom.el(doc, "span", { class: "hsl-tile t-plain" });
+    var im = doc.createElement("img"); im.className = "hsl-glyph-img"; im.alt = ""; im.src = "icons/ui/" + glyph + ".png";
+    tile.appendChild(im); btn.appendChild(tile);
+    var lab = dom.el(doc, "span", { class: "hsl-lab" }, [
+      dom.el(doc, "span", { class: "hsl-ctx", text: ctx }),
+      dom.el(doc, "span", { class: "hsl-val", id: id + "Val", text: "" })
+    ]);
+    btn.appendChild(lab);
+    var car = doc.createElement("img"); car.className = "hsl-caret"; car.alt = ""; car.src = "icons/ui/hsl-caret-gold.png";
+    btn.appendChild(car);
+    var sel = dom.el(doc, "select", { class: "inp", id: id });
+    wrap.appendChild(btn); wrap.appendChild(sel);
+    return { wrap: wrap, sel: sel, val: lab.lastChild, btn: btn };
+  }
+  function fillSel(sel, items, cur) {
+    dom.clear(sel);
+    var found = false;
+    items.forEach(function (it) {
+      var o = doc.createElement("option"); o.value = it.v; o.textContent = it.label;
+      if (it.v === cur) { o.selected = true; found = true; }
+      sel.appendChild(o);
+    });
+    if (!found && items.length) { sel.selectedIndex = 0; }
+    return sel.value;
+  }
+  function paintVal(p) { var o = p.sel.options[p.sel.selectedIndex]; p.val.textContent = o ? String(o.textContent || "") : "\u2014"; }
+  function normRatio(r) { r = String(r || ""); return (r === "auto" || r === "source") ? "" : r; }
+  function renderGenOpts(root, wf) {
+    var go = genOptsBridge();
+    if (!go) return;
+    var cur = go.current();
+    var out = state.output || {};
+    var route = state.resolvedRoute || wf.route || {};
+    var chosen = (route && route.auto === false && route.modelId) ? route.modelId : "";
+    var modelId = chosen || cur.model;
+    var box = dom.el(doc, "div", { class: "hnk-wf-opts", id: "hnkWfOpts" });
+    box.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("wf_opts", "Model \u00b7 Ratio \u00b7 Count \u00b7 Size") }));
+
+    /* Model — "Auto" is the workflow's own route; a name is a pick that also becomes Freeform's model */
+    var mp = hslPicker("wfModel", "Model", "brand-banana");
+    mp.wrap.className = "hsl hsl-span2";
+    var models = [{ v: "", label: dom.t("wf_model_auto", "Auto \u2014 the workflow's choice") }].concat(go.models().map(function (m) { return { v: m.id, label: m.label }; }));
+    fillSel(mp.sel, models, chosen); paintVal(mp);
+    var row1 = dom.el(doc, "div", { class: "arow gen-opts" }, [mp.wrap]);
+    box.appendChild(row1);
+
+    /* Ratio — the parked select + the visual rail the Freeform card has */
+    var rp = hslPicker("wfRatio", "Ratio", "hsl-size");
+    rp.wrap.className = "hsl hsl-span2";
+    var rail = dom.el(doc, "div", { class: "ratio-rail", id: "wfRatioRail" });
+    /* Count · Size */
+    var cp = hslPicker("wfCount", "Count", "hsl-count");
+    var sp = hslPicker("wfSize", "Size", "hsl-size");
+    var row2 = dom.el(doc, "div", { class: "arow gen-opts" }, [cp.wrap, sp.wrap]);
+
+    var g = (typeof globalThis !== "undefined") ? globalThis : {};
+    function paintRail() {
+      if (typeof g.paintRatioRail === "function") {
+        try { g.paintRatioRail("wfRatioRail", "wfRatio", function (v) { rp.sel.value = v; onRatio(); }); } catch (e) { }
+        rp.wrap.style.display = "none"; rail.style.display = rp.sel.options.length ? "flex" : "none";
+      } else { rp.wrap.style.display = rp.sel.options.length ? "" : "none"; rail.style.display = "none"; }
+    }
+    function fillForModel(id) {
+      var ratios = go.ratios(id), sizes = go.sizes(id), counts = go.counts(id);
+      var wantR = normRatio(out.ratio != null ? out.ratio : cur.ratio);
+      var r = fillSel(rp.sel, ratios.map(function (v) { return { v: v, label: v || "Ratio: Auto" }; }), wantR);
+      var wantS = String(out.size || cur.size || "").toUpperCase();
+      var sz = fillSel(sp.sel, sizes.map(function (v) { return { v: v, label: v || "Size: Auto" }; }), wantS === "2K" && sizes.indexOf("2K") < 0 ? "" : wantS);
+      var wantC = String(out.variants || cur.count || 1);
+      var c = fillSel(cp.sel, counts.map(function (n) { return { v: String(n), label: "\u00d7" + n }; }), wantC);
+      cp.wrap.style.display = counts.length > 1 ? "" : "none";
+      sp.wrap.style.display = sizes.length ? "" : "none";
+      paintVal(rp); paintVal(sp); paintVal(cp); paintRail();
+      return { ratio: r, size: sz, count: c };
+    }
+    function apply() {
+      var ratio = rp.sel.value || "", size = sp.sel.value || "", count = parseInt(cp.sel.value, 10) || 1;
+      wstate.setOutput(state, { ratio: ratio || "auto", size: size ? size.toLowerCase() : "2k", variants: count });
+      try { go.set({ model: mp.sel.value || null, ratio: ratio, count: count, size: size }); } catch (e) { }
+      out = state.output || {};
+      var line = doc.getElementById("hnkWfRouteLine");
+      if (line) line.textContent = routeLine(wf);
+    }
+    function onModel() {
+      var v = mp.sel.value;
+      state.resolvedRoute = v ? { modelId: v, auto: false } : (wf.route ? Object.assign({}, wf.route) : null);
+      paintVal(mp);
+      fillForModel(v || cur.model);
+      apply();
+    }
+    function onRatio() { paintVal(rp); paintRail(); apply(); }
+    dom.on(mp.sel, "change", onModel);
+    dom.on(rp.sel, "change", onRatio);
+    dom.on(cp.sel, "change", function () { paintVal(cp); apply(); });
+    dom.on(sp.sel, "change", function () { paintVal(sp); apply(); });
+    box.appendChild(rp.wrap); box.appendChild(rail); box.appendChild(row2);
+    root.appendChild(box);
+    /* the rail paints by id, so the box is in the document first */
+    fillForModel(modelId);
+    /* the prefs the wizard shows are the prefs it will send */
+    wstate.setOutput(state, { ratio: rp.sel.value || "auto", size: sp.sel.value ? sp.sel.value.toLowerCase() : (out.size || "2k"), variants: parseInt(cp.sel.value, 10) || 1 });
+  }
+  function routeLine(wf) {
+    var route = state.resolvedRoute || wf.route;
+    var m = modelRegistry.getModel(route.modelId);
+    var out = state.output || {};
+    return dom.t("ai_model_lbl", "Model") + ": " + (route.auto ? dom.t("qual_auto", "Auto") + " \u00B7 " : "") + (m ? m.displayName : route.modelId) +
+      "   \u00b7   Output: " + String(out.size || "2k").toUpperCase() + " \u00b7 " + (normRatio(out.ratio) || "auto") + (out.variants > 1 ? " \u00b7 \u00d7" + out.variants : "");
   }
 
   function addFromLibrary(inp) {

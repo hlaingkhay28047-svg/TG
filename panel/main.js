@@ -944,6 +944,8 @@ const I18N = {
     wf_ready_generate: "All required inputs are ready \u2014 press GENERATE.",
     wf_add_required: "Add the required images.",
     wf_press_prepare: "Press Prepare to load this workflow and check your images.",
+    wf_opts: "Model \u00b7 Ratio \u00b7 Count \u00b7 Size",
+    wf_model_auto: "Auto \u2014 the workflow's choice",
     err_timeout: "Request timed out \u2014 the server took too long; please try again \u00b7 \u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_generic: "The request could not be completed \u2014 please try again",
     err_img: "No usable image was produced \u2014 please try again",
@@ -1606,6 +1608,8 @@ const I18N = {
     wf_ready_generate: "လိုအပ်တဲ့ ပုံတွေ အဆင်သင့်ပါ — GENERATE နှိပ်ပါ။",
     wf_add_required: "လိုအပ်တဲ့ ပုံတွေ ထည့်ပါ။",
     wf_press_prepare: "ဒီ workflow ကို ဖွင့်ပြီး ပုံတွေ စစ်ဖို့ ပြင်ဆင် ခလုတ် နှိပ်ပါ။",
+    wf_opts: "Model \u00b7 Ratio \u00b7 \u1021\u101b\u1031\u1021\u1010\u103d\u1000\u103a \u00b7 Size",
+    wf_model_auto: "Auto \u2014 workflow \u101b\u1032\u1037 \u101b\u103d\u1031\u1038\u1001\u103b\u101a\u103a\u1019\u103e\u102f",
     err_timeout: "\u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a\u101e\u103d\u102c\u1038\u1015\u103c\u102e \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_generic: "\u1010\u1031\u102c\u1004\u103a\u1038\u1006\u102d\u102f\u1019\u103e\u102f \u1019\u1015\u103c\u102e\u1038\u1006\u102f\u1036\u1038\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     err_img: "\u1021\u101e\u102f\u1036\u1038\u101d\u1004\u103a\u1010\u1032\u1037 \u1015\u102f\u1036 \u1019\u101b\u101b\u103e\u102d\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
@@ -2268,6 +2272,8 @@ const I18N = {
     wf_ready_generate: "ႁၢင်ႈဢၼ်လူဝ်ႇ ႁၢင်ႈႁႅၼ်းယဝ်ႉ — ၼဵၵ်း GENERATE။",
     wf_add_required: "သႂ်ႇႁၢင်ႈဢၼ်လူဝ်ႇ။",
     wf_press_prepare: "ၼဵၵ်း ႁၢင်ႈႁႅၼ်း သေ ပိုတ်ႇ workflow ၼႆႉလႄႈ ၵူတ်ႇထတ်းႁၢင်ႈ။",
+    wf_opts: "Model \u00b7 Ratio \u00b7 \u1010\u1031\u1080\u1015\u1030\u1076\u1010\u102d\u1060 \u00b7 Size",
+    wf_model_auto: "Auto \u2014 workflow \u101c\u102d\u1030\u1075\u1076\u1088\u1096",
     err_timeout: "\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1010\u1035\u1019\u103a \u2014 server \u1078\u1082\u103a\u1089\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1081\u102d\u102f\u1004\u103a\u1015\u1030\u107c\u103a\u1089; \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_generic: "\u1081\u1035\u1010\u103a\u1038\u1022\u1019\u103a\u1087\u101a\u101d\u103a\u1089 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     err_img: "\u1022\u1019\u103a\u1087\u101c\u1086\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u107c\u103a\u1078\u1082\u103a\u1089\u101c\u1086\u1088 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
@@ -2928,6 +2934,8 @@ const I18N = {
     wf_ready_generate: "Ra ai sumla ni hkrum sai — GENERATE dip u.",
     wf_add_required: "Ra ai sumla ni bang u.",
     wf_press_prepare: "Ndai workflow hpaw nna sumla ni jep na matu Prepare dip u.",
+    wf_opts: "Model \u00b7 Ratio \u00b7 Hkum \u00b7 Size",
+    wf_model_auto: "Auto \u2014 workflow a lata ai",
     err_timeout: "Ten hpring mat sai \u2014 server grau na ai; bai chyam yu u",
     err_generic: "Ndai lam n ngut lu ai \u2014 bai chyam yu u",
     err_img: "Lang mai ai sumla n pru ai \u2014 bai chyam yu u",
@@ -3588,6 +3596,8 @@ const I18N = {
     wf_ready_generate: "รูปที่ต้องใช้พร้อมแล้ว — กด GENERATE",
     wf_add_required: "เพิ่มรูปที่ต้องใช้",
     wf_press_prepare: "กด Prepare เพื่อโหลด workflow นี้และตรวจรูปของคุณ",
+    wf_opts: "Model \u00b7 Ratio \u00b7 \u0e08\u0e33\u0e19\u0e27\u0e19 \u00b7 Size",
+    wf_model_auto: "Auto \u2014 \u0e15\u0e32\u0e21\u0e17\u0e35\u0e48 workflow \u0e40\u0e25\u0e37\u0e2d\u0e01",
     err_timeout: "\u0e04\u0e33\u0e02\u0e2d\u0e2b\u0e21\u0e14\u0e40\u0e27\u0e25\u0e32 \u2014 \u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e43\u0e0a\u0e49\u0e40\u0e27\u0e25\u0e32\u0e19\u0e32\u0e19\u0e40\u0e01\u0e34\u0e19\u0e44\u0e1b \u0e01\u0e23\u0e38\u0e13\u0e32\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
     err_generic: "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e14\u0e33\u0e40\u0e19\u0e34\u0e19\u0e01\u0e32\u0e23\u0e15\u0e32\u0e21\u0e04\u0e33\u0e02\u0e2d\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
     err_img: "\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
@@ -4248,6 +4258,8 @@ const I18N = {
     wf_ready_generate: "所需图片已就绪 — 点 GENERATE。",
     wf_add_required: "请添加所需图片。",
     wf_press_prepare: "点 Prepare 载入此工作流并检查图片。",
+    wf_opts: "\u6a21\u578b \u00b7 \u6bd4\u4f8b \u00b7 \u6570\u91cf \u00b7 \u5c3a\u5bf8",
+    wf_model_auto: "\u81ea\u52a8 \u2014 \u7531 workflow \u9009\u62e9",
     err_timeout: "\u8bf7\u6c42\u8d85\u65f6 \u2014 \u670d\u52a1\u5668\u8017\u65f6\u8fc7\u957f\uff0c\u8bf7\u91cd\u8bd5",
     err_generic: "\u8bf7\u6c42\u672a\u80fd\u5b8c\u6210 \u2014 \u8bf7\u91cd\u8bd5",
     err_img: "\u672a\u751f\u6210\u53ef\u7528\u7684\u56fe\u7247 \u2014 \u8bf7\u91cd\u8bd5",
@@ -4908,6 +4920,8 @@ const I18N = {
     wf_ready_generate: "Ảnh cần thiết đã sẵn sàng — bấm GENERATE.",
     wf_add_required: "Thêm các ảnh cần thiết.",
     wf_press_prepare: "Bấm Prepare để nạp workflow này và kiểm tra ảnh.",
+    wf_opts: "Model \u00b7 Ratio \u00b7 S\u1ed1 l\u01b0\u1ee3ng \u00b7 Size",
+    wf_model_auto: "Auto \u2014 workflow t\u1ef1 ch\u1ecdn",
     err_timeout: "Y\u00eau c\u1ea7u qu\u00e1 h\u1ea1n \u2014 m\u00e1y ch\u1ee7 ph\u1ea3n h\u1ed3i qu\u00e1 l\u00e2u; vui l\u00f2ng th\u1eed l\u1ea1i",
     err_generic: "Kh\u00f4ng th\u1ec3 ho\u00e0n t\u1ea5t y\u00eau c\u1ea7u \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
     err_img: "Kh\u00f4ng t\u1ea1o \u0111\u01b0\u1ee3c \u1ea3nh d\u00f9ng \u0111\u01b0\u1ee3c \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
@@ -5568,6 +5582,8 @@ const I18N = {
     wf_ready_generate: "Gambar yang diperlukan sudah siap — tekan GENERATE.",
     wf_add_required: "Tambahkan gambar yang diperlukan.",
     wf_press_prepare: "Tekan Prepare untuk memuat workflow ini dan memeriksa gambar.",
+    wf_opts: "Model \u00b7 Ratio \u00b7 Jumlah \u00b7 Size",
+    wf_model_auto: "Auto \u2014 pilihan workflow",
     err_timeout: "Permintaan kehabisan waktu \u2014 server terlalu lama merespons; silakan coba lagi",
     err_generic: "Permintaan tidak dapat diselesaikan \u2014 silakan coba lagi",
     err_img: "Tidak ada gambar yang dapat dipakai \u2014 silakan coba lagi",
@@ -6228,6 +6244,8 @@ const I18N = {
     wf_ready_generate: "Gambar yang diperlukan sudah sedia — tekan GENERATE.",
     wf_add_required: "Tambah gambar yang diperlukan.",
     wf_press_prepare: "Tekan Prepare untuk memuatkan workflow ini dan menyemak gambar.",
+    wf_opts: "Model \u00b7 Ratio \u00b7 Bilangan \u00b7 Size",
+    wf_model_auto: "Auto \u2014 pilihan workflow",
     err_timeout: "Permintaan tamat masa \u2014 pelayan mengambil masa terlalu lama; sila cuba lagi",
     err_generic: "Permintaan tidak dapat diselesaikan \u2014 sila cuba lagi",
     err_img: "Tiada imej yang boleh digunakan dihasilkan \u2014 sila cuba lagi",
@@ -6611,7 +6629,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.149.0";
+const PANEL_VERSION = "6.150.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8044,8 +8062,14 @@ function applyI18n() {
          dialog, in the same card shape as setupConfirm's */
       askText: function (msg, def, cb) { studioAskText(msg, def).then(function (v) { cb && cb(v); }); },
       /* the studio's PHOTO slot IS the panel's subject slot */
-      pickPhoto: function () { try { refLibBrowseInto("subject-reference"); } catch (e) { } },
-      pickRef: function () { try { refLibBrowseInto("reference-2"); } catch (e) { } },
+      /* v6.79.0 — the owner's 15th and 16th photographs: this tap opened a
+         Windows "Select Folder" dialog. refLibBrowseInto asks for the
+         reference LIBRARY folder first when none is set, and Retouch's photo
+         is not a library pick: it is the open layer, or one file. The same
+         sheet every other slot opens (Layer · File), through the panel's own
+         capture paths. */
+      pickPhoto: function () { try { stPickInto("subject-reference", "PHOTO"); } catch (e) { } },
+      pickRef: function () { try { stPickInto("reference-2", "REF"); } catch (e) { } },
       clearPhoto: function () {
         try {
           state.refs[0] = null;
@@ -8410,7 +8434,7 @@ function studioAskText(msg, def) {
       dlg.appendChild(body);
       dlg.addEventListener("cancel", function () { fin(null); });
       document.body.appendChild(dlg);
-      const r = dlg.showModal();
+      const r = hnkShowDialog(dlg, { title: "", width: 300, height: 210 });
       if (r && r.then) r.then(function (v) { fin(v === "ok" ? inp.value : null); }, function () { fin(null); });
       try { inp.focus(); } catch (e) { }
     } catch (e) { herr("studio prompt:", e); fin(null); }
@@ -8435,6 +8459,28 @@ function studioAskText(msg, def) {
    eight rows a search field filters). Choosing a row sets selectedIndex and
    fires the same input + change events the native dropdown would have, so
    every existing handler repaints exactly as before. */
+/* v6.79.0 — HOW A DIALOG GETS ITS SIZE IN PHOTOSHOP. The owner's 6th and
+   14th photographs of 6.149.0: the Model list and the photo sheet both opened
+   as a strip eighty pixels wide, a scrollbar and a sliver of each row. UXP
+   sizes a dialog from its CONTENT's explicit dimensions — width on the
+   <dialog> itself, and the background painted on it, are the host's to
+   ignore — so the first child carries the width in px, the background and
+   the colour, and showModal is handed the same size (UXP's option; a browser
+   takes no argument and ignores it). One helper, used by every dialog the
+   panel opens: the pickers, the photo sheet, the confirm, the text prompt. */
+function hnkShowDialog(dlg, opts) {
+  opts = opts || {};
+  const w = Math.max(200, opts.width || 320), h = Math.max(120, opts.height || 240);
+  try {
+    const body = dlg.firstElementChild || dlg.firstChild;
+    if (body && body.style) { body.style.width = w + "px"; body.style.boxSizing = "border-box"; }
+  } catch (e) { }
+  const o = { title: String(opts.title || ""), resize: "none", size: { width: w + 20, height: h } };
+  try { if (typeof dlg.uxpShowModal === "function") return dlg.uxpShowModal(o); } catch (e) { }
+  try { if (typeof dlg.showModal === "function") return dlg.showModal(o); } catch (e) { }
+  try { dlg.setAttribute("open", ""); } catch (e2) { }
+  return null;
+}
 let hslPickDlg = null;
 function hslClosest(el, cls) {
   let n = el;
@@ -8513,8 +8559,14 @@ function hslPick(sel, title) {
   dlg.addEventListener("click", function (ev) { if (ev.target === dlg) hslPickClose(); });
   document.body.appendChild(dlg);
   hslPickDlg = dlg;
-  try { if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", ""); }
-  catch (e) { try { dlg.setAttribute("open", ""); } catch (e2) { } }
+  /* the list's height is explicit too: rows are 38px, headers 26px, and the
+     list stops at 380px and scrolls — a max-height the host cannot resolve
+     from an unmeasured column is a column with no height at all */
+  let nRows = 0, nGrp = 0;
+  rows.forEach(function (r) { if (r.grp) nGrp++; else nRows++; });
+  const listH = Math.min(380, nRows * 38 + nGrp * 26 + 2);
+  list.style.height = listH + "px";
+  hnkShowDialog(dlg, { title: h.textContent, width: 320, height: 118 + (q ? 46 : 0) + listH });
   try { if (q) q.focus(); } catch (e) { }
   return dlg;
 }
@@ -8578,7 +8630,7 @@ function setupConfirm(msg) {
       dlg.addEventListener("close", function () { fin(dlg.returnValue === "ok"); });
       dlg.addEventListener("cancel", function () { fin(false); });
       document.body.appendChild(dlg);
-      const r = dlg.showModal();
+      const r = hnkShowDialog(dlg, { title: "", width: 300, height: 170 });
       if (r && r.then) r.then(function (v) { fin(v === "ok"); }, function () { fin(false); });
     } catch (e) {
       try { if (typeof confirm === "function") { fin(confirm(String(msg || ""))); return; } } catch (e2) { }
@@ -9791,6 +9843,11 @@ function selfTestRowsInner() {
       level: (tp2 && tp2.offset) ? (tp2.offset === "no offsetX" ? "host" : "ok") : "pend" });
     const vw = (typeof window !== "undefined" && window.innerWidth) || 0, vh = (typeof window !== "undefined" && window.innerHeight) || 0;
     rows.push({ label: "Viewport", detail: vw + "\u00d7" + vh + " (innerWidth)", level: vw > 0 ? "ok" : "host" });
+    /* v6.79.0 — innerWidth read 0 on the owner's 9th photograph, and every
+       width fallback the Imagine brush and sliders had was built on it. Five
+       other rulers, each printed: whichever answers is the one to build on. */
+    const wp = hnkWidthProbes();
+    rows.push({ label: "width probes", detail: wp.detail, level: wp.best > 0 ? "ok" : "host" });
     /* the student scrolled down to press Run: a positive reading here means
        scroll positions reach script (page-restore, the jump chips) */
     const pgS = $("pages");
@@ -13184,6 +13241,37 @@ async function refLibRescan() {
 /* THE universal Browse: first use asks for the library folder then continues
    automatically; afterwards the picker opens inside the saved folder. A chosen
    image is assigned only to the requesting slot; a cancel leaves the slot as-is. */
+/* v6.79.0 — a slot filled from one file, with no library folder in the way */
+async function refFileInto(slotId) {
+  if (state.busy) return;
+  const slot = refSlotById(slotId);
+  if (!slot) return;
+  try {
+    setStatus(t("st_importing"));
+    let file = null;
+    try { file = await fsp.getFileForOpening({ allowMultiple: false, types: REF_LIB_TYPES }); } catch (e) { file = null; }
+    if (!file) { setStatus(t("st_ready")); return; }
+    const cap = await refCaptureEntry(file);
+    if (!cap || !imgMagicOk(cap.b64)) { setStatus(t("st_img_bad"), "err"); return; }
+    slot.assign(cap);
+    setStatus(t("st_ref_file_added"), "ok");
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+/* v6.79.0 — a slot filled from the active layer */
+async function refLayerInto(slotId) {
+  const slot = refSlotById(slotId);
+  if (!slot) return;
+  const e = await layerPhotoCapture();
+  if (!e) return;
+  slot.assign({ b64: e.b64, mime: e.mime, label: e.name });
+  setStatus(t(slotId === "subject-reference" ? "st_photo_layer_added" : "st_ref_layer_added"), "ok");
+}
+function stPickInto(slotId, title) {
+  photoSheet(title, {
+    onLayer: function () { refLayerInto(slotId); },
+    onFile: function () { refFileInto(slotId); }
+  });
+}
 async function refLibBrowseInto(slotId) {
   if (state.busy) return;
   const slot = refSlotById(slotId);
@@ -14423,8 +14511,8 @@ function photoSheet(title, opts) {
   bd.addEventListener("cancel", function () { ffSheetClose(); });
   bd.appendChild(card);
   document.body.appendChild(bd);
-  try { if (typeof bd.showModal === "function") bd.showModal(); else bd.setAttribute("open", ""); }
-  catch (e) { try { bd.setAttribute("open", ""); } catch (e2) { } }
+  const nBtn = card.querySelectorAll(".btn").length;
+  hnkShowDialog(bd, { title: h.textContent, width: 300, height: 74 + nBtn * 52 });
 }
 
 /* A captured layer, in every shape the panel's photo slots read: {mime, b64}
@@ -17486,6 +17574,19 @@ function imagineHost() {
         });
       });
     },
+    /* v6.79.0 — the module asks its host for a width before it asks the
+       viewport; the panel answers with whichever ruler works here */
+    stageWidth: function (el) {
+      const wp = hnkWidthProbes(); if (!(wp.best > 0)) return 0;
+      let n = el, pad = 0, guard = 0;
+      while (n && n.nodeType === 1 && guard++ < 40) {
+        let cs = null; try { cs = getComputedStyle(n); } catch (e) { cs = null; }
+        if (cs) ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth", "marginLeft", "marginRight"].forEach(function (k) { const v = parseFloat(cs[k]); if (isFinite(v)) pad += v; });
+        if (n === document.body) break;
+        n = n.parentNode;
+      }
+      return Math.max(80, wp.best - pad);
+    },
     hasModel: function (id) { return !!ffModelById(id); },
     /* 6.31.0 — how many pictures the model takes in one call: a Reference Card needs two (the photo + the reference) */
     maxImages: function (id) { const m = ffModelById(id); if (!m) return 0; if (m.maxImages) return m.maxImages; if (m.node && m.node.images && m.node.images.length) return m.node.images.length; return (m.imageParam === "image" || m.imageParam === "imageUrl") ? 1 : 10; },
@@ -17658,6 +17759,43 @@ function ffPaintAdvanced() {
   ffPaintSizeBtn();
   ffPaintEta();
 }
+/* v6.79.0 — THE WIZARD'S GENERATE OPTIONS ARE FREEFORM'S. The web app's
+   Smart Workflow wizard clones the Create card's model · ratio · count · size
+   selects into its last step and writes every change back (buildWizGenRow);
+   the panel's wizard printed a read-only "Model: Auto · Nano Banana 2 ·
+   Output: 2K · auto" line, and the owner asked for the four to be pickable.
+   This is the bridge the AI Tools screen reads and writes: the same 49
+   models, the same per-model ratio and size lists, the same count, and a
+   set() that repaints Freeform so the two never disagree. */
+globalThis.HNK = globalThis.HNK || {};
+globalThis.HNK.genOpts = {
+  models: function () { return FREEFORM_MODELS.map(function (m) { return { id: m.id, label: ffModelLabel(m), upscale: ffIsUpscale(m) }; }); },
+  current: function () {
+    const m = ffModel();
+    return { model: m.id, ratio: ffHasRatio(m) ? (state.ffRatio || "") : "", count: ffIsUpscale(m) ? 1 : (state.ffCount || 1), size: ffHasSize(m) ? (state.ffSize || "") : "" };
+  },
+  ratios: function (id) { const m = ffModelById(id) || ffModel(); return ffHasRatio(m) ? ffRatioOptionsFor(m).slice() : []; },
+  sizes: function (id) {
+    const m = ffModelById(id) || ffModel();
+    if (!ffHasSize(m)) return [];
+    const mc = rhDefaultModels()[m.id] || {};
+    const list = (mc.resolutions && mc.resolutions.length) ? mc.resolutions : null;
+    return list ? [""].concat(list.map(function (r) { return String(r).toUpperCase(); })) : FF_SIZE_STOCK.map(function (o) { return o.v; });
+  },
+  counts: function (id) { const m = ffModelById(id) || ffModel(); return ffIsUpscale(m) ? [1] : [1, 2, 4]; },
+  hasRatio: function (id) { const m = ffModelById(id); return !!(m && ffHasRatio(m)); },
+  hasSize: function (id) { const m = ffModelById(id); return !!(m && ffHasSize(m)); },
+  set: function (o) {
+    o = o || {};
+    if (o.model && ffModelById(o.model)) state.rhModel = o.model;
+    if (o.ratio != null) state.ffRatio = String(o.ratio);
+    if (o.count != null) state.ffCount = Math.max(1, Math.min(4, parseInt(o.count, 10) || 1));
+    if (o.size != null) state.ffSize = String(o.size);
+    try { ffPaintModelBtn(); ffFillRatio(); ffPaintRail(); ffPaintAdvanced(); } catch (e) { hwarn("genOpts.set:", e); }
+    try { saveSettings(); } catch (e2) { }
+    return this.current();
+  }
+};
 function ffOnModelChange(id) {
   const m = ffModelById(id) || FREEFORM_MODELS[0];
   state.rhModel = m.id;
@@ -18870,6 +19008,40 @@ function installGlobalSafetyNet() {
 /* v6.77.0 — the storage shim reads its file once at load; the first render
    waits for it the way it waits for the settings, so nothing lifted from the
    web app reads an empty store at boot. A browser resolves at once. */
+/* v6.79.0 — every ruler that could still give the panel's width when the
+   viewport reads 0: outerWidth, visualViewport, screen, and a media-query
+   binary search (matchMedia needs no layout read — the engine answers whether
+   the panel is at least N px wide, and fifteen questions pin N to a pixel).
+   The search is self-checking: a host that answers "yes" to 20000px or "no"
+   to 1px is not measuring anything and is skipped. */
+function hnkMatchMediaWidth() {
+  try {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return 0;
+    if (!window.matchMedia("(min-width: 1px)").matches || window.matchMedia("(min-width: 20000px)").matches) return 0;
+    let lo = 1, hi = 20000;
+    for (let i = 0; i < 16 && hi - lo > 1; i++) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (window.matchMedia("(min-width: " + mid + "px)").matches) lo = mid; else hi = mid;
+    }
+    return lo;
+  } catch (e) { return 0; }
+}
+function hnkWidthProbes() {
+  const W = (typeof window !== "undefined") ? window : {};
+  const n = function (v) { v = Number(v); return isFinite(v) && v > 0 ? Math.round(v) : 0; };
+  const inner = n(W.innerWidth), outer = n(W.outerWidth);
+  let vv = 0; try { vv = n(W.visualViewport && W.visualViewport.width); } catch (e) { vv = 0; }
+  let scr = 0; try { scr = n(W.screen && W.screen.width); } catch (e) { scr = 0; }
+  const mm = hnkMatchMediaWidth();
+  const best = inner || outer || vv || mm || 0;
+  return { inner: inner, outer: outer, vv: vv, screen: scr, mm: mm, best: best,
+    detail: "inner " + inner + " \u00b7 outer " + outer + " \u00b7 vv " + vv + " \u00b7 mm " + mm + " \u00b7 screen " + scr };
+}
+function hostIsPhotoshop() {
+  try { const m = require("photoshop"); if (m && m.app && typeof m.app.version === "string" && m.app.version) return true; } catch (e) { }
+  try { const u = require("uxp"); if (u && u.host && typeof u.host.name === "string" && /photoshop/i.test(u.host.name)) return true; } catch (e2) { }
+  return false;
+}
 function lsReady() {
   try {
     const l = globalThis.HNK && globalThis.HNK.localStore;
@@ -18880,6 +19052,17 @@ function init() {
   installGlobalSafetyNet();
   safe("off-guard", function () { bindOffGuard(document); });
   safe("pickers", function () { bindHslPickers(); });
+  /* v6.79.0 — the SELF-TEST on 6.149.0 read "Storage · native localStorage":
+     the real host was not recognised when the shim's script ran (its only
+     signal was require("photoshop").app.version), so the forty-one call
+     sites were writing to a storage the owner's own photographs had shown
+     forgetting everything. The shim now takes the host from two signals, and
+     main.js — which knows the host for certain by now — adopts it here if
+     the first script missed, carrying every key written so far across. */
+  safe("storage-adopt", function () {
+    const ls = globalThis.HNK && globalThis.HNK.localStore;
+    if (ls && !ls.shimmed && typeof ls.adopt === "function" && hostIsPhotoshop()) ls.adopt();
+  });
   Promise.all([loadSettings(), lsReady()]).then(function () {
     /* first: the wall comes down only if the plan says so */
     safe("gate", function () { gateBoot(); });
