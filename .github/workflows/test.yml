@@ -546,6 +546,8 @@ jobs:
         run: PORT=8931 node test/verify_panel_wf_results.js
       - name: Panel Selection Edit results + Active layer — a Selection Edit result on the wizard's Results card (Before = the selected pixels, Place again lands at the exact selection under a mask), the Active-layer slot tick names the layer and its size, Freeform's Layer button retries through the host's four routes, CMYK/Lab read as RGB, the SELF-TEST Layer capture row
         run: PORT=8931 node test/verify_panel_selection_results.js
+      - name: Panel video wizard result — the Video Smart Workflow wizard renders inside the page (was position:fixed), its Result plays the take where <video> decodes and says vid_no_inline with numbered tiles where not, offers Download · direct link · folder and an earlier-takes strip, vtRun records vtHist and the V→V page gets its result box; the app wizard gains From · direct link · takes strip (6.85.0 / panel 6.156.0)
+        run: PORT=8931 node test/verify_panel_video_wizard_result.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

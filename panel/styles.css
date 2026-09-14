@@ -3192,8 +3192,13 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    v6.14.0 — THE VIDEO WIZARD: the app's .wiz shell for the two video decks,
    on the panel's own tokens (--accent is the app's --gold; --bg its --ink).
    ====================================================================== */
-.vwiz-sheet { position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 70; background-color: var(--bg); overflow-y: auto; }
-.vwiz-sheet .wiz-in { max-width: 640px; margin: 0 auto; padding: 12px 14px 32px; }
+/* v6.85.0 — the wizard is a card IN the page (its first child, the page's
+   other cards hidden while it is open), not a fixed sheet over it: Photoshop
+   lays a position:fixed box out as an ordinary block at the end of the
+   document, the same defect the 6.78.0 photo sheet and the 6.82.0 Freeform
+   sheet had. In-flow it scrolls with the page and needs no viewport ruler. */
+.vwiz-sheet { display: block; background-color: var(--bg); }
+.vwiz-sheet .wiz-in { max-width: 640px; margin: 0 auto; padding: 4px 0 28px; }
 .vwiz-sheet .wiz-top { display: flex; flex-direction: row; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
 .vwiz-sheet .wiz-top .ttl { font-size: 15px; font-weight: 800; color: var(--text); display: flex; flex-direction: row; align-items: center; }
 .vwiz-sheet .wiz-x { margin-left: auto; width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line-soft); background-color: var(--panel-2); display: flex; align-items: center; justify-content: center; }
@@ -3226,6 +3231,17 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .vwiz-sheet .wizrow { display: flex; flex-direction: row; flex-wrap: wrap; margin: 10px 0; }
 .vwiz-sheet .wizrow .inp { flex: 1; min-width: 120px; margin: 4px; }
 .vwiz-sheet .grp-b textarea { width: 100%; min-height: 120px; }
+/* v6.85.0 — the Result step: the From chip, the take, the meta and saved lines, the takes strip, the file+link row */
+.vwiz-sheet .wiz-from { display: flex; flex-direction: row; align-items: center; margin: 8px 0 10px; }
+.vwiz-sheet .wiz-from .th { width: 44px; height: 44px; border-radius: 9px; background-color: var(--bg); overflow: hidden; flex: none; margin-right: 10px; border: 1px solid var(--line-soft); }
+.vwiz-sheet .wiz-from .th .im { width: 100%; height: 100%; background-size: cover; background-position: center; }
+.vwiz-sheet .wiz-from .nm { font-size: 12.5px; color: var(--muted); font-weight: 700; }
+.vwiz-sheet .wiz-clip { width: 100%; border-radius: 12px; background-color: #000; }
+.vwiz-sheet .wiz-meta, .vwiz-sheet .wiz-saved { margin-top: 8px; }
+.vwiz-sheet .wiz-takes-h { margin-top: 12px; }
+.vwiz-sheet .wiz-takes { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 8px; }
+.vwiz-sheet .wiz-nav-acts { margin-top: 12px; }
+.vwiz-sheet .wiz-nav-acts .btn { font-size: 12.5px; padding: 11px 8px; }
 
 /* ---- IMAGINE_CSS ---- */
 /* Imagine (6.29.0 wave) — the hub and the tool view. Flex and margins only: the same rules are

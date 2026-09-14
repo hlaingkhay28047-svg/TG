@@ -1520,6 +1520,15 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 .wiz-cmp-range{width:100%;margin-top:8px;accent-color:var(--gold)}
 .wiz-cmp-tags{display:flex;justify-content:space-between;margin-top:2px}
 .wiz-cmp-tags .mut{margin:0}
+/* v6.85.0 — the video wizard's Result step: the From chip, the meta line, the takes strip, the file+link row */
+.wiz-from{display:flex;align-items:center;gap:10px;margin:8px 0 10px}
+.wiz-from .th{width:44px;height:44px;border-radius:9px;background:var(--ink);overflow:hidden;flex:none;border:1px solid var(--line-soft)}
+.wiz-from .th img{width:100%;height:100%;object-fit:cover;display:block}
+.wiz-from .nm{font-size:12.5px;color:var(--muted);font-weight:700}
+.wiz-meta{margin:8px 0 0}
+.wiz-takes-h{margin:12px 0 0}
+.wiz-nav-acts{margin-top:12px}
+.wiz-nav-acts .btn{font-size:13px;padding:11px 8px}
 /* ---- inline icon system (replaces emoji iconography) ---- */
 svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
   fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
@@ -5291,6 +5300,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.85.0", kind:"page", ref:"pgVideo",
+    t:{my:"Photoshop Panel — Video Smart Workflow wizard ရဲ့ Result စာမျက်နှာ အစစ်ဖြစ်ပြီ: စာမျက်နှာထဲမှာပဲ ပွင့်တယ် (အရင်က Photoshop က အောက်ဆုံး ချထားတဲ့ fixed sheet)၊ ဘယ်ပုံ/ဘယ်ဗီဒီယိုကနေ ထုတ်တာ ပြတယ်၊ ဗီဒီယို ဖွင့်လို့ရရင် ဖွင့်ပြ မရရင် ပြောပြတယ်၊ Download · Direct Link · Folder · အရင်ထုတ်ခဲ့တာတွေ strip · V→V စာမျက်နှာမှာ ရလဒ် box ပါလာပြီ",en:"Photoshop Panel — the Video Smart Workflow wizard's Result step is a real result: it opens inside the page (was a fixed sheet Photoshop laid out below the fold), shows which photo or clip it came from, plays the take where the panel can and says so where it cannot, offers Download · Open Direct Link · Open the folder and a strip of earlier takes · the V→V page gets its result box",shn:"Photoshop Panel — Result ၶွင် Video Smart Workflow wizard ပဵၼ်ၽွၼ်းလႆႈတႄႉ: ပိုတ်ႇၼႂ်းၼႃႈလိၵ်ႈ၊ ၼႄဝႃႈလုၵ်ႉတီႈၶႅပ်း/ဝီဒီရူဝ်ႈလႂ်၊ Download · Direct Link · folder · ဢၼ်ႁဵတ်းဝႆႉမိူဝ်ႈၵူႈပွၵ်ႈ · V→V ၼႃႈလိၵ်ႈ မီး result box",kac:"Photoshop Panel — Video Smart Workflow wizard a Result gaw ah kyu teng teng rai sai: page kata hpaw ai, gara sumla/video kaw na re yu lu, Download · Direct Link · folder · shawng galaw da ai ni · V→V page hta result box lawm sai",th:"Photoshop Panel — ขั้น Result ของวิซาร์ด Video Smart Workflow เป็นผลลัพธ์จริง: เปิดในหน้าเดิม (เดิมเป็น fixed sheet ที่ Photoshop วางไว้ท้ายหน้า) แสดงว่ามาจากรูป/คลิปไหน เล่นได้ก็เล่น เล่นไม่ได้ก็บอก มี Download · เปิดลิงก์ตรง · เปิดโฟลเดอร์ · แถบผลก่อนหน้า · หน้า V→V มีกล่องผลลัพธ์",zh:"Photoshop 面板 — Video Smart Workflow 向导的 Result 步骤成为真正的结果：在页面内打开（原为被 Photoshop 排到页面底部的固定层），显示来自哪张照片/视频，能播放就播放、不能就说明，提供 下载 · 打开直链 · 打开文件夹 · 之前的结果条 · V→V 页面新增结果框",vi:"Photoshop Panel — bước Result của wizard Video Smart Workflow là kết quả thật: mở ngay trong trang (trước là lớp cố định bị Photoshop xếp xuống cuối trang), cho biết từ ảnh/clip nào, phát được thì phát, không thì nói rõ, có Tải về · Mở liên kết trực tiếp · Mở thư mục · dải các lần trước · trang V→V có hộp kết quả",id:"Photoshop Panel — langkah Result wizard Video Smart Workflow jadi hasil sungguhan: terbuka di dalam halaman (dulu lembar fixed yang ditaruh Photoshop di bawah), menunjukkan dari foto/klip mana, memutar bila bisa dan memberi tahu bila tidak, ada Unduh · Buka tautan langsung · Buka folder · strip hasil sebelumnya · halaman V→V punya kotak hasil",ms:"Photoshop Panel — langkah Result wizard Video Smart Workflow kini hasil sebenar: dibuka dalam halaman (dulu helaian fixed yang diletak Photoshop di bawah), menunjukkan dari foto/klip mana, dimainkan jika boleh dan diberitahu jika tidak, ada Muat turun · Buka pautan terus · Buka folder · jalur hasil sebelumnya · halaman V→V ada kotak hasil"},
+    s:{my:"အရင် 6.155.0 မှာ — wizard sheet က position:fixed ဖြစ်နေတော့ Photoshop က စာမျက်နှာ အောက်ဆုံးမှာ ချထားတယ် (6.78.0 photo sheet နဲ့ 6.82.0 Freeform sheet အမှား တစ်မျိုးတည်း)၊ ပုံ→ဗီဒီယို ရလဒ်က Photoshop ထဲ ဖွင့်မရတဲ့ video အမဲ၊ ဗီဒီယို→ဗီဒီယို ရလဒ်က \"saved\" စာကြောင်း တစ်ကြောင်းပဲ။\n\nအခု — wizard က နှိပ်တဲ့ စာမျက်နှာထဲမှာပဲ ပွင့်တယ်။ Result မှာ **ဘယ်ပုံ/ဗီဒီယိုကနေ ထုတ်တာ** (From)၊ ဖွင့်လို့မရရင် \"Clip 1 အဆင်သင့် — Download/Open\" စာကြောင်း + MP4 1/2 tile၊ **Download · Direct Link ဖွင့် · Folder ဖွင့်**၊ **အရင်ထုတ်ခဲ့တာတွေ strip** (တစ်ခု နှိပ်ရင် အဲ့ဒါ ပြ၊ စာမျက်နှာရဲ့ ရွေးချယ်မှုလဲ လိုက်)။ V→V စာမျက်နှာမှာ ရလဒ် box + ✕ + Clear ပါလာပြီ။ Web app wizard မှာလဲ From · Direct Link · strip ပါပြီ။",en:"Before (6.155.0): the wizard sheet was position:fixed, which Photoshop lays out at the end of the page (the 6.78.0 photo-sheet and 6.82.0 Freeform-sheet defect); an image→video result was a video Photoshop cannot play; a video→video result was one \"saved\" line.\n\nNow the wizard renders inside the tapped page. Result shows **From** (the page's photo or clip), the honest \"Clip 1 is ready — Download / Open\" line with MP4 1/2 tiles where there is no player, **Download · Open Direct Link · Open the folder**, and a **strip of earlier takes** (tap to view; the page's selection follows). The V→V page gets the app's result box with ✕ and Clear. The web app wizard gains From · Open Direct Link · the takes strip too.",shn:"Wizard ပိုတ်ႇၼႂ်းၼႃႈလိၵ်ႈ (ဢမ်ႇၸႂ်ႈ fixed sheet ယဝ်ႉ)။ Result ၼႄ From၊ Download · Direct Link · folder၊ ဢၼ်ႁဵတ်းဝႆႉမိူဝ်ႈၵူႈပွၵ်ႈ strip။ V→V ၼႃႈလိၵ်ႈ မီး result box (✕ · Clear)။ Web app ၵေႃႈ From · Direct Link · strip။",kac:"Wizard gaw page kata hpaw ai (fixed sheet n rai sai). Result hta From, Download · Direct Link · folder, shawng galaw da ai ni strip. V→V page hta result box (✕ · Clear). Web app mung From · Direct Link · strip.",th:"วิซาร์ดเปิดในหน้าเดิม (ไม่ใช่ fixed sheet แล้ว) ขั้น Result แสดง From, Download · เปิดลิงก์ตรง · เปิดโฟลเดอร์, แถบผลก่อนหน้า (แตะดู หน้าเลือกตาม) หน้า V→V มีกล่องผลลัพธ์ (✕ · Clear) เว็บแอปก็มี From · ลิงก์ตรง · แถบผล",zh:"向导在页面内打开（不再是固定层）。Result 显示 From、下载 · 打开直链 · 打开文件夹、之前的结果条（点一个查看，页面选择同步）。V→V 页面新增结果框（✕ · 清除）。网页版向导也新增 From · 直链 · 结果条。",vi:"Wizard mở trong trang (không còn lớp cố định). Result hiển thị From, Tải về · Mở liên kết trực tiếp · Mở thư mục, dải các lần trước (chạm để xem, trang chọn theo). Trang V→V có hộp kết quả (✕ · Xoá). Web app cũng có From · liên kết trực tiếp · dải.",id:"Wizard terbuka di dalam halaman (bukan lembar fixed lagi). Result menampilkan From, Unduh · Buka tautan langsung · Buka folder, strip hasil sebelumnya (ketuk untuk melihat, pilihan halaman mengikuti). Halaman V→V punya kotak hasil (✕ · Hapus). Web app juga dapat From · tautan langsung · strip.",ms:"Wizard dibuka dalam halaman (bukan helaian fixed lagi). Result menunjukkan From, Muat turun · Buka pautan terus · Buka folder, jalur hasil sebelumnya (ketik untuk melihat, pilihan halaman mengikut). Halaman V→V ada kotak hasil (✕ · Kosongkan). Web app juga dapat From · pautan terus · jalur."} },
   { v:"6.84.0", kind:"page", ref:"pgWf",
     t:{my:"Photoshop Panel — Selection Edit ရလဒ်လဲ wizard ရဲ့ Results card ထဲ ဝင်ပြီ (Before = select ထားတဲ့ နေရာ · Before/After · \"Photoshop ထဲ ထပ်ထည့်\" က မူလ selection နေရာ အတိအက်ျ mask နဲ့ ပြန်ဝင်) · Active layer စစ်ဆေး — slot ✓ မှာ layer နာမည် + size ပေါ်၊ Freeform/Retouch/Path ရဲ့ Layer ခလုတ်လဲ wizard နည်းလမ်း ၄ ခုနဲ့ ပြန်ကြိုးစား၊ CMYK/Lab document ကို RGB အဖြစ် ဖတ် · SELF-TEST ▸ \"Layer capture\" row အသစ်",en:"Photoshop Panel — Selection Edit results join the wizard's Results card (Before = the selected area · Before/After · \"Place into Photoshop again\" lands at the exact selection under a mask) · Active layer checked — the slot's tick names the layer and its size, the Layer button on Freeform/Retouch/Path retries through the wizard's four routes, CMYK/Lab documents are read as RGB · SELF-TEST ▸ new \"Layer capture\" row",shn:"Photoshop Panel — ၽွၼ်းလႆႈ Selection Edit ၶဝ်ႈ Results card (Before = တီႈလိူၵ်ႇ · Before/After · သႂ်ႇ Photoshop ထႅင်ႈ တီႈ selection) · Active layer ၵူတ်ႇ — ✓ ၼႄၸိုဝ်ႈ layer + size၊ Layer ၼႂ်း Freeform ၸၢမ်း 4 တၢင်း၊ CMYK/Lab → RGB · SELF-TEST \"Layer capture\"",kac:"Photoshop Panel — Selection Edit lachyum gaw Results card hta shang sai (Before = lata da ai shara · Before/After · Photoshop hta bai bang gaw selection shara kaw mask hte) · Active layer jep — ✓ hta layer mying + size, Freeform Layer gaw lam 4 hte bai chyam, CMYK/Lab → RGB · SELF-TEST \"Layer capture\" row",th:"Photoshop Panel — ผลลัพธ์ Selection Edit เข้าการ์ด Results ของวิซาร์ดแล้ว (Before = พื้นที่ที่เลือก · Before/After · \"วางลง Photoshop อีกครั้ง\" ลงตรงตำแหน่ง selection พร้อมมาสก์) · ตรวจ Active layer — เครื่องหมาย ✓ บอกชื่อเลเยอร์ + ขนาด, ปุ่ม Layer ใน Freeform/Retouch/Path ลองใหม่ผ่าน 4 เส้นทางของวิซาร์ด, เอกสาร CMYK/Lab อ่านเป็น RGB · SELF-TEST ▸ แถวใหม่ \"Layer capture\"",zh:"Photoshop 面板 — Selection Edit 的结果也进入向导的 Results 卡片（Before = 选区 · Before/After · \"再次放入 Photoshop\" 精确落回原选区并带蒙版）· 检查 Active layer — 槽位的 ✓ 显示图层名 + 尺寸，Freeform/Retouch/Path 的 Layer 按钮改走向导的四条路径重试，CMYK/Lab 文档按 RGB 读取 · SELF-TEST ▸ 新增 \"Layer capture\" 行",vi:"Photoshop Panel — kết quả Selection Edit vào thẻ Results của wizard (Before = vùng đã chọn · Before/After · \"Đặt vào Photoshop lần nữa\" trả đúng vùng chọn kèm mask) · Kiểm tra Active layer — dấu ✓ ghi tên layer + kích cỡ, nút Layer ở Freeform/Retouch/Path thử lại qua 4 đường của wizard, tài liệu CMYK/Lab đọc thành RGB · SELF-TEST ▸ hàng mới \"Layer capture\"",id:"Photoshop Panel — hasil Selection Edit masuk kartu Results wizard (Before = area terpilih · Before/After · \"Tempatkan ke Photoshop lagi\" kembali tepat ke seleksi dengan mask) · Active layer diperiksa — tanda ✓ menyebut nama layer + ukuran, tombol Layer di Freeform/Retouch/Path mencoba ulang lewat 4 jalur wizard, dokumen CMYK/Lab dibaca sebagai RGB · SELF-TEST ▸ baris baru \"Layer capture\"",ms:"Photoshop Panel — hasil Selection Edit masuk kad Results wizard (Before = kawasan dipilih · Before/After · \"Letak ke Photoshop lagi\" kembali tepat ke pilihan dengan mask) · Active layer diperiksa — tanda ✓ menyebut nama layer + saiz, butang Layer di Freeform/Retouch/Path cuba semula melalui 4 laluan wizard, dokumen CMYK/Lab dibaca sebagai RGB · SELF-TEST ▸ baris baharu \"Layer capture\""},
     s:{my:"ဆရာ့ မေးခွန်း ၂ ခု ကနေ —\n\n(1) **Selection Edit → Results · Before/After** — Selection Edit ရလဒ်ကလဲ Results card ထဲ ဝင်ပြီ။ Before က select ထားတဲ့ pixel တွေ (\"← Before (Selection)\")၊ meta မှာ Selection W×H ပေါ်၊ **Photoshop ထဲ ထပ်ထည့်မယ်** နှိပ်ရင် မူလ selection နေရာ အတိအက်ျမှာ mask နဲ့ ပြန်ဝင်တယ် (page အလိုက် fit မလုပ်တော့)။\n\n(2) **Active layer စစ်ဆေးမှု** — Smart Workflow slot က layer ကို နည်းလမ်း ၄ ခု + saved copy နဲ့ ဖတ်တယ် (ခိုင်တယ်)။ Freeform/Retouch/Path ရဲ့ Layer ခလုတ်က နည်းလမ်း ၁ ခုတည်း — group layer၊ CMYK/Lab document ဆို ငြင်းတယ်။ အခု ငြင်းရင် wizard ရဲ့ ၄ နည်းလမ်း ပြန်ကြိုးစားတယ်၊ CMYK/Lab ကို RGB အဖြစ် ဖတ်တယ်။ slot ✓ မှာ layer နာမည် + size ပေါ်တယ်။ **Setup ▸ SELF-TEST ▸ \"Layer capture\"** row — document ဖွင့်ထားရင် layer နာမည် · size · route · ms ပေါ်၊ ငြင်းရင် အကြောင်းအရင်း ပေါ်။ Test 219။",en:"From the owner's two questions —\n\n(1) **Selection Edit → Results · Before/After** — a Selection Edit result joins the Results card: Before is the selected pixels (\"← Before (Selection)\"), the line names Selection W×H, and **Place into Photoshop again** lands at the exact selection under a mask (no fit-to-page).\n\n(2) **The Active layer, checked** — a Smart Workflow slot reads the layer through four getPixels shapes and a saved copy (robust); the Layer button on Freeform/Retouch/Path had one route and refused a group or a CMYK/Lab document. It now retries through the wizard's four routes, CMYK/Lab documents are read as RGB, and the slot's tick names the layer and its size. **Setup ▸ SELF-TEST ▸ \"Layer capture\"** — with a document open it prints the layer's name · size · route · ms, or the exact refusal. Test 219.",shn:"Selection Edit ၽွၼ်းလႆႈ ၶဝ်ႈ Results card (Before = selection၊ သႂ်ႇ Photoshop ထႅင်ႈ တီႈ selection)၊ Active layer ၵူတ်ႇ (4 တၢင်း၊ CMYK/Lab → RGB၊ ✓ ၼႄၸိုဝ်ႈ layer)၊ SELF-TEST \"Layer capture\"။ Test 219။",kac:"Selection Edit lachyum Results card hta shang (Before = selection, Photoshop hta bai bang gaw selection kaw), Active layer jep (lam 4, CMYK/Lab → RGB, ✓ hta layer mying), SELF-TEST \"Layer capture\". Test 219.",th:"ผลลัพธ์ Selection Edit เข้าการ์ด Results (Before = selection, วางลง Photoshop อีกครั้งตรง selection), ตรวจ Active layer (4 เส้นทาง, CMYK/Lab → RGB, ✓ บอกชื่อเลเยอร์), SELF-TEST \"Layer capture\". Test 219.",zh:"Selection Edit 结果进入 Results 卡片（Before = 选区，再次放入 Photoshop 落回选区），检查 Active layer（4 条路径，CMYK/Lab → RGB，✓ 显示图层名），SELF-TEST \"Layer capture\"。Test 219。",vi:"Kết quả Selection Edit vào thẻ Results (Before = vùng chọn, Đặt vào Photoshop lần nữa đúng vùng chọn), kiểm tra Active layer (4 đường, CMYK/Lab → RGB, ✓ ghi tên layer), SELF-TEST \"Layer capture\". Test 219.",id:"Hasil Selection Edit masuk kartu Results (Before = seleksi, Tempatkan ke Photoshop lagi tepat di seleksi), Active layer diperiksa (4 jalur, CMYK/Lab → RGB, ✓ menyebut nama layer), SELF-TEST \"Layer capture\". Test 219.",ms:"Hasil Selection Edit masuk kad Results (Before = pilihan, Letak ke Photoshop lagi tepat di pilihan), Active layer diperiksa (4 laluan, CMYK/Lab → RGB, ✓ menyebut nama layer), SELF-TEST \"Layer capture\". Test 219."} },
@@ -29630,7 +29642,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.84.0";
+var APP_VER="6.85.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -33029,7 +33041,14 @@ var VWIZ_L={
   again:{my:"နောက်တစ်ခု ထုတ်မယ်",en:"Make another",shn:"ႁဵတ်းထႅင်ႈဢၼ်ၼိုင်ႈ",kac:"Langai bai galaw u",th:"ทำอีกอัน",zh:"再做一个",vi:"Làm cái khác",id:"Buat lagi",ms:"Buat lagi"},
   onPage:{my:"စာမျက်နှာပေါ်မှာ ကြည့်မယ်",en:"See it on the page",shn:"တူၺ်းၼိူဝ်ၼႃႈလိၵ်ႈ",kac:"Page ntsa yu u",th:"ดูบนหน้า",zh:"在页面上查看",vi:"Xem trên trang",id:"Lihat di halaman",ms:"Lihat pada halaman"},
   fast:{my:"ဖိုင်တွေ ရှိပြီးသား — Generate ကို တန်းသွားမယ်",en:"Files already in place — skip to Generate",shn:"ၾၢႆႇမီးယဝ်ႉ — ၵႂႃႇ Generate",kac:"File ni nga sai — Generate de rai u",th:"มีไฟล์แล้ว — ข้ามไป Generate",zh:"文件已就位 — 直接到 Generate",vi:"Đã có tệp — chuyển thẳng tới Generate",id:"File sudah ada — langsung ke Generate",ms:"Fail sudah ada — terus ke Generate"},
-  engine:{my:"RunningHub engine · card ရဲ့ prompt {C} လုံး",en:"RunningHub engine · the card's request, {C} chars",shn:"RunningHub engine · prompt {C} တူဝ်",kac:"RunningHub engine · prompt {C} chars",th:"เอนจิน RunningHub · คำขอของการ์ด {C} ตัวอักษร",zh:"RunningHub 引擎 · 卡片请求 {C} 字",vi:"Engine RunningHub · yêu cầu của thẻ {C} ký tự",id:"Engine RunningHub · permintaan kartu {C} karakter",ms:"Enjin RunningHub · permintaan kad {C} aksara"}
+  engine:{my:"RunningHub engine · card ရဲ့ prompt {C} လုံး",en:"RunningHub engine · the card's request, {C} chars",shn:"RunningHub engine · prompt {C} တူဝ်",kac:"RunningHub engine · prompt {C} chars",th:"เอนจิน RunningHub · คำขอของการ์ด {C} ตัวอักษร",zh:"RunningHub 引擎 · 卡片请求 {C} 字",vi:"Engine RunningHub · yêu cầu của thẻ {C} ký tự",id:"Engine RunningHub · permintaan kartu {C} karakter",ms:"Enjin RunningHub · permintaan kad {C} aksara"},
+  /* v6.85.0 — the Result step: where the take came from, the earlier takes, the link and the saved file */
+  from:{my:"ဒီပုံကနေ ထုတ်တာ",en:"From this photo",shn:"လုၵ်ႉတီႈၶႅပ်းႁၢင်ႈၼႆႉ",kac:"Ndai sumla kaw na",th:"จากรูปนี้",zh:"来自这张照片",vi:"Từ ảnh này",id:"Dari foto ini",ms:"Daripada foto ini"},
+  fromClip:{my:"ဒီဗီဒီယိုကနေ ထုတ်တာ",en:"From this clip",shn:"လုၵ်ႉတီႈဝီဒီရူဝ်ႈၼႆႉ",kac:"Ndai video kaw na",th:"จากคลิปนี้",zh:"来自这段视频",vi:"Từ clip này",id:"Dari klip ini",ms:"Daripada klip ini"},
+  takes:{my:"အရင် ထုတ်ခဲ့တာတွေ — တစ်ခု နှိပ်ပြီး ကြည့်ပါ",en:"Earlier takes — tap one to see it",shn:"ဢၼ်ႁဵတ်းဝႆႉမိူဝ်ႈၵူႈပွၵ်ႈ — ၼဵၵ်းတူၺ်း",kac:"Shawng galaw da ai ni — langai dip nna yu u",th:"ที่ทำไว้ก่อนหน้า — แตะเพื่อดู",zh:"之前的结果 — 点一个查看",vi:"Các lần trước — chạm để xem",id:"Hasil sebelumnya — ketuk untuk melihat",ms:"Hasil sebelumnya — ketik untuk melihat"},
+  openLink:{my:"Direct Link ဖွင့်မယ်",en:"Open Direct Link",shn:"ပိုတ်ႇ Direct Link",kac:"Direct Link hpaw u",th:"เปิดลิงก์ตรง",zh:"打开直链",vi:"Mở liên kết trực tiếp",id:"Buka tautan langsung",ms:"Buka pautan terus"},
+  savedTo:{my:"{F} အနေနဲ့ သိမ်းပြီးပါပြီ",en:"Saved as {F}",shn:"သိမ်းဝႆႉပဵၼ် {F}",kac:"{F} hku tawn da sai",th:"บันทึกเป็น {F} แล้ว",zh:"已保存为 {F}",vi:"Đã lưu thành {F}",id:"Tersimpan sebagai {F}",ms:"Disimpan sebagai {F}"},
+  openFolder:{my:"Folder ဖွင့်မယ်",en:"Open the folder",shn:"ပိုတ်ႇ folder",kac:"Folder hpaw u",th:"เปิดโฟลเดอร์",zh:"打开文件夹",vi:"Mở thư mục",id:"Buka folder",ms:"Buka folder"}
 };
 /* the four guide lines, per deck; {N} is the card's own need badge */
 var VWIZ_STEPS={
@@ -33069,8 +33088,9 @@ var VWIZ_STEPS={
    pickers are the page's own file inputs, and Generate presses the page's own
    button. So a run started here is exactly the run the page would have made,
    and a student who closes the wizard finds everything where it was. */
-var vwiz={kind:"",w:null,step:1,token:0,busy:false,result:null,error:"",tick:null};
+var vwiz={kind:"",w:null,step:1,token:0,busy:false,result:null,error:"",tick:null,sel:0};
 function vwizL(k){ return L9(VWIZ_L[k]||{en:k}); }
+function vwizClock(ts){ var d=new Date(ts||Date.now()); var p2=function(x){ return (x<10?"0":"")+x; }; return p2(d.getHours())+":"+p2(d.getMinutes()); }
 function vwizTool(){ return vwiz.kind==="v2v" ? rhVtModelDef($("selVtModel").value) : null; }
 function vwizNeed(){
   /* the words on the card's own badge — the guide's {N} */
@@ -33090,7 +33110,7 @@ function vwizInputsOk(){
 }
 function vwizPageText(){ return vwiz.kind==="i2v" ? $("vidPrompt").value : $("vtPrompt").value; }
 function openVWiz(kind, w){
-  vwiz.kind=kind; vwiz.w=w; vwiz.step=1; vwiz.token++; vwiz.busy=false; vwiz.result=null; vwiz.error="";
+  vwiz.kind=kind; vwiz.w=w; vwiz.step=1; vwiz.sel=0; vwiz.token++; vwiz.busy=false; vwiz.result=null; vwiz.error="";
   if(vwiz.tick){ clearInterval(vwiz.tick); vwiz.tick=null; }
   document.body.style.overflow="hidden";
   /* the file inputs are the page's; when one lands, the page repaints and so does this */
@@ -33247,14 +33267,51 @@ function renderVWiz(){
       var ld=el("p",null,vwizL("running")); body.appendChild(ld);
       var sp=el("div","spin on"); sp.id="vwizSpin"; sp.textContent=$(spinId).textContent; body.appendChild(sp);
     } else if(vwiz.result){
+      /* v6.85.0 — THE RESULT STEP SHOWS THE TAKE, WHERE IT CAME FROM, AND THE
+         OTHERS. The page's history is the source of truth: the shown take is
+         state[hist][vwiz.sel] (0 = the one just made), the From chip is the
+         page's own slot, and every earlier take of this page sits in a strip
+         a tap switches to — the page's selection follows, so Download and
+         the direct link always mean the clip on screen. */
+      var hk = vwiz.kind==="i2v" ? "vidHist" : "vtHist", hl = state[hk]||[];
+      if(vwiz.sel>=hl.length) vwiz.sel=0;
+      var cur = hl[vwiz.sel] || vwiz.result;
       body.appendChild(el("p",null,vwizL("done")));
-      var v=document.createElement("video"); v.controls=true; v.playsInline=true; v.style.cssText="width:100%;border-radius:12px;background:#000"; v.src=vidPlayUrl(vwiz.result); body.appendChild(v);
+      var from=el("div","wiz-from");
+      if(vwiz.kind==="i2v" && state.refs[0]){
+        var fth=el("div","th"); var fim=document.createElement("img"); fim.src="data:"+state.refs[0].mime+";base64,"+state.refs[0].b64; fim.alt=""; fth.appendChild(fim); from.appendChild(fth);
+        from.appendChild(el("div","nm",vwizL("from")));
+      } else if(vwiz.kind==="v2v" && state.vtFile){
+        from.appendChild(el("div","nm",vwizL("fromClip")+" · "+(state.vtFile.name||"video")));
+      }
+      if(from.firstChild) body.appendChild(from);
+      var v=document.createElement("video"); v.controls=true; v.playsInline=true; v.style.cssText="width:100%;border-radius:12px;background:#000"; v.src=vidPlayUrl(cur); body.appendChild(v);
+      var meta=[];
+      if(cur.resolution) meta.push(String(cur.resolution));
+      if(cur.duration) meta.push(/^\d+$/.test(String(cur.duration)) ? cur.duration+"s" : String(cur.duration));
+      if(vwiz.kind==="v2v" && vwizTool()) meta.push(vwizTool().label||"");
+      if(cur.ts) meta.push(vwizClock(cur.ts));
+      meta=meta.filter(Boolean); if(meta.length) body.appendChild(el("p","mut wiz-meta",meta.join(" · ")));
+      if(hl.length>1){
+        body.appendChild(el("p","mut wiz-takes-h",vwizL("takes")));
+        var strip=el("div","hist wiz-takes"); strip.id="vwizTakes";
+        hl.forEach(function(e,i){
+          var tv=document.createElement("video"); tv.src=vidPlayUrl(e); tv.muted=true; tv.preload="metadata"; tv.playsInline=true; tv.className=i===vwiz.sel?"sel":"";
+          makePickable(tv, function(){ vwiz.sel=i; state[hk+"Sel"]=i; if(vwiz.kind==="i2v") showVidResult(false); else showVtResult(false); renderVWiz(); });
+          strip.appendChild(tv);
+        });
+        body.appendChild(strip);
+      }
+      var nav1=el("div","wiz-nav wiz-nav-acts");
       var dl=el("button","btn btn-gold"); setIcnText(dl,"i-download",vwizL("download"));
       dl.onclick=function(){ $(vwiz.kind==="i2v"?"btnVidDl":"btnVtDl").onclick(); };
+      nav1.appendChild(dl);
+      if(cur.url){ var lk=el("a","btn"); lk.id="vwizOpenLink"; lk.href=cur.url; lk.target="_blank"; lk.rel="noopener"; setIcnText(lk,"i-external",vwizL("openLink")); nav1.appendChild(lk); }
+      body.appendChild(nav1);
       var again=el("button","btn"); setIcnText(again,"i-retry",vwizL("again")); again.onclick=function(){ vwiz.result=null; goStep(2); };
       var onp=el("button","btn"); setIcnText(onp,"i-caret",vwizL("onPage"));
       onp.onclick=function(){ closeVWiz(); var bx=$(vwiz.kind==="i2v"?"vidResultBox":"vtResultBox"); if(bx) bx.scrollIntoView({behavior:"smooth"}); };
-      nav.appendChild(dl); nav.appendChild(again); nav.appendChild(onp);
+      nav.appendChild(again); nav.appendChild(onp);
     } else {
       body.appendChild(el("p","mut warn",vwizL("failed")));
       if(vwiz.error) body.appendChild(el("p","mut",vwiz.error));
@@ -33278,7 +33335,7 @@ async function runVWizGenerate(){
   if(vwiz.tick){ clearInterval(vwiz.tick); vwiz.tick=null; }
   if(token!==vwiz.token || $("wiz").className.indexOf("on")<0) return;
   vwiz.busy=false;
-  if(state[histKey][0]!==before){ vwiz.result=state[histKey][0]; }
+  if(state[histKey][0]!==before){ vwiz.result=state[histKey][0]; vwiz.sel=0; }
   else {
     var st=$(kind==="i2v"?"stVidGen":"stVtGen"); vwiz.error=(st&&st.textContent)||"";
     /* a missing key sent the student to Setup underneath the wizard — get out of the way */
