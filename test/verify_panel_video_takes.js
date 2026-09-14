@@ -62,8 +62,9 @@ const nineLangs = (line) => !!line && LANGS.every(l => new RegExp("[{,]" + l + '
 
 (async () => {
   /* ---------------- A. source pins ---------------- */
-  report("A1) mkTakes builds a page's result box from its ids (player where VIDEO_OK, the tile + vid_no_inline where not, the saved line, Download again, the direct link, Open the folder, ✕ per take, Clear); tkRun and vuRun record every take; both boxes and controls are in the page and bound; V→V gains Open the folder",
-    /function mkTakes\(pre, L\)/.test(MAIN) && /const tkTakes = mkTakes\("tk", TK_L\);/.test(MAIN) && /const vuTakes = mkTakes\("vu", VU_L\);/.test(MAIN) &&
+  report("A1) mkTakes(pre, L, page) builds a page's result box from its ids (player where VIDEO_OK, the tile + vid_no_inline where not, the saved line, Download again, the direct link, Open the folder, ✕ per take, Clear), keeps twelve takes and hands every one to the takes store; tkRun and vuRun record every take; both boxes and controls are in the page and bound; V→V gains Open the folder",
+    /function mkTakes\(pre, L, page\)/.test(MAIN) && /const tkTakes = mkTakes\("tk", TK_L, "talk"\);/.test(MAIN) && /const vuTakes = mkTakes\("vu", VU_L, "upscale"\);/.test(MAIN) &&
+    /T\.record = function \(e\) \{ T\.list\.unshift\(e\); while \(T\.list\.length > 12\) T\.list\.pop\(\); T\.sel = 0; try \{ T\.show\(\); \} catch \(x\) \{ \} takesRecordP\(page, e\); \};/.test(MAIN) &&
     /if \(VIDEO_OK && out\.url\) \{ vid\.style\.display = ""; vid\.src = out\.url; \} else \{ vid\.style\.display = "none"; clearSrc\(vid\); \}/.test(MAIN) &&
     /note\.textContent = t\("vid_no_inline"\)\.replace\("\{n\}", String\(T\.sel \+ 1\)\)/.test(MAIN) &&
     /tkTakes\.record\(\{ url: res\.results\[0\]\.url \|\| "", ref: res\.results\[0\]\.ref, name: name, folder: TK\.out\.name \|\| "", folderPath: TK\.out\.nativePath \|\| "",/.test(MAIN) &&

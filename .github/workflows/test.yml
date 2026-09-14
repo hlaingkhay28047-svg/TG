@@ -550,6 +550,8 @@ jobs:
         run: PORT=8931 node test/verify_panel_video_wizard_result.js
       - name: Panel video takes — Talking Photo and Video Upscale get the app's result boxes (mkTakes — player or MP4 tile + vid_no_inline, saved line, Download again, direct link, Open the folder, strip with a cross per take, Clear), V→V gains Open the folder, Learn Mode's guide box renders in the flow above the tapped card (the panel's last position:fixed element is gone), SELF-TEST gets a Video player row (6.86.0 / panel 6.157.0)
         run: PORT=8931 node test/verify_panel_video_takes.js
+      - name: Panel video takes persist — every take on Video · V→V · Talking Photo · Upscale is kept as an mp4 copy in the gallery folder plus an index (takes-store, 12 per page), the four strips come back on boot, Download again reads the copy, ✕ and Clear drop it, the Gallery page lists videos as tiles with Open the folder · Save · Delete, History gets a Videos section whose Open selects the take on its page (6.87.0 / panel 6.158.0)
+        run: PORT=8931 node test/verify_panel_video_takes_persist.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

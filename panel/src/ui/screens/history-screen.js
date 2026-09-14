@@ -14,6 +14,42 @@
 var _CJS = (typeof module !== "undefined" && module.exports);
 var dom = _CJS ? require("../dom") : globalThis.HNK.dom;
 
+/* v6.87.0 — THE VIDEO TAKES JOIN HISTORY. The four video pages' takes are
+   kept by the takes store (a copy in the gallery folder + an index), and this
+   screen lists them under their own heading: page · tool · resolution ·
+   length · time · file, and Open, which takes the student back to that
+   page with that take selected. */
+var TAKE_PAGE = { video: "Video", v2v: "V\u2192V", talk: "Talking Photo", upscale: "Upscale" };
+function _clock(ts) {
+  var d = new Date(ts || 0); var p2 = function (x) { return (x < 10 ? "0" : "") + x; };
+  return p2(d.getHours()) + ":" + p2(d.getMinutes());
+}
+function renderTakes(root, deps) {
+  var doc = deps.document;
+  var takes = deps.takes || (globalThis.HNK && globalThis.HNK.takesStore) || null;
+  var vids = (takes && typeof takes.list === "function") ? takes.list() : [];
+  if (!vids.length) return;
+  root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_videos", "Videos") }));
+  var listEl = dom.el(doc, "div", { class: "hnk-hist-list", id: "hnkTakes" });
+  vids.forEach(function (v) {
+    var card = dom.el(doc, "div", { class: "hnk-hist", id: "hnkTake_" + v.id });
+    card.appendChild(dom.el(doc, "div", { class: "hnk-hist-badge free", text: TAKE_PAGE[v.page] || v.page }));
+    var meta = [v.tool, v.resolution, v.duration ? (/^\d+$/.test(String(v.duration)) ? v.duration + "s" : v.duration) : "", _clock(v.ts), v.name].filter(Boolean).join(" \u00b7 ");
+    card.appendChild(dom.el(doc, "div", { class: "hnk-hist-meta", text: meta }));
+    if (v.prompt) card.appendChild(dom.el(doc, "div", { class: "hnk-hist-prompt", text: v.prompt }));
+    var actions = dom.el(doc, "div", { class: "hnk-hist-actions" });
+    var open = dom.el(doc, "button", { class: "hnk-btn", id: "hnkTakeOpen_" + v.id, text: dom.t("ai_open", "Open") });
+    dom.on(open, "click", function () {
+      if (deps.onOpenTake) { deps.onOpenTake(v); return; }
+      if (globalThis.HNK && typeof globalThis.HNK.openTake === "function") globalThis.HNK.openTake(v.id);
+    });
+    actions.appendChild(open);
+    card.appendChild(actions);
+    listEl.appendChild(card);
+  });
+  root.appendChild(listEl);
+}
+
 function render(root, deps) {
   var doc = deps.document;
   var svc = deps.history;
@@ -23,6 +59,7 @@ function render(root, deps) {
   var entries = (svc && svc.list()) || [];
   if (!entries.length) {
     root.appendChild(dom.el(doc, "div", { class: "hnk-todo", text: dom.t("ai_no_gen", "No generations yet.") }));
+    renderTakes(root, deps);   /* v6.87.0 — the video takes still show */
     return root;
   }
 
@@ -43,6 +80,7 @@ function render(root, deps) {
     listEl.appendChild(card);
   });
   root.appendChild(listEl);
+  renderTakes(root, deps);   /* v6.87.0 */
 
   var clearBtn = dom.el(doc, "button", { class: "hnk-btn", id: "hnkHistClear", text: dom.t("ai_clear_hist", "Clear history") });
   dom.on(clearBtn, "click", function () { if (svc) svc.clear(); render(root, deps); });
@@ -50,7 +88,7 @@ function render(root, deps) {
   return root;
 }
 
-var API = { render: render };
+var API = { render: render, renderTakes: renderTakes, TAKE_PAGE: TAKE_PAGE };
 
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.historyScreen = API; }

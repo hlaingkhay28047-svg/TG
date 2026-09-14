@@ -22,7 +22,11 @@ var FOLDER = "gallery";
    the studio's own delete is the only thing that removes a file. */
 var MAX = 0;     /* 0 = no ceiling; kept as a field so callers still read it */
 
-function _uxp() { return (typeof require === "function") ? require("uxp") : null; }
+/* v6.87.0 — a test may hand in a fake host (HNK.__uxpForTests); Photoshop's is the real one */
+function _uxp() {
+  try { var h = globalThis.HNK && globalThis.HNK.__uxpForTests; if (h) return h; } catch (e) { }
+  return (typeof require === "function") ? require("uxp") : null;
+}
 
 async function _folder(create) {
   var uxp = _uxp();
@@ -109,7 +113,7 @@ async function readDataUrl(name) {
       if (files[i].name !== name) continue;
       var buf = await files[i].read({ format: uxp.storage.formats.binary });
       var ext = String(name).split(".").pop().toLowerCase();
-      var mime = (ext === "jpg" || ext === "jpeg") ? "image/jpeg" : ext === "webp" ? "image/webp" : "image/png";
+      var mime = (ext === "jpg" || ext === "jpeg") ? "image/jpeg" : ext === "webp" ? "image/webp" : ext === "mp4" ? "video/mp4" : "image/png";   /* v6.87.0 — the video takes' copies */
       var b64 = toB64(buf);
       return b64 ? "data:" + mime + ";base64," + b64 : "";
     }
