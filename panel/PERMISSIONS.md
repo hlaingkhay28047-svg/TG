@@ -25,6 +25,16 @@ hosts its manifest lists. Without it the panel could submit and pay for a task
 and never be allowed to download its result — which is exactly what the
 owner's 6.150.0 photograph showed as "cannot reach RunningHub".
 
+`https://*.myqcloud.com` and `https://*.cos.ap-hongkong.myqcloud.com`
+(v6.152.0) are where RunningHub's finished pictures actually live: Tencent
+Cloud COS. The owner's 6.151.0 photograph carried the panel's own refusal,
+word for word — "Permission denied to the url
+rh-hk-images-1252422369.cos.ap-hongkong.myqcloud.com Manifest entry not
+found" — after a paid task had reached SUCCESS. The xiaoyaoyou host above is
+the upload side; the result side is this one. Both forms are listed because
+UXP documents the wildcard for one subdomain label and the bucket host is
+four labels deep.
+
 Clipboard access supports explicit Copy/Paste actions for prompts, diagnostic
 logs, and image URLs. Remote webviews remain user-initiated and are restricted
 to the domains listed in `manifest.json`. No HNK admin key, service credential,

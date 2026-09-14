@@ -56,7 +56,8 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
 const PIXEL = Buffer.from("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", "base64");
 const PNG1 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-const STORAGE_HOST = "rh-hk-images-switch.xiaoyaoyou.com";
+const STORAGE_HOST = "rh-hk-images-switch.xiaoyaoyou.com";           /* uploads */
+const RESULT_HOST = "rh-hk-images-1252422369.cos.ap-hongkong.myqcloud.com";   /* finished pictures (Tencent COS) — 6.81.0 */
 
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
 const MAIN = read("panel/main.js");
@@ -75,9 +76,10 @@ const LANDING = read("docs/index.html");
 
 function sourcePins() {
   const domains = (MANIFEST.requiredPermissions && MANIFEST.requiredPermissions.network && MANIFEST.requiredPermissions.network.domains) || [];
-  report("A1) the manifest allows RunningHub's file storage (https://*.xiaoyaoyou.com) beside *.runninghub.ai, still no \"all\", and PERMISSIONS.md names the host and the reason",
-    domains.includes("https://*.xiaoyaoyou.com") && domains.includes("https://*.runninghub.ai") && !domains.includes("all")
-    && /xiaoyaoyou/.test(PERMS) && /rh-hk-images-switch\.xiaoyaoyou\.com/.test(PERMS), domains);
+  report("A1) the manifest allows RunningHub's upload storage (https://*.xiaoyaoyou.com) and its result storage (https://*.myqcloud.com + the cos.ap-hongkong family) beside *.runninghub.ai, still no \"all\", and PERMISSIONS.md names both hosts and the reason",
+    domains.includes("https://*.xiaoyaoyou.com") && domains.includes("https://*.myqcloud.com") && domains.includes("https://*.cos.ap-hongkong.myqcloud.com")
+    && domains.includes("https://*.runninghub.ai") && !domains.includes("all")
+    && /xiaoyaoyou/.test(PERMS) && /rh-hk-images-switch\.xiaoyaoyou\.com/.test(PERMS) && /rh-hk-images-1252422369\.cos\.ap-hongkong\.myqcloud\.com/.test(PERMS), domains);
   const a2 = {
     up: /var UPLOAD_MAX_TIMEOUT_MS = 480000;/.test(HTTPJS), dl: /var DOWNLOAD_TIMEOUT_MS = 180000;/.test(HTTPJS), rate: /var UPLOAD_BYTES_PER_MS = 20;/.test(HTTPJS),
     budget: /function budgetFor\(req, opts\)/.test(HTTPJS), timeout: HTTPJS.includes('{ code: "timeout", kind: kind, host: host }'),
@@ -96,17 +98,18 @@ function sourcePins() {
   report("A5) bootstrap.js: the strip line carries the stage word and the detail after the localized sentence; runViaProvider catches (licence refusal kept verbatim); the boot handle is published",
     Object.values(a5).every(Boolean), a5);
   const a6 = { keys: (MAIN.match(/^    rh_err_task_failed: /mg) || []).length, row: MAIN.includes("rows.push(hnkNetProbeRow());"), probe: /function hnkNetProbeStart\(force\)/.test(MAIN),
-    hosts: MAIN.includes('url: "https://www.runninghub.ai/openapi/v2/query"') && MAIN.includes('url: "https://' + STORAGE_HOST + '/"'),
+    hosts: MAIN.includes('url: "https://www.runninghub.ai/openapi/v2/query"') && MAIN.includes('url: "https://' + STORAGE_HOST + '/"') && MAIN.includes('url: "https://' + RESULT_HOST + '/"'),
     stage: /function rhStageWord\(stage\)/.test(MAIN), why: MAIN.includes('((e && e.why) ? " \\u00b7 " + e.why : "")'), run: MAIN.includes("hnkNetProbeStart(true); } catch (eN) { } renderSelfTest();") };
-  report("A6) main.js: rh_err_task_failed in nine languages, the SELF-TEST Network row over both hosts (probe re-armed by Run again), the classic status line prints the stage and reason (e.why)",
+  report("A6) main.js: rh_err_task_failed in nine languages, the SELF-TEST Network row over RunningHub · uploads · results (probe re-armed by Run again), the classic status line prints the stage and reason (e.why)",
     a6.keys === 9 && a6.row && a6.probe && a6.hosts && a6.stage && a6.why && a6.run, a6);
   const imPins = (src) => src.includes('el("input","im-stagerange")') && /function imStageW\(\)\{ return S\.stageW>0 \? S\.stageW : IM_STAGE_W; \}/.test(src)
     && src.includes("desc:S.desc, stageW:S.stageW })") && src.includes("if(!(vw>0)) return imStageW();") && src.includes('wrap.style.width=imStageW()+"px"; srng.style.display="";');
   report("A7) the Imagine module (app, and lifted to the panel byte for byte here): a stored stage width, the range under the brush stage, imStageWidth falls back to it, the CSS on both surfaces",
     imPins(APP) && imPins(IMAGINE_PANEL) && /\.im-stagerange\{display:block;width:100%;box-sizing:border-box;margin:6px 0 0\}/.test(APP) && /\.im-stagerange\{/.test(PANEL_CSS), { app: imPins(APP), panel: imPins(IMAGINE_PANEL) });
   const ciIdx = CI.indexOf("node test/verify_panel_generate_reach.js"), prevIdx = CI.indexOf("node test/verify_panel_uxp_dialogs.js");
-  report("A8) CI runs this test right after verify_panel_uxp_dialogs, and the landing claims 215 tests",
-    ciIdx > prevIdx && prevIdx > 0 && /data-count="tests">215</.test(LANDING) && !/data-count="tests">214</.test(LANDING), { ciIdx, prevIdx });
+  const landingTests = parseInt((/data-count="tests">(\d+)</.exec(LANDING) || [])[1] || "0", 10);
+  report("A8) CI runs this test right after verify_panel_uxp_dialogs, and the landing claims at least the 215 tests this wave reached",
+    ciIdx > prevIdx && prevIdx > 0 && landingTests >= 215, { ciIdx, prevIdx, landingTests });
   report("A9) the What's New row 6.80.0 exists in the app and in the panel's lifted table",
     /v:"6\.80\.0", kind:"page", ref:"pgWf"/.test(APP) && /v:"6\.80\.0"/.test(WHATS));
 }
@@ -165,7 +168,7 @@ async function providerInNode() {
     if (u.indexOf("/media/upload/binary") >= 0) return { ok: true, status: 200, json: async () => ({ code: 0, data: { download_url: "https://" + STORAGE_HOST + "/input/openapi/a.jpg" } }) };
     if (u.indexOf("/openapi/v2/query") >= 0) return { ok: true, status: 200, json: async () => (mode === "fail"
       ? { taskId: "t-1", status: "FAILED", failReason: "content policy" }
-      : { taskId: "t-1", status: "SUCCESS", results: [{ url: "https://" + STORAGE_HOST + "/output/z.png" }] }) };
+      : { taskId: "t-1", status: "SUCCESS", results: [{ url: "https://" + RESULT_HOST + "/output/z.png" }] }) };
     if (req.binary) throw Object.assign(new TypeError("Failed to fetch"), { host: H.hostOf(u), kind: "download" });
     return { ok: true, status: 200, json: async () => ({ taskId: "t-1" }) };
   };
@@ -173,9 +176,9 @@ async function providerInNode() {
     images: [{ ref: "data:image/png;base64," + PIXEL.toString("base64") }], output: { ratio: "auto", size: "2k", variants: 1 }, requestCount: 1 });
   const stages = [];
   const r5 = await A.generate({ transport, apiKey: "k", sleep: async () => { }, now: () => Date.now() }, request(), { onStage: (s) => stages.push(s) });
-  report("C5) end to end on a fake transport: upload → submit → query SUCCESS → the download throws → ok:false · network · stage DOWNLOADING_RESULT · the storage host in the detail (the task was paid for and the picture refused)",
-    !r5.ok && r5.error.code === "network" && r5.error.stage === "DOWNLOADING_RESULT" && r5.error.detail.indexOf(STORAGE_HOST) !== -1
-    && calls[0].indexOf("upload/binary") !== -1 && /rhart|nano|openapi\/v2\//.test(calls[1]) && calls[2].indexOf("/query") !== -1 && calls[3].indexOf("GET https://" + STORAGE_HOST + "/output/z.png") === 0,
+  report("C5) end to end on a fake transport: upload → submit → query SUCCESS → the download throws → ok:false · network · stage DOWNLOADING_RESULT · the result host in the detail (the task was paid for and the picture refused)",
+    !r5.ok && r5.error.code === "network" && r5.error.stage === "DOWNLOADING_RESULT" && r5.error.detail.indexOf(RESULT_HOST) !== -1
+    && calls[0].indexOf("upload/binary") !== -1 && /rhart|nano|openapi\/v2\//.test(calls[1]) && calls[2].indexOf("/query") !== -1 && calls[3].indexOf("GET https://" + RESULT_HOST + "/output/z.png") === 0,
     { ok: r5.ok, error: r5.error, calls });
   mode = "fail"; calls.length = 0;
   const r6 = await A.generate({ transport, apiKey: "k", sleep: async () => { }, now: () => Date.now() }, request(), {});
@@ -236,10 +239,10 @@ async function main() {
     const B = await boot();
     /* ---------------- E1. the Network row, both hosts answering ---------------- */
     await B.page.evaluate(() => switchPage("setup"));
-    await B.page.waitForFunction(() => Array.from(document.querySelectorAll("#selfTestRows .diagrow")).some(r => r.querySelector(".diag-nm").textContent === "Network" && /files ok/.test(r.querySelector(".diag-st").textContent)), null, { timeout: 8000 }).catch(() => { });
+    await B.page.waitForFunction(() => Array.from(document.querySelectorAll("#selfTestRows .diagrow")).some(r => r.querySelector(".diag-nm").textContent === "Network" && /results ok/.test(r.querySelector(".diag-st").textContent)), null, { timeout: 8000 }).catch(() => { });
     const e1 = await netRow(B.page);
-    report("E1) the SELF-TEST Network row probes RunningHub and its file storage and, with both answering, reads \"RunningHub ok · files ok\" with the green mark",
-      !e1.missing && /RunningHub ok \(200/.test(e1.st) && /files ok \(200/.test(e1.st) && /\bok\b/.test(e1.lvl), e1);
+    report("E1) the SELF-TEST Network row probes RunningHub, the upload host and the result host and, with all three answering, reads \"RunningHub ok · uploads ok · results ok\" with the green mark",
+      !e1.missing && /RunningHub ok \(200/.test(e1.st) && /uploads ok \(200/.test(e1.st) && /results ok \(200/.test(e1.st) && /\bok\b/.test(e1.lvl), e1);
 
     /* ---------------- D1. the real transport, the storage host refused ---------------- */
     await B.page.evaluate(() => switchPage("aitools"));
@@ -249,9 +252,9 @@ async function main() {
       window.__rhCalls = [];
       window.fetch = function (url, init) {
         url = String(url); window.__rhCalls.push(((init && init.method) || "GET") + " " + url);
-        if (url.indexOf("xiaoyaoyou.com") >= 0) return Promise.reject(new TypeError("Failed to fetch"));
+        if (url.indexOf("myqcloud.com") >= 0) return Promise.reject(new TypeError("Failed to fetch"));
         if (url.indexOf("/media/upload/binary") >= 0) return json({ code: 0, data: { download_url: "https://rh-hk-images-switch.xiaoyaoyou.com/input/openapi/a.jpg" } });
-        if (url.indexOf("/openapi/v2/query") >= 0) return json({ taskId: "t-1", status: "SUCCESS", results: [{ url: "https://rh-hk-images-switch.xiaoyaoyou.com/output/z.png" }] });
+        if (url.indexOf("/openapi/v2/query") >= 0) return json({ taskId: "t-1", status: "SUCCESS", results: [{ url: "https://rh-hk-images-1252422369.cos.ap-hongkong.myqcloud.com/output/z.png" }] });
         if (url.indexOf("runninghub.ai/openapi/v2/") >= 0) return json({ taskId: "t-1" });
         return prev(url, init);
       };
@@ -259,11 +262,11 @@ async function main() {
         images: [{ ref: png }], output: { ratio: "auto", size: "2k", variants: 1 }, requestCount: 1 });
       const msg = document.getElementById("hnkProgressMsg"); const strip = document.querySelector("#hnkAiToolsRoot .hnk-progress");
       return { ok: res.ok, code: res.error && res.error.code, stage: res.error && res.error.stage, detail: res.error && res.error.detail, line: msg ? msg.textContent : null, cls: strip ? strip.className : null,
-        loc: HNK.i18n.t("rh_err_network"), stageWord: HNK.i18n.t("stage_downloading"), calls: window.__rhCalls.filter(u => /runninghub|xiaoyaoyou/.test(u)) };
+        loc: HNK.i18n.t("rh_err_network"), stageWord: HNK.i18n.t("stage_downloading"), calls: window.__rhCalls.filter(u => /runninghub|xiaoyaoyou|myqcloud/.test(u)) };
     }, PNG1);
-    report("D1) in the panel, through the real transport and the real fetch: upload · submit · query SUCCESS · the storage host refused → the strip is red and prints the panel's own nine-language line, then the stage word, then the host",
-      d1.ok === false && d1.code === "network" && d1.stage === "DOWNLOADING_RESULT" && !!d1.line && d1.line.indexOf(d1.loc) === 0 && d1.line.indexOf(d1.stageWord) > 0 && d1.line.indexOf("rh-hk-images-switch.xiaoyaoyou.com") > 0
-      && /\berr\b/.test(d1.cls || "") && d1.calls.length === 4 && /GET https:\/\/rh-hk-images-switch\.xiaoyaoyou\.com\/output\/z\.png/.test(d1.calls[3]), d1);
+    report("D1) in the panel, through the real transport and the real fetch: upload · submit · query SUCCESS · the result host refused → the strip is red and prints the panel's own nine-language line, then the stage word, then the host",
+      d1.ok === false && d1.code === "network" && d1.stage === "DOWNLOADING_RESULT" && !!d1.line && d1.line.indexOf(d1.loc) === 0 && d1.line.indexOf(d1.stageWord) > 0 && d1.line.indexOf(RESULT_HOST) > 0
+      && /\berr\b/.test(d1.cls || "") && d1.calls.length === 4 && d1.calls[3] === "GET https://" + RESULT_HOST + "/output/z.png", d1);
     /* ---------------- D2. a licence refusal on the same path is printed ---------------- */
     const d2 = await B.page.evaluate(async (png) => {
       const keep = HNK.panelAuth.requireLease;
@@ -282,8 +285,8 @@ async function main() {
     await B.page.click("#btnSelfTest");
     await B.page.waitForFunction(() => Array.from(document.querySelectorAll("#selfTestRows .diagrow")).some(r => r.querySelector(".diag-nm").textContent === "Network" && /BLOCKED/.test(r.querySelector(".diag-st").textContent)), null, { timeout: 8000 }).catch(() => { });
     const e2 = await netRow(B.page);
-    report("E2) Run again with the storage host throwing: the row reads \"RunningHub ok · files BLOCKED — Failed to fetch\" with the red mark — the one photograph that names a manifest gap",
-      !e2.missing && /RunningHub ok \(200/.test(e2.st) && /files BLOCKED — Failed to fetch/.test(e2.st) && /\berr\b/.test(e2.lvl), e2);
+    report("E2) Run again with the result host throwing: the row reads \"RunningHub ok · uploads ok · results BLOCKED — Failed to fetch\" with the red mark — the one photograph that names a manifest gap",
+      !e2.missing && /RunningHub ok \(200/.test(e2.st) && /uploads ok \(200/.test(e2.st) && /results BLOCKED — Failed to fetch/.test(e2.st) && /\berr\b/.test(e2.lvl), e2);
     report("D/E) no page error on the way", B.errs.length === 0, B.errs);
     await B.page.close();
 

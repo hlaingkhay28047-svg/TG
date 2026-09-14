@@ -68,6 +68,21 @@ function _classify(raw, ctx) {
   var code = _lc(raw && raw.code);
   var msg = _lc((raw && (raw.message || raw.error)) || (typeof raw === "string" ? raw : ""));
 
+  // v6.81.0 — THE HOST ITSELF, REFUSED BY THE PLATFORM. UXP answers a fetch to
+  // a host outside the manifest with "Permission denied to the url … Manifest
+  // entry not found" (the owner's 6.151.0 photograph, word for word) — after
+  // the task was paid for and had reached SUCCESS. That is not a dead line
+  // and not RunningHub: it is the panel's own allowlist, and the fix is a
+  // newer panel. Named first so no other branch can claim it.
+  if (msg.indexOf("manifest entry not found") !== -1 || msg.indexOf("permission denied to the url") !== -1) {
+    return {
+      code: "host-blocked",
+      title: "Photoshop refused this host \u2014 the panel's manifest does not allow it.",
+      message: "Photoshop refused this host \u2014 the panel's manifest does not allow it.",
+      bullets: ["Install the newest panel build."]
+    };
+  }
+
   // Invalid / unauthorized key
   if (status === 401 || status === 403 || code === "invalid-key" ||
       msg.indexOf("unauthorized") !== -1 || msg.indexOf("invalid key") !== -1 ||
