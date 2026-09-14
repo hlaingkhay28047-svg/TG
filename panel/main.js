@@ -6673,7 +6673,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.156.0";
+const PANEL_VERSION = "6.157.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9920,6 +9920,12 @@ function selfTestRowsInner() {
     rows.push(hnkNetProbeRow());
     /* v6.84.0 — the Active-layer read every image slot uses, on the open document (see hnkLayerProbeStart) */
     rows.push(hnkLayerProbeRow());
+    /* v6.86.0 — whether <video> decodes here at all. Photoshop's does not,
+       which is why every video page shows numbered tiles and Download /
+       Open Direct Link / Open the folder instead of a player (6.77.0). */
+    rows.push({ label: "Video player",
+      detail: VIDEO_OK ? "plays MP4 inline" : "no inline player \u2014 Download / Open Direct Link / Open the folder play the clip",
+      level: VIDEO_OK ? "ok" : "host" });
     /* the student scrolled down to press Run: a positive reading here means
        scroll positions reach script (page-restore, the jump chips) */
     const pgS = $("pages");
@@ -11622,7 +11628,11 @@ const VU_L = {
   needOut: { my: "\u101e\u102d\u1019\u103a\u1038\u1019\u101a\u1037\u103a folder \u1010\u1005\u103a\u1001\u102f \u101b\u103d\u1031\u1038\u101b\u1015\u102b\u1019\u101a\u103a", en: "You'll need to choose a save folder",
     shn: "\u101c\u1030\u101d\u103a\u1087\u101c\u102d\u1030\u1075\u103a\u1088 folder \u101e\u102d\u1019\u103a\u1038\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038", kac: "Save folder langai lata ra ai",
     th: "\u0e15\u0e49\u0e2d\u0e07\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e01\u0e48\u0e2d\u0e19", zh: "\u9700\u8981\u5148\u9009\u62e9\u4fdd\u5b58\u6587\u4ef6\u5939",
-    vi: "B\u1ea1n c\u1ea7n ch\u1ecdn th\u01b0 m\u1ee5c l\u01b0u", id: "Anda perlu memilih folder simpan", ms: "Anda perlu pilih folder simpan" }
+    vi: "B\u1ea1n c\u1ea7n ch\u1ecdn th\u01b0 m\u1ee5c l\u01b0u", id: "Anda perlu memilih folder simpan", ms: "Anda perlu pilih folder simpan" },
+  /* v6.86.0 — the result box: the app's own three strings (vuResultH2, vuHistH, btnVuOpen — its arrow glyph is the panel's sprite) */
+  resultH2: {my:"ရလဒ် (ဗီဒီယို)",en:"Result (video)",shn:"လွင်ႈဢွၵ်ႇမႃး (ဝီဒီရူဝ်ႈ)",kac:"Ah kyu (video)",th:"ผลลัพธ์ (วิดีโอ)",zh:"结果（视频）",vi:"Kết quả (video)",id:"Hasil (video)",ms:"Hasil (video)"},
+  histH: {my:"လတ်တလော resolution မြှင့်ခဲ့တဲ့ ဗီဒီယိုများ (session အတွင်းပဲ)",en:"Recently upscaled videos (this session only)",shn:"ဝီဒီရူဝ်ႈဢၼ်ႁဵတ်း resolution သုင်ၶိုၼ်ႈဝႆႉမိူဝ်ႈလဵဝ်",kac:"Video resolution grau na ni galaw da ai (session sha)",th:"วิดีโออัปสเกลล่าสุด (เฉพาะเซสชันนี้)",zh:"最近提升分辨率的视频（仅本次会话）",vi:"Video vừa nâng cấp gần đây (chỉ trong phiên này)",id:"Video yang baru ditingkatkan (hanya sesi ini)",ms:"Video yang baru ditingkatkan (sesi ini sahaja)"},
+  openLink: {my:"Direct Link ဖွင့်",en:"Open direct link",shn:"ပိုတ်ႇ Direct Link",kac:"Direct Link hpaw",th:"เปิดลิงก์โดยตรง",zh:"打开原始链接",vi:"Mở liên kết trực tiếp",id:"Buka tautan langsung",ms:"Buka pautan terus"}
 };
 const VT_L = {
   /* v6.4.0 — this surface's reference-photo slot: the app's own two strings
@@ -11664,7 +11674,9 @@ const VT_L = {
   resultH2: {my:"ရလဒ် (ဗီဒီယို)",en:"Result (video)",shn:"လွင်ႈဢွၵ်ႇမႃး (ဝီဒီရူဝ်ႈ)",kac:"Ah kyu (video)",th:"ผลลัพธ์ (วิดีโอ)",zh:"结果（视频）",vi:"Kết quả (video)",id:"Hasil (video)",ms:"Hasil (video)"},
   openLink: {my:"Direct Link ဖွင့်မယ်",en:"Open Direct Link",shn:"ပိုတ်ႇ Direct Link",kac:"Direct Link hpaw u",th:"เปิดลิงก์ตรง",zh:"打开直链",vi:"Mở liên kết trực tiếp",id:"Buka tautan langsung",ms:"Buka pautan terus"},
   histH: {my:"ဒီစာမျက်နှာက ထုတ်ခဲ့တဲ့ ဗီဒီယိုများ — ကိုယ်တိုင် မဖျက်မချင်း ကျန်နေပါမယ်",en:"Videos this page made — they stay until you delete them",shn:"ဝီဒီရူဝ်ႈဢၼ်ႁဵတ်းဝႆႉ — တေမီးၵႂႃႇတေႃႇထိုင်ၸဝ်ႈၵဝ်ႇလုပ်ႇ",kac:"Ndai shara galaw da ai video ni — nang mat kau ai laning du hkra naw nga na",th:"วิดีโอที่หน้านี้สร้างไว้ — อยู่จนกว่าคุณจะลบเอง",zh:"此页面生成的视频 — 在你亲自删除前都会保留",vi:"Video trang này đã tạo — vẫn còn cho tới khi bạn tự xoá",id:"Video yang dibuat halaman ini — tetap ada sampai Anda menghapusnya",ms:"Video yang dibuat halaman ini — kekal sehingga anda memadamnya"},
-  savedTo: {my:"{F} အနေနဲ့ သိမ်းပြီးပါပြီ",en:"Saved as {F}",shn:"သိမ်းဝႆႉပဵၼ် {F}",kac:"{F} hku tawn da sai",th:"บันทึกเป็น {F} แล้ว",zh:"已保存为 {F}",vi:"Đã lưu thành {F}",id:"Tersimpan sebagai {F}",ms:"Disimpan sebagai {F}"}
+  savedTo: {my:"{F} အနေနဲ့ သိမ်းပြီးပါပြီ",en:"Saved as {F}",shn:"သိမ်းဝႆႉပဵၼ် {F}",kac:"{F} hku tawn da sai",th:"บันทึกเป็น {F} แล้ว",zh:"已保存为 {F}",vi:"Đã lưu thành {F}",id:"Tersimpan sebagai {F}",ms:"Disimpan sebagai {F}"},
+  /* v6.86.0 — the folder the clip was written to, on every page's result box (the wizard's word, lifted) */
+  openFolder: {my:"Folder ဖွင့်မယ်",en:"Open the folder",shn:"ပိုတ်ႇ folder",kac:"Folder hpaw u",th:"เปิดโฟลเดอร์",zh:"打开文件夹",vi:"Mở thư mục",id:"Buka folder",ms:"Buka folder"}
 };
 
 /* the app paints the file it holds and, when something is still missing, one
@@ -11699,7 +11711,10 @@ function vuPaintLabels() {
   if (!vtDl.busy) setIcnText($("btnVtDl"), "i-download", "ink", ff9(VID_L.dl));
   setIcnText($("btnVtOpen"), "i-external", "cream", ff9(VT_L.openLink));
   set("vtHistH", ff9(VT_L.histH));
+  setIcnText($("btnVtFolder"), "i-folder", "cream", ff9(VT_L.openFolder));   /* v6.86.0 */
   try { vtClearSyncP(); } catch (e) { }
+  /* v6.86.0 — the Talking Photo and Video Upscale result boxes */
+  try { tkTakes.labels(); vuTakes.labels(); } catch (e) { }
   renderVu(); renderVt(); renderVtWf();
 }
 
@@ -12369,6 +12384,9 @@ const TK_L = {
   needImg: {my:"ပုံ တစ်ပုံ ထည့်ပါ",en:"Add a photo first",shn:"သႂ်ႇၶႅပ်းႁၢင်ႈဢွၼ်တၢင်း",kac:"Sumla langai bang u",th:"เพิ่มรูปก่อน",zh:"请先添加照片",vi:"Thêm ảnh trước",id:"Tambahkan foto dulu",ms:"Tambah foto dahulu"},
   needAud: {my:"အသံဖိုင် ထည့်ပါ",en:"Add an audio file",shn:"သႂ်ႇၾၢႆႇသဵင်",kac:"Nsen file bang u",th:"เพิ่มไฟล์เสียง",zh:"请添加音频文件",vi:"Thêm tệp âm thanh",id:"Tambahkan file audio",ms:"Tambah fail audio"},
   price: {my:"{L} — တစ်စက္ကန့် ¥{P}။ အသံ ရှည်လေ ဈေး များလေ။ RunningHub က Generate နှိပ်တဲ့အချိန်မှာ ငွေဖြတ်ပါတယ်။",en:"{L} — ¥{P} per second. The longer the audio, the more it costs. RunningHub charges the moment you press Generate.",shn:"{L} — ¥{P} ဢၼ်ၼိုင်ႈၸဵၵ်ႇ။ သဵင်ယၢဝ်း ၵႃႈၼမ်။",kac:"{L} — sekan langai ¥{P}. Nsen galu yang manga grau law.",th:"{L} — ¥{P} ต่อวินาที ยิ่งเสียงยาวยิ่งแพง คิดเงินตอนกด Generate",zh:"{L} — 每秒 ¥{P}。音频越长费用越高，按下生成时即扣费。",vi:"{L} — ¥{P} mỗi giây. Âm thanh càng dài càng tốn. Trừ tiền ngay khi bấm Generate.",id:"{L} — ¥{P} per detik. Makin panjang audio makin mahal. Ditagih saat menekan Generate.",ms:"{L} — ¥{P} sesaat. Makin panjang audio makin mahal. Dicaj sebaik anda tekan Generate."},
+  /* v6.86.0 — the result box: the app's own two strings (tkResultH2, tkHistH) */
+  resultH2: {my:"ရလဒ်",en:"Result",shn:"ၽွၼ်းလႆႈ",kac:"Ah kyu",th:"ผลลัพธ์",zh:"结果",vi:"Kết quả",id:"Hasil",ms:"Hasil"},
+  histH: {my:"အရင် လုပ်ထားတာတွေ",en:"Earlier takes",shn:"ဢၼ်ႁဵတ်းဝႆႉၸဵမ်မိူဝ်ႈၵွၼ်ႇ",kac:"Moi galaw da ai ni",th:"งานก่อนหน้า",zh:"之前的成片",vi:"Các lần trước",id:"Hasil sebelumnya",ms:"Hasil terdahulu"},
   promptPh: {my:"မဖြည့်လည်း ရပါတယ် — ဥပမာ: ကင်မရာကို ကြည့်ပြီး သဘာဝကျကျ ပြုံးပါ",en:"Optional — e.g. looking at the camera, a natural friendly smile",shn:"ဢမ်ႇသႂ်ႇၵေႃႈလႆႈ",kac:"Bang ra ai n rai",th:"ไม่ใส่ก็ได้ — เช่น มองกล้อง ยิ้มอย่างเป็นธรรมชาติ",zh:"可留空 — 例如：看着镜头，自然微笑",vi:"Không bắt buộc — ví dụ: nhìn vào máy quay, mỉm cười tự nhiên",id:"Opsional — mis. menatap kamera, senyum alami",ms:"Pilihan — cth. memandang kamera, senyuman semula jadi"}
 };
 function tkDef() {
@@ -12471,6 +12489,9 @@ async function tkRun() {
     try { rhBookUsage(res.usage, { kind: "video", label: d.label || d.id, prov: "rh" }); } catch (e) { }
     const name = "hnk-talking-photo-" + Date.now() + ".mp4";
     await saveResultFile(TK.out, name, res.results[0].ref);
+    /* v6.86.0 — the take joins the page's result box (see mkTakes) */
+    tkTakes.record({ url: res.results[0].url || "", ref: res.results[0].ref, name: name, folder: TK.out.name || "", folderPath: TK.out.nativePath || "",
+      tool: d.label || d.id, prompt: promptText.slice(0, 120), ts: Date.now() });
     TK.rows = [{ label: name, level: "ok", detail: "saved" }];
     setStatus(t("st_done") || "Done", "ok");
   } catch (e) {
@@ -12516,6 +12537,7 @@ function bindTalk() {
     catch (e) { setStatus(friendlyErr(e), "err"); }
   });
   const rn = $("btnTkGen"); if (rn) rn.addEventListener("click", tkRun);
+  tkTakes.bind();   /* v6.86.0 — the result box's controls */
   tkPaintLabels();
   REFRESHERS.push(function () { try { tkPaintLabels(); } catch (e) { hwarn("talk:", e); } });
 }
@@ -12770,6 +12792,7 @@ function showVtResult(scroll) {
   const sv = $("vtSavedLine");
   if (sv) sv.textContent = ff9(VT_L.savedTo).replace("{F}", (out.folder ? out.folder + "/" : "") + (out.name || ""));
   const op = $("btnVtOpen"); if (op) op.style.display = out.url ? "" : "none";
+  const fo = $("btnVtFolder"); if (fo) fo.style.display = out.folderPath ? "" : "none";   /* v6.86.0 */
   const h = $("vtHist");
   if (h) {
     while (h.firstChild) h.removeChild(h.firstChild);
@@ -12831,6 +12854,96 @@ async function vtOpenFolder(p) {
   try { const x = require("uxp"); if (x && x.shell && x.shell.openPath) { await x.shell.openPath(np, "Open the folder this video was saved to."); return; } } catch (e) { }
   setStatus(np, "ok");
 }
+/* ============================================================
+   v6.86.0 — ONE RESULT BOX FOR EVERY PAGE THAT WRITES A CLIP. Talking Photo
+   and Video Upscale ended exactly where V→V did before 6.85.0: one status
+   row, "hnk-….mp4 · saved", and nothing a student could see, open or save
+   again. mkTakes(pre) gives a page the app's result box, box for box, from
+   its ids alone: the take plays where <video> decodes and is named where it
+   does not (vid_no_inline), the saved-file line, Download again into a
+   folder picked now, the direct link where the app has one, Open the folder,
+   a strip with ✕ per take and Clear. tk = Talking Photo, vu = Video Upscale.
+   ============================================================ */
+function mkTakes(pre, L) {
+  const Pre = pre.charAt(0).toUpperCase() + pre.slice(1);
+  const id = function (s) { return pre + s; };
+  const T = { list: [], sel: 0, dl: false };
+  T.record = function (e) { T.list.unshift(e); while (T.list.length > 6) T.list.pop(); T.sel = 0; try { T.show(); } catch (x) { } };
+  T.show = function (scroll) {
+    const out = T.list[T.sel]; const box = $(id("ResultBox")); if (!out || !box) return;
+    box.className = "card result-box on";
+    const vid = $(id("ResultVideo"));
+    if (vid) { try { if (VIDEO_OK && out.url) { vid.style.display = ""; vid.src = out.url; } else { vid.style.display = "none"; clearSrc(vid); } } catch (e) { } }
+    const note = $(id("NoInline"));
+    if (note) { if (!VIDEO_OK) { note.textContent = t("vid_no_inline").replace("{n}", String(T.sel + 1)); note.style.display = ""; } else note.style.display = "none"; }
+    const sv = $(id("SavedLine")); if (sv) sv.textContent = ff9(VT_L.savedTo).replace("{F}", (out.folder ? out.folder + "/" : "") + (out.name || ""));
+    const op = $("btn" + Pre + "Open"); if (op) op.style.display = out.url ? "" : "none";
+    const fo = $("btn" + Pre + "Folder"); if (fo) fo.style.display = out.folderPath ? "" : "none";
+    const h = $(id("Hist"));
+    if (h) {
+      while (h.firstChild) h.removeChild(h.firstChild);
+      T.list.forEach(function (e, i) {
+        let v;
+        if (VIDEO_OK && e.url) { v = document.createElement("video"); v.src = e.url; v.muted = true; v.preload = "metadata"; v.className = i === T.sel ? "sel" : ""; }
+        else { v = document.createElement("div"); v.className = "hvt" + (i === T.sel ? " sel" : ""); v.textContent = "MP4 " + (i + 1); }
+        ffPressable(v, function () { T.sel = i; T.show(false); });
+        const d = document.createElement("div"); d.className = "hitem"; d.appendChild(v);
+        d.appendChild(histXBtn(function () { T.remove(i); })); h.appendChild(d);
+      });
+      T.syncClear();
+    }
+    if (scroll !== false) { try { box.scrollIntoView({ behavior: "smooth" }); } catch (e) { } }
+  };
+  T.remove = function (i) {
+    if (!T.list[i]) return;
+    T.list.splice(i, 1);
+    if (!T.list.length) { T.clear(false); setStatus(ff9(HIST_L.done), "ok"); return; }
+    if (T.sel > i) T.sel--; if (T.sel >= T.list.length) T.sel = T.list.length - 1;
+    T.show(false); setStatus(ff9(HIST_L.done), "ok");
+  };
+  T.clear = function (say) {
+    T.list = []; T.sel = 0;
+    const h = $(id("Hist")); if (h) while (h.firstChild) h.removeChild(h.firstChild);
+    const box = $(id("ResultBox")); if (box) box.className = "card result-box";
+    T.syncClear();
+    if (say !== false) setStatus(ff9(HIST_L.cleared), "ok");
+  };
+  T.syncClear = function () {
+    const b = $(id("HistClear")); if (!b) return;
+    b.style.display = T.list.length ? "" : "none"; b.textContent = ff9(HIST_L.clear);
+    b.onclick = function () { T.clear(true); };
+  };
+  T.download = async function () {
+    const out = T.list[T.sel]; const btn = $("btn" + Pre + "Dl");
+    if (!out || T.dl) return;
+    T.dl = true;
+    if (btn) setIcnText(btn, "i-download", "ink", ff9(VID_L.dlBusy));
+    try {
+      const folder = await pickFolder();
+      if (folder) { await saveResultFile(folder, out.name || ("hnk-" + pre + "-" + Date.now() + ".mp4"), out.ref); setStatus(t("st_done"), "ok"); }
+    } catch (e) { setStatus(ff9(VID_L.dlFail), "err"); }
+    T.dl = false;
+    if (btn) setIcnText(btn, "i-download", "ink", ff9(VID_L.dl));
+  };
+  T.open = function () { const out = T.list[T.sel]; if (out && out.url) openUrl(out.url); };
+  T.folder = function () { const out = T.list[T.sel]; if (out && out.folderPath) vtOpenFolder(out.folderPath); };
+  T.labels = function () {
+    const set = function (i2, txt) { const el = $(i2); if (el) el.textContent = txt; };
+    set(id("ResultH2"), ff9(L.resultH2)); set(id("HistH"), ff9(L.histH));
+    if (!T.dl) setIcnText($("btn" + Pre + "Dl"), "i-download", "ink", ff9(VID_L.dl));
+    if (L.openLink) setIcnText($("btn" + Pre + "Open"), "i-external", "cream", ff9(L.openLink));
+    setIcnText($("btn" + Pre + "Folder"), "i-folder", "cream", ff9(VT_L.openFolder));
+    T.syncClear();
+  };
+  T.bind = function () {
+    const b1 = $("btn" + Pre + "Dl"); if (b1) b1.addEventListener("click", T.download);
+    const b2 = $("btn" + Pre + "Open"); if (b2) b2.addEventListener("click", T.open);
+    const b3 = $("btn" + Pre + "Folder"); if (b3) b3.addEventListener("click", T.folder);
+  };
+  return T;
+}
+const tkTakes = mkTakes("tk", TK_L);
+const vuTakes = mkTakes("vu", VU_L);
 /* the app's label pass for this page, re-run on every language switch */
 function vidPaintLabels() {
   const set = function (id, txt) { const el = $(id); if (el) el.textContent = txt; };
@@ -12866,6 +12979,9 @@ async function vuRun() {
     try { rhBookUsage(res.usage, { kind: "video", label: "Video Upscale", prov: "rh" }); } catch (e) { }
     const name = "hnk-upscaled-" + Date.now() + ".mp4";
     await saveResultFile(VU.out, name, res.results[0].ref);
+    /* v6.86.0 — the take joins the page's result box (see mkTakes) */
+    vuTakes.record({ url: res.results[0].url || "", ref: res.results[0].ref, name: name, folder: VU.out.name || "", folderPath: VU.out.nativePath || "",
+      tool: "Video Upscale", resolution: ($("vuRes") && $("vuRes").value) || "", ts: Date.now() });
     VU.rows = [{ label: name, level: "ok", detail: "saved" }];
     setStatus(t("st_done") || "Done", "ok");
   } catch (e) {
@@ -13279,6 +13395,7 @@ function bindVideo() {
       catch (e) { setStatus(friendlyErr(e), "err"); }
     });
     const vr = $("btnVuRun"); if (vr) vr.addEventListener("click", vuRun);
+    vuTakes.bind();   /* v6.86.0 — the result box's controls */
   });
 
   /* v6.50.0 — VIDEO TOOLS */
@@ -13351,6 +13468,7 @@ function bindVideo() {
     /* v6.85.0 — the result box's two controls */
     const vtd = $("btnVtDl"); if (vtd) vtd.addEventListener("click", vtDownload);
     const vto = $("btnVtOpen"); if (vto) vto.addEventListener("click", vtOpen);
+    const vtf = $("btnVtFolder"); if (vtf) vtf.addEventListener("click", function () { const o = vtHist[vtHistSel]; if (o && o.folderPath) vtOpenFolder(o.folderPath); });   /* v6.86.0 */
   });
 
   /* the app's nine-language copy for both halves of this page */
@@ -16313,7 +16431,26 @@ function disarm() {
   state.armedEl = null;
   state.armStage = 0;
   const gb = $("guideBox");
-  if (gb) gb.style.display = "none";
+  if (gb) gb.className = "gbox";
+}
+
+/* v6.86.0 — THE GUIDE BOX SITS IN THE PAGE, NEXT TO THE CARD THAT WAS TAPPED.
+   It was the panel's last position:fixed element (bottom: 62px), and
+   Photoshop lays a fixed box out as an ordinary block at the end of the
+   document — so in the real host Learn Mode's yellow guide appeared, if at
+   all, a screen below the button. A dialog is the wrong shape here: the
+   three-tap cycle needs the same button tappable again while the guide is
+   up. So the box is moved into the flow right above the tapped button's own
+   card (or the top of the active page) and shown there; disarm() hides it. */
+function guidePlace(el) {
+  const gb = $("guideBox"); if (!gb) return;
+  const card = el ? hslClosest(el, "card") : null;
+  let done = false;
+  try { if (card && card.parentNode) { card.parentNode.insertBefore(gb, card); done = true; } } catch (e) { }
+  if (!done) {
+    try { const pe = pageEntry(state.page); const pg = pe && $(pe.page); if (pg) { pg.insertBefore(gb, pg.firstChild); done = true; } } catch (e) { }
+  }
+  gb.className = "gbox on";
 }
 
 function greenFlash(el) {
@@ -16331,7 +16468,7 @@ function showGuide(key, titleTxt) {
   const isGen = !!GEN_GUIDES[key];
   if (tt) tt.textContent = "\uD83C\uDF93 " + (titleTxt || key);
   if (bd) bd.textContent = (isGen ? dualT(GEN_GUIDES[key]) : guideFor(key)) + "\n\n" + dualT("g_learn_next_prompt");
-  gb.style.display = "block";
+  guidePlace(state.armedEl);   /* v6.86.0 — in the flow, beside the button's card */
 }
 
 /* Stage 2 = show the EXACT prompt this button will send (blue), and (for a real
@@ -16348,7 +16485,7 @@ function showPromptStage(key, titleTxt) {
   if (PRESETS[key]) { try { appendPrompt(promptTxt); } catch (e) { } }
   if (tt) tt.textContent = "\uD83D\uDCDD " + (titleTxt || key);
   if (bd) bd.textContent = dualT("g_learn_prompt_head") + "\n\n" + promptTxt + "\n\n" + dualT("g_learn_next_run");
-  if (gb) gb.style.display = "block";
+  if (gb) guidePlace(state.armedEl);   /* v6.86.0 */
   setStatus(t("st_prompt_ready"), "ok");
 }
 

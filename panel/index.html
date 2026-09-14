@@ -228,7 +228,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.156.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.157.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.png" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -962,6 +962,22 @@
         <div class="status" id="stVuGen"></div>
       </div>
 
+      <!-- v6.86.0 — the app's vuResultBox, box for box (mkTakes): player or tile, saved line, Download again, direct link, Open the folder, strip with a cross per take, Clear -->
+      <div class="card result-box" id="vuResultBox">
+        <h2 id="vuResultH2"></h2>
+        <div class="result-img"><video id="vuResultVideo" controls style="width:100%;border-radius:12px;background:#000"></video></div>
+        <div class="mut vid-noinline" id="vuNoInline" style="display:none"></div>
+        <div class="mut" id="vuSavedLine" style="margin-top:8px"></div>
+        <div class="arow" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn btn-gold grow" id="btnVuDl"></div>
+          <div role="button" tabindex="0" class="btn" id="btnVuOpen"></div>
+          <div role="button" tabindex="0" class="btn" id="btnVuFolder"></div>
+        </div>
+        <div class="subh" id="vuHistH" style="margin-top:12px"></div>
+        <div class="hist" id="vuHist"></div>
+        <div role="button" tabindex="0" class="chip" id="vuHistClear" style="display:none"></div>
+      </div>
+
     </div>
 
     <!-- ========== PAGE: VIDEO → VIDEO (pageV2V) ==========
@@ -1073,6 +1089,7 @@
         <div class="arow" style="margin-top:10px">
           <div role="button" tabindex="0" class="btn btn-gold grow" id="btnVtDl"></div>
           <div role="button" tabindex="0" class="btn" id="btnVtOpen"></div>
+          <div role="button" tabindex="0" class="btn" id="btnVtFolder"></div>
         </div>
         <div class="subh" id="vtHistH" style="margin-top:12px"></div>
         <div class="hist" id="vtHist"></div>
@@ -1150,6 +1167,21 @@
         <div class="mut" id="tkNeedNote" style="margin-top:6px"></div>
         <div role="button" tabindex="0" id="btnTkGen" class="btn btn-gold gen" style="margin-top:8px"></div>
         <div class="status" id="stTkGen"></div>
+      </div>
+
+      <!-- v6.86.0 — the app's tkResultBox, box for box (mkTakes): the take plays where <video> decodes and is named where it does not; Download writes the saved bytes to a folder picked now; Open the folder shows the file; the strip keeps every take until the student deletes it -->
+      <div class="card result-box" id="tkResultBox">
+        <h2 id="tkResultH2"></h2>
+        <div class="result-img"><video id="tkResultVideo" controls style="width:100%;border-radius:12px;background:#000"></video></div>
+        <div class="mut vid-noinline" id="tkNoInline" style="display:none"></div>
+        <div class="mut" id="tkSavedLine" style="margin-top:8px"></div>
+        <div class="arow" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn btn-gold grow" id="btnTkDl"></div>
+          <div role="button" tabindex="0" class="btn" id="btnTkFolder"></div>
+        </div>
+        <div class="subh" id="tkHistH" style="margin-top:12px"></div>
+        <div class="hist" id="tkHist"></div>
+        <div role="button" tabindex="0" class="chip" id="tkHistClear" style="display:none"></div>
       </div>
     </div>
 
@@ -1524,7 +1556,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.156.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.157.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
