@@ -81,12 +81,28 @@ function nearestRatio(w, h){
   }
   return best;
 }
+/* v6.82.0 — THE FRAME THE STUDENT GAVE US. The owner's Reference Scenes
+   result of 6.152.0 came back in a different frame from IMAGE 1: on Auto the
+   default branch (Nano Banana 2, and every model with no kind) sent NO
+   aspectRatio at all, so the server chose its own — and "keep image 1 subject
+   frame and composition" cannot survive a frame the model was never told
+   about. Every endpoint whose Auto used to mean "send nothing" now measures
+   IMAGE 1 and sends the nearest documented ratio: the default branch, Grok
+   Imagine, Wan 2.5 (a size keyed by ratio), GPT Image 1.5 (three sizes keyed
+   by orientation), the ratio-only pair, and the qwen/wan models whose size
+   or width×height is keyed by ratio. The endpoints that DOCUMENT an "auto"
+   value (nanov1, fluxedit, node graphs with auto) keep sending it, a ratio
+   the student picked is never overridden, and text-to-image has no IMAGE 1. */
 function needsMeasuredRatio(cfg, ratio){
   if(RH_NODE_RATIO_MAP[ratio]) return false;
   if(!cfg) return false;
   if(cfg.kind==="zimage") return true;
   if(cfg.kind==="node") return !(cfg.node && cfg.node.auto);
-  return false;
+  if(ratio && ratio!=="auto" && ratio!=="source") return false;
+  if(cfg.kind==="t2i" || cfg.kind==="upscale") return false;
+  if(cfg.sizeParam || cfg.whParam) return true;
+  var k=cfg.kind||"";
+  return k==="" || k==="imagine" || k==="wan25" || k==="gpt15" || k==="ratioOnly";
 }
 function measureDataUrl(dataUrl){
   var m=/^data:[^;,]*;base64,(.*)$/.exec(String(dataUrl||""));

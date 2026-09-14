@@ -118,18 +118,37 @@ async function pickImageFile() {
   }
 }
 
-/* ---- confident: fetch a web image into a data-URL ref ---- */
+/* ---- confident: fetch a web image into a data-URL ref ----
+   v6.82.0 — TWO DOORS. A direct fetch works only for the hosts the UXP
+   manifest names; Photoshop refuses every other host ("Permission denied to
+   the url … Manifest entry not found"), which is why "Web" on a wizard slot
+   did nothing in the owner's 6.152.0 photographs. When the direct door is
+   shut the picture comes through the studio's own API (main.js installs
+   HNK.webImageFallback → GET /v1/image?url=… with the member's bearer),
+   which the manifest always allows. Nothing here names the API: the host
+   stays host-agnostic and the fallback is whatever the panel installed. */
 async function fetchImageUrl(url) {
+  var direct = null;
   try {
     var resp = await fetch(url);
-    if (!resp || !resp.ok) return null;
-    var ct = (resp.headers && resp.headers.get && resp.headers.get("content-type")) || "";
-    if (ct && ct.indexOf("image/") !== 0) return null; // not an image
-    var ab = await resp.arrayBuffer();
-    var bytes = new Uint8Array(ab);
-    var ref = "data:" + (ct || "image/png") + ";base64," + _bytesToBase64(bytes);
-    return { ref: ref, width: 0, height: 0 };
-  } catch (e) { return null; }
+    if (resp && resp.ok) {
+      var ct = (resp.headers && resp.headers.get && resp.headers.get("content-type")) || "";
+      if (!ct || ct.indexOf("image/") === 0) {
+        var ab = await resp.arrayBuffer();
+        var bytes = new Uint8Array(ab);
+        if (bytes.length) direct = { ref: "data:" + (ct || "image/png") + ";base64," + _bytesToBase64(bytes), width: 0, height: 0 };
+      }
+    }
+  } catch (e) { direct = null; }
+  if (direct) return direct;
+  try {
+    var fb = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.webImageFallback : null;
+    if (typeof fb === "function") {
+      var got = await fb(url);
+      if (got && got.ref) return { ref: got.ref, width: (got.width | 0) || 0, height: (got.height | 0) || 0 };
+    }
+  } catch (e2) { }
+  return null;
 }
 
 /* ---- needs in-panel verify: clipboard image ----

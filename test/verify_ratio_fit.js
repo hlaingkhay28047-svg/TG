@@ -156,16 +156,32 @@ const MODELS = (() => {
   while (depth) { const c = APP[i++]; if (c === "[") depth++; else if (c === "]") depth--; }
   return APP.slice(m.index + m[0].length, i - 1);
 })();
+/* 6.82.0 — a row with no kind is the default branch (Nano Banana 2 among
+   them): on Auto it used to send no ratio at all, which is how the owner's
+   Reference Scenes result of panel 6.152.0 lost IMAGE 1's frame. Those rows
+   are measured now, as are imagine / wan25 / gpt15 / ratioOnly and the
+   size- or width-keyed qwen and wan models; the kinds that document an
+   "auto" value are not. */
 const rows = MODELS.split("\n").map(l => {
   const id = /id:"([^"]+)"/.exec(l), kind = /kind:"([^"]+)"/.exec(l);
-  if (!id || !kind) return null;
-  return { id: id[1], kind: kind[1], auto: /\bauto:\s*true/.test(l) };
+  if (!id || !/apiPath:"/.test(l)) return null;
+  return { id: id[1], kind: kind ? kind[1] : "", auto: /\bauto:\s*true/.test(l), sizeParam: /\bsizeParam:/.test(l), whParam: /\bwhParam:/.test(l) };
 }).filter(Boolean);
-const wantMeasured = rows.filter(r => r.kind === "zimage" || (r.kind === "node" && !r.auto)).map(r => r.id).sort();
-const gotMeasured = rows.filter(r => app.rhNeedsMeasuredRatio({ kind: r.kind, node: r.auto ? { auto: true } : {} }, "")).map(r => r.id).sort();
-report("D) every endpoint whose documented enum has no auto value is measured, and only those",
-  wantMeasured.length > 0 && JSON.stringify(wantMeasured) === JSON.stringify(gotMeasured),
+const AUTO_SENDS_NOTHING = ["", "imagine", "wan25", "gpt15", "ratioOnly"];
+const wantMeasured = rows.filter(r => r.kind === "zimage" || (r.kind === "node" && !r.auto)
+  || (r.kind !== "t2i" && r.kind !== "upscale" && (r.sizeParam || r.whParam || AUTO_SENDS_NOTHING.includes(r.kind)))).map(r => r.id).sort();
+const cfgOf = r => ({ kind: r.kind || undefined, node: r.auto ? { auto: true } : {}, sizeParam: r.sizeParam ? "size" : undefined, whParam: r.whParam ? true : undefined });
+const gotMeasured = rows.filter(r => app.rhNeedsMeasuredRatio(cfgOf(r), "")).map(r => r.id).sort();
+report("D) every endpoint that cannot say \"match the input\" on its own is measured — the no-auto node graphs, zimage, AND (6.82.0) every endpoint whose Auto used to send no ratio — and only those",
+  wantMeasured.length > 0 && rows.some(r => r.kind === "" ) && JSON.stringify(wantMeasured) === JSON.stringify(gotMeasured),
   { want: wantMeasured, got: gotMeasured });
+const nb2 = rows.find(r => r.id === "nano-banana-2");
+report("D1) nano-banana-2 (the Reference Scenes route, no kind) is measured on Auto on both surfaces, and never on a picked ratio — 4:5 is a ratio its enum can express",
+  !!nb2 && nb2.kind === "" && app.rhNeedsMeasuredRatio({}, "") === true && app.rhNeedsMeasuredRatio({}, "auto") === true && pan.needsMeasuredRatio({ apiPath: "x", maxImages: 10 }, "auto") === true
+  && app.rhNeedsMeasuredRatio({}, "4:5") === false && pan.needsMeasuredRatio({}, "4:5") === false
+  && app.rhNeedsMeasuredRatio({ kind: "nanov1" }, "") === false && app.rhNeedsMeasuredRatio({ kind: "t2i", sizeParam: "size" }, "") === false
+  && app.rhNeedsMeasuredRatio({ kind: "gpt15" }, "") === true && pan.needsMeasuredRatio({ kind: "wan25" }, "") === true,
+  { nb2 });
 
 report("D2) an endpoint that documents auto is left exactly as it was, and a ratio the student picked is never overridden",
   app.rhNeedsMeasuredRatio({ kind: "node", node: { auto: true } }, "") === false &&
