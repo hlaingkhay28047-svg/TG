@@ -15,6 +15,7 @@ const { createDownloadTokenService,createDownloadStreamLifecycle,createPgDownloa
 const { createPanelLeaseService } = require("./panel-lease");
 const { readyArtifactForRelease,materializeArtifact } = require("./panel-artifacts");
 const admin = require("./admin-api");
+const imageProxy = require("./image-proxy");
 
 /* DB-backed artifacts are materialized into a temporary file before streaming.
    A 90+ MiB panel can therefore consume roughly that much disk and database
@@ -513,6 +514,14 @@ async function handle(input) {
 
   requireIdentity(identity);
   if (pathname==="/v1/me/entitlement"&&method==="GET") return meEntitlement(identity,input.params);
+  /* v6.82.0 — a web picture for a photo slot, fetched here because the
+     Photoshop panel's manifest refuses every host it does not name and a
+     browser is refused by hosts that send no CORS header. Signed-in members
+     only (requireIdentity above); image-proxy.js holds the SSRF guard. */
+  if (pathname==="/v1/image"&&method==="GET") {
+    const got=await imageProxy.fetchImage(input.params.get("url"));
+    return {status:200,raw:got.bytes,contentType:got.contentType};
+  }
   if (pathname==="/v1/devices/enroll"&&method==="POST") return enrollDevice(identity,body,context);
   if (pathname==="/v1/devices/release"&&method==="POST") return releaseDevice(identity,body);
   if (pathname==="/v1/panel/pair"&&method==="POST") return panelPair(identity,body,context);

@@ -79,8 +79,9 @@ function sourcePins() {
   report("A2) the normalizer's host-blocked branch stands first, rh_err_host_blocked in nine languages, the Network row probes RunningHub · uploads · results and keeps 140 characters of a refusal (the COS host alone is 52)",
     a2.branch && a2.code && a2.first && a2.i18n === 9 && a2.probes && a2.running && a2.cap, a2);
   const ciIdx = CI.indexOf("node test/verify_panel_result_host.js"), prevIdx = CI.indexOf("node test/verify_panel_generate_reach.js");
-  report("A3) CI runs this test right after verify_panel_generate_reach, the landing claims 216 tests, the What's New row 6.81.0 exists on both surfaces",
-    ciIdx > prevIdx && prevIdx > 0 && /data-count="tests">216</.test(LANDING) && /v:"6\.81\.0", kind:"page", ref:"pgWf"/.test(APP) && /v:"6\.81\.0"/.test(WHATS), { ciIdx, prevIdx });
+  const landingTests = parseInt((/data-count="tests">(\d+)</.exec(LANDING) || [])[1] || "0", 10);
+  report("A3) CI runs this test right after verify_panel_generate_reach, the landing claims at least the 216 tests this wave reached, the What's New row 6.81.0 exists on both surfaces",
+    ciIdx > prevIdx && prevIdx > 0 && landingTests >= 216 && /v:"6\.81\.0", kind:"page", ref:"pgWf"/.test(APP) && /v:"6\.81\.0"/.test(WHATS), { ciIdx, prevIdx, landingTests });
 }
 
 async function inNode() {

@@ -35,6 +35,16 @@ the upload side; the result side is this one. Both forms are listed because
 UXP documents the wildcard for one subdomain label and the bucket host is
 four labels deep.
 
+Web pictures for a photo slot (v6.153.0) come through the studio's own API
+when the picture's host is not listed here. A "Web" import first tries the
+host itself; under UXP that succeeds only for the hosts above and Photoshop
+refuses every other one with "Permission denied to the url <host> Manifest
+entry not found." (the owner's 6.152.0 photographs). The panel then asks
+`GET /v1/image?url=…` on the studio API — signed-in members only, image
+bodies only, 25 MB, three redirects, every hostname resolved and refused when
+any address is private — which the manifest already allows. The list needs
+no picture hosts for this, and never gains `"all"`.
+
 Clipboard access supports explicit Copy/Paste actions for prompts, diagnostic
 logs, and image URLs. Remote webviews remain user-initiated and are restricted
 to the domains listed in `manifest.json`. No HNK admin key, service credential,

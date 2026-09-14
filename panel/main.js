@@ -165,7 +165,7 @@ const state = {
   subj: null, rhModel: "nano-banana-2", ffRatio: "", ffSize: "", ffCount: 1,
   /* the app's per-slot role sentences (null = defaults: IMAGE 1 subject,
      IMAGE 2/3 style ref) and the slot a Library pick should land in. */
-  imgRoles: null, libTargetSlot: null, vidRefs: [],   /* v6.21.0 — face references behind the base three */
+  imgRoles: null, libTargetSlot: null, wfLibTarget: null, vidRefs: [],   /* v6.21.0 — face references behind the base three */
   /* the app's Setup state: per-model RunningHub apiPath/quality overrides
      + active model (hnk_rh_cfg), the spend ledger (hnk_rh_spend), the last
      balance check (hnk_rh_bal) and the currency RunningHub last reported. */
@@ -473,6 +473,14 @@ const FF_L = {
   srcFile: { my: "ဒီစက်ထဲက ဖိုင် ရွေးမယ်", en: "Upload from this device", shn: "ဢဝ်ၶႅပ်းႁၢင်ႈ ၼႂ်းၶိူင်ႈၼႆႉ", kac: "Ndai jak kaw na sumla la u", th: "อัปโหลดจากเครื่องนี้", zh: "从本机上传", vi: "Tải lên từ máy này", id: "Unggah dari perangkat ini", ms: "Muat naik dari peranti ini" },
   srcLib: { my: "Library look ထဲက ယူမယ်", en: "Pick a Library look", shn: "လိူၵ်ႈ Library look", kac: "Library look langai lata u", th: "เลือกลุคจาก Library", zh: "从 Library 选择", vi: "Chọn look từ Library", id: "Pilih look dari Library", ms: "Pilih look dari Library" },
   srcLast: { my: "နောက်ဆုံးရလဒ်ကို သုံးမယ်", en: "Use the last result", shn: "ၸႂ်ႉၽွၼ်းလႆႈလိုၼ်းသုတ်း", kac: "Lachyum hpang jahtum hpe lang u", th: "ใช้ผลลัพธ์ล่าสุด", zh: "使用最近的结果", vi: "Dùng kết quả gần nhất", id: "Pakai hasil terakhir", ms: "Guna hasil terakhir" },
+  /* v6.82.0 — the Freeform slot sheet gains the wizard's two other sources.
+     Paste reads a copied picture, or a copied image address; Web asks for
+     an address and fetches it (through the studio's API when Photoshop
+     refuses the host). */
+  srcPaste: { my: "Copy ထားတဲ့ ပုံ / link ကို paste မယ်", en: "Paste a copied picture or link", shn: "Paste ႁၢင်ႈ / link ဢၼ် copy ဝႆႉ", kac: "Copy da ai sumla / link hpe paste u", th: "วางรูปหรือลิงก์ที่คัดลอกไว้", zh: "粘贴已复制的图片或链接", vi: "Dán ảnh hoặc link đã sao chép", id: "Tempel gambar atau tautan yang disalin", ms: "Tampal gambar atau pautan yang disalin" },
+  srcWeb: { my: "Web link ကနေ ယူမယ်", en: "From a web link", shn: "ဢဝ်တီႈ web link", kac: "Web link kaw na la u", th: "จากลิงก์เว็บ", zh: "来自网页链接", vi: "Từ một link web", id: "Dari tautan web", ms: "Daripada pautan web" },
+  pasteOk: { my: "Paste လုပ်ထားတဲ့ ပုံ → IMAGE {n} ✓", en: "Pasted picture → IMAGE {n} ✓", shn: "ႁၢင်ႈဢၼ် paste → IMAGE {n} ✓", kac: "Paste da ai sumla → IMAGE {n} ✓", th: "รูปที่วาง → IMAGE {n} ✓", zh: "粘贴的图片 → IMAGE {n} ✓", vi: "Ảnh đã dán → IMAGE {n} ✓", id: "Gambar tertempel → IMAGE {n} ✓", ms: "Gambar ditampal → IMAGE {n} ✓" },
+  pasteNone: { my: "Clipboard ထဲ ပုံ (သို့) ပုံ link မရှိပါ — ပုံတစ်ပုံ (သို့) ပုံရဲ့ address ကို အရင် copy လုပ်ပါ", en: "The clipboard holds no picture or image link — copy a picture, or an image address, first", shn: "ၼႂ်း clipboard ဢမ်ႇမီးႁၢင်ႈ / link — copy ႁၢင်ႈ ဢမ်ႇၼၼ် address ႁၢင်ႈ ဢွၼ်တၢင်း", kac: "Clipboard hta sumla / sumla link n nga ai — sumla (sh) sumla address hpe shawng copy u", th: "คลิปบอร์ดไม่มีรูปหรือลิงก์รูป — คัดลอกรูปหรือที่อยู่รูปก่อน", zh: "剪贴板里没有图片或图片链接 — 请先复制一张图片或图片地址", vi: "Clipboard không có ảnh hay link ảnh — hãy sao chép một ảnh hoặc địa chỉ ảnh trước", id: "Papan klip tidak berisi gambar atau tautan gambar — salin gambar atau alamat gambarnya dulu", ms: "Papan keratan tiada gambar atau pautan gambar — salin gambar atau alamat gambar dahulu" },
   resultTo: { my: "ရလဒ် → IMAGE {n} ✓", en: "Result → IMAGE {n} ✓" },
   min: { my: " မိနစ်", en: " min", shn: " မိၼိတ်ႉ", kac: " minit", th: " นาที", zh: " 分钟", vi: " phút", id: " mnt", ms: " min" },
   credits: { my: " · RH credit သုံးမယ်", en: " · uses RH credits", shn: " · ၸႂ်ႉ RH credit", kac: " · RH credit lang na", th: " · ใช้เครดิต RH", zh: " · 消耗 RH 额度", vi: " · dùng credit RH", id: " · pakai kredit RH", ms: " · guna kredit RH" },
@@ -6647,7 +6655,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.152.0";
+const PANEL_VERSION = "6.153.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -14175,10 +14183,21 @@ async function fetchWebImage(url, depth) {
   if (dm) {
     return { buf: b64ToBuf(dm[2]), mime: dm[1].toLowerCase() };
   }
-  const res = await hnkFetch(url, {
-    method: "GET",
-    headers: { "Accept": "image/jpeg,image/png,image/webp,image/*;q=0.9,*/*;q=0.8" }
-  }, 60000);
+  let res;
+  try {
+    /* hnkNoRetry: a manifest refusal is the same the second time; the API
+       attempt below keeps the wrapper's one retry for a genuinely dropped line */
+    res = await hnkFetch(url, {
+      method: "GET", hnkNoRetry: true,
+      headers: { "Accept": "image/jpeg,image/png,image/webp,image/*;q=0.9,*/*;q=0.8" }
+    }, 60000);
+  } catch (e) {
+    /* v6.82.0 — Photoshop refused the host (the UXP manifest names only the
+       studio's and RunningHub's hosts — "Permission denied to the url …
+       Manifest entry not found", the owner's 6.152.0 photographs) or the
+       line to it is dead: the studio's own API fetches the picture. */
+    return fetchWebImageViaApi(url);
+  }
   if (!res.ok) throw new Error("HTTP " + res.status);
   const ct = String((res.headers && res.headers.get) ? (res.headers.get("content-type") || "") : "").toLowerCase();
   if (ct.indexOf("text/html") >= 0) {
@@ -14200,6 +14219,33 @@ async function fetchWebImage(url, depth) {
   }
   return { buf: buf, mime: mime, url: url };
 }
+
+/* v6.82.0 — GET /v1/image?url=… on the studio API: signed-in members only,
+   image bodies only (the server refuses a page with 415 and a private host
+   with 403 — see server/lib/image-proxy.js). The member's bearer rides
+   along; the API's host is in the manifest, so this door is never shut. */
+async function fetchWebImageViaApi(url) {
+  const tok = gateS.sess && gateS.sess.access;
+  const res = await hnkFetch(GATE_API_URL + "/v1/image?url=" + encodeURIComponent(url),
+    { method: "GET", headers: gateHeaders(tok, false) }, 60000);
+  if (!res.ok) {
+    let why = "";
+    try { const j = await res.json(); why = String((j && (j.msg || j.message || j.error)) || ""); } catch (e) { }
+    throw new Error("HTTP " + res.status + (why ? " \u00b7 " + why : ""));
+  }
+  const ct = String((res.headers && res.headers.get) ? (res.headers.get("content-type") || "") : "").toLowerCase();
+  const buf = await res.arrayBuffer();
+  if (!buf || !buf.byteLength) throw new Error(t("st_url_bad"));
+  return { buf: buf, mime: ct.split(";")[0].trim() || "image/jpeg", url: url };
+}
+try {
+  globalThis.HNK = globalThis.HNK || {};
+  /* the host's fetchImageUrl (the wizard's Web button) falls back to this */
+  globalThis.HNK.webImageFallback = async function (url) {
+    const got = await fetchWebImageViaApi(url);
+    return { ref: "data:" + got.mime + ";base64," + bufToB64(got.buf), width: 0, height: 0 };
+  };
+} catch (e) { }
 
 function urlLabel(u) {
   try {
@@ -14316,11 +14362,32 @@ const REF_L = {
 /* What js/hnk_library_compact_cards.js (the app's pgLib) needs from the
    panel: language, toast, the slot writer, the Library-target handshake. */
 globalThis.HNK = globalThis.HNK || {};
+/* v6.82.0 — a wizard slot asks for the Library: remember the slot (its key
+   for the way back, its index so the Library's IMAGE button names the right
+   number) and open the Presets page. */
+globalThis.HNK.libTarget = {
+  request: function (key, index) {
+    state.wfLibTarget = String(key || "");
+    state.libTargetSlot = (index | 0) || 0;
+    switchPage("presets");
+    setStatus(ff9(REF_L.libHint).replace("{n}", String(((index | 0) || 0) + 1)), "ok");
+  }
+};
 globalThis.HNK.libBridge = {
   lang: function () { return state.lang; },
   fb: function (l) { return LANG_FB[l]; },
   status: function (msg, kind) { setStatus(msg, kind); },
-  toSlot: function (slot, cap) { ffSlotSet(slot, cap); },
+  toSlot: function (slot, cap) {
+    /* v6.82.0 — a Smart Workflow slot opened the Library (HNK.libTarget):
+       the look goes back to that slot and the panel returns to the wizard. */
+    if (state.wfLibTarget) {
+      const key = state.wfLibTarget; state.wfLibTarget = null;
+      let ok = false;
+      try { ok = !!(globalThis.HNK.wfSlotFill && globalThis.HNK.wfSlotFill(key, cap)); } catch (e) { ok = false; }
+      if (ok) { switchPage("wf"); setStatus("Library \u2192 " + (cap && cap.label ? cap.label + " \u2192 " : "") + key + " \u2713", "ok"); return; }
+    }
+    ffSlotSet(slot, cap);
+  },
   takeTargetSlot: function () {
     const t = typeof state.libTargetSlot === "number" ? state.libTargetSlot : null;
     state.libTargetSlot = null;
@@ -14521,6 +14588,9 @@ function photoSheet(title, opts) {
   }
   opt(ff9(FF_L.srcLayer), opts.onLayer);
   opt(ff9(FF_L.srcFile), opts.onFile);
+  /* v6.82.0 — a caller's own rows (Freeform: Paste · Web · Library) sit
+     between File and the last result; every other caller passes none. */
+  (opts.extra || []).forEach(function (x) { if (x && x.label && typeof x.fn === "function") opt(x.label, x.fn); });
   if (opts.onLast && state.resultB64) opt(ff9(FF_L.srcLast), opts.onLast);
   const cancel = document.createElement("div");
   cancel.className = "btn ff-sheet-cancel"; cancel.setAttribute("role", "button"); cancel.setAttribute("tabindex", "0");
@@ -14563,34 +14633,33 @@ async function layerPhotoCapture() {
     return layerPhotoEntry(cap);
   } catch (e) { setStatus(friendlyErr(e), "err"); return null; }
 }
+/* v6.82.0 — THE FREEFORM SLOT SHEET IS A DIALOG. This was the one photo
+   sheet still built as a fixed <div> after 6.78.0 moved the others to
+   <dialog>: Photoshop lays a fixed box out as an ordinary block at the end
+   of the page, so on the Freeform page an IMG tile did nothing a student
+   could see — the owner's 6.152.0 photographs: "active layer နဲ့ chose file
+   choose web chose library မရဘူး". It now goes through photoSheet (the same
+   dialog the other four callers open) and carries every source the wizard
+   slots have: Layer · File · Paste · Web · Library · the last result. */
 function ffSrcSheet(slot) {
-  ffSheetClose();
-  const bd = document.createElement("div"); bd.id = "ffSheet"; bd.className = "ff-sheet";
-  const card = document.createElement("div"); card.className = "card";
-  const h = document.createElement("div"); h.className = "subh";
-  h.textContent = "IMAGE " + (slot + 1) + " — " + ff9(FF_L.where);
-  card.appendChild(h);
-  function opt(label, fn) {
-    const b = document.createElement("div");
-    b.className = "btn"; b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
-    b.textContent = label;
-    b.addEventListener("click", function () { ffSheetClose(); fn(); });
-    card.appendChild(b);
-  }
-  opt(ff9(FF_L.srcLayer), function () { ffSlotFromLayer(slot); });
-  opt(ff9(FF_L.srcFile), function () { ffSlotFromFile(slot); });
-  opt(ff9(FF_L.srcLib), function () {
-    state.libTargetSlot = slot;
-    switchPage("presets");
-    setStatus(ff9(REF_L.libHint).replace("{n}", String(slot + 1)), "ok");
+  const n = String(slot + 1);
+  photoSheet("IMAGE " + n, {
+    onLayer: function () { ffSlotFromLayer(slot); },
+    onFile: function () { ffSlotFromFile(slot); },
+    extra: [
+      { label: ff9(FF_L.srcPaste), fn: function () { ffSlotFromPaste(slot); } },
+      { label: ff9(FF_L.srcWeb), fn: function () { ffSlotFromWeb(slot); } },
+      { label: ff9(FF_L.srcLib), fn: function () {
+        state.libTargetSlot = slot;
+        switchPage("presets");
+        setStatus(ff9(REF_L.libHint).replace("{n}", n), "ok");
+      } }
+    ],
+    onLast: state.resultB64 ? function () {
+      ffSlotSet(slot, { b64: state.resultB64, mime: state.resultMime || "image/png", label: "result" });
+      setStatus(ff9(FF_L.resultTo).replace("{n}", n), "ok");
+    } : null
   });
-  if (state.resultB64) opt(ff9(FF_L.srcLast), function () {
-    ffSlotSet(slot, { b64: state.resultB64, mime: state.resultMime || "image/png", label: "result" });
-    setStatus(ff9(FF_L.resultTo).replace("{n}", String(slot + 1)), "ok");
-  });
-  bd.addEventListener("click", function (ev) { if (ev.target === bd) ffSheetClose(); });
-  bd.appendChild(card);
-  document.body.appendChild(bd);
 }
 async function ffSlotFromLayer(slot) {
   if (state.busy) return;
@@ -14610,6 +14679,53 @@ async function ffSlotFromFile(slot) {
     if (!imgMagicOk(cap.b64)) { setStatus(t("st_img_bad") + " (IMAGE " + (slot + 1) + ")", "err"); return; }
     ffSlotSet(slot, cap);
     setStatus(t("st_ref_file_added"), "ok");
+  } catch (e) { setStatus(friendlyErr(e), "err"); }
+}
+/* v6.82.0 — a web address into a Freeform slot: the same loader the classic
+   reference slots used (page links unwrapped to their picture, odd formats
+   converted through Photoshop), and when Photoshop refuses the picture's
+   host the studio's API fetches it (fetchWebImage). The address is asked
+   for in the panel's own prompt dialog, pre-filled from the clipboard when
+   a link is already there. */
+function ffSlotWebCfg(slot) {
+  return {
+    tmpPrefix: "hnk_ff_web_",
+    assign: function (ref) { ffSlotSet(slot, ref); },
+    repaint: renderRefs,
+    close: function () { }
+  };
+}
+function looksLikeLink(s) { return /^https?:\/\/\S+$/i.test(String(s || "").trim()); }
+async function ffSlotFromWeb(slot) {
+  if (state.busy) return;
+  let def = "";
+  try { const c = await readClipboardText(); if (looksLikeLink(c)) def = String(c).trim(); } catch (e) { }
+  const url = await studioAskText(t("url_ph"), def);
+  if (url == null || !String(url).trim()) { setStatus(t("st_ready")); return; }
+  await loadUrlIntoAnySlot(String(url).trim(), ffSlotWebCfg(slot));
+}
+/* v6.82.0 — Paste: a copied picture first (the host reads the clipboard's
+   image, where the host can), else a copied image address, else the
+   nine-language "copy a picture first" line. */
+async function ffSlotFromPaste(slot) {
+  if (state.busy) return;
+  const n = String(slot + 1);
+  try {
+    setStatus(t("st_importing"));
+    const host = globalThis.HNK && globalThis.HNK.photoshopHost;
+    let img = null;
+    try { if (host && typeof host.readClipboardImage === "function") img = await host.readClipboardImage(); } catch (e) { img = null; }
+    if (img && img.ref) {
+      const m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(String(img.ref));
+      if (m && imgMagicOk(m[2])) {
+        ffSlotSet(slot, { b64: m[2], mime: m[1].toLowerCase(), label: "clipboard" });
+        setStatus(ff9(FF_L.pasteOk).replace("{n}", n), "ok");
+        return;
+      }
+    }
+    const txt = await readClipboardText();
+    if (looksLikeLink(txt)) { await loadUrlIntoAnySlot(String(txt).trim(), ffSlotWebCfg(slot)); return; }
+    setStatus(ff9(FF_L.pasteNone), "err");
   } catch (e) { setStatus(friendlyErr(e), "err"); }
 }
 
@@ -18844,6 +18960,7 @@ const PAGE_SCOPE_STPG = { pageMeitu: 1, pageEvoto: 1, pageRetouch: 1, stDock: 1 
 function pageScope(pageId) { return " apg" + (PAGE_SCOPE_STPG[pageId] ? " stpg" : ""); }
 function switchPage(key) {
   try { disarm(); } catch (e) { }
+  if (key !== "presets" && key !== "wf") state.wfLibTarget = null;   /* v6.82.0 */
   let found = false;
   for (let i = 0; i < PAGES.length; i++) { if (PAGES[i].key === key) found = true; }
   if (!found) key = "aitools";

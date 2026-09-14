@@ -700,6 +700,8 @@ function create(deps) {
         if (show && thumb.firstChild && thumb.firstChild.src !== ref) thumb.firstChild.src = ref;
       }
     });
+    /* v6.82.0 — the route line follows the photograph: Auto's measured shape */
+    try { var rl = doc.getElementById("hnkWfRouteLine"), wfNow = registry.get(state.workflowId); if (rl && wfNow) rl.textContent = routeLine(wfNow); } catch (e) { }
     var ready = ev.ready;
     var canGenerate = ready && (state.prepared || directMode());
     if (nodes.prepareBtn) {
@@ -1033,25 +1035,79 @@ function create(deps) {
     /* the prefs the wizard shows are the prefs it will send */
     wstate.setOutput(state, { ratio: rp.sel.value || "auto", size: sp.sel.value ? sp.sel.value.toLowerCase() : (out.size || "2k"), variants: parseInt(cp.sel.value, 10) || 1 });
   }
+  /* v6.82.0 — WHAT AUTO WILL SEND. On Auto the adapter measures the first
+     photograph and sends its nearest documented ratio (ratio-fit.js, the
+     6.152.0 Reference Scenes result had lost IMAGE 1's frame because Auto
+     sent nothing). The line reads it the same way, so the student sees the
+     frame lock — "auto → 2:3" — before pressing GENERATE. */
+  function measuredAuto(route) {
+    var g = (typeof globalThis !== "undefined") ? globalThis : {};
+    var rf = g.HNK && g.HNK.ratioFit, rc = g.HNK && g.HNK.runninghubConfig;
+    if (!rf || !rc || !route) return "";
+    var first = (state.requiredInputs || []).concat(state.optionalInputs || [])
+      .map(function (i) { return i.image && i.image.ref; })
+      .filter(function (r) { return /^data:image\//.test(String(r || "")); })[0];
+    if (!first) return "";
+    try {
+      var mc = rc.modelConfig(rc.resolve(), route.modelId) || {};
+      if (!rf.needsMeasuredRatio(mc, "")) return "";
+      var wh = rf.measureDataUrl(first);
+      return wh ? (rf.nearestRatio(wh.w, wh.h) || "") : "";
+    } catch (e) { return ""; }
+  }
   function routeLine(wf) {
     var route = state.resolvedRoute || wf.route;
     var m = modelRegistry.getModel(route.modelId);
     var out = state.output || {};
+    var r = normRatio(out.ratio);
+    if (!r) { var mr = measuredAuto(route); r = mr ? "auto \u2192 " + mr : "auto"; }
     return dom.t("ai_model_lbl", "Model") + ": " + (route.auto ? dom.t("qual_auto", "Auto") + " \u00B7 " : "") + (m ? m.displayName : route.modelId) +
-      "   \u00b7   Output: " + String(out.size || "2k").toUpperCase() + " \u00b7 " + (normRatio(out.ratio) || "auto") + (out.variants > 1 ? " \u00b7 \u00d7" + out.variants : "");
+      "   \u00b7   Output: " + String(out.size || "2k").toUpperCase() + " \u00b7 " + r + (out.variants > 1 ? " \u00b7 \u00d7" + out.variants : "");
   }
 
   function addFromLibrary(inp) {
     var g = (typeof globalThis !== "undefined") ? globalThis : {};
     var getPick = g.HNK && g.HNK.getLibraryPickDataUrl;
     var hint = function (msg) { if (nodes.readyMsg) { nodes.readyMsg.className = "hnk-status"; nodes.readyMsg.textContent = msg; } };
-    if (!getPick) { hint(dom.t("ai_lib_bridge_off", "Library bridge unavailable on this host.")); return; }
+    /* v6.82.0 — THE DOOR, NOT A HINT. "Library" used to answer "pick a
+       photo from the Presets tab first" and stay where it was; the owner's
+       6.152.0 photographs read that as "choose library မရဘူး". With nothing
+       picked yet the slot now OPENS the Library (HNK.libTarget, installed by
+       main.js) and remembers which slot asked; the Library's IMAGE button
+       hands the look straight back to it (HNK.wfSlotFill) and returns here. */
+    var openLib = function () {
+      var lt = g.HNK && g.HNK.libTarget;
+      if (lt && typeof lt.request === "function") {
+        var all = (state.requiredInputs || []).concat(state.optionalInputs || []);
+        var idx = 0; for (var i = 0; i < all.length; i++) if (all[i].key === inp.key) idx = i;
+        lt.request(inp.key, idx); return true;
+      }
+      return false;
+    };
+    if (!getPick) { if (!openLib()) hint(dom.t("ai_lib_bridge_off", "Library bridge unavailable on this host.")); return; }
     getPick().then(function (res) {
-      if (!res || !res.dataUrl) { hint(dom.t("ai_lib_pick_first", "Pick a photo from the Presets tab \u2192 Visual Library first.")); return; }
+      if (!res || !res.dataUrl) { if (!openLib()) hint(dom.t("ai_lib_pick_first", "Pick a photo from the Presets tab \u2192 Visual Library first.")); return; }
       wstate.setInput(state, inp.key, { source: "library", role: inp.role, ref: res.dataUrl, valid: true });
       refresh();
     }).catch(function () { hint(dom.t("ai_lib_load_fail", "Library image could not be loaded.")); });
   }
+  /* v6.82.0 — the Library's way back into a wizard slot: {mime,b64} or a
+     data URL lands in the slot named by key. Installed on every create() so
+     the live screen's state is the one written. */
+  function fillSlot(key, cap) {
+    var all = (state.requiredInputs || []).concat(state.optionalInputs || []);
+    var inp = null; for (var i = 0; i < all.length; i++) if (all[i].key === key) inp = all[i];
+    if (!inp || !cap) return false;
+    var ref = cap.ref || cap.dataUrl || (cap.b64 ? "data:" + (cap.mime || "image/jpeg") + ";base64," + cap.b64 : "");
+    if (!/^data:image\//.test(String(ref))) return false;
+    wstate.setInput(state, key, { source: "library", role: inp.role, ref: ref, valid: true });
+    try { refresh(); } catch (e) { }
+    return true;
+  }
+  try {
+    var gSlot = (typeof globalThis !== "undefined") ? globalThis : null;
+    if (gSlot) { gSlot.HNK = gSlot.HNK || {}; gSlot.HNK.wfSlotFill = fillSlot; }
+  } catch (e) { }
 
   /* v6.76.0 — the Library's scene looks under a scene or background slot:
      one tap loads the full plate into the slot (through remoteArt, the path
@@ -1128,6 +1184,10 @@ function create(deps) {
     dom.on(urlGo, "click", function () {
       addFromWeb(inp, urlInp.value);
       urlRow.style.display = "none";
+    });
+    /* v6.82.0 — Enter in the link field is the Load button */
+    dom.on(urlInp, "keydown", function (ev) {
+      if (ev && ev.key === "Enter") { addFromWeb(inp, urlInp.value); urlRow.style.display = "none"; }
     });
 
     /* v6.59.0 — the slot's own preview; refresh() fills and hides it. A
