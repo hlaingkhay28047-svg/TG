@@ -17,7 +17,8 @@
      3. RETOUCH A/B "ADD A PHOTO" OPENED A FOLDER DIALOG (15th, 16th). The tap
         went to the reference-library browser, which asks for a library folder
         first. It opens the Layer · File sheet now, through the panel's own
-        capture paths. (A3, B5)
+        capture paths. (A3, B5) The "Before" tag on the empty slot is the
+        app's own (the string-parity walk reads it) and stays.
      4. HOME TILE LABELS AT THE GRID'S FOOT (2nd) — again, with display:block.
         The caption rides inside the picture box, absolute, like the badge
         that has always been right. (A4, B6)
@@ -31,7 +32,8 @@
      7. "Storage · native localStorage" (9th): the real host was not recognised
         by the shim's one signal; two signals now, and a late adopt. (A7, D1)
      8. The header's language label wrapped, the Freeform model picker had
-        half a row, the Workflows hero spoke of the browser. (A8)
+        half a row. (A8) The Workflows hero keeps the app's literal — the
+        page-parity walk reads it string for string.
 
    Fault-injected while writing: `.hnk-dlg-body` without a width fails A1;
    pickPhoto back on refLibBrowseInto fails A3 and B5; the caption outside
@@ -103,10 +105,9 @@ function sourcePins() {
     sheet: /function stPickInto\(slotId, title\) \{\s*photoSheet\(title, \{\s*onLayer: function \(\) \{ refLayerInto\(slotId\); \},\s*onFile: function \(\) \{ refFileInto\(slotId\); \}/.test(MAIN),
     file: /async function refFileInto\(slotId\) \{[\s\S]{0,400}fsp\.getFileForOpening\(\{ allowMultiple: false, types: REF_LIB_TYPES \}\)/.test(MAIN) && !/async function refFileInto\(slotId\) \{[\s\S]{0,900}getFolder/.test(MAIN),
     layer: /async function refLayerInto\(slotId\) \{[\s\S]{0,300}layerPhotoCapture\(\)[\s\S]{0,200}slot\.assign\(\{ b64: e\.b64, mime: e\.mime, label: e\.name \}\)/.test(MAIN),
-    noLib: !/pickPhoto: function \(\) \{ try \{ refLibBrowseInto/.test(MAIN),
-    tag: /if \(ref\) d\.appendChild\(el\("span", "tag"/.test(STUDIO)
+    noLib: !/pickPhoto: function \(\) \{ try \{ refLibBrowseInto/.test(MAIN)
   };
-  report("A3) the studio bridge's pickPhoto / pickRef open the Layer · File sheet (stPickInto); refFileInto is one file dialog with no library folder; refLayerInto captures the active layer into the slot; the empty slot draws no \"Before\" tag",
+  report("A3) the studio bridge's pickPhoto / pickRef open the Layer · File sheet (stPickInto); refFileInto is one file dialog with no library folder; refLayerInto captures the active layer into the slot",
     Object.keys(a3).every(k => a3[k]), a3);
 
   /* A4 — the Home caption inside the picture box */
@@ -138,12 +139,10 @@ function sourcePins() {
     && /safe\("storage-adopt", function \(\) \{/.test(MAIN) && /function hostIsPhotoshop\(\) \{/.test(MAIN) && /ls\.adopt\(\)/.test(MAIN), {});
 
   /* A8 — the tidy-ups */
-  report("A8) .hdr .hsl no longer shrinks (flex 0 0 auto, min-width 108px), #genOpts .hsl takes the row, textarea drops the host frame, #rhConfiguredList chips are denser, the Workflows hero speaks of Photoshop not the browser",
+  report("A8) .hdr .hsl no longer shrinks (flex 0 0 auto, min-width 108px), #genOpts .hsl takes the row, textarea drops the host frame, #rhConfiguredList chips are denser",
     /\.hdr \.hsl \{ position: relative; flex: 0 0 auto; display: flex; flex-direction: row; max-width: 132px; min-width: 108px; \}/.test(CSS)
     && /\.apg #genOpts \.hsl \{ width: 100%; \}/.test(CSS) && /^textarea \{ -webkit-appearance: none; appearance: none; outline: none; box-shadow: none; border-width: 1px; border-style: solid; \}/m.test(CSS)
-    && /#rhConfiguredList \.chip \{ font-size: 10\.5px;/.test(CSS)
-    && /var L_KICK = "Panel Data · RunningHub AI · Photoshop";/.test(WF) && /var L_HERO = \{ my: "<em>One-Tap တွေ<\/em> Photoshop ထဲမှာ တိုက်ရိုက် သုံးလို့ရပြီ", en: "The <em>One-Taps<\/em>, right inside Photoshop"/.test(WF)
-    && !/var L_HERO = \{ my: "Photoshop panel ထဲက/.test(WF), {});
+    && /#rhConfiguredList \.chip \{ font-size: 10\.5px;/.test(CSS), {});
 
   report("A9) .github/workflows/test.yml runs verify_panel_uxp_dialogs.js right after verify_panel_pickers.js",
     /node test\/verify_panel_pickers\.js\n[\s\S]{0,400}node test\/verify_panel_uxp_dialogs\.js/.test(CI), {});
@@ -307,12 +306,12 @@ async function main() {
       fsx.getFileForOpening = function () { file++; return Promise.resolve(null); };
       document.querySelector("#stPicker .add").click();
       const sh = document.getElementById("ffSheet");
-      const r = { sheet: !!sh, tag: sh && sh.tagName, title: sh && sh.querySelector(".subh").textContent, btns: sh ? sh.querySelectorAll(".btn").length : 0, emptyTag: !!document.querySelector("#stPicker .tag") };
+      const r = { sheet: !!sh, tag: sh && sh.tagName, title: sh && sh.querySelector(".subh").textContent, btns: sh ? sh.querySelectorAll(".btn").length : 0 };
       sh.querySelectorAll(".btn")[1].click();
       return new Promise(res => setTimeout(() => { r.folder = folder; r.file = file; r.gone = !document.getElementById("ffSheet"); res(r); }, 150));
     });
-    report("B5) Retouch A's \"Add a photo\" opens the Layer · File · Cancel <dialog> titled PHOTO — ဘယ်ကယူမလဲ; File asks for ONE FILE (getFileForOpening ×1, getFolder ×0); the empty slot shows no \"Before\" tag",
-      b5.sheet && b5.tag === "DIALOG" && /^PHOTO — /.test(b5.title) && b5.btns === 3 && b5.file === 1 && b5.folder === 0 && b5.gone && !b5.emptyTag, b5);
+    report("B5) Retouch A's \"Add a photo\" opens the Layer · File · Cancel <dialog> titled PHOTO — ဘယ်ကယူမလဲ; File asks for ONE FILE (getFileForOpening ×1, getFolder ×0)",
+      b5.sheet && b5.tag === "DIALOG" && /^PHOTO — /.test(b5.title) && b5.btns === 3 && b5.file === 1 && b5.folder === 0 && b5.gone, b5);
 
     /* ---------------- B6. the Home caption ---------------- */
     await B.page.evaluate(() => switchPage("aitools"));

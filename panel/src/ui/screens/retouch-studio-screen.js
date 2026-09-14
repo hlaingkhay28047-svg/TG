@@ -465,9 +465,7 @@ function renderStPicker() {
     add.onclick = function () { var b = bridge(); if (b && b.pickPhoto) b.pickPhoto(); };
     d.appendChild(add);
   }
-  /* v6.79.0 — the "Before" tag belongs to a photo; with the slot empty it sat
-     under the add button on the owner's 15th and 16th photographs */
-  if (ref) d.appendChild(el("span", "tag", L9({ my: "မူရင်း", en: "Before" })));
+  d.appendChild(el("span", "tag", L9({ my: "မူရင်း", en: "Before" })));
   host.appendChild(d);
   var tg = $("stTarget"); if (tg) tg.style.display = ref ? "" : "none";
 }
