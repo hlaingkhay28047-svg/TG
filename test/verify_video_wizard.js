@@ -442,8 +442,11 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     announced: APP.indexOf('"' + n + '"') >= 0 }));
   const talkHero = /<div class="page" id="pgTalk">\s*<header class="page-hero"><img src="lib\/banners\/banner-talk-photo\.jpg"/.test(APP);
   const v2vHero = /<div class="page" id="pgV2V">\s*<header class="page-hero"><img src="lib\/banners\/banner-v2v-portal\.jpg"/.test(APP);
-  const panelTalk = /id="pageTalk">\s*<div class="phero">\s*<img src="icons\/banners\/banner-talk-photo\.jpg"/.test(panelHtml);
-  const panelV2V = /id="pageV2V">\s*<div class="phero">\s*<img src="icons\/banners\/banner-v2v-portal\.jpg"/.test(panelHtml);
+  /* 6.96.1 — was class="phero", which no rule ever matched (the banner drew at its natural
+     772 x 248 inside a 368px page and the host cut it). The styled class is .page-hero;
+     verify_panel_hero_banners owns the rendered contract for all fourteen panel banners. */
+  const panelTalk = /id="pageTalk">\s*<div class="page-hero">\s*<img src="icons\/banners\/banner-talk-photo\.jpg"/.test(panelHtml);
+  const panelV2V = /id="pageV2V">\s*<div class="page-hero">\s*<img src="icons\/banners\/banner-v2v-portal\.jpg"/.test(panelHtml);
   report("E) the Talk and Video→Video pages wear their own hero banners on both surfaces — stills, mp4+webm pairs on disk, and announced to the clip system",
     pairs.every(p => p.still && p.mp4 && p.webm && p.panel && p.announced) && talkHero && v2vHero && panelTalk && panelV2V,
     { pairs, talkHero, v2vHero, panelTalk, panelV2V });
