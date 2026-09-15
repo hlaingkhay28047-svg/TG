@@ -191,14 +191,13 @@ report("B2) the panel's strings speak the nine languages and its Clear label is 
   }
 
   /* ---- G) What's New, CI ---- */
-  const wnStart = APP.indexOf("var WHATS_NEW = [");
-  const wnBlock = APP.slice(wnStart, APP.indexOf("\n];", wnStart));
-  const rowRe = /\{ v:"([\d.]+)", kind:"page", ref:"pgCreate",\s*t:\{my:"([^"]*)",en:"([^"]*)"/g;
-  let row = null, m;
-  while ((m = rowRe.exec(wnBlock))) { if (/Results Histories can be deleted/.test(m[3])) row = m; }
-  report("G) What's New carries the row at 6.20.0 — found by what it says — naming the ✕, the Gallery copy and the five pages, in Burmese and English",
-    !!row && row[1] === "6.20.0" && /VIDEO UPSCALE/.test(row[3]) && /Gallery/.test(row[3]) && /Results History/.test(row[2]) && /✕/.test(row[2]), row && row.slice(1, 4).map(x => x.slice(0, 80)));
-  report("G2) the panel's lifted What's New says the same, byte for byte", !!row && PANEL_WN.indexOf(row[0]) >= 0, null);
+  /* v6.91.0 — the row is history in the archive record (docs/app/data/whats-new-archive.json);
+     the panel lifts the live table only, so an archived row rides neither surface */
+  const wnRows = require("../tools/lib/app-data.js").readWhatsNewArchive().filter(e => e.kind === "page" && e.ref === "pgCreate" && e.t && /Results Histories can be deleted/.test(e.t.en || ""));
+  const row = wnRows.length ? wnRows[wnRows.length - 1] : null;
+  report("G) the archive record keeps the row at 6.20.0 — found by what it says — naming the ✕, the Gallery copy and the five pages, in Burmese and English",
+    !!row && row.v === "6.20.0" && /VIDEO UPSCALE/.test(row.t.en) && /Gallery/.test(row.t.en) && /Results History/.test(row.t.my) && /✕/.test(row.t.my), row && [row.v, row.t.my.slice(0, 80), row.t.en.slice(0, 80)]);
+  report("G2) the panel's lifted What's New carries the live table only — the archived row rides neither surface", !!row && PANEL_WN.indexOf('v:"' + row.v + '"') < 0, null);
   report("G3) CI runs this", /node test\/verify_result_history_delete\.js/.test(CI), null);
 
   console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS — every strip's takes can go, one by one or all at once, on both surfaces");

@@ -73,8 +73,7 @@ function report(name, ok, detail) {
 
 const APP = path.join(__dirname, "..", "docs", "app");
 const src = fs.readFileSync(path.join(APP, "index.html"), "utf8");
-const data = JSON.parse(src.match(
-  /<script id="hnkData" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+const data = require("../tools/lib/app-data.js").readHnkData();
 
 const LIGHTS = data.lighting.lights;
 const WIN_KEYS = ["winSoftL", "sunShaft", "winHard", "winWide"];

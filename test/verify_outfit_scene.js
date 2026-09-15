@@ -50,7 +50,7 @@ function report(name, ok, detail) {
 }
 
 /* ---- A) the records ---- */
-const lib = JSON.parse(APP.match(/<script id="hnkLibWf" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+const lib = require("../tools/lib/app-data.js").readLibWf();
 const W = {}; IDS.forEach(id => { W[id] = lib.workflows.find(x => x.id === id); });
 report("A) four records, each with exactly three required inputs — outfit(s), scene, the people — numbered IMAGE 1, 2, 3",
   IDS.every(id => W[id] && W[id].req.length === 3 && /IMAGE 1/.test(W[id].req[0]) && /Scene \(IMAGE 2\)/.test(W[id].req[1]) && /IMAGE 3/.test(W[id].req[2]) && (W[id].opt || []).length === 0),
@@ -199,14 +199,13 @@ report("E) the wizard owns a multi-file board input, a composeBoard that lays tw
     { pGaps, total: items.length, bg: !!bgCat });
 
   /* ---- J) What's New, CI ---- */
-  const wnStart = APP.indexOf("var WHATS_NEW = [");
-  const wnBlock = APP.slice(wnStart, APP.indexOf("\n];", wnStart));
-  const rowRe = /\{ v:"([\d.]+)", kind:"wf", ref:"outfit-scene-couple",\s*t:\{my:"([^"]*)",en:"([^"]*)"/g;
-  let row = null, m;
-  while ((m = rowRe.exec(wnBlock))) { if (/Outfit & Scene/.test(m[3])) row = m; }
-  report("J) What's New carries the row at 6.19.0 — found by what it says — naming all four and the three pictures, in Burmese and English",
-    !!row && row[1] === "6.19.0" && /Solo \/ Couple \/ Family \/ Group/.test(row[3]) && /IMAGE 3/.test(row[3]) && /Solo \/ Couple \/ Family \/ Group/.test(row[2]), row && row.slice(1, 4).map(x => x.slice(0, 80)));
-  report("J2) the panel's lifted What's New says the same, byte for byte", !!row && PANEL_WN.indexOf(row[0]) >= 0, null);
+  /* v6.91.0 — the 6.19.0 row is history in the archive record (docs/app/data/whats-new-archive.json);
+     the panel lifts the live table (the releases since the strip's cut), so an archived row rides neither surface */
+  const wnRows = require("../tools/lib/app-data.js").readWhatsNewArchive().filter(e => e.kind === "wf" && e.ref === "outfit-scene-couple" && e.t && /Outfit & Scene/.test(e.t.en || ""));
+  const row = wnRows.length ? wnRows[wnRows.length - 1] : null;
+  report("J) the archive record keeps the 6.19.0 What's New row — found by what it says — naming all four and the three pictures, in Burmese and English",
+    !!row && row.v === "6.19.0" && /Solo \/ Couple \/ Family \/ Group/.test(row.t.en) && /IMAGE 3/.test(row.t.en) && /Solo \/ Couple \/ Family \/ Group/.test(row.t.my), row && [row.v, row.t.my.slice(0, 80), row.t.en.slice(0, 80)]);
+  report("J2) the panel's lifted What's New carries the live table only — the archived 6.19.0 row rides neither surface", !!row && PANEL_WN.indexOf('v:"6.19.0"') < 0, null);
   report("J3) CI runs this", /node test\/verify_outfit_scene\.js/.test(CI), null);
 
   console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS — dressed from IMAGE 1, placed in IMAGE 2, IMAGE 3's pose and frame kept, on both surfaces");

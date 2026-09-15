@@ -62,8 +62,9 @@ report("A6) the Auto button sits beside the Heal button in Heal & Brush and call
   /healRow\.appendChild\(healBtn\);[\s\S]{0,600}autoBtn\.id="stAutoHealBtn";[\s\S]{0,900}autoBtn\.onclick=function\(\)\{ stAutoBlemish\(\); \};\s*healRow\.appendChild\(autoBtn\);/.test(SRC));
 report("A7) retouch batch (v4.45, pinned): the Path page's Studio-look button saves the current recipe through the shared store and selects it as slot pt_rc_0 for the whole batch",
   has("if(!stSaveRecipe()) return;\n    ptRegisterRecipeLooks();\n    state.pt.look=\"pt_rc_0\";") && has("function stApplyRecipeTo(img, recipe, maxDim){"));
-report("A8) What's New names the wave (my + en)",
-  /v:"6\.27\.0"[\s\S]{0,400}(reshape|Reshape|မျက်နှာပုံသွင်း)/.test(SRC));
+/* v6.91.0 — this row is history in the archive record (docs/app/data/whats-new-archive.json) */
+report("A8) the archived 6.27.0 What's New row names the wave (my + en)",
+  /(reshape|Reshape|မျက်နှာပုံသွင်း)/.test((r => r ? Object.keys(r.t || {}).map(l => r.t[l]).concat(Object.keys(r.s || {}).map(l => r.s[l])).join("\n") : "")(require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.27.0"))));
 report("P) the panel lifter carries stAutoBlemish and stWarpActive as stage stubs (the panel holds no pixels; no live reshape there) and the lifted studio suites show the Auto button",
   LIFTER.indexOf('"stAutoBlemish", "stWarpActive"') > 0 && LIFTER.indexOf("var stAutoBlemish=H.stAutoBlemish||noop, stWarpActive=H.stWarpActive||function(){ return false; };") > 0 && PANEL_SUITES.indexOf('autoBtn.id="stAutoHealBtn"') > 0);
 report("CI runs this test", /node test\/verify_retouch_reshape\.js/.test(CI));

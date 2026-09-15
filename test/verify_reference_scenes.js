@@ -38,7 +38,7 @@ function jpegSize(buf) {
 }
 
 /* ---- A) the record ---- */
-const lib = JSON.parse(APP.match(/<script id="hnkLibWf" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+const lib = require("../tools/lib/app-data.js").readLibWf();
 const w = lib.workflows.find(x => x.id === ID), idx = lib.workflows.findIndex(x => x.id === ID), slc = lib.workflows.findIndex(x => x.id === "studio-look-copy");
 report("A) the record takes exactly two required inputs — your photo as IMAGE 1, the scene as IMAGE 2 — no optional input and no fields",
   !!w && w.req.length === 2 && /Your Photo.*IMAGE 1/.test(w.req[0]) && /Scene.*IMAGE 2/.test(w.req[1]) && (w.opt || []).length === 0 && Array.isArray(w.fields) && w.fields.length === 0, w && { req: w.req, fields: w.fields });
@@ -74,13 +74,17 @@ report("D) the app's meta, the landing and its counter all count 194 Smart Workf
   APP.indexOf("Smart Workflow 194") >= 0 && APP.indexOf("Smart Workflow 193") < 0 && (LANDING.match(/Smart Workflow 194/g) || []).length >= 30 && LANDING.indexOf("Smart Workflow 193") < 0 &&
   /data-count="wf">194</.test(LANDING) && !/data-count="wf">193</.test(LANDING) && lib.workflows.filter(x => !x.kind).length + 0 > 0,
   { app: APP.indexOf("Smart Workflow 194") >= 0, landing: (LANDING.match(/Smart Workflow 194/g) || []).length });
-const wn = (APP.match(new RegExp('\\{ v:"6\\.32\\.2", kind:"wf", ref:"' + ID + '",[\\s\\S]*?\\} \\},\\n')) || [""])[0];
-const wn3 = (APP.match(new RegExp('\\{ v:"6\\.32\\.3", kind:"wf", ref:"' + ID + '",[\\s\\S]*?\\} \\},\\n')) || [""])[0];
-report("D3) WHATS_NEW carries the 6.32.3 fix row (kind wf) above the 6.32.2 row, a title and a line in all nine languages, and it names the roles",
-  !!wn3 && LANGS.every(l => (wn3.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2) && /IMAGE 1 = the person to keep/.test(wn3) && APP.indexOf(wn3) < APP.indexOf(wn), { row: wn3.slice(0, 90) });
-report("D2) WHATS_NEW carries the 6.32.2 row (kind wf) with a title and a line in all nine languages, the panel's lifted What's New carries it, and CI runs this test",
-  !!wn && LANGS.every(l => (wn.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2) && /word for word/.test(wn) && PANEL_WN.indexOf('"' + ID + '"') >= 0 && /PORT=8931 node test\/verify_reference_scenes\.js/.test(CI),
-  { row: wn.slice(0, 100), panel: PANEL_WN.indexOf('"' + ID + '"') >= 0, ci: /verify_reference_scenes/.test(CI) });
+/* v6.91.0 — both rows are history in the archive record (docs/app/data/whats-new-archive.json, newest first);
+   the panel lifts the live table only, so an archived row rides neither surface */
+const wnArch = require("../tools/lib/app-data.js").readWhatsNewArchive();
+const wnI = wnArch.findIndex(e => e.v === "6.32.2" && e.kind === "wf" && e.ref === ID), wn3I = wnArch.findIndex(e => e.v === "6.32.3" && e.kind === "wf" && e.ref === ID);
+const wn = wnI >= 0 ? wnArch[wnI] : null, wn3 = wn3I >= 0 ? wnArch[wn3I] : null;
+const allText = r => Object.keys(r.t || {}).map(l => r.t[l]).concat(Object.keys(r.s || {}).map(l => r.s[l])).join("\n");
+report("D3) the archive record keeps the 6.32.3 fix row (kind wf) above the 6.32.2 row, a title and a line in all nine languages, and it names the roles",
+  !!wn3 && !!wn && LANGS.every(l => wn3.t[l] && wn3.s[l]) && /IMAGE 1 = the person to keep/.test(allText(wn3)) && wn3I < wnI, { row: wn3 ? wn3.t.en.slice(0, 90) : "" });
+report("D2) the archive record keeps the 6.32.2 row (kind wf) with a title and a line in all nine languages, the panel's lifted What's New carries the live table only, and CI runs this test",
+  !!wn && LANGS.every(l => wn.t[l] && wn.s[l]) && /word for word/.test(allText(wn)) && PANEL_WN.indexOf('"' + ID + '"') < 0 && /PORT=8931 node test\/verify_reference_scenes\.js/.test(CI),
+  { row: wn ? wn.t.en.slice(0, 100) : "", panel: PANEL_WN.indexOf('"' + ID + '"') < 0, ci: /verify_reference_scenes/.test(CI) });
 
 /* ---- E) the panel carries it, prompt identical ---- */
 const cat = JSON.parse(PANEL_CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);

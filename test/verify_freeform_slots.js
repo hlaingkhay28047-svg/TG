@@ -38,7 +38,7 @@ report("A) every RH_MODELS entry carries maxImages, and the measured ones read e
 report("A2) the helpers: ffRefMax (single-image kinds 1, node graphs their slot count, else maxImages), ffSlotsShown (base three, then the filled extras plus one empty), ffAllRefs, ffCapLabel; What's New names the wave",
   /function ffRefMax\(m\)\{/.test(APP) && /function ffSlotsShown\(mx\)\{/.test(APP) && /function ffAllRefs\(mx\)\{/.test(APP) && /function ffCapLabel\(m\)\{/.test(APP) &&
   /k==="node"&&m\.node&&m\.node\.images\) return m\.node\.images\.length;/.test(APP) && /return \(m\.maxImages\|0\)>0 \? m\.maxImages : RB;/.test(APP) &&
-  /\{ v:"6\.26\.0", kind:"page", ref:"pgCreate",/.test(APP), null);
+  !!require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.26.0" && e.ref === "pgCreate"), null);   /* v6.91.0 — the row is history in the archive record */
 report("A3) the Create strip grows with the image model (refStrip branch, rs-ref tiles on refGet/refSet, a capacity line), the Library grid grows the same way, the model dropdown repaints the slots, the strip wraps",
   /if\(hostId==="refStrip" && typeof ffRefMax==="function"\)\{\s*var fmx=ffRefMax\(\), fshown=ffSlotsShown\(fmx\);/.test(APP) && /d=el\("div","rs rs-face rs-ref"\+\(ref\?" filled":""\)\)/.test(APP) &&
   /host\.appendChild\(el\("div","note cap",\(cm\.label\|\|cm\.id\)\+" · "\+ffCapLabel\(cm\)\)\)/.test(APP) &&

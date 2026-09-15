@@ -560,6 +560,8 @@ jobs:
         run: PORT=8931 node test/verify_no_undeclared_identifiers.js
       - name: Every control the studio looks up exists — a static id scan over the panel scripts and the web app, the dictionaries read in both directions, the Learn Mode switch on the Setup screen, job_needkey in nine languages, the dead Freeform cards gone, the version files honest (6.90.0 / panel 6.161.0)
         run: PORT=8931 node test/verify_panel_dead_lookups.js
+      - name: The data left the shell — the Library catalog and the studio tables as content-hashed cached files, the What's New strip cut at 6.80.0 with the archive record, the service worker's data cache, the shell under its byte ceilings (6.91.0)
+        run: PORT=8931 node test/verify_app_data_files.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

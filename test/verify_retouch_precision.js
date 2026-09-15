@@ -62,7 +62,7 @@ report("A5) true-detail zoom: rendered on the worker's EXPORT path from stExport
   /var s0=Z\.s\|\|1, s1=stClamp\(s,1,maxS\(\)\);/.test(APP) && /#stHiCanvas\{position:absolute;left:0;top:0;pointer-events:none/.test(APP) &&
   /#stStage\.sbs #stCanvas,#stStage\.sbs #stCanvasB\{width:calc\(50% - 2px\);max-width:calc\(50% - 2px\);height:auto;max-height:none;margin:0\}/.test(APP) && /\.st-cols\.sbs\{grid-template-columns:minmax\(0,1fr\) minmax\(300px,34%\)\}/.test(APP), null);
 report("A6) What's New 6.24.0 points at Retouch A; CI runs this test",
-  /\{ v:"6\.24\.0", kind:"page", ref:"pgMeitu",/.test(APP) && /node test\/verify_retouch_precision\.js/.test(CI), null);
+  !!require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.24.0" && e.ref === "pgMeitu") && /node test\/verify_retouch_precision\.js/.test(CI), null);   /* v6.91.0 — the row is history in the archive record */
 
 /* ---- B) driven ---- */
 (async () => {

@@ -88,7 +88,7 @@ const onDiskUi = new Set(fs.readdirSync(path.join(APP, "lib", "ui"))
 const onDiskFull = new Set(fs.readdirSync(path.join(APP, "lib", "full"))
   .filter(f => /\.jpg$/.test(f)).map(f => f.replace(/\.jpg$/, "")));
 const html = fs.readFileSync(path.join(APP, "index.html"), "utf8");
-const cat = JSON.parse(/<script id="hnkLibWf" type="application\/json">([\s\S]*?)<\/script>/.exec(html)[1]);
+const cat = require("../tools/lib/app-data.js").readLibWf();
 const ids = new Set(cat.items.map(i => i.id));
 const catNotDisk = [...ids].filter(x => !onDiskUi.has(x));
 const diskNotCat = [...onDiskUi].filter(x => !ids.has(x));

@@ -42,7 +42,7 @@ report("A5) stage chrome: swap chip beside A|B, zoom presets row, the picture ow
   /var sx0=ST\.split\.swap\?cwp:0, sw0=ST\.split\.swap\?c\.width-cwp:cwp;/.test(APP) &&
   !/id="stStage"/.test(PANEL), null);
 report("A6) What's New 6.23.0 points at Retouch A; CI runs this test",
-  /\{ v:"6\.23\.0", kind:"page", ref:"pgMeitu",/.test(APP) && /node test\/verify_retouch_live_preview\.js/.test(CI), null);
+  !!require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.23.0" && e.ref === "pgMeitu") && /node test\/verify_retouch_live_preview\.js/.test(CI), null);   /* v6.91.0 — the row is history in the archive record */
 
 /* ---- B) driven ---- */
 (async () => {

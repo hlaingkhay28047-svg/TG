@@ -55,8 +55,9 @@ report("B3) a stored pick of a down model falls back to the first model that ans
   APP.includes('rhPaintDownOptions($("selVidModel"));'));
 report("B4) GENERATE refuses a down model before anything is uploaded or submitted",
   /var m=vidModelDef\(\);\n  if\(m\.down\)\{ var dn=m\.label\+" — "\+L9\(RH_DOWN_NOTE\); setSt\("stVidGen",dn,"err"\); toast\(dn,"err"\); return; \}/.test(APP));
-report("B5) What's New 6.28.2 names the seven and the reason (my + en)",
-  /\{ v:"6\.28\.2", kind:"page", ref:"pgVideo",\n\s+t:\{my:"Video model 7 ခု[^"]*RunningHub[^"]*",en:"Seven video models \(Wan 2\.2 ×3 · LTX 2\.3 ×4\)[^"]*RunningHub/.test(APP));
+/* v6.91.0 — this row is history in the archive record (docs/app/data/whats-new-archive.json) */
+report("B5) the archived 6.28.2 What's New row names the seven and the reason (my + en)",
+  (r => !!r && /^Video model 7 ခု[\s\S]*RunningHub/.test(r.t.my) && /^Seven video models \(Wan 2\.2 ×3 · LTX 2\.3 ×4\)[\s\S]*RunningHub/.test(r.t.en))(require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.28.2" && e.ref === "pgVideo")));
 
 /* ---- C) the panel, in step ---- */
 const notePanel = (PANEL.match(/const RH_DOWN_NOTE = (\{[^\n]*?\});\n/) || [])[1] || "";

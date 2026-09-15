@@ -107,9 +107,10 @@ report("A7) the lane's two W3 job files: run A = the five brand-model bases (Qwe
   JOBS_A.concat(JOBS_B).every(j => CATALOG.has(j.apiPath)) && APP.indexOf('apiPath:"alibaba/qwen-image-3.0-pro/image-edit"') >= 0,
   { a: JOBS_A.length, b: JOBS_B.length, apis: [...new Set(JOBS_A.concat(JOBS_B).map(j => j.apiPath))] });
 
-const wn = (APP.match(/\{ v:"6\.32\.0", kind:"page", ref:"pgImagine",[\s\S]*?\} \},\n/) || [""])[0];
-report("A8) WHATS_NEW carries the 6.32.0 Imagine row (W3, brush) with a title and a line in all nine languages, and CI runs this test",
-  !!wn && LANGS.every(l => (wn.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2) && /Imagine W3/.test(wn) && /brush/.test(wn) && /PORT=8931 node test\/verify_imagine_w3\.js/.test(CI), { row: wn.slice(0, 120), ci: /verify_imagine_w3/.test(CI) });
+/* v6.91.0 — this row is history in the archive record (docs/app/data/whats-new-archive.json) */
+const wnR = require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.32.0" && e.ref === "pgImagine"), wn = (r => r ? Object.keys(r.t || {}).map(l => r.t[l]).concat(Object.keys(r.s || {}).map(l => r.s[l])).join("\n") : "")(wnR);
+report("A8) the archive record keeps the 6.32.0 Imagine row (W3, brush) with a title and a line in all nine languages, and CI runs this test",
+  !!wnR && LANGS.every(l => wnR.t[l] && wnR.s[l]) && /Imagine W3/.test(wn) && /brush/.test(wn) && /PORT=8931 node test\/verify_imagine_w3\.js/.test(CI), { row: wn.slice(0, 120), ci: /verify_imagine_w3/.test(CI) });
 
 /* ---------------- B) the page ---------------- */
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";

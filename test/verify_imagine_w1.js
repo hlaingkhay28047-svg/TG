@@ -54,8 +54,9 @@ report("A4) the app host: nativePick over the add buttons, rhGenerateOne on the 
   /nativePick\(btn, inputId\|\|"imFile"\)/.test(APP) && /rhGenerateOne\(state\.rhKey, cfg\.apiPath, o\.prompt, "", o\.refDataUrl \? \[o\.dataUrl, o\.refDataUrl\] : \[o\.dataUrl\], rhV2Resolution\(o\.size\), cfg/.test(APP) &&   /* 6.31.0 — the Reference Card's own input and the two-picture call */
   /page:"pgImagine", before: m \? \{ mime:m\[1\], b64:m\[2\] \} : null/.test(APP) && /IMAGINE\.init\(host, \$\("imRoot"\)\)/.test(APP) &&
   /if\(id==="pgImagine" && typeof imagineOnEnter==="function"\)/.test(APP) && (APP.match(/\/\* ---- IMAGINE_HOST ---- \*\//g) || []).length === 1, null);
-report("A5) What's New announces it (kind page → pgImagine, nine languages)",
-  /\{ v:"6\.29\.0", kind:"page", ref:"pgImagine",\n\s*t:\{my:/.test(APP) && (() => { const i = APP.indexOf('{ v:"6.29.0", kind:"page", ref:"pgImagine"'); const row = APP.slice(i, APP.indexOf(" },\n", i)); return LANGS.every(l => new RegExp("\\b" + l + ':"').test(row)); })(), null);
+/* v6.91.0 — this row is history in the archive record (docs/app/data/whats-new-archive.json) */
+report("A5) the archive record keeps the 6.29.0 announcement (kind page → pgImagine, nine languages)",
+  (r => !!r && r.kind === "page" && LANGS.every(l => r.t[l] && r.s[l]))(require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.29.0" && e.ref === "pgImagine")), null);
 /* art on both surfaces */
 const ART = path.join(ROOT, "docs/app/lib/wf/imagine"), PART = path.join(ROOT, "panel/icons/imagine");
 /* 6.29.1 wave — the card picture is a Before | After PAIR (the generated base photograph, the cardPreset result), both 2:3 and

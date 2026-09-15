@@ -32,7 +32,7 @@ function report(name, ok, detail) {
   if (!ok) failures++;
 }
 
-const data = JSON.parse(APP.match(/<script id="hnkData" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+const data = require("../tools/lib/app-data.js").readHnkData();
 const L = data.lighting.lights, GUARD = data.lighting.guard;
 const GEAR = /softbox|octabox|umbrella|beauty dish|strobe|light stand|reflector|panel/i;
 const setupLine = t => (t.split("\n").find(l => l.trim().indexOf("- ") === 0) || "");
@@ -108,10 +108,10 @@ report("E2) the panel's own Lighting designer is gone with the old Freeform page
 
 /* ---- F) What's New says so, and opens a relight card ---- */
 /* the relight row shipped with 6.16.0; later releases stack above it, so it is found by what it says */
-const wnStart = APP.indexOf("var WHATS_NEW = [");
-const wnBlock = APP.slice(wnStart, APP.indexOf("\n];", wnStart));   /* the whole table, not a fixed slice */
-report("F) a What's New row opens a Relight card and says the softbox is gone",
-  /\{ v:"6\.16\.0", kind:"wf", ref:"lg-side",\n    t:\{[^\n]*no softbox, lamp or light panel/.test(wnBlock), wnBlock.slice(0, 100));
+/* v6.91.0 — the 6.16.0 relight row is history in the archive record (docs/app/data/whats-new-archive.json) */
+const wnRow = require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.16.0" && e.kind === "wf" && e.ref === "lg-side");
+report("F) the 6.16.0 What's New row pointing at a Relight card is kept in the archive record and says the softbox is gone",
+  !!wnRow && Object.keys(wnRow.t || {}).some(l => /no softbox, lamp or light panel/.test(wnRow.t[l])), wnRow ? wnRow.t.en.slice(0, 100) : null);
 
 console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS — twelve lights described as light, every source outside the picture, on both surfaces");
 process.exit(failures ? 1 : 0);

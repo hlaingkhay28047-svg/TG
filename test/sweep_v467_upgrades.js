@@ -228,7 +228,7 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
       out.anyClipped = clipped.some(Boolean);
 
       /* E-G) the workflow */
-      const D = JSON.parse(document.getElementById("hnkData").textContent);
+      const D = window.HNK_DATA;
       const pr = D.presets.filter(p => p.key === "sketchPose")[0];
       out.presetExists = !!pr;
       out.presetCount = D.presets.length;

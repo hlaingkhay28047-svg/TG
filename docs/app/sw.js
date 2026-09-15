@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-90-0";
+var CACHE = "hnk-web-studio-v6-91-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -26,6 +26,18 @@ var LIB_CACHE = "hnk-lib-v1";
    ceiling and it evicts the whole cache rather than trimming, which is why an
    explicit cap exists at all. */
 var LIB_MAX_ENTRIES = 6000;
+/* v6.91.0 — THE DATA FILES. data/libwf.js (the Library catalog, 1.18 MB) and
+   data/hnkdata.js (the studio tables) used to ride inside index.html, so a
+   shell release re-sent them whether they had changed or not. The shell now
+   loads them by <script src="data/<file>.js?v=<content tag>"> — the tag is
+   the file's own SHA-256 (tools/build_app_data.js), so one URL names one
+   content for ever. They live in their own cache, served cache-first by full
+   URL and never revalidated, which a shell release does not wipe; a changed
+   file simply arrives under a new URL. The cap keeps old tags from piling
+   up: a handful of releases' worth, oldest first. */
+var DATA_CACHE = "hnk-data-v1";
+var DATA_RE = /\/data\/[A-Za-z0-9_-]+\.js$/;
+var DATA_MAX_ENTRIES = 24;
 /* v5.10 — the face model now lives under /lib/face/ (the face-api bundle, the
    tiny detector weights and the 68-point landmark weights, ~1.9MB). They ride
    the same cache-first branch as the library art, which is exactly what makes
@@ -340,7 +352,7 @@ self.addEventListener("activate", function (e) {
      and the worker claims its clients regardless. */
   e.waitUntil(
     caches.keys().then(function (keys) {
-      return Promise.all(keys.filter(function (k) { return k !== CACHE && k !== LIB_CACHE; }).map(function (k) { return caches.delete(k); }));
+      return Promise.all(keys.filter(function (k) { return k !== CACHE && k !== LIB_CACHE && k !== DATA_CACHE; }).map(function (k) { return caches.delete(k); }));
     }).then(purgeReplacedLibArt)
       .catch(function () {})
       .then(function () { return self.clients.claim(); })
@@ -368,6 +380,29 @@ self.addEventListener("fetch", function (e) {
      the thumbnails the cache exists to protect. Left to the browser, whose
      own HTTP cache handles media correctly. */
   if (url.pathname.indexOf("/lib/banners/motion/") >= 0) return;
+  if (DATA_RE.test(url.pathname) && /(^|[?&])v=[0-9a-f]+/.test(url.search)) {
+    e.respondWith(
+      caches.open(DATA_CACHE).then(function (c) {
+        return c.match(e.request).then(function (hit) {
+          if (hit) return hit;
+          return fetch(e.request).then(function (res) {
+            if (res && res.ok) {
+              try {
+                c.put(e.request, res.clone()).catch(function () {});
+                c.keys().then(function (keys) {
+                  if (keys.length > DATA_MAX_ENTRIES) {
+                    return Promise.all(keys.slice(0, keys.length - DATA_MAX_ENTRIES).map(function (k) { return c.delete(k); }));
+                  }
+                }).catch(function () {});
+              } catch (err) {}
+            }
+            return res;
+          });
+        });
+      }).catch(function () { return fetch(e.request); })
+    );
+    return;
+  }
   var isLib = url.pathname.indexOf("/lib/") >= 0 && !LIB_ICON_RE.test(url.pathname);
   if (isLib) {
     /* v5.46 — THE CACHE MUST NEVER TAKE DOWN WHAT IT EXISTS TO PROTECT. On a

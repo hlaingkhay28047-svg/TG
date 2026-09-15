@@ -82,7 +82,8 @@ const collectionSum = Object.values(collections).reduce((a, b) => a + b, 0);
 const countMismatch = Object.keys(Object.assign({}, collections, membership))
   .filter(c => collections[c] !== membership[c]);
 const featured = Array.isArray(data && data.featured) ? data.featured : [];
-const webIds = new Set(webHtml.match(/user-ref-\d+/g) || []);
+/* v6.91.0 — the ids live in docs/app/data/libwf.js now (appText), not in the shell */
+const webIds = new Set(appText.match(/user-ref-\d+/g) || []);
 const missingFromPanel = [...webIds].filter(id => !itemIds.has(id));
 check("D) catalog totals are arithmetic",
   itemIds.size === items.length &&

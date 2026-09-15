@@ -49,7 +49,7 @@ function jpegSize(buf) {
 }
 
 /* ---- A) the record ---- */
-const lib = JSON.parse(APP.match(/<script id="hnkLibWf" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+const lib = require("../tools/lib/app-data.js").readLibWf();
 const w = lib.workflows.find(x => x.id === ID);
 report("A) the record takes exactly three required inputs — the bride's face, the groom's face, the couple photograph — named as IMAGE 1, 2 and 3",
   !!w && w.req.length === 3 && /Bride.*IMAGE 1/.test(w.req[0]) && /Groom.*IMAGE 2/.test(w.req[1]) && /Couple.*IMAGE 3/.test(w.req[2]) && (w.opt || []).length === 0, w && w.req);
@@ -115,9 +115,11 @@ function REQ3(x) { return x.req[2]; }
 
 /* ---- F) What's New ---- */
 /* the row shipped with 6.17.0; later releases stack above it, so it is found anywhere in the table rather than at its head */
-const wnStart = APP.indexOf("var WHATS_NEW = [");
-const wn = APP.slice(wnStart, APP.indexOf("\n];", wnStart));
-report("F) a What's New row at 6.17.0 opens Couple Compose", /\{ v:"6\.17\.0", kind:"wf", ref:"couple-compose"/.test(wn), wn.slice(0, 100));
+/* v6.91.0 — rows older than the strip's cut left the live table for the archive record
+   (docs/app/data/whats-new-archive.json); the 6.17.0 row is history there, nine languages intact */
+const wnRow = require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.17.0" && e.kind === "wf" && e.ref === "couple-compose");
+report("F) the 6.17.0 What's New row for Couple Compose is kept in the archive record, a title and a line in all nine languages",
+  !!wnRow && ["my","en","shn","kac","th","zh","vi","id","ms"].every(l => wnRow.t && wnRow.s && wnRow.t[l] && wnRow.s[l]), wnRow ? wnRow.t.en.slice(0, 100) : null);
 
 console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS — two faces onto the couple, everything else kept, on both surfaces");
 process.exit(failures ? 1 : 0);

@@ -1,7 +1,7 @@
 /* ============================================================
    HNK Visual Library — GENERATED, do not edit by hand.
-   Source of truth: the web app's own <script id="hnkLibWf"> JSON in
-   docs/app/index.html (items, featured, collections, workflows,
+   Source of truth: the web app's own JSON in docs/app/data/libwf.js
+   (items, featured, collections, workflows,
    groupOrder), copied byte-for-byte. Regenerate with:
      node tools/build_panel_lib_catalog.js
    test/verify_panel_catalog_sync.js pins this file to the app.

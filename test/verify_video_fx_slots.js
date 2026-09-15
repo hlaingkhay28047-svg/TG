@@ -167,14 +167,13 @@ report("C) the panel's lifted VID_WF carries the same two clauses and the same t
   }
 
   /* ---- I) What's New, CI ---- */
-  const wnStart = APP.indexOf("var WHATS_NEW = [");
-  const wnBlock = APP.slice(wnStart, APP.indexOf("\n];", wnStart));
-  const rowRe = /\{ v:"([\d.]+)", kind:"page", ref:"pgVideo",\s*t:\{my:"([^"]*)",en:"([^"]*)"/g;
-  let row = null, m;
-  while ((m = rowRe.exec(wnBlock))) { if (/30-second fast-cut films with VFX/.test(m[3])) row = m; }
-  report("I) What's New carries the row at 6.21.0 — found by what it says — naming the fast editing, the VFX and the model-following slots",
-    !!row && row[1] === "6.21.0" && /face-reference slots/.test(row[3]) && /VFX/.test(row[2]), row && row.slice(1, 4).map(x => x.slice(0, 80)));
-  report("I2) the panel's lifted What's New says the same, byte for byte", !!row && PANEL_WN.indexOf(row[0]) >= 0, null);
+  /* v6.91.0 — the row is history in the archive record (docs/app/data/whats-new-archive.json);
+     the panel lifts the live table only, so an archived row rides neither surface */
+  const wnRows = require("../tools/lib/app-data.js").readWhatsNewArchive().filter(e => e.kind === "page" && e.ref === "pgVideo" && e.t && /30-second fast-cut films with VFX/.test(e.t.en || ""));
+  const row = wnRows.length ? wnRows[wnRows.length - 1] : null;
+  report("I) the archive record keeps the row at 6.21.0 — found by what it says — naming the fast editing, the VFX and the model-following slots",
+    !!row && row.v === "6.21.0" && /face-reference slots/.test(row.t.en) && /VFX/.test(row.t.my), row && [row.v, row.t.my.slice(0, 80), row.t.en.slice(0, 80)]);
+  report("I2) the panel's lifted What's New carries the live table only — the archived row rides neither surface", !!row && PANEL_WN.indexOf('v:"' + row.v + '"') < 0, null);
   report("I3) CI runs this", /node test\/verify_video_fx_slots\.js/.test(CI), null);
 
   console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS — every card cuts the way it should, and the slots follow the model");
