@@ -346,7 +346,13 @@ function create(deps) {
     var head = dom.el(doc, "button", { class: "grp-h" }, [car, lbl, cnt, sact]);
     var body = dom.el(doc, "div", { class: "grp-b" });
     function isOpen() { return g.className.indexOf(" open") >= 0; }
-    function setOpen(on) { g.className = on ? "grp app-grp open" : "grp app-grp"; }
+    function setOpen(on) {
+      g.className = on ? "grp app-grp open" : "grp app-grp";
+      /* 6.167.0 — a closed .grp-b is display:none and every card in it measures 0, so the clamp marker
+         cannot see what was cut until the group opens. Both the header tap and the search filter come
+         through here. */
+      if (on) { try { var em = globalThis.HNK && globalThis.HNK.ellMark; if (em) em(g, ".wfmini .s"); } catch (e) { } }
+    }
     dom.on(head, "click", function () { setOpen(!isOpen()); });
     /* app stResetSection(): put every chip row in this body back on its
        first ("All") chip, then say so */
@@ -1564,6 +1570,13 @@ function create(deps) {
   function render(mountRoot) {
     root = mountRoot;
     if (state.workflowId) renderSelected(); else renderList();
+    /* 6.167.0 — the clamp marker (main.js ellMark, the app's own 6.96.0 pass): a card description that
+       overflows its three-line ceiling ends in "…" instead of simply stopping. Runs after the grid is in
+       the page, because nothing measures before it is mounted. */
+    try {
+      var em = globalThis.HNK && globalThis.HNK.ellMark;
+      if (em) em(root, ".wfmini .s");
+    } catch (e) { }
     return root;
   }
 
