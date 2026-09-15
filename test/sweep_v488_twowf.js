@@ -65,8 +65,7 @@ function report(name, ok, detail) {
 
 const APP = path.join(__dirname, "..", "docs", "app");
 const src = fs.readFileSync(path.join(APP, "index.html"), "utf8");
-const LW = JSON.parse(src.match(
-  /<script id="hnkLibWf" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+const LW = require("../tools/lib/app-data.js").readLibWf();
 const byId = {};
 LW.workflows.forEach(w => { byId[w.id] = w; });
 const SCENE = byId["scene-fit-pro"], RT = byId["master-pro-retouch"];

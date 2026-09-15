@@ -15,7 +15,20 @@
  * Usage: PORT=8931 node test/verify_whats_new.js  (serve docs/app first) */
 "use strict";
 const { chromium } = require("playwright-core");
+const fs = require("fs");
+const path = require("path");
 const PORT = process.env.PORT || 8931;
+const APP_SRC = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.html"), "utf8");
+const REANNOUNCE = (() => {
+  const open = "var WHATS_NEW = [\n";
+  const a = APP_SRC.indexOf(open); const b = APP_SRC.indexOf("\n];", a);
+  const inline = new Function("return [" + APP_SRC.slice(a + open.length, b) + "]")();
+  if (inline.some(e => e.kind === "wf")) return null;
+  const appVer = APP_SRC.match(/var APP_VER="([^"]+)"/)[1];
+  const arch = require("../tools/lib/app-data.js").readWhatsNewArchive()
+    .find(e => e.kind === "wf" && APP_SRC.indexOf('"' + e.ref + '"') >= 0);
+  return arch ? Object.assign({}, arch, { v: appVer }) : null;
+})();
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 let failures = 0;
 function report(name, ok, detail) {
@@ -33,6 +46,23 @@ function report(name, ok, detail) {
     localStorage.setItem("hnk_ws_onboarded", "1");
     localStorage.setItem("hnk_ws_seen", "1");
   });
+  /* v6.91.0 — the table keeps only the releases since the strip's cut
+     (data/whats-new-archive.json holds the rest), so a run of page-kind
+     releases can leave it without a single workflow row. The workflow path
+     (row → wizard, ribbons, the ✦ NEW chip) must still be checked, so when
+     that happens the newest ARCHIVED workflow row that still names a live
+     workflow is re-announced under the current version — for this run only,
+     through a setter on the global, so the reloads below see the same table. */
+  if (REANNOUNCE) {
+    await page.addInitScript((row) => {
+      let table;
+      Object.defineProperty(window, "WHATS_NEW", {
+        configurable: true,
+        get() { return table; },
+        set(v) { table = v; if (Array.isArray(v) && !v.some(e => e.kind === "wf")) v.unshift(row); }
+      });
+    }, REANNOUNCE);
+  }
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(2600);
 

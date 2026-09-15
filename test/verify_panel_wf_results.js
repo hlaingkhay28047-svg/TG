@@ -128,7 +128,7 @@ function sourcePins() {
     !!appNoteEn && noteRows.indexOf('    wiz_promptnote: "' + appNoteEn[1].replace(/\\'/g, "'") + '",') >= 0 &&
     /g\.HNK\.bufToB64 = bufToB64;/.test(MAIN) && /g\.HNK\.wfToFreeform = function \(beforeRef, afterRef\)/.test(MAIN) && /studioAskText\(msg, def\)[\s\S]{0,2000}ok\.textContent = t\("btn_ok"\)/.test(MAIN),
     { ok: okRows.length, note: noteRows.length, appNote: !!appNote });
-  const lib = JSON.parse(APP.match(/<script id="hnkLibWf" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+  const lib = require("../tools/lib/app-data.js").readLibWf();
   const w = lib.workflows.find(x => x.id === "reference-scenes");
   const cat = JSON.parse(CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);
   const pw = cat.categories.flatMap(c => c.items).find(x => x.id === "reference-scenes");

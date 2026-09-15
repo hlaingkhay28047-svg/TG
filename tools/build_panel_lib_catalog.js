@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* Build panel/js/hnk_library_compact_data.js from the web app's OWN Visual
-   Library data — the <script id="hnkLibWf" type="application/json"> block in
+   Library data — the JSON in docs/app/data/libwf.js (v6.91.0; before that the
+   <script id="hnkLibWf" type="application/json"> block in
    docs/app/index.html that pgLib renders (items, featured, collections,
    workflows, groupOrder). The panel ships that JSON text byte-for-byte, so
    its Library page filters, groups, searches and titles exactly like the app;
@@ -21,11 +22,11 @@ const OUT = path.join(ROOT, "panel", "js", "hnk_library_compact_data.js");
 const HEAD_MARK = "var LW = ";
 const TAIL_MARK = ";\n/*END-LW*/";
 
-function appLibText(html) {
-  const a = html.indexOf(OPEN);
-  if (a < 0) throw new Error("docs/app/index.html has no hnkLibWf block");
-  const b = html.indexOf(CLOSE, a);
-  return html.slice(a + OPEN.length, b);
+/* v6.91.0 — the JSON left index.html for docs/app/data/libwf.js (one
+   window.HNK_LIBWF= assignment around the verbatim text); the argument is
+   kept so older callers still work, and ignored. */
+function appLibText() {
+  return require("./lib/app-data.js").libWfText();
 }
 
 function validate(json) {
@@ -52,8 +53,8 @@ function panelLibText(src) {
 function render(json) {
   return "/* ============================================================\n" +
     "   HNK Visual Library — GENERATED, do not edit by hand.\n" +
-    "   Source of truth: the web app's own <script id=\"hnkLibWf\"> JSON in\n" +
-    "   docs/app/index.html (items, featured, collections, workflows,\n" +
+    "   Source of truth: the web app's own JSON in docs/app/data/libwf.js\n" +
+    "   (items, featured, collections, workflows,\n" +
     "   groupOrder), copied byte-for-byte. Regenerate with:\n" +
     "     node tools/build_panel_lib_catalog.js\n" +
     "   test/verify_panel_catalog_sync.js pins this file to the app.\n" +
@@ -67,7 +68,7 @@ module.exports = { OPEN, CLOSE, OUT, appLibText, panelLibText, validate, render 
 
 if (require.main === module) {
   try {
-    const json = appLibText(fs.readFileSync(path.join(ROOT, "docs", "app", "index.html"), "utf8"));
+    const json = appLibText();
     const lw = validate(json);
     if (process.argv.includes("--print")) { process.stdout.write(json); process.exit(0); }
     fs.writeFileSync(OUT, render(json));

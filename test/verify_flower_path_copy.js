@@ -51,7 +51,7 @@ function jpegSize(buf) {
 }
 
 /* ---- A) the record ---- */
-const lib = JSON.parse(APP.match(/<script id="hnkLibWf" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+const lib = require("../tools/lib/app-data.js").readLibWf();
 const w = lib.workflows.find(x => x.id === ID);
 report("A) the record exists in the catalog with a title, a summary, an explanation and one text field for the extra request",
   !!w && w.title === "Flower Path Copy" && w.summary.length > 40 && w.explanation.length > 100 &&
@@ -114,9 +114,10 @@ report("F) the panel's lifted catalog carries the record with the same prompt, A
   !!wedCat && /Wedding/.test(String(wedCat.category || "")), { found: !!pit, cat: wedCat && wedCat.category });
 
 /* ---- G) What's New — the row shipped with 6.16.0; later releases stack above it ---- */
-const wnStart = APP.indexOf("var WHATS_NEW = [");
-const wn = APP.slice(wnStart, APP.indexOf("\n];", wnStart));   /* the whole table — later releases stack above this row */
-report("G) a What's New row opens this workflow", /\{ v:"6\.16\.0", kind:"wf", ref:"flower-path-copy"/.test(wn), wn.slice(0, 100));
+/* v6.91.0 — the 6.16.0 row is history in the archive record (docs/app/data/whats-new-archive.json) */
+const wnRow = require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.16.0" && e.kind === "wf" && e.ref === "flower-path-copy");
+report("G) the 6.16.0 What's New row for this workflow is kept in the archive record, a title and a line in all nine languages",
+  !!wnRow && ["my","en","shn","kac","th","zh","vi","id","ms"].every(l => wnRow.t && wnRow.s && wnRow.t[l] && wnRow.s[l]), wnRow ? wnRow.t.en.slice(0, 100) : null);
 
 console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS — only the flowers come across, onto the floor at the feet, on both surfaces");
 process.exit(failures ? 1 : 0);
