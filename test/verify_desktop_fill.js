@@ -177,7 +177,9 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
         !!E.strip && E.strip.thumbs >= 8 && E.strip.thumbW >= (w >= 1440 ? 120 : 96) && E.strip.fill >= 80, JSON.stringify(E.strip));
       check(`E3) at ${w}px every Tutorials button sits below its text, each row of cards on one baseline (ten lessons since 6.88.0), the number still a pill`,
         E.tut.length === 10 && E.tut.every(t => t.gap >= 8 && t.chipW < 100) &&
-        Object.values(E.tut.reduce((m, t) => { (m[t.top] = m[t.top] || []).push(t.btnBottom); return m; }, {})).every(r => new Set(r).size === 1), JSON.stringify(E.tut));
+        /* 6.93.0 — "one baseline" within a pixel: WebKit's cross-engine leg rounded one card's button bottom to 930 beside
+           two at 931 (a fractional layout position rounding the other way), which is not a card out of line */
+        Object.values(E.tut.reduce((m, t) => { (m[t.top] = m[t.top] || []).push(t.btnBottom); return m; }, {})).every(r => Math.max.apply(null, r) - Math.min.apply(null, r) <= 1), JSON.stringify(E.tut));
       check(`E4) at ${w}px the Retouch group rail scrolls with the mouse wheel and shows a thin scrollbar`,
         !!E.wheel && E.wheel.pointer && E.wheel.after > E.wheel.before && E.wheel.prevented && (E.wheel.scrollbar === "thin" || E.wheel.honours === false), JSON.stringify(E.wheel));
       check(`E5) at ${w}px the small labels read at monitor size (kicker ≥12, card badge ≥11, select context ≥9.5)`,
