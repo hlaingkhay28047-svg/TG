@@ -2903,6 +2903,9 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .stpg #rsModeTabs .chip { margin-right: 6px; }
 .stpg #rsSelCount { margin-top: 6px; }
 
+/* 6.165.0 — the "Send to" row under every video result box (app .vid-send): two small buttons, margins not gap */
+.vid-send { display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 8px; }
+.vid-send > div { flex: 1 1 auto; min-height: 38px; font-size: 11.5px; padding: 8px 12px; margin: 0 6px 6px 0; }
 /* ---- PHOTO slot (app: #stPicker / #rsPicker .ref.stbig) ---- */
 .stpg #stPicker .ref { position: relative; display: block; width: 100%; min-height: 120px;
   border: 1px dashed var(--line); border-radius: 12px; background-color: var(--panel-2); overflow: hidden; }

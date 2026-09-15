@@ -2597,7 +2597,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.164.0";
+const PANEL_VERSION = "6.165.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5819,6 +5819,8 @@ function selfTestRowsInner() {
     rows.push(hnkNetProbeRow());
     /* v6.84.0 — the Active-layer read every image slot uses, on the open document (see hnkLayerProbeStart) */
     rows.push(hnkLayerProbeRow());
+    /* 6.165.0 — the folder every finished take is written to: found, written, read back (see hnkSaveProbeStart) */
+    rows.push(hnkSaveProbeRow());
     /* v6.86.0 — whether <video> decodes here at all. Photoshop's does not,
        which is why every video page shows numbered tiles and Download /
        Open Direct Link / Open the folder instead of a player (6.77.0). */
@@ -6182,7 +6184,7 @@ function bindSetup() {
     const cpy = $("btnCopyLink"); if (cpy) cpy.addEventListener("click", function () { shareCopy(); });
     const cu = $("btnCheckUpdate"); if (cu) cu.addEventListener("click", function () { aboutCheckUpdate(); });
     const hr = $("btnHardRefresh"); if (hr) hr.addEventListener("click", function () { aboutHardRefresh(); });
-    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { try { hnkNetProbeStart(true); } catch (eN) { } try { hnkLayerProbeStart(true); } catch (eL) { } renderSelfTest(); });
+    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { try { hnkNetProbeStart(true); } catch (eN) { } try { hnkSaveProbeStart(true); } catch (eSv) { } try { hnkLayerProbeStart(true); } catch (eL) { } renderSelfTest(); });
     const stc = $("btnSelfTestCopy"); if (stc) stc.addEventListener("click", function () { selfTestCopy(); });
     const about = $("cardAbout");
     if (about) {
@@ -7595,6 +7597,7 @@ function renderVu() {
   if (row) stSet("stVuGen", row.label + (row.detail ? " \u00b7 " + row.detail : ""), row.level === "err" ? "err" : row.level === "ok" ? "ok" : "");
 }
 function vuPaintLabels() {
+  try { vidSendPaintP(); } catch (e) { }   /* 6.165.0 — the send row's words */
   const set = function (id, txt) { const el = $(id); if (el) el.textContent = txt; };
   set("vuIntro", ff9(VU_L.intro));
   set("vuFormatNote", ff9(VU_L.format));
@@ -8123,6 +8126,14 @@ function vwizResultCard(body, nav, el, goStep) {
   if (cur.url) { const lk = mkBtn("btn", ""); lk.id = "vwizOpenLink"; setIcnText(lk, "i-external", "cream", vwizL("openLink")); ffPressable(lk, function () { openUrl(cur.url); }); nav1.appendChild(lk); }
   if (vwiz.kind === "v2v" && cur.folderPath) { const fo = mkBtn("btn", ""); fo.id = "vwizOpenFolder"; setIcnText(fo, "i-folder", "cream", vwizL("openFolder")); ffPressable(fo, function () { vtOpenFolder(cur.folderPath); }); nav1.appendChild(fo); }
   body.appendChild(nav1);
+  /* 6.165.0 — the clip goes on to the next tool from here too; the wizard closes so the page it lands on is visible */
+  const sendRow = el("wiz-nav wiz-nav-acts vid-send"); sendRow.id = "vwizSendRow";
+  [["vwizSendUp", "up", "i-rocket", "sendUp"], ["vwizSendV2v", "v2v", "i-clapper", "sendV2v"]].forEach(function (r) {
+    const sb = mkBtn("btn", ""); sb.id = r[0]; setIcnText(sb, r[2], "cream", vwizL(r[3]));
+    ffPressable(sb, function () { vidSendTo(r[1], cur, vwiz.kind === "i2v" ? "video" : "videotool", true); });
+    sendRow.appendChild(sb);
+  });
+  body.appendChild(sendRow);
   const again = mkBtn("btn", ""); setIcnText(again, "i-retry", "cream", vwizL("again")); ffPressable(again, function () { vwiz.result = null; goStep(2); });
   const onp = mkBtn("btn", ""); setIcnText(onp, "i-caret", "cream", vwizL("onPage"));
   ffPressable(onp, function () { const k = vwiz.kind; closeVWiz(); const bx = $(k === "i2v" ? "vidResultBox" : "vtResultBox"); if (bx) { try { bx.scrollIntoView({ behavior: "smooth" }); } catch (e3) { } } });
@@ -8358,6 +8369,7 @@ function renderTk() {
   if (hv && d) hv.textContent = d.label + " — ¥" + d.cny.toFixed(2) + "/s";
 }
 function tkPaintLabels() {
+  try { vidSendPaintP(); } catch (e) { }   /* 6.165.0 — the send row's words */
   const set = function (id, txt) { const el = $(id); if (el) el.textContent = txt; };
   set("tkIntro", ff9(TK_L.intro));
   setIcnText($("btnTkImgPick"), "i-frame", "cream", ff9(TK_L.pickImg));
@@ -8438,6 +8450,7 @@ function bindTalk() {
   });
   const rn = $("btnTkGen"); if (rn) rn.addEventListener("click", tkRun);
   tkTakes.bind();   /* v6.86.0 — the result box's controls */
+  vidSendBindP();   /* 6.165.0 */
   tkPaintLabels();
   REFRESHERS.push(function () { try { tkPaintLabels(); } catch (e) { hwarn("talk:", e); } });
 }
@@ -8848,6 +8861,56 @@ function mkTakes(pre, L, page) {
 const tkTakes = mkTakes("tk", TK_L, "talk");
 const vuTakes = mkTakes("vu", VU_L, "upscale");
 
+/* 6.165.0 — ONE TAP, THE NEXT TOOL (the app's vidSendTo, on this surface). A finished clip used to leave the
+   panel the long way round: Download, find the file, open Video Upscale or Video Tools, Pick, find it again. Every
+   video result box — Video, Video Upscale, Video Tools, Talking Photo and the video wizard's Result — now carries
+   "Send to Upscale" and "Send to Video Tools": the take's bytes (this session's, or the gallery copy the takes store
+   kept) become that page's picked clip — the same {name, _url} shape the pickers leave, which vtRun already reads
+   and vuRun now reads too — and the page opens. Upscale offers only Video Tools. The words are the app's own,
+   lifted in the video-wizard pack (VWIZ_L sendUp · sendV2v · sendBusy · sentTo · sendFail). */
+const VID_SEND_PAGE = { up: "vidup", v2v: "v2v" };
+const VID_SEND_NAME = { up: "Video Upscale", v2v: "Video Tools" };
+async function vidSendTo(target, out, from, closeWiz) {
+  if (!out || !VID_SEND_PAGE[target]) return false;
+  setStatus(vwizL("sendBusy"), "");
+  try {
+    const ref = await takesRefP(out);
+    const kb = Math.round(String(ref).length * 3 / 4 / 1024);
+    const clip = { name: "hnk-" + (from || "clip") + "-" + Date.now() + ".mp4", _url: ref,
+      _size: kb > 1024 ? (Math.round(kb / 102.4) / 10) + " MB" : kb + " KB", _sentFrom: from || "" };
+    if (target === "up") { VU.video = clip; try { renderVu(); } catch (e) { } }
+    else { VT.video = clip; try { renderVt(); } catch (e) { } }
+    if (closeWiz) { try { closeVWiz(); } catch (e) { } }
+    switchPage(VID_SEND_PAGE[target]);
+    setStatus(vwizL("sentTo").replace("{P}", VID_SEND_NAME[target]), "ok");
+    return true;
+  } catch (e) { setStatus(vwizL("sendFail"), "err"); return false; }
+}
+/* the seven static buttons: which take each one sends, and where */
+const VID_SEND_BTNS = [
+  ["btnVidSendUp", "up", "video", function () { return vidHist[vidHistSel]; }],
+  ["btnVidSendV2v", "v2v", "video", function () { return vidHist[vidHistSel]; }],
+  ["btnVtSendUp", "up", "videotool", function () { return vtHist[vtHistSel]; }],
+  ["btnVtSendV2v", "v2v", "videotool", function () { return vtHist[vtHistSel]; }],
+  ["btnTkSendUp", "up", "talk", function () { return tkTakes.list[tkTakes.sel]; }],
+  ["btnTkSendV2v", "v2v", "talk", function () { return tkTakes.list[tkTakes.sel]; }],
+  ["btnVuSendV2v", "v2v", "upscale", function () { return vuTakes.list[vuTakes.sel]; }]
+];
+let vidSendBound = false;
+function vidSendBindP() {
+  if (vidSendBound) return; vidSendBound = true;
+  VID_SEND_BTNS.forEach(function (row) {
+    const b = $(row[0]); if (!b) return;
+    ffPressable(b, function () { const out = row[3](); if (out) vidSendTo(row[1], out, row[2], false); });
+  });
+}
+function vidSendPaintP() {
+  VID_SEND_BTNS.forEach(function (row) {
+    const b = $(row[0]); if (!b) return;
+    setIcnText(b, row[1] === "up" ? "i-rocket" : "i-clapper", "cream", vwizL(row[1] === "up" ? "sendUp" : "sendV2v"));
+  });
+}
+
 /* ============================================================
    v6.87.0 — THE TAKES SURVIVE A RELOAD. Every finished take on the four
    video pages goes through the takes store (src/app/takes-store.js): a copy
@@ -8910,6 +8973,7 @@ function takesOpenP(id) {
 }
 /* the app's label pass for this page, re-run on every language switch */
 function vidPaintLabels() {
+  try { vidSendPaintP(); } catch (e) { }   /* 6.165.0 — the send row's words */
   const set = function (id, txt) { const el = $(id); if (el) el.textContent = txt; };
   set("vidIntro", ff9(VID_L.intro));
   set("vidWfIntro", ff9(VID_L.wfIntro));
@@ -8933,7 +8997,7 @@ async function vuRun() {
   if (!VU.out) { setStatus("Choose a save folder first", "err"); return; }
   VU.busy = true; VU.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderVu();
   try {
-    const ref = await fileToDataUrl(VU.video);
+    const ref = VU.video._url || await fileToDataUrl(VU.video);   /* 6.165.0 — a clip sent on from a result box carries its bytes */
     const res = await V.upscale(videoEnv(), ref, ($("vuRes") && $("vuRes").value) || "1080p",
       function (stage, info) {
         VU.rows = [{ label: "Working", level: "pend",
@@ -9341,6 +9405,7 @@ function bindVideo() {
     const dl = $("btnVidDl"); if (dl) dl.addEventListener("click", vidDownload);
     const open = $("btnVidOpen"); if (open) open.addEventListener("click", vidOpen);
     const vfo = $("btnVidFolder"); if (vfo) vfo.addEventListener("click", function () { takesOpenGalleryP(); });   /* v6.87.0 */
+    vidSendBindP();   /* 6.165.0 — the send rows on all four result boxes */
     const box = $("vidPromptP");
     if (box) box.addEventListener("input", vidPaintPromptCount);
   });
@@ -9391,6 +9456,7 @@ function bindVideo() {
     });
     const vr = $("btnVuRun"); if (vr) vr.addEventListener("click", vuRun);
     vuTakes.bind();   /* v6.86.0 — the result box's controls */
+    vidSendBindP();   /* 6.165.0 */
   });
 
   /* v6.50.0 — VIDEO TOOLS */
@@ -13512,7 +13578,7 @@ function switchPage(key) {
      opened (and on Run again), never on the boot path: renderSelfTest also
      runs from setupApplyStatics at boot, and a probe there would reach out
      to RunningHub on every panel start. The row re-paints when they answer. */
-  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); hnkLayerProbeStart(false); renderSelfTest(); } catch (e) { } }
+  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); hnkLayerProbeStart(false); hnkSaveProbeStart(false); renderSelfTest(); } catch (e) { } }
   /* the sticky GENERATE follows the page that owns it */
   try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
 }
@@ -13714,6 +13780,47 @@ function hnkLayerProbeStart(force) {
     layerProbe = { state: "done", at: Date.now(), res: { level: "err", detail: "threw \u2014 " + String((e && e.message) || e).slice(0, 140) } };
     try { renderSelfTest(); } catch (e2) { }
   });
+}
+/* 6.165.0 — SELF-TEST "Save folder". Every finished take is copied into the plugin's data folder (the takes store)
+   and Download writes into the folder the student picks; when either write fails the symptom is a clip that plays once
+   and is gone. This row asks the host for the data folder, writes a one-line probe file, reads it back and deletes
+   it, and prints the folder's path, "writable", the count of saved takes and the time — or the exact refusal. A folder
+   with no native path (a browser walk, a shim) is reported as such and never written to. Throttled like the Layer row;
+   Run again forces it. */
+let saveProbe = { state: "idle", at: 0, res: null };
+function hnkSaveProbeStart(force) {
+  const now = Date.now();
+  if (saveProbe.state === "running") return;
+  if (!force && saveProbe.state === "done" && now - saveProbe.at < 60000) return;
+  saveProbe = { state: "running", at: now, res: null };
+  const t0 = Date.now();
+  (async function () {
+    let uxp = null;
+    try { uxp = (globalThis.HNK && globalThis.HNK.__uxpForTests) || require("uxp"); } catch (e) { uxp = null; }
+    const lfs = uxp && uxp.storage && uxp.storage.localFileSystem;
+    if (!lfs || typeof lfs.getDataFolder !== "function") return { level: "host", detail: "no data folder on this host" };
+    const folder = await lfs.getDataFolder();
+    if (!folder) return { level: "err", detail: "getDataFolder answered nothing" };
+    const ts = takesStoreP();
+    let takes = 0, gal = "";
+    try { takes = ts ? ts.list().length : 0; } catch (e) { }
+    try { gal = ts ? ((await ts.galleryPath()) || "") : ""; } catch (e) { }
+    const path = folder.nativePath || gal || "";
+    if (!folder.nativePath) return { level: "host", detail: (path || "data folder") + " \u00b7 no native path \u2014 not written to \u00b7 " + takes + " saved take" + (takes === 1 ? "" : "s") };
+    const name = "hnk-selftest-" + Date.now() + ".txt";
+    const f = await folder.createFile(name, { overwrite: true });
+    await f.write("hnk", { format: uxp.storage.formats.utf8 });
+    const back = await f.read({ format: uxp.storage.formats.utf8 });
+    try { if (typeof f.delete === "function") await f.delete(); } catch (e) { }
+    if (String(back) !== "hnk") return { level: "err", detail: path + " \u00b7 wrote but read back \u201C" + String(back).slice(0, 12) + "\u201D" };
+    return { level: "ok", detail: path + " \u00b7 writable \u00b7 " + takes + " saved take" + (takes === 1 ? "" : "s") + " \u00b7 " + (Date.now() - t0) + "ms" };
+  })().then(function (res) { saveProbe = { state: "done", at: Date.now(), res: res }; try { renderSelfTest(); } catch (e) { } },
+    function (e) { saveProbe = { state: "done", at: Date.now(), res: { level: "err", detail: "REFUSED \u2014 " + String((e && e.message) || e).slice(0, 140) } }; try { renderSelfTest(); } catch (e2) { } });
+}
+function hnkSaveProbeRow() {
+  if (saveProbe.state === "idle") return { label: "Save folder", detail: "\u2014", level: "pend" };
+  if (saveProbe.state === "running") return { label: "Save folder", detail: "writing a probe file\u2026", level: "pend" };
+  return { label: "Save folder", detail: (saveProbe.res && saveProbe.res.detail) || "\u2014", level: (saveProbe.res && saveProbe.res.level) || "pend" };
 }
 function hnkLayerProbeRow() {
   if (layerProbe.state === "idle") return { label: "Layer capture", detail: "\u2014", level: "pend" };

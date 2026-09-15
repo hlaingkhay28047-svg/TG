@@ -161,6 +161,102 @@ v6.108.0 immediately below.
 
 ## Acceptance record
 
+### Publish ledger
+
+One line per panel release, written by `node tools/acceptance_record.js` from
+`panel/release-manifest.json` at every version bump and again after the CCX
+pin (`--backfill` reads the older manifests out of git). A line records only
+what the release session can know: the version, its date, the SHA-256 and
+size the publish lane must match byte for byte, and the manifest's
+`adobe_acceptance`. **pending** says in words that the in-Photoshop checklist
+was not run on that build; whether the build was published is the
+panel-release run that matched its SHA-256, and a line never claims one.
+**accepted** is refused by the tool unless the manifest carries
+`acceptance_evidence` (date, tester, host). A version with its own paragraph
+below the ledger is marked `recorded below`; only that paragraph says whether
+the build was photographed in real Photoshop (v6.144.0 is the latest that was).
+`test/verify_release_contract.js` runs the tool's `--check`: a manifest
+version without its line, or a line whose facts disagree with the manifest,
+fails the release contract.
+
+<!-- publish-ledger:start -->
+- v6.165.0 · 2026-09-15 · SHA-256 `88aea9912efc…` · 20,889,760 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.164.0 · 2026-09-15 · SHA-256 `5095f6e4128f…` · 20,884,462 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.163.0 · 2026-09-15 · SHA-256 `8faf5e035cc6…` · 20,878,204 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.162.0 · 2026-09-15 · SHA-256 `87d7d943846a…` · 20,876,796 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.161.0 · 2026-09-15 · SHA-256 `88aa77521dae…` · 21,098,765 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.160.0 · 2026-09-14 · SHA-256 `2486c44b5b9e…` · 21,249,945 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.159.1 · 2026-09-14 · SHA-256 `ad4a8e040e23…` · 21,254,673 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.159.0 · 2026-09-14 · SHA-256 `6cbd8fa2a2a2…` · 21,251,547 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.158.0 · 2026-09-14 · SHA-256 `f491b0005b88…` · 21,238,782 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.157.0 · 2026-09-14 · SHA-256 `b5708e6c1d5d…` · 21,230,954 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.156.0 · 2026-09-14 · SHA-256 `a18f24060373…` · 21,226,043 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.155.0 · 2026-09-14 · SHA-256 `591e647744fe…` · 21,217,870 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.154.0 · 2026-09-14 · SHA-256 `32665ac4bb54…` · 21,213,120 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.153.0 · 2026-09-14 · SHA-256 `48c16a1a2900…` · 21,198,264 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.152.0 · 2026-09-14 · SHA-256 `5363456f9988…` · 21,191,605 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.151.0 · 2026-09-14 · SHA-256 `eb8d001fc0e3…` · 21,189,426 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.150.0 · 2026-09-13 · SHA-256 `c4d3ca6df6cf…` · 21,181,209 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.149.0 · 2026-09-13 · SHA-256 `3d7bc347df81…` · 21,169,774 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.148.0 · 2026-09-13 · SHA-256 `0fea53f368cd…` · 21,163,069 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.147.0 · 2026-09-13 · SHA-256 `03d4d0659d4c…` · 21,152,473 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.146.1 · 2026-09-13 · SHA-256 `362ee8d99f88…` · 21,147,922 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.146.0 · 2026-09-13 · SHA-256 `f15e5d609840…` · 21,146,152 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.145.0 · 2026-09-13 · SHA-256 `eae77a60b641…` · 21,138,534 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.144.0 · 2026-09-13 · SHA-256 `95305939f5ec…` · 21,134,475 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte · recorded below (see the **v6.144.0** paragraph)
+- v6.143.0 · 2026-09-12 · SHA-256 `b5660a99941d…` · 21,128,809 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.142.0 · 2026-09-12 · SHA-256 `7f1291b99b0b…` · 21,126,338 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.141.0 · 2026-09-12 · SHA-256 `1bd695e91977…` · 21,123,732 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.140.0 · 2026-09-12 · SHA-256 `e40813299136…` · 21,120,557 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.139.0 · 2026-09-12 · SHA-256 `2a3166ccde49…` · 21,117,369 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.138.0 · 2026-09-12 · SHA-256 `0541a056f89f…` · 21,112,993 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.137.0 · 2026-09-12 · SHA-256 `3998225a5a6f…` · 21,107,888 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.136.0 · 2026-09-12 · SHA-256 `7e629e0ab13a…` · 21,102,411 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.135.0 · 2026-09-11 · SHA-256 `f36f32735355…` · 21,095,798 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.134.0 · 2026-09-11 · SHA-256 `15786c3732ef…` · 21,074,858 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.133.0 · 2026-09-11 · SHA-256 `363dd9a7b321…` · 20,520,377 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.132.0 · 2026-09-11 · SHA-256 `2695cfdba2db…` · 20,509,462 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.131.0 · 2026-09-11 · SHA-256 `118485bca937…` · 20,504,445 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.130.0 · 2026-09-10 · SHA-256 `78cd345ab1bb…` · 20,502,535 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.129.0 · 2026-09-10 · SHA-256 `635c850674c0…` · 20,499,014 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.128.0 · 2026-09-10 · SHA-256 `20c0047a52ec…` · 20,495,219 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.127.0 · 2026-09-10 · SHA-256 `ed06a616c2c1…` · 20,490,538 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.126.0 · 2026-09-10 · SHA-256 `53add92154dd…` · 20,487,694 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.125.0 · 2026-09-10 · SHA-256 `800b6a48228f…` · 20,485,113 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.124.0 · 2026-09-10 · SHA-256 `d9302f4d6dad…` · 20,481,760 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.123.0 · 2026-09-10 · SHA-256 `750f3013ea4f…` · 20,478,419 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.122.0 · 2026-09-10 · SHA-256 `0c2d46bcd681…` · 20,475,530 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.121.0 · 2026-09-10 · SHA-256 `84d98b1ebea9…` · 20,471,605 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.120.0 · 2026-09-10 · SHA-256 `5ad08b010ffc…` · 20,468,688 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.119.0 · 2026-09-09 · SHA-256 `88e10a1e86db…` · 20,466,348 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.118.0 · 2026-09-09 · SHA-256 `c18488e9d1da…` · 20,463,251 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.117.0 · 2026-09-09 · SHA-256 `b5d2f1c785e3…` · 20,461,142 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.116.0 · 2026-09-09 · SHA-256 `ebe439485cc5…` · 20,458,933 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.115.0 · 2026-09-09 · SHA-256 `96d389e8b0e8…` · 20,456,807 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.114.0 · 2026-09-09 · SHA-256 `6caa2bedd195…` · 20,454,985 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.113.0 · 2026-09-09 · SHA-256 `a350faa3a404…` · 20,453,915 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.112.0 · 2026-09-09 · SHA-256 `fedd28f76c40…` · 20,452,689 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.111.0 · 2026-09-09 · SHA-256 `113af531acb9…` · 20,450,135 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.110.0 · 2026-09-09 · SHA-256 `ee1efc4dfe9e…` · 20,449,042 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.109.0 · 2026-09-09 · SHA-256 `749adad3b3b0…` · 20,444,060 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.108.5 · 2026-09-09 · SHA-256 `88cc18471ca3…` · 20,440,421 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.108.4 · 2026-09-08 · SHA-256 `2d728ac2cb46…` · 20,439,770 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.108.1 · 2026-09-08 · SHA-256 `fc75834ac466…` · 20,439,292 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.108.0 · 2026-09-08 · SHA-256 `0475cbb4de86…` · 20,438,780 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte · recorded below (see the **v6.108.0** paragraph)
+- v6.107.1 · 2026-09-08 · SHA-256 `9d2f95e3a562…` · 20,432,541 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.107.0 · 2026-09-08 · SHA-256 `6a9e0e37aa52…` · 20,428,212 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte · recorded below (see the **v6.107.0** paragraph)
+- v6.106.0 · 2026-09-08 · SHA-256 `39f853b152fb…` · 20,410,761 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte · recorded below (see the **v6.106.0** paragraph)
+- v6.105.0 · 2026-09-08 · SHA-256 `714bba083cd8…` · 20,407,754 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.104.0 · 2026-09-08 · SHA-256 `76865d79fe88…` · 20,404,073 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.103.0 · 2026-09-08 · SHA-256 `c7c64411b16e…` · 20,401,791 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.102.5 · 2026-09-08 · SHA-256 `eda9a2023161…` · 20,399,694 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.102.4 · 2026-09-08 · SHA-256 `487d221490f9…` · 20,399,694 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.102.3 · 2026-09-08 · SHA-256 `d086130a9a4a…` · 20,396,296 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.102.2 · 2026-09-08 · SHA-256 `939baf289935…` · 20,394,580 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.102.1 · 2026-09-07 · SHA-256 `d3f9cf7a3b14…` · 20,392,809 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
+- v6.102.0 · 2026-09-07 · SHA-256 `8f8331c3a162…` · 20,392,367 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte · recorded below (see the **v6.102.0** paragraph)
+<!-- publish-ledger:end -->
+
 - **v6.144.0** — published as latest by panel-release run #107 from main
   `4dd6b5a908286efddb79df45a461e9384e3bbf82`. The lane rebuilt the artifact
   from the reviewed source and matched the tracked pins byte for byte (SHA-256

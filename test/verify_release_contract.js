@@ -300,6 +300,15 @@ check("panel source, release metadata, and public version endpoint agree",
   JSON.stringify({ source: panelSourceManifest.version, release: panelRelease.version,
     minimum: panelRelease.minimum_supported_version, endpoint: panelVersion,
     artifact: panelRelease.artifact_file }));
+/* 6.94.0 — the publish ledger: PANEL_RELEASE_SECURITY.md carries one line per panel release, written by
+   tools/acceptance_record.js from the manifest; a manifest version without its line, or a line whose facts
+   (date, SHA-256, size, adobe_acceptance) disagree with the manifest, is a release whose record lies. */
+const ledgerCheck = (() => { try { return execFileSync("node", ["tools/acceptance_record.js", "--check"], { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim(); } catch (e) { return "FAILED: " + String((e.stderr || e.stdout || e.message)).trim(); } })();
+check("the publish ledger carries the release manifest's version with matching facts (tools/acceptance_record.js --check)",
+  /^publish ledger ok: v/.test(ledgerCheck) && ledgerCheck.indexOf("v" + panelRelease.version + " · " + panelRelease.adobe_acceptance) > 0 &&
+    /<!-- publish-ledger:start -->[\s\S]*<!-- publish-ledger:end -->/.test(read("PANEL_RELEASE_SECURITY.md")) &&
+    ["pending", "accepted"].indexOf(panelRelease.adobe_acceptance) >= 0,
+  ledgerCheck);
 /* The landing prints the panel version in more places than the badges the
    release bump rewrites: a <span> in the features heading read v6.48.0 and the
    panel's JSON-LD softwareVersion read v6.49.0 for months while the badges

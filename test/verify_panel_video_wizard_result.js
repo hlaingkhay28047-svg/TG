@@ -185,14 +185,14 @@ function report(name, ok, detail) {
   } finally { await browser.close(); }
 
   const F = app.first, S = app.second, T = app.tap;
-  report("B1) app · image→video Result: the From chip shows the page's photo with the word, the direct link is a new-tab anchor to the clip, four ways on, no takes strip with a single take",
-    F.fromImg && F.fromWord === D.L.from[app.lang] && F.link && /hero-mermaid\.mp4$/.test(F.link) && F.target === "_blank" && F.navBtns === 4 && F.takes === 0 && /hero-mermaid\.mp4$/.test(F.mainSrc), F);
+  report("B1) app · image→video Result: the From chip shows the page's photo with the word, the direct link is a new-tab anchor to the clip, six ways on (6.94.0: + Send to Upscale · Send to Video Tools), no takes strip with a single take",
+    F.fromImg && F.fromWord === D.L.from[app.lang] && F.link && /hero-mermaid\.mp4$/.test(F.link) && F.target === "_blank" && F.navBtns === 6 /* 6.94.0 — + Send to Upscale · Send to Video Tools */ && F.takes === 0 && /hero-mermaid\.mp4$/.test(F.mainSrc), F);
   report("B2) app · Make another keeps the photo; the second take shows first, and the strip lists both takes under its heading",
     app.again.filled === 1 && S.takes === 2 && S.selIdx === 0 && /take=2$/.test(S.mainSrc) && S.hist === 2 && S.header === D.L.takes[app.lang], { again: app.again, second: S });
   report("B3) app · tapping the older take plays it (the page's own play URL — the Gallery's saved copy once it is home), marks it, moves the page's own selection, and points the direct link at it",
     T.mainSrc && T.mainSrc === T.expect && !/take=2$/.test(T.mainSrc) && T.pageSel === 1 && T.wizSel === 1 && T.selIdx === 1 && /hero-mermaid\.mp4$/.test(String(T.link)), T);
-  report("B4) app · video→video Result: the From chip names the clip, the clip plays, the direct link and four ways on",
-    app.v2v.fromWord.indexOf(D.L.fromClip[app.lang]) === 0 && /clip\.mp4$/.test(app.v2v.fromWord) && !!app.v2v.link && app.v2v.navBtns === 4 && app.v2v.video, app.v2v);
+  report("B4) app · video→video Result: the From chip names the clip, the clip plays, the direct link and six ways on",
+    app.v2v.fromWord.indexOf(D.L.fromClip[app.lang]) === 0 && /clip\.mp4$/.test(app.v2v.fromWord) && !!app.v2v.link && app.v2v.navBtns === 6 /* 6.94.0 */ && app.v2v.video, app.v2v);
   report("B5) app · no page error", app.errs.length === 0, app.errs.slice(0, 3));
 
   /* ---------------- C. the panel, on a renderer that cannot play video (Photoshop) ---------------- */
@@ -316,18 +316,18 @@ function report(name, ok, detail) {
   const PI = pan.i2v, PV = pan.v2v;
   report("C1) panel · no sheet before a tap; the tap renders the wizard INSIDE #pageVideo as its first child, not position:fixed, with the page's own cards hidden and the page still on",
     pan.videoOk === false && pan.beforeOpen && pan.open.inPage && pan.open.first && pan.open.position !== "fixed" && pan.open.sibsHidden && pan.open.sibCount > 2 && pan.open.pageOn, pan.open);
-  report("C2) panel · image→video Result with no player: no <video>, the vid_no_inline line for clip 1, one \"MP4 1\" tile marked, the From chip with the photo, the meta line (1080p · 5s), four ways on incl. the direct link",
+  report("C2) panel · image→video Result with no player: no <video>, the vid_no_inline line for clip 1, one \"MP4 1\" tile marked, the From chip with the photo, the meta line (1080p · 5s), six ways on incl. the direct link and the two Send buttons",
     PI.onDot.join() === "Result" && !PI.video && PI.note === PI.want && PI.tiles.join() === "MP4 1" && PI.sel.join() === "MP4 1" && PI.fromThumb && PI.fromWord === P_TR(D, "from") &&
-    /1080p/.test(PI.meta) && /5s/.test(PI.meta) && PI.navBtns === 4 && PI.link, PI);
+    /1080p/.test(PI.meta) && /5s/.test(PI.meta) && PI.navBtns === 6 /* 6.165.0 — + the two Send buttons */ && PI.link, PI);
   report("C3) panel · the direct link goes through openUrl (the system browser); Make another keeps the photo; the second take is tile 2 of 2 under the takes heading; tapping tile 2 says clip 2, moves the page's selection to it, and the link follows",
     PI.opened === "http://127.0.0.1:" + port + "/x.mp4?take=2".replace("?take=2", "") && PI.againFilled === 1 && PI.second.tiles.join() === "MP4 1,MP4 2" && PI.second.sel.join() === "MP4 1" &&
     PI.second.header === P_TR(D, "takes") && /720p/.test(PI.second.meta) && PI.tap.note === PI.tap.want && PI.tap.sel.join() === "MP4 2" && PI.tap.pageSel === 1 &&
     /1080p/.test(PI.tap.meta) && PI.tap.opened === "http://127.0.0.1:" + port + "/x.mp4", { opened: PI.opened, again: PI.againFilled, second: PI.second, tap: PI.tap });
   report("C4) panel · Close removes the sheet and puts the page's cards back exactly as they were",
     pan.closed.gone && JSON.stringify(pan.closed.sibsBack) === JSON.stringify(pan.sibsBefore) && pan.closed.pageOn, pan.closed);
-  report("C5) panel · video→video Result: the wizard sits in #pageV2V, the take vtRun recorded is named as Renders/hnk-videotool-1.mp4, the From chip names the clip, the tool is on the meta line, five ways on incl. Open the folder (shell.openPath gets the folder's path), and the page's result box is on behind it with its tile, saved line, no-player line, the app's heading and link words, Clear shown",
+  report("C5) panel · video→video Result: the wizard sits in #pageV2V, the take vtRun recorded is named as Renders/hnk-videotool-1.mp4, the From chip names the clip, the tool is on the meta line, seven ways on incl. Open the folder and the two Send buttons (shell.openPath gets the folder's path), and the page's result box is on behind it with its tile, saved line, no-player line, the app's heading and link words, Clear shown",
     pan.v2vOpen.inPage && pan.v2vOpen.boxHidden && PV.onDot.join() === "Result" && PV.saved === PV.wantSaved && PV.fromWord.indexOf(P_TR(D, "fromClip")) === 0 && /clip\.mp4$/.test(PV.fromWord) &&
-    /Tool X/.test(PV.meta) && PV.folderBtn && PV.navBtns === 5 && PV.note.length > 10 && PV.tiles.join() === "MP4 1" && PV.folderOpened === "/tmp/Renders" &&
+    /Tool X/.test(PV.meta) && PV.folderBtn && PV.navBtns === 7 /* 6.165.0 */ && PV.note.length > 10 && PV.tiles.join() === "MP4 1" && PV.folderOpened === "/tmp/Renders" &&
     PV.page.on && PV.page.tiles.join() === "MP4 1" && /Renders\/hnk-videotool-1\.mp4/.test(PV.page.saved) && PV.page.note && PV.page.videoHidden &&
     PV.page.h2 === "ရလဒ် (ဗီဒီယို)" && PV.page.openWord === "Direct Link ဖွင့်မယ်" && PV.page.clear, { open: pan.v2vOpen, v2v: PV });
   report("C6) panel · Close shows the page's result box (still on); ✕ on its strip removes the take and the box goes quiet",
