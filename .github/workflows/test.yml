@@ -574,6 +574,8 @@ jobs:
         run: PORT=8931 node test/verify_ui_tidy_696.js
       - name: Every panel hero banner is the same 126px band — a rendered walk of all fourteen (picture inside the band, kicker and headline on it) plus the static read that catches a class no rule reaches (6.96.1)
         run: PORT=8931 node test/verify_panel_hero_banners.js
+      - name: Nothing in the panel is drawn where Photoshop cuts it — all sixteen pages walked at 320px and 400px, no box past its page's right edge and no box cutting its own text but the three that do it on purpose (6.96.2)
+        run: PORT=8931 node test/verify_panel_narrow_fit.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

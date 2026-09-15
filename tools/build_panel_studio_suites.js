@@ -147,7 +147,7 @@ const RANGE_REWRITES = [
        count 5, caret 9) over a DOM that starts with the caret. UXP has no
        `order`, so the panel builds the header in the app's VISUAL order and
        the boxes land where the web page puts them. */
-    repl: ['  var ttl=el("span");',
+    repl: ['  var ttl=el("span","grp-t");',
       '  if(icon){ ttl.innerHTML=icn(icon)+" "+escH(stripIcn(title)); } else { ttl.textContent=stripIcn(title); }',
       '  h.appendChild(ttl);',
       '  var car=el("span","car"); car.innerHTML=icn("i-caret","ic-car"); h.appendChild(car);'].join("\n") },
