@@ -228,7 +228,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.165.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.166.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.png" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -433,6 +433,16 @@
           <div role="button" tabindex="0" class="btn grow" id="btnImportData"></div>
         </div>
         <div class="status" id="stData"></div>
+      </div>
+
+      <div class="card" id="cardPrefs">
+        <h2 id="prefsH2"><img class="ic-h2" src="icons/ui/i-gear-gold.png" alt=""></h2>
+        <div class="row prefs-row" id="prefsTsizeRow">
+          <span class="lbl" id="prefsTsizeL"></span>
+          <div role="button" tabindex="0" class="chip" id="prefsTsizeS"></div>
+          <div role="button" tabindex="0" class="chip" id="prefsTsizeM"></div>
+          <div role="button" tabindex="0" class="chip" id="prefsTsizeL2"></div>
+        </div>
       </div>
 
       <div class="card" id="cardPlat">
@@ -788,6 +798,19 @@
       <div class="card">
         <h2><img class="ic-h2" src="icons/ui/i-gallery-hi.png" alt="">MY GALLERY</h2>
         <div class="mut" id="galNote"></div>
+        <!-- 6.166.0 — the app's Gallery tools: search · kind · sort -->
+        <div class="row gal-tools" id="galTools">
+          <input type="text" class="hnk-input" id="galSearch">
+          <div class="hsl hsl-for-galKind" id="galKindHsl">
+            <div role="button" tabindex="0" class="hsl-btn" id="galKindBtn"><span class="hsl-lab"><span class="hsl-val" id="galKindVal"></span></span><img class="hsl-caret" src="icons/ui/hsl-caret-gold.png" alt=""></div>
+            <select class="inp" id="galKind"></select>
+          </div>
+          <div class="hsl hsl-for-galSort" id="galSortHsl">
+            <div role="button" tabindex="0" class="hsl-btn" id="galSortBtn"><span class="hsl-lab"><span class="hsl-val" id="galSortVal"></span></span><img class="hsl-caret" src="icons/ui/hsl-caret-gold.png" alt=""></div>
+            <select class="inp" id="galSort"></select>
+          </div>
+        </div>
+        <div class="mut" id="galCount"></div>
         <div class="row" id="galBulkBar" style="margin-bottom:8px">
           <div role="button" tabindex="0" class="chip" id="galSelMode"></div>
           <div role="button" tabindex="0" class="btn" id="galZipSel" style="display:none"></div>
@@ -915,7 +938,7 @@
           <div role="button" tabindex="0" class="btn" id="btnVidOpen"></div>
           <div role="button" tabindex="0" class="btn" id="btnVidFolder" style="display:none"></div>
         </div>
-        <div class="arow vid-send" id="vidSendRow"><div role="button" tabindex="0" class="btn" id="btnVidSendUp"></div><div role="button" tabindex="0" class="btn" id="btnVidSendV2v"></div></div>
+        <div class="arow vid-send" id="vidSendRow"><div role="button" tabindex="0" class="btn" id="btnVidSendUp"></div><div role="button" tabindex="0" class="btn" id="btnVidSendV2v"></div><div role="button" tabindex="0" class="btn" id="btnVidSendTalk" style="display:none"></div><div role="button" tabindex="0" class="btn" id="btnVidSendImg1" style="display:none"></div></div>
         <div class="subh" id="vidHistH" style="margin-top:12px"></div>
         <div class="hist" id="vidHist"></div>
         <div role="button" tabindex="0" class="chip" id="vidHistClear" style="display:none"></div>
@@ -976,7 +999,7 @@
           <div role="button" tabindex="0" class="btn" id="btnVuOpen"></div>
           <div role="button" tabindex="0" class="btn" id="btnVuFolder"></div>
         </div>
-        <div class="arow vid-send" id="vuSendRow"><div role="button" tabindex="0" class="btn" id="btnVuSendV2v"></div></div>
+        <div class="arow vid-send" id="vuSendRow"><div role="button" tabindex="0" class="btn" id="btnVuSendV2v"></div><div role="button" tabindex="0" class="btn" id="btnVuSendTalk" style="display:none"></div><div role="button" tabindex="0" class="btn" id="btnVuSendImg1" style="display:none"></div></div>
         <div class="subh" id="vuHistH" style="margin-top:12px"></div>
         <div class="hist" id="vuHist"></div>
         <div role="button" tabindex="0" class="chip" id="vuHistClear" style="display:none"></div>
@@ -1095,7 +1118,7 @@
           <div role="button" tabindex="0" class="btn" id="btnVtOpen"></div>
           <div role="button" tabindex="0" class="btn" id="btnVtFolder"></div>
         </div>
-        <div class="arow vid-send" id="vtSendRow"><div role="button" tabindex="0" class="btn" id="btnVtSendUp"></div><div role="button" tabindex="0" class="btn" id="btnVtSendV2v"></div></div>
+        <div class="arow vid-send" id="vtSendRow"><div role="button" tabindex="0" class="btn" id="btnVtSendUp"></div><div role="button" tabindex="0" class="btn" id="btnVtSendV2v"></div><div role="button" tabindex="0" class="btn" id="btnVtSendTalk" style="display:none"></div><div role="button" tabindex="0" class="btn" id="btnVtSendImg1" style="display:none"></div></div>
         <div class="subh" id="vtHistH" style="margin-top:12px"></div>
         <div class="hist" id="vtHist"></div>
         <div role="button" tabindex="0" class="chip" id="vtHistClear" style="display:none"></div>
@@ -1184,7 +1207,7 @@
           <div role="button" tabindex="0" class="btn btn-gold grow" id="btnTkDl"></div>
           <div role="button" tabindex="0" class="btn" id="btnTkFolder"></div>
         </div>
-        <div class="arow vid-send" id="tkSendRow"><div role="button" tabindex="0" class="btn" id="btnTkSendUp"></div><div role="button" tabindex="0" class="btn" id="btnTkSendV2v"></div></div>
+        <div class="arow vid-send" id="tkSendRow"><div role="button" tabindex="0" class="btn" id="btnTkSendUp"></div><div role="button" tabindex="0" class="btn" id="btnTkSendV2v"></div><div role="button" tabindex="0" class="btn" id="btnTkSendTalk" style="display:none"></div><div role="button" tabindex="0" class="btn" id="btnTkSendImg1" style="display:none"></div></div>
         <div class="subh" id="tkHistH" style="margin-top:12px"></div>
         <div class="hist" id="tkHist"></div>
         <div role="button" tabindex="0" class="chip" id="tkHistClear" style="display:none"></div>
@@ -1562,7 +1585,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.165.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.166.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>

@@ -270,7 +270,7 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
   report("C6) GENERATE presses the page's own button — the page goes busy, the wizard shows Result running",
     same(I.busy.onDot, ["Result"]) && I.busy.spin && I.busy.pageBusy === true, I.busy);
   report("C7) the result is the page's result: one history entry, the page's result box on, the clip playing in the wizard, six ways on (v6.85.0: Download · Open Direct Link · Make another · See it on the page; 6.94.0: Send to Upscale · Send to Video Tools)",
-    same(I.done.onDot, ["Result"]) && I.done.video && I.done.hist === 1 && I.done.pageResult && I.done.navBtns === 6 /* 6.94.0 — + Send to Upscale · Send to Video Tools */ &&
+    same(I.done.onDot, ["Result"]) && I.done.video && I.done.hist === 1 && I.done.pageResult && I.done.navBtns === 8 /* 6.95.0 — + Frame → Talking Photo · Frame → IMAGE 1 */ &&
     I.done.pageFree && /hero-mermaid\.mp4$/.test(String(I.done.src)), I.done);
   report("C8) closing unwinds everything: the modal, the scroll lock and both pick hooks",
     I.closed.open === false && I.closed.hooks && I.closed.overflow === "", I.closed);
@@ -418,17 +418,17 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
     same(PI.step3.onDot, ["Generate"]) && PI.step3.gen && PI.step3.clone && PI.step3.cloneValue === PI.step3.pageValue &&
     PI.step3.ta === PI.step3.pagePrompt && PI.step3.ta.length > 40 &&
     PI.sync.picked && PI.sync.page === PI.sync.picked && PI.sync.shown.length > 0, { step3: PI.step3, sync: PI.sync });
-  report("D5) GENERATE runs the page's own vidGenerate: Result running, then the new history entry playing, six ways on (v6.85.0 + the two Send buttons), and Close removes the sheet",
-    same(PI.busy, ["Result"]) && same(PI.done.onDot, ["Result"]) && PI.done.video && PI.done.hist === 1 && PI.done.navBtns === 6 /* 6.165.0 */ && PI.closed,
+  report("D5) GENERATE runs the page's own vidGenerate: Result running, then the new history entry playing, eight ways on (v6.85.0 + the two Send buttons + the two Frame buttons), and Close removes the sheet",
+    same(PI.busy, ["Result"]) && same(PI.done.onDot, ["Result"]) && PI.done.video && PI.done.hist === 1 && PI.done.navBtns === 8 /* 6.166.0 */ && PI.closed,
     { busy: PI.busy, done: PI.done, closed: PI.closed });
   report("D6) video→video on the panel asks for THREE inputs — the clip, the photograph and the save folder Photoshop writes to — all before Next",
     PV.open && same(PV.dots, D.DOTS) && PV.model === VT_PACK.WF[0].model && PV.step2.slots === 3 && PV.step2.nextDis === true &&
     PV.step2.names.some(n => n === (D.L.slotRef.my)) && PV.step2b.filled === 3 && PV.step2b.nextDis === false,
     { step2: PV.step2, step2b: PV.step2b, model: PV.model });
-  report("D7) Generate names the tool, mirrors the request, clones exactly the option selects the page shows; the Result is the take vtRun recorded (v6.85.0): the clip playing, the saved file named, seven ways on (Download · link · folder · again · page · Send to Upscale · Send to Video Tools), the page's result box on",
+  report("D7) Generate names the tool, mirrors the request, clones exactly the option selects the page shows; the Result is the take vtRun recorded (v6.85.0): the clip playing, the saved file named, nine ways on (Download · link · folder · again · page · Send to Upscale · Send to Video Tools · Frame → Talking Photo · Frame → IMAGE 1), the page's result box on",
     PV.step3.gen && PV.step3.ta === PV.step3.pagePrompt && PV.step3.ta.length > 40 && PV.step3.toolLine.length > 5 &&
     same(PV.step3.clones, PV.step3.pageOpts) && same(PV.done.onDot, ["Result"]) &&
-    PV.done.video && /Renders\/hnk-videotool-1\.mp4/.test(PV.done.saved) && PV.done.navBtns === 7 /* 6.165.0 */ && PV.done.pageBox && PV.closed,
+    PV.done.video && /Renders\/hnk-videotool-1\.mp4/.test(PV.done.saved) && PV.done.navBtns === 9 /* 6.166.0 */ && PV.done.pageBox && PV.closed,
     { step3: PV.step3, done: PV.done });
   report("D8) no page error on the panel", pan.errs.length === 0, pan.errs.slice(0, 3));
 

@@ -1542,6 +1542,21 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 .wiz-acts .btn{padding:12px;font-size:13px;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px}
 /* v6.83.0 — the wizard's Before | After (percent widths; the Before picture is 100/pct % of its window) */
 /* 6.94.0 — the "Send to" row under every video result box: two small chips, wrapping */
+/* 6.95.0 — Gallery tools (search · kind · sort), the Home recent strip, the Settings card, text size */
+.gal-tools{margin:8px 0;gap:6px;flex-wrap:wrap;align-items:center}
+.gal-tools .inp{min-height:38px;font-size:var(--fs-sm)}
+.gal-tools #galSearch{flex:1 1 150px;min-width:0}
+#galCount{margin:0 0 8px;font-size:var(--fs-xs)}
+.dash-recent-h{font-size:var(--fs-2xs);color:var(--muted);margin-top:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.dash-recent{display:flex;gap:6px;overflow-x:auto;margin-top:6px;padding-bottom:4px;scrollbar-width:thin}
+.dash-recent img{width:64px;height:64px;object-fit:cover;border-radius:var(--r-md);border:1px solid var(--line-soft);flex:none;cursor:pointer;background:var(--ink)}
+.prefs-row{align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px}
+.prefs-row .lbl{font-size:var(--fs-sm);color:var(--muted);margin-right:4px}
+/* text size — the three steps move the type tokens every component reads (S · M · L) */
+html.tsize-l{--fs-2xs:11px;--fs-xs:12.5px;--fs-sm:13.5px;--fs-base:14.5px;--fs-md:16px}
+html.tsize-l body{font-size:17px}
+html.tsize-s{--fs-2xs:9px;--fs-xs:10px;--fs-sm:11px;--fs-base:12px;--fs-md:13px}
+html.tsize-s body{font-size:13.5px}
 .vid-send{margin-top:8px;flex-wrap:wrap;gap:6px}
 .vid-send:empty{display:none}
 .vid-send .btn{min-height:38px;padding:8px 12px;font-size:11.5px;flex:1 1 auto}
@@ -2937,6 +2952,21 @@ html.splashing #splash{display:flex}
     <div class="status" id="stData"></div>
   </section>
 
+  <!-- 6.95.0 — SETTINGS: text size (S · M · L) and "tell me when a video is ready" -->
+  <section class="card" id="cardPrefs">
+    <h2 id="prefsH2"></h2>
+    <div class="row prefs-row" id="prefsTsizeRow">
+      <span class="lbl" id="prefsTsizeL"></span>
+      <button class="chip" id="prefsTsizeS" data-tsize="s"></button>
+      <button class="chip" id="prefsTsizeM" data-tsize="m"></button>
+      <button class="chip" id="prefsTsizeL2" data-tsize="l"></button>
+    </div>
+    <div class="row prefs-row" id="prefsNotifyRow">
+      <button class="chip" id="prefsNotify"></button>
+      <span class="mut" id="prefsNotifyNote" style="margin:0"></span>
+    </div>
+  </section>
+
   <section class="card">
     <h2 id="platH2"></h2>
     <!-- a user only needs their own platform's install steps, not all 4 at
@@ -3980,6 +4010,12 @@ html.splashing #splash{display:flex}
   <section class="card">
     <h2><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-gallery"/></svg>MY GALLERY</h2>
     <p class="mut" id="galNote">ထုတ်ပြီးသမျှ ရလဒ်တွေ ဒီမှာ အလိုအလျောက် စုသိမ်းထားတယ် (ဖုန်းထဲမှာပဲ) — reload လုပ်လည်း မပျောက်ဘူး။</p>
+    <div class="row gal-tools" id="galTools">
+      <input class="inp" id="galSearch" type="search" autocomplete="off" autocapitalize="none" spellcheck="false">
+      <select class="inp" id="galKind" style="width:auto"></select>
+      <select class="inp" id="galSort" style="width:auto"></select>
+    </div>
+    <div class="mut" id="galCount"></div>
     <div class="row" id="galBulkBar" style="margin-bottom:8px">
       <button class="chip" id="galSelMode"></button>
       <button class="btn" id="galZipSel" style="display:none"></button>
@@ -4363,6 +4399,8 @@ var LS_STATE = "hnk_web_studio_v2_state";
 /* ---------- language (my/en) — toggle reloads so every builder re-reads t() ---------- */
 var LANG = "my";
 try { LANG = localStorage.getItem("hnk_ws_lang") || "my"; } catch(e){}
+/* 6.95.0 — the text size a student chose is on <html> before the first paint (Setup ▸ Settings) */
+try { var _ts0 = localStorage.getItem("hnk_ws_tsize"); if (_ts0 === "s" || _ts0 === "l") document.documentElement.classList.add("tsize-" + _ts0); } catch(e){}
 /* v5.56.0 — the picker offers only languages that really render (owner
    instruction: "တကယ်ရှိပြီး သုံးလို့ရတာတွေပဲ ပြပါ"). Ten codes shipped as
    pure fallback shells with ZERO native strings — picking Mon showed
@@ -5415,6 +5453,9 @@ var TOPGROUPS=[
    tools/build_app_data.js moves the cut forward; the panel lifts this list
    (js/hnk_whats_new.js), so its boot parses these rows and no more. */
 var WHATS_NEW = [
+  { v:"6.95.0", kind:"page", ref:"pgGallery",
+    t:{my:"အသုံးပြုရ အဆင်ပြေအောင် ၆ ချက် — Gallery မှာ ရှာ · filter · စီ လို့ရပြီ၊ ဗီဒီယို ပြီးရင် (app နောက်ကွယ်ရောက်နေရင်လည်း) notification ရမယ်၊ Home မှာ နောက်ဆုံး ရလဒ် ၆ ခု၊ clip ထဲက ပုံ တစ်ပုံ → Talking Photo / IMAGE 1၊ Photoshop Panel မှာ ဖိုင် ဆွဲထည့် (drag & drop) လို့ရပြီ၊ Setup မှာ စာလုံး အရွယ် သေး · ပုံမှန် · ကြီး",en:"Six conveniences — search · filter · sort in the Gallery, a notification when a video finishes while the app is in the background, the last six results on Home, one frame of any clip into Talking Photo / IMAGE 1, drag & drop onto every Photoshop Panel slot, and a text-size setting (Small · Normal · Large) in Setup",shn:"ၸႂ်ႉငၢႆႈလိူဝ် ၆ ဢၼ် — Gallery ၼႂ်း သွၵ်ႈႁႃ · filter · ၸႅၵ်ႇ၊ ဝီးတီးဢူဝ်ႊယဝ်ႉ (app ယူႇတၢင်းလင်ၵေႃႈ) လႆႈ notification၊ Home ၼႂ်း ၽွၼ်းလႆႈလိုၼ်းသုတ်း ၆ ဢၼ်၊ ႁၢင်ႈၼိုင်ႈၶႅပ်း ၼႂ်း clip → Talking Photo / IMAGE 1၊ Photoshop Panel ၼႂ်း drag & drop ၾၢႆႇ၊ Setup ၼႂ်း တူဝ်လိၵ်ႈ လဵၵ်ႉ · ပၵ်းၵဝ်ႇ · ယႂ်ႇ",kac:"Ahkyak 6 — Gallery hta tam · filter · sort lu sai, video ngut yang (app hpang de nga tim) notification lu na, Home hta hpang jahtum lachyum 6, clip kaw na sumla langai → Talking Photo / IMAGE 1, Photoshop Panel hta file drag & drop lu sai, Setup hta laika kaba Kaji · Pyaw · Kaba",th:"6 ความสะดวก — ค้นหา · กรอง · เรียงในแกลเลอรี, แจ้งเตือนเมื่อวิดีโอเสร็จแม้แอปอยู่เบื้องหลัง, 6 ผลลัพธ์ล่าสุดบนหน้า Home, ดึงหนึ่งเฟรมจากคลิปไป Talking Photo / IMAGE 1, ลากวางไฟล์ลงทุกช่องของ Photoshop Panel, และตั้งขนาดตัวอักษร (เล็ก · ปกติ · ใหญ่) ใน Setup",zh:"六项便利 — 图库支持搜索·筛选·排序，视频在后台完成时发送通知，Home 显示最近 6 个结果，任意片段截一帧送入 Talking Photo / IMAGE 1，Photoshop 面板每个槽位支持拖放文件，Setup 中可设置文字大小（小·标准·大）",vi:"Sáu tiện ích — tìm · lọc · sắp xếp trong Gallery, thông báo khi video xong lúc app ở nền, 6 kết quả gần nhất trên Home, một khung hình của clip vào Talking Photo / IMAGE 1, kéo thả tệp vào mọi ô của Photoshop Panel, và cỡ chữ (Nhỏ · Thường · Lớn) trong Setup",id:"Enam kemudahan — cari · filter · urut di Galeri, notifikasi saat video selesai ketika aplikasi di latar belakang, 6 hasil terakhir di Home, satu frame dari klip ke Talking Photo / IMAGE 1, seret & lepas berkas ke setiap slot Photoshop Panel, dan ukuran teks (Kecil · Normal · Besar) di Setup",ms:"Enam kemudahan — cari · tapis · susun dalam Galeri, notifikasi bila video siap ketika aplikasi di latar belakang, 6 hasil terkini di Home, satu bingkai daripada klip ke Talking Photo / IMAGE 1, seret & lepas fail ke setiap slot Photoshop Panel, dan saiz teks (Kecil · Biasa · Besar) dalam Setup"},
+    s:{my:"**Gallery** — အပေါ်မှာ ရှာဖွေစာ (prompt · workflow · ရက်စွဲ)၊ အမျိုးအစား (အားလုံး · ပုံများ · ဗီဒီယိုများ · ★ သိမ်းထား) နဲ့ စီပုံ (အသစ်ဆုံး · အဟောင်းဆုံး · ဖိုင် အကြီးဆုံး) — “N / M ပြထား” လို့ မှန်မှန် ပြတယ်။ Photoshop Panel ရဲ့ Gallery မှာလဲ အတူတူ။ **Notification** — Video · Video Upscale · Video Tools · Talking Photo ပထမဆုံး အကြိမ် ထုတ်တဲ့အခါ browser က ခွင့်တောင်းမယ်; app ကို နောက်ကွယ်ထားပြီး ပြီးသွားရင် notification လာမယ်၊ နှိပ်ရင် အဲ့စာမျက်နှာ ပွင့်မယ်။ Setup ▸ ပြင်ဆင်ချက် မှာ ပိတ်/ဖွင့် လို့ရတယ် (Panel မှာ မရှိ — Photoshop ထဲ notification မရှိလို့)။ **Home** — Continue card အောက်မှာ နောက်ဆုံး ရလဒ် ၆ ခု၊ နှိပ်ရင် Gallery မှာ အဲ့ပုံ ရွေးပြီးသား။ **ပုံ ယူ** — Video ရလဒ်ဘောက်စ်တိုင်း + Video wizard ရဲ့ Result မှာ “ပုံ ယူ → Talking Photo” နဲ့ “ပုံ ယူ → IMAGE 1” — clip ရဲ့ ပထမ တစ်စက္ကန့်ခွဲ ပုံ (JPEG) က Talking Photo ရဲ့ မျက်နှာ ဒါမှမဟုတ် Freeform ရဲ့ IMAGE 1 ဖြစ်သွားမယ်။ Panel မှာ video ဖွင့်လို့ရမှသာ ပေါ်မယ်။ **Drag & drop (Panel)** — Talking Photo ပုံ/အသံ · Video Tools clip/ပုံ · Upscale clip · Retouch A/B PHOTO card · Freeform slot — ကွန်ပျူတာက ဖိုင်ကို ဆွဲထည့်ရင် ရွေးလိုက်တဲ့အတိုင်း ဝင်မယ်; SELF-TEST မှာ “Drag & drop” row (Photoshop ထဲ တကယ် စစ်ရန် ကျန်)။ **စာလုံး အရွယ်** — Setup ▸ ပြင်ဆင်ချက် ▸ သေး · ပုံမှန် · ကြီး — app နဲ့ Panel နှစ်ခုလုံး၊ မှတ်ထားမယ်။",en:"**Gallery** — a search box (prompt · workflow · date), a kind filter (All · Photos · Videos · ★ Starred) and a sort (Newest · Oldest · Largest) above the grid, with an honest “N of M shown” count; the Photoshop Panel's Gallery has the same three. **Notifications** — the first Video · Video Upscale · Video Tools · Talking Photo job asks the browser once; when a job finishes while the app is in the background you get a notification, and tapping it opens that page. Switch it in Setup ▸ SETTINGS (not in the Panel — Photoshop has no notifications). **Home** — the last six results under the Continue card; a tap opens the Gallery on that one. **Frame** — every video result box and the video wizard's Result carry “Frame → Talking Photo” and “Frame → IMAGE 1”: the clip's half-second frame (JPEG) becomes the Talking Photo face or Freeform's IMAGE 1. In the Panel only where video decodes. **Drag & drop (Panel)** — Talking Photo photo/voice · Video Tools clip/photo · Upscale clip · the Retouch A/B PHOTO card · the Freeform slots: drop a file from the computer and it lands as if picked; SELF-TEST gets a “Drag & drop” row (real-Photoshop check still pending). **Text size** — Setup ▸ SETTINGS ▸ Small · Normal · Large, on the app and the Panel, remembered.",shn:"Gallery ၼႂ်း သွၵ်ႈႁႃ · filter · ၸႅၵ်ႇ၊ ဝီးတီးဢူဝ်ႊယဝ်ႉ လႆႈ notification၊ Home ၼႂ်း ၽွၼ်းလႆႈလိုၼ်းသုတ်း ၆၊ clip → Talking Photo / IMAGE 1၊ Panel drag & drop၊ တူဝ်လိၵ်ႈ လဵၵ်ႉ · ပၵ်းၵဝ်ႇ · ယႂ်ႇ။",kac:"Gallery hta tam · filter · sort, video ngut yang notification, Home hta lachyum 6, clip → Talking Photo / IMAGE 1, Panel drag & drop, laika kaba Kaji · Pyaw · Kaba.",th:"ค้นหา · กรอง · เรียงในแกลเลอรี, แจ้งเตือนเมื่อวิดีโอเสร็จ, 6 ผลลัพธ์ล่าสุดบน Home, เฟรมจากคลิป → Talking Photo / IMAGE 1, ลากวางใน Panel, ขนาดตัวอักษร เล็ก · ปกติ · ใหญ่",zh:"图库搜索·筛选·排序，视频完成通知，Home 最近 6 个结果，片段截帧 → Talking Photo / IMAGE 1，面板拖放，文字大小 小·标准·大。",vi:"Tìm · lọc · sắp xếp trong Gallery, thông báo khi video xong, 6 kết quả gần nhất trên Home, khung hình → Talking Photo / IMAGE 1, kéo thả trong Panel, cỡ chữ Nhỏ · Thường · Lớn.",id:"Cari · filter · urut di Galeri, notifikasi saat video selesai, 6 hasil terakhir di Home, frame → Talking Photo / IMAGE 1, seret & lepas di Panel, ukuran teks Kecil · Normal · Besar.",ms:"Cari · tapis · susun dalam Galeri, notifikasi bila video siap, 6 hasil terkini di Home, bingkai → Talking Photo / IMAGE 1, seret & lepas dalam Panel, saiz teks Kecil · Biasa · Besar."} },
   { v:"6.94.0", kind:"page", ref:"pgVideo",
     t:{my:"Video ရလဒ်တိုင်းမှာ “Upscale ဆီ ပို့မယ်” · “Video Tools ဆီ ပို့မယ်” ခလုတ် — တစ်ချက်နှိပ်ရင် clip က အဲ့စာမျက်နှာရဲ့ input ဖြစ်သွားပြီ (Download လုပ်ပြီး ပြန်ရွေးစရာ မလိုတော့)၊ Panel SELF-TEST မှာ “Save folder” row အသစ်၊ panel release တိုင်းရဲ့ Adobe acceptance မှတ်တမ်း",en:"Every video result carries “Send to Upscale” and “Send to Video Tools” — one tap and the clip is that page's input (no more Download, then pick it again); the Panel's SELF-TEST gets a “Save folder” row; and every panel release now has one honest line in the Adobe acceptance record",shn:"ၽွၼ်းလႆႈဝီးတီးဢူဝ်ႊၵူႈဢၼ် မီး “သူင်ႇၸူး Upscale” · “သူင်ႇၸူး Video Tools” — ၼဵၵ်းၼိုင်ႈပွၵ်ႈ clip ပဵၼ် input ၼႃႈလိၵ်ႈၼၼ်ႉ၊ Panel SELF-TEST မီး “Save folder”၊ release ၵူႈဢၼ် မီးမၢႆတွင်း acceptance",kac:"Video lachyum shagu hta “Send to Upscale” · “Send to Video Tools” — kalang dip yang clip gaw dai page a input tai sai, Panel SELF-TEST hta “Save folder” row, release shagu hta acceptance ka da ai",th:"ผลลัพธ์วิดีโอทุกกล่องมีปุ่ม “ส่งไป Upscale” · “ส่งไป Video Tools” — แตะครั้งเดียว คลิปกลายเป็นไฟล์ของหน้านั้น (ไม่ต้อง Download แล้วเลือกใหม่), SELF-TEST ของ Panel มีแถว “Save folder” และทุก release มีบันทึก Adobe acceptance หนึ่งบรรทัดตามจริง",zh:"每个视频结果都带“发送到 Upscale”·“发送到 Video Tools”——点一下，片段就成为该页面的输入（不再需要先下载再选择）；面板 SELF-TEST 新增“Save folder”行；每个面板版本在 Adobe 验收记录中都有一行真实记录",vi:"Mỗi kết quả video có “Gửi sang Upscale” · “Gửi sang Video Tools” — một chạm, clip thành đầu vào của trang đó (không còn Tải về rồi chọn lại); SELF-TEST của Panel thêm dòng “Save folder”; mỗi bản phát hành panel có một dòng trung thực trong hồ sơ Adobe acceptance",id:"Setiap hasil video punya “Kirim ke Upscale” · “Kirim ke Video Tools” — satu ketukan dan klip menjadi input halaman itu (tak perlu Download lalu pilih lagi); SELF-TEST Panel mendapat baris “Save folder”; setiap rilis panel kini punya satu baris jujur di catatan Adobe acceptance",ms:"Setiap hasil video ada “Hantar ke Upscale” · “Hantar ke Video Tools” — satu ketikan dan klip menjadi input halaman itu (tak perlu Download lalu pilih semula); SELF-TEST Panel dapat baris “Save folder”; setiap keluaran panel kini ada satu baris jujur dalam rekod Adobe acceptance"},
     s:{my:"**Clip ပို့မယ်** — Video · Video Upscale · Video Tools · Talking Photo ရလဒ်ဘောက်စ်တိုင်း + Video wizard ရဲ့ Result မှာ “Upscale ဆီ ပို့မယ်” နဲ့ “Video Tools ဆီ ပို့မယ်” ခလုတ် ၂ ခု။ နှိပ်ရင် clip ရဲ့ ဖိုင် (သိမ်းထားတဲ့ copy ဒါမှမဟုတ် link ကို တစ်ခါ ဆွဲယူ) က အဲ့စာမျက်နှာမှာ ရွေးထားတဲ့ ဖိုင် ဖြစ်သွားပြီး စာမျက်နှာ ပွင့်မယ်။ Upscale ဘောက်စ်က Video Tools တစ်ခုပဲ ပို့တယ်၊ Talking Photo က ပုံ + အသံ ယူတာမို့ ဘာမှ မလက်ခံဘူး — သူ့ရလဒ်ကိုပဲ ဆက်ပို့တယ်။ Photoshop Panel မှာလဲ အတူတူ။ **Save folder (Panel SELF-TEST)** — ရလဒ် ဖိုင် သိမ်းတဲ့ folder ကို ရှာ၊ probe ဖိုင် တစ်ခု ရေး၊ ပြန်ဖတ်၊ ဖျက် — လမ်းကြောင်း · writable · သိမ်းထားတဲ့ take အရေအတွက် · ms (ဒါမှမဟုတ် ငြင်းတဲ့ အကြောင်းရင်း)။ **Acceptance record** — panel release တိုင်း PANEL_RELEASE_SECURITY.md မှာ တစ်ကြောင်း: version · ရက်စွဲ · SHA-256 · size · Photoshop ထဲ စစ်ပြီးပြီလား (ယခုထိ pending)။",en:"**Send the clip on** — every result box (Video · Video Upscale · Video Tools · Talking Photo) and the video wizard's Result step carry “Send to Upscale” and “Send to Video Tools”. One tap: the clip's bytes (the saved copy, or the live link fetched once) become that page's picked file, exactly as the picker would set them, and the page opens. The Upscale box offers only Video Tools; Talking Photo takes a photo and a voice, so nothing is sent to it — its results are sent on. The Photoshop Panel does the same. **Save folder (Panel SELF-TEST)** — the folder every finished take is written to: found, a probe file written, read back and deleted — path · writable · saved takes · ms, or the exact refusal. **Acceptance record** — every panel release gets one honest line in PANEL_RELEASE_SECURITY.md: version · date · SHA-256 · size · whether the in-Photoshop checklist ran (still pending).",shn:"ၽွၼ်းလႆႈဝီးတီးဢူဝ်ႊၵူႈဢၼ် သူင်ႇၵႂႃႇ Upscale / Video Tools လႆႈ ၼဵၵ်းၼိုင်ႈပွၵ်ႈ၊ Panel SELF-TEST “Save folder”၊ release ၵူႈဢၼ် မီးမၢႆတွင်း acceptance ၼိုင်ႈထႅဝ်။",kac:"Video lachyum shagu hpe Upscale / Video Tools de kalang dip shangun lu ai, Panel SELF-TEST “Save folder” row, release shagu hta acceptance ka da ai lang mi.",th:"ส่งคลิปผลลัพธ์ทุกกล่องไป Upscale / Video Tools ได้ในหนึ่งแตะ, SELF-TEST ของ Panel มีแถว “Save folder”, ทุก release มีบันทึก acceptance หนึ่งบรรทัด",zh:"每个视频结果都可一键发送到 Upscale / Video Tools，面板 SELF-TEST 新增“Save folder”行，每个版本一行 acceptance 记录。",vi:"Mỗi kết quả video gửi sang Upscale / Video Tools bằng một chạm, SELF-TEST của Panel có dòng “Save folder”, mỗi bản phát hành một dòng acceptance.",id:"Setiap hasil video dikirim ke Upscale / Video Tools dengan satu ketukan, SELF-TEST Panel punya baris “Save folder”, setiap rilis satu baris acceptance.",ms:"Setiap hasil video dihantar ke Upscale / Video Tools dengan satu ketikan, SELF-TEST Panel ada baris “Save folder”, setiap keluaran satu baris acceptance."} },
@@ -6249,6 +6290,82 @@ function galleryDel(id, cb){
   });
 }
 var galSel=null;
+/* 6.95.0 — GALLERY TOOLS. A hundred results and one long grid: the strip now has a search box (prompt · workflow
+   · date), a kind filter (all · photos · videos · starred) and a sort (newest · oldest · largest). The view is a
+   filter over the same records — nothing is moved or deleted; Select-all selects what is SHOWN. A tile tapped on
+   the Home recent strip opens the Gallery with that result picked (galPendingId). */
+var galView={ q:"", kind:"all", sort:"new" }, galPendingId=null, galToolsBound=false;
+var GAL_W={
+  search:{my:"ရလဒ်ထဲ ရှာမယ် — prompt · workflow · ရက်စွဲ",en:"Search results — prompt · workflow · date",shn:"သွၵ်ႈႁႃၽွၼ်းလႆႈ — prompt · workflow · ဝၼ်း",kac:"Result tam u — prompt · workflow · shani",th:"ค้นหาผลลัพธ์ — prompt · workflow · วันที่",zh:"搜索结果 — 提示词 · 工作流 · 日期",vi:"Tìm kết quả — prompt · workflow · ngày",id:"Cari hasil — prompt · workflow · tanggal",ms:"Cari hasil — prompt · workflow · tarikh"},
+  kAll:{my:"အားလုံး",en:"All",shn:"တင်းမူတ်း",kac:"Yawng",th:"ทั้งหมด",zh:"全部",vi:"Tất cả",id:"Semua",ms:"Semua"},
+  kImg:{my:"ပုံများ",en:"Photos",shn:"ၶႅပ်းႁၢင်ႈ",kac:"Sumla ni",th:"รูปภาพ",zh:"图片",vi:"Ảnh",id:"Foto",ms:"Foto"},
+  kVid:{my:"ဗီဒီယိုများ",en:"Videos",shn:"ဝီးတီးဢူဝ်ႊ",kac:"Video ni",th:"วิดีโอ",zh:"视频",vi:"Video",id:"Video",ms:"Video"},
+  kKeep:{my:"★ သိမ်းထား",en:"★ Starred",shn:"★ မၢႆဝႆႉ",kac:"★ Tawn da ai",th:"★ ติดดาว",zh:"★ 已加星",vi:"★ Đã gắn sao",id:"★ Berbintang",ms:"★ Berbintang"},
+  sNew:{my:"အသစ်ဆုံး အရင်",en:"Newest first",shn:"မႂ်ႇသုတ်းဢွၼ်တၢင်း",kac:"Nnan htum shawng",th:"ใหม่ล่าสุดก่อน",zh:"最新优先",vi:"Mới nhất trước",id:"Terbaru dulu",ms:"Terbaru dahulu"},
+  sOld:{my:"အဟောင်းဆုံး အရင်",en:"Oldest first",shn:"ၵဝ်ႇသုတ်းဢွၼ်တၢင်း",kac:"Dingsa htum shawng",th:"เก่าสุดก่อน",zh:"最早优先",vi:"Cũ nhất trước",id:"Terlama dulu",ms:"Terlama dahulu"},
+  sBig:{my:"ဖိုင် အကြီးဆုံး အရင်",en:"Largest first",shn:"ယႂ်ႇသုတ်းဢွၼ်တၢင်း",kac:"Kaba htum shawng",th:"ไฟล์ใหญ่สุดก่อน",zh:"最大优先",vi:"Lớn nhất trước",id:"Terbesar dulu",ms:"Terbesar dahulu"},
+  count:{my:"{N} / {M} ပြထား",en:"{N} of {M} shown",shn:"ၼႄ {N} / {M}",kac:"{N} / {M} madun ai",th:"แสดง {N} จาก {M}",zh:"显示 {N} / {M}",vi:"Hiện {N} / {M}",id:"Menampilkan {N} dari {M}",ms:"Menunjukkan {N} daripada {M}"},
+  none:{my:"ကိုက်တဲ့ ရလဒ် မရှိပါ — ရှာစာ ဒါမှမဟုတ် filter ပြောင်းကြည့်ပါ",en:"Nothing matches — change the search or the filter",shn:"ဢမ်ႇမီးဢၼ်မႅၼ်ႈ — လႅၵ်ႈသွၵ်ႈႁႃ ဢမ်ႇၼၼ် filter",kac:"Hkrak ai n nga ai — tam ai ga (sh) filter galai u",th:"ไม่มีรายการที่ตรง — ลองเปลี่ยนคำค้นหรือตัวกรอง",zh:"没有匹配项 — 换个搜索词或筛选",vi:"Không có kết quả khớp — đổi từ khóa hoặc bộ lọc",id:"Tidak ada yang cocok — ubah pencarian atau filter",ms:"Tiada yang sepadan — tukar carian atau penapis"},
+  recent:{my:"နောက်ဆုံး ရလဒ်များ",en:"Recent results",shn:"ၽွၼ်းလႆႈလိုၼ်းသုတ်း",kac:"Hpang jahtum result ni",th:"ผลลัพธ์ล่าสุด",zh:"最近的结果",vi:"Kết quả gần đây",id:"Hasil terbaru",ms:"Hasil terkini"}
+};
+function galItemText(it){
+  var d=new Date(it.ts||0), p2=function(x){ return (x<10?"0":"")+x; };
+  return ((it.prompt||"")+" "+(it.prov||"")+" "+(it.kind||"image")+" "+d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate())).toLowerCase();
+}
+function galApplyView(all){
+  var q=(galView.q||"").trim().toLowerCase(), out=all.filter(function(it){
+    if(galView.kind==="image" && it.kind==="video") return false;
+    if(galView.kind==="video" && it.kind!=="video") return false;
+    if(galView.kind==="keep" && !it.keep) return false;
+    return !q || galItemText(it).indexOf(q)>=0;
+  });
+  if(galView.sort==="old") out.sort(function(a,b){ return (a.ts||0)-(b.ts||0); });
+  else if(galView.sort==="big") out.sort(function(a,b){ return (b.bytes||0)-(a.bytes||0); });
+  else out.sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+  return out;
+}
+function galToolsPaint(){
+  var sIn=$("galSearch"), k=$("galKind"), so=$("galSort"); if(!sIn||!k||!so) return;
+  sIn.placeholder=L9(GAL_W.search);
+  var fill=function(sel, rows, cur){ sel.innerHTML=""; rows.forEach(function(r){ var o=document.createElement("option"); o.value=r[0]; o.textContent=L9(r[1]); sel.appendChild(o); }); sel.value=cur; };
+  fill(k, [["all",GAL_W.kAll],["image",GAL_W.kImg],["video",GAL_W.kVid],["keep",GAL_W.kKeep]], galView.kind);
+  fill(so, [["new",GAL_W.sNew],["old",GAL_W.sOld],["big",GAL_W.sBig]], galView.sort);
+}
+function galToolsBind(){
+  if(galToolsBound) return; galToolsBound=true;
+  var sIn=$("galSearch"), k=$("galKind"), so=$("galSort"), tm=null; if(!sIn||!k||!so) return;
+  sIn.oninput=function(){ galView.q=sIn.value; clearTimeout(tm); tm=setTimeout(renderGallery, 160); };
+  k.onchange=function(){ galView.kind=k.value; renderGallery(); };
+  so.onchange=function(){ galView.sort=so.value; renderGallery(); };
+}
+/* 6.95.0 — HOME: the last six results as a strip under Continue; a tap opens the Gallery on that result */
+function renderDashRecent(){
+  var card=$("dashCont"); if(!card) return;
+  galDb().then(function(d){
+    var got=[];
+    var req=d.transaction("gal").objectStore("gal").openCursor(null,"prev");
+    req.onsuccess=function(e){
+      var c=e.target.result;
+      if(c && got.length<6){ var v=c.value||{}; got.push({ id:v.id, kind:v.kind, thumb:v.thumb, mime:v.mime, b64:v.b64 }); c.continue(); return; }
+      if(curPage!=="pgDash" || !got.length) return;
+      var host=$("dashRecent"), h=$("dashRecentH");
+      if(!host){
+        h=el("div","dash-recent-h"); h.id="dashRecentH"; card.appendChild(h);
+        host=el("div","dash-recent"); host.id="dashRecent"; card.appendChild(host);
+      }
+      h.textContent=L9(GAL_W.recent); host.innerHTML="";
+      got.forEach(function(it){
+        var im=document.createElement("img");
+        im.src=it.thumb ? "data:image/jpeg;base64,"+it.thumb : (it.kind==="video" ? GAL_VIDEO_TILE : (it.b64 ? "data:"+it.mime+";base64,"+it.b64 : GAL_VIDEO_TILE));
+        if(it.kind==="video") im.classList.add("gal-vid");
+        im.alt=""; im.loading="lazy"; im.decoding="async"; im.dataset.gid=String(it.id);
+        makePickable(im, function(){ galPendingId=it.id; switchPage("pgGallery"); });
+        host.appendChild(im);
+      });
+      card.style.display="";
+    };
+  }).catch(function(){});
+}
 /* v5.62.0 — owner: one visible sweep for the whole Gallery. Starred records
    are the studio's protected deliveries, so the sweep spares them and says
    so. No modal: the button arms on the first tap and only a second tap
@@ -6385,7 +6502,7 @@ function galBulkRefresh(){
       sa=el("button","chip"); sa.id="galSelAll";
       m.parentNode.insertBefore(sa, m.nextSibling);
       sa.onclick=function(){
-        var all=window._galItems||[];
+        var all=window._galShown||window._galItems||[];   /* 6.95.0 — what the filter shows */
         var every=all.length && all.every(function(it){ return galMulti.ids[it.id]; });
         galMulti.ids={};
         if(!every) all.forEach(function(it){ galMulti.ids[it.id]=1; });
@@ -6394,7 +6511,7 @@ function galBulkRefresh(){
     }
     if(sa){
       sa.style.display="";
-      var all2=window._galItems||[];
+      var all2=window._galShown||window._galItems||[];
       var every2=all2.length && all2.every(function(it){ return galMulti.ids[it.id]; });
       setIcnText(sa,"i-check",every2
         ? L9({my:"အားလုံးဖြုတ်",en:"Clear all",shn:"ထွၼ်တင်းမူတ်း",kac:"Yawng raw u",th:"ยกเลิกทั้งหมด",zh:"取消全选",vi:"Bỏ chọn hết",id:"Hapus semua",ms:"Kosongkan semua"})
@@ -6460,11 +6577,15 @@ function galBackfillThumbs(ids){
 function renderGallery(){
   galDb().then(function(d){
     galReadIndex(d).then(function(idx){
-      var items=idx.items;
-      window._galItems=items;
+      var all=idx.items;
+      window._galItems=all;
+      galToolsBind(); galToolsPaint();
+      var items=galApplyView(all); window._galShown=items;
       setTimeout(function(){ galBackfillThumbs(idx.legacy); }, 400);
       var grid=$("galGrid"); grid.innerHTML="";
-      $("galEmpty").classList.toggle("on",!items.length);
+      $("galEmpty").classList.toggle("on",!all.length);
+      var gc=$("galCount");
+      if(gc) gc.textContent = all.length ? (L9(GAL_W.count).replace("{N}",String(items.length)).replace("{M}",String(all.length)) + (items.length ? "" : " · " + L9(GAL_W.none))) : "";
       if(galSel && !items.some(function(it){ return it.id===galSel.id; })) galSel=null;
       if(!galSel){ $("galPick").className="lib-pick"; }
       galBulkRefresh();
@@ -6490,6 +6611,7 @@ function renderGallery(){
         im.loading="lazy"; im.decoding="async";
         im.alt=(it.prompt||"").slice(0,80)||"gallery result";
         im.className = (galMulti.on&&galMulti.ids[it.id]) || (galSel&&galSel.id===it.id) ? "sel" : "";
+        im.dataset.gid=String(it.id);
         im.classList.add("ld"); im.onload=im.onerror=function(){ im.classList.remove("ld"); };
         makePickable(im, function(){
           if(galMulti.on){
@@ -6544,6 +6666,7 @@ function renderGallery(){
         });
         grid.appendChild(im);
       });
+      if(galPendingId!=null){ var pt=grid.querySelector('img[data-gid="'+galPendingId+'"]'); galPendingId=null; if(pt && pt.onclick){ pt.onclick(); try{ pt.scrollIntoView({block:"center"}); }catch(eS){} } }
     });
   }).catch(function(){
     $("galGrid").innerHTML="";
@@ -26289,6 +26412,7 @@ function renderDashStatic(){
 }
 function renderDashCont(){
   var card=$("dashCont");
+  try{ renderDashRecent(); }catch(eR){}
   var recents=[];
   try{ recents=JSON.parse(localStorage.getItem("hnk_ws_wf_recent")||"[]"); }catch(e){}
   var hasHist=!!state.hist.length;
@@ -29503,7 +29627,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.94.0";
+var APP_VER="6.95.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -29633,8 +29757,85 @@ function accPlanLineText(){
 }
 
 /* ---- Backup & Restore ---- */
+/* 6.95.0 — SETTINGS card: text size (S · M · L on <html>, remembered) and the "tell me when it's ready" switch */
+var PREFS_W={
+  h2:{my:"ပြင်ဆင်ချက်",en:"SETTINGS",shn:"ၶိူင်ႈမၢႆ",kac:"Setting ni",th:"การตั้งค่า",zh:"设置",vi:"CÀI ĐẶT",id:"PENGATURAN",ms:"TETAPAN"},
+  tsize:{my:"စာလုံး အရွယ်",en:"Text size",shn:"တူဝ်လိၵ်ႈ",kac:"Laika kaba",th:"ขนาดตัวอักษร",zh:"文字大小",vi:"Cỡ chữ",id:"Ukuran teks",ms:"Saiz teks"},
+  s:{my:"သေး",en:"Small",shn:"လဵၵ်ႉ",kac:"Kaji",th:"เล็ก",zh:"小",vi:"Nhỏ",id:"Kecil",ms:"Kecil"},
+  m:{my:"ပုံမှန်",en:"Normal",shn:"ပၵ်းၵဝ်ႇ",kac:"Pyaw",th:"ปกติ",zh:"标准",vi:"Thường",id:"Normal",ms:"Biasa"},
+  l:{my:"ကြီး",en:"Large",shn:"ယႂ်ႇ",kac:"Kaba",th:"ใหญ่",zh:"大",vi:"Lớn",id:"Besar",ms:"Besar"},
+  nOn:{my:"ဗီဒီယို ပြီးရင် အသိပေးမယ် — ဖွင့်ထား",en:"Tell me when a video is ready — on",shn:"ဝီးတီးဢူဝ်ႊယဝ်ႉ ပွင်ႇၶၢဝ်ႇ — ပိုတ်ႇ",kac:"Video ngut yang shana u — hpaw da",th:"แจ้งเมื่อวิดีโอเสร็จ — เปิด",zh:"视频完成时提醒我 — 开",vi:"Báo khi video xong — bật",id:"Beri tahu saat video selesai — aktif",ms:"Maklumkan bila video siap — hidup"},
+  nOff:{my:"ဗီဒီယို ပြီးရင် အသိပေးမယ် — ပိတ်ထား",en:"Tell me when a video is ready — off",shn:"ဝီးတီးဢူဝ်ႊယဝ်ႉ ပွင်ႇၶၢဝ်ႇ — ပိၵ်ႉ",kac:"Video ngut yang shana u — pat da",th:"แจ้งเมื่อวิดีโอเสร็จ — ปิด",zh:"视频完成时提醒我 — 关",vi:"Báo khi video xong — tắt",id:"Beri tahu saat video selesai — nonaktif",ms:"Maklumkan bila video siap — mati"},
+  nNote:{my:"App ကို နောက်ကွယ်ထားရင်လည်း ပြီးတာနဲ့ notification ရမယ်",en:"You get a notification even when the app is in the background",shn:"တေႃႉတႄႉ app ယူႇတၢင်းလင်ၵေႃႈ လႆႈ notification",kac:"App hpe hpang de tawn da tim notification lu na",th:"ได้รับการแจ้งเตือนแม้แอปอยู่ในพื้นหลัง",zh:"即使应用在后台也会收到通知",vi:"Vẫn nhận thông báo khi app ở nền",id:"Tetap dapat notifikasi saat aplikasi di latar belakang",ms:"Masih dapat notifikasi walaupun aplikasi di latar belakang"},
+  nBlocked:{my:"Browser က notification ပိတ်ထားတယ် — browser setting မှာ ခွင့်ပြုပါ",en:"The browser has blocked notifications — allow them in the browser settings",shn:"Browser ပိၵ်ႉ notification ဝႆႉ — ပၼ်ၶႂၢင်ႉတီႈ setting",kac:"Browser gaw notification pat da ai — browser setting hta ahkang jaw u",th:"เบราว์เซอร์บล็อกการแจ้งเตือน — อนุญาตในตั้งค่าเบราว์เซอร์",zh:"浏览器已阻止通知 — 请在浏览器设置中允许",vi:"Trình duyệt đã chặn thông báo — hãy cho phép trong cài đặt",id:"Browser memblokir notifikasi — izinkan di pengaturan browser",ms:"Pelayar menyekat notifikasi — benarkan dalam tetapan pelayar"},
+  nNo:{my:"ဒီ browser မှာ notification မရပါ",en:"Notifications are not available in this browser",shn:"Browser ၼႆႉ ဢမ်ႇမီး notification",kac:"Ndai browser hta notification n lu ai",th:"เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน",zh:"此浏览器不支持通知",vi:"Trình duyệt này không hỗ trợ thông báo",id:"Notifikasi tidak tersedia di browser ini",ms:"Notifikasi tidak tersedia dalam pelayar ini"}
+};
+var TSIZE_KEY="hnk_ws_tsize", NOTIFY_KEY="hnk_ws_notify";
+function tsizeGet(){ try{ var v=localStorage.getItem(TSIZE_KEY); return v==="s"||v==="l" ? v : "m"; }catch(e){ return "m"; } }
+function tsizeSet(v){
+  v = v==="s"||v==="l" ? v : "m";
+  var root=document.documentElement; root.classList.remove("tsize-s","tsize-l"); if(v!=="m") root.classList.add("tsize-"+v);
+  try{ localStorage.setItem(TSIZE_KEY, v); }catch(e){}
+  renderPrefs();
+}
+function notifyWanted(){ try{ return localStorage.getItem(NOTIFY_KEY)!=="0"; }catch(e){ return true; } }
+function notifyState(){ if(!("Notification" in window)) return "none"; return Notification.permission; }
+function notifyAsk(){
+  if(!notifyWanted() || !("Notification" in window)) return Promise.resolve(false);
+  if(Notification.permission==="granted") return Promise.resolve(true);
+  if(Notification.permission==="denied") return Promise.resolve(false);
+  try{ return Promise.resolve(Notification.requestPermission()).then(function(r){ renderPrefs(); return r==="granted"; }).catch(function(){ return false; }); }
+  catch(e){ return Promise.resolve(false); }
+}
+var NOTIFY_W={
+  title:{my:"HNK — ရလဒ် အသင့်ပါ",en:"HNK — your result is ready",shn:"HNK — ၽွၼ်းလႆႈယဝ်ႉ",kac:"HNK — result ngut sai",th:"HNK — ผลลัพธ์พร้อมแล้ว",zh:"HNK — 结果已就绪",vi:"HNK — kết quả đã sẵn sàng",id:"HNK — hasilmu sudah siap",ms:"HNK — hasil anda sudah siap"},
+  video:{my:"ဗီဒီယို ထုတ်ပြီးပါပြီ — ကြည့်ဖို့ နှိပ်ပါ",en:"Your video is done — tap to see it",shn:"ဝီးတီးဢူဝ်ႊယဝ်ႉ — ၼဵၵ်းတူၺ်း",kac:"Video ngut sai — yu na dip u",th:"วิดีโอเสร็จแล้ว — แตะเพื่อดู",zh:"视频已完成 — 点击查看",vi:"Video đã xong — chạm để xem",id:"Video selesai — ketuk untuk melihat",ms:"Video siap — ketik untuk melihat"},
+  upscale:{my:"Upscale ပြီးပါပြီ — ကြည့်ဖို့ နှိပ်ပါ",en:"Your upscale is done — tap to see it",shn:"Upscale ယဝ်ႉ — ၼဵၵ်းတူၺ်း",kac:"Upscale ngut sai — yu na dip u",th:"Upscale เสร็จแล้ว — แตะเพื่อดู",zh:"放大已完成 — 点击查看",vi:"Upscale đã xong — chạm để xem",id:"Upscale selesai — ketuk untuk melihat",ms:"Upscale siap — ketik untuk melihat"},
+  videotool:{my:"Video Tools ရလဒ် ပြီးပါပြီ — ကြည့်ဖို့ နှိပ်ပါ",en:"Your Video Tools result is done — tap to see it",shn:"Video Tools ယဝ်ႉ — ၼဵၵ်းတူၺ်း",kac:"Video Tools result ngut sai — yu na dip u",th:"Video Tools เสร็จแล้ว — แตะเพื่อดู",zh:"Video Tools 已完成 — 点击查看",vi:"Video Tools đã xong — chạm để xem",id:"Video Tools selesai — ketuk untuk melihat",ms:"Video Tools siap — ketik untuk melihat"},
+  talk:{my:"Talking Photo ပြီးပါပြီ — ကြည့်ဖို့ နှိပ်ပါ",en:"Your Talking Photo is done — tap to see it",shn:"Talking Photo ယဝ်ႉ — ၼဵၵ်းတူၺ်း",kac:"Talking Photo ngut sai — yu na dip u",th:"Talking Photo เสร็จแล้ว — แตะเพื่อดู",zh:"Talking Photo 已完成 — 点击查看",vi:"Talking Photo đã xong — chạm để xem",id:"Talking Photo selesai — ketuk untuk melihat",ms:"Talking Photo siap — ketik untuk melihat"}
+};
+var NOTIFY_PAGE={ video:"pgVideo", upscale:"pgVideoUp", videotool:"pgV2V", talk:"pgTalk" };
+/* the tab is in the background (or another window has the focus): a system notification, through the service
+   worker where one controls the page (Chrome on Android refuses the constructor), the constructor otherwise */
+function notifyDone(kind){
+  try{
+    if(!notifyWanted() || !("Notification" in window) || Notification.permission!=="granted") return false;
+    if(!document.hidden && document.hasFocus()) return false;
+    var title=L9(NOTIFY_W.title), body=L9(NOTIFY_W[kind]||NOTIFY_W.video), page=NOTIFY_PAGE[kind]||"pgVideo";
+    var opts={ body:body, icon:"lib/icon-192.png", badge:"lib/icon-192.png", tag:"hnk-done-"+kind, renotify:true, data:{ page:page } };
+    if(navigator.serviceWorker && navigator.serviceWorker.controller){
+      navigator.serviceWorker.ready.then(function(r){ return r.showNotification(title, opts); }).catch(function(){ try{ var n=new Notification(title, opts); n.onclick=function(){ try{ window.focus(); switchPage(page); n.close(); }catch(e){} }; }catch(e2){} });
+    } else {
+      var n=new Notification(title, opts); n.onclick=function(){ try{ window.focus(); switchPage(page); n.close(); }catch(e){} };
+    }
+    return true;
+  }catch(e){ return false; }
+}
+window.notifyDone=notifyDone;
+/* the service worker's notificationclick hands the page back to the tab */
+try{ if(navigator.serviceWorker) navigator.serviceWorker.addEventListener("message", function(ev){ var d=ev && ev.data; if(d && d.type==="hnk-open" && d.page && $(d.page)) switchPage(d.page); }); }catch(e){}
+function renderPrefs(){
+  var h=$("prefsH2"); if(!h) return;
+  h.innerHTML=icn("i-gear","ic-h2")+escH(L9(PREFS_W.h2));
+  $("prefsTsizeL").textContent=L9(PREFS_W.tsize);
+  var cur=tsizeGet();
+  [["prefsTsizeS","s"],["prefsTsizeM","m"],["prefsTsizeL2","l"]].forEach(function(r){
+    var b=$(r[0]); if(!b) return; b.textContent=L9(PREFS_W[r[1]]); b.className="chip"+(cur===r[1]?" on":"");
+    b.onclick=function(){ tsizeSet(r[1]); };
+  });
+  var nb=$("prefsNotify"), nn=$("prefsNotifyNote"), st=notifyState(), on=notifyWanted();
+  if(st==="none"){ nb.style.display="none"; nn.textContent=L9(PREFS_W.nNo); return; }
+  nb.style.display="";
+  setIcnText(nb,"i-bell",L9(on?PREFS_W.nOn:PREFS_W.nOff)); nb.className="chip"+(on?" on":"");
+  nn.textContent = st==="denied" ? L9(PREFS_W.nBlocked) : L9(PREFS_W.nNote);
+  nb.onclick=function(){
+    var next=!notifyWanted(); try{ localStorage.setItem(NOTIFY_KEY, next?"1":"0"); }catch(e){}
+    renderPrefs(); if(next) notifyAsk();
+  };
+}
 function wireDataCard(){
   if(!$("cardData")) return;
+  try{ renderPrefs(); }catch(eP){}
   $("dataH2").innerHTML=icn("i-stack","ic-h2")+escH(L9({my:"DATA သိမ်းဆည်းမှု",en:"DATA & BACKUP",shn:"DATA လႄႈ BACKUP",kac:"DATA hte BACKUP",th:"ข้อมูลและสำรอง",zh:"数据与备份",vi:"Dữ liệu & sao lưu",id:"Data & cadangan",ms:"Data & sandaran"}));
   setIcnText($("btnExportData"),"i-download",L9({my:"Backup ထုတ်မယ်",en:"Export backup",shn:"ဢွၵ်ႇ backup",kac:"Backup shapraw u",th:"ส่งออกสำรอง",zh:"导出备份",vi:"Xuất bản sao lưu",id:"Ekspor cadangan",ms:"Eksport sandaran"}));
   setIcnText($("btnImportData"),"i-restore",L9({my:"Backup ပြန်သွင်းမယ်",en:"Restore backup",shn:"သႂ်ႇၶိုၼ်း backup",kac:"Backup bai bang u",th:"กู้คืนสำรอง",zh:"恢复备份",vi:"Khôi phục sao lưu",id:"Pulihkan cadangan",ms:"Pulihkan sandaran"}));
@@ -31994,15 +32195,17 @@ function vidPlayUrl(e){
    the file picker would have set them, and the page opens. The Upscale box offers only Video Tools (an upscale of an
    upscale is not a step). Talking Photo takes a photo and a voice, so nothing is sent TO it — its results are sent on.
    The panel does the same in its own main.js (vidSendTo) with the same lifted words. */
-var VID_SEND_TARGETS={ up:{ page:"pgVideoUp", key:"sendUp", ic:"i-rocket", name:"Video Upscale" }, v2v:{ page:"pgV2V", key:"sendV2v", ic:"i-clapper", name:"Video Tools" } };
+var VID_SEND_TARGETS={ up:{ page:"pgVideoUp", key:"sendUp", ic:"i-rocket", name:"Video Upscale" }, v2v:{ page:"pgV2V", key:"sendV2v", ic:"i-clapper", name:"Video Tools" },
+  /* 6.95.0 — a still from the clip: the first half-second frame becomes the Talking Photo face or Freeform's IMAGE 1 */
+  talk:{ page:"pgTalk", key:"grabTalk", ic:"i-frame", name:"Talking Photo", frame:true }, img1:{ page:"pgCreate", key:"grabImg1", ic:"i-restore", name:"IMAGE 1", frame:true } };
 var VID_SEND_BOXES={
-  vid:{ row:"vidSendRow", from:"video", targets:["up","v2v"], get:function(){ return state.vidHist[state.vidHistSel]; } },
-  vu: { row:"vuSendRow",  from:"upscale", targets:["v2v"],    get:function(){ return state.vuHist[state.vuHistSel]; } },
-  vt: { row:"vtSendRow",  from:"videotool", targets:["up","v2v"], get:function(){ return state.vtHist[state.vtHistSel]; } },
-  tk: { row:"tkSendRow",  from:"talk", targets:["up","v2v"],  get:function(){ return state.tkHist[state.tkHistSel]; } }
+  vid:{ row:"vidSendRow", from:"video", targets:["up","v2v","talk","img1"], get:function(){ return state.vidHist[state.vidHistSel]; } },
+  vu: { row:"vuSendRow",  from:"upscale", targets:["v2v","talk","img1"],    get:function(){ return state.vuHist[state.vuHistSel]; } },
+  vt: { row:"vtSendRow",  from:"videotool", targets:["up","v2v","talk","img1"], get:function(){ return state.vtHist[state.vtHistSel]; } },
+  tk: { row:"tkSendRow",  from:"talk", targets:["up","v2v","talk","img1"],  get:function(){ return state.tkHist[state.tkHistSel]; } }
 };
 var VID_SEND_MAX=200*1024*1024;   /* the pickers' own ceiling */
-async function vidSendBytes(out){
+async function vidSendBlob(out){
   var blob=out.blob;
   if(!blob){
     if(!out.url) throw new Error("no-clip");
@@ -32012,6 +32215,34 @@ async function vidSendBytes(out){
   }
   if(!blob || !blob.size) throw new Error("empty-clip");
   if(blob.size>VID_SEND_MAX) throw new Error("too-large");
+  return blob;
+}
+/* 6.95.0 — one frame of the clip as a JPEG {mime,b64}: the bytes come through vidSendBlob (a same-origin object
+   URL — a cross-origin <video> would taint the canvas), the frame is the first half-second, 15 s budget */
+function vidGrabFrame(out){
+  return vidSendBlob(out).then(function(blob){
+    return new Promise(function(res, rej){
+      var url=URL.createObjectURL(blob), v=document.createElement("video"), done=false;
+      var fin=function(err, val){ if(done) return; done=true; clearTimeout(tm); try{ v.pause(); v.removeAttribute("src"); v.load(); }catch(e){} try{ URL.revokeObjectURL(url); }catch(e2){} if(err) rej(err); else res(val); };
+      var tm=setTimeout(function(){ fin(new Error("frame-timeout")); }, 15000);
+      v.muted=true; v.playsInline=true; v.preload="auto";
+      v.onerror=function(){ fin(new Error("frame-decode")); };
+      v.onloadeddata=function(){ try{ v.currentTime=Math.min(0.5, Math.max(0, (v.duration||1)/2)); }catch(e){ fin(new Error("frame-seek")); } };
+      v.onseeked=function(){
+        try{
+          var w=v.videoWidth, h=v.videoHeight; if(!w||!h) throw new Error("frame-empty");
+          var c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(v,0,0,w,h);
+          var m=c.toDataURL("image/jpeg",0.92).match(/^data:([^;]+);base64,(.+)$/); if(!m) throw new Error("frame-encode");
+          fin(null, { mime:m[1], b64:m[2], w:w, h:h });
+        }catch(e){ fin(e); }
+      };
+      v.src=url;
+    });
+  });
+}
+window.vidGrabFrame=vidGrabFrame;
+async function vidSendBytes(out){
+  var blob=await vidSendBlob(out);
   var dataUrl=await new Promise(function(res,rej){ var rd=new FileReader(); rd.onload=function(){ res(String(rd.result)); }; rd.onerror=function(){ rej(new Error("read-failed")); }; rd.readAsDataURL(blob); });
   var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/); if(!m) throw new Error("bad-bytes");
   var mime=/^video\//.test(m[1]) ? m[1] : "video/mp4";
@@ -32021,7 +32252,19 @@ async function vidSendTo(target, out, from, closeWiz){
   var T=VID_SEND_TARGETS[target]; if(!T || !out) return false;
   toast(vwizL("sendBusy"));
   try{
-    var b=await vidSendBytes(out), name="hnk-"+(from||"clip")+"-"+Date.now()+".mp4";   /* the panel names its clip the same way */
+    var name="hnk-"+(from||"clip")+"-"+Date.now()+".mp4";   /* the panel names its clip the same way */
+    if(T.frame){
+      var fr;
+      try{ fr=await vidGrabFrame(out); }catch(eF){ toast(vwizL("grabFail"), "err"); return false; }
+      var pname=name.replace(/\.mp4$/, ".jpg");
+      if(target==="talk"){ state.tkImg={mime:fr.mime,b64:fr.b64,name:pname}; renderTkPicks(); wipSave(); }
+      else { refsClobberGuard(0); state.cmpBase=null; state.rsOrig=null; state.refs[0]={mime:fr.mime,b64:fr.b64,label:pname}; state.imgRoles=null; renderRefs(); }
+      if(closeWiz){ try{ closeVWiz(); }catch(eW2){} }
+      switchPage(T.page);
+      toast(vwizL("sentTo").replace("{P}", T.name), "ok");
+      return true;
+    }
+    var b=await vidSendBytes(out);
     if(target==="up"){
       /* the same three effects vuFilePick's onchange has */
       state.vuFile={mime:"video/mp4",b64:b.b64,name:name};
@@ -32073,6 +32316,7 @@ function showVidResult(scroll){
 }
 
 $("btnVidGen").onclick = async function(){
+  notifyAsk();   /* 6.95.0 — the first long job asks once for the "it's ready" notification */
   if(!gate("video")) return;        /* v4.30 §6.3 — guard the ACTION, not the navigation */
   if(!state.rhKey){
     pendingCapture();
@@ -32108,6 +32352,7 @@ $("btnVidGen").onclick = async function(){
     } else {
       var entry={ url:outs[0].url, prompt:text.slice(0,120), resolution:resolution, duration:duration, ts:Date.now() };
       state.vidHist.unshift(entry);
+      notifyDone("video");
       state.vidHistSel=0;
       showVidResult();
       setSt("stVidGen", t("st_done"), "ok");
@@ -32234,6 +32479,7 @@ function showVuResult(){
 }
 
 $("btnVuGen").onclick = async function(){
+  notifyAsk();
   if(!gate("video")) return;        /* v4.30 §6.3 */
   if(!state.rhKey){
     pendingCapture();
@@ -32258,6 +32504,7 @@ $("btnVuGen").onclick = async function(){
       $("btnVuRetry").style.display="";
     } else {
       state.vuHist.unshift({ url:outs[0].url, resolution:targetResolution, ts:Date.now() });
+      notifyDone("upscale");
       while(state.vuHist.length>6) state.vuHist.pop();
       state.vuHistSel=0;
       showVuResult();
@@ -32877,6 +33124,7 @@ $("vtImgPick").onchange=function(){
   rd.readAsDataURL(f);
 };
 $("btnVtGen").onclick=async function(){
+  notifyAsk();
   if(!gate("video")) return;
   if(!state.rhKey){ pendingCapture(); switchPage("pgHome"); toast(t("st_needkey")||"RunningHub key?", "err"); return; }
   var m=rhVtModelDef($("selVtModel").value);
@@ -32905,6 +33153,7 @@ $("btnVtGen").onclick=async function(){
     } else {
       var entry={ url:outs[0].url, prompt:(text||m.label||"").slice(0,120), ts:Date.now() };
       state.vtHist.unshift(entry);
+      notifyDone("videotool");
       state.vtHistSel=0;
       var a=$("btnVtOpen"); setIcnText(a,"i-link",L9({my:"Direct Link ဖွင့်မယ်",en:"Open Direct Link",shn:"ပိုတ်ႇ Direct Link",kac:"Direct Link hpaw u",th:"เปิดลิงก์ตรง",zh:"打开直链",vi:"Mở liên kết trực tiếp",id:"Buka tautan langsung",ms:"Buka pautan terus"}));
       showVtResult();
@@ -33017,7 +33266,10 @@ var VWIZ_L={
   sendV2v:{my:"Video Tools ဆီ ပို့မယ်",en:"Send to Video Tools",shn:"သူင်ႇၸူး Video Tools",kac:"Video Tools de shagun u",th:"ส่งไป Video Tools",zh:"发送到 Video Tools",vi:"Gửi sang Video Tools",id:"Kirim ke Video Tools",ms:"Hantar ke Video Tools"},
   sendBusy:{my:"Clip ကို ယူနေသည်...",en:"Fetching the clip...",shn:"တိုၵ်ႉဢဝ် clip...",kac:"Clip hpe la nga ai...",th:"กำลังดึงคลิป...",zh:"正在获取视频片段...",vi:"Đang lấy clip...",id:"Mengambil klip...",ms:"Mengambil klip..."},
   sentTo:{my:"{P} ဆီ ပို့ပြီ — ဒီ clip က အဲ့စာမျက်နှာရဲ့ input ဖြစ်နေပြီ",en:"Sent to {P} — the clip is now that page's input",shn:"သူင်ႇၸူး {P} ယဝ်ႉ — clip ၼႆႉပဵၼ် input ၼႃႈလိၵ်ႈၼၼ်ႉယဝ်ႉ",kac:"{P} de shagun sai — ndai clip gaw dai page a input rai sai",th:"ส่งไป {P} แล้ว — คลิปนี้เป็นอินพุตของหน้านั้นแล้ว",zh:"已发送到 {P} — 这段视频已成为该页的输入",vi:"Đã gửi sang {P} — clip này giờ là đầu vào của trang đó",id:"Terkirim ke {P} — klip ini kini menjadi input halaman itu",ms:"Dihantar ke {P} — klip ini kini input halaman itu"},
-  sendFail:{my:"Clip ကို မယူနိုင်ပါ — Download လုပ်ပြီး ကိုယ်တိုင် ရွေးပါ",en:"Couldn't fetch the clip — download it and pick it by hand",shn:"ဢမ်ႇဢဝ်လႆႈ clip — download သေ လိူၵ်ႈႁင်းၵူၺ်း",kac:"Clip hpe la n lu ai — download nna nang hkrai lata u",th:"ดึงคลิปไม่ได้ — ดาวน์โหลดแล้วเลือกเอง",zh:"无法获取视频片段 — 请下载后手动选择",vi:"Không lấy được clip — hãy tải về rồi chọn tay",id:"Tidak dapat mengambil klip — unduh lalu pilih manual",ms:"Tidak dapat mengambil klip — muat turun dan pilih sendiri"}
+  sendFail:{my:"Clip ကို မယူနိုင်ပါ — Download လုပ်ပြီး ကိုယ်တိုင် ရွေးပါ",en:"Couldn't fetch the clip — download it and pick it by hand",shn:"ဢမ်ႇဢဝ်လႆႈ clip — download သေ လိူၵ်ႈႁင်းၵူၺ်း",kac:"Clip hpe la n lu ai — download nna nang hkrai lata u",th:"ดึงคลิปไม่ได้ — ดาวน์โหลดแล้วเลือกเอง",zh:"无法获取视频片段 — 请下载后手动选择",vi:"Không lấy được clip — hãy tải về rồi chọn tay",id:"Tidak dapat mengambil klip — unduh lalu pilih manual",ms:"Tidak dapat mengambil klip — muat turun dan pilih sendiri"},
+  grabTalk:{my:"ပုံ ယူ → Talking Photo",en:"Frame → Talking Photo",shn:"ဢဝ်ႁၢင်ႈ → Talking Photo",kac:"Sumla la → Talking Photo",th:"เฟรม → Talking Photo",zh:"取一帧 → Talking Photo",vi:"Lấy khung → Talking Photo",id:"Ambil bingkai → Talking Photo",ms:"Ambil bingkai → Talking Photo"},
+  grabImg1:{my:"ပုံ ယူ → IMAGE 1",en:"Frame → IMAGE 1",shn:"ဢဝ်ႁၢင်ႈ → IMAGE 1",kac:"Sumla la → IMAGE 1",th:"เฟรม → IMAGE 1",zh:"取一帧 → IMAGE 1",vi:"Lấy khung → IMAGE 1",id:"Ambil bingkai → IMAGE 1",ms:"Ambil bingkai → IMAGE 1"},
+  grabFail:{my:"Clip ထဲက ပုံ မယူနိုင်ပါ — ဒီ browser က ဒီ clip ကို ဖွင့်မရလို့ပါ",en:"Couldn't grab a frame — this browser can't decode this clip",shn:"ဢမ်ႇၸၢင်ႈဢဝ်ႁၢင်ႈ — browser ၼႆႉ ပိုတ်ႇ clip ၼႆႉဢမ်ႇလႆႈ",kac:"Sumla la n lu ai — ndai browser gaw ndai clip hpe hpaw n lu ai",th:"ดึงเฟรมไม่ได้ — เบราว์เซอร์นี้เล่นคลิปนี้ไม่ได้",zh:"无法截取画面 — 此浏览器无法解码该片段",vi:"Không lấy được khung — trình duyệt này không giải mã được clip",id:"Tidak bisa mengambil bingkai — browser ini tidak dapat memutar klip",ms:"Tidak dapat mengambil bingkai — pelayar ini tidak dapat memainkan klip"}
 };
 /* the four guide lines, per deck; {N} is the card's own need badge */
 var VWIZ_STEPS={
@@ -33279,7 +33531,7 @@ function renderVWiz(){
       body.appendChild(nav1);
       /* 6.94.0 — the clip goes on to the next tool from here too; the wizard closes so the page it lands on is visible */
       var sendRow=el("div","wiz-nav wiz-nav-acts vid-send"); sendRow.id="vwizSendRow";
-      vidSendChips(sendRow, function(){ return cur; }, vwiz.kind==="i2v"?"video":"videotool", ["up","v2v"], true);
+      vidSendChips(sendRow, function(){ return cur; }, vwiz.kind==="i2v"?"video":"videotool", ["up","v2v","talk","img1"], true);
       body.appendChild(sendRow);
       var again=el("button","btn"); setIcnText(again,"i-retry",vwizL("again")); again.onclick=function(){ vwiz.result=null; goStep(2); };
       var onp=el("button","btn"); setIcnText(onp,"i-caret",vwizL("onPage"));
@@ -33431,6 +33683,7 @@ $("tkAudPick").onchange=function(){
   rd.readAsDataURL(f);
 };
 $("btnTkGen").onclick=async function(){
+  notifyAsk();
   if(!gate("video")) return;
   if(!state.rhKey){ pendingCapture(); switchPage("pgHome"); toast(t("st_needkey")||"RunningHub key?", "err"); return; }
   var m=tkModelDef();
@@ -33454,6 +33707,7 @@ $("btnTkGen").onclick=async function(){
     } else {
       var entry={ url:outs[0].url, prompt:(text||m.label||"").slice(0,120), ts:Date.now() };
       state.tkHist.unshift(entry);
+      notifyDone("talk");
       state.tkHistSel=0;
       showTkResult();
       setSt("stTkGen", t("st_done"), "ok");

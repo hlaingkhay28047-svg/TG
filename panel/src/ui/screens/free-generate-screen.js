@@ -159,6 +159,24 @@ function create(deps) {
       }).catch(function () { applySlot({ source: "file", ref: null, valid: false, reason: "unreadable" }); });
     });
     srcRow.appendChild(nodes.addRefFile);
+    /* 6.166.0 — DRAG & DROP: a file dragged onto the slot strip (or the source row) is the File source without
+       the picker; the same import path, the same slot rules (limit, unreadable → the slot says so). */
+    (function bindDrop(target) {
+      if (!target || target.__hnkDrop) return; target.__hnkDrop = true;
+      var dropNote = (typeof globalThis !== "undefined" && globalThis.HNK && globalThis.HNK.dropTarget) ? globalThis.HNK.dropTarget : null;
+      if (dropNote) dropNote.bound("free-slots");
+      ["dragenter", "dragover"].forEach(function (ev) { dom.on(target, ev, function (e) { try { e.preventDefault(); } catch (x) {} target.className = String(target.className || "").replace(/\s*\bdrop-on\b/g, "") + " drop-on"; }); });
+      dom.on(target, "dragleave", function () { target.className = String(target.className || "").replace(/\s*\bdrop-on\b/g, ""); });
+      dom.on(target, "drop", function (e) {
+        try { e.preventDefault(); e.stopPropagation(); } catch (x) {}
+        target.className = String(target.className || "").replace(/\s*\bdrop-on\b/g, "");
+        var dt = e && e.dataTransfer, file = dt && dt.files && dt.files[0];
+        if (!file && dt && dt.items && dt.items[0] && dt.items[0].getAsFile) { try { file = dt.items[0].getAsFile(); } catch (x2) {} }
+        if (!file || atLimit() || !imageImport) return;
+        Promise.resolve(imageImport.fromFile(deps.host, file)).then(function (slot) { applySlot(slot); if (dropNote) dropNote.got(file); })
+          .catch(function (err) { applySlot({ source: "file", ref: null, valid: false, reason: "unreadable" }); if (dropNote) dropNote.failed(err); });
+      });
+    })(nodes.slots);
     /* v6.59.0 — Paste, the fifth source, on the Freeform slots too: the
        import service has carried fromPaste since the first spec and the host
        now really reads the clipboard, so the two screens offer the same five

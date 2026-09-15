@@ -568,6 +568,8 @@ jobs:
         run: PORT=8931 node test/verify_ui_wave_693.js
       - name: One tap to the next tool — Send to Upscale · Send to Video Tools on every video result box and the wizard's Result on both surfaces (the clip's bytes become the page's picked file), the SELF-TEST Save folder row (found · written · read back, never written without a native path), and the publish ledger one honest line per panel release (6.94.0)
         run: PORT=8931 node test/verify_clip_handoff_694.js
+      - name: The six convenience upgrades — Gallery search · kind · sort on both surfaces, a system notification when a video finishes in the background, the Home recent-results strip, a frame of a clip into Talking Photo / IMAGE 1, drag & drop onto every panel picker, text size S · M · L (6.95.0)
+        run: PORT=8931 node test/verify_convenience_695.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

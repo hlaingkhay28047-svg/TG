@@ -99,7 +99,21 @@ const APP_ONLY = {
     "Default \u1015\u102d\u1010\u103a\u1011\u102c\u1038\u1015\u102b\u1010\u101a\u103a\u104b \u1016\u103d\u1004\u1037\u103a\u1011\u102c\u1038\u101b\u1004\u103a install \u101c\u102f\u1015\u103a\u1011\u102c\u1038\u1010\u1032\u1037 app \u1000\u102d\u102f \u1016\u103d\u1004\u1037\u103a\u1010\u102d\u102f\u1004\u103a\u1038 \u1010\u1005\u103a\u1001\u102b \u1019\u103c\u100a\u103a\u1015\u102b\u1019\u101a\u103a \u2014 \u1016\u102f\u1014\u103a\u1038\u1000 \u1021\u101e\u1036\u1015\u102d\u1010\u103a\u1011\u102c\u1038\u101b\u1004\u103a (\u101e\u102d\u102f\u1037) browser \u1000 \u1001\u103d\u1004\u1037\u103a\u1019\u1015\u103c\u102f\u101b\u1004\u103a \u1019\u1019\u103c\u100a\u103a\u1015\u102b\u104b",
     "Photoshop Panel",
     "Premium plan သက်တမ်းရှိကြောင်း စစ်ပြီးပါပြီ။ Photoshop 24.2+ အတွက် Panel ကို ဒီမှာရယူနိုင်ပါတယ်။",
-    "Panel ccx v6.50.0 ရယူမယ်"
+    "Panel ccx v6.50.0 ရယူမယ်",
+    /* v6.95.0 — the notification switch and its note. The app tells a student
+       when a long video finished while the tab was in the background, through
+       the browser's Notification API. UXP has no notification of any kind — no
+       Notification, no service worker, and Photoshop's own alert is a modal
+       inside an application the student has already left — so the switch could
+       never do anything in the panel. Same rule as the chime above; the
+       SETTINGS card itself (text size) is on both surfaces. The note reads one
+       of three lines depending on the browser's permission state, and the chip
+       one of two, so all five are named. */
+    "ဗီဒီယို ပြီးရင် အသိပေးမယ် — ဖွင့်ထား",
+    "ဗီဒီယို ပြီးရင် အသိပေးမယ် — ပိတ်ထား",
+    "App ကို နောက်ကွယ်ထားရင်လည်း ပြီးတာနဲ့ notification ရမယ်",
+    "Browser က notification ပိတ်ထားတယ် — browser setting မှာ ခွင့်ပြုပါ",
+    "ဒီ browser မှာ notification မရပါ"
   ]
 };
 /* The panel keeps its results as files, so its counter names the panel's own
@@ -301,7 +315,10 @@ function rewrite(list) {
          actually chosen. Same page, same moment, both surfaces. */
       const bState = await panel.evaluate(`${COLLECT_STATE}(${JSON.stringify(p.panelRoot)})`, null);
       const aState = await app.evaluate(`${COLLECT_STATE}(${JSON.stringify(p.appRoot)})`, null);
-      const sd = stateDiff(aState, bState);
+      /* v6.95.0 — a line named in APP_ONLY is app-only in whatever form it is
+         read: the notify switch is a chip that opens ON, so its label is
+         dropped from the app's selection list exactly as from its words. */
+      const sd = stateDiff({ ph: aState.ph, sel: dropOnce(aState.sel, APP_ONLY[p.key] || []) }, bState);
       report(`${p.label} opens on the web app's own choices — ${aState.ph.length} placeholder(s), ${aState.sel.length} selection(s)`,
         sd.length === 0, sd.slice(0, 4).join(" | "));
 

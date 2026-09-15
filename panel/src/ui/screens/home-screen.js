@@ -440,6 +440,36 @@ function render(root, deps) {
   destCard.appendChild(acts);
   root.appendChild(destCard);
 
+  /* ---- 2b. RECENT RESULTS (6.166.0 — the app's #dashRecent strip) ----
+     The newest six stored results as tiles; a tap opens the Gallery on that
+     one. Drawn only once the store answers with something, so a first-day
+     panel never shows an empty card. main.js publishes HNK.homeRecent. */
+  var hr = (typeof globalThis !== "undefined" && globalThis.HNK && globalThis.HNK.homeRecent) ? globalThis.HNK.homeRecent : null;
+  if (hr && typeof hr.list === "function") {
+    var recentCard = dom.el(doc, "div", { class: "card", id: "hnkDashRecent" });
+    recentCard.style.display = "none";
+    root.appendChild(recentCard);
+    Promise.resolve(hr.list(6)).then(function (items) {
+      if (!items || !items.length || !recentCard.parentNode) return;
+      dom.clear(recentCard);
+      recentCard.appendChild(dom.el(doc, "div", { class: "dash-recent-h", text: (typeof hr.title === "function" ? hr.title() : "Recent results") }));
+      var strip = dom.el(doc, "div", { class: "dash-recent", id: "dashRecent" });
+      items.forEach(function (it) {
+        var tile;
+        if (it.video || !it.thumb) {
+          tile = dom.el(doc, "div", { class: "gal-vid", text: it.video ? "MP4" : "" });
+        } else {
+          tile = doc.createElement("img"); tile.src = it.thumb; tile.alt = it.label || "";
+        }
+        tile.setAttribute("data-name", it.name);
+        dom.on(tile, "click", function () { if (typeof hr.open === "function") hr.open(it.name); });
+        strip.appendChild(tile);
+      });
+      recentCard.appendChild(strip);
+      recentCard.style.display = "";
+    }).catch(function () { });
+  }
+
   /* ---- 3. COST & BALANCE (the app's #dashMoney / renderDashMoney) ----
      Shown once a run or a balance check exists — a studio that never touches
      RunningHub never sees an empty money card, exactly like the app. */

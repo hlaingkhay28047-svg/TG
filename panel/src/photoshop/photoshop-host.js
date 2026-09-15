@@ -91,8 +91,12 @@ function canvasSize() {
 /* ---- confident: read a chosen file into a data-URL ref ---- */
 async function readImageFile(file) {
   try {
-    if (!file || !file.read) return null;
-    var buf = await file.read({ format: (_uxp() && _uxp().storage.formats.binary) || undefined });
+    if (!file) return null;
+    /* 6.166.0 — a file dropped onto a slot may be a DOM File (arrayBuffer), not a UXP entry (read) */
+    var buf;
+    if (typeof file.read === "function") buf = await file.read({ format: (_uxp() && _uxp().storage.formats.binary) || undefined });
+    else if (typeof file.arrayBuffer === "function") buf = await file.arrayBuffer();
+    else return null;
     var bytes = new Uint8Array(buf);
     var ref = "data:" + _guessMime(file.name) + ";base64," + _bytesToBase64(bytes);
     return { ref: ref, width: 0, height: 0 };

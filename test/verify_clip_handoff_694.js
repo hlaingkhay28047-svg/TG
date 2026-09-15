@@ -68,30 +68,31 @@ function sourcePins() {
     appLines.every(l => PVW.indexOf(l.trim()) > 0), appLines.map(l => l.slice(0, 40)));
 
   report("A2) the app: VID_SEND_TARGETS (up → pgVideoUp, v2v → pgV2V), four boxes (vid up+v2v · vu v2v only · vt up+v2v · tk up+v2v), vidSendBytes (blob or a fetchWithTimeout of the link, 200MB ceiling, data URL), vidSendTo mirrors the pickers (vuFile + vuFileName + vuPreview + updateVuNeedNote; vtFile + updateVtModelUI + renderVtPicks + vtWfCheckClip + wipSave), switches the page and toasts sentTo / sendFail; painted after every histStripClearSync and in the wizard's Result step with closeWiz",
-    /var VID_SEND_TARGETS=\{ up:\{ page:"pgVideoUp", key:"sendUp", ic:"i-rocket", name:"Video Upscale" \}, v2v:\{ page:"pgV2V", key:"sendV2v", ic:"i-clapper", name:"Video Tools" \} \};/.test(APP) &&
-    /vid:\{ row:"vidSendRow", from:"video", targets:\["up","v2v"\]/.test(APP) && /vu: \{ row:"vuSendRow",  from:"upscale", targets:\["v2v"\]/.test(APP) &&
-    /vt: \{ row:"vtSendRow",  from:"videotool", targets:\["up","v2v"\]/.test(APP) && /tk: \{ row:"tkSendRow",  from:"talk", targets:\["up","v2v"\]/.test(APP) &&
-    /var VID_SEND_MAX=200\*1024\*1024;/.test(APP) && /async function vidSendBytes\(out\)\{[\s\S]*?fetchWithTimeout\(out\.url, \{\}, MEDIA_DL_TIMEOUT_MS\)[\s\S]*?if\(blob\.size>VID_SEND_MAX\) throw new Error\("too-large"\);/.test(APP) &&
+    /* 6.95.0 — the two frame targets (talk · img1) joined every box; they are pinned in verify_convenience_695 */
+    /var VID_SEND_TARGETS=\{ up:\{ page:"pgVideoUp", key:"sendUp", ic:"i-rocket", name:"Video Upscale" \}, v2v:\{ page:"pgV2V", key:"sendV2v", ic:"i-clapper", name:"Video Tools" \},/.test(APP) &&
+    /vid:\{ row:"vidSendRow", from:"video", targets:\["up","v2v","talk","img1"\]/.test(APP) && /vu: \{ row:"vuSendRow",  from:"upscale", targets:\["v2v","talk","img1"\]/.test(APP) &&
+    /vt: \{ row:"vtSendRow",  from:"videotool", targets:\["up","v2v","talk","img1"\]/.test(APP) && /tk: \{ row:"tkSendRow",  from:"talk", targets:\["up","v2v","talk","img1"\]/.test(APP) &&
+    /var VID_SEND_MAX=200\*1024\*1024;/.test(APP) && /async function vidSendBlob\(out\)\{[\s\S]*?fetchWithTimeout\(out\.url, \{\}, MEDIA_DL_TIMEOUT_MS\)[\s\S]*?if\(blob\.size>VID_SEND_MAX\) throw new Error\("too-large"\);/.test(APP) && /async function vidSendBytes\(out\)\{\n\s*var blob=await vidSendBlob\(out\);/.test(APP) &&
     /state\.vuFile=\{mime:"video\/mp4",b64:b\.b64,name:name\};\n\s*\$\("vuFileName"\)\.textContent=name;\n\s*var pv=\$\("vuPreview"\); pv\.src=b\.dataUrl; pv\.style\.display="";\n\s*updateVuNeedNote\(\);/.test(APP) &&
     /state\.vtFile=\{mime:b\.mime,b64:b\.b64,name:name\}; updateVtModelUI\(\); renderVtPicks\(\); vtWfCheckClip\(\); wipSave\(\);/.test(APP) &&
     /if\(closeWiz\)\{ try\{ closeVWiz\(\); \}catch\(eW\)\{\} \}\n\s*switchPage\(T\.page\);\n\s*toast\(vwizL\("sentTo"\)\.replace\("\{P\}", T\.name\), "ok"\);/.test(APP) &&
     /\}catch\(e\)\{ toast\(vwizL\("sendFail"\), "err"\); return false; \}/.test(APP) &&
     ["vid", "vu", "vt", "tk"].every(k => new RegExp('histStripClearSync\\("' + k + 'Hist"\\);\\n\\s*vidSendPaint\\("' + k + '"\\);').test(APP)) &&
-    /sendRow\.id="vwizSendRow";\n\s*vidSendChips\(sendRow, function\(\)\{ return cur; \}, vwiz\.kind==="i2v"\?"video":"videotool", \["up","v2v"\], true\);/.test(APP) &&
+    /sendRow\.id="vwizSendRow";\n\s*vidSendChips\(sendRow, function\(\)\{ return cur; \}, vwiz\.kind==="i2v"\?"video":"videotool", \["up","v2v","talk","img1"\], true\);/.test(APP) &&
     ["vidSendRow", "vuSendRow", "vtSendRow", "tkSendRow"].every(id => APP.indexOf('<div class="row vid-send" id="' + id + '"></div>') > 0) &&
     /\.vid-send:empty\{display:none\}/.test(APP), null);
 
   report("A3) the panel: vidSendTo takes the take's bytes through takesRefP into the {name, _url, _size} clip the pickers leave, VU.video → renderVu / VT.video → renderVt, closes the wizard when asked, switches to vidup / v2v and sets sentTo / sendFail; seven static buttons (Upscale box: Video Tools only) bound once and painted from the lifted pack in vidPaintLabels · vuPaintLabels · tkPaintLabels; vuRun reads VU.video._url before fileToDataUrl; the wizard's Result draws vwizSendUp / vwizSendV2v with closeWiz; styles.css lays the row out with flex + margins (no gap)",
-    /const VID_SEND_PAGE = \{ up: "vidup", v2v: "v2v" \};/.test(PMAIN) && /const VID_SEND_NAME = \{ up: "Video Upscale", v2v: "Video Tools" \};/.test(PMAIN) &&
+    /const VID_SEND_PAGE = \{ up: "vidup", v2v: "v2v", talk: "talk", img1: "prompt" \};/.test(PMAIN) && /const VID_SEND_NAME = \{ up: "Video Upscale", v2v: "Video Tools", talk: "Talking Photo", img1: "IMAGE 1" \};/.test(PMAIN) &&
     /async function vidSendTo\(target, out, from, closeWiz\) \{[\s\S]*?const ref = await takesRefP\(out\);[\s\S]*?const clip = \{ name: "hnk-" \+ \(from \|\| "clip"\) \+ "-" \+ Date\.now\(\) \+ "\.mp4", _url: ref,/.test(PMAIN) &&
     /if \(target === "up"\) \{ VU\.video = clip; try \{ renderVu\(\); \} catch \(e\) \{ \} \}\n\s*else \{ VT\.video = clip; try \{ renderVt\(\); \} catch \(e\) \{ \} \}\n\s*if \(closeWiz\) \{ try \{ closeVWiz\(\); \} catch \(e\) \{ \} \}\n\s*switchPage\(VID_SEND_PAGE\[target\]\);\n\s*setStatus\(vwizL\("sentTo"\)\.replace\("\{P\}", VID_SEND_NAME\[target\]\), "ok"\);/.test(PMAIN) &&
     /\} catch \(e\) \{ setStatus\(vwizL\("sendFail"\), "err"\); return false; \}/.test(PMAIN) &&
     ["btnVidSendUp", "btnVidSendV2v", "btnVtSendUp", "btnVtSendV2v", "btnTkSendUp", "btnTkSendV2v", "btnVuSendV2v"].every(id => new RegExp('\\["' + id + '", "(up|v2v)", "(video|videotool|talk|upscale)", function').test(PMAIN) && PHTML.indexOf('id="' + id + '"') > 0) &&
     PHTML.indexOf('id="btnVuSendUp"') < 0 && (PMAIN.match(/vidSendBindP\(\);/g) || []).length >= 3 && /let vidSendBound = false;\nfunction vidSendBindP\(\) \{\n  if \(vidSendBound\) return; vidSendBound = true;/.test(PMAIN) &&
     (PMAIN.match(/try \{ vidSendPaintP\(\); \} catch \(e\) \{ \}/g) || []).length === 3 &&
-    /setIcnText\(b, row\[1\] === "up" \? "i-rocket" : "i-clapper", "cream", vwizL\(row\[1\] === "up" \? "sendUp" : "sendV2v"\)\);/.test(PMAIN) &&
+    /setIcnText\(b, VID_SEND_ICON\[row\[1\]\], "cream", vwizL\(VID_SEND_KEY\[row\[1\]\]\)\);/.test(PMAIN) && /const VID_SEND_ICON = \{ up: "i-rocket", v2v: "i-clapper", talk: "i-frame", img1: "i-restore" \};/.test(PMAIN) && /const VID_SEND_KEY = \{ up: "sendUp", v2v: "sendV2v", talk: "grabTalk", img1: "grabImg1" \};/.test(PMAIN) &&
     /const ref = VU\.video\._url \|\| await fileToDataUrl\(VU\.video\);/.test(PMAIN) &&
-    /sendRow\.id = "vwizSendRow";\n\s*\[\["vwizSendUp", "up", "i-rocket", "sendUp"\], \["vwizSendV2v", "v2v", "i-clapper", "sendV2v"\]\]/.test(PMAIN) &&
+    /sendRow\.id = "vwizSendRow";\n\s*\[\["vwizSendUp", "up", "i-rocket", "sendUp"\], \["vwizSendV2v", "v2v", "i-clapper", "sendV2v"\], \["vwizSendTalk", "talk", "i-frame", "grabTalk"\], \["vwizSendImg1", "img1", "i-restore", "grabImg1"\]\]/.test(PMAIN) &&
     /ffPressable\(sb, function \(\) \{ vidSendTo\(r\[1\], cur, vwiz\.kind === "i2v" \? "video" : "videotool", true\); \}\);/.test(PMAIN) &&
     ["vidSendRow", "vtSendRow", "tkSendRow", "vuSendRow"].every(id => new RegExp('<div class="arow vid-send" id="' + id + '">').test(PHTML)) &&
     /\.vid-send \{ display: flex; flex-direction: row; flex-wrap: wrap; margin-top: 8px; \}\n\.vid-send > div \{ flex: 1 1 auto; min-height: 38px; font-size: 11\.5px; padding: 8px 12px; margin: 0 6px 6px 0; \}/.test(PCSS) &&
@@ -190,9 +191,9 @@ async function appWalk(browser) {
       return out;
     }, CLIP_B64);
     const F = o.up.file;
-    report("B1) Video box: two chips (Upscale · Video Tools) in the strip's row, shown, worded from VWIZ_L; the Upscale box offers Video Tools only; Talk and Video Tools boxes offer both",
-      o.vid.chips.length === 2 && o.vid.chips[0][0] === "up" && o.vid.chips[1][0] === "v2v" && o.vid.chips.every(c => c[1] === "video") && o.vid.chips[0][2] === o.vid.words[0] && o.vid.chips[1][2] === o.vid.words[1] && o.vid.display === "flex" &&
-      o.vuChips.length === 1 && o.vuChips[0][0] === "v2v" && o.vuChips[0][1] === "upscale" && o.tkChips.map(c => c[0]).join() === "up,v2v" && o.tkChips.every(c => c[1] === "talk") && o.vtChips.map(c => c[0]).join() === "up,v2v", o);
+    report("B1) Video box: the two Send chips (Upscale · Video Tools) lead the strip's row, shown, worded from VWIZ_L, followed by the two 6.95.0 Frame chips; the Upscale box offers Video Tools (+ the two Frame chips); Talk and Video Tools boxes offer all four",
+      o.vid.chips.length === 4 && o.vid.chips[0][0] === "up" && o.vid.chips[1][0] === "v2v" && o.vid.chips[2][0] === "talk" && o.vid.chips[3][0] === "img1" && o.vid.chips.every(c => c[1] === "video") && o.vid.chips[0][2] === o.vid.words[0] && o.vid.chips[1][2] === o.vid.words[1] && o.vid.display === "flex" &&
+      o.vuChips.length === 3 && o.vuChips[0][0] === "v2v" && o.vuChips.every(c => c[1] === "upscale") && o.tkChips.map(c => c[0]).join() === "up,v2v,talk,img1" && o.tkChips.every(c => c[1] === "talk") && o.vtChips.map(c => c[0]).join() === "up,v2v,talk,img1", o);
     report("B2) Send to Upscale: state.vuFile = the clip's bytes (video/mp4, the same base64), #vuFileName names it, #vuPreview shows a data: URL, the page is pgVideoUp, toasts sendBusy then sentTo (Video Upscale)",
       F && F.mime === "video/mp4" && F.b64 === CLIP_B64 && /^hnk-video-\d+\.mp4$/.test(F.name) && o.up.page === "pgVideoUp" && o.up.fileName === F.name && o.up.prevShown && o.up.prevSrc.indexOf("data:video/mp4;base64,") === 0 &&
       o.up.toasts.length === 2 && o.up.toasts[1][1] === "ok" && /Video Upscale/.test(o.up.toasts[1][0]), o.up);
@@ -201,8 +202,8 @@ async function appWalk(browser) {
       /^hnk-talk-\d+\.mp4$/.test(o.tkV2v.name) && o.tkV2v.page === "pgV2V", { v2v: o.v2v, tk: o.tkV2v });
     report("B4) a link-only take is fetched once and sent (the same bytes); a dead link leaves the target untouched, stays on the page and toasts sendFail",
       o.linkOnly.file && o.linkOnly.file.b64 === CLIP_B64 && o.linkOnly.page === "pgVideoUp" && o.dead.same && o.dead.page === "pgV2V" && o.dead.toasts.length === 2 && o.dead.toasts[1][1] === "err" && o.dead.toasts[1][0] === o.dead.want, { link: o.linkOnly, dead: o.dead });
-    report("B5) the video wizard's Result step carries both chips (from video) and a tap closes the wizard and lands on Upscale with the file set; the words follow the language (English: Send to Upscale)",
-      o.wiz && o.wiz.chips && o.wiz.chips.join() === "up,v2v" && o.wiz.from === "video" && o.wiz.after && o.wiz.after.page === "pgVideoUp" && !o.wiz.after.wizOpen && o.wiz.after.file && o.en === "Send to Upscale", { wiz: o.wiz, wizErr: o.wizErr, en: o.en });
+    report("B5) the video wizard's Result step carries all four chips (from video) and a tap closes the wizard and lands on Upscale with the file set; the words follow the language (English: Send to Upscale)",
+      o.wiz && o.wiz.chips && o.wiz.chips.join() === "up,v2v,talk,img1" && o.wiz.from === "video" && o.wiz.after && o.wiz.after.page === "pgVideoUp" && !o.wiz.after.wizOpen && o.wiz.after.file && o.en === "Send to Upscale", { wiz: o.wiz, wizErr: o.wizErr, en: o.en });
     report("B6) nothing threw in the app while all of that ran", errs.length === 0, errs);
   } finally { await page.close(); }
 }
