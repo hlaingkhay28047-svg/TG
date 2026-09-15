@@ -112,7 +112,7 @@ const FAKE_FS_SRC = `(function () {
     /takesForgetP\(vidHist\.splice\(i, 1\)\[0\]\);/.test(MAIN) && /vidHist = \[\]; vidHistSel = 0; takesClearP\("video"\);/.test(MAIN) &&
     /takesForgetP\(vtHist\.splice\(i, 1\)\[0\]\);/.test(MAIN) && /takesClearP\("v2v"\);/.test(MAIN) &&
     /takesForgetP\(T\.list\.splice\(i, 1\)\[0\]\);/.test(MAIN) && /takesClearP\(page\);/.test(MAIN) &&
-    count(MAIN, /await takesRefP\(out\)/g) === 3 && /async function takesRefP\(out\) \{\n\s*if \(out && out\.ref\) return out\.ref;/.test(MAIN) &&
+    count(MAIN, /await takesRefP\(out\)/g) === 4 /* 6.165.0 — vidSendTo (Send to Upscale / Video Tools) is the fourth reader */ && /async function takesRefP\(out\) \{\n\s*if \(out && out\.ref\) return out\.ref;/.test(MAIN) &&
     /const u = await ts\.readDataUrl\(out\); if \(u\) return u;/.test(MAIN) && /throw new Error\("no saved copy"\);/.test(MAIN) &&
     /async function takesRestoreP\(\)/.test(MAIN) && /vidHist = by\("video"\); vidHistSel = 0;/.test(MAIN) && /vtHist = by\("v2v"\); vtHistSel = 0;/.test(MAIN) &&
     /tkTakes\.list = by\("talk"\); tkTakes\.sel = 0;/.test(MAIN) && /vuTakes\.list = by\("upscale"\); vuTakes\.sel = 0;/.test(MAIN) &&

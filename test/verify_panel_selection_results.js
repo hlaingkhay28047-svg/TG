@@ -100,7 +100,7 @@ function sourcePins() {
     /r = await host\.captureActiveLayer\(\);/.test(MAIN) && /if \(r === null\) throw e;/.test(MAIN), null);
   report("A5) SELF-TEST carries a \"Layer capture\" row: started on Setup entry (throttled) and on Run again, never at boot; it runs the host's captureActiveLayer and prints name · size · route · ms, REFUSED with the reason, or the host mark without a document",
     /let layerProbe = \{ state: "idle", at: 0, res: null \};/.test(MAIN) && /function hnkLayerProbeStart\(force\)/.test(MAIN) && /function hnkLayerProbeRow\(\)/.test(MAIN) &&
-    /rows\.push\(hnkLayerProbeRow\(\)\);/.test(MAIN) && /hnkNetProbeStart\(false\); hnkLayerProbeStart\(false\); renderSelfTest\(\);/.test(MAIN) &&
+    /rows\.push\(hnkLayerProbeRow\(\)\);/.test(MAIN) && /hnkNetProbeStart\(false\); hnkLayerProbeStart\(false\);( hnkSaveProbeStart\(false\);)? renderSelfTest\(\);/.test(MAIN) /* 6.165.0 — the Save folder probe starts here too */ &&
     /try \{ hnkLayerProbeStart\(true\); \} catch \(eL\) \{ \}/.test(MAIN) && /label: "Layer capture"/.test(MAIN) &&
     /detail: "REFUSED \\u2014 " \+ String\(r\.error\)\.slice\(0, 140\)/.test(MAIN) && /"no document open \\u2014 open a photo, select its layer, then Run again"/.test(MAIN) &&
     !/hnkLayerProbeStart\(\)[^\n]*setupApplyStatics/.test(MAIN), null);

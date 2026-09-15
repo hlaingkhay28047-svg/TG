@@ -1541,6 +1541,10 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 .wiz-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .wiz-acts .btn{padding:12px;font-size:13px;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px}
 /* v6.83.0 — the wizard's Before | After (percent widths; the Before picture is 100/pct % of its window) */
+/* 6.94.0 — the "Send to" row under every video result box: two small chips, wrapping */
+.vid-send{margin-top:8px;flex-wrap:wrap;gap:6px}
+.vid-send:empty{display:none}
+.vid-send .btn{min-height:38px;padding:8px 12px;font-size:11.5px;flex:1 1 auto}
 .wiz-cmp{margin-top:12px}
 .wiz-cmp .cmp{cursor:default}
 .wiz-cmp .cmp-top img{position:absolute;left:0;top:0;height:auto;width:200%;max-width:none;object-fit:fill}
@@ -3509,6 +3513,7 @@ html.splashing #splash{display:flex}
       <button class="btn btn-gold grow" id="btnVidDl"></button>
       <a class="btn" id="btnVidOpen" target="_blank" rel="noopener"></a>
     </div>
+    <div class="row vid-send" id="vidSendRow"></div>
     <div class="subh" style="margin-top:12px" id="vidHistH"></div>
     <div class="hist" id="vidHist"></div>
     <button class="chip" id="vidHistClear" style="display:none"></button>
@@ -3556,6 +3561,7 @@ html.splashing #splash{display:flex}
       <button class="btn btn-gold grow" id="btnVuDl"></button>
       <a class="btn" id="btnVuOpen" target="_blank" rel="noopener"></a>
     </div>
+    <div class="row vid-send" id="vuSendRow"></div>
     <div class="subh" style="margin-top:12px" id="vuHistH"></div>
     <div class="hist" id="vuHist"></div>
     <button class="chip" id="vuHistClear" style="display:none"></button>
@@ -3644,6 +3650,7 @@ html.splashing #splash{display:flex}
       <button class="btn grow" id="btnVtDl"></button>
       <a class="btn btn-gold grow" id="btnVtOpen" target="_blank" rel="noopener"></a>
     </div>
+    <div class="row vid-send" id="vtSendRow"></div>
     <!-- v6.4.0 — the takes this page made, kept like the Video page's are:
          saved to the Gallery as they finish, read back when the page opens,
          and gone only when the student deletes them. -->
@@ -3722,6 +3729,7 @@ html.splashing #splash{display:flex}
     <div class="row" style="margin-top:10px">
       <button class="btn grow" id="btnTkDl"></button>
     </div>
+    <div class="row vid-send" id="tkSendRow"></div>
     <h3 id="tkHistH" style="margin-top:14px"></h3>
     <div class="hist" id="tkHist"></div>
     <button class="chip" id="tkHistClear" style="display:none"></button>
@@ -5407,6 +5415,9 @@ var TOPGROUPS=[
    tools/build_app_data.js moves the cut forward; the panel lifts this list
    (js/hnk_whats_new.js), so its boot parses these rows and no more. */
 var WHATS_NEW = [
+  { v:"6.94.0", kind:"page", ref:"pgVideo",
+    t:{my:"Video ရလဒ်တိုင်းမှာ “Upscale ဆီ ပို့မယ်” · “Video Tools ဆီ ပို့မယ်” ခလုတ် — တစ်ချက်နှိပ်ရင် clip က အဲ့စာမျက်နှာရဲ့ input ဖြစ်သွားပြီ (Download လုပ်ပြီး ပြန်ရွေးစရာ မလိုတော့)၊ Panel SELF-TEST မှာ “Save folder” row အသစ်၊ panel release တိုင်းရဲ့ Adobe acceptance မှတ်တမ်း",en:"Every video result carries “Send to Upscale” and “Send to Video Tools” — one tap and the clip is that page's input (no more Download, then pick it again); the Panel's SELF-TEST gets a “Save folder” row; and every panel release now has one honest line in the Adobe acceptance record",shn:"ၽွၼ်းလႆႈဝီးတီးဢူဝ်ႊၵူႈဢၼ် မီး “သူင်ႇၸူး Upscale” · “သူင်ႇၸူး Video Tools” — ၼဵၵ်းၼိုင်ႈပွၵ်ႈ clip ပဵၼ် input ၼႃႈလိၵ်ႈၼၼ်ႉ၊ Panel SELF-TEST မီး “Save folder”၊ release ၵူႈဢၼ် မီးမၢႆတွင်း acceptance",kac:"Video lachyum shagu hta “Send to Upscale” · “Send to Video Tools” — kalang dip yang clip gaw dai page a input tai sai, Panel SELF-TEST hta “Save folder” row, release shagu hta acceptance ka da ai",th:"ผลลัพธ์วิดีโอทุกกล่องมีปุ่ม “ส่งไป Upscale” · “ส่งไป Video Tools” — แตะครั้งเดียว คลิปกลายเป็นไฟล์ของหน้านั้น (ไม่ต้อง Download แล้วเลือกใหม่), SELF-TEST ของ Panel มีแถว “Save folder” และทุก release มีบันทึก Adobe acceptance หนึ่งบรรทัดตามจริง",zh:"每个视频结果都带“发送到 Upscale”·“发送到 Video Tools”——点一下，片段就成为该页面的输入（不再需要先下载再选择）；面板 SELF-TEST 新增“Save folder”行；每个面板版本在 Adobe 验收记录中都有一行真实记录",vi:"Mỗi kết quả video có “Gửi sang Upscale” · “Gửi sang Video Tools” — một chạm, clip thành đầu vào của trang đó (không còn Tải về rồi chọn lại); SELF-TEST của Panel thêm dòng “Save folder”; mỗi bản phát hành panel có một dòng trung thực trong hồ sơ Adobe acceptance",id:"Setiap hasil video punya “Kirim ke Upscale” · “Kirim ke Video Tools” — satu ketukan dan klip menjadi input halaman itu (tak perlu Download lalu pilih lagi); SELF-TEST Panel mendapat baris “Save folder”; setiap rilis panel kini punya satu baris jujur di catatan Adobe acceptance",ms:"Setiap hasil video ada “Hantar ke Upscale” · “Hantar ke Video Tools” — satu ketikan dan klip menjadi input halaman itu (tak perlu Download lalu pilih semula); SELF-TEST Panel dapat baris “Save folder”; setiap keluaran panel kini ada satu baris jujur dalam rekod Adobe acceptance"},
+    s:{my:"**Clip ပို့မယ်** — Video · Video Upscale · Video Tools · Talking Photo ရလဒ်ဘောက်စ်တိုင်း + Video wizard ရဲ့ Result မှာ “Upscale ဆီ ပို့မယ်” နဲ့ “Video Tools ဆီ ပို့မယ်” ခလုတ် ၂ ခု။ နှိပ်ရင် clip ရဲ့ ဖိုင် (သိမ်းထားတဲ့ copy ဒါမှမဟုတ် link ကို တစ်ခါ ဆွဲယူ) က အဲ့စာမျက်နှာမှာ ရွေးထားတဲ့ ဖိုင် ဖြစ်သွားပြီး စာမျက်နှာ ပွင့်မယ်။ Upscale ဘောက်စ်က Video Tools တစ်ခုပဲ ပို့တယ်၊ Talking Photo က ပုံ + အသံ ယူတာမို့ ဘာမှ မလက်ခံဘူး — သူ့ရလဒ်ကိုပဲ ဆက်ပို့တယ်။ Photoshop Panel မှာလဲ အတူတူ။ **Save folder (Panel SELF-TEST)** — ရလဒ် ဖိုင် သိမ်းတဲ့ folder ကို ရှာ၊ probe ဖိုင် တစ်ခု ရေး၊ ပြန်ဖတ်၊ ဖျက် — လမ်းကြောင်း · writable · သိမ်းထားတဲ့ take အရေအတွက် · ms (ဒါမှမဟုတ် ငြင်းတဲ့ အကြောင်းရင်း)။ **Acceptance record** — panel release တိုင်း PANEL_RELEASE_SECURITY.md မှာ တစ်ကြောင်း: version · ရက်စွဲ · SHA-256 · size · Photoshop ထဲ စစ်ပြီးပြီလား (ယခုထိ pending)။",en:"**Send the clip on** — every result box (Video · Video Upscale · Video Tools · Talking Photo) and the video wizard's Result step carry “Send to Upscale” and “Send to Video Tools”. One tap: the clip's bytes (the saved copy, or the live link fetched once) become that page's picked file, exactly as the picker would set them, and the page opens. The Upscale box offers only Video Tools; Talking Photo takes a photo and a voice, so nothing is sent to it — its results are sent on. The Photoshop Panel does the same. **Save folder (Panel SELF-TEST)** — the folder every finished take is written to: found, a probe file written, read back and deleted — path · writable · saved takes · ms, or the exact refusal. **Acceptance record** — every panel release gets one honest line in PANEL_RELEASE_SECURITY.md: version · date · SHA-256 · size · whether the in-Photoshop checklist ran (still pending).",shn:"ၽွၼ်းလႆႈဝီးတီးဢူဝ်ႊၵူႈဢၼ် သူင်ႇၵႂႃႇ Upscale / Video Tools လႆႈ ၼဵၵ်းၼိုင်ႈပွၵ်ႈ၊ Panel SELF-TEST “Save folder”၊ release ၵူႈဢၼ် မီးမၢႆတွင်း acceptance ၼိုင်ႈထႅဝ်။",kac:"Video lachyum shagu hpe Upscale / Video Tools de kalang dip shangun lu ai, Panel SELF-TEST “Save folder” row, release shagu hta acceptance ka da ai lang mi.",th:"ส่งคลิปผลลัพธ์ทุกกล่องไป Upscale / Video Tools ได้ในหนึ่งแตะ, SELF-TEST ของ Panel มีแถว “Save folder”, ทุก release มีบันทึก acceptance หนึ่งบรรทัด",zh:"每个视频结果都可一键发送到 Upscale / Video Tools，面板 SELF-TEST 新增“Save folder”行，每个版本一行 acceptance 记录。",vi:"Mỗi kết quả video gửi sang Upscale / Video Tools bằng một chạm, SELF-TEST của Panel có dòng “Save folder”, mỗi bản phát hành một dòng acceptance.",id:"Setiap hasil video dikirim ke Upscale / Video Tools dengan satu ketukan, SELF-TEST Panel punya baris “Save folder”, setiap rilis satu baris acceptance.",ms:"Setiap hasil video dihantar ke Upscale / Video Tools dengan satu ketikan, SELF-TEST Panel ada baris “Save folder”, setiap keluaran satu baris acceptance."} },
   { v:"6.93.0", kind:"page", ref:"pgWf",
     t:{my:"UI/UX wave — Smart Workflow card တွေ သပ်ရပ်သွားပြီ၊ Imagine page က ဖုန်းမှာ card ၂ ခု တစ်တန်း + tool rail + Model/Size က Apply ဘေးမှာ၊ Photoshop Panel ရဲ့ Retouch A/B မှာ Active layer ပုံ ပေါ်လာပြီ (Layer နာမည် + ↻)၊ Selection Edit က web မှာလဲ ရွေးတဲ့နေရာပဲ ပြောင်းပြီ",en:"UI/UX wave — Smart Workflow cards tidied, the Imagine page two cards to a row on a phone with a tool rail and Model · Size beside Apply, the Photoshop Panel's Retouch A/B now shows the captured Active layer (its name + ↻), and Selection Edit changes only the drawn area on the web too",shn:"UI/UX wave — Smart Workflow card ႁၢင်ႈလီ၊ Imagine page card 2 ၼိုင်ႈထႅဝ် + tool rail၊ Retouch A/B ၼႂ်း Panel ၼႄ Active layer၊ Selection Edit လႅၵ်ႈတီႈလိူၵ်ႈၵူၺ်း",kac:"UI/UX wave — Smart Workflow card ni san sai, Imagine page card 2 hpe lahkawng hte tool rail, Panel Retouch A/B kaw Active layer pru sai, Selection Edit gaw lata da ai shara sha galai sai",th:"UI/UX wave — การ์ด Smart Workflow เป็นระเบียบขึ้น หน้า Imagine แสดง 2 การ์ดต่อแถวบนมือถือพร้อม tool rail และ Model · Size ข้าง Apply, Retouch A/B ใน Panel แสดง Active layer ที่จับมาแล้ว (ชื่อ + ↻) และ Selection Edit บนเว็บก็เปลี่ยนเฉพาะบริเวณที่เลือก",zh:"UI/UX 波次 — Smart Workflow 卡片更整洁，Imagine 页面手机上一行两张卡片、工具栏和 Apply 旁的 Model · Size，Panel 的 Retouch A/B 现在会显示捕获的活动图层（名称 + ↻），网页版 Selection Edit 也只改框选区域",vi:"Đợt UI/UX — thẻ Smart Workflow gọn hơn, trang Imagine hai thẻ mỗi hàng trên điện thoại với thanh công cụ và Model · Size cạnh Apply, Retouch A/B trong Panel hiện lớp đang chọn (tên + ↻), Selection Edit trên web cũng chỉ đổi vùng đã vẽ",id:"Gelombang UI/UX — kartu Smart Workflow dirapikan, halaman Imagine dua kartu per baris di ponsel dengan rel alat dan Model · Size di samping Apply, Retouch A/B di Panel kini menampilkan layer aktif yang ditangkap (nama + ↻), dan Selection Edit di web hanya mengubah area yang digambar",ms:"Gelombang UI/UX — kad Smart Workflow dikemas, halaman Imagine dua kad sebaris di telefon dengan rel alat dan Model · Size di sebelah Apply, Retouch A/B dalam Panel kini menunjukkan lapisan aktif yang ditangkap (nama + ↻), dan Selection Edit di web hanya mengubah kawasan yang dilukis"},
     s:{my:"**Smart Workflow card** — ★ နဲ့ batch ခလုတ် ၂ ခု ညာဘက်အပေါ်မှာ အတူတူ (ပုံရဲ့ IMAGE 1 label ကို မဖုံးတော့ဘူး)၊ ပုံအရေအတွက် pill နဲ့ route badge အောက်နားမှာ၊ Wizard ခလုတ် ညာဘက်။ **Imagine** — ဖုန်းမှာ card ၂ ခု တစ်တန်း (အရင် ၂၂ ခု တစ်တန်းတည်း)၊ tool rail နဲ့ tool ပြောင်းလို့ရ၊ Model/Size က Apply အပေါ်မှာ။ **Retouch A/B (Panel)** — layer ယူပြီးရင် ပုံ ချက်ချင်း ပေါ်တယ်၊ Layer နာမည်နဲ့ ↻ (ပြန်ယူ)။ **Selection Edit (web)** — IMAGE 1 ပေါ်မှာ လေးထောင့် ဆွဲရွေးရင် အဲ့နေရာပဲ ပို့ပြီး ရလဒ်ကို မူရင်းပုံထဲ ပြန်ထည့်ပေးတယ်၊ Panel မှာ Generate မနှိပ်ခင် selection ရှိမရှိ စစ်ပြတယ်။",en:"**Smart Workflow card** — the ★ and batch buttons are twin discs at the top-right (off the art's own IMAGE 1 label), the photo-count pill and route badge sit at the bottom edge, Wizard is a right-aligned pill. **Imagine** — two cards to a row on a phone (twenty-two used to stand in one column), a tool rail switches tools, Model · Size sit above Apply. **Retouch A/B (Panel)** — the captured layer shows at once, with its name and a ↻ to capture again. **Selection Edit (web)** — drag a rectangle on IMAGE 1 and only that area is sent, the result pasted back into your untouched photo; the Panel checks the selection before GENERATE.",shn:"Smart Workflow card ႁၢင်ႈလီ၊ Imagine card 2 ၼိုင်ႈထႅဝ် + tool rail၊ Retouch A/B ၼႄ layer၊ Selection Edit လႅၵ်ႈတီႈလိူၵ်ႈၵူၺ်း။",kac:"Smart Workflow card san, Imagine card 2 hte tool rail, Retouch A/B layer pru, Selection Edit lata ai shara sha galai.",th:"การ์ด Smart Workflow เป็นระเบียบ, Imagine 2 การ์ดต่อแถว + tool rail, Retouch A/B แสดง layer, Selection Edit เปลี่ยนเฉพาะบริเวณที่เลือก",zh:"Smart Workflow 卡片整洁，Imagine 一行两张 + 工具栏，Retouch A/B 显示图层，Selection Edit 只改框选区域。",vi:"Thẻ Smart Workflow gọn, Imagine hai thẻ mỗi hàng + thanh công cụ, Retouch A/B hiện lớp, Selection Edit chỉ đổi vùng chọn.",id:"Kartu Smart Workflow rapi, Imagine dua kartu per baris + rel alat, Retouch A/B menampilkan layer, Selection Edit hanya mengubah area terpilih.",ms:"Kad Smart Workflow kemas, Imagine dua kad sebaris + rel alat, Retouch A/B menunjukkan lapisan, Selection Edit hanya mengubah kawasan dipilih."} },
@@ -29492,7 +29503,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.93.0";
+var APP_VER="6.94.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -31976,6 +31987,68 @@ function vidPlayUrl(e){
   if(e.blob){ if(!e._u){ try{ e._u=URL.createObjectURL(e.blob); }catch(x){ e._u=""; } } return e._u||e.url||""; }
   return e.url||"";
 }
+/* 6.94.0 — ONE TAP, THE NEXT TOOL. A finished clip used to leave the studio the long way round: Download, find the
+   file, open Video Upscale or Video Tools, Pick, find the file again. Every video result box — Video, Video Upscale,
+   Video Tools, Talking Photo and the video wizard's Result step — now carries "Send to Upscale" and "Send to Video
+   Tools": the clip's bytes (the saved copy, or the live link fetched once) become that page's picked file, exactly as
+   the file picker would have set them, and the page opens. The Upscale box offers only Video Tools (an upscale of an
+   upscale is not a step). Talking Photo takes a photo and a voice, so nothing is sent TO it — its results are sent on.
+   The panel does the same in its own main.js (vidSendTo) with the same lifted words. */
+var VID_SEND_TARGETS={ up:{ page:"pgVideoUp", key:"sendUp", ic:"i-rocket", name:"Video Upscale" }, v2v:{ page:"pgV2V", key:"sendV2v", ic:"i-clapper", name:"Video Tools" } };
+var VID_SEND_BOXES={
+  vid:{ row:"vidSendRow", from:"video", targets:["up","v2v"], get:function(){ return state.vidHist[state.vidHistSel]; } },
+  vu: { row:"vuSendRow",  from:"upscale", targets:["v2v"],    get:function(){ return state.vuHist[state.vuHistSel]; } },
+  vt: { row:"vtSendRow",  from:"videotool", targets:["up","v2v"], get:function(){ return state.vtHist[state.vtHistSel]; } },
+  tk: { row:"tkSendRow",  from:"talk", targets:["up","v2v"],  get:function(){ return state.tkHist[state.tkHistSel]; } }
+};
+var VID_SEND_MAX=200*1024*1024;   /* the pickers' own ceiling */
+async function vidSendBytes(out){
+  var blob=out.blob;
+  if(!blob){
+    if(!out.url) throw new Error("no-clip");
+    var r=await fetchWithTimeout(out.url, {}, MEDIA_DL_TIMEOUT_MS);
+    if(!r.ok){ var e=new Error("download-failed"); e.status=r.status; throw e; }
+    blob=await r.blob();
+  }
+  if(!blob || !blob.size) throw new Error("empty-clip");
+  if(blob.size>VID_SEND_MAX) throw new Error("too-large");
+  var dataUrl=await new Promise(function(res,rej){ var rd=new FileReader(); rd.onload=function(){ res(String(rd.result)); }; rd.onerror=function(){ rej(new Error("read-failed")); }; rd.readAsDataURL(blob); });
+  var m=dataUrl.match(/^data:([^;]+);base64,(.+)$/); if(!m) throw new Error("bad-bytes");
+  var mime=/^video\//.test(m[1]) ? m[1] : "video/mp4";
+  return { mime:mime, b64:m[2], dataUrl:"data:"+mime+";base64,"+m[2], bytes:blob.size };
+}
+async function vidSendTo(target, out, from, closeWiz){
+  var T=VID_SEND_TARGETS[target]; if(!T || !out) return false;
+  toast(vwizL("sendBusy"));
+  try{
+    var b=await vidSendBytes(out), name="hnk-"+(from||"clip")+"-"+Date.now()+".mp4";   /* the panel names its clip the same way */
+    if(target==="up"){
+      /* the same three effects vuFilePick's onchange has */
+      state.vuFile={mime:"video/mp4",b64:b.b64,name:name};
+      $("vuFileName").textContent=name;
+      var pv=$("vuPreview"); pv.src=b.dataUrl; pv.style.display="";
+      updateVuNeedNote();
+    } else {
+      /* the same four effects vtFilePick's onchange has */
+      state.vtFile={mime:b.mime,b64:b.b64,name:name}; updateVtModelUI(); renderVtPicks(); vtWfCheckClip(); wipSave();
+    }
+    if(closeWiz){ try{ closeVWiz(); }catch(eW){} }
+    switchPage(T.page);
+    toast(vwizL("sentTo").replace("{P}", T.name), "ok");
+    return true;
+  }catch(e){ toast(vwizL("sendFail"), "err"); return false; }
+}
+function vidSendChips(host, getOut, from, targets, closeWiz){
+  targets.forEach(function(tg){
+    var T=VID_SEND_TARGETS[tg];
+    var b=el("button","btn vid-send-btn"); b.type="button"; b.setAttribute("data-send",tg); b.setAttribute("data-from",from);
+    setIcnText(b, T.ic, vwizL(T.key));
+    b.onclick=function(){ var out=getOut(); if(out) vidSendTo(tg, out, from, closeWiz); };
+    host.appendChild(b);
+  });
+}
+function vidSendPaint(k){ var B=VID_SEND_BOXES[k], host=B && $(B.row); if(!host) return; host.innerHTML=""; vidSendChips(host, B.get, B.from, B.targets, false); }
+window.vidSendTo=vidSendTo;
 function showVidResult(scroll){
   var out=state.vidHist[state.vidHistSel]; if(!out) return;
   $("vidResultBox").className="card result-box on";
@@ -31995,6 +32068,7 @@ function showVidResult(scroll){
     histItem(h, v, "vidHist", i);
   });
   histStripClearSync("vidHist");
+  vidSendPaint("vid");
   if(scroll!==false) $("vidResultBox").scrollIntoView({behavior:"smooth"});
 }
 
@@ -32155,6 +32229,7 @@ function showVuResult(){
     histItem(h, v, "vuHist", i);
   });
   histStripClearSync("vuHist");
+  vidSendPaint("vu");
   $("vuResultBox").scrollIntoView({behavior:"smooth"});
 }
 
@@ -32876,6 +32951,7 @@ function showVtResult(scroll){
     histItem(h, v, "vtHist", i);
   });
   histStripClearSync("vtHist");
+  vidSendPaint("vt");
   if(scroll!==false) $("vtResultBox").scrollIntoView({behavior:"smooth"});
 }
 $("btnVtDl").onclick=async function(){
@@ -32935,7 +33011,13 @@ var VWIZ_L={
   takes:{my:"အရင် ထုတ်ခဲ့တာတွေ — တစ်ခု နှိပ်ပြီး ကြည့်ပါ",en:"Earlier takes — tap one to see it",shn:"ဢၼ်ႁဵတ်းဝႆႉမိူဝ်ႈၵူႈပွၵ်ႈ — ၼဵၵ်းတူၺ်း",kac:"Shawng galaw da ai ni — langai dip nna yu u",th:"ที่ทำไว้ก่อนหน้า — แตะเพื่อดู",zh:"之前的结果 — 点一个查看",vi:"Các lần trước — chạm để xem",id:"Hasil sebelumnya — ketuk untuk melihat",ms:"Hasil sebelumnya — ketik untuk melihat"},
   openLink:{my:"Direct Link ဖွင့်မယ်",en:"Open Direct Link",shn:"ပိုတ်ႇ Direct Link",kac:"Direct Link hpaw u",th:"เปิดลิงก์ตรง",zh:"打开直链",vi:"Mở liên kết trực tiếp",id:"Buka tautan langsung",ms:"Buka pautan terus"},
   savedTo:{my:"{F} အနေနဲ့ သိမ်းပြီးပါပြီ",en:"Saved as {F}",shn:"သိမ်းဝႆႉပဵၼ် {F}",kac:"{F} hku tawn da sai",th:"บันทึกเป็น {F} แล้ว",zh:"已保存为 {F}",vi:"Đã lưu thành {F}",id:"Tersimpan sebagai {F}",ms:"Disimpan sebagai {F}"},
-  openFolder:{my:"Folder ဖွင့်မယ်",en:"Open the folder",shn:"ပိုတ်ႇ folder",kac:"Folder hpaw u",th:"เปิดโฟลเดอร์",zh:"打开文件夹",vi:"Mở thư mục",id:"Buka folder",ms:"Buka folder"}
+  openFolder:{my:"Folder ဖွင့်မယ်",en:"Open the folder",shn:"ပိုတ်ႇ folder",kac:"Folder hpaw u",th:"เปิดโฟลเดอร์",zh:"打开文件夹",vi:"Mở thư mục",id:"Buka folder",ms:"Buka folder"},
+  /* 6.94.0 — ONE TAP, THE NEXT TOOL: every video result box hands its clip to Video Upscale or Video Tools */
+  sendUp:{my:"Upscale ဆီ ပို့မယ်",en:"Send to Upscale",shn:"သူင်ႇၸူး Upscale",kac:"Upscale de shagun u",th:"ส่งไป Upscale",zh:"发送到 Upscale",vi:"Gửi sang Upscale",id:"Kirim ke Upscale",ms:"Hantar ke Upscale"},
+  sendV2v:{my:"Video Tools ဆီ ပို့မယ်",en:"Send to Video Tools",shn:"သူင်ႇၸူး Video Tools",kac:"Video Tools de shagun u",th:"ส่งไป Video Tools",zh:"发送到 Video Tools",vi:"Gửi sang Video Tools",id:"Kirim ke Video Tools",ms:"Hantar ke Video Tools"},
+  sendBusy:{my:"Clip ကို ယူနေသည်...",en:"Fetching the clip...",shn:"တိုၵ်ႉဢဝ် clip...",kac:"Clip hpe la nga ai...",th:"กำลังดึงคลิป...",zh:"正在获取视频片段...",vi:"Đang lấy clip...",id:"Mengambil klip...",ms:"Mengambil klip..."},
+  sentTo:{my:"{P} ဆီ ပို့ပြီ — ဒီ clip က အဲ့စာမျက်နှာရဲ့ input ဖြစ်နေပြီ",en:"Sent to {P} — the clip is now that page's input",shn:"သူင်ႇၸူး {P} ယဝ်ႉ — clip ၼႆႉပဵၼ် input ၼႃႈလိၵ်ႈၼၼ်ႉယဝ်ႉ",kac:"{P} de shagun sai — ndai clip gaw dai page a input rai sai",th:"ส่งไป {P} แล้ว — คลิปนี้เป็นอินพุตของหน้านั้นแล้ว",zh:"已发送到 {P} — 这段视频已成为该页的输入",vi:"Đã gửi sang {P} — clip này giờ là đầu vào của trang đó",id:"Terkirim ke {P} — klip ini kini menjadi input halaman itu",ms:"Dihantar ke {P} — klip ini kini input halaman itu"},
+  sendFail:{my:"Clip ကို မယူနိုင်ပါ — Download လုပ်ပြီး ကိုယ်တိုင် ရွေးပါ",en:"Couldn't fetch the clip — download it and pick it by hand",shn:"ဢမ်ႇဢဝ်လႆႈ clip — download သေ လိူၵ်ႈႁင်းၵူၺ်း",kac:"Clip hpe la n lu ai — download nna nang hkrai lata u",th:"ดึงคลิปไม่ได้ — ดาวน์โหลดแล้วเลือกเอง",zh:"无法获取视频片段 — 请下载后手动选择",vi:"Không lấy được clip — hãy tải về rồi chọn tay",id:"Tidak dapat mengambil klip — unduh lalu pilih manual",ms:"Tidak dapat mengambil klip — muat turun dan pilih sendiri"}
 };
 /* the four guide lines, per deck; {N} is the card's own need badge */
 var VWIZ_STEPS={
@@ -33195,6 +33277,10 @@ function renderVWiz(){
       nav1.appendChild(dl);
       if(cur.url){ var lk=el("a","btn"); lk.id="vwizOpenLink"; lk.href=cur.url; lk.target="_blank"; lk.rel="noopener"; setIcnText(lk,"i-external",vwizL("openLink")); nav1.appendChild(lk); }
       body.appendChild(nav1);
+      /* 6.94.0 — the clip goes on to the next tool from here too; the wizard closes so the page it lands on is visible */
+      var sendRow=el("div","wiz-nav wiz-nav-acts vid-send"); sendRow.id="vwizSendRow";
+      vidSendChips(sendRow, function(){ return cur; }, vwiz.kind==="i2v"?"video":"videotool", ["up","v2v"], true);
+      body.appendChild(sendRow);
       var again=el("button","btn"); setIcnText(again,"i-retry",vwizL("again")); again.onclick=function(){ vwiz.result=null; goStep(2); };
       var onp=el("button","btn"); setIcnText(onp,"i-caret",vwizL("onPage"));
       onp.onclick=function(){ closeVWiz(); var bx=$(vwiz.kind==="i2v"?"vidResultBox":"vtResultBox"); if(bx) bx.scrollIntoView({behavior:"smooth"}); };
@@ -33402,6 +33488,7 @@ function showTkResult(scroll){
     histItem(h, v, "tkHist", i);
   });
   histStripClearSync("tkHist");
+  vidSendPaint("tk");
   if(scroll!==false) $("tkResultBox").scrollIntoView({behavior:"smooth"});
 }
 $("btnTkDl").onclick=async function(){

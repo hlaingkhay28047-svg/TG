@@ -566,6 +566,8 @@ jobs:
         run: PORT=8931 node test/verify_lang_packs.js
       - name: The owner's UI/UX wave — Smart Workflow cards tidied on both surfaces, Imagine two to a row with a tool rail and Model · Size above Apply (a row-aware slider width where Photoshop reads no rect), the Retouch A/B PHOTO card repainted after a layer capture (name + ↻), Selection Edit's marquee drawn on the web (crop sent, result pasted back) and the panel's Selection row (6.93.0)
         run: PORT=8931 node test/verify_ui_wave_693.js
+      - name: One tap to the next tool — Send to Upscale · Send to Video Tools on every video result box and the wizard's Result on both surfaces (the clip's bytes become the page's picked file), the SELF-TEST Save folder row (found · written · read back, never written without a native path), and the publish ledger one honest line per panel release (6.94.0)
+        run: PORT=8931 node test/verify_clip_handoff_694.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
