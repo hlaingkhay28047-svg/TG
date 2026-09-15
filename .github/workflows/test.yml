@@ -564,6 +564,8 @@ jobs:
         run: PORT=8931 node test/verify_app_data_files.js
       - name: The packs left the shell — eighteen native language packs as data/trl-<code>.js that the shell's loader fetches one at a time (a link's ?lang= first, then the stored choice, never a base language), the Imagine tables as data/imagine.js inlined into the panel's module, the loader in a VM over hostile codes, seven real boots (6.92.0)
         run: PORT=8931 node test/verify_lang_packs.js
+      - name: The owner's UI/UX wave — Smart Workflow cards tidied on both surfaces, Imagine two to a row with a tool rail and Model · Size above Apply (a row-aware slider width where Photoshop reads no rect), the Retouch A/B PHOTO card repainted after a layer capture (name + ↻), Selection Edit's marquee drawn on the web (crop sent, result pasted back) and the panel's Selection row (6.93.0)
+        run: PORT=8931 node test/verify_ui_wave_693.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

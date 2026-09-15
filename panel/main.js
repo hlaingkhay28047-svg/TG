@@ -2597,7 +2597,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.163.0";
+const PANEL_VERSION = "6.164.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -4048,6 +4048,8 @@ function applyI18n() {
          sheet every other slot opens (Layer · File), through the panel's own
          capture paths. */
       pickPhoto: function () { try { stPickInto("subject-reference", "PHOTO"); } catch (e) { } },
+      /* 6.164.0 — the card's ↻: read the active layer again, straight into the PHOTO slot */
+      pickLayer: function () { try { refLayerInto("subject-reference"); } catch (e) { } },
       pickRef: function () { try { stPickInto("reference-2", "REF"); } catch (e) { } },
       clearPhoto: function () {
         try {
@@ -10625,6 +10627,14 @@ function ffPressable(node, fn) {
 function renderRefs() {
   /* v6.51.0 — the app's one refstrip, painted on Freeform and Video alike */
   try { if (typeof vwizRepaint === "function") vwizRepaint(); } catch (e) { }   /* v6.14.0 — the video wizard repaints with the slots */
+  /* v6.164.0 — THE RETOUCH PHOTO CARD REPAINTS WITH THE SLOT. Retouch A / B
+     draw the shared PHOTO slot through the studio screen's own picker
+     (#stPicker), not through the refstrips below; every route that fills
+     the slot — the Layer · File sheet, the library, a URL — ended here and
+     repainted only the strips, so on Retouch A the layer was captured, the
+     status line said so, and the card still read "Add a photo" until the
+     page was left and re-entered. Only clearPhoto remembered the picker. */
+  try { const sc = globalThis.HNK && globalThis.HNK.studioScreen; if (sc && typeof sc.renderPicker === "function") sc.renderPicker(); } catch (e) { }
   ["refStrip", "vidRefStrip"].forEach(function (hostId) {
     const host = $(hostId);
     if (!host) return;

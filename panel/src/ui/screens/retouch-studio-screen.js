@@ -443,6 +443,25 @@ function renderStPicker() {
     var im = doc().createElement("img");
     im.src = "data:" + ref.mime + ";base64," + ref.b64; im.alt = "before";
     d.appendChild(im);
+    /* 6.164.0 — WHERE THE PHOTO CAME FROM, AND A WAY TO TAKE IT AGAIN. A photo
+       captured from the open layer names that layer under the picture, and a
+       ↻ beside the ✕ reads the active layer again — the student retouches in
+       Photoshop, taps once, and the card shows the layer as it is now. */
+    var fromLayer = /^Layer:/.test(String(ref.label || ""));
+    if (fromLayer) {
+      var re = el("button", "x re");
+      /* i-reset ships only its muted tint — the literal path, as the group reset in the
+         Workflows screen draws it, not icn() (which would ask for a cream file). */
+      re.innerHTML = '<img class="ic-s" alt="" src="icons/ui/i-reset-muted.png">';
+      var reL = L9({ my: "Layer ကို ပြန်ယူမယ်", en: "Capture the layer again" });
+      re.setAttribute("aria-label", reL); re.title = reL;
+      re.onclick = function (ev) {
+        ev.stopPropagation();
+        var b = bridge(); if (b && b.pickLayer) b.pickLayer();
+      };
+      d.appendChild(re);
+      d.appendChild(el("span", "tag src", "Layer · " + String(ref.label).replace(/^Layer:\s*/, "").replace(/\.(jpe?g|png)$/i, "")));
+    }
     var x = el("button", "x");
     x.innerHTML = icn("i-close");
     x.setAttribute("aria-label", L9({ my: "ပုံဖယ်မယ်", en: "Remove image" }));

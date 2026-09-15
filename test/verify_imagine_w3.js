@@ -185,7 +185,9 @@ const MOCK = `(function(){
     report("B3) Mark opens the paint view: the chip reads Done and is on, three brush sizes with the medium one on, Undo and Clear disabled until a stroke, the picture with a live canvas over it (touch-action none) instead of the compare",
       on.on && on.pressed === "true" && on.doneLabel && on.brushes === 3 && on.brushOn === "1" && on.undoOff && on.clearOff && on.wrapOn && on.cv && on.cvW > 100 && on.cvH > 100 && on.noCmp && on.touch === "none", on);
 
-    /* a real pointer stroke across the canvas */
+    /* a real pointer stroke across the canvas — 6.93.0: the tool rail above the stage pushed the canvas past the
+       viewport's bottom edge, where a real mouse cannot reach; bring it into view first, as a student would scroll */
+    await page.evaluate(() => document.getElementById("imMarkCv").scrollIntoView({ block: "center" })); await page.waitForTimeout(120);
     const box = await page.evaluate(() => { const r = document.getElementById("imMarkCv").getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
     await page.mouse.move(box.x + box.w * 0.25, box.y + box.h * 0.30); await page.mouse.down();
     for (let k = 1; k <= 8; k++) await page.mouse.move(box.x + box.w * (0.25 + 0.05 * k), box.y + box.h * (0.30 + 0.025 * k));
