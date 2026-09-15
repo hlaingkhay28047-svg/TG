@@ -212,6 +212,10 @@ report("E2) key.body still explains the bring-your-own-key engine",
 const APP_FREE_WORDS = ["Free", "အခမဲ့", "လၢႆလၢႆ", "ฟรี", "免费", "Miễn phí", "Gratis",
   "Percuma", "ফ্রি", "મફત", "फ्री", "無料", "ᦟᦻᦟᦻ", "ឥតគិតថ្លៃ", "ಉಚಿತ", "무료", "ຟຣີ",
   "സൗജന്യം", "मोफत", "निःशुल्क", "ਮੁਫ਼ਤ", "இலவசம்", "ᥘᥣᥭᥘᥣᥭ", "ఉచితం", "فری"];
+/* v6.92.0 — the eighteen native packs live in data/trl-<code>.js (the shell loads only the chosen one); the
+   pack strings are scanned there, so this still covers every language table wherever it lives. */
+const APPDATA = require("../tools/lib/app-data.js");
+const PACKS = APPDATA.TRL_CODES.map(c => APPDATA.wrapperText("trl-" + c)).join("\n");
 const planFree = [];
 {
   const block = app.match(/acc_plan_free:\{([^}]*)\}/);
@@ -220,7 +224,7 @@ const planFree = [];
     while ((m = re.exec(block[1]))) planFree.push({ lg: m[1], v: m[2] });
   }
   let m2; const re2 = /"?acc_plan_free"?:"((?:[^"\\]|\\.)*)"/g;
-  while ((m2 = re2.exec(app))) planFree.push({ lg: "pack", v: m2[1] });
+  while ((m2 = re2.exec(app + "\n" + PACKS))) planFree.push({ lg: "pack", v: m2[1] });
 }
 const stillFree = planFree.filter(e =>
   APP_FREE_WORDS.some(w => e.v.startsWith(w)) || e.v.includes(" — "));
