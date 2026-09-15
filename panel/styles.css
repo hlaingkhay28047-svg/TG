@@ -421,9 +421,16 @@ select.inp { padding: 9px 10px; }
 /* ---------- Buttons ---------- */
 .btn {
   display: flex; align-items: center; justify-content: center;
-  white-space: nowrap;
+  /* 6.96.2 — A BUTTON LABEL IS NEVER CUT. This said white-space:nowrap, which
+     the web app's .btn has never said: there a long label simply takes a second
+     line. Here it meant the label was ellipsised the moment the button was a
+     few pixels short — and how short depends on the host's fonts, so the same
+     button fits on one machine and reads "Before/After ၂ ကွက်…" on another.
+     It wraps now. overflow:hidden stays as the backstop: a wrapped label can
+     grow downwards, never sideways past its button. */
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   background-color: var(--btn);
   border: 1px solid var(--line-3);
   border-radius: 7px;
@@ -2327,7 +2334,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .addons { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 18px; }
 .apg .btn, #genDock .btn { display: flex; flex-direction: row; align-items: center; justify-content: center; background-color: var(--panel-2);
   border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text); padding: 8px 16px; font-size: 13px; font-weight: 700;
-  min-height: 44px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  min-height: 44px; box-sizing: border-box; white-space: normal; overflow: hidden; text-overflow: clip; }
 .apg .btn + .btn { margin-left: 0; }
 /* …and the app-page copy of .btn re-states white-space:nowrap at the same
    specificity as .btn.grow but later in the file, so the row's main action

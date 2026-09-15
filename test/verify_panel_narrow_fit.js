@@ -47,6 +47,15 @@
         card, but the look tile is a <span> in the same .pcard, so it took the
         2px side padding: a 76px picture in a 76px box with 4px of padding has
         a 72px content column and lost 4px off its right edge, on all eight.
+     4. AND EVERY OTHER BUTTON LABEL, which the CI runner found before any
+        student did. .btn said white-space:nowrap, so a label was ellipsised
+        the moment its button was a few pixels short — and how short depends on
+        the host's fonts. On this machine "Before/After ၂ ကွက်တွဲ ထုတ်မယ်"
+        (#stExp2Up, Retouch A and B) fitted its 252px button exactly; on the CI
+        runner's fonts it was 3px over and cut. The web app's .btn has never
+        said nowrap: there the label takes a second line. The panel's does the
+        same now, with overflow:hidden kept as the backstop, so a label can
+        grow downwards but never sideways past its button.
 
    Fault-injected while writing: undo any one of the three rules and B1/B2 name
    the element, the page and the width; A1–A3 fail on the source. */
@@ -73,7 +82,13 @@ const MANIFEST = JSON.parse(read("panel/release-manifest.json"));
 const ALLOWED = {
   "im-cmp-top": "the Imagine card's BEFORE layer is clipped to the slider's position — the cut IS the control",
   "s": "the Smart Workflow / V→V card description's three-line ceiling (6.96.0); every cut one carries its own span.ell marker",
-  "hsl-val": "the picker's chosen value declares text-overflow:ellipsis, so a long model name ends in a marker rather than stopping mid-word"
+  "hsl-val": "the picker's chosen value declares text-overflow:ellipsis, so a long model name ends in a marker rather than stopping mid-word",
+  /* #pageAiTools .dash-card .art is an aspect-ratio frame — height:0 with a
+     percentage padding-top, its picture and its badge both absolutely placed
+     and clipped to it on purpose. There is no text in it to lose, and what
+     little its own scrollWidth reports past the frame is the absolutely placed
+     badge, which is where the design puts it. */
+  "art": "the dashboard card's aspect-ratio picture frame: art and badge are absolutely placed and clipped to the frame by design, and it holds no text"
 };
 
 let failures = 0;
@@ -86,7 +101,13 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
 
 /* ================= A) the three rules, in the source ================= */
 function sourcePins() {
-  report("A1) a row's main action may wrap and may not shrink below its own words — both where .btn is defined and again inside .apg, where the app-page copy re-states nowrap later in the file",
+  report("A1) no button label is cut: .btn wraps like the web app's, in both places the panel states it — and neither place still says nowrap",
+    /white-space: normal;\n  overflow: hidden;\n  text-overflow: clip;/.test(PCSS) &&
+    /min-height: 44px; box-sizing: border-box; white-space: normal; overflow: hidden; text-overflow: clip; \}/.test(PCSS) &&
+    !/\.btn[^{]*\{[^}]*white-space: nowrap/.test(PCSS),
+    { base: /white-space: normal;\n  overflow: hidden;/.test(PCSS), apg: /box-sizing: border-box; white-space: normal;/.test(PCSS) });
+
+  report("A1b) and a row's MAIN action may also take a line of its own — it never shrinks below its own words, which needs overflow:visible because overflow:hidden zeroes a flex item's automatic minimum size",
     /\.btn\.grow \{ white-space: normal; text-overflow: clip; line-height: 1\.25; min-width: auto; overflow: visible; \}/.test(PCSS) &&
     /\.apg \.btn\.grow, #genDock \.btn\.grow \{ white-space: normal; text-overflow: clip; line-height: 1\.25; min-width: auto; overflow: visible; \}/.test(PCSS),
     { unscoped: /\.btn\.grow \{ white-space: normal/.test(PCSS), scoped: /\.apg \.btn\.grow/.test(PCSS) });
