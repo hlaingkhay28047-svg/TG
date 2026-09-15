@@ -100,6 +100,12 @@ function create(deps) {
   var L_KICK = "No Install · Panel Data · RunningHub AI";
   var L_HERO = { my: "Photoshop panel ထဲက <em>One-Tap တွေ</em> browser ရောက်လာပြီ", en: "The panel's <em>One-Taps</em>, now in your browser", shn: "One-Tap ၶွင် Photoshop panel ႁွတ်ႈမႃး ၼႂ်း browser ယဝ်ႉ", kac: "Photoshop panel a One-Tap ni gaw browser hta du sai", th: "One-Tap จากแผง Photoshop มาอยู่ในเบราว์เซอร์แล้ว", zh: "Photoshop 面板的 One-Tap 功能，现已进入浏览器", vi: "One-Tap của bảng Photoshop nay đã có trên trình duyệt", id: "One-Tap dari panel Photoshop kini hadir di browser", ms: "One-Tap panel Photoshop kini di pelayar anda" };
   var L_NOTE = { my: "Card နှိပ်ရင် wizard ပွင့်မယ် — Guide → Images → Generate · သင် setup လုပ်ထားတဲ့ AI engine (RunningHub Enterprise) နဲ့ အလုပ်လုပ်တယ်", en: "Tap any card to open its wizard — Guide → Images → Generate · runs on your configured AI engines (RunningHub Enterprise)", shn: "ၼဵၵ်း card ဢၼ်လႂ်သေဢမ်ႇဝႃႈ wizard တေပိုတ်ႇ — Guide → Images → Generate · ႁဵတ်းၵၢၼ်လူၺ်ႈ AI engine ဢၼ်ၸဝ်ႈၵဝ်ႇ setup ဝႆႉ (RunningHub Enterprise)", kac: "Card langai mi dip yang wizard hpaw na — Guide → Images → Generate · nang setup da ai AI engine (RunningHub Enterprise) hte galaw ai", th: "แตะการ์ดใดก็ได้เพื่อเปิด wizard — Guide → Images → Generate · ทำงานบน AI engine ที่คุณตั้งค่าไว้ (RunningHub Enterprise)", zh: "点击任意卡片即可打开向导 — Guide → Images → Generate · 由你配置的 AI engine 驱动（RunningHub Enterprise）", vi: "Chạm vào card bất kỳ để mở wizard — Guide → Images → Generate · chạy trên engine AI bạn đã cấu hình (RunningHub Enterprise)", id: "Ketuk kartu mana pun untuk membuka wizard-nya — Guide → Images → Generate · berjalan dengan engine AI yang Anda konfigurasi (RunningHub Enterprise)", ms: "Ketik mana-mana kad untuk membuka wizard — Guide → Images → Generate · berjalan pada enjin AI yang anda konfigurasikan (RunningHub Enterprise)" };
+  /* 6.164.0 — the selection row on a region workflow (Selection Edit) */
+  var L_SEL_CHECK = { my: "Selection စစ်မယ်", en: "Check selection", shn: "ၵူတ်ႇထတ်း selection", kac: "Selection jep u", th: "ตรวจการเลือก", zh: "检查选区", vi: "Kiểm tra vùng chọn", id: "Periksa seleksi", ms: "Semak pilihan" };
+  var L_SEL_CHECKING = { my: "Selection စစ်နေသည်...", en: "Checking the selection...", shn: "တိုၵ်ႉၵူတ်ႇထတ်း selection...", kac: "Selection jep nga ai...", th: "กำลังตรวจการเลือก...", zh: "正在检查选区...", vi: "Đang kiểm tra vùng chọn...", id: "Memeriksa seleksi...", ms: "Menyemak pilihan..." };
+  var L_SEL_OK = { my: "Selection ရှိပြီ ✓ {w} × {h} px — ဒီနေရာပဲ ပြောင်းမယ်", en: "Selection ready ✓ {w} × {h} px — only this area changes", shn: "Selection မီးယဝ်ႉ ✓ {w} × {h} px — လႅၵ်ႈတီႈၼႆႉၵူၺ်း", kac: "Selection nga sai ✓ {w} × {h} px — ndai shara sha galai na", th: "มีการเลือกแล้ว ✓ {w} × {h} px — เปลี่ยนแค่บริเวณนี้", zh: "已有选区 ✓ {w} × {h} px — 只改这一块", vi: "Đã có vùng chọn ✓ {w} × {h} px — chỉ vùng này đổi", id: "Seleksi siap ✓ {w} × {h} px — hanya area ini berubah", ms: "Pilihan sedia ✓ {w} × {h} px — hanya kawasan ini berubah" };
+  var L_SEL_NONE = { my: "Selection မရှိသေးပါ — Photoshop မှာ Rectangle tool နဲ့ ဆွဲရွေးပြီး ထပ်စစ်ပါ", en: "No selection yet — drag a Rectangle-tool selection in Photoshop, then check again", shn: "ပႆႇမီး selection — ၸႂ်ႉ Rectangle tool ၼႂ်း Photoshop သေ ၵူတ်ႇထတ်းထႅင်ႈ", kac: "Selection n nga shi ai — Photoshop kaw Rectangle tool hte lata nna bai jep u", th: "ยังไม่มีการเลือก — ลากเลือกด้วย Rectangle tool ใน Photoshop แล้วตรวจอีกครั้ง", zh: "还没有选区 — 在 Photoshop 用矩形选框工具框选后再检查", vi: "Chưa có vùng chọn — kéo chọn bằng Rectangle tool trong Photoshop rồi kiểm tra lại", id: "Belum ada seleksi — seleksi dengan Rectangle tool di Photoshop lalu periksa lagi", ms: "Belum ada pilihan — pilih dengan Rectangle tool dalam Photoshop, kemudian semak semula" };
+  var L_SEL_NOHOST = { my: "Photoshop နဲ့ မချိတ်ရသေးပါ — GENERATE နှိပ်တဲ့အချိန် selection ကို ဖတ်မယ်", en: "Photoshop is not connected — the selection is read when you press GENERATE", shn: "ပႆႇတိတ်းၸပ်း Photoshop — တေလူ selection မိူဝ်ႈၼဵၵ်း GENERATE", kac: "Photoshop hte n matut shi ai — GENERATE dip yang selection hpe hti na", th: "ยังไม่ได้เชื่อม Photoshop — จะอ่านการเลือกตอนกด GENERATE", zh: "未连接 Photoshop — 按 GENERATE 时再读取选区", vi: "Chưa kết nối Photoshop — vùng chọn được đọc khi bấm GENERATE", id: "Photoshop belum terhubung — seleksi dibaca saat menekan GENERATE", ms: "Photoshop belum disambung — pilihan dibaca apabila menekan GENERATE" };
   var L_FAV_HINT = { my: "ကတ်ပေါ်က ★ ကို နှိပ်ပြီး အကြိုက်ဆုံး workflow တွေ ဒီမှာ စုထားနိုင်တယ်", en: "Tap ★ on a card to pin your favorite workflows here", shn: "ၼဵၵ်း ★ ၼိူဝ်ၵၢတ်ႈသေ သိမ်း workflow ဢၼ်လႆႈၸႂ်တီႈၼႆႈ", kac: "Card ntsa na ★ hpe dip nna ra ai workflow ni ndai kaw da u", th: "แตะ ★ บนการ์ดเพื่อปักหมุดเวิร์กโฟลว์โปรดไว้ที่นี่", zh: "点按卡片上的 ★ 把常用工作流固定在这里", vi: "Chạm ★ trên thẻ để ghim workflow yêu thích tại đây", id: "Ketuk ★ pada kartu untuk menyematkan workflow favorit di sini", ms: "Ketik ★ pada kad untuk semat aliran kerja kegemaran di sini" };
   var L_FAVS = { my: "အကြိုက်ဆုံးများ", en: "Favorites", shn: "ဢၼ်လႆႈၸႂ်", kac: "Ra dik ai ni", th: "รายการโปรด", zh: "收藏", vi: "Yêu thích", id: "Favorit", ms: "Kegemaran" };
   var L_RECENT = { my: "မကြာခင်သုံးခဲ့", en: "Recent", shn: "ဢၼ်ၸႂ်ႉလိုၼ်းသုတ်း", kac: "Ya sha lang ai", th: "ล่าสุด", zh: "最近", vi: "Gần đây", id: "Terbaru", ms: "Terkini" };
@@ -865,7 +871,7 @@ function create(deps) {
       var fwrap = dom.el(doc, "div", { class: "hnk-wf-fields" });
       wf.fields.forEach(function (f) {
         if (state.fieldVals[f.key] === undefined) state.fieldVals[f.key] = f.type === "toggle" ? f.default !== false : (f.default || "");
-        var row = dom.el(doc, "div", { class: "hnk-wf-field" });
+        var row = dom.el(doc, "div", { class: "hnk-wf-field" + (f.type === "text" ? " is-text" : "") });   /* 6.164.0 — a typed line is a column */
         row.appendChild(dom.el(doc, "span", { class: "hnk-wf-field-l", text: fl(f.label) || f.key }));
         if (f.type === "toggle") {
           var tb = dom.el(doc, "button", { class: "hnk-btn hnk-wf-sw" + (state.fieldVals[f.key] ? " on" : ""), text: state.fieldVals[f.key] ? "ON" : "OFF" });
@@ -879,6 +885,7 @@ function create(deps) {
           var ti = dom.el(doc, "input", { class: "hnk-input hnk-wf-text" });
           ti.setAttribute("type", "text");
           if (f.ph) ti.setAttribute("placeholder", f.ph);
+          if (f.max) ti.setAttribute("maxlength", String(f.max));   /* 6.164.0 — the same ceiling the app's wizard sets */
           ti.value = state.fieldVals[f.key] || "";
           dom.on(ti, "input", function () { wstate.setField(state, f.key, ti.value); });
           row.appendChild(ti);
@@ -923,6 +930,29 @@ function create(deps) {
     if (wf.region) {
       reqWrap.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc",
         text: dom.t("ai_region_hint", "Drag a Rectangle-tool selection over the area to change, type your request above, then press GENERATE. Only the selected area changes — every pixel outside it stays identical.") }));
+      /* 6.164.0 — THE SELECTION, CHECKED BEFORE THE MONEY. Until now the student learned that no rectangle was
+         selected only after pressing GENERATE. This row asks Photoshop for the live selection when the workflow
+         opens and on every tap of Check, and says what it found: the rectangle's size in pixels, or that there
+         is none yet. doGenerate still reads the selection itself at fire time — this row informs, it never
+         replaces that read. Without a Photoshop host (a browser walk) the row says so. */
+      var selRow = dom.el(doc, "div", { class: "hnk-sel-row", id: "hnkWfSelRow" });
+      var selTxt = dom.el(doc, "span", { class: "hnk-sel-txt", id: "hnkWfSelState", text: l9(L_SEL_CHECKING) });
+      var selBtn = dom.el(doc, "button", { class: "hnk-btn hnk-sel-check", id: "hnkWfSelCheck", text: l9(L_SEL_CHECK) });
+      selRow.appendChild(selTxt); selRow.appendChild(selBtn);
+      reqWrap.appendChild(selRow);
+      nodes.selRow = selRow; nodes.selTxt = selTxt;
+      var selCheck = function () {
+        if (!(deps.host && deps.host.getSelectionBounds)) { selRow.className = "hnk-sel-row"; selTxt.textContent = l9(L_SEL_NOHOST); return; }
+        selRow.className = "hnk-sel-row"; selTxt.textContent = l9(L_SEL_CHECKING);
+        var done = function (b) {
+          if (b && b.width > 0 && b.height > 0) { selRow.className = "hnk-sel-row ok"; selTxt.textContent = l9(L_SEL_OK).replace("{w}", String(b.width)).replace("{h}", String(b.height)); }
+          else { selRow.className = "hnk-sel-row none"; selTxt.textContent = l9(L_SEL_NONE); }
+        };
+        try { Promise.resolve(deps.host.getSelectionBounds()).then(done, function () { done(null); }); }
+        catch (e) { done(null); }
+      };
+      dom.on(selBtn, "click", selCheck);
+      selCheck();
     }
     root.appendChild(reqWrap);
     if (state.optionalInputs.length) {

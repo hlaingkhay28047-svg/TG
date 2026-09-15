@@ -83,11 +83,28 @@ var IMAGINE = (function(){
     if(!(h>0)){ var ar=el.__imAspect||0; if(!(ar>0)) return null; h=w/ar; }
     return [imClamp(ox/w), imClamp(oy/h)];
   }
+  /* 6.93.0 — A HUB CARD IS ONE OF A ROW. imStageWidth answers "the column, less every frame around el", which was
+     the hub card's width while one card filled the row. The hub now seats two cards to a row (three at 700px, four at
+     1100px — the same breakpoints the stylesheet declares), so where no ruler answers the art's width is the row's
+     share: the card's margins (5px a side) given back, the row divided, the margins and the 1px borders taken again.
+     A browser that measures never reaches this; Photoshop's renderer, which reads every rect as 0, would otherwise
+     move the Before | After line at half the finger's speed. */
+  function imHubCols(vw){ return vw>=1100 ? 4 : vw>=700 ? 3 : 2; }
+  function imDragWidth(el){
+    var w=el.clientWidth; if(w>0) return w;
+    var alone=imStageWidth(el); if(!(alone>0)) return 0;
+    var card=null, n=el, guard=0;
+    while(n && n.nodeType===1 && guard++<12){ if(/\bim-card\b/.test(String(n.className||""))){ card=n; break; } n=n.parentNode; }
+    if(!card) return alone;
+    var vw=imViewportW(); if(!(vw>0)) return alone;
+    var cols=imHubCols(vw);
+    return Math.max(60, (alone+12-cols*10)/cols-2);
+  }
   /* a horizontal slider: absolute through the rect, else relative to where the drag began */
   function imDragX(el, ev, startPct, downX){
     var c=imPt(ev), r=imRect(el);
     if(r) return Math.max(0, Math.min(100, (c[0]-r.left)/r.width*100));
-    var w=el.clientWidth||imStageWidth(el); if(!(w>0)) return null;
+    var w=imDragWidth(el); if(!(w>0)) return null;
     return Math.max(0, Math.min(100, startPct + (c[0]-downX)/w*100));
   }
   var S = { tool:null, model:"", size:"", tab:"tpl", preset:{}, desc:{}, photos:[], cur:0, busy:false, job:null, split:50, status:"", ref:{}, markMode:false, brush:1, stageW:0 };   /* 6.80.0 — stageW: the brush stage width the student set where nothing measures (Photoshop) · 6.31.0 — ref: the Reference Card picture per tool (never saved to the device); 6.32.0 — markMode/brush: the brush tools' red paint */
@@ -228,6 +245,17 @@ var IMAGINE = (function(){
     var head = el("div","im-toolhead"); root.appendChild(head);
     var back = btn("btn im-back", t("back")); back.id="imBack"; back.onclick=function(){ goHub(); }; head.appendChild(back);
     var ttl = el("div","im-tooltitle"); var ic=ico(tool.ic); if(ic) ttl.appendChild(ic); ttl.appendChild(text((ic?" ":"")+H.t9(tool.name))); head.appendChild(ttl);
+    /* 6.93.0 — the tool rail: every tool as a chip under the title, the open one lit, so a student moves between
+       tools without going back to the hub (← Imagine stays one tap away). Names come from the same table the
+       hub cards read, so the rail is translated wherever the cards are. */
+    var rail = el("div","im-rail"); rail.id="imRail"; root.appendChild(rail);
+    for(var ri=0;ri<D.tools.length;ri++)(function(tl){
+      var ch = btn("chip im-railchip"+(tl.id===tool.id?" on":""), H.t9(tl.name), tl.ic);
+      ch.setAttribute("data-tool", tl.id); ch.setAttribute("aria-pressed", tl.id===tool.id?"true":"false");
+      ch.onclick=function(){ if(tl.id!==tool.id) openTool(tl.id); };
+      rail.appendChild(ch);
+    })(D.tools[ri]);
+    try{ var railOn=rail.querySelector(".chip.on"); if(railOn && railOn.offsetLeft>60) rail.scrollLeft=railOn.offsetLeft-12; }catch(e){}
     var cols = el("div","im-cols"); root.appendChild(cols);
     var left = el("div","im-col im-col-stage"), right = el("div","im-col im-col-set");
     cols.appendChild(left); cols.appendChild(right);
@@ -239,7 +267,8 @@ var IMAGINE = (function(){
     /* the photo strip — up to eleven, a tick on the finished ones, + to add */
     var strip = el("div","im-strip"); strip.id="imStrip"; card.appendChild(strip);
     for(var i=0;i<S.photos.length;i++) strip.appendChild(thumb(S.photos[i], i));
-    if(S.photos.length < MAX_PHOTOS){
+    /* 6.93.0 — no lone "+" tile above an empty stage: the Add photos box below is the only door until a photo is in */
+    if(S.photos.length && S.photos.length < MAX_PHOTOS){
       var add = btn("im-th im-add", "+"); add.id="imAdd"; add.setAttribute("aria-label", t("add_photos")); add.title=t("add_photos");
       strip.appendChild(add); H.pickWire(add, addPhotos);
     }
@@ -280,6 +309,8 @@ var IMAGINE = (function(){
     } else {
       view.appendChild(compare(cur));
     }
+    /* 6.93.0 — Model · Size right above Apply: what the tap will run with, where the tap is */
+    card.appendChild(modelRow(tool));
     /* actions */
     var acts = el("div","im-acts"); card.appendChild(acts);
     var apply = btn("btn im-apply", t("apply"), "i-wand"); apply.id="imApply"; apply.onclick=function(){ applyOne(S.cur); }; off(apply, S.busy); acts.appendChild(apply);
@@ -364,8 +395,10 @@ var IMAGINE = (function(){
       ta.oninput=function(){ if(this.value.length>DESC_MAX) this.value=this.value.slice(0,DESC_MAX); S.desc[tool.id]=this.value; cnt.textContent=this.value.length+"/"+DESC_MAX; save(); };
       if(pk) card.appendChild(el("div","mut im-tplhint", "✓ "+H.t9(pk.name)+((pk.t && !ta.value.trim()) ? " · "+t("text_needed") : "")));
     }
-    /* model + size */
-    var row = el("div","im-msrow"); card.appendChild(row);
+  }
+  /* model + size — 6.93.0: drawn by the stage card (renderStage), above Apply */
+  function modelRow(tool){
+    var row = el("div","im-msrow");
     var mw = el("div","im-field"); mw.appendChild(el("span","mut", t("model"))); row.appendChild(mw);
     var msel = el("select","inp im-model"); msel.id="imModel"; msel.setAttribute("aria-label", t("model")); mw.appendChild(msel);
     var ms=models(), mid=curModelId();
@@ -379,6 +412,7 @@ var IMAGINE = (function(){
       for(var q=0;q<tiers.length;q++){ var so=document.createElement("option"); so.value=tiers[q]; so.textContent=String(tiers[q]).toUpperCase(); if(tiers[q]===cs) so.selected=true; ssel.appendChild(so); }
       ssel.onchange=function(){ S.size=this.value; save(); };
     }
+    return row;
   }
   function tile(tool, p, sel){
     var tl = el("div","im-tpl"+(p.id===sel?" on":"")); tl.setAttribute("role","button"); tl.tabIndex=0; tl.setAttribute("data-preset", p.id); tl.setAttribute("aria-pressed", p.id===sel?"true":"false");

@@ -613,6 +613,20 @@ textarea.wiz-prompt{min-height:220px}
 .wiz-field{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative}
 .wiz-field .wfl{min-width:120px;font-size:13px;color:var(--mut,#c9cfdd)}
 .wiz-field-text .inp{flex:1;min-width:180px}
+/* 6.93.0 — a required line (Selection Edit's request) is the whole row: label above, the box the full width */
+.wiz-field-req{flex-direction:column;align-items:stretch;gap:6px}
+.wiz-field-req .wfl{min-width:0;font-weight:700;color:var(--cream)}
+.wiz-field-req .inp{width:100%;min-width:0;min-height:44px;font-size:14px;box-sizing:border-box}
+/* 6.93.0 — Selection Edit's drawn marquee on step 2 */
+.wiz-region{margin:12px 0 4px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:10px}
+.wiz-region-h{font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.wiz-region-box{position:relative;border-radius:9px;overflow:hidden;background:var(--ink);touch-action:none;cursor:crosshair;user-select:none;-webkit-user-select:none}
+.wiz-region-box img{display:block;width:100%;height:auto;max-height:62vh;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
+.wiz-region-rect{position:absolute;border:2px dashed var(--gold);box-shadow:0 0 0 9999px rgba(5,8,14,.55),0 0 0 1px rgba(0,0,0,.6) inset;pointer-events:none;box-sizing:border-box;border-radius:2px}
+.wiz-region-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;flex-wrap:wrap}
+.wiz-region-note{font-size:12px;color:var(--muted);flex:1 1 160px;line-height:1.5}
+.wiz-region-note.on{color:var(--gold-hi);font-weight:700}
+.wiz-region-clear{padding:8px 12px;min-height:36px;font-size:11.5px}
 .wiz-field-toggle{cursor:pointer;-webkit-user-select:none;user-select:none}
 .wiz-field-toggle input{position:absolute;opacity:0;pointer-events:none}
 .wiz-sw{width:40px;height:22px;border-radius:12px;background:#39415a;position:relative;transition:background .18s;flex:0 0 auto}
@@ -658,6 +672,8 @@ textarea.wiz-prompt{min-height:220px}
    otherwise leave a dangling empty cell next to the last card — span it
    across both columns instead (see the wfgrid-render loop) */
 .wfgrid .wf-span2{grid-column:1/-1}
+.wfmini.wf-span2 .wfv{aspect-ratio:2/1}
+.wfmini.wf-span2 .wfv img{object-position:center 22%}
 .wfmini{border:1px solid var(--line-soft);border-radius:11px;background:var(--panel-2);padding:10px;text-align:left;color:var(--cream);display:flex;flex-direction:column;gap:4px}
 @media(hover:hover){.wfmini:hover{border-color:var(--gold)}}
 /* v4.81: a video card STAYS selected after the tap, where a pgWf card hands
@@ -684,8 +700,8 @@ textarea.wiz-prompt{min-height:220px}
    right region — and the app was covering the very thing the pack was
    commissioned to show. The favourite star stays top-RIGHT: measured against
    both card layouts, it clears "AFTER" and "RESULT". */
-.wfv .bdg{position:absolute;bottom:4px;right:4px;z-index:2;background:rgba(11,13,20,.78);border:1px solid var(--line-soft);border-radius:8px;padding:2px 6px;font-size:13px;line-height:1.3}
-.wfv .wf-need{top:auto;bottom:4px;left:4px}
+.wfv .bdg{position:absolute;bottom:6px;right:6px;z-index:2;background:rgba(11,13,20,.8);border:1px solid rgba(255,255,255,.16);border-radius:999px;width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1}
+.wfv .wf-need{top:auto;bottom:6px;left:6px;height:22px;line-height:20px;padding:0 9px;border-radius:999px;font-size:10px;font-weight:800;background:rgba(11,13,20,.8);border:1px solid rgba(255,255,255,.16);box-sizing:border-box}
 .wfv img.pl{clip-path:inset(0 50% 0 0)}
 .wfv img.pr{clip-path:inset(0 0 0 50%)}
 .wfv img.svgv{object-position:center;object-fit:cover}
@@ -710,7 +726,7 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
    both above the ink. Cards are ~40px taller and every word in them is whole. */
 .wfmini .t{font-size:12.5px;font-weight:800;line-height:2.25;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.25em}
 .wfmini .s{font-size:11.5px;color:var(--muted);line-height:2.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
-.wfmini .go{margin-top:auto;font-size:10.5px;color:var(--gold-hi);font-weight:800}
+.wfmini .go{margin-top:auto;font-size:10.5px;color:var(--gold-hi);font-weight:800;align-self:flex-end;display:inline-flex;align-items:center;padding:5px 11px 5px 8px;border:1px solid rgba(233,185,73,.38);border-radius:999px;background:rgba(233,185,73,.08);line-height:1.2}
 
 /* v3.0 UX */
 .refstrip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
@@ -726,12 +742,21 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 /* 44px touch floor: the glyph stays small but the hit box doesn't */
 .wfmini .fav{position:absolute;top:0;right:0;background:transparent;border:none;border-radius:7px;min-width:44px;min-height:44px;padding:6px;font-size:12px;color:var(--muted);z-index:2;display:flex;align-items:flex-start;justify-content:flex-end}
 .wfmini .fav>span{background:rgba(11,13,20,.72);border-radius:7px;padding:2px 6px;display:block}
+/* 6.93.0 — THE CARD, TIDIED. The two corner controls are twin 26px glass discs side by side at the art's
+   top-right (the batch button used to sit top-LEFT, over the art's own "IMAGE 1" / "BEFORE" label); the
+   photo-count pill and the route badge share one 22px pill shape at the bottom edge; the Wizard line is a
+   right-aligned pill so every card ends the same way; the odd last card that spans the row keeps a 2:1
+   art instead of a 3:2 slab. CSS only — the panel carries the same rules in styles.css. */
+.wfmini .fav>span,.wfmini .wfbatch>span{width:26px;height:26px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;background:rgba(11,13,20,.74);border:1px solid rgba(255,255,255,.16);box-shadow:0 2px 6px rgba(0,0,0,.35);line-height:1}
 .wfmini .fav.on{color:var(--gold-hi)}
 /* v5.0 — "run this over the whole shoot". Mirrors .fav on the opposite corner
    so the two card actions never overlap, and carries the same 44px floor. */
 .wfmini .wfbatch{position:absolute;top:0;left:0;background:transparent;border:none;border-radius:7px;min-width:44px;min-height:44px;padding:6px;font-size:12px;color:var(--muted);z-index:2;display:flex;align-items:flex-start;justify-content:flex-start}
 .wfmini .wfbatch>span{background:rgba(11,13,20,.72);border-radius:7px;padding:2px 6px;display:block;line-height:1}
+.wfmini .wfbatch>span{width:26px;height:26px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;background:rgba(11,13,20,.74);border:1px solid rgba(255,255,255,.16);box-shadow:0 2px 6px rgba(0,0,0,.35)}
 .wfmini .wfbatch svg{width:13px;height:13px;vertical-align:-2px}
+/* 6.93.0 — after the v5.0 corner rule above, so it wins: the batch disc rides beside the favourite at the top-RIGHT (34px in), off the art's own IMAGE 1 / BEFORE label */
+.wfmini .wfbatch{left:auto;right:34px;justify-content:flex-end}
 /* per-row AI marker in the Studio suites */
 .ai-mark{display:inline-block;margin-left:6px;font-size:8.5px;font-weight:800;letter-spacing:.06em;font-style:normal;color:#1a1408;background:linear-gradient(120deg,#f7e2a6,#e9b949);border-radius:4px;padding:0 4px;vertical-align:1px;line-height:1.5}
 .chainrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
@@ -895,6 +920,8 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
      is wider, but the min-content trap scales with the text, not the screen */
   .wfgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .wfgrid .wf-span2{grid-column:auto}
+  .wfmini.wf-span2 .wfv{aspect-ratio:3/2}
+  .wfmini.wf-span2 .wfv img{object-position:center 12%}
 }
 /* v5.46 — desktop layer 2: a monitor stops being a very tall phone.
    The settings-style pages (Setup, Account) pack their independent cards into
@@ -1950,7 +1977,7 @@ body.wall #wallRetry.on{display:block}
 }
 @media(min-width:1200px){
   .page-hero .ph-kick{font-size:12px}
-  .wf-need{font-size:11px}
+  .wf-need,.wfv .wf-need{font-size:11px}   /* 6.93.0 — the tidied pill (.wfv .wf-need) keeps the monitor size too */
   .refstrip .rs .tag{font-size:10px}
   .hsl-lab .hsl-ctx{font-size:9.5px}
 }
@@ -1971,7 +1998,8 @@ body.wall #wallRetry.on{display:block}
    flex gap, no aspect-ratio and no object-fit — thumbnails are background-size:cover boxes. */
 #pgImagine .im-intro{margin:0 0 12px;line-height:1.6}
 .im-grid{display:flex;flex-wrap:wrap;margin:0 -5px}
-.im-card{flex:1 1 40%;min-width:240px;margin:5px;border:1px solid var(--line-soft);border-radius:14px;background:var(--panel-2);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;color:var(--cream);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+/* 6.93.0 — two cards to a row on a phone (150px floor, was 240px: twenty-two cards in one 14,000px column), three at 700px, four at 1100px; a compact body */
+.im-card{flex:1 1 40%;min-width:150px;margin:5px;border:1px solid var(--line-soft);border-radius:14px;background:var(--panel-2);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;color:var(--cream);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
 .im-card:hover,.im-card.lift,.im-card:focus-visible{border-color:var(--gold);outline:none;transform:translateY(-6px) scale(1.012);box-shadow:0 16px 34px rgba(0,0,0,.5)}
 .im-card.lift{border-color:var(--gold-hi)}
 /* the card picture: a 2:3 Before | After compare, the after as the whole picture, the before clipped on top */
@@ -1980,15 +2008,21 @@ body.wall #wallRetry.on{display:block}
 .im-hubcmp .im-cmp-knob{width:34px;height:34px;margin:-17px 0 0 -17px;line-height:34px}
 .im-hubrange{display:block;width:100%;box-sizing:border-box;margin:6px 0 0}
 .im-stagerange{display:block;width:100%;box-sizing:border-box;margin:6px 0 0}
+@media (min-width:700px){.im-card{flex:1 1 28%;min-width:0;max-width:calc(33.333% - 10px)}}
 @media (min-width:1100px){.im-card{flex:1 1 20%;min-width:0;max-width:calc(25% - 10px)}}
-.im-card-body{padding:10px 12px 12px;display:flex;flex-direction:column;flex:1 1 auto}
-.im-card-name{font-weight:800;font-size:14px;display:flex;align-items:center;color:var(--cream)}
+.im-card-body{padding:8px 10px 10px;display:flex;flex-direction:column;flex:1 1 auto}
+.im-card-name{font-weight:800;font-size:13px;line-height:1.3;display:flex;align-items:center;color:var(--cream)}
 .im-card-name .ic-s{margin-right:6px;flex:none}
-.im-card-sum{margin:4px 0 10px;line-height:1.5;flex:1 1 auto}
-.im-card-foot{display:flex;align-items:center;justify-content:space-between}
-.im-card-foot .im-open{min-height:36px;padding:6px 16px;margin-left:8px;flex:none}
+.im-card-sum{margin:4px 0 8px;font-size:11.5px;line-height:1.5;max-height:3em;overflow:hidden;flex:1 1 auto}
+.im-card-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:0 -3px}
+.im-card-foot .im-tplcount{font-size:10.5px;padding:3px 8px;min-height:0;white-space:nowrap;flex:1 1 auto;margin:3px;text-align:center;justify-content:center}
+.im-card-foot .im-open{min-height:32px;padding:5px 12px;margin:3px;flex:1 1 auto;font-size:11.5px}
 .im-next{margin-top:12px;line-height:1.6}
 .im-toolhead{display:flex;align-items:center;margin:0 0 6px}
+/* 6.93.0 — the tool rail: every Imagine tool as a chip under the title, the open one lit; a row that scrolls sideways, margins not gap */
+.im-rail{display:flex;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;margin:0 0 10px;padding:2px 0 6px}
+.im-rail .chip{flex:none;margin-right:6px;cursor:pointer;white-space:nowrap}
+.im-rail .chip.on{border-color:var(--gold);color:var(--gold-hi);box-shadow:0 0 0 1px var(--gold)}
 .im-back{min-height:36px;padding:6px 12px;flex:none}
 .im-tooltitle{font-weight:800;font-size:15px;margin-left:10px;display:flex;align-items:center;color:var(--gold-hi);min-width:0}
 .im-tooltitle .ic-s{margin-right:6px;flex:none}
@@ -2046,7 +2080,8 @@ body.wall #wallRetry.on{display:block}
 .im-desc{min-height:130px}
 .im-descmeta{display:flex;justify-content:space-between;align-items:flex-start;margin-top:6px}
 .im-descmeta .im-desccnt{margin-left:10px;flex:none}
-.im-msrow{display:flex;flex-wrap:wrap;margin:10px -4px 0}
+/* 6.93.0 — Model · Size sit in the stage card right above Apply (they used to hide under the template grid) */
+.im-msrow{display:flex;flex-wrap:wrap;margin:0 -4px 10px}
 .im-field{flex:1 1 150px;margin:0 4px;min-width:0}
 .im-field-size{flex:0 1 110px}
 .im-field>.mut{display:block;margin-bottom:4px}
@@ -5372,6 +5407,9 @@ var TOPGROUPS=[
    tools/build_app_data.js moves the cut forward; the panel lifts this list
    (js/hnk_whats_new.js), so its boot parses these rows and no more. */
 var WHATS_NEW = [
+  { v:"6.93.0", kind:"page", ref:"pgWf",
+    t:{my:"UI/UX wave — Smart Workflow card တွေ သပ်ရပ်သွားပြီ၊ Imagine page က ဖုန်းမှာ card ၂ ခု တစ်တန်း + tool rail + Model/Size က Apply ဘေးမှာ၊ Photoshop Panel ရဲ့ Retouch A/B မှာ Active layer ပုံ ပေါ်လာပြီ (Layer နာမည် + ↻)၊ Selection Edit က web မှာလဲ ရွေးတဲ့နေရာပဲ ပြောင်းပြီ",en:"UI/UX wave — Smart Workflow cards tidied, the Imagine page two cards to a row on a phone with a tool rail and Model · Size beside Apply, the Photoshop Panel's Retouch A/B now shows the captured Active layer (its name + ↻), and Selection Edit changes only the drawn area on the web too",shn:"UI/UX wave — Smart Workflow card ႁၢင်ႈလီ၊ Imagine page card 2 ၼိုင်ႈထႅဝ် + tool rail၊ Retouch A/B ၼႂ်း Panel ၼႄ Active layer၊ Selection Edit လႅၵ်ႈတီႈလိူၵ်ႈၵူၺ်း",kac:"UI/UX wave — Smart Workflow card ni san sai, Imagine page card 2 hpe lahkawng hte tool rail, Panel Retouch A/B kaw Active layer pru sai, Selection Edit gaw lata da ai shara sha galai sai",th:"UI/UX wave — การ์ด Smart Workflow เป็นระเบียบขึ้น หน้า Imagine แสดง 2 การ์ดต่อแถวบนมือถือพร้อม tool rail และ Model · Size ข้าง Apply, Retouch A/B ใน Panel แสดง Active layer ที่จับมาแล้ว (ชื่อ + ↻) และ Selection Edit บนเว็บก็เปลี่ยนเฉพาะบริเวณที่เลือก",zh:"UI/UX 波次 — Smart Workflow 卡片更整洁，Imagine 页面手机上一行两张卡片、工具栏和 Apply 旁的 Model · Size，Panel 的 Retouch A/B 现在会显示捕获的活动图层（名称 + ↻），网页版 Selection Edit 也只改框选区域",vi:"Đợt UI/UX — thẻ Smart Workflow gọn hơn, trang Imagine hai thẻ mỗi hàng trên điện thoại với thanh công cụ và Model · Size cạnh Apply, Retouch A/B trong Panel hiện lớp đang chọn (tên + ↻), Selection Edit trên web cũng chỉ đổi vùng đã vẽ",id:"Gelombang UI/UX — kartu Smart Workflow dirapikan, halaman Imagine dua kartu per baris di ponsel dengan rel alat dan Model · Size di samping Apply, Retouch A/B di Panel kini menampilkan layer aktif yang ditangkap (nama + ↻), dan Selection Edit di web hanya mengubah area yang digambar",ms:"Gelombang UI/UX — kad Smart Workflow dikemas, halaman Imagine dua kad sebaris di telefon dengan rel alat dan Model · Size di sebelah Apply, Retouch A/B dalam Panel kini menunjukkan lapisan aktif yang ditangkap (nama + ↻), dan Selection Edit di web hanya mengubah kawasan yang dilukis"},
+    s:{my:"**Smart Workflow card** — ★ နဲ့ batch ခလုတ် ၂ ခု ညာဘက်အပေါ်မှာ အတူတူ (ပုံရဲ့ IMAGE 1 label ကို မဖုံးတော့ဘူး)၊ ပုံအရေအတွက် pill နဲ့ route badge အောက်နားမှာ၊ Wizard ခလုတ် ညာဘက်။ **Imagine** — ဖုန်းမှာ card ၂ ခု တစ်တန်း (အရင် ၂၂ ခု တစ်တန်းတည်း)၊ tool rail နဲ့ tool ပြောင်းလို့ရ၊ Model/Size က Apply အပေါ်မှာ။ **Retouch A/B (Panel)** — layer ယူပြီးရင် ပုံ ချက်ချင်း ပေါ်တယ်၊ Layer နာမည်နဲ့ ↻ (ပြန်ယူ)။ **Selection Edit (web)** — IMAGE 1 ပေါ်မှာ လေးထောင့် ဆွဲရွေးရင် အဲ့နေရာပဲ ပို့ပြီး ရလဒ်ကို မူရင်းပုံထဲ ပြန်ထည့်ပေးတယ်၊ Panel မှာ Generate မနှိပ်ခင် selection ရှိမရှိ စစ်ပြတယ်။",en:"**Smart Workflow card** — the ★ and batch buttons are twin discs at the top-right (off the art's own IMAGE 1 label), the photo-count pill and route badge sit at the bottom edge, Wizard is a right-aligned pill. **Imagine** — two cards to a row on a phone (twenty-two used to stand in one column), a tool rail switches tools, Model · Size sit above Apply. **Retouch A/B (Panel)** — the captured layer shows at once, with its name and a ↻ to capture again. **Selection Edit (web)** — drag a rectangle on IMAGE 1 and only that area is sent, the result pasted back into your untouched photo; the Panel checks the selection before GENERATE.",shn:"Smart Workflow card ႁၢင်ႈလီ၊ Imagine card 2 ၼိုင်ႈထႅဝ် + tool rail၊ Retouch A/B ၼႄ layer၊ Selection Edit လႅၵ်ႈတီႈလိူၵ်ႈၵူၺ်း။",kac:"Smart Workflow card san, Imagine card 2 hte tool rail, Retouch A/B layer pru, Selection Edit lata ai shara sha galai.",th:"การ์ด Smart Workflow เป็นระเบียบ, Imagine 2 การ์ดต่อแถว + tool rail, Retouch A/B แสดง layer, Selection Edit เปลี่ยนเฉพาะบริเวณที่เลือก",zh:"Smart Workflow 卡片整洁，Imagine 一行两张 + 工具栏，Retouch A/B 显示图层，Selection Edit 只改框选区域。",vi:"Thẻ Smart Workflow gọn, Imagine hai thẻ mỗi hàng + thanh công cụ, Retouch A/B hiện lớp, Selection Edit chỉ đổi vùng chọn.",id:"Kartu Smart Workflow rapi, Imagine dua kartu per baris + rel alat, Retouch A/B menampilkan layer, Selection Edit hanya mengubah area terpilih.",ms:"Kad Smart Workflow kemas, Imagine dua kad sebaris + rel alat, Retouch A/B menunjukkan lapisan, Selection Edit hanya mengubah kawasan dipilih."} },
   { v:"6.92.0", kind:"page", ref:"pgHome",
     t:{my:"ပိုပေါ့သွားပြီ — ဘာသာစကား ၁၈ မျိုးရဲ့ စာအုပ်တွေနဲ့ Imagine table ကို app file ထဲက ခွဲထုတ်လိုက်ပြီ (3.8 MB → 3.0 MB)၊ ကိုယ်ရွေးထားတဲ့ ဘာသာစကား တစ်ခုတည်းကိုပဲ ဆွဲတယ်၊ မြန်မာ / English သုံးရင် ဘာမှ ထပ်မဆွဲဘူး၊ ဆွဲပြီးသား file ကို update တိုင်း ပြန် download မလုပ်တော့ဘူး",en:"Lighter still — the eighteen native language packs and the Imagine tables left the app file (3.8 MB → 3.0 MB): only the language you chose is fetched, a Burmese or English visit fetches none, and a fetched pack is cached so an update never re-downloads it",shn:"မဝ်းလိူဝ် — ပပ်ႉၽႃႇသႃႇ 18 လႄႈ Imagine table ဢွၵ်ႇၸၢၵ်ႈ app file (3.8 MB → 3.0 MB)၊ ဢဝ်ၽႃႇသႃႇဢၼ်လိူၵ်ႈဝႆႉ ဢၼ်လဵဝ်ၵူၺ်း၊ မၢၼ်ႈ / English ဢမ်ႇလူဝ်ႇ ဢဝ်သင်၊ update ဢမ်ႇလူဝ်ႇ download ထႅင်ႈ",kac:"Grau tsan sai — ga shingan laika 18 hte Imagine table ni app file kaw na garan kau sai (3.8 MB → 3.0 MB), nang lata ai ga shingan langai sha la ai; Myen / English hpe n ra ai, update shagu bai download n ra sai",th:"เบาลงอีก — แพ็กภาษาแม่ 18 ภาษาและตาราง Imagine แยกออกจากไฟล์แอป (3.8 MB → 3.0 MB) โหลดเฉพาะภาษาที่คุณเลือก ใช้ภาษาพม่าหรืออังกฤษไม่ต้องโหลดเลย และแพ็กที่โหลดแล้วถูกแคชไว้ อัปเดตแล้วไม่ต้องดาวน์โหลดซ้ำ",zh:"更轻了 — 18 个母语语言包和 Imagine 表格移出应用文件（3.8 MB → 3.0 MB）：只加载你选择的那一种语言，缅甸语或英语访问什么都不加载，已加载的语言包会被缓存，更新时不再重复下载",vi:"Nhẹ hơn nữa — 18 gói ngôn ngữ bản địa và các bảng Imagine tách khỏi tệp ứng dụng (3.8 MB → 3.0 MB): chỉ tải ngôn ngữ bạn chọn, dùng tiếng Miến hoặc tiếng Anh thì không tải gì, gói đã tải được cache nên cập nhật không tải lại",id:"Makin ringan — 18 paket bahasa asli dan tabel Imagine keluar dari berkas aplikasi (3.8 MB → 3.0 MB): hanya bahasa yang Anda pilih yang diambil, kunjungan Burma atau Inggris tidak mengambil apa pun, dan paket yang sudah diambil di-cache sehingga pembaruan tidak mengunduhnya lagi",ms:"Lebih ringan lagi — 18 pek bahasa asli dan jadual Imagine keluar dari fail aplikasi (3.8 MB → 3.0 MB): hanya bahasa yang anda pilih diambil, lawatan Burma atau Inggeris tidak mengambil apa-apa, dan pek yang diambil dicache jadi kemas kini tidak memuat turunnya semula"},
     s:{my:"**app file 3.8 MB → 3.0 MB**: ဘာသာစကား pack 18 ခု (518 KB) ကို data/trl-<code>.js file သီးသန့် ခွဲထားပြီး app ဖွင့်တဲ့အခါ ကိုယ်ရွေးထားတဲ့ ဘာသာစကားရဲ့ file တစ်ခုတည်းကိုပဲ loader က ဆွဲတယ် (link ထဲက ?lang= ကို အရင် ကြည့်တယ်)။ Imagine table (250 KB) လည်း data/imagine.js ဖြစ်သွားပြီ၊ Photoshop Panel ထဲမှာတော့ အရင်အတိုင်း ပါဝင်တယ်။",en:"**The app file: 3.8 MB → 3.0 MB.** The eighteen language packs (518 KB) became one data/trl-<code>.js each; a small loader fetches only the chosen language's file at boot (a link's ?lang= first, then the stored choice). The Imagine tables (250 KB) became data/imagine.js; the Photoshop Panel keeps them inline as before.",shn:"app file 3.8 MB → 3.0 MB၊ ပပ်ႉၽႃႇသႃႇ 18 ပဵၼ် data/trl-<code>.js၊ Imagine table ပဵၼ် data/imagine.js။",kac:"app file 3.8 MB → 3.0 MB, ga shingan pack 18 gaw data/trl-<code>.js, Imagine table gaw data/imagine.js.",th:"ไฟล์แอป 3.8 MB → 3.0 MB, แพ็กภาษา 18 ภาษาเป็น data/trl-<code>.js, ตาราง Imagine เป็น data/imagine.js",zh:"应用文件 3.8 MB → 3.0 MB，18 个语言包成为 data/trl-<code>.js，Imagine 表格成为 data/imagine.js。",vi:"Tệp ứng dụng 3.8 MB → 3.0 MB, 18 gói ngôn ngữ thành data/trl-<code>.js, bảng Imagine thành data/imagine.js.",id:"Berkas aplikasi 3.8 MB → 3.0 MB, 18 paket bahasa jadi data/trl-<code>.js, tabel Imagine jadi data/imagine.js.",ms:"Fail aplikasi 3.8 MB → 3.0 MB, 18 pek bahasa jadi data/trl-<code>.js, jadual Imagine jadi data/imagine.js."} },
@@ -10704,7 +10742,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     ]
   };
   /* ---- 4-step workflow wizard: 1 Guide · 2 Images · 3 Generate · 4 Result (v4.27.0) ---- */
-  var wiz = { w: null, step: 1, prompt: "", token: 0, busy: false, result: null, error: "" };
+  var wiz = { w: null, step: 1, prompt: "", token: 0, busy: false, result: null, error: "", region: null };
   function wizInputs(w){
     return w.req.map(function(l){ return { label: l, req: true }; })
       .concat(w.opt.map(function(l){ return { label: l, req: false }; }));
@@ -10785,6 +10823,8 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
   window._wizSendPrompt=wizSendPrompt;
   /* v6.83.0 — test hook: land a result on step 4 without a paid run (verify_panel_wf_results D) */
   window._wizShowResult=function(res){ wiz.step=4; wiz.busy=false; wiz.error=""; wiz.result=res; renderWiz(); };
+  /* 6.93.0 — the drawn selection (Selection Edit on the web), readable and settable from outside the closure */
+  window._wizRegion=function(r){ if(arguments.length){ wiz.region=r||null; } return wiz.region; };
   window._scenePresetIds=function(){ return scenePresetList(LW.items).map(function(it){ return it.id; }); };
   function wizReqOk(){
     for (var i=0;i<wiz.w.req.length;i++) if(!state.refs[i]) return false;
@@ -10881,6 +10921,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     wiz.avoidTail=wiz.prompt.slice(w.prompt.length); /* the tail, composed once above */
     wiz.fieldVals=wfFieldDefaults(w); /* v5.62.0 — design fields, fresh per open */
     wiz.scenePreset=null; wiz.sceneBusy=false; /* v6.76.0 — a Library scene preset is chosen per open */
+    wiz.region=null; /* 6.93.0 — a drawn selection belongs to one open */
     document.body.style.overflow="hidden";
     window._wizOnPick=renderWiz;
     window._wizCurrentId=w.id; /* pending-intent context for the no-key round trip */
@@ -10929,16 +10970,39 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
        control is blanked. */
     var wzR=$("selRatio"), wzSavedRatio=wzR.value;
     if(!wiz.ratioPicked) wzR.value="";
+    /* 6.93.0 — SELECTION EDIT ON THE WEB: only the drawn rectangle travels. The panel takes the marquee from
+       Photoshop and masks the result back to it; the web app now does the same by hand — IMAGE 1 is cropped to
+       the rectangle the student drew on step 2, the crop alone is sent, and the result is pasted back into the
+       untouched full photograph at the same pixels. No rectangle drawn: the whole photo goes, as before. */
+    var rgn=(w.id==="region-edit" && wiz.region && state.refs[0] && state.refs[0].b64) ? wiz.region : null, rgnFull=null;
+    if(rgn){
+      try{ var rgCrop=await wizRegionCrop(state.refs[0], rgn); if(rgCrop){ rgnFull=state.refs[0]; rgn.px=rgCrop.px; state.refs[0]={mime:rgCrop.mime,b64:rgCrop.b64,label:"selection"}; } else rgn=null; }
+      catch(eRg){ rgn=null; }
+    }
     /* identity check, never length — state.hist caps at 8 (see rsDoGenerate) */
     var beforeFirst=state.hist[0];
     state.runWfId=w.id; /* v5.62.0 — gallery records carry their workflow */
     try{ await $("btnGen").onclick(); }catch(e){}
-    finally{ wzR.value=wzSavedRatio; state.runWfId=""; }
+    finally{ wzR.value=wzSavedRatio; state.runWfId=""; if(rgnFull){ state.refs[0]=rgnFull; try{ renderRefs(); }catch(eRR){} } }
     /* wizard was closed or re-opened for another workflow meanwhile — this
        run's result already lives on the Create page + Gallery, stop here */
     if(token!==wiz.token || $("wiz").className.indexOf("on")<0) return;
     wiz.busy=false; window._wizBusy=false;
     if(state.hist[0]!==beforeFirst){
+      if(rgn && rgnFull){
+        /* the paste-back: the full photograph with the result set into the rectangle; the crop's own gallery
+           record gives way to the composite, which is the picture the student asked for */
+        try{
+          var rgOut=state.hist[0], rgComp=await wizRegionPaste(rgnFull, rgOut, rgn);
+          if(rgComp){
+            rgComp._prov=rgOut._prov||""; rgComp.region={x:rgn.px.x,y:rgn.px.y,w:rgn.px.w,h:rgn.px.h};
+            state.hist[0]=rgComp; state.result=rgComp; state.histSel=0;
+            if(rgOut._id) galleryDel(rgOut._id, function(){});
+            state.runWfId=w.id;
+            try{ await galleryAdd(rgComp, w.title+" · selection "+rgn.px.w+"×"+rgn.px.h, {before:{mime:rgnFull.mime,b64:rgnFull.b64}}); }finally{ state.runWfId=""; }
+          }
+        }catch(ePb){}
+      }
       wiz.result=state.hist[0];
     }else{
       var st=$("stGen");
@@ -10952,6 +11016,67 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     }
     renderWiz(); $("wiz").scrollTop=0;
   }
+  /* 6.93.0 — THE MARQUEE, DRAWN BY HAND. Selection Edit's card promises "only that area changes"; in the panel
+     Photoshop supplies the rectangle, on the web nothing did and the whole photograph was sent. This block is the
+     web's rectangle: a drag over IMAGE 1 on step 2 (pointer events, normalised 0..1 so the box can be any size),
+     a dashed gold frame with the rest dimmed, the size in pixels once the photo is measured, Clear to go back to
+     the whole photo. wizRegionCrop / wizRegionPaste are the two halves of the run. */
+  function wizRegionL(k){
+    var L={
+      title:{my:"ပြောင်းမယ့် နေရာကို ပုံပေါ်မှာ ဆွဲရွေးပါ",en:"Drag over the area to change",shn:"ၸၼ်လိူၵ်ႈတီႈၶႂ်ႈလႅၵ်ႈၼိူဝ်ႁၢင်ႈ",kac:"Galai na shara hpe sumla ntsa kaw garan lata u",th:"ลากเลือกบริเวณที่จะเปลี่ยนบนภาพ",zh:"在照片上拖出要修改的区域",vi:"Kéo chọn vùng cần đổi trên ảnh",id:"Seret area yang ingin diubah di foto",ms:"Seret kawasan yang mahu diubah pada foto"},
+      none:{my:"မရွေးထားရင် ပုံတစ်ပုံလုံးကို ပို့မယ်",en:"Nothing drawn yet — the whole photo will be sent",shn:"ပႆႇလိူၵ်ႈသင် — တေသူင်ႇႁၢင်ႈတင်းမူတ်း",kac:"Hpa n lata shi ai — sumla ting hpe shagun na",th:"ยังไม่ได้เลือก — จะส่งทั้งภาพ",zh:"还没有框选 — 将发送整张照片",vi:"Chưa chọn vùng — sẽ gửi cả ảnh",id:"Belum ada seleksi — seluruh foto akan dikirim",ms:"Belum dipilih — seluruh foto akan dihantar"},
+      sel:{my:"ရွေးထားပြီ ✓ {s} — ဒီနေရာပဲ ပို့ပြီး ပြောင်းမယ်၊ ကျန်တာ မထိပါ",en:"Selected ✓ {s} — only this area is sent and changed, the rest is untouched",shn:"လိူၵ်ႈယဝ်ႉ ✓ {s} — သူင်ႇလႄႈလႅၵ်ႈတီႈၼႆႉၵူၺ်း",kac:"Lata sai ✓ {s} — ndai shara sha shagun nna galai na",th:"เลือกแล้ว ✓ {s} — ส่งและเปลี่ยนแค่บริเวณนี้",zh:"已框选 ✓ {s} — 只发送并修改这一块，其余不动",vi:"Đã chọn ✓ {s} — chỉ gửi và đổi vùng này",id:"Terpilih ✓ {s} — hanya area ini dikirim dan diubah",ms:"Dipilih ✓ {s} — hanya kawasan ini dihantar dan diubah"},
+      clear:{my:"ရွေးချယ်မှု ဖျက်မယ်",en:"Clear selection",shn:"မွတ်ႇ selection",kac:"Selection kau u",th:"ล้างการเลือก",zh:"清除选区",vi:"Xoá vùng chọn",id:"Hapus seleksi",ms:"Kosongkan pilihan"}
+    };
+    return L9(L[k]);
+  }
+  function wizRegionPicker(ref){
+    var box=el("div","wiz-region"); box.id="wizRegion";
+    var hd=el("div","wiz-region-h"); setIcnText(hd,"i-frame",wizRegionL("title")); box.appendChild(hd);
+    var pane=el("div","wiz-region-box"); pane.id="wizRegionBox"; box.appendChild(pane);
+    var im=document.createElement("img"); im.alt="IMAGE 1"; im.draggable=false; im.src="data:"+(ref.mime||"image/jpeg")+";base64,"+ref.b64; pane.appendChild(im);
+    var rect=el("div","wiz-region-rect"); rect.id="wizRegionRect"; rect.style.display="none"; pane.appendChild(rect);
+    var foot=el("div","wiz-region-foot"); box.appendChild(foot);
+    var note=el("div","wiz-region-note"); note.id="wizRegionNote"; foot.appendChild(note);
+    var clr=el("button","btn wiz-region-clear"); clr.id="wizRegionClear"; clr.type="button"; setIcnText(clr,"i-close",wizRegionL("clear")); foot.appendChild(clr);
+    var paint=function(){
+      var r=wiz.region;
+      if(!r){ rect.style.display="none"; note.className="wiz-region-note"; note.textContent=wizRegionL("none"); clr.style.display="none"; return; }
+      rect.style.display=""; rect.style.left=(r.x*100)+"%"; rect.style.top=(r.y*100)+"%"; rect.style.width=(r.w*100)+"%"; rect.style.height=(r.h*100)+"%";
+      var W=im.naturalWidth||0, Hh=im.naturalHeight||0;
+      var sz=(W&&Hh) ? Math.round(r.w*W)+" × "+Math.round(r.h*Hh)+" px" : Math.round(r.w*100)+"% × "+Math.round(r.h*100)+"%";
+      note.className="wiz-region-note on"; note.textContent=wizRegionL("sel").replace("{s}",sz); clr.style.display="";
+    };
+    im.onload=paint; paint();
+    clr.onclick=function(ev){ ev.preventDefault(); wiz.region=null; paint(); };
+    var drag=null;
+    var norm=function(ev){ var b=im.getBoundingClientRect(); if(!(b.width>0&&b.height>0)) return null; return [Math.max(0,Math.min(1,(ev.clientX-b.left)/b.width)), Math.max(0,Math.min(1,(ev.clientY-b.top)/b.height))]; };
+    var apply=function(a,b){ var x=Math.min(a[0],b[0]), y=Math.min(a[1],b[1]), w=Math.abs(a[0]-b[0]), h=Math.abs(a[1]-b[1]); return {x:x,y:y,w:w,h:h}; };
+    pane.onpointerdown=function(ev){ if(ev.button&&ev.button!==0) return; var p=norm(ev); if(!p) return; drag={a:p,b:p}; try{ pane.setPointerCapture(ev.pointerId); }catch(e){} ev.preventDefault(); };
+    pane.onpointermove=function(ev){ if(!drag) return; var p=norm(ev); if(!p) return; drag.b=p; var r=apply(drag.a,drag.b); rect.style.display=""; rect.style.left=(r.x*100)+"%"; rect.style.top=(r.y*100)+"%"; rect.style.width=(r.w*100)+"%"; rect.style.height=(r.h*100)+"%"; ev.preventDefault(); };
+    var end=function(ev){ if(!drag) return; var d=drag; drag=null; var r=apply(d.a,d.b); if(r.w>=0.03 && r.h>=0.03) wiz.region=r; paint(); };
+    pane.onpointerup=end; pane.onpointercancel=end;
+    return box;
+  }
+  function wizLoadImg(ref){ return new Promise(function(res,rej){ var im=new Image(); im.onload=function(){ res(im); }; im.onerror=rej; im.src="data:"+(ref.mime||"image/jpeg")+";base64,"+ref.b64; }); }
+  async function wizRegionCrop(ref, r){
+    var im=await wizLoadImg(ref); var W=im.naturalWidth||im.width, Hh=im.naturalHeight||im.height;
+    var x=Math.round(r.x*W), y=Math.round(r.y*Hh), cw=Math.min(W-x,Math.round(r.w*W)), ch=Math.min(Hh-y,Math.round(r.h*Hh));
+    if(!(cw>=8 && ch>=8)) return null;
+    var c=document.createElement("canvas"); c.width=cw; c.height=ch; c.getContext("2d").drawImage(im, x,y,cw,ch, 0,0,cw,ch);
+    var url=c.toDataURL("image/jpeg",0.95);
+    return { mime:"image/jpeg", b64:url.slice(url.indexOf(",")+1), px:{x:x,y:y,w:cw,h:ch,W:W,H:Hh} };
+  }
+  async function wizRegionPaste(full, out, r){
+    var px=r&&r.px; if(!px) return null;
+    var base=await wizLoadImg(full), res=await wizLoadImg(out);
+    var c=document.createElement("canvas"); c.width=px.W; c.height=px.H; var x=c.getContext("2d");
+    x.drawImage(base,0,0,px.W,px.H);
+    x.drawImage(res, 0,0,res.naturalWidth||res.width,res.naturalHeight||res.height, px.x,px.y,px.w,px.h);
+    var png=(full.mime==="image/png"), url=c.toDataURL(png?"image/png":"image/jpeg",0.95);
+    return { mime:png?"image/png":"image/jpeg", b64:url.slice(url.indexOf(",")+1) };
+  }
+  window._wizRegionCrop=wizRegionCrop; window._wizRegionPaste=wizRegionPaste;
   /* v6.19.0 — OUTFIT BOARD. A workflow may declare board:{slot,max}: that slot
      also accepts two to `max` photographs at once, and the app lays them out
      side by side (two or three) or two-by-two (four) into ONE picture before
@@ -11113,6 +11238,8 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
         /* v6.76.0 — the Library's scene looks, one tap each, under a scene or background slot */
         if(i>0 && isSceneLabel(inp.label)) body.appendChild(wizSceneStrip(inp,i));
       });
+      /* 6.93.0 — Selection Edit on the web: the marquee is drawn on the photo here */
+      if(w.id==="region-edit" && state.refs[0] && state.refs[0].b64) body.appendChild(wizRegionPicker(state.refs[0]));
       if(!wizReqOk()){ var rw=el("div","mut"); setIcnText(rw,"i-warn",t("wiz_reqwarn")); body.appendChild(rw); }
     }
     if (wiz.step===3){
@@ -11131,7 +11258,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       if(w.fields&&w.fields.length){
         var fwrap=el("div","wiz-fields");
         w.fields.forEach(function(f){
-          var frow=el("label","wiz-field wiz-field-"+f.type);
+          var frow=el("label","wiz-field wiz-field-"+f.type+(f.required?" wiz-field-req":""));   /* 6.93.0 — a required line is the whole row */
           var flab=el("span","wfl", L9(f.label||{en:f.key}));
           if(f.type==="toggle"){
             var tg=document.createElement("input"); tg.type="checkbox";
@@ -29365,7 +29492,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.92.0";
+var APP_VER="6.93.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -29973,11 +30100,28 @@ var IMAGINE = (function(){
     if(!(h>0)){ var ar=el.__imAspect||0; if(!(ar>0)) return null; h=w/ar; }
     return [imClamp(ox/w), imClamp(oy/h)];
   }
+  /* 6.93.0 — A HUB CARD IS ONE OF A ROW. imStageWidth answers "the column, less every frame around el", which was
+     the hub card's width while one card filled the row. The hub now seats two cards to a row (three at 700px, four at
+     1100px — the same breakpoints the stylesheet declares), so where no ruler answers the art's width is the row's
+     share: the card's margins (5px a side) given back, the row divided, the margins and the 1px borders taken again.
+     A browser that measures never reaches this; Photoshop's renderer, which reads every rect as 0, would otherwise
+     move the Before | After line at half the finger's speed. */
+  function imHubCols(vw){ return vw>=1100 ? 4 : vw>=700 ? 3 : 2; }
+  function imDragWidth(el){
+    var w=el.clientWidth; if(w>0) return w;
+    var alone=imStageWidth(el); if(!(alone>0)) return 0;
+    var card=null, n=el, guard=0;
+    while(n && n.nodeType===1 && guard++<12){ if(/\bim-card\b/.test(String(n.className||""))){ card=n; break; } n=n.parentNode; }
+    if(!card) return alone;
+    var vw=imViewportW(); if(!(vw>0)) return alone;
+    var cols=imHubCols(vw);
+    return Math.max(60, (alone+12-cols*10)/cols-2);
+  }
   /* a horizontal slider: absolute through the rect, else relative to where the drag began */
   function imDragX(el, ev, startPct, downX){
     var c=imPt(ev), r=imRect(el);
     if(r) return Math.max(0, Math.min(100, (c[0]-r.left)/r.width*100));
-    var w=el.clientWidth||imStageWidth(el); if(!(w>0)) return null;
+    var w=imDragWidth(el); if(!(w>0)) return null;
     return Math.max(0, Math.min(100, startPct + (c[0]-downX)/w*100));
   }
   var S = { tool:null, model:"", size:"", tab:"tpl", preset:{}, desc:{}, photos:[], cur:0, busy:false, job:null, split:50, status:"", ref:{}, markMode:false, brush:1, stageW:0 };   /* 6.80.0 — stageW: the brush stage width the student set where nothing measures (Photoshop) · 6.31.0 — ref: the Reference Card picture per tool (never saved to the device); 6.32.0 — markMode/brush: the brush tools' red paint */
@@ -30118,6 +30262,17 @@ var IMAGINE = (function(){
     var head = el("div","im-toolhead"); root.appendChild(head);
     var back = btn("btn im-back", t("back")); back.id="imBack"; back.onclick=function(){ goHub(); }; head.appendChild(back);
     var ttl = el("div","im-tooltitle"); var ic=ico(tool.ic); if(ic) ttl.appendChild(ic); ttl.appendChild(text((ic?" ":"")+H.t9(tool.name))); head.appendChild(ttl);
+    /* 6.93.0 — the tool rail: every tool as a chip under the title, the open one lit, so a student moves between
+       tools without going back to the hub (← Imagine stays one tap away). Names come from the same table the
+       hub cards read, so the rail is translated wherever the cards are. */
+    var rail = el("div","im-rail"); rail.id="imRail"; root.appendChild(rail);
+    for(var ri=0;ri<D.tools.length;ri++)(function(tl){
+      var ch = btn("chip im-railchip"+(tl.id===tool.id?" on":""), H.t9(tl.name), tl.ic);
+      ch.setAttribute("data-tool", tl.id); ch.setAttribute("aria-pressed", tl.id===tool.id?"true":"false");
+      ch.onclick=function(){ if(tl.id!==tool.id) openTool(tl.id); };
+      rail.appendChild(ch);
+    })(D.tools[ri]);
+    try{ var railOn=rail.querySelector(".chip.on"); if(railOn && railOn.offsetLeft>60) rail.scrollLeft=railOn.offsetLeft-12; }catch(e){}
     var cols = el("div","im-cols"); root.appendChild(cols);
     var left = el("div","im-col im-col-stage"), right = el("div","im-col im-col-set");
     cols.appendChild(left); cols.appendChild(right);
@@ -30129,7 +30284,8 @@ var IMAGINE = (function(){
     /* the photo strip — up to eleven, a tick on the finished ones, + to add */
     var strip = el("div","im-strip"); strip.id="imStrip"; card.appendChild(strip);
     for(var i=0;i<S.photos.length;i++) strip.appendChild(thumb(S.photos[i], i));
-    if(S.photos.length < MAX_PHOTOS){
+    /* 6.93.0 — no lone "+" tile above an empty stage: the Add photos box below is the only door until a photo is in */
+    if(S.photos.length && S.photos.length < MAX_PHOTOS){
       var add = btn("im-th im-add", "+"); add.id="imAdd"; add.setAttribute("aria-label", t("add_photos")); add.title=t("add_photos");
       strip.appendChild(add); H.pickWire(add, addPhotos);
     }
@@ -30170,6 +30326,8 @@ var IMAGINE = (function(){
     } else {
       view.appendChild(compare(cur));
     }
+    /* 6.93.0 — Model · Size right above Apply: what the tap will run with, where the tap is */
+    card.appendChild(modelRow(tool));
     /* actions */
     var acts = el("div","im-acts"); card.appendChild(acts);
     var apply = btn("btn im-apply", t("apply"), "i-wand"); apply.id="imApply"; apply.onclick=function(){ applyOne(S.cur); }; off(apply, S.busy); acts.appendChild(apply);
@@ -30254,8 +30412,10 @@ var IMAGINE = (function(){
       ta.oninput=function(){ if(this.value.length>DESC_MAX) this.value=this.value.slice(0,DESC_MAX); S.desc[tool.id]=this.value; cnt.textContent=this.value.length+"/"+DESC_MAX; save(); };
       if(pk) card.appendChild(el("div","mut im-tplhint", "✓ "+H.t9(pk.name)+((pk.t && !ta.value.trim()) ? " · "+t("text_needed") : "")));
     }
-    /* model + size */
-    var row = el("div","im-msrow"); card.appendChild(row);
+  }
+  /* model + size — 6.93.0: drawn by the stage card (renderStage), above Apply */
+  function modelRow(tool){
+    var row = el("div","im-msrow");
     var mw = el("div","im-field"); mw.appendChild(el("span","mut", t("model"))); row.appendChild(mw);
     var msel = el("select","inp im-model"); msel.id="imModel"; msel.setAttribute("aria-label", t("model")); mw.appendChild(msel);
     var ms=models(), mid=curModelId();
@@ -30269,6 +30429,7 @@ var IMAGINE = (function(){
       for(var q=0;q<tiers.length;q++){ var so=document.createElement("option"); so.value=tiers[q]; so.textContent=String(tiers[q]).toUpperCase(); if(tiers[q]===cs) so.selected=true; ssel.appendChild(so); }
       ssel.onchange=function(){ S.size=this.value; save(); };
     }
+    return row;
   }
   function tile(tool, p, sel){
     var tl = el("div","im-tpl"+(p.id===sel?" on":"")); tl.setAttribute("role","button"); tl.tabIndex=0; tl.setAttribute("data-preset", p.id); tl.setAttribute("aria-pressed", p.id===sel?"true":"false");

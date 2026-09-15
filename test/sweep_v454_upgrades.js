@@ -137,8 +137,9 @@ function report(name, ok, detail) {
   /* runWizGenerate lives inside the wizard closure, so it is pinned at source
      level — the same file-based technique other suites use for the site */
   const srcHtml = fs.readFileSync(path.resolve(__dirname, "..", "docs", "app", "index.html"), "utf8");
+  /* 6.93.0 — the window grew: Selection Edit's crop-before / paste-back block sits between the blank and the restore */
   const wizFn = srcHtml.slice(srcHtml.indexOf("async function runWizGenerate()"),
-                              srcHtml.indexOf("async function runWizGenerate()") + 2500);
+                              srcHtml.indexOf("async function runWizGenerate()") + 6000);
   report("D) the Workflow wizard blanks the invisible ratio and restores it",
     wizFn.indexOf('wzR.value=""') >= 0 && wizFn.indexOf("wzR.value=wzSavedRatio") >= 0,
     { found: wizFn.indexOf('wzR.value=""') >= 0, restored: wizFn.indexOf("wzR.value=wzSavedRatio") >= 0 });
