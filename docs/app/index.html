@@ -5369,6 +5369,9 @@ var TOPGROUPS=[
                 t/s  title and one line, in all nine languages
    Adding one is the whole job — every surface below reads this array. */
 var WHATS_NEW = [
+  { v:"6.90.0", kind:"page", ref:"pgHome",
+    t:{my:"Photoshop Panel — Learn Mode ကို AI Tools ▸ Settings မှာ ပိတ်/ဖွင့် လို့ရပြီ (6.51.0 ကတည်းက switch မရှိလို့ GENERATE တိုင်း ၃ ချက် နှိပ်နေရတာ)၊ Video / Talking Photo / V→V မှာ key မထည့်ရသေးရင် \"st_nokey\" အစား စာသားအမှန် ပြပြီ၊ 6.51.0 မတိုင်ခင် page အဟောင်းတွေရဲ့ code အသေ 6,000 lines ဖြုတ်ပြီ",en:"Photoshop Panel — Learn Mode can be switched off (and on) again under AI Tools ▸ Settings (its switch had been missing since 6.51.0, so every GENERATE took three taps), Video / Talking Photo / V→V say \"Add your RunningHub key in Setup first\" instead of the raw key \"st_nokey\", and 6,000 lines of the old Freeform page's dead code are gone",shn:"Photoshop Panel — Learn Mode ပိုတ်ႇ/ပိုတ်း လႆႈယဝ်ႉတီႈ AI Tools ▸ Settings (switch ႁၢႆဝႆႉတႄႇ 6.51.0 မႃး)၊ Video / Talking Photo / V→V ဢမ်ႇပၼ် \"st_nokey\" ယဝ်ႉ၊ code တၢႆ 6,000 ထႅဝ် ဢဝ်ဢွၵ်ႇယဝ်ႉ",kac:"Photoshop Panel — Learn Mode hpe AI Tools ▸ Settings kaw pat/hpaw lu sai (6.51.0 kaw na switch n nga ai), Video / Talking Photo / V→V gaw \"st_nokey\" n madun sai, si ai code 6,000 hkyen shaw kau sai",th:"Photoshop Panel — เปิด/ปิด Learn Mode ได้อีกครั้งใน AI Tools ▸ Settings (สวิตช์หายไปตั้งแต่ 6.51.0 ทำให้ GENERATE ต้องแตะ 3 ครั้ง) Video / Talking Photo / V→V ไม่แสดง \"st_nokey\" แล้ว และลบโค้ดตายของหน้า Freeform เก่า 6,000 บรรทัด",zh:"Photoshop 面板 — Learn Mode 可以在 AI Tools ▸ Settings 重新开关（开关自 6.51.0 起缺失，导致每次 GENERATE 都要点三下）；Video / Talking Photo / V→V 不再显示原始键名 \"st_nokey\"；删除旧 Freeform 页面的 6,000 行死代码",vi:"Photoshop Panel — Learn Mode bật/tắt lại được trong AI Tools ▸ Settings (công tắc thiếu từ 6.51.0 nên mỗi GENERATE phải chạm ba lần), Video / Talking Photo / V→V không hiện \"st_nokey\" nữa, và 6.000 dòng mã chết của trang Freeform cũ đã bị xóa",id:"Photoshop Panel — Learn Mode bisa dimatikan/dinyalakan lagi di AI Tools ▸ Settings (sakelarnya hilang sejak 6.51.0 sehingga setiap GENERATE butuh tiga ketukan), Video / Talking Photo / V→V tak lagi menampilkan \"st_nokey\", dan 6.000 baris kode mati halaman Freeform lama dihapus",ms:"Photoshop Panel — Learn Mode boleh dimatikan/dihidupkan semula di AI Tools ▸ Settings (suisnya hilang sejak 6.51.0 jadi setiap GENERATE perlu tiga ketukan), Video / Talking Photo / V→V tidak lagi memaparkan \"st_nokey\", dan 6,000 baris kod mati halaman Freeform lama dibuang"},
+    s:{my:"6.89.0 ရဲ့ identifier scan နောက် တစ်ဆင့်တက် — **control တိုင်း ရှိရမယ်**: main.js က ခေါ်တဲ့ element id 129 ခု က panel/index.html ထဲ မရှိတော့ဘူး (theme picker, Library folder card, URL bar, relight stage, camera pro, wedding, scenes, recipes, batch, preset ခလုတ် 19 ခု, card header 18 ခု, toggle 4 ခု) — 6.51.0 မှာ page တွေ app ရဲ့ page ဖြစ်သွားတုန်းက ကျန်ခဲ့တဲ့ code။ အဲ့ထဲမှာ **Learn Mode switch (tglLearn)** လဲ ပါလို့ Photoshop ထဲ Learn Mode ပိတ်လို့ မရခဲ့ဘူး → AI Tools ▸ Settings မှာ switch ပြန်ထည့် (ပိတ်ရင် arm ထားတာ ဖြုတ်)။ **st_nokey** — Video / Talking Photo / V→V က key မရှိရင် dictionary မှာ မရှိတဲ့ key ကို ပြခဲ့ → app ရဲ့ job_needkey စာသား ၉ ဘာသာ။ Code အသေ 6,100 lines (function 130 ကျော်, dictionary key 455 × ၉ ဘာသာ) ဖြုတ်ပြီ — main.js 19,881 → 13,783 lines။ Test အသစ်: `$(\"id\")` / binder တိုင်း element ရှိရမယ် (panel + app), dictionary key တိုင်း ဖတ်သူ ရှိရမယ်၊ ၉ ဘာသာ တူရမယ်။ Web app: device limit မက်ဆေ့ဂျ်က slot ပြန်လွတ်ပြီးလဲ ကျန်နေတာ ပြင်ပြီ။ Version file: download page ရဲ့ date release နဲ့အတူ ရွှေ့၊ release-manifest ရဲ့ minimum က cluster policy (6.24.0) အတိုင်း။",en:"One step past 6.89.0's identifier scan — **every control must exist**: 129 element ids main.js looked up were no longer in panel/index.html (the theme picker, the Library-folder card, the URL bar, the relight stage, camera pro, wedding, scenes, recipes, batch, nineteen preset buttons, eighteen card headers, four toggles) — code left behind when the pages became the app's own in 6.51.0. Among them was the **Learn Mode switch (tglLearn)**, so Learn Mode could not be turned off in Photoshop at all → the switch is back under AI Tools ▸ Settings (turning it off disarms a half-tapped button). **st_nokey** — Video / Talking Photo / V→V showed a key no dictionary carried when the RunningHub key was missing → the app's job_needkey wording in nine languages. 6,100 dead lines are gone (130+ functions, 455 dictionary keys × nine languages) — main.js 19,881 → 13,783 lines. New test: every `$(\"id\")` / binder argument resolves to a control (panel + app), every dictionary key has a reader and every language carries the same keys. Web app: the device-limit line no longer lingers after a slot is freed. Version files: the download page's date moves with the release; the release-manifest's minimum is the cluster policy (6.24.0).",shn:"Learn Mode switch ပွၵ်ႈမႃးယဝ်ႉ၊ st_nokey မႄးယဝ်ႉ၊ code တၢႆ 6,100 ထႅဝ် ဢဝ်ဢွၵ်ႇ၊ test မႂ်ႇ ၵူတ်ႇထတ်း control ၵူႈဢၼ်။",kac:"Learn Mode switch bai nga sai, st_nokey hpe jahkrat sai, si ai code 6,100 hkyen shaw kau sai, test nnan gaw control yawng hpe jep ai.",th:"สวิตช์ Learn Mode กลับมาแล้ว แก้ st_nokey ลบโค้ดตาย 6,100 บรรทัด เทสต์ใหม่ตรวจทุกคอนโทรล",zh:"Learn Mode 开关回来了，修复 st_nokey，删除 6,100 行死代码，新测试检查每个控件。",vi:"Công tắc Learn Mode trở lại, sửa st_nokey, xóa 6.100 dòng mã chết, test mới kiểm tra mọi điều khiển.",id:"Sakelar Learn Mode kembali, st_nokey diperbaiki, 6.100 baris kode mati dihapus, tes baru memeriksa setiap kontrol.",ms:"Suis Learn Mode kembali, st_nokey dibaiki, 6,100 baris kod mati dibuang, ujian baharu memeriksa setiap kawalan."} },
   { v:"6.89.0", kind:"page", ref:"pgMeitu",
     t:{my:"Photoshop Panel — Retouch A · Retouch B · Retouch Pro: ရွေးထားတဲ့ HD Finish engine နဲ့ မျက်နှာ ရွေးချယ်မှုကို finish pass က တကယ် သုံးပြီ (အောက်က မှတ်ချက်လဲ အမှန်ပြောပြီ)၊ studio တစ်ခုလုံးကို \"X is not defined\" error မထွက်နိုင်အောင် စစ်ထားပြီ",en:"Photoshop Panel — Retouch A · Retouch B · Retouch Pro: the HD Finish engine and face choice you pick is now the one the finish pass runs (and the note under the rows tells the truth); the whole studio is scanned so no \"X is not defined\" error can ship again",shn:"Photoshop Panel — Retouch A · Retouch B · Retouch Pro: HD Finish engine လႄႈ ၼႃႈ ဢၼ်လိူၵ်ႈဝႆႉၼၼ်ႉ finish pass ႁဵတ်းၸွမ်းယဝ်ႉ (ၶေႃႈမၢႆတွင်းတႂ်ႈၼၼ်ႉၵေႃႈ ဝႃႈတႄႉ)၊ studio တင်းမူတ်း ၵူတ်ႇထတ်း \"X is not defined\" ယဝ်ႉ",kac:"Photoshop Panel — Retouch A · Retouch B · Retouch Pro: lata ai HD Finish engine hte myi man lata ai hpe finish pass gaw galaw sai (npu na matsing mung teng sai), studio yawng hpe \"X is not defined\" n pru na matu jep sai",th:"Photoshop Panel — Retouch A · Retouch B · Retouch Pro: เอนจิน HD Finish และตัวเลือกใบหน้าที่คุณเลือกคือสิ่งที่ finish pass ใช้จริงแล้ว (และหมายเหตุใต้แถวบอกความจริง) ทั้งสตูดิโอถูกสแกนไม่ให้เกิดข้อผิดพลาด \"X is not defined\" อีก",zh:"Photoshop 面板 — Retouch A · Retouch B · Retouch Pro：你选择的 HD Finish 引擎与人脸选项现在真正由 finish pass 执行（行下的说明也如实显示）；整个工作室已扫描，\"X is not defined\" 错误不会再发布",vi:"Photoshop Panel — Retouch A · Retouch B · Retouch Pro: engine HD Finish và tùy chọn khuôn mặt bạn chọn giờ là thứ finish pass thực sự chạy (ghi chú dưới các hàng nói đúng), toàn bộ studio được quét để không lỗi \"X is not defined\" nào lọt ra nữa",id:"Photoshop Panel — Retouch A · Retouch B · Retouch Pro: mesin HD Finish dan pilihan wajah yang Anda pilih kini benar-benar dijalankan finish pass (catatan di bawah baris jujur), seluruh studio dipindai agar galat \"X is not defined\" tak pernah terkirim lagi",ms:"Photoshop Panel — Retouch A · Retouch B · Retouch Pro: enjin HD Finish dan pilihan wajah yang anda pilih kini benar-benar dijalankan finish pass (nota di bawah baris berkata benar), seluruh studio diimbas supaya ralat \"X is not defined\" tidak dihantar lagi"},
     s:{my:"Photoshop ထဲမှာ finish pass က HD Finish chip နဲ့ engine / မျက်နှာ ရွေးချယ်မှုကို studio module က ဘယ်တော့မှ မထုတ်ပေးခဲ့တဲ့ store ကနေ ဖတ်နေခဲ့လို့ default engine ပဲ အမြဲ run ပြီး မှတ်ချက်ကလဲ \"HD Finish ပိတ်ထားတယ်\" လို့ အမြဲ ပြောခဲ့တယ် → retouch page တစ်ခု ဆောက်တာနဲ့ store ကို ထုတ်ပေးပြီ။ 6.51.0 ကတည်းက ကတ် မရှိတော့တဲ့ Pipeline Chain Builder code က အဲ့ wave မှာ ဖျက်ထားတဲ့ function ကို ခေါ်နေသေးလို့ ဖြုတ်ပြီ။ **Test အသစ်:** panel (script 68 ခု၊ page scope တစ်ခုတည်း)၊ web app၊ service worker၊ landing၊ admin၊ server ထဲက identifier တိုင်းကို language ရဲ့ scope အတိုင်း ရှာပြီး declare မထားရင် fail — 6.88.1 ရဲ့ MODEL_PRO_IMG လို error မျိုး ထပ်မထွက်နိုင်တော့။ CI မှာ acorn ကို Playwright နဲ့အတူ install။",en:"In Photoshop the finish pass read the student's HD Finish chip and engine / face choice through a store the studio module never published, so it always ran the default engine and the note under the rows always said HD Finish was off — the store is published the moment a retouch page is built. A Pipeline Chain Builder with no card since 6.51.0 still called a function deleted in that same wave — gone. **New test:** every identifier in the panel (68 scripts, one page scope), the web app, the service worker, the landing page, the admin console and the server is resolved against the scopes the language creates and must be declared — the class of fault behind 6.88.1's MODEL_PRO_IMG cannot ship again. CI installs acorn beside Playwright.",shn:"Finish pass ဢၢၼ်ႇ HD Finish chip လႄႈ engine / ၼႃႈ ဢၼ်လိူၵ်ႈဝႆႉ ၸွမ်း store ဢၼ်ဢမ်ႇပိုၼ်ဝႆႉ → ပိုၼ်ယဝ်ႉ။ code Pipeline ဢၼ်တၢႆ ဢဝ်ဢွၵ်ႇယဝ်ႉ။ test မႂ်ႇ ၵူတ်ႇထတ်း identifier ၵူႈဢၼ်။",kac:"Finish pass gaw HD Finish chip hte engine / myi man lata ai hpe n shapraw ai store kaw na hti nga ai → shapraw sai. Si ai Pipeline code hpe shaw kau sai. Test nnan gaw identifier yawng hpe jep ai.",th:"finish pass อ่านชิป HD Finish และตัวเลือกเอนจิน/ใบหน้าจาก store ที่ไม่เคยถูกเผยแพร่ → เผยแพร่แล้ว โค้ด Pipeline ที่ตายแล้วถูกลบ เทสต์ใหม่ตรวจทุก identifier",zh:"finish pass 通过一个从未发布的 store 读取 HD Finish 开关与引擎/人脸选项 → 现已发布。已删除死掉的 Pipeline 代码。新测试检查每个标识符。",vi:"finish pass đọc chip HD Finish và lựa chọn engine/khuôn mặt qua một store chưa từng được công bố → đã công bố. Mã Pipeline chết đã bị xóa. Test mới kiểm tra mọi định danh.",id:"finish pass membaca chip HD Finish dan pilihan mesin/wajah lewat store yang tak pernah dipublikasikan → kini dipublikasikan. Kode Pipeline mati dihapus. Tes baru memeriksa setiap identifier.",ms:"finish pass membaca cip HD Finish dan pilihan enjin/wajah melalui store yang tidak pernah diterbitkan → kini diterbitkan. Kod Pipeline mati dibuang. Ujian baharu memeriksa setiap pengecam."} },
@@ -10668,10 +10671,6 @@ function applyTap(text, note){
   toast(t("tap_ready"),"ok");
   saveState();
 }
-function refNote(needRef){
-  if(!needRef) return "IMAGE 1 (ပင်မပုံ) တင်ထားဖို့လိုတယ်";
-  return "IMAGE 1 (ပင်မပုံ) + IMAGE 2 (reference) နှစ်ပုံလိုတယ်";
-}
 
 /* Panel-exact tables: Create page Prompt Library + Image→Prompt scene builder */
 var PROMPT_LIB = [
@@ -12994,7 +12993,6 @@ function rsPresetByKey(key){
   if(dp) return { key:dp.key, icon:"i-sparkle", label:(rn?rn.label:dp.label), was:(rn?rn.was:undefined), text:function(n){ return dp.text.replace(/\b\d{1,3}(?=% strength)/g, String(n)); } };
   return null;
 }
-function rsPresetLabel(key){ var p=rsPresetByKey(key); return p ? p.label : key; }
 function rsPresetText(key, strength){ var p=rsPresetByKey(key); return p ? p.text(strength) : ""; }
 var RS_ONETAP_KEYS = ["evoto","meitu","rsEditorial","rsNatural","rsGlam"];
 /* Quick Bundles: curated multi-slider combos so a user doesn't have to hand
@@ -19727,10 +19725,6 @@ function stLoadFullSource(du){
   img.onerror=function(){ ST.fullBitmap=null; };
   img.src=du;
 }
-function stGeoDims(){
-  var s=stGeoSource(); if(!s) return {w:0,h:0};
-  return { w:s.width||s.naturalWidth, h:s.height||s.naturalHeight };
-}
 function stGeoChanged(){ /* T2 op — settle latency acceptable; mask + px0 invalidated, buffer rebuilt */
   /* heal taps are normalized to the CURRENT buffer frame — crop/rotate moves
      that frame, so surviving ops would land on the wrong pixels. Clear, and
@@ -24936,7 +24930,6 @@ function stComposePrompt(){
    whitened a shoulder, and the operator had no way to tell which. This draws
    the regions the pipeline is really using straight onto the stage, so a
    mis-read face is something you SEE before you spend a generate on it. */
-function stZonesOn(){ return !!ST.showZones; }
 function stDrawZones(cx,W,H){
   if(!ST.showZones||!ST.px0) return;
   var mi=ST.maskCache||stSkinMask(ST.px0,W,H,ST.faceLM||null);
@@ -27700,7 +27693,7 @@ function accPostLogin(){
     try { await unifiedRefresh(true); } catch(e){}
     try {
       var d = await accRegisterDevice();
-      if (d && d.limit) accShowDeviceLimit();
+      if (d && d.limit) accShowDeviceLimit(); else accHideDeviceLimit();
     } catch(e){}
     try { accRender(); accChipRender(); } catch(e){}
     /* v5.30 — the profile has just landed, so "checking" can resolve to open
@@ -27986,7 +27979,6 @@ function accShowDeviceLimit(){
   accSetInline("stAccDev", msg, "err");
   var box = $("accDevLimit"); if (box) box.style.display = "";
   var dt = $("devLimitTxt"); if (dt){ dt.textContent = msg; dt.style.display = ""; }
-  var da = $("devLimitAct"); if (da) da.style.display = "";
 }
 /* The counterpart. Freeing a slot used to leave "Device limit reached — remove
    an old device from the list below" sitting above an empty list, telling the
@@ -27995,7 +27987,6 @@ function accHideDeviceLimit(){
   accSetInline("stAccDev", "");
   var box = $("accDevLimit"); if (box) box.style.display = "none";
   var dt = $("devLimitTxt"); if (dt) dt.style.display = "none";
-  var da = $("devLimitAct"); if (da) da.style.display = "none";
 }
 
 /* ---------------- §6 gating ---------------- */
@@ -28247,8 +28238,7 @@ function accRender(){
     accSetInline("stAccDev", "");
     var box = $("accDevLimit"); if (box) box.style.display = "none";
     var dt = $("devLimitTxt"); if (dt) dt.style.display = "none";
-    var da = $("devLimitAct"); if (da) da.style.display = "none";
-  }
+    }
   accAvaRender();
   accRenderPlan();
   unifiedRender();
@@ -28872,6 +28862,7 @@ async function unifiedRelease(kind){
       throw new Error((b && (b.message || b.msg)) || code || "Release was not authorized");
     }
     await unifiedRefresh(true);
+    accHideDeviceLimit();   /* v6.90.0 — the slot is free again, so the "remove an old device" line goes with it */
     accSetInline("unifiedStatus", L9(TX.ok), "ok");
     try { toast(L9(TX.ok), "ok"); } catch(e){}
   } catch(e){ accSetInline("unifiedStatus", friendlyError(e), "err"); }
@@ -29151,7 +29142,7 @@ function accWire(){
            reached the server here rejected silently and the user saw the
            dev_limit copy only on the NEXT cold boot (§5.4 wants it inline,
            at the moment it happens) */
-        accRegisterDevice().then(function(d){ if (d && d.limit) accShowDeviceLimit(); })
+        accRegisterDevice().then(function(d){ if (d && d.limit) accShowDeviceLimit(); else accHideDeviceLimit(); })
                            .catch(function(){});
         /* v6.43.0 — the reconnect is the one moment worth spending a call on,
            so it jumps the backoff queue rather than waiting out the interval a
@@ -29218,7 +29209,7 @@ function accBoot(){
     try { await unifiedRefresh(true); } catch(e){}
     try {
       var d = await accRegisterDevice();
-      if (d && d.limit) accShowDeviceLimit();
+      if (d && d.limit) accShowDeviceLimit(); else accHideDeviceLimit();
     } catch(e){}
     try { accRender(); accChipRender(); } catch(e){}
     try { appWallApply(); } catch(e){}          /* v5.30 — boot profile landed */
@@ -29728,7 +29719,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.89.0";
+var APP_VER="6.90.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

@@ -261,10 +261,13 @@ const missing = [...named].filter((n) => !have.has(n));
 report("D4) every icon named literally is on disk (" + named.size + " named, " + have.size + " files)",
   missing.length === 0, missing.slice(0, 10));
 
-/* the moon this wave added, because the theme button used to paint U+2600 */
-report("D5) the theme button paints a sprite, and the moon beside the sun exists",
-  /ffIcon\(\(th === "light" \|\| th === "porcelain"\) \? "i-moon" : "i-sun", "cream"\)/.test(MAIN) &&
-  ["cream", "gold", "ink", "muted"].every((t) => have.has("i-moon-" + t + ".png")), null);
+/* the moon this wave added, because the theme button used to paint U+2600. v6.161.0: that
+   button (btnTheme) never existed in the panel's markup — the pages have been the app's own
+   since 6.51.0 — so the paint went with the dead lookup; applyTheme sets data-theme only,
+   and no sun/moon character can reach a textContent. */
+report("D5) the theme button the panel never drew is not painted: applyTheme sets data-theme only, main.js names neither btnTheme nor a moon sprite, and no U+2600 / U+263D / U+263E character remains",
+  !/btnTheme/.test(MAIN) && !/btnTheme/.test(fs.readFileSync(path.join(PANEL, "index.html"), "utf8")) && !/i-moon/.test(MAIN) &&
+  /function applyTheme\(\) \{[\s\S]{0,700}setAttribute\("data-theme", th\)/.test(MAIN) && !/[\u2600\u263D\u263E]/.test(MAIN), null);
 
 /* ------------------- D6-D9. ONE icon, not three. v6.65.0.
 

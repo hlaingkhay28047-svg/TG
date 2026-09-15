@@ -61,6 +61,8 @@ var REPLACED_IDS = {
   rsCmpTop: 1, rsCmpRange: 1, rsCmpBeforeLbl: 1, rsCmpAfterLbl: 1, rsZoomBtn: 1,
   rsRerunRow: 1, rsRerunLbl: 1, rsRerunChips: 1, btnRsDl: 1, btnRsToRef: 1,
   btnV2Next: 1, handoffRetouch: 1, rsHistH: 1, rsHist: 1, rsHistClear: 1,
+  /* the app's control-count badges and its phone-width "more" fold — the panel's screen draws neither (v6.161.0) */
+  stMeituCount: 1, stEvotoCount: 1, stGenMore: 1,
   /* the browser's shared file input — the panel opens its own picker */
   filePick: 1
 };

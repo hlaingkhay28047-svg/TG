@@ -175,7 +175,7 @@ SERVER_ERRORS.push({ status: 503, message: "Server busy", code: "auth_busy" });
      refresh token away it said "Wrong email or password" before anybody had typed
      anything at all. */
   const checkBlock = panelSrc.slice(panelSrc.indexOf("async function gateCheck()"),
-    panelSrc.indexOf("function retiredOfflinePath"));
+    panelSrc.indexOf("/* v6.102.4 \u2014 WHICH refusal this is."));   /* gateCheck's body alone — up to gateSignInKey's own header (v6.161.0: retiredOfflinePath, the old boundary, is gone) */
   report("D5) 6.102.4 — a remembered session that the server no longer honours is not reported as a wrong password",
     /gateT\(rf === "dead" \? "gate_session_ended" : "gate_service_down"\)/.test(checkBlock) &&
     !/gate_bad/.test(checkBlock), checkBlock.slice(0, 400));
