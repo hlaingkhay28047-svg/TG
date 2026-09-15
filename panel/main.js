@@ -2597,7 +2597,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.165.0";
+const PANEL_VERSION = "6.166.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -3929,6 +3929,14 @@ function applyI18n() {
   /* v6.161.0 — Learn Mode's switch. Its toggle (tglLearn) left with the old Freeform page in 6.51.0 and
      was never rebuilt, so the three-tap cycle could not be turned off from the panel at all; the Setup
      screen (settings-screen.js) now reads and writes it here. Turning it off disarms a pending tap. */
+  /* 6.166.0 — text size (AI Tools ▸ Settings): S · M · L as a body class the stylesheet reads; remembered in the
+     settings file. The Home screen's recent strip and the Gallery tools are published beside it. */
+  g.HNK.textSize = {
+    get: function () { return state.tsize === "s" || state.tsize === "l" ? state.tsize : "m"; },
+    set: function (v) { return tsizeSetP(v); }
+  };
+  g.HNK.homeRecent = { list: homeRecentListP, open: homeRecentOpen, title: function () { return ff9(GAL_L.recent); } };
+  g.HNK.dropTarget = dropTargetBridge();
   g.HNK.learnMode = {
     get: function () { return !!state.learnMode; },
     set: function (on) { state.learnMode = !!on; if (!state.learnMode) { try { disarm(); } catch (e) { } } try { saveSettings(); } catch (e2) { } return state.learnMode; }
@@ -5821,6 +5829,8 @@ function selfTestRowsInner() {
     rows.push(hnkLayerProbeRow());
     /* 6.165.0 — the folder every finished take is written to: found, written, read back (see hnkSaveProbeStart) */
     rows.push(hnkSaveProbeRow());
+    /* 6.166.0 — drag & drop: bound targets, the last file that arrived, or the refusal */
+    rows.push(hnkDropRow());
     /* v6.86.0 — whether <video> decodes here at all. Photoshop's does not,
        which is why every video page shows numbered tiles and Download /
        Open Direct Link / Open the folder instead of a player (6.77.0). */
@@ -6078,6 +6088,7 @@ async function selfTestCopy() {
 
 /* ---------------- PLATFORMS · SHARE · ABOUT statics ---------------- */
 function setupApplyStatics() {
+  try { renderPrefsP(); } catch (e) { }   /* 6.166.0 — SETTINGS card */
   const platH2 = $("platH2"); if (platH2) platH2.textContent = sl("plat_h2");
   const p1 = $("platP1"); if (p1) p1.textContent = sl("plat_p1");
   const p2 = $("platP2"); if (p2) p2.textContent = sl("plat_p2");
@@ -6175,6 +6186,12 @@ function bindSetup() {
   safe("setup:data", function () {
     const ex = $("btnExportData"); if (ex) ex.addEventListener("click", function () { exportData(); });
     const im = $("btnImportData"); if (im) im.addEventListener("click", function () { importData(); });
+  });
+  /* 6.166.0 — text size S · M · L */
+  safe("setup:prefs", function () {
+    [["prefsTsizeS", "s"], ["prefsTsizeM", "m"], ["prefsTsizeL2", "l"]].forEach(function (r) {
+      const b = $(r[0]); if (b) ffPressable(b, function () { tsizeSetP(r[1]); });
+    });
   });
   /* platforms · share · about */
   safe("setup:about-wire", function () {
@@ -8128,7 +8145,8 @@ function vwizResultCard(body, nav, el, goStep) {
   body.appendChild(nav1);
   /* 6.165.0 — the clip goes on to the next tool from here too; the wizard closes so the page it lands on is visible */
   const sendRow = el("wiz-nav wiz-nav-acts vid-send"); sendRow.id = "vwizSendRow";
-  [["vwizSendUp", "up", "i-rocket", "sendUp"], ["vwizSendV2v", "v2v", "i-clapper", "sendV2v"]].forEach(function (r) {
+  [["vwizSendUp", "up", "i-rocket", "sendUp"], ["vwizSendV2v", "v2v", "i-clapper", "sendV2v"], ["vwizSendTalk", "talk", "i-frame", "grabTalk"], ["vwizSendImg1", "img1", "i-restore", "grabImg1"]].forEach(function (r) {
+    if (VID_SEND_FRAME[r[1]] && !VIDEO_OK) return;   /* 6.166.0 — no frame without a player */
     const sb = mkBtn("btn", ""); sb.id = r[0]; setIcnText(sb, r[2], "cream", vwizL(r[3]));
     ffPressable(sb, function () { vidSendTo(r[1], cur, vwiz.kind === "i2v" ? "video" : "videotool", true); });
     sendRow.appendChild(sb);
@@ -8463,10 +8481,130 @@ async function pickFolder() {
   const uxp = require("uxp");
   return uxp.storage.localFileSystem.getFolder();
 }
-async function fileToDataUrl(f) {
+/* 6.166.0 — text size: a class on <body>; className is rebuilt as a string (UXP once handed back a null className) */
+function applyTextSize() {
+  const b = document.body; if (!b) return;
+  const v = state.tsize === "s" || state.tsize === "l" ? state.tsize : "m";
+  const rest = String(b.className || "").split(/\s+/).filter(function (c) { return c && !/^tsize-/.test(c); });
+  if (v !== "m") rest.push("tsize-" + v);
+  b.className = rest.join(" ");
+}
+/* 6.166.0 — SETUP ▸ SETTINGS, the app's PREFS_W word for word. Text size only: the app's second row is a browser
+   Notification switch, and UXP has no notification of any kind — a switch that could never do anything is not
+   offered here, and the parity walk names those lines app-only for that reason. */
+const PREFS_L = {
+  h2: { my: "ပြင်ဆင်ချက်", en: "SETTINGS", shn: "ၶိူင်ႈမၢႆ", kac: "Setting ni", th: "การตั้งค่า", zh: "设置", vi: "CÀI ĐẶT", id: "PENGATURAN", ms: "TETAPAN" },
+  tsize: { my: "စာလုံး အရွယ်", en: "Text size", shn: "တူဝ်လိၵ်ႈ", kac: "Laika kaba", th: "ขนาดตัวอักษร", zh: "文字大小", vi: "Cỡ chữ", id: "Ukuran teks", ms: "Saiz teks" },
+  s: { my: "သေး", en: "Small", shn: "လဵၵ်ႉ", kac: "Kaji", th: "เล็ก", zh: "小", vi: "Nhỏ", id: "Kecil", ms: "Kecil" },
+  m: { my: "ပုံမှန်", en: "Normal", shn: "ပၵ်းၵဝ်ႇ", kac: "Pyaw", th: "ปกติ", zh: "标准", vi: "Thường", id: "Normal", ms: "Biasa" },
+  l: { my: "ကြီး", en: "Large", shn: "ယႂ်ႇ", kac: "Kaba", th: "ใหญ่", zh: "大", vi: "Lớn", id: "Besar", ms: "Besar" }
+};
+function tsizeSetP(v) {
+  state.tsize = (v === "s" || v === "l") ? v : "m";
+  applyTextSize();
+  try { saveSettings(); } catch (e) { }
+  try { renderPrefsP(); } catch (e) { }
+  return state.tsize;
+}
+function renderPrefsP() {
+  const h = $("prefsH2"); if (!h) return;
+  setIcnText(h, "i-gear", "gold", ff9(PREFS_L.h2), "ic-h2");
+  const lb = $("prefsTsizeL"); if (lb) lb.textContent = ff9(PREFS_L.tsize);
+  const cur = state.tsize === "s" || state.tsize === "l" ? state.tsize : "m";
+  [["prefsTsizeS", "s"], ["prefsTsizeM", "m"], ["prefsTsizeL2", "l"]].forEach(function (r) {
+    const b = $(r[0]); if (!b) return;
+    b.textContent = ff9(PREFS_L[r[1]]); b.className = "chip" + (cur === r[1] ? " on" : "");
+  });
+}
+/* 6.166.0 — one reader for a UXP entry (read) and a DOM File (arrayBuffer / FileReader): a file dropped onto the
+   panel from the OS arrives as whichever shape the host gives it */
+async function entryReadBinary(f) {
   const uxp = require("uxp");
-  const buf = await f.read({ format: uxp.storage.formats.binary });
-  return "data:" + extToMime(f.name) + ";base64," + bufToB64(buf);
+  if (f && typeof f.read === "function") return f.read({ format: uxp.storage.formats.binary });
+  if (f && typeof f.arrayBuffer === "function") return f.arrayBuffer();
+  if (f && typeof FileReader !== "undefined") return new Promise(function (res, rej) { const rd = new FileReader(); rd.onload = function () { res(rd.result); }; rd.onerror = function () { rej(new Error("read failed")); }; rd.readAsArrayBuffer(f); });
+  throw new Error("unreadable file");
+}
+/* 6.166.0 — DRAG & DROP onto every picker. A file dragged from Explorer / Finder onto a slot's Pick control lands
+   in that slot exactly as the picker would put it. The SELF-TEST "Drag & drop" row says how many targets are bound
+   and names the last file that arrived — or the refusal — because whether Photoshop's renderer delivers OS drops
+   into a UXP panel is a thing only the real host can prove (acceptance pending). */
+const DROP = { bound: 0, dyn: [], last: null, err: null };
+/* the screens that bind their own drop target (the Freeform slot strip) report through this bridge, so the SELF-TEST
+   row counts them once and names their last file too */
+function dropTargetBridge() {
+  return {
+    bound: function (name) { name = String(name || "screen"); if (DROP.dyn.indexOf(name) < 0) DROP.dyn.push(name); },
+    got: function (f) { DROP.last = { name: (f && f.name) || "file", bytes: (f && f.size) || 0, at: Date.now() }; DROP.err = null; try { renderSelfTest(); } catch (x) { } },
+    failed: function (err) { DROP.err = String((err && err.message) || err || "drop failed").slice(0, 120); try { renderSelfTest(); } catch (x) { } }
+  };
+}
+function dropFileOf(e) {
+  const dt = e && e.dataTransfer; if (!dt) return null;
+  if (dt.files && dt.files.length) return dt.files[0];
+  if (dt.items && dt.items.length) { for (let i = 0; i < dt.items.length; i++) { try { const f = dt.items[i].getAsFile && dt.items[i].getAsFile(); if (f) return f; } catch (e2) { } } }
+  return null;
+}
+function dropBind(el, onFile) {
+  if (!el || el.__hnkDrop) return; el.__hnkDrop = true; DROP.bound++;
+  const on = function () { el.className = String(el.className || "").replace(/\s*\bdrop-on\b/g, "") + " drop-on"; };
+  const off = function () { el.className = String(el.className || "").replace(/\s*\bdrop-on\b/g, ""); };
+  ["dragenter", "dragover"].forEach(function (ev) { el.addEventListener(ev, function (e) { try { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = "copy"; } catch (x) { } on(); }); });
+  el.addEventListener("dragleave", off);
+  el.addEventListener("drop", async function (e) {
+    try { e.preventDefault(); e.stopPropagation(); } catch (x) { }
+    off();
+    const f = dropFileOf(e);
+    if (!f) { DROP.err = "drop carried no file"; try { renderSelfTest(); } catch (x) { } return; }
+    try { await onFile(f); DROP.last = { name: f.name || "file", bytes: f.size || 0, at: Date.now() }; DROP.err = null; }
+    catch (err) { DROP.err = String((err && err.message) || err).slice(0, 120); setStatus(friendlyErr(err), "err"); }
+    try { renderSelfTest(); } catch (x) { }
+  });
+}
+function bindDrops() {
+  dropBind($("btnTkImgPick"), async function (f) { TK.img = f; renderTk(); setStatus(t("st_ref_file_added"), "ok"); });
+  dropBind($("btnTkAudPick"), async function (f) { TK.aud = f; renderTk(); });
+  dropBind($("btnVtPick"), async function (f) { VT.video = f; renderVt(); });
+  dropBind($("btnVtImgPick"), async function (f) { VT.img = f; renderVt(); });
+  dropBind($("btnVuPickP"), async function (f) { VU.video = f; renderVu(); });
+  dropBind($("stPicker"), async function (f) {
+    const slot = refSlotById("subject-reference"); if (!slot) return;
+    const cap = await refCaptureEntry(f); if (!cap || !imgMagicOk(cap.b64)) throw new Error("HNKERR:err_img:unreadable");
+    slot.assign(cap); setStatus(t("st_ref_file_added"), "ok");
+  });
+}
+function hnkDropRow() {
+  const kb = DROP.last ? Math.round((DROP.last.bytes || 0) / 1024) : 0;
+  const n = DROP.bound + DROP.dyn.length;
+  if (!DROP.bound) return { label: "Drag & drop", detail: "no targets bound", level: "err" };
+  if (DROP.err) return { label: "Drag & drop", detail: "REFUSED \u2014 " + DROP.err, level: "err" };
+  if (DROP.last) return { label: "Drag & drop", detail: n + " targets \u00b7 last file " + DROP.last.name + " \u00b7 " + kb + " KB", level: "ok" };
+  return { label: "Drag & drop", detail: n + " targets bound \u00b7 no file dropped yet", level: "pend" };
+}
+/* 6.166.0 — one frame of a clip as a JPEG data URL (the app's vidGrabFrame); only where <video> decodes (VIDEO_OK) */
+function vidGrabFrameP(ref) {
+  return new Promise(function (res, rej) {
+    if (!VIDEO_OK) { rej(new Error("no-player")); return; }
+    const v = document.createElement("video"); let done = false;
+    const fin = function (err, val) { if (done) return; done = true; clearTimeout(tm); try { v.pause(); clearSrc(v); v.load(); } catch (e) { } if (err) rej(err); else res(val); };
+    const tm = setTimeout(function () { fin(new Error("frame-timeout")); }, 15000);
+    v.muted = true; v.preload = "auto";
+    v.onerror = function () { fin(new Error("frame-decode")); };
+    v.onloadeddata = function () { try { v.currentTime = Math.min(0.5, Math.max(0, (v.duration || 1) / 2)); } catch (e) { fin(new Error("frame-seek")); } };
+    v.onseeked = function () {
+      try {
+        const w = v.videoWidth, h = v.videoHeight; if (!w || !h) throw new Error("frame-empty");
+        const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(v, 0, 0, w, h);
+        const mm = /^data:([^;]+);base64,(.+)$/.exec(c.toDataURL("image/jpeg", 0.92)); if (!mm) throw new Error("frame-encode");
+        fin(null, { mime: mm[1], b64: mm[2], w: w, h: h });
+      } catch (e) { fin(e); }
+    };
+    v.src = ref;
+  });
+}
+async function fileToDataUrl(f) {
+  const buf = await entryReadBinary(f);
+  return "data:" + ((f && f.type && /^(image|video|audio)\//.test(f.type)) ? f.type : extToMime(f.name)) + ";base64," + bufToB64(buf);
 }
 async function saveResultFile(folder, name, ref) {
   const uxp = require("uxp");
@@ -8868,13 +9006,25 @@ const vuTakes = mkTakes("vu", VU_L, "upscale");
    kept) become that page's picked clip — the same {name, _url} shape the pickers leave, which vtRun already reads
    and vuRun now reads too — and the page opens. Upscale offers only Video Tools. The words are the app's own,
    lifted in the video-wizard pack (VWIZ_L sendUp · sendV2v · sendBusy · sentTo · sendFail). */
-const VID_SEND_PAGE = { up: "vidup", v2v: "v2v" };
-const VID_SEND_NAME = { up: "Video Upscale", v2v: "Video Tools" };
+const VID_SEND_PAGE = { up: "vidup", v2v: "v2v", talk: "talk", img1: "prompt" };
+const VID_SEND_NAME = { up: "Video Upscale", v2v: "Video Tools", talk: "Talking Photo", img1: "IMAGE 1" };
+const VID_SEND_FRAME = { talk: true, img1: true };   /* 6.166.0 — a still from the clip, only where <video> decodes */
 async function vidSendTo(target, out, from, closeWiz) {
   if (!out || !VID_SEND_PAGE[target]) return false;
   setStatus(vwizL("sendBusy"), "");
   try {
     const ref = await takesRefP(out);
+    if (VID_SEND_FRAME[target]) {
+      let fr;
+      try { fr = await vidGrabFrameP(ref); } catch (eF) { setStatus(vwizL("grabFail"), "err"); return false; }
+      const pbase = "hnk-" + (from || "clip") + "-" + Date.now();   /* layerPhotoEntry adds the .jpg */
+      if (target === "talk") { TK.img = layerPhotoEntry({ b64: fr.b64, mime: fr.mime, label: pbase }); try { renderTk(); } catch (e) { } }
+      else { state.refs[0] = { b64: fr.b64, mime: fr.mime, label: pbase + ".jpg" }; try { renderRefs(); } catch (e) { } }
+      if (closeWiz) { try { closeVWiz(); } catch (e) { } }
+      switchPage(VID_SEND_PAGE[target]);
+      setStatus(vwizL("sentTo").replace("{P}", VID_SEND_NAME[target]), "ok");
+      return true;
+    }
     const kb = Math.round(String(ref).length * 3 / 4 / 1024);
     const clip = { name: "hnk-" + (from || "clip") + "-" + Date.now() + ".mp4", _url: ref,
       _size: kb > 1024 ? (Math.round(kb / 102.4) / 10) + " MB" : kb + " KB", _sentFrom: from || "" };
@@ -8894,8 +9044,19 @@ const VID_SEND_BTNS = [
   ["btnVtSendV2v", "v2v", "videotool", function () { return vtHist[vtHistSel]; }],
   ["btnTkSendUp", "up", "talk", function () { return tkTakes.list[tkTakes.sel]; }],
   ["btnTkSendV2v", "v2v", "talk", function () { return tkTakes.list[tkTakes.sel]; }],
-  ["btnVuSendV2v", "v2v", "upscale", function () { return vuTakes.list[vuTakes.sel]; }]
+  ["btnVuSendV2v", "v2v", "upscale", function () { return vuTakes.list[vuTakes.sel]; }],
+  /* 6.166.0 — a frame of the clip → Talking Photo's face / Freeform's IMAGE 1 (hidden where no <video> decodes) */
+  ["btnVidSendTalk", "talk", "video", function () { return vidHist[vidHistSel]; }],
+  ["btnVidSendImg1", "img1", "video", function () { return vidHist[vidHistSel]; }],
+  ["btnVtSendTalk", "talk", "videotool", function () { return vtHist[vtHistSel]; }],
+  ["btnVtSendImg1", "img1", "videotool", function () { return vtHist[vtHistSel]; }],
+  ["btnTkSendTalk", "talk", "talk", function () { return tkTakes.list[tkTakes.sel]; }],
+  ["btnTkSendImg1", "img1", "talk", function () { return tkTakes.list[tkTakes.sel]; }],
+  ["btnVuSendTalk", "talk", "upscale", function () { return vuTakes.list[vuTakes.sel]; }],
+  ["btnVuSendImg1", "img1", "upscale", function () { return vuTakes.list[vuTakes.sel]; }]
 ];
+const VID_SEND_ICON = { up: "i-rocket", v2v: "i-clapper", talk: "i-frame", img1: "i-restore" };
+const VID_SEND_KEY = { up: "sendUp", v2v: "sendV2v", talk: "grabTalk", img1: "grabImg1" };
 let vidSendBound = false;
 function vidSendBindP() {
   if (vidSendBound) return; vidSendBound = true;
@@ -8907,7 +9068,8 @@ function vidSendBindP() {
 function vidSendPaintP() {
   VID_SEND_BTNS.forEach(function (row) {
     const b = $(row[0]); if (!b) return;
-    setIcnText(b, row[1] === "up" ? "i-rocket" : "i-clapper", "cream", vwizL(row[1] === "up" ? "sendUp" : "sendV2v"));
+    setIcnText(b, VID_SEND_ICON[row[1]], "cream", vwizL(VID_SEND_KEY[row[1]]));
+    if (VID_SEND_FRAME[row[1]]) b.style.display = VIDEO_OK ? "" : "none";
   });
 }
 
@@ -9035,12 +9197,24 @@ async function vuRun() {
    picks; and the panel keeps its results as files, so the counter reads the
    panel's own cap rather than the browser's 60.
    ============================================================ */
-const GAL = { files: [], sel: {}, selMode: false, pick: null, thumbs: {}, keep: {}, clearArm: 0 };
+const GAL = { files: [], sel: {}, selMode: false, pick: null, thumbs: {}, keep: {}, clearArm: 0, q: "", kind: "all", sort: "new", shown: [] };
 const GAL_KEEP_FILE = "_keep.json";
 
 /* the app's own copy for this page, lifted from its tr table and its L9
    blocks so a student reads the same sentence on both surfaces */
 const GAL_L = {
+  /* 6.166.0 — the Gallery tools, the app's GAL_W word for word */
+  search: { my: "ရလဒ်ထဲ ရှာမယ် — prompt · workflow · ရက်စွဲ", en: "Search results — prompt · workflow · date", shn: "သွၵ်ႈႁႃၽွၼ်းလႆႈ — prompt · workflow · ဝၼ်း", kac: "Result tam u — prompt · workflow · shani", th: "ค้นหาผลลัพธ์ — prompt · workflow · วันที่", zh: "搜索结果 — 提示词 · 工作流 · 日期", vi: "Tìm kết quả — prompt · workflow · ngày", id: "Cari hasil — prompt · workflow · tanggal", ms: "Cari hasil — prompt · workflow · tarikh" },
+  kAll: { my: "အားလုံး", en: "All", shn: "တင်းမူတ်း", kac: "Yawng", th: "ทั้งหมด", zh: "全部", vi: "Tất cả", id: "Semua", ms: "Semua" },
+  kImg: { my: "ပုံများ", en: "Photos", shn: "ၶႅပ်းႁၢင်ႈ", kac: "Sumla ni", th: "รูปภาพ", zh: "图片", vi: "Ảnh", id: "Foto", ms: "Foto" },
+  kVid: { my: "ဗီဒီယိုများ", en: "Videos", shn: "ဝီးတီးဢူဝ်ႊ", kac: "Video ni", th: "วิดีโอ", zh: "视频", vi: "Video", id: "Video", ms: "Video" },
+  kKeep: { my: "★ သိမ်းထား", en: "★ Starred", shn: "★ မၢႆဝႆႉ", kac: "★ Tawn da ai", th: "★ ติดดาว", zh: "★ 已加星", vi: "★ Đã gắn sao", id: "★ Berbintang", ms: "★ Berbintang" },
+  sNew: { my: "အသစ်ဆုံး အရင်", en: "Newest first", shn: "မႂ်ႇသုတ်းဢွၼ်တၢင်း", kac: "Nnan htum shawng", th: "ใหม่ล่าสุดก่อน", zh: "最新优先", vi: "Mới nhất trước", id: "Terbaru dulu", ms: "Terbaru dahulu" },
+  sBig: { my: "ဖိုင် အကြီးဆုံး အရင်", en: "Largest first", shn: "ယႂ်ႇသုတ်းဢွၼ်တၢင်း", kac: "Kaba htum shawng", th: "ไฟล์ใหญ่สุดก่อน", zh: "最大优先", vi: "Lớn nhất trước", id: "Terbesar dulu", ms: "Terbesar dahulu" },
+  sOld: { my: "အဟောင်းဆုံး အရင်", en: "Oldest first", shn: "ၵဝ်ႇသုတ်းဢွၼ်တၢင်း", kac: "Dingsa htum shawng", th: "เก่าสุดก่อน", zh: "最早优先", vi: "Cũ nhất trước", id: "Terlama dulu", ms: "Terlama dahulu" },
+  count: { my: "{N} / {M} ပြထား", en: "{N} of {M} shown", shn: "ၼႄ {N} / {M}", kac: "{N} / {M} madun ai", th: "แสดง {N} จาก {M}", zh: "显示 {N} / {M}", vi: "Hiện {N} / {M}", id: "Menampilkan {N} dari {M}", ms: "Menunjukkan {N} daripada {M}" },
+  none: { my: "ကိုက်တဲ့ ရလဒ် မရှိပါ — ရှာစာ ဒါမှမဟုတ် filter ပြောင်းကြည့်ပါ", en: "Nothing matches — change the search or the filter", shn: "ဢမ်ႇမီးဢၼ်မႅၼ်ႈ — လႅၵ်ႈသွၵ်ႈႁႃ ဢမ်ႇၼၼ် filter", kac: "Hkrak ai n nga ai — tam ai ga (sh) filter galai u", th: "ไม่มีรายการที่ตรง — ลองเปลี่ยนคำค้นหรือตัวกรอง", zh: "没有匹配项 — 换个搜索词或筛选", vi: "Không có kết quả khớp — đổi từ khóa hoặc bộ lọc", id: "Tidak ada yang cocok — ubah pencarian atau filter", ms: "Tiada yang sepadan — tukar carian atau penapis" },
+  recent: { my: "နောက်ဆုံး ရလဒ်များ", en: "Recent results", shn: "ၽွၼ်းလႆႈလိုၼ်းသုတ်း", kac: "Hpang jahtum result ni", th: "ผลลัพธ์ล่าสุด", zh: "最近的结果", vi: "Kết quả gần đây", id: "Hasil terbaru", ms: "Hasil terkini" },
   note: { my: "ထုတ်ပြီးသမျှ ရလဒ်တွေ ဒီမှာ အလိုအလျောက် စုသိမ်းထားတယ် (ဖုန်းထဲမှာပဲ) — reload လုပ်လည်း မပျောက်ဘူး။",
     en: "Every result is saved here automatically (on this device only) — it survives reloads.",
     shn: "ၽွၼ်းလႆႈတင်းသဵင်ႈ သိမ်းဝႆႉတီႈၼႆႈ (ၼႂ်းၶိူင်ႈၼႆႉၵူၺ်း) — reload ၵေႃႈ ဢမ်ႇႁၢႆ",
@@ -9172,6 +9346,10 @@ function renderGal() {
      to make room, so there is no ceiling to report a distance from. */
   if (note) note.textContent = ff9(GAL_L.note) + " · " + GAL.files.length;
   const empty = $("galEmpty");
+  /* 6.166.0 — the view: search · kind · sort over the same files (nothing moved or deleted) */
+  const shown = galApplyView(GAL.files); GAL.shown = shown; galToolsPaint();
+  const cnt = $("galCount");
+  if (cnt) cnt.textContent = GAL.files.length ? (ff9(GAL_L.count).replace("{N}", String(shown.length)).replace("{M}", String(GAL.files.length)) + (shown.length ? "" : " · " + ff9(GAL_L.none))) : "";
   if (empty) empty.className = "empty-state" + (GAL.files.length ? "" : " on");
   if (GAL.pick && !GAL.files.some(function (f) { return f.name === GAL.pick; })) GAL.pick = null;
   const pickBox = $("galPick");
@@ -9179,7 +9357,7 @@ function renderGal() {
   galBulkRefresh();
   if (!grid) return;
   grid.innerHTML = "";
-  GAL.files.forEach(function (f) {
+  shown.forEach(function (f) {
     const onTap = function () {
       if (GAL.selMode) {
         if (GAL.sel[f.name]) delete GAL.sel[f.name]; else GAL.sel[f.name] = true;
@@ -9212,6 +9390,65 @@ function renderGal() {
   });
 }
 
+/* 6.166.0 — GALLERY TOOLS (the app's galApplyView): the search matches the file name and a video's page label,
+   the kind is photo / video / starred, the sort reads the timestamp every stored name carries (page-<ts>.mp4,
+   hnk-<ts>.png) — newest, oldest, or the biggest file where the entry knows its size */
+function galStamp(name) { const mm = /(\d{10,13})/.exec(String(name || "")); return mm ? parseInt(mm[1], 10) : 0; }
+function galApplyView(files) {
+  const q = String(GAL.q || "").trim().toLowerCase();
+  let out = files.filter(function (f) {
+    const vid = galIsVideo(f.name);
+    if (GAL.kind === "image" && vid) return false;
+    if (GAL.kind === "video" && !vid) return false;
+    if (GAL.kind === "keep" && !GAL.keep[f.name]) return false;
+    if (!q) return true;
+    const label = vid ? galVideoLabel(f.name) : "";
+    return (String(f.name || "") + " " + label).toLowerCase().indexOf(q) >= 0;
+  });
+  if (GAL.sort === "old") out.sort(function (a, b) { return galStamp(a.name) - galStamp(b.name); });
+  else if (GAL.sort === "big") out.sort(function (a, b) { return (b.size || 0) - (a.size || 0); });
+  else out.sort(function (a, b) { return galStamp(b.name) - galStamp(a.name); });
+  return out;
+}
+function galToolsPaint() {
+  const sIn = $("galSearch"); if (sIn) sIn.placeholder = ff9(GAL_L.search);
+  /* the app's two <select>s — here behind the panel's own .hsl picker (a native select never opens in Photoshop) */
+  const fill = function (id, valId, rows, cur) {
+    const sel = $(id); if (!sel) return;
+    while (sel.firstChild) sel.removeChild(sel.firstChild);
+    let label = "";
+    rows.forEach(function (r) {
+      const o = document.createElement("option"); o.value = r[0]; o.textContent = ff9(r[1]); sel.appendChild(o);
+      if (r[0] === cur) label = o.textContent;
+    });
+    sel.value = cur;
+    const v = $(valId); if (v) v.textContent = label;
+  };
+  fill("galKind", "galKindVal", [["all", GAL_L.kAll], ["image", GAL_L.kImg], ["video", GAL_L.kVid], ["keep", GAL_L.kKeep]], GAL.kind);
+  fill("galSort", "galSortVal", [["new", GAL_L.sNew], ["old", GAL_L.sOld], ["big", GAL_L.sBig]], GAL.sort);
+}
+function bindGalleryTools() {
+  const sIn = $("galSearch"); let tm = null;
+  if (sIn) sIn.addEventListener("input", function () { GAL.q = sIn.value; clearTimeout(tm); tm = setTimeout(renderGal, 160); });
+  const k = $("galKind"); if (k) k.addEventListener("change", function () { GAL.kind = k.value; renderGal(); });
+  const so = $("galSort"); if (so) so.addEventListener("change", function () { GAL.sort = so.value; renderGal(); });
+}
+/* 6.166.0 — HOME: the app's recent-results strip. The Home screen (home-screen.js) asks for the newest six
+   stored results and paints them; a tap opens the Gallery on that one. */
+function homeRecentListP(n) {
+  const gs = globalThis.HNK && globalThis.HNK.galleryStore;
+  if (!gs) return Promise.resolve([]);
+  return gs.list().then(function (all) {
+    const files = all.filter(function (f) { return f.name !== GAL_KEEP_FILE; }).sort(function (a, b) { return galStamp(b.name) - galStamp(a.name); }).slice(0, n || 6);
+    return Promise.all(files.map(function (f) {
+      const vid = galIsVideo(f.name);
+      return (vid ? Promise.resolve(null) : galThumb(f).catch(function () { return null; })).then(function (url) {
+        return { name: f.name, video: vid, thumb: url || null, label: vid ? galVideoLabel(f.name) : f.name };
+      });
+    }));
+  }).catch(function () { return []; });
+}
+function homeRecentOpen(name) { GAL.pick = name; switchPage("gallery"); try { galPaintPick(); renderGal(); } catch (e) { } }
 function galPickFile() {
   for (let i = 0; i < GAL.files.length; i++) if (GAL.files[i].name === GAL.pick) return GAL.files[i];
   return null;
@@ -9328,6 +9565,7 @@ function bindGallery() {
   });
   const sv = $("galZipSel"); if (sv) sv.addEventListener("click", galSaveSelected);
   const dl = $("galDelSel"); if (dl) dl.addEventListener("click", galDeleteSelected);
+  bindGalleryTools();   /* 6.166.0 */
   const cl = $("galClearAll");
   if (cl) cl.addEventListener("click", async function () {
     if (Date.now() - GAL.clearArm >= 4000) {
@@ -9549,6 +9787,7 @@ function bindDiag() {
      button without a label and Setup's Version buttons bare — five symptoms of
      one line, and the line itself never named. Each page now fails alone, and
      the self-test card names which one. */
+  safe("drops", bindDrops);   /* 6.166.0 — drag & drop onto every picker (static elements; bound before the pages) */
   safe("setup", bindSetup);
   safe("path", bindPath);
   safe("video", bindVideo);
@@ -9601,7 +9840,7 @@ async function refCaptureEntry(f) {
   const ext = refExtOf(name);
   if (REF_LIB_TYPES.indexOf(ext) < 0) throw new Error("HNKERR:err_unsupported:" + ext);
   if (REF_LIB_DIRECT[ext]) {
-    const buf = await f.read({ format: formats.binary });
+    const buf = await entryReadBinary(f);   /* 6.166.0 — a dropped DOM File reads too */
     if (buf && buf.byteLength === 0) throw new Error("HNKERR:err_img:empty file");
     return { b64: bufToB64(buf), mime: REF_LIB_DIRECT[ext], label: name };
   }
@@ -10110,6 +10349,7 @@ async function saveSettings() {
     /* v4.16: de-duplicated — every persisted field appears exactly once. */
     const o = {
       rhKey: state.rhKey, lang: state.lang, theme: state.theme, model: state.model,
+      tsize: state.tsize || "m",   /* 6.166.0 — text size */
       size: state.size, ratio: state.ratio,
       autoPlace: state.autoPlace,
       rt: state.rt, rtStrength: state.rtStrength, page: state.page,
@@ -10146,6 +10386,7 @@ async function loadSettings() {
     const o = JSON.parse(txt);
     if (o && typeof o === "object") {
       if (typeof o.rhKey === "string") state.rhKey = o.rhKey;
+      if (o.tsize === "s" || o.tsize === "l") { state.tsize = o.tsize; try { applyTextSize(); } catch (eT) { } }
       /* v6.26.0 — legacy Gemini/OpenAI keys are PURGED, never restored: the
          next saveSettings() writes a file without them (web app 5.50.0 rule). */
       if (typeof o.apiKey === "string" || typeof o.oaiKey === "string") {
