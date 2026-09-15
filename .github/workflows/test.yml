@@ -572,6 +572,8 @@ jobs:
         run: PORT=8931 node test/verify_convenience_695.js
       - name: The hero banner and the cards, tidied — a three-line workflow description and a five-line Imagine summary with one measured ellipsis marker on both surfaces, a one-line hero kicker, page headlines capped at 72%, a 132px Imagine card floor (6.96.0)
         run: PORT=8931 node test/verify_ui_tidy_696.js
+      - name: Every panel hero banner is the same 126px band — a rendered walk of all fourteen (picture inside the band, kicker and headline on it) plus the static read that catches a class no rule reaches (6.96.1)
+        run: PORT=8931 node test/verify_panel_hero_banners.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
