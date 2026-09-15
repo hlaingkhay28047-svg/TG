@@ -298,20 +298,30 @@ async function panelWalk(browser) {
 }
 
 /* ================= D) the release ================= */
+/* 6.96.1 — these pins read the wave's own version out of the tree instead of
+   naming 6.96.0, so a later wave that bumps in lockstep still proves lockstep
+   (verify_ui_wave_693 D1 established the pattern). What is pinned is the
+   AGREEMENT between the seven places and the What's New row, not one number. */
 function releasePins() {
-  report("D1) the wave ships in lockstep: web 6.96.0, panel 6.167.0 in the manifest, panel-version.json and the panel's own PANEL_VERSION, a What's New row in all nine languages, the test in the CI sweep and the landing count at 232",
-    /var APP_VER *= *"6\.96\.0"/.test(APP) && MANIFEST.version === "6.167.0" &&
-    JSON.parse(read("docs/download/panel-version.json")).v === "6.167.0" &&
-    /PANEL_VERSION = "6\.167\.0"/.test(PMAIN) &&
-    JSON.parse(read("docs/app/version.json")).v === "6.96.0" &&
+  const appVer = JSON.parse(read("docs/app/version.json")).v;
+  const panVer = MANIFEST.version;
+  const pv = JSON.parse(read("docs/download/panel-version.json"));
+  const count = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
+  report("D1) the wave ships in lockstep: web " + appVer + ", panel " + panVer + " in the manifest, panel-version.json and the panel's own PANEL_VERSION, the test in the CI sweep and the landing count at 232 or more",
+    /^6\.9[6-9]\.\d+$|^6\.\d{3}\.\d+$|^[7-9]\./.test(appVer) &&
+    /^6\.16[7-9]\.\d+$|^6\.1[7-9]\d\.\d+$|^6\.[2-9]\d\d\.\d+$/.test(panVer) &&
+    new RegExp('var APP_VER *= *"' + appVer.replace(/\./g, "\\.") + '"').test(APP) &&
+    pv.v === panVer && pv.latest_version === panVer &&
+    new RegExp('PANEL_VERSION = "' + panVer.replace(/\./g, "\\.") + '"').test(PMAIN) &&
     CI.indexOf("node test/verify_ui_tidy_696.js") > 0 &&
-    /232/.test(LANDING), {
-      app: (APP.match(/var APP_VER *= *"([^"]+)"/) || [])[1], panel: MANIFEST.version,
-      ci: CI.indexOf("node test/verify_ui_tidy_696.js") > 0
-    });
-  const row = between(APP, 'var WHATS_NEW = [\n  { v:"6.96.0"', 'v:"6.95.0"');
-  report("D2) the What's New row names the tidying in all nine languages",
-    row.length > 100 && LANGS.every(l => new RegExp('\\b' + l + ':"').test(row)), { len: row.length });
+    count >= 232, { appVer, panVer, pv: pv.v, count,
+      app: (APP.match(/var APP_VER *= *"([^"]+)"/) || [])[1],
+      ci: CI.indexOf("node test/verify_ui_tidy_696.js") > 0 });
+  const head = 'var WHATS_NEW = [\n  { v:"' + appVer + '"';
+  const i = APP.indexOf(head);
+  const row = i < 0 ? "" : APP.slice(i, APP.indexOf('{ v:"', i + head.length));
+  report("D2) the newest What's New row is this wave's own version and speaks all nine languages",
+    row.length > 100 && LANGS.every(l => new RegExp('\\b' + l + ':"').test(row)), { v: appVer, len: row.length });
 }
 
 (async () => {
