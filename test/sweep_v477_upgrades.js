@@ -62,6 +62,7 @@ const NEW = Object.keys(SCRIPTS);
   });
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(2500);
+  await require("./lib/trl-packs.js").loadAll(page);   /* v6.92.0 — all eighteen packs; the shell loads only the chosen one */
 
   const data = await page.evaluate((newLangs) => {
     const langs = Object.keys(TR_L);

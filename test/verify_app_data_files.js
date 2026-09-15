@@ -16,6 +16,11 @@
  * table only. This file pins all of it: the files and tags, the service worker
  * in a VM, the cut, the shell's byte ceilings, and a real boot.
  *
+ * v6.92.0 — data/imagine.js (the Imagine tables) joined the shell's script
+ * tags, and the eighteen native language packs became data/trl-<code>.js that
+ * the shell loads one at a time (test/verify_lang_packs.js walks the loader);
+ * the ceilings dropped with them.
+ *
  * Usage: PORT=8931 node test/verify_app_data_files.js  (serve docs/app first) */
 "use strict";
 const fs = require("fs");
@@ -47,26 +52,37 @@ const libwf = A.readLibWf(), hnk = A.readHnkData();
 const tagLib = A.contentTag("libwf"), tagData = A.contentTag("hnkdata");
 const srcLib = APP.match(/<script src="data\/libwf\.js\?v=([0-9a-f]+)"><\/script>/);
 const srcData = APP.match(/<script src="data\/hnkdata\.js\?v=([0-9a-f]+)"><\/script>/);
+const tagIm = A.contentTag("imagine"), srcIm = APP.match(/<script src="data\/imagine\.js\?v=([0-9a-f]+)"><\/script>/);
 report("A1) data/libwf.js and data/hnkdata.js are one window.X= assignment around valid JSON — the Library catalog (items, featured, collections, workflows) and the studio tables (counts)",
   Array.isArray(libwf.items) && libwf.items.length > 1000 && Array.isArray(libwf.workflows) && libwf.featured.length > 0 &&
   hnk && hnk.counts && typeof hnk.counts.presets === "number" &&
   /^window\.HNK_LIBWF=\{/.test(A.wrapperText("libwf")) && /^window\.HNK_DATA=\{/.test(A.wrapperText("hnkdata")),
   { items: libwf.items && libwf.items.length, counts: hnk && hnk.counts });
-report("A2) the shell loads both by <script src=\"data/…?v=<content tag>\"> and the tags are each file's own SHA-256 today",
-  !!srcLib && !!srcData && srcLib[1] === tagLib && srcData[1] === tagData && /^[0-9a-f]{12}$/.test(tagLib),
-  { shell: [srcLib && srcLib[1], srcData && srcData[1]], files: [tagLib, tagData] });
+report("A2) the shell loads the three by <script src=\"data/…?v=<content tag>\"> (libwf, hnkdata, imagine) and the tags are each file's own SHA-256 today",
+  !!srcLib && !!srcData && !!srcIm && srcLib[1] === tagLib && srcData[1] === tagData && srcIm[1] === tagIm && /^[0-9a-f]{12}$/.test(tagLib),
+  { shell: [srcLib && srcLib[1], srcData && srcData[1], srcIm && srcIm[1]], files: [tagLib, tagData, tagIm] });
 const mainAt = APP.indexOf("var D = window.HNK_DATA;");
-report("A3) the inline JSON blocks are gone, the two data scripts sit before the app's script, and D / LW are the same globals the blocks used to produce",
-  APP.indexOf('<script id="hnkData"') < 0 && APP.indexOf('<script id="hnkLibWf"') < 0 &&
-  mainAt > 0 && APP.indexOf("var LW = window.HNK_LIBWF;") > 0 && srcLib.index < mainAt && srcData.index < mainAt &&
-  APP.indexOf('getElementById("hnkData")') < 0 && APP.indexOf('getElementById("hnkLibWf")') < 0, null);
+const loaderAt = APP.indexOf("window.HNK_TRL_TAGS=");
+report("A3) the inline blocks are gone, the three data scripts and the pack loader sit before the app's script, and D / LW / IMAGINE_DATA / TR_L are the loaded globals",
+  APP.indexOf('<script id="hnkData"') < 0 && APP.indexOf('<script id="hnkLibWf"') < 0 && APP.indexOf("\nvar TR_L={") < 0 && APP.indexOf("TR_PANEL_L") < 0 &&
+  mainAt > 0 && APP.indexOf("var LW = window.HNK_LIBWF;") > 0 && srcLib.index < mainAt && srcData.index < mainAt && srcIm.index < loaderAt && loaderAt < mainAt &&
+  APP.split("var IMAGINE_DATA = window.HNK_IMAGINE;").length === 2 && APP.indexOf("var TR_L = window.HNK_TRL;") > loaderAt &&
+  APP.indexOf('getElementById("hnkData")') < 0 && APP.indexOf('getElementById("hnkLibWf")') < 0, { mainAt, loaderAt, im: srcIm && srcIm.index });
 const rawBytes = Buffer.byteLength(APP, "utf8"), gzBytes = zlib.gzipSync(Buffer.from(APP, "utf8"), { level: 6 }).length;
-report("A4) the shell stays under its ceilings — 4.2 MB raw, 1.25 MB gzipped (it was 5.8 MB / 1.58 MB before the data left)",
-  rawBytes <= 4200000 && gzBytes <= 1250000, { rawBytes, gzBytes });
+report("A4) the shell stays under its ceilings — 3.3 MB raw, 1.05 MB gzipped (5.8 MB / 1.58 MB before the data left; 3.78 MB / 1.16 MB before the packs and the Imagine tables followed in 6.92.0)",
+  rawBytes <= 3300000 && gzBytes <= 1050000, { rawBytes, gzBytes });
 const before = APP;
 const run = spawnSync(process.execPath, [path.join(ROOT, "tools", "build_app_data.js")], { encoding: "utf8" });
 report("A5) tools/build_app_data.js is idempotent on a built tree — it validates, reports the tags and leaves index.html unchanged",
   run.status === 0 && /index\.html unchanged/.test(run.stdout) && read("docs/app/index.html") === before, { status: run.status, out: (run.stdout || "").slice(-200) });
+const im = A.readImagine();
+report("A6) data/imagine.js is one window.HNK_IMAGINE= assignment around the Imagine tables (tools, ui, models, frame) — the same JSON the panel lifter inlines",
+  /^window\.HNK_IMAGINE=\{/.test(A.wrapperText("imagine")) && Array.isArray(im.tools) && im.tools.length >= 22 && im.ui && im.models && im.frame &&
+  read("panel/js/hnk_imagine.js").indexOf("var IMAGINE_DATA = " + A.imagineText() + ";") >= 0, { tools: im.tools && im.tools.length });
+const packs = A.readTrl();
+report("A7) the eighteen native packs are each one fixed-head assignment around a dictionary, and the shell's loader table names every one under its own tag",
+  A.TRL_CODES.length === 18 && A.TRL_CODES.every((c) => Object.keys(packs[c]).length >= 200 && new RegExp("^window\\.HNK_TRL=window\\.HNK_TRL\\|\\|\\{\\};window\\.HNK_TRL\\." + c + "=\\{").test(A.wrapperText("trl-" + c))) &&
+  APP.indexOf(A.trlTagsLine()) > 0, { codes: A.TRL_CODES.length, sizes: A.TRL_CODES.map((c) => c + ":" + Object.keys(packs[c]).length).join(" ") });
 
 /* ---------------- B. the service worker, in a VM ---------------- */
 function swBox() {
@@ -168,13 +184,15 @@ report("B1) sw.js declares DATA_CACHE (hnk-data-v1), matches /data/<name>.js, ro
   const boot = await page.evaluate(() => ({
     lw: typeof LW === "object" && LW.items.length, lwGlobal: window.HNK_LIBWF === LW, d: typeof D === "object" && D === window.HNK_DATA && !!D.counts,
     inlineGone: !document.getElementById("hnkLibWf") && !document.getElementById("hnkData"),
-    libTotal: (document.getElementById("libTotal") || {}).textContent || null, rows: WHATS_NEW.length, strip: !!document.getElementById("dashNew")
+    libTotal: (document.getElementById("libTotal") || {}).textContent || null, rows: WHATS_NEW.length, strip: !!document.getElementById("dashNew"),
+    im: typeof IMAGINE_DATA === "object" && IMAGINE_DATA === window.HNK_IMAGINE && IMAGINE_DATA.tools.length, trl: TR_L === window.HNK_TRL && Object.keys(TR_L).length
   }));
   await browser.close();
-  report("D1) the app boots from the data files — LW and D are the loaded globals, the catalog is whole, the strip is drawn, and no page error",
-    boot.lw === libwf.items.length && boot.lwGlobal && boot.d && boot.inlineGone && boot.strip && errs.length === 0, { boot, errs: errs.slice(0, 3) });
-  report("D2) the shell asked for each data file exactly once, under its content tag",
-    reqs.filter((u) => u === "/data/libwf.js?v=" + tagLib).length === 1 && reqs.filter((u) => u === "/data/hnkdata.js?v=" + tagData).length === 1 && reqs.length === 2, { reqs });
+  report("D1) the app boots from the data files — LW, D and IMAGINE_DATA are the loaded globals, the catalog is whole, the strip is drawn, TR_L is the loader's (empty) object on a Burmese boot, and no page error",
+    boot.lw === libwf.items.length && boot.lwGlobal && boot.d && boot.inlineGone && boot.strip && boot.im === im.tools.length && boot.trl === 0 && errs.length === 0, { boot, errs: errs.slice(0, 3) });
+  report("D2) the shell asked for each of the three data files exactly once, under its content tag, and for no language pack",
+    reqs.filter((u) => u === "/data/libwf.js?v=" + tagLib).length === 1 && reqs.filter((u) => u === "/data/hnkdata.js?v=" + tagData).length === 1 &&
+    reqs.filter((u) => u === "/data/imagine.js?v=" + tagIm).length === 1 && reqs.length === 3, { reqs });
 
   /* ---------------- E. release pins ---------------- */
   const wn = APP.slice(a0, b0);

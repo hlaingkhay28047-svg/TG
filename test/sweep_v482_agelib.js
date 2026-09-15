@@ -42,7 +42,10 @@ function report(name, ok, detail) {
   if (!ok) failures++;
 }
 const APPDIR = path.join(__dirname, "..", "docs", "app");
-const src = fs.readFileSync(path.join(APPDIR, "index.html"), "utf8");
+/* v6.92.0 — the eighteen native packs live in data/trl-<code>.js (the shell loads only the chosen one), so the
+   source D scans is the shell plus every pack file: still EVERY language table, wherever it lives. */
+const APPDATA = require("../tools/lib/app-data.js");
+const src = fs.readFileSync(path.join(APPDIR, "index.html"), "utf8") + "\n" + APPDATA.TRL_CODES.map(c => APPDATA.wrapperText("trl-" + c)).join("\n");
 
 const CK = ["100 Days", "1 Month", "2 Months", "3 Months", "4 Months", "5 Months",
   "6 Months", "7 Months", "8 Months", "9 Months", "10 Months", "11 Months",
