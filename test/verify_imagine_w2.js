@@ -99,9 +99,10 @@ report("A7) Color Tone + Skin: 28 preset cards — five hex swatches each (named
   { n: CT.presets.length, bad: ctBad.slice(0, 3).map(p => p.id), base: !!ctBase });
 } else console.log("INFO — A7) Color Tone + Skin is held back: no colortone tool, no swatch presets expected");
 
-const wn = (APP.match(/\{ v:"6\.30\.0", kind:"page", ref:"pgImagine",[\s\S]*?\} \},\n/) || [""])[0];
-report("A6) WHATS_NEW carries the 6.30.0 Imagine row with a title and a line in all nine languages, and CI runs this test",
-  !!wn && LANGS.every(l => (wn.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2) && /Imagine W2/.test(wn) && /PORT=8931 node test\/verify_imagine_w2\.js/.test(CI), { row: wn.slice(0, 120), ci: /verify_imagine_w2/.test(CI) });
+/* v6.91.0 — this row is history in the archive record (docs/app/data/whats-new-archive.json) */
+const wnR = require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.30.0" && e.ref === "pgImagine"), wn = (r => r ? Object.keys(r.t || {}).map(l => r.t[l]).concat(Object.keys(r.s || {}).map(l => r.s[l])).join("\n") : "")(wnR);
+report("A6) the archive record keeps the 6.30.0 Imagine row with a title and a line in all nine languages, and CI runs this test",
+  !!wnR && LANGS.every(l => wnR.t[l] && wnR.s[l]) && /Imagine W2/.test(wn) && /PORT=8931 node test\/verify_imagine_w2\.js/.test(CI), { row: wn.slice(0, 120), ci: /verify_imagine_w2/.test(CI) });
 
 /* ---------------- B) the page ---------------- */
 (async () => {

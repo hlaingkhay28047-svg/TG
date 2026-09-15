@@ -206,11 +206,12 @@ function appArray(name) {
 
     /* ---- F) What's New names the cards — the row shipped with 6.15.0 and later releases stack above it,
        so it is found by what it says, not by its position ---- */
-    const wn = await page.evaluate(() => {
-      const row = WHATS_NEW.find(e => e.kind === "page" && e.ref === "pgVideo" && /your own face in the lead/.test(e.t.en));
-      return row ? { v: row.v, kind: row.kind, ref: row.ref, t: row.t.en, idx: WHATS_NEW.indexOf(row) } : { missing: true };
-    });
-    report("F) a What's New row opens the Video page and says whose face leads the four cards",
+    /* v6.91.0 — the row is history in the archive record (docs/app/data/whats-new-archive.json) */
+    const wn = (() => {
+      const row = require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.kind === "page" && e.ref === "pgVideo" && /your own face in the lead/.test(e.t.en));
+      return row ? { v: row.v, kind: row.kind, ref: row.ref, t: row.t.en } : { missing: true };
+    })();
+    report("F) the archived What's New row points at the Video page and says whose face leads the four cards",
       !wn.missing && wn.v === "6.15.0" && /Triad Boss|Flying Apsara/.test(wn.t), wn);
 
     report("G) no page errors", errs.length === 0, errs);

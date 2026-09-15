@@ -95,12 +95,13 @@ const requester = (APP.match(/async function accRequestPanelDownload\(ev\)\{[\s\
 report("B3) the request itself is unchanged: POST /v1/downloads/panel from the account card, same-origin delivery address, no device id round-trip",
   requester.includes('accFetch("/v1/downloads/panel",{method:"POST"') && requester.includes("u.origin!==location.origin") &&
   !/computer_installation_id|installation_hash/.test(requester));
-report("B4) What's New names the one door (my + en)",
-  /\{ v:"6\.28\.0", kind:"page", ref:"pgHome",\n\s+t:\{my:"[^"]*Web App[^"]*",en:"[^"]*one place[^"]*Web App/.test(APP));
-report("B5) What's New 6.33.1 names the one place (my + en); verify_whats_new owns the newest-first rule",
-  /\{ v:"6\.33\.1", kind:"page", ref:"pgHome",\n\s+t:\{my:"[^"]*တစ်နေရာတည်း[^"]*",en:"[^"]*one place only: Setup ▸ Account ▸ Photoshop Panel/.test(APP));
-report("B5b) What's New 6.33.2 tells a phone why its tiles say Computer only (my + en)",
-  /\{ v:"6\.33\.2", kind:"page", ref:"pgAccount",\n\s+t:\{my:"[^\n]*?Computer only[^\n]*?",en:"[^\n]*?read \\"Computer only\\" instead of \\"OFF\\"/.test(APP));
+/* v6.91.0 — this row is history in the archive record (docs/app/data/whats-new-archive.json) */
+report("B4) the archived 6.28.0 What's New row names the one door (my + en)",
+  (r => !!r && /Web App/.test(r.t.my) && /one place[\s\S]*Web App/.test(r.t.en))(require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.28.0" && e.ref === "pgHome")));
+report("B5) the archived 6.33.1 What's New row names the one place (my + en); verify_whats_new owns the newest-first rule",
+  (r => !!r && /တစ်နေရာတည်း/.test(r.t.my) && /one place only: Setup ▸ Account ▸ Photoshop Panel/.test(r.t.en))(require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.33.1" && e.ref === "pgHome")));
+report("B5b) the archived 6.33.2 What's New row tells a phone why its tiles say Computer only (my + en)",
+  (r => !!r && /Computer only/.test(r.t.my) && /read "Computer only" instead of "OFF"/.test(r.t.en))(require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.33.2" && e.ref === "pgAccount")));
 report("B6) the one button answers where it was pressed: a toast on refusal, on success and on failure",
   (requester.match(/toast\(/g) || []).length === 3 && requester.includes('toast("Temporary Panel delivery created'));
 

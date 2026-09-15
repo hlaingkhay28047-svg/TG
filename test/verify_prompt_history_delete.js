@@ -151,15 +151,14 @@ report("A4) the six new strings — row label, starred question, row toast, chip
   }
 
   /* ---- I) What's New, the panel's copy, CI ---- */
-  const wnStart = APP.indexOf("var WHATS_NEW = [");
-  const wnBlock = APP.slice(wnStart, APP.indexOf("\n];", wnStart));
-  const rowRe = /\{ v:"([\d.]+)", kind:"page", ref:"pgCreate",\s*t:\{my:"([^"]*)",en:"([^"]*)"/g;
-  let row = null, m;
-  while ((m = rowRe.exec(wnBlock))) { if (/Prompt history can be deleted/.test(m[3])) row = m; }
-  report("I) What's New carries the row, found by what it says — a CREATE page entry on deleting prompt history, in Burmese and English, at 6.18.0",
-    !!row && row[1] === "6.18.0" && /Prompt မှတ်တမ်း/.test(row[2]) && /✕/.test(row[3]) && /Clear/.test(row[3]), row && row.slice(1, 4));
-  report("I2) the panel's lifted What's New says the same, byte for byte",
-    !!row && PANEL_WN.indexOf(row[0]) >= 0, null);
+  /* v6.91.0 — the row is history in the archive record (docs/app/data/whats-new-archive.json);
+     the panel lifts the live table only, so an archived row rides neither surface */
+  const wnRows = require("../tools/lib/app-data.js").readWhatsNewArchive().filter(e => e.kind === "page" && e.ref === "pgCreate" && e.t && /Prompt history can be deleted/.test(e.t.en || ""));
+  const row = wnRows.length ? wnRows[wnRows.length - 1] : null;
+  report("I) the archive record keeps the row, found by what it says — a CREATE page entry on deleting prompt history, in Burmese and English, at 6.18.0",
+    !!row && row.v === "6.18.0" && /Prompt မှတ်တမ်း/.test(row.t.my) && /✕/.test(row.t.en) && /Clear/.test(row.t.en), row && [row.v, row.t.my.slice(0, 80), row.t.en.slice(0, 80)]);
+  report("I2) the panel's lifted What's New carries the live table only — the archived 6.18.0 row rides neither surface",
+    !!row && PANEL_WN.indexOf('v:"6.18.0"') < 0, null);
   report("I3) CI runs this", /node test\/verify_prompt_history_delete\.js/.test(CI), null);
 
   console.log(failures ? "\n" + failures + " FAILED" : "\nALL PASS");

@@ -62,9 +62,10 @@ report("A5) the panel host: maxImages(id) from ffModelById and a second inlineDa
   /maxImages: function \(id\) \{ const m = ffModelById\(id\); if \(!m\) return 0; if \(m\.maxImages\) return m\.maxImages;/.test(PANEL_MAIN) &&
   /if \(o\.refDataUrl\) \{ const r2 = \/\^data:\(\[\^;\]\+\);base64,\(\.\*\)\$\/\.exec\(o\.refDataUrl\); if \(r2\) parts\.push\(\{ inlineData: \{ mimeType: r2\[1\], data: r2\[2\] \} \}\); \}/.test(PANEL_MAIN), "panel host contract");
 
-const wn = (APP.match(/\{ v:"6\.31\.0", kind:"page", ref:"pgImagine",[\s\S]*?\} \},\n/) || [""])[0];
-report("A6) WHATS_NEW carries the 6.31.0 Imagine row (Reference Card) with a title and a line in all nine languages, and CI runs this test",
-  !!wn && LANGS.every(l => (wn.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2) && /Reference Card/.test(wn) && /PORT=8931 node test\/verify_imagine_ref\.js/.test(CI), { row: wn.slice(0, 120), ci: /verify_imagine_ref/.test(CI) });
+/* v6.91.0 — this row is history in the archive record (docs/app/data/whats-new-archive.json) */
+const wnR = require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.31.0" && e.ref === "pgImagine"), wn = (r => r ? Object.keys(r.t || {}).map(l => r.t[l]).concat(Object.keys(r.s || {}).map(l => r.s[l])).join("\n") : "")(wnR);
+report("A6) the archive record keeps the 6.31.0 Imagine row (Reference Card) with a title and a line in all nine languages, and CI runs this test",
+  !!wnR && LANGS.every(l => wnR.t[l] && wnR.s[l]) && /Reference Card/.test(wn) && /PORT=8931 node test\/verify_imagine_ref\.js/.test(CI), { row: wn.slice(0, 120), ci: /verify_imagine_ref/.test(CI) });
 
 const stills = JOBS.filter(j => !/image-to-video$/.test(j.apiPath));
 report("A7) the lane's pictures are on Qwen 3.0 Pro image-edit (every picture that starts from a picture) and Wan 2.7 Pro text-to-image (the object bases) — both apiPaths in the app's catalog, no invented endpoint; thumbnails ask for 2:3 at 2k",

@@ -61,7 +61,15 @@ function report(name, ok, detail) {
       state.refs = [{ mime: "image/gif", b64: arg.gif }, null, null];
       try { renderRefs(); } catch (e) { }
       try { switchPage("pgWf"); } catch (e) { }
-      const c = document.querySelector(".wfgrid .wfmini");
+      /* v6.91.0 — the fast path to the ratio step needs every required input in
+         place, and one photo is set above: open a one-photo image workflow on
+         purpose. The first card of the grid used to be one by accident — the
+         newest announced workflow, sorted forward by its NEW ribbon — and
+         nothing is announced as new once the What's New table was cut. */
+      const all = [];
+      (window.HNK_WF_CATALOG || []).forEach(cat => (cat.items || []).forEach(x => all.push(x)));
+      const w = all.find(x => !x.kind && Array.isArray(x.req) && x.req.length === 1);   /* one required photo, no video kind */
+      const c = (w && document.querySelector('.wfmini[data-nw-id="' + w.id + '"]')) || document.querySelector(".wfgrid .wfmini");
       if (c) c.click();
     }, { gif: TINY_GIF });
     await page.waitForTimeout(1200);

@@ -118,9 +118,10 @@ report("A8) the lane's two W4 job files: run A = the five brand-model bases (Qwe
   JOBS_A.concat(JOBS_B).every(j => CATALOG.has(j.apiPath)) && /function depsOf\(j\)/.test(RUNNER) && /const ready = waiting\.filter\(j => depsOf\(j\)\.every\(d => outputs\.has\(d\)\)\);/.test(RUNNER) && /while \(waiting\.length\)/.test(RUNNER),
   { a: JOBS_A.length, b: JOBS_B.length, chains: chains.map(c => c.id + ":" + c.jobs.length), runner: /while \(waiting\.length\)/.test(RUNNER) });
 
-const wn = (APP.match(/\{ v:"6\.33\.0", kind:"page", ref:"pgImagine",[\s\S]*?\} \},\n/) || [""])[0];
-report("A9) WHATS_NEW carries the 6.33.0 Imagine row (W4, recipes, typed words) with a title and a line in all nine languages, and CI runs this test",
-  !!wn && LANGS.every(l => (wn.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2) && /Imagine W4/.test(wn) && /Batch Imagine/.test(wn) && /PORT=8931 node test\/verify_imagine_w4\.js/.test(CI), { row: wn.slice(0, 120), ci: /verify_imagine_w4/.test(CI) });
+/* v6.91.0 — this row is history in the archive record (docs/app/data/whats-new-archive.json) */
+const wnR = require("../tools/lib/app-data.js").readWhatsNewArchive().find(e => e.v === "6.33.0" && e.ref === "pgImagine"), wn = (r => r ? Object.keys(r.t || {}).map(l => r.t[l]).concat(Object.keys(r.s || {}).map(l => r.s[l])).join("\n") : "")(wnR);
+report("A9) the archive record keeps the 6.33.0 Imagine row (W4, recipes, typed words) with a title and a line in all nine languages, and CI runs this test",
+  !!wnR && LANGS.every(l => wnR.t[l] && wnR.s[l]) && /Imagine W4/.test(wn) && /Batch Imagine/.test(wn) && /PORT=8931 node test\/verify_imagine_w4\.js/.test(CI), { row: wn.slice(0, 120), ci: /verify_imagine_w4/.test(CI) });
 
 /* ---------------- B) the page ---------------- */
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
