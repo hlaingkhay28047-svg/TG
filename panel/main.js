@@ -89,10 +89,6 @@ globalThis.HNK = globalThis.HNK || {};
 globalThis.HNK.herr = function () { return pushLog("ERR", arguments); };
 globalThis.HNK.hwarn = function () { return pushLog("WARN", arguments); };
 globalThis.HNK.hlog = function () { return pushLog("INFO", arguments); };
-function logText() {
-  if (!HNK_LOG.length) return "(log is empty)";
-  return HNK_LOG.map(function (e) { return "[" + e.ts + "] " + e.level + "  " + e.msg; }).join("\n");
-}
 
 /* ---------------- State ---------------- */
 const state = {
@@ -112,48 +108,31 @@ const state = {
      member's entitlement would still be sitting in accProfile. */
   accSeenUid: "", accSeenDev: "",
   rhKey: "", lang: "my", theme: "dark", model: "auto", size: "1K", ratio: "auto",
-  autoRun: true, autoPlace: true, intensity: 60,
-  refs: [null, null],
+  autoPlace: true, refs: [null, null],
   beforeB64: null, beforeMime: "image/jpeg",
   resultB64: null, resultMime: "image/png",
-  busy: false, keyShown: false, previewRatio: 0.75, urlSlot: -1,
-  rt: null,
+  busy: false, keyShown: false, previewRatio: 0.75, rt: null,
   /* v6.56.0 — Retouch Pro's strength. The app opens on 100% and both of its
      strength rows (one-tap and sliders) render that chip already chosen; the
      panel had no such field at all, so `v === state.rtStrength` was never true
      and a student met two rows of 60 / 90 / 100 with nothing selected — no way
      to tell what strength the next retouch would actually run at. */
   rtStrength: 100,
-  sections: {}, promptCap: MAX_PROMPT, page: "aitools", lastPreset: null,
-  clean: { people: false, hands: false, legs: false, full: false },
-  keep: { frame: true, pose: true, face: true, expr: false, hair: false, dress: false, skin: false, light: false, color: false, bg: false, subject: false },
-  rmix: { bg: false, fg: false, light: false, color: false, object: false },
-  i2p: { objects: true, light: true, color: true, bg: true, fg: true, fit: true, adapt: true },
-  lights: null, lightSel: 0, lightEquip: false,
-  chains: { prewedding: false, pageant: false, model: false, glass: false, commercial: false, korea: false, vietnam: false, chinese: false },
-  restMode: "color", pendingBtn: null, busyBtnEl: null, busyBtnTxt: null,
+  promptCap: MAX_PROMPT, page: "aitools", keep: { frame: true, pose: true, face: true, expr: false, hair: false, dress: false, skin: false, light: false, color: false, bg: false, subject: false },
+  pendingBtn: null, busyBtnEl: null, busyBtnTxt: null,
   history: [],
-  recentPrompts: [], histSel: -1, lastAction: "Prompt",
+  histSel: -1, lastAction: "Prompt",
   /* v6.56.0 — the app's Text to Image opens on AUTO, letting the model pick
      the shape; the panel opened on 1:1, so a student's first generation came
      back square when the web's would not have. The string test cannot see
      this — the two pages carry the same chips, only a different one wears
      the "on" class. */
-  cRatio: "auto", cVariations: 1, cGallery: [], cSel: 0, cUrlSlot: -1,
-  /* v6.53.0 — Text to Image picks its own model, like the app's page */
+  cRatio: "auto", cVariations: 1, cGallery: [], cSel: 0, /* v6.53.0 — Text to Image picks its own model, like the app's page */
   t2iModel: "", t2iSize: "",
   cRefs: [null, null, null, null], cResultB64: null, cMime: "image/png", cBeforeB64: null,
-  genCount: 0, batch: false, batchStop: false, lastUserText: "", lastFinalPrompt: "",
+  genCount: 0, lastUserText: "", lastFinalPrompt: "",
   realOn: true, realDir: "auto", banText: true,
-  camOn: false, camBody: null, camMm: null, camF: null, camFilm: null, camBokeh: null,
-  camIso: 100, camIsoOn: false, camK: 5600, camKOn: false,
-  refTarget: "solo", refMkOn: true, refHairOn: false,
-  bgKeepFrame: true, bgKeepSubLight: false,
-  bdayAge: 18, capOn: false, capText: "", capPos: "bottom", scarfDir: "right", scarfLen: "long",
-  match: { color: true, light: true, makeup: true, skin: true },
-  wedTrail: "trailBlush", wedVeil: 2, wedGown: 3, wedPetal: "petGentle", wedExtra: "horse1",
-  autoSave: false, saveDirH: null, sessionLog: "",
-  learnMode: true, armedKey: null, armedEl: null, armTimer: null, armStage: 0,
+  saveDirH: null, learnMode: true, armedKey: null, armedEl: null, armTimer: null, armStage: 0,
   /* Reference Image Library (user-selected folder + persistent token) */
   libToken: "", libFolderName: "", libNativePath: "", libImgCount: 0, libLastScan: 0,
   refTokens: {}, /* stable-slot-id -> persistent file token */
@@ -660,10 +639,25 @@ function stSet(id, msg, kind) {
 const I18N = {
   /* ---- English (en) — 587 keys, complete ---- */
   en: {
+    rh_err_network: "Could not reach RunningHub Enterprise \u2014 the line is down. Check your internet connection and try again.",
+    rh_err_task_failed: "The RunningHub task failed \u2014 try a different prompt or photo.",
+    rh_err_host_blocked: "Photoshop refused this host \u2014 the panel\u2019s manifest does not allow it. Install the newest panel build.",
+    rh_err_timeout: "The generation took too long \u2014 RunningHub did not answer in time. Try again, or reduce the size or number of variants.",
+    rh_err_rate_limited: "RunningHub Enterprise is busy right now \u2014 wait a moment and try again.",
+    rh_err_invalid_key: "RunningHub refused the key \u2014 check it under Setup \u25b8 RunningHub Enterprise.",
+    wf_exp_bg_replace: "Replaces the background behind your subject. Your person, pose, edges and lighting stay exactly the same \u2014 only what is behind them changes.",
+    wf_exp_reference_transfer: "Takes a reference photo's whole scene (but NOT the people in it) and places YOUR subject into it \u2014 keeping your subject's identity, pose and framing, and matching the scene's light and perspective.",
+    wf_exp_master_bgfg_replace: "The strictest subject-in-scene replacement: completely removes the person from your reference scene, naturally reconstructs the hidden background and foreground, then places your exact subject into that spot \u2014 identity, pose, proportions, hairstyle, outfit, skin and lighting locked from your photo, while the reference supplies only the scene, camera and depth.",
+    wf_exp_subject_face: "Blends a referenced subject or face onto your base image seamlessly, keeping the base composition intact.",
+    wf_exp_retouch: "Gives a natural retouch to skin, hair and tone. Your identity, features and expression are kept \u2014 no plastic skin, no face change.",
+    wf_exp_upscale: "Upscales your image while restoring fine natural detail in skin, hair and fabric. Identity, pose, composition and colors stay exactly the same \u2014 no plastic smoothing.",
+    wf_exp_object_edit: "Removes, replaces or adds objects using a controlled local edit. Everything you don't touch stays the same.",
+    wf_exp_water_edit: "Adds or edits water, reflections and wet surfaces so they look physically natural, keeping your subject intact.",
+    wf_exp_text_logo: "Adds or edits clean, legible text or a logo on the image while keeping the composition.",
+    ai_learn_mode: "Learn Mode — a GENERATE tap explains itself first",
+    job_needkey: "Add your RunningHub key in Setup first",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
-    sec_ready: "READINESS",
-    sec_acct: "ACCOUNT",
     /* v6.47.0 — the member's own profile photo, set from Setup. The five
        strings the web app already ships for this are lifted verbatim so the
        two surfaces read alike; ava_working is the panel's own, because
@@ -675,25 +669,15 @@ const I18N = {
     ava_removed: "Photo removed",
     ava_fail: "That image could not be used — try another one",
     ava_working: "Preparing the photo…",
-    sec_money: "COST & BALANCE",
-    sec_data: "DATA & BACKUP",
-    sec_about: "APP & UPDATES",
     /* v6.48.0 — the update fetches itself. What the button can and cannot
        do is stated on the card, not left for the customer to discover. */
-    btn_get_update: "Download the update",
-    upd_hint: "The panel fetches the new release itself — you are already signed in. Photoshop does not let a plugin replace its own files, so the last step is yours: double-click the saved .ccx and Creative Cloud installs it.",
     upd_web: "Opening the Web App — get the Panel from Account → Photoshop Panel there.",
-    upd_none: "This is the newest release.",
     money_intro: "Every GENERATE is booked at the amount RunningHub actually charged — not an estimate. The balance is read straight from your RunningHub account.",
     money_bal: "Balance",
     money_refresh: "Check balance",
     money_nokey: "Save a RunningHub key first, then the balance can be read.",
     money_fail: "Could not read the balance — the ledger below is still exact. RunningHub answered:",
     money_never: "never checked",
-    btn_export_backup: "Export backup",
-    btn_import_backup: "Restore backup",
-    btn_check_update: "Check for updates",
-    btn_hard_refresh: "Clear cache + restart",
     gate_sub_login: "Sign in with your HNK account to use this panel.",
     gate_email_ph: "Email",
     gate_pass_ph: "Password",
@@ -722,38 +706,11 @@ const I18N = {
     gate_service_down: "The licence service cannot be reached — check your internet, then press Check again.",
     gate_no_lease: "The licence server returned no valid panel lease — press Check again.",
     gate_sent_as: "Sent as {E} · {N} characters",
-    app_title: "HNK Photoshop Ai Panel (Students)",
-    sec_api: "RunningHub Enterprise Key",
     btn_show: "Show",
-    btn_hide: "Hide",
-    btn_test: "Test Key",
     btn_save: "Save",
-    st_testing: "Testing key",
-    st_key_ok: "\u2713 API key is working",
-    st_key_bad: "API key failed",
-    st_key_saved: "API key saved \u2713",
     st_need_key: "Enter your RunningHub Enterprise key first",
-    sec_model: "Model & Output",
-    scope_model_note: "Used by the Prompt tab's Generate button below \u2014 Create and AI Tools each have their own separate model settings.",
-    model_auto: "Auto (recommended)",
-    model_flash: "Flash \u2014 fast (2.5)",
-    model_pro: "Pro \u2014 quality (3.0)",
-    lbl_ratio: "Ratio",
-    ratio_auto: "Auto ratio (from document)",
-    lbl_size: "Size",
-    lbl_quality: "Quality",
     qual_auto: "Auto",
-    qual_low: "Low",
-    qual_med: "Medium",
-    qual_high: "High",
-    sec_prompt: "Prompt",
-    hint_prompt: "Type your prompt here\u2026 (max 20,000 characters)",
-    btn_improve: "Improve Prompt",
     btn_clear: "Clear",
-    st_improving: "Improving prompt",
-    st_improved: "Prompt improved \u2713",
-    sec_refs: "Reference Images (2 slots)",
-    base_note: "Base image = your active Photoshop document (captured automatically).",
     btn_ref_layer: "+ Layer",
     btn_ref_file: "File",
     btn_ref_web: "Web",
@@ -761,9 +718,7 @@ const I18N = {
     st_photo_layer_added: "Layer added as the photo \u2713",
     st_ref_file_added: "File added as reference \u2713",
     st_importing: "Importing file",
-    url_title: "Reference from URL \u2014 Chrome / Pinterest",
     url_ph: "https://\u2026 image address or Pinterest pin link",
-    btn_paste: "Paste",
     btn_load: "Load",
     btn_cancel: "Cancel",
     btn_ok: "OK",
@@ -772,178 +727,22 @@ const I18N = {
     st_ref_web_added: "Web image added as reference \u2713",
     st_url_bad: "Could not load an image from this URL \u2014 copy the image address and try again",
     no_layer: "No layer selected",
-    sec_presets: "AI Presets",
-    auto_run: "Preset click \u2192 Auto Generate (OFF = insert into prompt only)",
-    grp_cleanup: "Cleanup Tools",
-    p_remove_people: "Remove People",
-    p_fix_hands: "Fix Extra Hands",
-    p_fix_legs: "Fix Extra Legs",
-    p_full_clean: "Full Cleanup",
-    grp_moved_note: "Reference tools now live in the Reference Ops Pro card below (one place, with Solo/Couple/Family + guides).",
-    ro_h_detail: "Hair \u00b7 Accessories \u00b7 Pose (\u2190 Ref1)",
-    ro_h_comp: "Composite \u00b7 Style \u00b7 Text (\u2190 Ref1)",
-    p_fgbglc: "FG=Doc \u00b7 BG=Ref1 \u00b7 Light=Ref2",
-    p_hair: "Hairstyle (\u2190 Ref1)",
-    p_access: "Jewelry+Accessories (\u2190 Ref1)",
-    p_pose: "Pose Match (Doc \u2192 Ref1)",
-    p_fgprops: "FG Props (\u2190 Ref1)",
-    p_textlogo: "Text / Logo (\u2190 Ref1)",
-    p_style: "Photo Style (\u2190 Ref1)",
-    grp_repsubj: "Replace Subject (Doc \u2192 Ref1 scene)",
-    p_rep_solo: "Replace Solo",
-    p_rep_couple: "Replace Couple",
-    p_rep_family: "Replace Family",
-    grp_rmix: "Replace Mix \u2014 tick & take from Ref1",
-    rm_bg: "Background (BG)",
-    rm_fg: "Foreground (FG)",
-    rm_light: "Lighting",
-    rm_color: "Colour",
-    rm_object: "Objects / Props",
-    btn_rmix: "REPLACE GENERATE",
-    rm_none: "Tick at least one aspect first",
-    grp_i2p: "Image \u2192 Prompt (Scene Builder)",
-    i2p_note: "1) Extract: Ref1 scene \u2192 detailed text prompt (people excluded). 2) Edit it on the Prompt page. 3) SCENE GENERATE builds it around your document subject \u2014 auto-fitted to any angle. Face/Pose/Frame locks = Keep Original.",
-    i2p_objects: "Objects & Props detail",
-    i2p_light: "Lighting detail",
-    i2p_color: "Color / Grade detail",
-    i2p_bg: "Background detail",
-    i2p_fg: "Foreground detail",
-    btn_i2p: "Image \u2192 Prompt (Extract Scene)",
-    i2p_fit: "Scene Auto-Fit \u2014 re-project scene to the document's angle / distance / lens",
-    i2p_adapt: "Adapt subject light & color to the scene",
-    btn_scenegen: "SCENE GENERATE",
-    st_extract: "Extracting scene into a prompt",
-    st_extract_done: "Scene prompt ready \u2014 review it on the Prompt page",
-    scene_no_prompt: "Prompt box is empty \u2014 run Image \u2192 Prompt first",
-    i2p_none: "Tick at least one detail aspect first",
-    sec_light: "Studio Lighting \u2014 AI Relight",
-    light_note: "Tick lights ON, tap a row to select it, shape it with the sliders \u2014 the 3D top-view diagram follows live (\u25b4 = high, \u25be = low). LIGHTING GENERATE relights your document exactly to this setup; face / pose / frame stay locked.",
-    lbl_my_prompt: "MYANMAR PROMPT",
-    lstage_model: "MODEL",
-    lstage_cam: "CAM",
-    l_key: "Key Light",
-    l_fill: "Fill / Front",
-    l_butterfly: "Butterfly (top-front)",
-    l_side: "Side Light",
-    l_rim: "Rim Light",
-    l_back: "Back Light",
-    l_hair: "Hair Light",
-    l_bglight: "Background Light",
-    lt_softbox: "Softbox",
-    lt_octa: "Octa",
-    lt_strip: "Strip",
-    lt_umbrella: "Umbrella",
-    lt_beauty: "Beauty",
-    lt_hard: "Hard",
-    li_int: "Intensity",
-    li_angle: "Angle",
-    li_height: "Height",
-    li_dist: "Distance",
-    li_size: "Size",
-    btn_lightgen: "LIGHTING GENERATE",
-    light_none: "Turn ON at least one light first",
-    lg_equip: "Show light equipment in the photo (softbox / stands visible)",
-    grp_chains: "Style Chains \u2014 combine \u2713 styles",
-    chains_note: "Turn ON any styles \u2014 they blend into EVERY Generate / preset / Retouch together.",
-    grp_restore: "Old Photo Restore",
-    p_restore: "Old Photo Restore",
-    rest_color: "Full Color",
-    rest_bw: "Black & White",
-    restore_note: "Repairs tears, water / burn damage, fading \u2014 keeps every original face 100% identical.",
-    rt_browstyle: "Brow Style",
-    rt_lashstyle: "Lash Style",
-    rt_blush: "Blush Color",
-    rt_contour: "Contour Style",
-    rt_bust: "Bust",
-    rt_butt: "Glutes",
-    rt_thigh: "Thighs",
-    rt_calf: "Calves",
-    rt_neck: "Neck",
-    rt_fingers: "Fingers",
-    hint_prompt_my: "\u1019\u103c\u1014\u103a\u1019\u102c\u101c\u102d\u102f \u101b\u1031\u1038\u1015\u102b \u2014 Generate \u1019\u103e\u102c English \u1021\u101c\u102d\u102f\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1015\u1031\u1038\u1019\u101a\u103a (\u1021\u1019\u103b\u102c\u1038\u1006\u102f\u1036\u1038 20,000)",
-    st_translate: "Translating Myanmar prompt to English",
-    live_trans: "Live \u21c4 auto-translate (EN \u2194 MY, after you pause typing)",
-    st_retry: "Retrying",
-    grp_recipes: "Recipes \u2014 save / share settings",
-    recipe_note: "Save EVERYTHING (chains, retouch, lights, keeps, prompts) as one .json recipe \u2014 students just Load it.",
-    btn_recipe_save: "Save Recipe",
-    btn_recipe_load: "Load Recipe",
-    st_recipe_saved: "Recipe saved \u2713",
-    st_recipe_loaded: "Recipe loaded \u2713 \u2014 all controls updated",
-    st_recipe_bad: "Not a HNK recipe file",
-    sec_final: "Final Prompt (sent to AI)",
-    btn_copy: "Copy",
-    st_copied: "Copied \u2713",
-    hist_note: "History \u2014 last 6 results, tap to view:",
-    btn_hist_prompt: "\u2192 Prompt",
-    sec_batch: "Batch Mode",
-    batch_note: "Pick multiple photos + an output folder \u2014 the current prompt, chains, cleanup and Keep locks run on every photo; results save as *_HNK.png.",
-    btn_batch: "RUN BATCH",
-    btn_batch_stop: "Stop",
-    st_batch: "Batch",
-    st_batch_done: "Batch done",
-    sec_web: "Web AI \u2014 Mini Browser",
-    web_note: "Open any web AI editor inside Photoshop. Generate there, then bring the result in as a layer:",
-    web_import_note: "Import: \u2460 in the web app use Copy image address, then IMPORT COPIED LINK \u00b7 \u2461 or download the file and use IMPORT FILE \u00b7 \u2462 partner web apps with the HNK bridge send images in automatically.",
-    btn_web_go: "Go",
-    btn_web_home: "Home",
-    btn_web_reload: "Reload",
-    btn_web_import_link: "IMPORT COPIED LINK \u2192 PS",
-    btn_web_import_file: "IMPORT FILE \u2192 PS",
     st_web_import: "Imported to Photoshop as a layer \u2713",
-    st_web_nourl: "Copy an image link first (right-click \u2192 Copy image address)",
-    st_web_fetch: "Fetching image from link",
-    st_web_notallowed: "This domain is not in the allow-list \u2014 it may stay blank. Ask HNK to add it.",
-    st_need_doc: "Open a photo document in Photoshop first",
-    sec_campro: "Camera Pro & Quality",
-    autosave_lbl: "Auto-Export every result (PNG + prompt log \u2192 folder)",
     st_folder_ok: "Export folder set \u2713",
     st_exported: "Exported \u2713",
     st_export_fail: "Export failed \u2014 check the folder",
-    st_pro_fallback: "Pro model unavailable \u2014 switched to Flash for this run",
     st_img_bad: "Image data failed the integrity check \u2014 re-add the photo",
     st_auto_comp: "Auto Composite: IMAGE 1 subject \u2192 reference scene",
-    prov_lbl: "AI Provider",
-    tab_create: "Create",
-    create_note: "CREATE MODE \u2014 brand-new image from your prompt (+ its own 4 refs). Fully standalone: never reads the document, presets, chains or locks.",
     create_ph: "Describe the image you want \u2014 e.g. a photorealistic portrait of a woman in a red dress standing in a garden at golden hour\u2026",
     btn_create_ps: "\u2b07 Send to Photoshop",
     btn_to_ref: "\u21ba Use as Ref 1",
     st_to_ref: "Result loaded into Ref 1 \u2713",
-    scope_create_note: "Independent of Setup's Model & Output \u2014 these settings apply only to Create's Generate.",
-    cr_ratio: "Ratio",
-    cr_var: "Variations",
     cr_restyle: "\u267b Restyle result",
-    cr_lib: "Prompt Library \u2014 tap to insert",
-    cr_improve: "\u2728 Improve",
-    cr_describe: "\ud83d\udd0d Describe Ref 1 \u2192 Prompt",
-    st_describing: "Reading the reference\u2026",
-    st_described: "Prompt written from Ref 1 \u2713",
-    st_need_ref1: "Add an image to Ref 1 first",
-    st_lib_added: "Prompt added \u2713",
-    cr_refs: "Reference Images (up to 4)",
-    cr_refs_note: "Optional \u2014 add with Layer / File / Web. Create pulls only what your prompt asks for.",
-    cr_results: "Results",
     cr_gal_empty: "No results yet \u2014 tap Generate.",
     cr_gal_have: "result(s) \u00b7 tap a thumbnail to preview / act on it",
     cr_save: "\u2b07 Save PNG",
-    cr_engine: "Engine",
     cr_need_result: "Generate an image first",
-    btn_web_import_url: "\u2b07 Import URL",
-    st_clip_help: "Clipboard empty/blocked \u2014 paste the link into the URL bar, then tap \u2b07 Import URL",
-    st_web_blob: "That is a temporary blob: link \u2014 use right-click \u2192 Copy IMAGE Address, or save the file and use Import File",
-    err_key: "API key invalid \u2014 re-check the key on the Setup tab \u00b7 API key \u1019\u103e\u102c\u1038\u1014\u1031 \u2014 Setup \u1019\u103e\u102c \u1015\u103c\u1014\u103a\u1005\u1005\u103a\u1015\u102b",
-    err_quota: "Quota / rate limit \u2014 wait a moment, then retry \u00b7 Quota \u1015\u103c\u100a\u1037\u103a/\u1014\u103e\u102f\u1014\u103a\u1038\u1000\u1014\u1037\u103a \u2014 \u1001\u100f\u1014\u1031\u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    err_big: "Image too large for the API \u2014 downsize, then retry \u00b7 \u1015\u102f\u1036\u1000\u103c\u102e\u1038\u101c\u103d\u1014\u103a\u1038 \u2014 \u1001\u103b\u102f\u1036\u1037\u1015\u103c\u102e\u1038\u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    err_safety: "Blocked by safety filter \u2014 adjust the prompt or photo \u00b7 Safety \u1004\u103c\u1004\u103a\u1038 \u2014 prompt/\u1015\u102f\u1036 \u1015\u103c\u1004\u103a\u1015\u103c\u102e\u1038\u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    err_net: "Network / server problem \u2014 please try again \u00b7 \u1000\u103d\u1014\u103a\u101b\u1000\u103a/\u1006\u102c\u1017\u102c\u1015\u103c\u1005\u1014\u102c \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
-    rh_err_network: "Could not reach RunningHub Enterprise \u2014 the line is down. Check your internet connection and try again.",
-    rh_err_task_failed: "The RunningHub task failed \u2014 try a different prompt or photo.",
-    rh_err_host_blocked: "Photoshop refused this host \u2014 the panel\u2019s manifest does not allow it. Install the newest panel build.",
-    rh_err_timeout: "The generation took too long \u2014 RunningHub did not answer in time. Try again, or reduce the size or number of variants.",
-    rh_err_rate_limited: "RunningHub Enterprise is busy right now \u2014 wait a moment and try again.",
-    rh_err_invalid_key: "RunningHub refused the key \u2014 check it under Setup \u25b8 RunningHub Enterprise.",
     /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
     wf_scene_presets: "Scene presets from the Library \u2014 one tap",
     wf_scene_loading: "Loading the scene\u2026",
@@ -957,114 +756,20 @@ const I18N = {
     wf_press_prepare: "Press Prepare to load this workflow and check your images.",
     wf_opts: "Model \u00b7 Ratio \u00b7 Count \u00b7 Size",
     wf_model_auto: "Auto \u2014 the workflow's choice",
-    err_timeout: "Request timed out \u2014 the server took too long; please try again \u00b7 \u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    err_generic: "The request could not be completed \u2014 please try again",
-    err_img: "No usable image was produced \u2014 please try again",
-    err_mode: "This document is not in RGB mode \u2014 convert it first (Image \u25b8 Mode \u25b8 RGB Color), then try again",
-    cam_master: "Camera block ON \u2014 append to the end of EVERY prompt",
-    cam_body: "Camera Body",
-    cam_lens: "Prime Lens (mm)",
-    cam_f: "Aperture",
-    cam_film: "Film Look",
-    cam_bokeh: "Bokeh Style",
-    cam_iso: "ISO",
-    cam_k: "WB Kelvin",
-    cam_note: "Turn the block ON, then pick only what you need \u2014 \u2013 chips stay silent. Everything lands at the end of the final prompt.",
-    ro_h_main: "REFERENCE OPS PRO (Ref1 / Ref2)",
-    ro_note: "Ref1 = IMAGE 2 (woman) \u00b7 Ref2 = IMAGE 3 (man). Pick a target, then run an op \u2014 unmatched people never change.",
-    ro_target: "Target:",
-    ro_solo: "Solo",
-    ro_couple: "Couple",
-    ro_family: "Family",
-    ro_mk: "Copy ref makeup",
-    ro_hair: "Take ref hairstyle",
-    ro_h_face: "Face Ops",
-    ro_h_bg: "BG / FG Ops",
-    ro_h_sub: "Subject Ops",
-    ro_h_lc: "Light & Color Ops",
-    ro_h_dress: "Dress Ops",
-    ro_h_mk: "Makeup Ops",
-    ro_h_match: "\u2605 Master Match (one look)",
-    ro_match_note: "Match IMAGE 1 to the reference so both look like one edit \u2014 tick what to match:",
-    m_color: "Color",
-    m_light: "Light",
-    m_makeup: "Makeup",
-    m_skin: "Skin Retouch",
-    crd_chainsrest: "Style Chains + Old Photo Restore",
-    crd_refops: "Reference Ops Pro (Ref1 / Ref2)",
-    crd_scenes: "\ud83c\udfac Scenes Pro \u2014 locked subject \u00b7 scene matches",
-    scn_note: "Lock your subject (face \u00b7 pose \u00b7 dress \u00b7 frame) and rebuild the whole scene to match them \u2014 light, shadow, colour, background, foreground and objects all adapt automatically for a real-photo look.",
-    scn_h_style: "Scene Style (indoor / cultural)",
-    scn_h_bday: "\ud83c\udf82 Birthday \u2014 age number 1\u201345",
-    scn_h_cap: "Caption / Text (kid \u00b7 Miss Universe \u00b7 birthday)",
-    scn_h_scarf: "Outdoor / Flying Scarf",
-    scn_grad: "Graduation Indoor",
-    scn_prewed: "Prewedding Indoor",
-    scn_vietnam: "Vietnam",
-    scn_myanmar: "Myanmar",
-    scn_chinese: "Chinese",
-    scn_shan: "Shan",
-    scn_newborn: "Newborn / Baby",
-    scn_age: "Age",
-    scn_bday_go: "\ud83c\udf82 BIRTHDAY SCENE",
-    scn_cap_on: "Add caption text",
-    scn_cap_ph: "Caption text (e.g. Happy 1st Birthday, name)\u2026",
-    scn_cap_pos: "Position",
-    scn_top: "Top",
-    scn_bottom: "Bottom",
-    scn_scarf: "\u2726 FLYING SCARF SCENE",
-    scn_dir: "Direction",
-    scn_left: "Left",
-    scn_right: "Right",
-    scn_up: "Up",
-    scn_len: "Length",
-    scn_short: "Short",
-    scn_long: "Long",
-    g_cat_scene: "SCENE OP \u2014 your subject is locked (face \u00b7 pose \u00b7 dress \u00b7 frame); the whole generated scene (light, shadow, colour, background, foreground, objects, atmosphere) is auto-matched to the subject for a real-photo composite.",
-    crd_wed: "\u2665 Wedding Pro Suite",
-    crd_recipes: "Recipes \u2014 save / share",
-    learn_lbl: "\ud83c\udf93 Learn Mode \u2014 1st tap = guide (yellow), 2nd = prompt (blue), 3rd = RUN (green)",
     guide_hint: "Tap again: yellow \u2192 blue (prompt) \u2192 green (run) \u25b6",
     g_learn_next_prompt: "Tap again \u2192 shows the exact PROMPT (blue).",
     g_learn_prompt_head: "PROMPT this button will send (tap again = RUN):",
     g_learn_next_run: "Tap once more \u2192 RUN (green) generates.",
     st_prompt_ready: "Prompt ready \u2014 tap again (green) to run \u2713",
-    g_step_doc: "Open your photo document in Photoshop first.",
-    g_step_ref1: "Load the reference image into Ref1 (it becomes IMAGE 2). Add Ref2 for a second person.",
-    g_step_target: "Pick the Target: Solo / Couple (Ref1 = woman, Ref2 = man) / Family.",
-    g_step_mkhair: "Optional: tick \u2018Copy ref makeup\u2019 / \u2018Take ref hairstyle\u2019 above the Face Ops.",
-    g_step_petal: "Pick a petal color first (auto = matches your scene).",
-    g_step_rest: "Choose Full Color or B&W with the \u2713 above.",
-    g_step_int: "Set the Intensity slider to taste.",
     g_step_confirm: "Tap again to advance: GUIDE (yellow) \u2192 PROMPT (blue) \u2192 RUN (GREEN generates).",
-    g_cat_face: "FACE OP \u2014 transfers the reference face onto the matching person; everyone else stays unchanged.",
-    g_cat_sub: "SUBJECT OP \u2014 brings/morphs the reference PERSON into your scene; scene and framing stay.",
-    g_cat_bgfg: "BG/FG OP \u2014 changes only the background / foreground using the reference.",
-    g_cat_lc: "LIGHT & COLOR OP \u2014 copies the reference\u2019s lighting and grade; people stay pixel-faithful.",
-    g_cat_dress: "DRESS OP \u2014 changes only the outfit using the reference.",
-    g_cat_mkop: "MAKEUP OP \u2014 changes only the makeup using the reference.",
-    g_cat_match: "MASTER MATCH \u2014 makes your photo match the reference\u2019s whole look (tick the layers above).",
-    g_cat_trail: "WEDDING TRAIL \u2014 luxury grass + a flowing flower path; faces/pose/frame are hard-locked.",
-    g_cat_veil: "FLYING VEIL \u2014 adds/extends a wind-blown veil at this length; face never covered.",
-    g_cat_gown: "GOWN \u2014 cleans the existing gown (design unchanged) and sets this train length.",
-    g_cat_petal: "FLYING PETALS \u2014 adds petals in the air in this style; color from the swatch above.",
-    g_cat_wedx: "WEDDING EXTRA \u2014 adds this element matched to your scene; subject stays locked.",
-    g_cat_canvas: "REPLACE (CANVAS) \u2014 puts YOUR subject into the reference\u2019s scene; ref people removed.",
-    g_cat_restore: "OLD PHOTO RESTORE \u2014 repairs damage; every original face stays 100% identical.",
     g_cat_generic: "PRESET \u2014 applies this professional edit to your photo.",
     g_gen: "GENERATE \u2014 runs the prompt box (+ chains, keeps, camera block) on your document.",
     g_retouchbtn: "RETOUCH APPLY \u2014 runs all your slider settings as one professional retouch pass.",
-    g_relightbtn: "LIGHTING GENERATE \u2014 relights the photo exactly to your 3D light diagram.",
-    g_scene: "SCENE GENERATE \u2014 rebuilds the scene from the extracted prompt; subject stays.",
-    g_rmix: "REPLACE MIX \u2014 replaces only the \u2713 ticked parts from the reference.",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
     ro_bgSwap: "BG Swap",
     ro_fgRep: "FG Replace",
-    ro_bg_note: "Doc = subject \u00b7 Ref1 = new scene. Target (Solo/Couple/Family) picks who to keep.",
-    ro_bg_frame: "Keep frame & composition",
-    ro_bg_light: "Preserve subject light/color",
     ro_subSwap: "Subject Swap",
     ro_lcRef: "L&C Reference",
     ro_lcCopy: "L&C Copy-Paste",
@@ -1072,94 +777,8 @@ const I18N = {
     ro_dressRep: "Dress Replace",
     ro_mkCopy: "Makeup Copy",
     ro_matchBtn: "\u2605 MASTER MATCH",
-    grp_retouch: "Skin Retouch Presets",
-    lbl_intensity: "Strength",
-    p_evoto: "Retouch B Style",
-    p_meitu: "Retouch A Style",
-    auto_place: "Auto place result into Photoshop as a new layer",
-    sec_retouchpro: "Retouch Pro \u2014 Sliders",
-    rt_skin: "Skin",
-    rt_faceai: "Face AI",
-    rt_hair: "Hair",
-    rt_dress: "Dress",
-    rt_bg: "Background",
-    rt_smooth: "Skin Smooth",
-    rt_acne: "Acne Remove",
-    rt_spots: "Dark Spots",
-    rt_wrinkle: "Wrinkles",
-    rt_tone: "Whiten / Tan",
-    rt_glow: "Glow",
-    rt_reshape: "AI Reshape",
-    rt_lash: "Eyelashes",
-    rt_brow: "Eyebrows",
-    rt_lipsmooth: "Lip Smooth",
-    rt_lipcolor: "Lip Color",
-    rt_lenscolor: "Lens Color",
-    rt_hairstray: "Stray Hair",
-    rt_hairsmooth: "Hair Smooth",
-    rt_hairshine: "Hair Shine (D&B)",
-    rt_dresssmooth: "Fabric Smooth",
-    rt_dressedge: "Edge Cleanup",
-    rt_dresswrinkle: "Wrinkle Remove",
-    rt_dresstexture: "Texture Recover",
-    rt_bgsmooth: "BG Clean/Smooth",
-    rt_bgcolor: "BG Color",
-    rt_bgrecolor: "BG Color Smooth",
-    rt_shape: "Reshape Pro (Face + Body)",
-    rt_teeth: "Teeth Whiten",
-    rt_eyewhite: "Eye Whites Clean",
-    rt_faceslim: "Face Slim",
-    rt_jaw: "Jawline",
-    rt_chin: "Chin",
-    rt_nosesize: "Nose Size",
-    rt_eyesize: "Eye Size",
-    rt_lipfull: "Lips Full",
-    rt_waist: "Waist Slim",
-    rt_bodyslim: "Body Slim",
-    rt_shoulder: "Shoulders",
-    rt_hip: "Hip Slim",
-    rt_leglen: "Leg Length",
-    rt_armslim: "Arm Slim",
-    rt_dressfit: "Dress Fit",
-    rt_dressclean: "Dress Clean",
-    rt_dresscolorpure: "Dress Color Pure",
-    rt_bodygrp: "Body Skin Pro",
-    rt_bodysmooth: "Body Skin Smooth",
-    rt_bodyblemish: "Body Blemish Clean",
-    rt_bodytone: "Body Even Tone",
-    rt_bodyglow: "Body Glow",
-    rt_bodyhairrm: "Body Hair Reduce",
-    rt_hairvolume: "Hair Volume",
-    rt_hairgloss: "Hair Gloss",
-    rt_hairfill: "Hair Fill (thin areas)",
-    wp_h_trail: "\u2665 Wedding \u2014 Luxury Flower Trail",
-    wp_h_veil: "\u2665 Wedding \u2014 Flying Veil",
-    wp_h_gown: "\u2665 Wedding \u2014 Gown Clean + Train",
-    wp_h_petal: "\u2665 Wedding \u2014 Flying Petals",
-    wp_h_extra: "\u2665 Wedding \u2014 Horse \u00b7 Water \u00b7 Mood",
-    wp_note: "Face ID / pose / frame / dress design are hard-locked \u2014 only the named element changes.",
-    wp_petalcolor: "Petal Color (auto = scene match)",
-    wp_trail_c: "Flower color",
-    wp_trail_go: "\u25b6 Flower Trail",
-    wp_veil_c: "Veil length",
-    wp_veil_go: "\u25b6 Flying Veil",
-    wp_gown_c: "Train length",
-    wp_gown_go: "\u25b6 Gown Clean + Train",
-    wp_pet_c: "Petal style",
-    wp_pet_go: "\u25b6 Flying Petals",
-    wp_extra_c: "Extra",
-    wp_extra_go: "\u25b6 Add Extra",
-    btn_apply_rt: "Apply Retouch",
-    btn_reset: "Reset",
     rt_none: "Set at least one retouch slider or color first",
-    tab_setup: "Setup",
-    tab_prompt: "Edit",
-    tab_presets: "Library",
-    recent_lbl: "Recent prompts\u2026",
-    tab_retouch: "Retouch",
-    tab_aitools: "Home",
     cap_warn: "Photoshop limits this prompt box to:",
-    cleanup_note: "Ticked items run together with EVERY Generate / preset.",
     btn_generate: "GENERATE",
     st_ready: "Ready",
     st_capture: "Capturing document",
@@ -1176,70 +795,18 @@ const I18N = {
     st_err: "Error",
     st_no_doc: "No active document \u2014 open a photo first",
     st_no_prompt: "Prompt is empty",
-    need_ref: "This preset needs a reference image in slot 1",
     st_new_doc: "Result opened as a new document \u2713",
-    sec_preview: "Preview \u2014 Before / After",
     before: "BEFORE",
     after: "AFTER",
     btn_place: "Place to Photoshop",
-    btn_saveas: "Save As\u2026",
     st_saved: "Saved \u2713",
-    sec_diag: "System Check",
-    sec_log: "Activity Log",
-    btn_diag: "Run Check",
-    btn_copylog: "Copy Log",
-    btn_clearlog: "Clear",
-    diag_host: "Photoshop host",
-    diag_uxp: "UXP capabilities",
-    diag_rh: "RunningHub Enterprise key",
-    diag_doc: "Active document",
-    diag_set: "set",
-    diag_unset: "not set",
-    diag_open: "open",
-    diag_none: "none open",
-    diag_missing: "missing",
-    diag_done: "System check complete \u2713",
-    diag_lib: "Reference Library",
-    diag_lib_open: "Open-folder capability",
-    sec_reflib: "Reference Image Library",
-    reflib_note: "Pick a folder of your favourite reference images once \u2014 Browse remembers it and opens inside it everywhere.",
-    btn_browse: "Browse",
-    lib_choose: "Choose Folder",
-    lib_open: "Open Folder",
-    lib_change: "Change Folder",
-    lib_reset: "Reset",
-    lib_rescan: "Rescan",
-    lib_current: "Current Folder",
-    lib_found: "Images Found",
-    lib_status: "Status",
-    lib_lastscan: "Last Scan",
-    lib_images: "images",
-    lib_connected: "Connected",
-    lib_not_config: "Not configured",
-    lib_perm_lost: "Permission lost \u2014 reselect",
-    lib_none: "(no folder selected)",
-    lib_copy_only: "copy path only",
     lib_choose_msg: "Choose your HNK Reference Image Library folder.",
-    lib_scanning: "Scanning library\u2026",
-    lib_scan_done: "Rescan complete \u2713",
-    lib_reset_done: "Library reset \u2713",
-    lib_path_copied: "Path copied",
     lib_unsupported: "Unsupported image type",
     lib_restore_fail: "Reference could not be restored",
     on: "ON",
     off: "OFF",
-    ai_home_title: "What do you want to create?",
     ai_settings_defaults: "AI Tools \u2014 Defaults",
     ai_key_lives_in_setup: "The RunningHub Enterprise key is managed on the Setup tab \u2014 saved once, used everywhere.",
-    ai_greet_morning: "Good morning",
-    ai_greet_afternoon: "Good afternoon",
-    ai_greet_evening: "Good evening",
-    ai_free_generate: "Free Generate",
-    ai_free_sub: "Write your own prompt",
-    ai_more_tools: "More Tools",
-    ai_more_sub: "Water Edit \u00b7 Text/Logo \u00b7 all workflows",
-    ai_nav_home: "Home",
-    ai_nav_tools: "Tools",
     ai_history: "History",
     ai_no_gen: "No generations yet.",
     ai_videos: "Videos",
@@ -1266,14 +833,11 @@ const I18N = {
     ai_lib_pick_first: "Pick a photo from the Presets tab \u2192 Visual Library first.",
     ai_lib_load_fail: "Library image could not be loaded.",
     ai_missing: "Missing",
-    ai_add: "Add",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 add a model endpoint (Advanced \u2014 optional)",
     ai_rh_note: "Built-in models already work with the key above \u2014 nothing to do. If a model shows \"not connected\" (its endpoint path isn't confirmed yet), copy the path from RunningHub's API docs and paste it here.",
     ai_rh_save: "Save this model's endpoint",
     ai_test_conn: "Test connection",
-    ai_save_verify: "Save & Verify",
-    ai_settings: "Settings",
     ai_add_layers: "Add Results as New Layers",
     ai_done: "Done.",
     ai_result_ready: "Result ready.",
@@ -1284,21 +848,6 @@ const I18N = {
     ai_placed_group: "Placed into the \u201c{name}\u201d group as a new layer (mask unavailable on this host).",
     ai_placed_plain: "Placed as a new layer (group/mask unavailable on this host).",
     ai_start_fail: "AI Tools failed to start",
-    pgb_setup: "Set up once — ready whenever you are",
-    pgb_studio: "Bring every scene you imagine to life — your way",
-    pgb_create: "One line of text becomes a professional image",
-    pgb_presets: "1850 curated looks — pick one and start instantly",
-    pgb_aitools: "One-tap professional \u2014 Nano Banana \u00b7 RunningHub",
-    pgb_retouch: "Flawless retouching that stays natural",
-    wf_sum_bg_replace: "Replace the background",
-    wf_sum_reference_transfer: "Put your subject into a reference scene",
-    wf_sum_master_bgfg_replace: "Remove the scene's person, rebuild bg/fg, insert your subject",
-    wf_sum_subject_face: "Transfer a subject or face onto a base",
-    wf_sum_retouch: "Natural portrait enhancement",
-    wf_sum_upscale: "Detail-preserving upscale",
-    wf_sum_object_edit: "Remove, replace or add objects",
-    wf_sum_water_edit: "Water and reflection edits",
-    wf_sum_text_logo: "Add or edit text and logos",
     wfin_subject: "Your Photo (Subject)",
     wfin_new_bg: "New Background (optional)",
     wfin_ref_scene: "Reference Scene",
@@ -1310,45 +859,41 @@ const I18N = {
     wfin_image: "Image",
     wfin_object_ref: "Object Reference (optional)",
     wfin_logo_ref: "Logo Reference (optional)",
-    wf_exp_bg_replace: "Replaces the background behind your subject. Your person, pose, edges and lighting stay exactly the same \u2014 only what is behind them changes.",
-    wf_exp_reference_transfer: "Takes a reference photo's whole scene (but NOT the people in it) and places YOUR subject into it \u2014 keeping your subject's identity, pose and framing, and matching the scene's light and perspective.",
-    wf_exp_master_bgfg_replace: "The strictest subject-in-scene replacement: completely removes the person from your reference scene, naturally reconstructs the hidden background and foreground, then places your exact subject into that spot \u2014 identity, pose, proportions, hairstyle, outfit, skin and lighting locked from your photo, while the reference supplies only the scene, camera and depth.",
-    wf_exp_subject_face: "Blends a referenced subject or face onto your base image seamlessly, keeping the base composition intact.",
-    wf_exp_retouch: "Gives a natural retouch to skin, hair and tone. Your identity, features and expression are kept \u2014 no plastic skin, no face change.",
-    wf_exp_upscale: "Upscales your image while restoring fine natural detail in skin, hair and fabric. Identity, pose, composition and colors stay exactly the same \u2014 no plastic smoothing.",
-    wf_exp_object_edit: "Removes, replaces or adds objects using a controlled local edit. Everything you don't touch stays the same.",
-    wf_exp_water_edit: "Adds or edits water, reflections and wet surfaces so they look physically natural, keeping your subject intact.",
-    wf_exp_text_logo: "Adds or edits clean, legible text or a logo on the image while keeping the composition."
   },
   /* ---- Burmese (my) — 587 keys, complete ---- */
   my: {
+    rh_err_network: "RunningHub Enterprise ကို မရောက်ပါ — အင်တာနက် ပြတ်နေပါတယ်။ ချိတ်ဆက်မှုကို စစ်ပြီး ပြန်ကြိုးစားပါ။",
+    rh_err_task_failed: "RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",
+    rh_err_host_blocked: "Photoshop က ဒီ host ကို ခွင့်မပြုပါ — panel manifest ထဲ မပါလို့ပါ။ Panel အသစ်ဆုံး ထည့်ပါ။",
+    rh_err_timeout: "ပုံထုတ်တာ ကြာလွန်းပါတယ် — RunningHub က အချိန်မီ မဖြေပါ။ ပြန်ကြိုးစားပါ (သို့) အရွယ်အစား / အရေအတွက် လျှော့ပါ။",
+    rh_err_rate_limited: "RunningHub Enterprise အလုပ်များနေပါတယ် — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ။",
+    rh_err_invalid_key: "RunningHub က key ကို လက်မခံပါ — Setup ▸ RunningHub Enterprise မှာ key ပြန်စစ်ပါ။",
+    wf_exp_bg_replace: "\u101c\u1030\u1014\u1031\u102c\u1000\u103a\u1000 \u1014\u1031\u102c\u1000\u103a\u1001\u1036\u1000\u102d\u102f \u1021\u1005\u102c\u1038\u1011\u102d\u102f\u1038\u1015\u1031\u1038\u1010\u101a\u103a\u104b \u101c\u1030\u104a \u1000\u102d\u102f\u101a\u103a\u101f\u1014\u103a\u104a \u1021\u1014\u102c\u1038\u101e\u1010\u103a\u1014\u1032\u1037 \u1021\u101c\u1004\u103a\u1038\u1000 \u1021\u1010\u102d\u1021\u1000\u103b \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1018\u1032 \u1014\u1031\u102c\u1000\u103a\u1000\u103d\u101a\u103a\u1000\u1015\u1032 \u1015\u103c\u1031\u102c\u1004\u103a\u1038\u101e\u103d\u102c\u1038\u1019\u101a\u103a\u104b",
+    wf_exp_reference_transfer: "Reference \u1015\u102f\u1036\u101b\u1032\u1037 scene \u1010\u1005\u103a\u1001\u102f\u101c\u102f\u1036\u1038\u1000\u102d\u102f \u101a\u1030\u1010\u101a\u103a (\u1012\u102b\u1015\u1031\u1019\u101a\u1037\u103a \u1021\u1011\u1032\u1000 \u101c\u1030\u1010\u103d\u1031\u1000\u102d\u102f \u1019\u101a\u1030\u1018\u1030\u1038)\u104a \u1015\u103c\u102e\u1038\u101b\u1004\u103a \u101e\u1004\u1037\u103a\u101c\u1030\u1000\u102d\u102f \u1011\u100a\u1037\u103a\u1015\u1031\u1038\u1010\u101a\u103a \u2014 \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u104a \u1000\u102d\u102f\u101a\u103a\u101f\u1014\u103a\u1014\u1032\u1037 frame \u1000\u102d\u102f \u1011\u102d\u1014\u103a\u1038\u1015\u103c\u102e\u1038 scene \u101b\u1032\u1037 \u1021\u101c\u1004\u103a\u1038\u1014\u1032\u1037 \u101b\u103e\u102f\u1011\u1031\u102c\u1004\u1037\u103a\u1000\u102d\u102f \u1000\u102d\u102f\u1000\u103a\u100a\u102e\u1021\u1031\u102c\u1004\u103a \u101c\u102f\u1015\u103a\u1015\u1031\u1038\u1010\u101a\u103a\u104b",
+    wf_exp_master_bgfg_replace: "\u1021\u1010\u102d\u1000\u103b\u1006\u102f\u1036\u1038 subject-in-scene \u1021\u1005\u102c\u1038\u1011\u102d\u102f\u1038\u1019\u103e\u102f \u2014 reference scene \u1011\u1032\u1000 \u101c\u1030\u1000\u102d\u102f \u101c\u102f\u1036\u1038\u101d\u1016\u101a\u103a\u101b\u103e\u102c\u1038\u104a \u1000\u103d\u101a\u103a\u1014\u1031\u1010\u1032\u1037 \u1014\u1031\u102c\u1000\u103a\u1001\u1036\u1014\u1032\u1037 \u101b\u103e\u1031\u1037\u1001\u1036\u1000\u102d\u102f \u101e\u1018\u102c\u101d\u1000\u103b\u1000\u103b \u1015\u103c\u1014\u103a\u1010\u100a\u103a\u1006\u1031\u102c\u1000\u103a\u104a \u1015\u103c\u102e\u1038\u101b\u1004\u103a \u101e\u1004\u1037\u103a\u101c\u1030\u1000\u102d\u102f \u1021\u1032\u1012\u102e\u1014\u1031\u101b\u102c\u1019\u103e\u102c \u1021\u1010\u102d\u1021\u1000\u103b \u1011\u100a\u1037\u103a\u1015\u1031\u1038\u1010\u101a\u103a \u2014 \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u104a \u1000\u102d\u102f\u101a\u103a\u101f\u1014\u103a\u104a \u1021\u1001\u103b\u102d\u102f\u1038\u1021\u1005\u102c\u1038\u104a \u1006\u1036\u1015\u1004\u103a\u104a \u101d\u1010\u103a\u1005\u102f\u1036\u104a \u1021\u101e\u102c\u1038\u1021\u101b\u1031\u1014\u1032\u1037 \u1021\u101c\u1004\u103a\u1038\u1000 \u101e\u1004\u1037\u103a\u1015\u102f\u1036\u1000\u1014\u1031 \u101c\u1031\u102c\u1037\u1001\u103a\u1001\u103b\u1011\u102c\u1038\u1015\u103c\u102e\u1038 reference \u1000\u1010\u1031\u102c\u1037 scene\u104a \u1000\u1004\u103a\u1019\u101b\u102c\u1014\u1032\u1037 \u1021\u1014\u1000\u103a\u1000\u102d\u102f\u1015\u1032 \u1015\u1031\u1038\u1010\u101a\u103a\u104b",
+    wf_exp_subject_face: "Reference \u1011\u1032\u1000 \u101c\u1030 (\u101e\u102d\u102f\u1037) \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u1000\u102d\u102f \u101e\u1004\u1037\u103a base \u1015\u102f\u1036\u1015\u1031\u102b\u103a \u1001\u103b\u1031\u102c\u1019\u103d\u1031\u1037\u1005\u103d\u102c \u1015\u1031\u102b\u1004\u103a\u1038\u1005\u1015\u103a\u1015\u1031\u1038\u1015\u103c\u102e\u1038 base \u101b\u1032\u1037 \u1016\u103d\u1032\u1037\u1005\u100a\u103a\u1038\u1015\u102f\u1036\u1000\u102d\u102f \u1019\u1011\u102d\u1001\u102d\u102f\u1000\u103a\u1005\u1031\u1015\u102b\u104b",
+    wf_exp_retouch: "\u1021\u101e\u102c\u1038\u1021\u101b\u1031\u104a \u1006\u1036\u1015\u1004\u103a\u1014\u1032\u1037 \u1021\u101b\u1031\u102c\u1004\u103a\u1000\u102d\u102f \u101e\u1018\u102c\u101d\u1000\u103b\u1000\u103b \u1019\u103d\u1019\u103a\u1038\u1019\u1036\u1015\u1031\u1038\u1010\u101a\u103a\u104b \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u104a \u1021\u1004\u103a\u1039\u1002\u102b\u101b\u1015\u103a\u1014\u1032\u1037 \u1021\u1019\u1030\u1021\u101b\u102c\u1000 \u1021\u1010\u102d\u102f\u1004\u103a\u1038\u101b\u103e\u102d\u1014\u1031\u1019\u101a\u103a \u2014 \u1021\u101e\u102c\u1038\u1015\u101c\u1015\u103a\u1005\u1010\u1005\u103a \u1019\u1016\u103c\u1005\u103a\u104a \u1019\u103b\u1000\u103a\u1014\u103e\u102c \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u104b",
+    wf_exp_upscale: "\u1015\u102f\u1036\u1000\u102d\u102f \u1001\u103b\u1032\u1037\u1015\u1031\u1038\u101b\u1004\u103a\u1038 \u1021\u101e\u102c\u1038\u1021\u101b\u1031\u104a \u1006\u1036\u1015\u1004\u103a\u1014\u1032\u1037 \u1021\u1011\u100a\u103a\u101b\u1032\u1037 \u101e\u1018\u102c\u101d \u1021\u101e\u1031\u1038\u1005\u102d\u1010\u103a\u1000\u102d\u102f \u1015\u103c\u1014\u103a\u1016\u1031\u102c\u103a\u1015\u1031\u1038\u1010\u101a\u103a\u104b \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u104a \u1000\u102d\u102f\u101a\u103a\u101f\u1014\u103a\u104a \u1016\u103d\u1032\u1037\u1005\u100a\u103a\u1038\u1015\u102f\u1036\u1014\u1032\u1037 \u1021\u101b\u1031\u102c\u1004\u103a\u1010\u103d\u1031 \u1021\u1010\u102d\u1021\u1000\u103b \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038 \u2014 \u1015\u101c\u1015\u103a\u1005\u1010\u1005\u103a\u1006\u1014\u103a\u1010\u1032\u1037 \u1001\u103b\u1031\u102c\u1019\u103d\u1031\u1037\u1019\u103e\u102f \u1019\u101b\u103e\u102d\u104b",
+    wf_exp_object_edit: "\u1011\u102d\u1014\u103a\u1038\u1001\u103b\u102f\u1015\u103a\u1011\u102c\u1038\u1010\u1032\u1037 \u1014\u1031\u101b\u102c\u101c\u102d\u102f\u1000\u103a \u1015\u103c\u1004\u103a\u1006\u1004\u103a\u1019\u103e\u102f\u1014\u1032\u1037 \u1021\u101b\u102c\u101d\u1010\u1039\u1011\u102f\u1010\u103d\u1031\u1000\u102d\u102f \u1016\u101a\u103a\u104a \u101c\u1032 (\u101e\u102d\u102f\u1037) \u1011\u100a\u1037\u103a\u1015\u1031\u1038\u1010\u101a\u103a\u104b \u1019\u1011\u102d\u1010\u1032\u1037 \u1021\u101b\u102c\u1021\u102c\u1038\u101c\u102f\u1036\u1038 \u1021\u1010\u102d\u102f\u1004\u103a\u1038\u101b\u103e\u102d\u1014\u1031\u1019\u101a\u103a\u104b",
+    wf_exp_water_edit: "\u101b\u1031\u104a \u101b\u1031\u102c\u1004\u103a\u1015\u103c\u1014\u103a\u101f\u1015\u103a\u1019\u103e\u102f\u1014\u1032\u1037 \u1005\u102d\u102f\u1005\u103d\u1010\u103a\u1010\u1032\u1037 \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u1015\u103c\u1004\u103a\u1010\u103d\u1031\u1000\u102d\u102f \u101b\u1030\u1015\u1017\u1031\u1012\u1021\u101b \u101e\u1018\u102c\u101d\u1000\u103b\u1021\u1031\u102c\u1004\u103a \u1011\u100a\u1037\u103a/\u1015\u103c\u1004\u103a\u1015\u1031\u1038\u1015\u103c\u102e\u1038 \u101e\u1004\u1037\u103a\u101c\u1030\u1000\u102d\u102f \u1019\u1011\u102d\u1001\u102d\u102f\u1000\u103a\u1005\u1031\u1015\u102b\u104b",
+    wf_exp_text_logo: "\u1015\u102f\u1036\u1015\u1031\u102b\u103a\u1019\u103e\u102c \u101e\u1014\u1037\u103a\u101b\u103e\u1004\u103a\u1038\u1015\u103c\u102e\u1038 \u1016\u1010\u103a\u101b\u101c\u103d\u101a\u103a\u1010\u1032\u1037 \u1005\u102c\u101e\u102c\u1038 (\u101e\u102d\u102f\u1037) logo \u1000\u102d\u102f \u1011\u100a\u1037\u103a/\u1015\u103c\u1004\u103a\u1015\u1031\u1038\u1015\u103c\u102e\u1038 \u1016\u103d\u1032\u1037\u1005\u100a\u103a\u1038\u1015\u102f\u1036\u1000\u102d\u102f \u1011\u102d\u1014\u103a\u1038\u1011\u102c\u1038\u1015\u102b\u1010\u101a\u103a\u104b",
+    ai_learn_mode: "Learn Mode — GENERATE ကို နှိပ်ရင် အရင် ရှင်းပြမယ်",
+    job_needkey: "RunningHub key ကို Setup မှာ အရင်ထည့်ပါ",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
-    sec_ready: "အသင့်ဖြစ်မှု အခြေအနေ",
-    sec_acct: "အကောင့်",
     ava_change: "ပရိုဖိုင်ပုံ ပြောင်းမယ်",
     ava_remove: "ပုံဖြုတ်မယ်",
     ava_saved: "ပရိုဖိုင်ပုံ သိမ်းပြီးပါပြီ",
     ava_removed: "ပုံဖြုတ်ပြီးပါပြီ",
     ava_fail: "ပုံကို သုံးလို့မရပါ — တခြားပုံတစ်ပုံ စမ်းကြည့်ပါ",
     ava_working: "ပုံ ပြင်ဆင်နေပါတယ်…",
-    sec_money: "ကုန်ကျစရိတ်နှင့် လက်ကျန်ငွေ",
-    sec_data: "DATA သိမ်းဆည်းမှု",
-    sec_about: "APP နဲ့ UPDATE",
-    btn_get_update: "Update ကို ဒေါင်းမယ်",
-    upd_hint: "Panel ကိုယ်တိုင် ဗားရှင်းအသစ်ကို ဆွဲပေးပါတယ် — အကောင့်ဝင်ပြီးသားမို့ website ပြန်သွားစရာ မလိုတော့ပါ။ Photoshop က plugin ကို သူ့ဖာသာသူ ပြောင်းခွင့် မပေးလို့ နောက်ဆုံးအဆင့်ကတော့ အရှင်လုပ်ရပါမယ် — သိမ်းထားတဲ့ .ccx ကို နှစ်ချက်နှိပ်ပါ၊ Creative Cloud က သွင်းပေးပါလိမ့်မယ်။",
     upd_web: "Web App ဖွင့်ပေးနေပါတယ် — Panel ကို Account → Photoshop Panel မှာ ယူပါ။",
-    upd_none: "ဒါက နောက်ဆုံးဗားရှင်းပါ။",
     money_intro: "GENERATE တစ်ခါလုပ်တိုင်း RunningHub က ဖြတ်တဲ့ ငွေအမှန်ကို မှတ်ထားပါတယ် — ခန့်မှန်းချက် မဟုတ်ပါ။ လက်ကျန်ငွေကတော့ RunningHub အကောင့်ကနေ တိုက်ရိုက် ဆွဲယူတာပါ။",
     money_bal: "လက်ကျန်",
     money_refresh: "လက်ကျန်ငွေ စစ်မယ်",
     money_nokey: "RunningHub key ထည့်ပြီးမှ လက်ကျန်ငွေ စစ်လို့ရပါမယ်။",
     money_fail: "လက်ကျန်ငွေ မဆွဲယူနိုင်ပါ — အောက်က မှတ်တမ်းကတော့ မှန်နေဆဲပါ။ RunningHub ပြန်ဖြေတဲ့ အကြောင်းရင်း —",
     money_never: "မစစ်ရသေးပါ",
-    btn_export_backup: "Backup ထုတ်မယ်",
-    btn_import_backup: "Backup ပြန်သွင်းမယ်",
-    btn_check_update: "Update စစ်မယ်",
-    btn_hard_refresh: "Cache ရှင်း + ပြန်စမယ်",
     gate_sub_login: "ဒီ panel ကို သုံးရန် သင့် HNK အကောင့်နဲ့ ဝင်ပါ။",
     gate_email_ph: "အီးမေးလ်",
     gate_pass_ph: "စကားဝှက်",
@@ -1377,38 +922,11 @@ const I18N = {
     gate_service_down: "လိုင်စင် server ကို မဆက်သွယ်နိုင်ပါ — အင်တာနက် စစ်ပြီး ပြန်စစ်ရန် နှိပ်ပါ။",
     gate_no_lease: "server က panel lease မှန်မှန် မပြန်ပါ — ပြန်စစ်ရန် နှိပ်ပါ။",
     gate_sent_as: "ပို့လိုက်တာ — {E} · {N} လုံး",
-    app_title: "HNK Photoshop Ai Panel (\u1000\u103b\u1031\u102c\u1004\u103a\u1038\u101e\u102c\u1038\u1019\u103b\u102c\u1038)",
-    sec_api: "RunningHub Enterprise Key",
     btn_show: "\u1015\u103c",
-    btn_hide: "\u1016\u103d\u1000\u103a",
-    btn_test: "Test \u1005\u1005\u103a\u1019\u101a\u103a",
     btn_save: "Save \u101e\u102d\u1019\u103a\u1038\u1019\u101a\u103a",
-    st_testing: "Key \u1005\u1005\u103a\u1014\u1031\u101e\u100a\u103a",
-    st_key_ok: "\u2713 API Key \u1021\u101c\u102f\u1015\u103a\u101c\u102f\u1015\u103a\u1015\u102b\u1010\u101a\u103a",
-    st_key_bad: "API Key \u1019\u103e\u102c\u1038\u1014\u1031\u1015\u102b\u1010\u101a\u103a",
-    st_key_saved: "API Key \u101e\u102d\u1019\u103a\u1038\u1015\u103c\u102e\u1038\u1015\u102b\u1015\u103c\u102e \u2713",
     st_need_key: "RunningHub Enterprise Key \u1021\u101b\u1004\u103a\u1011\u100a\u103a\u1015\u102b",
-    sec_model: "Model \u1014\u1032\u1037 Output",
-    scope_model_note: "\u1021\u1031\u102c\u1000\u103a\u1000 Prompt tab \u101b\u1032\u1037 Generate \u1001\u101c\u102f\u1010\u103a\u1021\u1010\u103d\u1000\u103a\u1015\u102b \u2014 Create \u1014\u1032\u1037 AI Tools \u1010\u102d\u102f\u1037\u1019\u103e\u102c \u101e\u1030\u1010\u102d\u102f\u1037\u1000\u102d\u102f\u101a\u103a\u1015\u102d\u102f\u1004\u103a model setting \u101e\u102e\u1038\u1001\u103c\u102c\u1038\u1005\u102e \u101b\u103e\u102d\u1015\u102b\u1010\u101a\u103a\u104b",
-    model_auto: "Auto (\u1021\u1000\u103c\u1036\u1015\u103c\u102f)",
-    model_flash: "Flash \u2014 \u1019\u103c\u1014\u103a (2.5)",
-    model_pro: "Pro \u2014 \u1021\u101b\u100a\u103a\u1021\u101e\u103d\u1031\u1038 (3.0)",
-    lbl_ratio: "Ratio",
-    ratio_auto: "Auto ratio (Document \u1021\u1010\u102d\u102f\u1004\u103a\u1038)",
-    lbl_size: "Size",
-    lbl_quality: "\u1021\u101b\u100a\u103a\u1021\u101e\u103d\u1031\u1038",
     qual_auto: "\u1021\u1031\u102c\u103a\u1010\u102d\u102f",
-    qual_low: "\u1014\u102d\u1019\u1037\u103a",
-    qual_med: "\u1021\u101c\u101a\u103a",
-    qual_high: "\u1019\u103c\u1004\u1037\u103a",
-    sec_prompt: "Prompt",
-    hint_prompt: "Prompt \u1000\u102d\u102f \u1012\u102e\u1019\u103e\u102c\u101b\u1031\u1038\u1015\u102b\u2026 (\u1005\u102c\u101c\u102f\u1036\u1038 \u1042\u1040,\u1040\u1040\u1040 \u1021\u1011\u102d)",
-    btn_improve: "Prompt \u1010\u102d\u102f\u1038\u1010\u1000\u103a\u1021\u1031\u102c\u1004\u103a\u101c\u102f\u1015\u103a",
     btn_clear: "\u1016\u103b\u1000\u103a",
-    st_improving: "Prompt \u1010\u102d\u102f\u1038\u1010\u1000\u103a\u1021\u1031\u102c\u1004\u103a\u101c\u102f\u1015\u103a\u1014\u1031\u101e\u100a\u103a",
-    st_improved: "Prompt \u1010\u102d\u102f\u1038\u1010\u1000\u103a\u1015\u103c\u102e\u1038\u1015\u102b\u1015\u103c\u102e \u2713",
-    sec_refs: "Reference \u1015\u102f\u1036\u1019\u103b\u102c\u1038 (2 slots)",
-    base_note: "Base \u1015\u102f\u1036 = \u1016\u103d\u1004\u103a\u1037\u1011\u102c\u1038\u1010\u1032\u1037 Photoshop document (\u1021\u101c\u102d\u102f\u1021\u101c\u103b\u1031\u102c\u1000\u103a \u1016\u1019\u103a\u1038\u101a\u1030\u1019\u101a\u103a)\u104b",
     btn_ref_layer: "+ Layer",
     btn_ref_file: "\u1016\u102d\u102f\u1004\u103a",
     btn_ref_web: "Web",
@@ -1416,9 +934,7 @@ const I18N = {
     st_photo_layer_added: "Layer ကို ပုံအဖြစ် ထည့်ပြီ ✓",
     st_ref_file_added: "File \u1000\u102d\u102f reference \u1021\u1016\u103c\u1005\u103a\u1011\u100a\u103a\u1015\u103c\u102e\u1038 \u2713",
     st_importing: "File \u1016\u103d\u1004\u103a\u1037\u1014\u1031\u101e\u100a\u103a",
-    url_title: "URL \u1000\u1014\u1031 Reference \u2014 Chrome / Pinterest",
     url_ph: "https://\u2026 \u1015\u102f\u1036\u101c\u102d\u1015\u103a\u1005\u102c \u101e\u102d\u102f\u1037 Pinterest pin link",
-    btn_paste: "Paste",
     btn_load: "\u101a\u1030\u1019\u101a\u103a",
     btn_cancel: "\u1019\u101c\u102f\u1015\u103a\u1010\u1031\u102c\u1037",
     btn_ok: "အိုကေ",
@@ -1427,178 +943,22 @@ const I18N = {
     st_ref_web_added: "Web \u1015\u102f\u1036\u1000\u102d\u102f reference \u1021\u1016\u103c\u1005\u103a\u1011\u100a\u103a\u1015\u103c\u102e\u1038 \u2713",
     st_url_bad: "\u1012\u102e URL \u1000\u1014\u1031 \u1015\u102f\u1036\u1019\u101b\u1015\u102b \u2014 \u1015\u102f\u1036\u1015\u1031\u102b\u103a Copy image address \u1014\u1032\u1037 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     no_layer: "Layer \u101b\u103d\u1031\u1038\u1011\u102c\u1038\u1001\u103c\u1004\u103a\u1038\u1019\u101b\u103e\u102d\u1015\u102b",
-    sec_presets: "AI Presets",
-    auto_run: "Preset \u1014\u103e\u102d\u1015\u103a\u101b\u1004\u103a \u1001\u103b\u1000\u103a\u1001\u103b\u1004\u103a\u1038 Generate (OFF = prompt \u1011\u1032\u1011\u100a\u103a\u101b\u102f\u1036)",
-    grp_cleanup: "\u101b\u103e\u1004\u103a\u1038\u101c\u1004\u103a\u1038\u101b\u1031\u1038 Tools",
-    p_remove_people: "\u101c\u1030\u1016\u103b\u1031\u102c\u1000\u103a",
-    p_fix_hands: "\u101c\u1000\u103a\u1021\u1015\u102d\u102f \u1015\u103c\u1004\u103a",
-    p_fix_legs: "\u1001\u103c\u1031\u1021\u1015\u102d\u102f \u1015\u103c\u1004\u103a",
-    p_full_clean: "\u1021\u1000\u102f\u1014\u101b\u103e\u1004\u103a\u1038 (Full Cleanup)",
-    grp_moved_note: "Reference tools \u1010\u103d\u1031 \u1021\u1001\u102f \u1021\u1031\u102c\u1000\u103a\u1000 Reference Ops Pro card \u1011\u1032 (\u1010\u1005\u103a\u1014\u1031\u101b\u102c\u1010\u100a\u103a\u1038 \u00b7 Solo/Couple/Family + guide)\u104b",
-    ro_h_detail: "\u1006\u1036\u1015\u1004\u103a \u00b7 Accessories \u00b7 Pose (\u2190 Ref1)",
-    ro_h_comp: "Composite \u00b7 Style \u00b7 Text (\u2190 Ref1)",
-    p_fgbglc: "FG=Doc \u00b7 BG=Ref1 \u00b7 Light=Ref2",
-    p_hair: "\u1006\u1036\u1015\u1004\u103a\u1015\u102f\u1036\u1005\u1036 (\u2190 Ref1)",
-    p_access: "\u101c\u1000\u103a\u101d\u1010\u103a Accessories (\u2190 Ref1)",
-    p_pose: "Pose Match (Doc \u2192 Ref1)",
-    p_fgprops: "\u101b\u103e\u1031\u1037\u1001\u1036 Props (\u2190 Ref1)",
-    p_textlogo: "\u1005\u102c\u101e\u102c\u1038 / Logo (\u2190 Ref1)",
-    p_style: "\u1013\u102c\u1010\u103a\u1015\u102f\u1036 Style (\u2190 Ref1)",
-    grp_repsubj: "Replace Subject (Doc \u2192 Ref1 scene)",
-    p_rep_solo: "Replace Solo (\u1010\u1005\u103a\u101a\u1031\u102c\u1000\u103a)",
-    p_rep_couple: "Replace Couple (\u1005\u102f\u1036\u1010\u103d\u1032)",
-    p_rep_family: "Replace Family (\u1019\u102d\u101e\u102c\u1038\u1005\u102f)",
-    grp_rmix: "Replace Mix \u2014 Ref1 \u1000\u1014\u1031 \u2713 \u101b\u103d\u1031\u1038\u101a\u1030",
-    rm_bg: "\u1014\u1031\u102c\u1000\u103a\u1001\u1036 (BG)",
-    rm_fg: "\u101b\u103e\u1031\u1037\u1001\u1036 (FG)",
-    rm_light: "\u1021\u101c\u1004\u103a\u1038 (Lighting)",
-    rm_color: "\u1021\u101b\u1031\u102c\u1004\u103a (Colour)",
-    rm_object: "\u1015\u1005\u1039\u1005\u100a\u103a\u1038 (Objects)",
-    btn_rmix: "REPLACE GENERATE",
-    rm_none: "\u1021\u1019\u103e\u1014\u103a\u1001\u103c\u1005\u103a \u1010\u1005\u103a\u1001\u102f\u1021\u101b\u1004\u103a\u101b\u103d\u1031\u1038\u1015\u102b",
-    grp_i2p: "Image \u2192 Prompt (Scene Builder)",
-    i2p_note: "\u1041) Extract: Ref1 scene \u1000\u102d\u102f prompt \u1021\u101e\u1031\u1038\u1005\u102d\u1010\u103a\u1015\u103c\u1031\u102c\u1004\u103a\u1038 (\u101c\u1030\u1019\u1015\u102b)\u104b \u1042) Prompt page \u1019\u103e\u102c \u1015\u103c\u1004\u103a\u104b \u1043) SCENE GENERATE \u1000 document \u101b\u1032\u1037 \u101b\u103e\u102f\u1011\u1031\u102c\u1004\u1037\u103a/lens \u1021\u101c\u102d\u102f\u1000\u103a auto \u100a\u103e\u102d\u1015\u103c\u102e\u1038 \u1006\u1031\u102c\u1000\u103a\u1019\u101a\u103a\u104b Face/Pose/Frame lock = Keep Original\u104b",
-    i2p_objects: "\u1015\u1005\u1039\u1005\u100a\u103a\u1038 Objects \u1021\u101e\u1031\u1038\u1005\u102d\u1010\u103a",
-    i2p_light: "\u1021\u101c\u1004\u103a\u1038 \u1021\u101e\u1031\u1038\u1005\u102d\u1010\u103a",
-    i2p_color: "\u1000\u102c\u101c\u102c / Grade",
-    i2p_bg: "\u1014\u1031\u102c\u1000\u103a\u1001\u1036 \u1021\u101e\u1031\u1038\u1005\u102d\u1010\u103a",
-    i2p_fg: "\u101b\u103e\u1031\u1037\u1001\u1036 \u1021\u101e\u1031\u1038\u1005\u102d\u1010\u103a",
-    btn_i2p: "Image \u2192 Prompt (Scene \u1011\u102f\u1010\u103a\u101a\u1030)",
-    i2p_fit: "Scene Auto-Fit \u2014 \u101b\u103e\u102f\u1011\u1031\u102c\u1004\u1037\u103a/\u1021\u1014\u102e\u1038\u1021\u101d\u1031\u1038/lens \u1021\u101c\u102d\u102f\u1000\u103a auto \u100a\u103e\u102d",
-    i2p_adapt: "Subject \u1000\u102d\u102f scene \u101b\u1032\u1037 \u1021\u101c\u1004\u103a\u1038/\u1021\u101b\u1031\u102c\u1004\u103a \u101c\u102d\u102f\u1000\u103a\u1015\u103c\u1031\u102c\u1004\u103a\u1038",
-    btn_scenegen: "SCENE GENERATE",
-    st_extract: "Scene \u1000\u102d\u102f prompt \u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1014\u1031\u101e\u100a\u103a",
-    st_extract_done: "Scene prompt \u101b\u1015\u103c\u102e \u2014 Prompt page \u1019\u103e\u102c \u1015\u103c\u1004\u103a\u101c\u102d\u102f\u1037\u101b",
-    scene_no_prompt: "Prompt box \u1017\u101c\u102c \u2014 Image \u2192 Prompt \u1021\u101b\u1004\u103a\u101c\u102f\u1015\u103a\u1015\u102b",
-    i2p_none: "\u1021\u101e\u1031\u1038\u1005\u102d\u1010\u103a \u1021\u1019\u103e\u1014\u103a\u1001\u103c\u1005\u103a \u1010\u1005\u103a\u1001\u102f\u1021\u101b\u1004\u103a\u101b\u103d\u1031\u1038\u1015\u102b",
-    sec_light: "Studio Lighting \u2014 AI Relight",
-    light_note: "\u1019\u102e\u1038\u1010\u103d\u1031\u1000\u102d\u102f \u2713 \u1016\u103d\u1004\u1037\u103a\u1015\u103c\u102e\u1038 row \u1000\u102d\u102f\u1014\u103e\u102d\u1015\u103a\u101b\u103d\u1031\u1038\u1000\u102c slider \u1014\u1032\u1037\u1001\u103b\u102d\u1014\u103a \u2014 3D top-view diagram \u1000 \u1010\u102d\u102f\u1000\u103a\u101b\u102d\u102f\u1000\u103a\u101c\u102d\u102f\u1000\u103a\u1015\u103c\u1031\u102c\u1004\u103a\u1038 (\u25b4 = \u1021\u1019\u103c\u1004\u1037\u103a, \u25be = \u1021\u1014\u102d\u1019\u1037\u103a)\u104b LIGHTING GENERATE \u1014\u103e\u102d\u1015\u103a\u101b\u1004\u103a \u1001\u103b\u102d\u1014\u103a\u1011\u102c\u1038\u1010\u1032\u1037 setup \u1021\u1010\u102d\u102f\u1004\u103a\u1038 \u1000\u103d\u1000\u103a\u1010\u102d \u1019\u102e\u1038\u1011\u100a\u1037\u103a\u1019\u101a\u103a \u2014 \u1019\u103b\u1000\u103a\u1014\u103e\u102c/pose/frame \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u104b",
-    lbl_my_prompt: "\u1019\u103c\u1014\u103a\u1019\u102c Prompt",
-    lstage_model: "\u1019\u1031\u102c\u103a\u1012\u101a\u103a",
-    lstage_cam: "\u1000\u1004\u103a\u1019\u101b\u102c",
-    l_key: "Key Light (\u1021\u1013\u102d\u1000)",
-    l_fill: "Fill / \u101b\u103e\u1031\u1037\u1010\u100a\u1037\u103a",
-    l_butterfly: "Butterfly (\u1021\u1015\u1031\u102b\u103a\u1005\u102e\u1038)",
-    l_side: "Side Light (\u1018\u1031\u1038)",
-    l_rim: "Rim Light",
-    l_back: "Back Light (\u1014\u1031\u102c\u1000\u103a)",
-    l_hair: "Hair Light (\u1006\u1036\u1015\u1004\u103a)",
-    l_bglight: "BG Light (\u1014\u1031\u102c\u1000\u103a\u1001\u1036\u1011\u102d\u102f\u1038)",
-    lt_softbox: "Softbox",
-    lt_octa: "Octa",
-    lt_strip: "Strip",
-    lt_umbrella: "Umbrella",
-    lt_beauty: "Beauty",
-    lt_hard: "Hard",
-    li_int: "\u1021\u102c\u1038",
-    li_angle: "\u101b\u103e\u102f\u1011\u1031\u102c\u1004\u1037\u103a",
-    li_height: "\u1021\u1014\u102d\u1019\u1037\u103a\u1021\u1019\u103c\u1004\u1037\u103a",
-    li_dist: "\u1021\u1014\u102e\u1038\u1021\u101d\u1031\u1038",
-    li_size: "Size",
-    btn_lightgen: "LIGHTING GENERATE",
-    light_none: "\u1019\u102e\u1038 \u1010\u1005\u103a\u101c\u102f\u1036\u1038\u1021\u101b\u1004\u103a \u2713 \u1016\u103d\u1004\u1037\u103a\u1015\u102b",
-    lg_equip: "\u1019\u102e\u1038/softbox \u1015\u1005\u1039\u1005\u100a\u103a\u1038\u1010\u103d\u1031 \u1015\u102f\u1036\u1011\u1032\u1019\u103e\u102c \u1015\u102b\u1015\u103c\u1019\u101a\u103a",
-    grp_chains: "Style Chains \u2014 \u2713 \u1010\u103d\u1032\u101e\u102f\u1036\u1038",
-    chains_note: "\u1000\u103c\u102d\u102f\u1000\u103a\u1010\u1032\u1037 style \u1010\u103d\u1031 \u2713 \u1016\u103d\u1004\u1037\u103a \u2014 Generate / Preset / Retouch \u1010\u102d\u102f\u1004\u103a\u1038\u1019\u103e\u102c \u1021\u101c\u102d\u102f\u1015\u1031\u102b\u1004\u103a\u1038\u1015\u102b\u101e\u103d\u102c\u1038\u1019\u101a\u103a\u104b",
-    grp_restore: "\u1013\u102c\u1010\u103a\u1015\u102f\u1036\u1021\u101f\u1031\u102c\u1004\u103a\u1038 Restore",
-    p_restore: "\u1015\u102f\u1036\u101f\u1031\u102c\u1004\u103a\u1038 \u1015\u103c\u1014\u103a\u1015\u103c\u1004\u103a",
-    rest_color: "\u1000\u102c\u101c\u102c\u1005\u102f\u1036 (Full Color)",
-    rest_bw: "\u1021\u1016\u103c\u1030\u1021\u1019\u1032 (B&W)",
-    restore_note: "\u1005\u102f\u1010\u103a\u1015\u103c\u1032/\u101b\u1031\u1005\u102d\u102f/\u1019\u102e\u1038\u101c\u1031\u102c\u1004\u103a/\u1019\u103e\u102d\u1014\u103a\u1038\u1010\u102c\u1010\u103d\u1031 \u1015\u103c\u1014\u103a\u1015\u103c\u1004\u103a \u2014 \u1019\u1030\u101c\u1019\u103b\u1000\u103a\u1014\u103e\u102c \u1021\u1010\u102d\u1021\u1000\u103b \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u104b",
-    rt_browstyle: "\u1019\u103b\u1000\u103a\u1001\u102f\u1036\u1038 Style",
-    rt_lashstyle: "\u1019\u103b\u1000\u103a\u1010\u1031\u102c\u1004\u103a Style",
-    rt_blush: "\u1015\u102b\u1038\u1014\u102e \u1021\u101b\u1031\u102c\u1004\u103a",
-    rt_contour: "Contour Style",
-    rt_bust: "\u101b\u1004\u103a",
-    rt_butt: "\u1010\u1004\u103a",
-    rt_thigh: "\u1015\u1031\u102b\u1004\u103a",
-    rt_calf: "\u1001\u103c\u1031\u101e\u101c\u102f\u1036\u1038",
-    rt_neck: "\u101c\u100a\u103a\u1015\u1004\u103a\u1038",
-    rt_fingers: "\u101c\u1000\u103a\u1001\u103b\u1031\u102c\u1004\u103a\u1038",
-    hint_prompt_my: "\u1019\u103c\u1014\u103a\u1019\u102c\u101c\u102d\u102f \u101b\u1031\u1038\u1015\u102b \u2014 Generate \u1019\u103e\u102c English \u1021\u101c\u102d\u102f\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1015\u1031\u1038\u1019\u101a\u103a (\u1021\u1019\u103b\u102c\u1038\u1006\u102f\u1036\u1038 20,000)",
-    st_translate: "\u1019\u103c\u1014\u103a\u1019\u102c prompt \u1000\u102d\u102f English \u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1014\u1031\u101e\u100a\u103a",
-    live_trans: "Live \u21c4 \u1021\u101c\u102d\u102f\u1018\u102c\u101e\u102c\u1015\u103c\u1014\u103a (EN \u2194 MY \u2014 \u101b\u1031\u1038\u101b\u1015\u103a\u1010\u102c\u1014\u1032\u1037)",
-    st_retry: "\u1015\u103c\u1014\u103a\u1000\u103c\u102d\u102f\u1038\u1005\u102c\u1038\u1014\u1031\u101e\u100a\u103a",
-    grp_recipes: "Recipes \u2014 setting \u101e\u102d\u1019\u103a\u1038/\u1019\u103b\u103e\u1038\u101d\u1031",
-    recipe_note: "Chains + Retouch + Lights + Keep + Prompt \u1021\u102c\u1038\u101c\u102f\u1036\u1038\u1000\u102d\u102f .json \u1010\u1005\u103a\u1016\u102d\u102f\u1004\u103a\u1010\u100a\u103a\u1038\u101e\u102d\u1019\u103a\u1038 \u2014 \u101e\u1004\u103a\u1010\u1014\u103a\u1038\u101e\u102c\u1038\u1010\u103d\u1031 Load \u1015\u1032\u101c\u102f\u1015\u103a\u101b\u102f\u1036\u104b",
-    btn_recipe_save: "Recipe \u101e\u102d\u1019\u103a\u1038\u1019\u101a\u103a",
-    btn_recipe_load: "Recipe \u1016\u103d\u1004\u1037\u103a\u1019\u101a\u103a",
-    st_recipe_saved: "Recipe \u101e\u102d\u1019\u103a\u1038\u1015\u103c\u102e\u1038 \u2713",
-    st_recipe_loaded: "Recipe \u1016\u103d\u1004\u1037\u103a\u1015\u103c\u102e\u1038 \u2713 \u2014 control \u1021\u102c\u1038\u101c\u102f\u1036\u1038 update",
-    st_recipe_bad: "HNK recipe \u1016\u102d\u102f\u1004\u103a \u1019\u101f\u102f\u1010\u103a\u1015\u102b",
-    sec_final: "Final Prompt (AI \u1006\u102e \u1015\u102d\u102f\u1037\u1010\u1032\u1037\u1021\u1010\u102d\u102f\u1004\u103a\u1038)",
-    btn_copy: "Copy",
-    st_copied: "Copy \u1015\u103c\u102e\u1038 \u2713",
-    hist_note: "History \u2014 \u1014\u1031\u102c\u1000\u103a\u1006\u102f\u1036\u1038 \u1046 \u1015\u102f\u1036\u104a \u1014\u103e\u102d\u1015\u103a\u1000\u103c\u100a\u1037\u103a:",
-    btn_hist_prompt: "\u2192 Prompt",
-    sec_batch: "Batch Mode",
-    batch_note: "\u1015\u102f\u1036\u1021\u1019\u103b\u102c\u1038\u101b\u103d\u1031\u1038 + output folder \u101b\u103d\u1031\u1038 \u2014 \u101c\u1000\u103a\u101b\u103e\u102d prompt/chains/cleanup/Keep \u1010\u103d\u1031\u1014\u1032\u1037 \u1015\u102f\u1036\u1010\u102d\u102f\u1004\u103a\u1038 auto \u1015\u103c\u1031\u1038\u1015\u103c\u102e\u1038 *_HNK.png \u1014\u1032\u1037\u101e\u102d\u1019\u103a\u1038\u1019\u101a\u103a\u104b",
-    btn_batch: "RUN BATCH",
-    btn_batch_stop: "\u101b\u1015\u103a\u1019\u101a\u103a",
-    st_batch: "Batch",
-    st_batch_done: "Batch \u1015\u103c\u102e\u1038\u1015\u102b\u1015\u103c\u102e",
-    sec_web: "Web AI \u2014 \u1019\u102e\u1014\u102e Browser",
-    web_note: "Web AI editor \u1010\u103d\u1031\u1000\u102d\u102f Photoshop \u1011\u1032\u1000\u1014\u1031 \u1016\u103d\u1004\u1037\u103a\u101e\u102f\u1036\u1038 \u2014 \u101f\u102d\u102f\u1019\u103e\u102c Generate \u101c\u102f\u1015\u103a\u1015\u103c\u102e\u1038 \u101b\u101c\u1012\u103a\u1000\u102d\u102f layer \u1021\u1016\u103c\u1005\u103a \u1010\u1004\u103a\u1015\u102b:",
-    web_import_note: "Import \u1014\u100a\u103a\u1038: \u2460 web app \u1011\u1032 \u1015\u102f\u1036\u1015\u1031\u102b\u103a right-click \u2192 Copy image address \u1015\u103c\u102e\u1038 IMPORT COPIED LINK \u00b7 \u2461 \u1012\u102b\u1019\u103e\u1019\u101f\u102f\u1010\u103a file download \u101c\u102f\u1015\u103a\u1015\u103c\u102e\u1038 IMPORT FILE \u00b7 \u2462 HNK bridge \u1015\u102b\u1010\u1032\u1037 web app \u1006\u102d\u102f auto \u101d\u1004\u103a\u101c\u102c\u1019\u101a\u103a\u104b",
-    btn_web_go: "Go",
-    btn_web_home: "Home",
-    btn_web_reload: "Reload",
-    btn_web_import_link: "\u1000\u1030\u1038\u1011\u102c\u1038\u1010\u1032\u1037 Link \u2192 PS",
-    btn_web_import_file: "File \u2192 PS",
     st_web_import: "Photoshop \u1011\u1032 layer \u1021\u1016\u103c\u1005\u103a \u101d\u1004\u103a\u1015\u103c\u102e\u1038 \u2713",
-    st_web_nourl: "Image link \u1021\u101b\u1004\u103a copy \u101c\u102f\u1015\u103a\u1015\u102b (right-click \u2192 Copy image address)",
-    st_web_fetch: "Link \u1000\u1014\u1031 \u1015\u102f\u1036\u1006\u103d\u1032\u1014\u1031\u101e\u100a\u103a",
-    st_web_notallowed: "\u1012\u102e domain \u1000 allow-list \u1011\u1032\u1019\u1015\u102b\u101e\u1031\u1038 \u2014 \u1021\u101c\u103d\u1010\u103a\u1016\u103c\u1005\u103a\u1014\u102d\u102f\u1004\u103a\u104a HNK \u1006\u102e \u1015\u103c\u1031\u102c\u1015\u102b\u104b",
-    st_need_doc: "Photoshop \u1011\u1032 \u1013\u102c\u1010\u103a\u1015\u102f\u1036 document \u1021\u101b\u1004\u103a\u1016\u103d\u1004\u1037\u103a\u1015\u102b",
-    sec_campro: "Camera Pro & Quality",
-    autosave_lbl: "\u101b\u101c\u1012\u103a\u1010\u102d\u102f\u1004\u103a\u1038 Auto-Export (PNG + prompt log \u2192 folder)",
     st_folder_ok: "Export folder \u101b\u103d\u1031\u1038\u1015\u103c\u102e\u1038 \u2713",
     st_exported: "Export \u1015\u103c\u102e\u1038 \u2713",
     st_export_fail: "Export \u1019\u1021\u1031\u102c\u1004\u103a \u2014 folder \u1005\u1005\u103a\u1015\u102b",
-    st_pro_fallback: "Pro model \u1019\u101b \u2014 \u1012\u102e\u1010\u1005\u103a\u1000\u103c\u102d\u1019\u103a Flash \u1014\u1032\u1037\u1015\u103c\u1031\u1038\u1019\u101a\u103a",
     st_img_bad: "\u1015\u102f\u1036 data \u1005\u1005\u103a\u1006\u1031\u1038\u1019\u1021\u1031\u102c\u1004\u103a \u2014 \u1015\u102f\u1036\u1000\u102d\u102f \u1015\u103c\u1014\u103a\u1011\u100a\u1037\u103a\u1015\u102b",
     st_auto_comp: "Auto Composite: \u1015\u1004\u103a\u1010\u102d\u102f\u1004\u103a (IMAGE 1) \u2192 reference scene \u1011\u1032\u101e\u103d\u1004\u103a\u1038\u1014\u1031\u101e\u100a\u103a",
-    prov_lbl: "AI \u101d\u1014\u103a\u1006\u1031\u102c\u1004\u103a\u1019\u103e\u102f\u1015\u1031\u1038\u101e\u1030",
-    tab_create: "Create",
-    create_note: "CREATE MODE \u2014 prompt (+ \u1000\u102d\u102f\u101a\u103a\u1015\u102d\u102f\u1004\u103a ref 4 \u1000\u103d\u1000\u103a) \u1014\u1032\u1037 \u1015\u102f\u1036\u1021\u101e\u1005\u103a\u1016\u1014\u103a\u1010\u102e\u1038\u1019\u101a\u103a\u104b Document \u1000\u102d\u102f \u101c\u102f\u1036\u1038\u101d\u1019\u1016\u1010\u103a \u2014 \u1018\u102c feature \u1014\u1032\u1037\u1019\u103e \u1019\u101b\u1031\u102c\u104b",
     create_ph: "\u1018\u101a\u103a\u101c\u102d\u102f \u1015\u102f\u1036\u1019\u103b\u102d\u102f\u1038 \u101c\u102d\u102f\u1001\u103b\u1004\u103a\u101c\u1032 \u1016\u1031\u102c\u103a\u1015\u103c\u1015\u102b \u2014 \u1025\u1015\u1019\u102c: a photorealistic portrait of a woman in a red dress standing in a garden at golden hour\u2026",
     btn_create_ps: "\u2b07 Photoshop \u1011\u1032\u1015\u102d\u102f\u1037",
     btn_to_ref: "\u21ba Ref 1 \u1021\u1016\u103c\u1005\u103a\u101e\u102f\u1036\u1038",
     st_to_ref: "\u101b\u101c\u1012\u103a\u1000\u102d\u102f Ref 1 \u1011\u1032\u1011\u100a\u1037\u103a\u1015\u103c\u102e\u1038 \u2713",
-    scope_create_note: "Setup \u101b\u1032\u1037 Model & Output \u1014\u1032\u1037 \u1019\u1006\u102d\u102f\u1004\u103a\u1015\u102b \u2014 \u1012\u102e setting \u1010\u103d\u1031\u1000 Create \u101b\u1032\u1037 Generate \u1021\u1010\u103d\u1000\u103a\u1015\u1032 \u1021\u1000\u103b\u102f\u1036\u1038\u101d\u1004\u103a\u1015\u102b\u1010\u101a\u103a\u104b",
-    cr_ratio: "Ratio",
-    cr_var: "\u1021\u101c\u102f\u1015\u103a\u1021\u1019\u103b\u102d\u102f\u1038\u1019\u103b\u102d\u102f\u1038",
     cr_restyle: "\u267b \u101b\u101c\u1012\u103a\u1000\u102d\u102f Restyle",
-    cr_lib: "Prompt Library \u2014 \u1014\u103e\u102d\u1015\u103a\u1011\u100a\u1037\u103a",
-    cr_improve: "\u2728 \u1010\u102d\u102f\u1038\u1010\u1000\u103a",
-    cr_describe: "\ud83d\udd0d Ref 1 \u2192 Prompt \u1016\u1010\u103a",
-    st_describing: "Reference \u1016\u1010\u103a\u1014\u1031\u101e\u100a\u103a\u2026",
-    st_described: "Ref 1 \u1019\u103e prompt \u101b\u1015\u103c\u102e \u2713",
-    st_need_ref1: "Ref 1 \u1011\u1032 \u1015\u102f\u1036\u1021\u101b\u1004\u103a\u1011\u100a\u1037\u103a\u1015\u102b",
-    st_lib_added: "Prompt \u1011\u100a\u1037\u103a\u1015\u103c\u102e\u1038 \u2713",
-    cr_refs: "Reference \u1015\u102f\u1036\u1019\u103b\u102c\u1038 (\u1021\u1019\u103b\u102c\u1038\u1006\u102f\u1036\u1038 4)",
-    cr_refs_note: "\u1019\u1016\u103c\u1005\u103a\u1019\u1014\u1031 \u2014 Layer / File / Web \u1016\u103c\u1004\u1037\u103a \u1011\u100a\u1037\u103a\u104b Prompt \u1010\u1031\u102c\u1004\u103a\u1038\u1006\u102d\u102f\u1010\u102c\u1015\u1032 \u101a\u1030\u1015\u102b\u1010\u101a\u103a\u104b",
-    cr_results: "\u101b\u101c\u1012\u103a\u1019\u103b\u102c\u1038",
     cr_gal_empty: "\u101b\u101c\u1012\u103a\u1019\u101b\u103e\u102d\u101e\u1031\u1038\u1015\u102b \u2014 Generate \u1014\u103e\u102d\u1015\u103a\u1015\u102b\u104b",
     cr_gal_have: "\u1001\u102f \u101b\u101c\u1012\u103a \u00b7 thumbnail \u1014\u103e\u102d\u1015\u103a\u1015\u103c\u102e\u1038 \u1000\u103c\u100a\u1037\u103a/\u1021\u101e\u102f\u1036\u1038\u1015\u103c\u102f\u1015\u102b",
     cr_save: "\u2b07 PNG \u101e\u102d\u1019\u103a\u1038",
-    cr_engine: "Engine",
     cr_need_result: "\u1021\u101b\u1004\u103a \u1015\u102f\u1036\u1010\u1005\u103a\u1015\u102f\u1036 Generate \u101c\u102f\u1015\u103a\u1015\u102b",
-    btn_web_import_url: "\u2b07 Import URL",
-    st_clip_help: "Clipboard \u1017\u101c\u102c/\u1015\u102d\u1010\u103a\u1011\u102c\u1038 \u2014 link \u1000\u102d\u102f URL bar \u1011\u1032 paste \u1015\u103c\u102e\u1038 \u2b07 Import URL \u1014\u103e\u102d\u1015\u103a\u1015\u102b",
-    st_web_blob: "blob: \u101a\u102c\u101a\u102e link \u1016\u103c\u1005\u103a\u1014\u1031 \u2014 \u1015\u102f\u1036\u1015\u1031\u102b\u103a right-click \u2192 Copy IMAGE Address \u101e\u102d\u102f\u1037 \u1015\u102f\u1036\u101e\u102d\u1019\u103a\u1038\u1015\u103c\u102e\u1038 Import File \u101e\u102f\u1036\u1038\u1015\u102b",
-    err_key: "API key \u1019\u103e\u102c\u1038 \u2014 Setup tab \u1019\u103e\u102c key \u1015\u103c\u1014\u103a\u1005\u1005\u103a\u1015\u102b",
-    err_quota: "Quota/\u1014\u103e\u102f\u1014\u103a\u1038\u1000\u1014\u1037\u103a\u1015\u103c\u100a\u1037\u103a \u2014 \u1001\u100f\u1014\u1031\u1015\u103c\u102e\u1038 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    err_big: "\u1015\u102f\u1036 API \u1021\u1010\u103d\u1000\u103a \u1000\u103c\u102e\u1038\u101c\u103d\u1014\u103a\u1038 \u2014 \u1001\u103b\u102f\u1036\u1037\u1015\u103c\u102e\u1038 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    err_safety: "Safety filter \u1004\u103c\u1004\u103a\u1038 \u2014 prompt (\u101e\u102d\u102f\u1037) \u1015\u102f\u1036 \u1015\u103c\u1004\u103a\u1015\u103c\u102e\u1038 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    err_net: "\u1000\u103d\u1014\u103a\u101b\u1000\u103a/\u1006\u102c\u1017\u102c \u1015\u103c\u1005\u1014\u102c \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
-    rh_err_network: "RunningHub Enterprise ကို မရောက်ပါ — အင်တာနက် ပြတ်နေပါတယ်။ ချိတ်ဆက်မှုကို စစ်ပြီး ပြန်ကြိုးစားပါ။",
-    rh_err_task_failed: "RunningHub task မအောင်မြင်ပါ — prompt ပြောင်းပြီး ပြန်စမ်းပါ",
-    rh_err_host_blocked: "Photoshop က ဒီ host ကို ခွင့်မပြုပါ — panel manifest ထဲ မပါလို့ပါ။ Panel အသစ်ဆုံး ထည့်ပါ။",
-    rh_err_timeout: "ပုံထုတ်တာ ကြာလွန်းပါတယ် — RunningHub က အချိန်မီ မဖြေပါ။ ပြန်ကြိုးစားပါ (သို့) အရွယ်အစား / အရေအတွက် လျှော့ပါ။",
-    rh_err_rate_limited: "RunningHub Enterprise အလုပ်များနေပါတယ် — ခဏစောင့်ပြီး ပြန်ကြိုးစားပါ။",
-    rh_err_invalid_key: "RunningHub က key ကို လက်မခံပါ — Setup ▸ RunningHub Enterprise မှာ key ပြန်စစ်ပါ။",
     /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
     wf_scene_presets: "Library ထဲက Scene Preset — တစ်ချက်နှိပ်ရုံ",
     wf_scene_loading: "Scene ယူနေသည်…",
@@ -1612,114 +972,20 @@ const I18N = {
     wf_press_prepare: "ဒီ workflow ကို ဖွင့်ပြီး ပုံတွေ စစ်ဖို့ ပြင်ဆင် ခလုတ် နှိပ်ပါ။",
     wf_opts: "Model \u00b7 Ratio \u00b7 \u1021\u101b\u1031\u1021\u1010\u103d\u1000\u103a \u00b7 Size",
     wf_model_auto: "Auto \u2014 workflow \u101b\u1032\u1037 \u101b\u103d\u1031\u1038\u1001\u103b\u101a\u103a\u1019\u103e\u102f",
-    err_timeout: "\u1021\u1001\u103b\u102d\u1014\u103a\u1015\u103c\u100a\u1037\u103a\u101e\u103d\u102c\u1038\u1015\u103c\u102e \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    err_generic: "\u1010\u1031\u102c\u1004\u103a\u1038\u1006\u102d\u102f\u1019\u103e\u102f \u1019\u1015\u103c\u102e\u1038\u1006\u102f\u1036\u1038\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    err_img: "\u1021\u101e\u102f\u1036\u1038\u101d\u1004\u103a\u1010\u1032\u1037 \u1015\u102f\u1036 \u1019\u101b\u101b\u103e\u102d\u1015\u102b \u2014 \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    err_mode: "\u1012\u102e document \u1000 RGB \u1019\u101f\u102f\u1010\u103a\u1015\u102b \u2014 Image \u25b8 Mode \u25b8 RGB Color \u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1015\u103c\u102e\u1038\u1019\u103e \u1015\u103c\u1014\u103a\u1005\u1019\u103a\u1038\u1015\u102b",
-    cam_master: "Camera block \u1016\u103d\u1004\u1037\u103a \u2014 prompt \u1010\u102d\u102f\u1004\u103a\u1038\u101b\u1032\u1037 \u1014\u1031\u102c\u1000\u103a\u1006\u102f\u1036\u1038\u1019\u103e\u102c \u1011\u100a\u1037\u103a\u1019\u101a\u103a",
-    cam_body: "Camera Body",
-    cam_lens: "Prime \u1019\u103e\u1014\u103a\u1018\u102e\u101c\u1030\u1038 (mm)",
-    cam_f: "Aperture (F)",
-    cam_film: "Film \u1021\u101e\u103d\u1004\u103a",
-    cam_bokeh: "Bokeh Style",
-    cam_iso: "ISO",
-    cam_k: "WB Kelvin",
-    cam_note: "Block \u1016\u103d\u1004\u1037\u103a\u1015\u103c\u102e\u1038 \u101c\u102d\u102f\u1010\u102c\u1015\u1032\u101b\u103d\u1031\u1038 \u2014 \u2013 chip \u1010\u103d\u1031 \u1018\u102c\u1019\u103e\u1019\u1011\u100a\u1037\u103a\u1018\u1030\u1038\u104b",
-    ro_h_main: "REFERENCE OPS PRO (Ref1 / Ref2)",
-    ro_note: "Ref1 = IMAGE 2 (\u1019\u102d\u1014\u103a\u1038\u1019) \u00b7 Ref2 = IMAGE 3 (\u101a\u1031\u102c\u1000\u103a\u103b\u102c\u1038)\u104b Target \u101b\u103d\u1031\u1038\u1015\u103c\u102e\u1038 op \u1014\u103e\u102d\u1015\u103a \u2014 \u1019\u1000\u102d\u102f\u1000\u103a\u1010\u1032\u1037\u101e\u1030 \u1018\u101a\u103a\u1010\u1031\u102c\u1037\u1019\u103e \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u104b",
-    ro_target: "Target:",
-    ro_solo: "Solo",
-    ro_couple: "Couple",
-    ro_family: "Family",
-    ro_mk: "Ref \u1019\u102d\u1010\u103a\u1000\u1015\u103a \u1000\u1030\u1038",
-    ro_hair: "Ref \u1006\u1036\u1015\u1004\u103a\u101a\u1030",
-    ro_h_face: "Face Ops",
-    ro_h_bg: "BG / FG Ops",
-    ro_h_sub: "Subject Ops",
-    ro_h_lc: "Light & Color Ops",
-    ro_h_dress: "Dress Ops",
-    ro_h_mk: "Makeup Ops",
-    ro_h_match: "\u2605 Master Match (\u1010\u1005\u103a\u1015\u102f\u1036\u1005\u1036\u1010\u100a\u103a\u1038)",
-    ro_match_note: "Reference \u1015\u102f\u1036\u1021\u1010\u102d\u102f\u1004\u103a\u1038 IMAGE 1 \u1000\u102d\u102f Match \u2014 \u1018\u102c\u1010\u103d\u1031 match \u1019\u101c\u1032 \u2713:",
-    m_color: "Color",
-    m_light: "Light",
-    m_makeup: "Makeup",
-    m_skin: "Skin Retouch",
-    crd_chainsrest: "Style Chains + \u1013\u102c\u1010\u103a\u1015\u102f\u1036\u1021\u101f\u1031\u102c\u1004\u103a\u1038 Restore",
-    crd_refops: "Reference Ops Pro (Ref1 / Ref2)",
-    crd_scenes: "\ud83c\udfac Scenes Pro \u2014 subject lock \u00b7 scene \u1000\u102d\u102f\u1000\u103a",
-    scn_note: "Subject (\u1019\u103b\u1000\u103a\u1014\u103e\u102c \u00b7 pose \u00b7 dress \u00b7 frame) \u1000\u102d\u102f lock \u1001\u1010\u103a\u1015\u103c\u102e\u1038 scene \u1010\u1005\u103a\u1001\u102f\u101c\u102f\u1036\u1038\u1000 subject \u1000\u102d\u102f \u101c\u102d\u102f\u1000\u103a\u100a\u103e\u102d \u2014 \u1021\u101c\u1004\u103a\u1038/\u1021\u101b\u102d\u1015\u103a/\u1021\u101b\u1031\u102c\u1004\u103a/background/foreground/objects \u1021\u102c\u1038\u101c\u102f\u1036\u1038 \u1021\u101c\u102d\u102f\u1021\u101c\u103b\u1031\u102c\u1000\u103a \u1000\u102d\u102f\u1000\u103a\u104a \u1013\u102c\u1010\u103a\u1015\u102f\u1036\u1021\u1005\u1005\u103a\u101c\u102d\u102f\u104b",
-    scn_h_style: "Scene Style (indoor / \u101a\u1009\u103a\u1000\u103b\u1031\u1038\u1019\u103e\u102f)",
-    scn_h_bday: "\ud83c\udf82 Birthday \u2014 \u1021\u101e\u1000\u103a 1\u201345",
-    scn_h_cap: "Caption / \u1005\u102c\u101e\u102c\u1038 (\u1000\u101c\u1031\u1038 \u00b7 Miss Universe \u00b7 \u1019\u103d\u1031\u1038\u1014\u1031\u1037)",
-    scn_h_scarf: "Outdoor / \u101c\u103d\u1004\u1037\u103a\u1014\u1031\u1010\u1032\u1037 \u1015\u101d\u102b",
-    scn_grad: "Graduation Indoor",
-    scn_prewed: "Prewedding Indoor",
-    scn_vietnam: "Vietnam",
-    scn_myanmar: "Myanmar",
-    scn_chinese: "Chinese",
-    scn_shan: "Shan",
-    scn_newborn: "Newborn / \u1000\u101c\u1031\u1038",
-    scn_age: "\u1021\u101e\u1000\u103a",
-    scn_bday_go: "\ud83c\udf82 BIRTHDAY SCENE",
-    scn_cap_on: "Caption \u1005\u102c\u101e\u102c\u1038 \u1011\u100a\u1037\u103a",
-    scn_cap_ph: "Caption \u1005\u102c\u101e\u102c\u1038 (\u1025\u1015\u1019\u102c Happy 1st Birthday / \u1014\u102c\u1019\u100a\u103a)\u2026",
-    scn_cap_pos: "\u1014\u1031\u101b\u102c",
-    scn_top: "\u1021\u1015\u1031\u102b\u103a",
-    scn_bottom: "\u1021\u1031\u102c\u1000\u103a",
-    scn_scarf: "\u2726 \u1015\u102f\u101d\u102b\u101c\u103d\u1004\u1037\u103a SCENE",
-    scn_dir: "\u1026\u1038\u1010\u100a\u103a\u101b\u102c",
-    scn_left: "\u1018\u101a\u103a",
-    scn_right: "\u100a\u102c",
-    scn_up: "\u1021\u1015\u1031\u102b\u103a",
-    scn_len: "\u1021\u101c\u103b\u102c\u1038",
-    scn_short: "\u1010\u102d\u102f",
-    scn_long: "\u101b\u103e\u100a\u103a",
-    g_cat_scene: "SCENE OP \u2014 subject \u1000\u102d\u102f lock (\u1019\u103b\u1000\u103a\u1014\u103e\u102c \u00b7 pose \u00b7 dress \u00b7 frame); scene \u1010\u1005\u103a\u1001\u102f\u101c\u102f\u1036\u1038 (\u1021\u101c\u1004\u103a\u1038/\u1021\u101b\u102d\u1015\u103a/\u1021\u101b\u1031\u102c\u1004\u103a/background/foreground/objects/atmosphere) \u1000\u102d\u102f subject \u1014\u1032\u1037 auto \u1000\u102d\u102f\u1000\u103a\u104a \u1013\u102c\u1010\u103a\u1015\u102f\u1036\u1021\u1005\u1005\u103a\u101c\u102d\u102f\u104b",
-    crd_wed: "\u2665 Wedding Pro Suite",
-    crd_recipes: "Recipes \u2014 \u101e\u102d\u1019\u103a\u1038/\u1019\u103b\u103e\u101d\u1031",
-    learn_lbl: "\ud83c\udf93 Learn Mode \u2014 \u1041\u1001\u103b\u1000\u103a = guide (\u1021\u101d\u102b)\u104a \u1042\u1001\u103b\u1000\u103a = prompt (\u1021\u1015\u103c\u102c)\u104a \u1043\u1001\u103b\u1000\u103a = RUN (\u1021\u1005\u102d\u1019\u103a\u1038)",
     guide_hint: "\u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a: \u1021\u101d\u102b \u2192 \u1021\u1015\u103c\u102c (prompt) \u2192 \u1021\u1005\u102d\u1019\u103a\u1038 (run) \u25b6",
     g_learn_next_prompt: "\u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a \u2192 PROMPT \u1021\u1010\u102d\u1021\u1000\u103b \u1015\u103c\u1019\u101a\u103a (\u1021\u1015\u103c\u102c)\u104b",
     g_learn_prompt_head: "\u1012\u102e\u1001\u101c\u102f\u1010\u103a \u1015\u102d\u102f\u1037\u1019\u101a\u1037\u103a PROMPT (\u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a = RUN):",
     g_learn_next_run: "\u1014\u1031\u102c\u1000\u103a\u1010\u1005\u103a\u1001\u103b\u1000\u103a \u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a \u2192 RUN (\u1021\u1005\u102d\u1019\u103a\u1038) generate \u101c\u102f\u1015\u103a\u1019\u101a\u103a\u104b",
     st_prompt_ready: "Prompt \u1021\u1006\u1004\u103a\u101e\u1004\u1037\u103a \u2014 \u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a (\u1021\u1005\u102d\u1019\u103a\u1038) run \u2713",
-    g_step_doc: "\u1013\u102c\u1010\u103a\u1015\u102f\u1036\u1000\u102d\u102f Photoshop \u1019\u103e\u102c \u1021\u101b\u1004\u103a\u1016\u103d\u1004\u1037\u103a\u1015\u102b\u104b",
-    g_step_ref1: "Reference \u1015\u102f\u1036\u1000\u102d\u102f Ref1 \u1011\u1032\u1010\u1004\u103a\u1015\u102b (IMAGE 2 \u1016\u103c\u1005\u103a\u1019\u101a\u103a)\u104b \u1012\u102f\u1010\u102d\u101a\u101c\u1030\u1021\u1010\u103d\u1000\u103a Ref2\u104b",
-    g_step_target: "Target \u101b\u103d\u1031\u1038\u1015\u102b: Solo / Couple (Ref1 = \u1019\u102d\u1014\u103a\u1038\u1019\u104a Ref2 = \u101a\u1031\u102c\u1000\u103a\u103b\u102c\u1038) / Family\u104b",
-    g_step_mkhair: "\u101c\u102d\u102f\u101b\u1004\u103a: Face Ops \u1021\u1015\u1031\u102b\u103a\u1000 \u2018Ref \u1019\u102d\u1010\u103a\u1000\u1015\u103a\u1000\u1030\u1038\u2019 / \u2018Ref \u1006\u1036\u1015\u1004\u103a\u101a\u1030\u2019 \u2713 \u1016\u103d\u1004\u1037\u103a\u1015\u102b\u104b",
-    g_step_petal: "\u1015\u103d\u1004\u1037\u103a\u1001\u103b\u1015\u103a\u1021\u101b\u1031\u102c\u1004\u103a \u1021\u101b\u1004\u103a\u101b\u103d\u1031\u1038\u1015\u102b (auto = scene \u1014\u1032\u1037\u1000\u102d\u102f\u1000\u103a)\u104b",
-    g_step_rest: "Full Color / B&W \u2713 \u101b\u103d\u1031\u1038\u1015\u102b\u104b",
-    g_step_int: "Intensity slider \u1000\u103c\u102d\u102f\u1000\u103a\u101e\u101c\u102d\u102f\u1001\u103b\u102d\u1014\u103a\u1015\u102b\u104b",
     g_step_confirm: "\u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a\u1015\u102b: GUIDE (\u1021\u101d\u102b) \u2192 PROMPT (\u1021\u1015\u103c\u102c) \u2192 RUN (\u1021\u1005\u102d\u1019\u103a\u1038\u1000 generate \u101c\u102f\u1015\u103a\u101e\u100a\u103a)\u104b",
-    g_cat_face: "FACE OP \u2014 reference \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u1000\u102d\u102f \u1000\u102d\u102f\u1000\u103a\u100a\u102e\u101e\u1030\u1006\u102e \u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1011\u100a\u1037\u103a\u1015\u1031\u1038\u1010\u101a\u103a \u2014 \u1000\u103b\u1014\u103a\u101e\u1030\u1010\u103d\u1031 \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u104b",
-    g_cat_sub: "SUBJECT OP \u2014 reference \u101c\u1030\u1000\u102d\u102f \u1019\u1004\u103a\u1038 scene \u1011\u1032 \u1011\u100a\u1037\u103a/\u1015\u103c\u1031\u102c\u1004\u103a\u1038 \u2014 scene/frame \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u104b",
-    g_cat_bgfg: "BG/FG OP \u2014 \u1014\u1031\u102c\u1000\u103a\u1001\u1036/\u1021\u101b\u103e\u1031\u1037\u1001\u1036\u1015\u1032 reference \u1014\u1032\u1037\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1010\u101a\u103a\u104b",
-    g_cat_lc: "LIGHT & COLOR OP \u2014 reference \u101b\u1032\u1037 \u1021\u101c\u1004\u103a\u1038\u1014\u1032\u1037 grade \u1000\u1030\u1038\u1010\u101a\u103a \u2014 \u101c\u1030 pixel-faithful\u104b",
-    g_cat_dress: "DRESS OP \u2014 \u1021\u101d\u1010\u103a\u1015\u1032 reference \u1014\u1032\u1037\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1010\u101a\u103a\u104b",
-    g_cat_mkop: "MAKEUP OP \u2014 \u1019\u102d\u1010\u103a\u1000\u1015\u103a\u1015\u1032 reference \u1014\u1032\u1037\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1010\u101a\u103a\u104b",
-    g_cat_match: "MASTER MATCH \u2014 reference \u1015\u102f\u1036\u1021\u1010\u102d\u102f\u1004\u103a\u1038 \u1010\u1005\u103a\u1015\u102f\u1036\u1005\u1036\u1010\u100a\u103a\u1038 Match (\u1021\u1015\u1031\u102b\u103a\u1000 \u2713 \u101b\u103d\u1031\u1038)\u104b",
-    g_cat_trail: "WEDDING TRAIL \u2014 luxury \u1019\u103c\u1000\u103a\u1001\u1004\u103a\u1038 + \u1015\u1014\u103a\u1038\u101c\u1019\u103a\u1038 \u2014 \u1019\u103b\u1000\u103a\u1014\u103e\u102c/pose/frame hard-lock\u104b",
-    g_cat_veil: "FLYING VEIL \u2014 \u1012\u102e\u1021\u101b\u103e\u100a\u103a\u1014\u1032\u1037 \u1007\u102c\u1015\u101d\u102b\u101c\u103d\u1004\u1037\u103a\u1011\u100a\u1037\u103a \u2014 \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u1019\u1016\u102f\u1036\u1038\u104b",
-    g_cat_gown: "GOWN \u2014 \u101b\u103e\u102d\u1015\u103c\u102e\u1038\u101e\u102c\u1038\u1002\u102b\u101d\u1014\u103a\u101e\u1014\u1037\u103a + \u1012\u102e train \u1021\u101b\u103e\u100a\u103a\u104b",
-    g_cat_petal: "FLYING PETALS \u2014 \u1012\u102e style \u1014\u1032\u1037 \u1015\u103d\u1004\u1037\u103a\u1001\u103b\u1015\u103a\u101c\u103d\u1004\u1037\u103a \u2014 \u1021\u101b\u1031\u102c\u1004\u103a\u1000 \u1021\u1015\u1031\u102b\u103a\u1000 swatch\u104b",
-    g_cat_wedx: "WEDDING EXTRA \u2014 scene \u1014\u1032\u1037\u1000\u102d\u102f\u1000\u103a\u1010\u1032\u1037 element \u1011\u100a\u1037\u103a \u2014 \u1015\u1004\u103a\u1010\u102d\u102f\u1004\u103a lock\u104b",
-    g_cat_canvas: "REPLACE (CANVAS) \u2014 \u1019\u1004\u103a\u1038\u101c\u1030\u1000\u102d\u102f reference scene \u1011\u1032\u1011\u100a\u1037\u103a \u2014 ref \u101c\u1030\u1010\u103d\u1031\u1016\u101a\u103a\u104b",
-    g_cat_restore: "OLD PHOTO RESTORE \u2014 \u1015\u103b\u1000\u103a\u1005\u102e\u1038\u1010\u102c\u1015\u103c\u1004\u103a \u2014 \u1019\u1030\u101c\u1019\u103b\u1000\u103a\u1014\u103e\u102c 100% \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u104b",
     g_cat_generic: "PRESET \u2014 \u1012\u102e professional edit \u1000\u102d\u102f \u1019\u1004\u103a\u1038\u1015\u102f\u1036\u1015\u1031\u102b\u103a \u1021\u101c\u102f\u1015\u103a\u101c\u102f\u1015\u103a\u1019\u101a\u103a\u104b",
     g_gen: "GENERATE \u2014 prompt box (+ chains/keeps/camera) \u1000\u102d\u102f \u1019\u1004\u103a\u1038 document \u1015\u1031\u102b\u103a run\u104b",
     g_retouchbtn: "RETOUCH APPLY \u2014 slider \u1021\u102c\u1038\u101c\u102f\u1036\u1038\u1000\u102d\u102f \u1010\u1005\u103a\u1000\u103c\u102d\u1019\u103a\u1010\u100a\u103a\u1038 retouch\u104b",
-    g_relightbtn: "LIGHTING GENERATE \u2014 3D diagram \u1021\u1010\u102d\u102f\u1004\u103a\u1038 \u1000\u103d\u1000\u103a\u1010\u102d\u1019\u102e\u1038\u1011\u100a\u1037\u103a\u104b",
-    g_scene: "SCENE GENERATE \u2014 \u1011\u102f\u1010\u103a\u1011\u102c\u1038\u1010\u1032\u1037 prompt \u1021\u1010\u102d\u102f\u1004\u103a\u1038 scene \u1015\u103c\u1014\u103a\u1006\u1031\u102c\u1000\u103a \u2014 \u101c\u1030\u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u104b",
-    g_rmix: "REPLACE MIX \u2014 \u2713 \u1016\u103d\u1004\u1037\u103a\u1011\u102c\u1038\u1010\u1032\u1037\u1021\u1015\u102d\u102f\u1004\u103a\u1038\u1010\u103d\u1031\u1015\u1032 reference \u1000\u1014\u1031\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u104b",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
     ro_bgSwap: "BG Swap",
     ro_fgRep: "FG Replace",
-    ro_bg_note: "Doc = subject \u00b7 Ref1 = scene \u1021\u101e\u1005\u103a\u104b Target (Solo/Couple/Family) \u1000 \u1018\u101a\u103a\u101e\u1030 \u1011\u102c\u1038\u1019\u101c\u1032 \u101b\u103d\u1031\u1038\u104b",
-    ro_bg_frame: "Frame & composition \u1011\u102c\u1038\u1019\u100a\u103a",
-    ro_bg_light: "Subject light/color \u1019\u1011\u102d",
     ro_subSwap: "Subject Swap",
     ro_lcRef: "L&C Reference",
     ro_lcCopy: "L&C Copy-Paste",
@@ -1727,94 +993,8 @@ const I18N = {
     ro_dressRep: "Dress Replace",
     ro_mkCopy: "Makeup Copy",
     ro_matchBtn: "\u2605 MASTER MATCH",
-    grp_retouch: "Skin Retouch Presets",
-    lbl_intensity: "\u1015\u103c\u1004\u103a\u1038\u1021\u102c\u1038",
-    p_evoto: "Retouch B Style",
-    p_meitu: "Retouch A Style",
-    auto_place: "\u101b\u101c\u1012\u103a\u1000\u102d\u102f Photoshop \u1011\u1032 layer \u1021\u101e\u1005\u103a\u1021\u1016\u103c\u1005\u103a \u1021\u101c\u102d\u102f\u1021\u101c\u103b\u1031\u102c\u1000\u103a\u1011\u100a\u103a",
-    sec_retouchpro: "Retouch Pro \u2014 Sliders",
-    rt_skin: "Skin (\u1021\u101e\u102c\u1038\u1021\u101b\u1031)",
-    rt_faceai: "Face AI",
-    rt_hair: "\u1006\u1036\u1015\u1004\u103a (Hair)",
-    rt_dress: "\u1021\u101d\u1010\u103a\u1021\u1005\u102c\u1038 (Dress)",
-    rt_bg: "\u1014\u1031\u102c\u1000\u103a\u1001\u1036 (Background)",
-    rt_smooth: "\u1021\u101e\u102c\u1038\u1001\u103b\u1031\u102c (Smooth)",
-    rt_acne: "Acne / \u1010\u1004\u103a\u1038\u1010\u102d\u1015\u103a",
-    rt_spots: "\u1021\u1019\u1032\u1005\u1000\u103a\u1016\u103b\u1031\u102c\u1000\u103a",
-    rt_wrinkle: "\u1021\u101b\u1031\u1038\u1021\u1000\u103c\u1031\u102c\u1004\u103a\u1038",
-    rt_tone: "\u1016\u103c\u1030 / \u100a\u102d\u102f",
-    rt_glow: "Glow",
-    rt_reshape: "AI Reshape",
-    rt_lash: "\u1019\u103b\u1000\u103a\u1010\u1031\u102c\u1004\u103a",
-    rt_brow: "\u1019\u103b\u1000\u103a\u1001\u102f\u1036\u1038",
-    rt_lipsmooth: "\u1014\u103e\u102f\u1010\u103a\u1001\u1019\u103a\u1038\u1001\u103b\u1031\u102c",
-    rt_lipcolor: "\u1014\u103e\u102f\u1010\u103a\u1001\u1019\u103a\u1038\u1014\u102e \u1021\u101b\u1031\u102c\u1004\u103a",
-    rt_lenscolor: "\u1019\u103b\u1000\u103a\u1000\u1015\u103a\u1019\u103e\u1014\u103a \u1021\u101b\u1031\u102c\u1004\u103a",
-    rt_hairstray: "\u1006\u1036\u1015\u1004\u103a\u1021\u1005 \u101b\u103e\u1004\u103a\u1038",
-    rt_hairsmooth: "\u1006\u1036\u1015\u1004\u103a Smooth",
-    rt_hairshine: "\u1006\u1036\u1015\u1004\u103a D&B \u1010\u1031\u102c\u1000\u103a\u1015",
-    rt_dresssmooth: "\u1021\u101d\u1010\u103a Smooth",
-    rt_dressedge: "\u1021\u1014\u102c\u1038\u101e\u1010\u103a \u101b\u103e\u1004\u103a\u1038",
-    rt_dresswrinkle: "\u1021\u1010\u103d\u1014\u103a\u1037\u1016\u103b\u1031\u102c\u1000\u103a",
-    rt_dresstexture: "Texture \u1015\u103c\u1014\u103a\u1016\u1031\u102c\u103a",
-    rt_bgsmooth: "\u1014\u1031\u102c\u1000\u103a\u1001\u1036 \u1001\u103b\u1031\u102c/\u101b\u103e\u1004\u103a\u1038",
-    rt_bgcolor: "\u1014\u1031\u102c\u1000\u103a\u1001\u1036 \u1021\u101b\u1031\u102c\u1004\u103a",
-    rt_bgrecolor: "\u1014\u1031\u102c\u1000\u103a\u1001\u1036\u1021\u101b\u1031\u102c\u1004\u103a \u1001\u103b\u1031\u102c",
-    rt_shape: "Reshape Pro (\u1019\u103b\u1000\u103a\u1014\u103e\u102c + \u1000\u102d\u102f\u101a\u103a)",
-    rt_teeth: "\u101e\u103d\u102c\u1038\u1016\u103c\u1030",
-    rt_eyewhite: "\u1019\u103b\u1000\u103a\u101c\u102f\u1036\u1038\u1021\u1010\u103d\u1004\u103a\u1038\u101e\u102c\u1038\u1016\u103c\u1030",
-    rt_faceslim: "\u1019\u103b\u1000\u103a\u1014\u103e\u102c\u101e\u103d\u101a\u103a",
-    rt_jaw: "\u1019\u1031\u1038\u101b\u102d\u102f\u1038",
-    rt_chin: "\u1019\u1031\u1038\u1005\u1031\u1037",
-    rt_nosesize: "\u1014\u103e\u102c\u1001\u1031\u102b\u1004\u103a\u1038 Size",
-    rt_eyesize: "\u1019\u103b\u1000\u103a\u101c\u102f\u1036\u1038 Size",
-    rt_lipfull: "\u1014\u103e\u102f\u1010\u103a\u1001\u1019\u103a\u1038\u1016\u1031\u102c\u1004\u103a\u1038",
-    rt_waist: "\u1001\u102b\u1038\u101e\u103d\u101a\u103a",
-    rt_bodyslim: "\u1000\u102d\u102f\u101a\u103a\u101e\u103d\u101a\u103a",
-    rt_shoulder: "\u1015\u1001\u102f\u1036\u1038",
-    rt_hip: "\u1010\u1004\u103a\u1015\u102b\u101e\u103d\u101a\u103a",
-    rt_leglen: "\u1001\u103c\u1031\u1011\u1031\u102c\u1000\u103a\u101b\u103e\u100a\u103a",
-    rt_armslim: "\u101c\u1000\u103a\u1019\u1031\u102c\u1004\u103a\u1038\u101e\u103d\u101a\u103a",
-    rt_dressfit: "\u1021\u101d\u1010\u103a\u1021\u1010\u1004\u103a\u1038\u1021\u101c\u103b\u1031\u102c\u1037",
-    rt_dressclean: "\u1021\u101d\u1010\u103a\u101e\u1014\u1037\u103a\u101b\u103e\u1004\u103a\u1038",
-    rt_dresscolorpure: "\u1021\u101d\u1010\u103a\u1021\u101b\u1031\u102c\u1004\u103a\u101e\u1014\u1037\u103a",
-    rt_bodygrp: "Body Skin Pro (\u1000\u102d\u102f\u101a\u103a\u1021\u101e\u102c\u1038)",
-    rt_bodysmooth: "\u1000\u102d\u102f\u101a\u103a\u1021\u101e\u102c\u1038 \u1001\u103b\u1031\u102c",
-    rt_bodyblemish: "\u1000\u102d\u102f\u101a\u103a\u1021\u1005\u1000\u103a\u1016\u101a\u103a",
-    rt_bodytone: "\u1000\u102d\u102f\u101a\u103a\u1021\u101b\u1031\u102c\u1004\u103a\u100a\u102e",
-    rt_bodyglow: "\u1000\u102d\u102f\u101a\u103a Glow",
-    rt_bodyhairrm: "\u1000\u102d\u102f\u101a\u103a\u1021\u1019\u103d\u103e\u1031\u1038\u101c\u103b\u103e\u1031\u102c\u1037",
-    rt_hairvolume: "\u1006\u1036\u1015\u1004\u103a Volume",
-    rt_hairgloss: "\u1006\u1036\u1015\u1004\u103a Gloss",
-    rt_hairfill: "\u1006\u1036\u1015\u1004\u103a\u1016\u103c\u100a\u1037\u103a",
-    wp_h_trail: "\u2665 Wedding \u2014 \u1015\u1014\u103a\u1038\u101c\u1019\u103a\u1038 (Luxury Grass)",
-    wp_h_veil: "\u2665 Wedding \u2014 \u1007\u102c\u1015\u101d\u102b \u1021\u101c\u103d\u1004\u1037\u103a",
-    wp_h_gown: "\u2665 Wedding \u2014 \u1002\u102b\u101d\u1014\u103a\u101e\u1014\u1037\u103a + Train",
-    wp_h_petal: "\u2665 Wedding \u2014 \u1015\u103d\u1004\u1037\u103a\u1001\u103b\u1015\u103a\u101c\u103d\u1004\u1037\u103a",
-    wp_h_extra: "\u2665 Wedding \u2014 \u1019\u103c\u1004\u103a\u1038\u1016\u103c\u1030 \u00b7 \u101b\u1031 \u00b7 Mood",
-    wp_note: "Face ID / pose / frame / dress design \u1010\u103d\u1031 hard-lock \u2014 \u1015\u103c\u1031\u102c\u1011\u102c\u1038\u1010\u1032\u1037\u1021\u1015\u102d\u102f\u1004\u103a\u1038\u1015\u1032\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1019\u101a\u103a\u104b",
-    wp_petalcolor: "\u1015\u103d\u1004\u1037\u103a\u1001\u103b\u1015\u103a\u1021\u101b\u1031\u102c\u1004\u103a (auto = scene \u1014\u1032\u1037\u1000\u102d\u102f\u1000\u103a)",
-    wp_trail_c: "\u1015\u1014\u103a\u1038\u1021\u101b\u1031\u102c\u1004\u103a",
-    wp_trail_go: "\u25b6 \u1015\u1014\u103a\u1038\u101c\u1019\u103a\u1038",
-    wp_veil_c: "\u1007\u102c\u1015\u101d\u102b \u1021\u101b\u103e\u100a\u103a",
-    wp_veil_go: "\u25b6 Veil \u101c\u103d\u1004\u1037\u103a",
-    wp_gown_c: "Train \u1021\u101b\u103e\u100a\u103a",
-    wp_gown_go: "\u25b6 Gown Clean + Train",
-    wp_pet_c: "\u1015\u103d\u1004\u1037\u103a\u1001\u103b\u1015\u103a style",
-    wp_pet_go: "\u25b6 \u1015\u1014\u103a\u1038\u1015\u103d\u1004\u1037\u103a\u101c\u103d\u1004\u1037\u103a",
-    wp_extra_c: "Extra",
-    wp_extra_go: "\u25b6 Add Extra",
-    btn_apply_rt: "Retouch Apply \u101c\u102f\u1015\u103a\u1019\u101a\u103a",
-    btn_reset: "Reset",
     rt_none: "Retouch slider / \u1021\u101b\u1031\u102c\u1004\u103a \u1010\u1005\u103a\u1001\u102f\u1021\u101b\u1004\u103a\u101b\u103d\u1031\u1038\u1015\u102b",
-    tab_setup: "Setup",
-    tab_prompt: "Edit",
-    tab_presets: "Library",
-    recent_lbl: "\u1019\u1000\u103c\u102c\u101e\u1031\u1038\u1019\u102e prompt \u1019\u103b\u102c\u1038\u2026",
-    tab_retouch: "Retouch",
-    tab_aitools: "Home",
     cap_warn: "Prompt box \u1000\u102d\u102f Photoshop \u1000 \u1000\u1014\u1037\u103a\u101e\u1010\u103a\u1011\u102c\u1038:",
-    cleanup_note: "\u1021\u1019\u103e\u1014\u103a\u1001\u103c\u1005\u103a\u1011\u102c\u1038\u1010\u102c\u1010\u103d\u1031 Generate / Preset \u1010\u102d\u102f\u1004\u103a\u1038\u1019\u103e\u102c \u1021\u101c\u102d\u102f \u1010\u103d\u1032\u1015\u102b\u101e\u103d\u102c\u1038\u1019\u101a\u103a\u104b",
     btn_generate: "GENERATE",
     st_ready: "\u1021\u101e\u1004\u103a\u1037\u1016\u103c\u1005\u103a\u1015\u102b\u1015\u103c\u102e",
     st_capture: "Document \u1000\u102d\u102f \u1016\u1019\u103a\u1038\u101a\u1030\u1014\u1031\u101e\u100a\u103a",
@@ -1831,70 +1011,18 @@ const I18N = {
     st_err: "Error",
     st_no_doc: "Document \u1016\u103d\u1004\u103a\u1037\u1011\u102c\u1038\u1001\u103c\u1004\u103a\u1038\u1019\u101b\u103e\u102d\u1015\u102b \u2014 \u1015\u102f\u1036\u1021\u101b\u1004\u103a\u1016\u103d\u1004\u103a\u1037\u1015\u102b",
     st_no_prompt: "Prompt \u1019\u101b\u1031\u1038\u101b\u101e\u1031\u1038\u1015\u102b",
-    need_ref: "\u1012\u102e preset \u1021\u1010\u103d\u1000\u103a Reference \u1015\u102f\u1036 (slot 1) \u101c\u102d\u102f\u1015\u102b\u1010\u101a\u103a",
     st_new_doc: "\u101b\u101c\u1012\u103a\u1000\u102d\u102f document \u1021\u101e\u1005\u103a\u1021\u1016\u103c\u1005\u103a \u1016\u103d\u1004\u103a\u1037\u1015\u103c\u102e\u1038 \u2713",
-    sec_preview: "\u1021\u1000\u103c\u102d\u102f\u1000\u103c\u100a\u1037\u103a \u2014 Before / After",
     before: "BEFORE",
     after: "AFTER",
     btn_place: "Photoshop \u1011\u1032\u1011\u100a\u103a",
-    btn_saveas: "\u1021\u1016\u103c\u1005\u103a \u101e\u102d\u1019\u103a\u1038\u2026",
     st_saved: "Save \u1015\u103c\u102e\u1038 \u2713",
-    sec_diag: "\u1005\u1014\u1005\u103a\u1005\u1005\u103a\u1006\u1031\u1038 \u1005\u1005\u103a\u1006\u1031\u1038\u1001\u103c\u1004\u103a\u1038",
-    sec_log: "\u101c\u102f\u1015\u103a\u1006\u1031\u102c\u1004\u103a\u1019\u103e\u1010\u103a\u1010\u1019\u103a\u1038",
-    btn_diag: "\u1005\u1005\u103a\u1006\u1031\u1038\u1015\u102b",
-    btn_copylog: "Log \u1000\u1030\u1038",
-    btn_clearlog: "\u101b\u103e\u1004\u103a\u1038",
-    diag_host: "Photoshop \u1021\u1000\u103a\u1015\u103a",
-    diag_uxp: "UXP \u1005\u103d\u1019\u103a\u1038\u101b\u100a\u103a",
-    diag_rh: "RunningHub Enterprise key",
-    diag_doc: "\u1016\u103d\u1004\u103a\u1011\u102c\u1038\u101e\u1031\u102c document",
-    diag_set: "\u1011\u100a\u103a\u1015\u103c\u102e\u1038",
-    diag_unset: "\u1019\u1011\u100a\u103a\u101b\u101e\u1031\u1038",
-    diag_open: "\u1016\u103d\u1004\u103a\u1011\u102c\u1038",
-    diag_none: "\u1019\u1016\u103d\u1004\u103a\u1037\u101b\u101e\u1031\u1038",
-    diag_missing: "\u1015\u103b\u1031\u102c\u1000\u103a\u1014\u1031",
-    diag_done: "\u1005\u1005\u103a\u1006\u1031\u1038\u1001\u103c\u1004\u103a\u1038 \u1015\u103c\u102e\u1038 \u2713",
-    diag_lib: "Reference Library",
-    diag_lib_open: "Folder \u1016\u103d\u1004\u103a\u1037\u1014\u102d\u102f\u1004\u103a\u1019\u103e\u102f",
-    sec_reflib: "Reference \u1015\u102f\u1036 Library",
-    reflib_note: "\u1000\u103c\u102d\u102f\u1000\u103a\u1014\u103e\u1005\u103a\u101e\u1000\u103a\u1010\u1032\u1037 reference \u1015\u102f\u1036\u1010\u103d\u1031\u101b\u103e\u102d\u1010\u1032\u1037 folder \u1000\u102d\u102f \u1010\u1005\u103a\u1001\u102b\u101b\u103d\u1031\u1038\u1015\u102b \u2014 Browse \u1000 \u1019\u103e\u1010\u103a\u1011\u102c\u1038\u1015\u102b\u1010\u101a\u103a\u104b",
-    btn_browse: "Browse",
-    lib_choose: "Folder \u101b\u103d\u1031\u1038",
-    lib_open: "Folder \u1016\u103d\u1004\u103a\u1037",
-    lib_change: "Folder \u1015\u103c\u1031\u102c\u1004\u103a\u1038",
-    lib_reset: "Reset",
-    lib_rescan: "\u1015\u103c\u1014\u103a\u1005\u1005\u103a",
-    lib_current: "\u101c\u1000\u103a\u101b\u103e\u102d Folder",
-    lib_found: "\u1010\u103d\u1031\u1037\u101b\u103e\u102d\u1015\u102f\u1036",
-    lib_status: "\u1021\u1001\u103c\u1031\u1021\u1014\u1031",
-    lib_lastscan: "\u1014\u1031\u102c\u1000\u103a\u1006\u102f\u1036\u1038\u1005\u1005\u103a",
-    lib_images: "\u1015\u102f\u1036",
-    lib_connected: "\u1001\u103b\u102d\u1010\u103a\u1006\u1000\u103a\u1015\u103c\u102e\u1038",
-    lib_not_config: "\u1019\u101e\u1010\u103a\u1019\u103e\u1010\u103a\u101b\u101e\u1031\u1038",
-    lib_perm_lost: "\u1001\u103d\u1004\u103a\u1037\u1015\u103c\u102f\u1001\u103b\u1000\u103a\u1015\u103b\u1031\u102c\u1000\u103a \u2014 \u1015\u103c\u1014\u103a\u101b\u103d\u1031\u1038\u1015\u102b",
-    lib_none: "(folder \u1019\u101b\u103d\u1031\u1038\u101b\u101e\u1031\u1038)",
-    lib_copy_only: "path \u1000\u1030\u1038\u101b\u102f\u1036\u101e\u102c",
     lib_choose_msg: "\u101e\u1004\u103a\u1037 HNK Reference \u1015\u102f\u1036 Library folder \u1000\u102d\u102f \u101b\u103d\u1031\u1038\u1015\u102b\u104b",
-    lib_scanning: "Library \u1005\u1005\u103a\u1014\u1031\u101e\u100a\u103a\u2026",
-    lib_scan_done: "\u1015\u103c\u1014\u103a\u1005\u1005\u103a\u1001\u103c\u1004\u103a\u1038 \u1015\u103c\u102e\u1038 \u2713",
-    lib_reset_done: "Library reset \u2713",
-    lib_path_copied: "Path \u1000\u1030\u1038\u1015\u103c\u102e\u1038",
     lib_unsupported: "\u1019\u1015\u1036\u1037\u1015\u102d\u102f\u1038\u101e\u1031\u102c \u1015\u102f\u1036\u1021\u1019\u103b\u102d\u102f\u1038\u1021\u1005\u102c\u1038",
     lib_restore_fail: "Reference \u1000\u102d\u102f \u1015\u103c\u1014\u103a\u1019\u101b\u1014\u102d\u102f\u1004\u103a\u1015\u102b",
     on: "\u1016\u103d\u1004\u1037\u103a",
     off: "\u1015\u102d\u1010\u103a",
-    ai_home_title: "\u1018\u102c\u1016\u1014\u103a\u1010\u102e\u1038\u1001\u103b\u1004\u103a\u101c\u1032\u104b",
     ai_settings_defaults: "AI Tools \u2014 \u1019\u1030\u101e\u1031 Setting \u1019\u103b\u102c\u1038",
     ai_key_lives_in_setup: "RunningHub Enterprise key \u1000\u102d\u102f Setup tab \u1019\u103e\u102c \u1010\u1005\u103a\u1001\u102b\u1011\u100a\u1037\u103a\u101b\u102f\u1036\u1015\u102b \u2014 \u1014\u1031\u101b\u102c\u1010\u102d\u102f\u1004\u103a\u1038\u1019\u103e\u102c \u1021\u101c\u102d\u102f\u1021\u101c\u103b\u1031\u102c\u1000\u103a \u101e\u102f\u1036\u1038\u1015\u102b\u1019\u101a\u103a\u104b",
-    ai_greet_morning: "\u1019\u1004\u103a\u1039\u1002\u101c\u102c\u1014\u1036\u1014\u1000\u103a\u1001\u1004\u103a\u1038\u1015\u102b",
-    ai_greet_afternoon: "\u1019\u1004\u103a\u1039\u1002\u101c\u102c\u1014\u1031\u1037\u101c\u101a\u103a\u1001\u1004\u103a\u1038\u1015\u102b",
-    ai_greet_evening: "\u1019\u1004\u103a\u1039\u1002\u101c\u102c\u100a\u1014\u1031\u1001\u1004\u103a\u1038\u1015\u102b",
-    ai_free_generate: "\u101c\u103d\u1010\u103a\u101c\u1015\u103a\u1016\u1014\u103a\u1010\u102e\u1038",
-    ai_free_sub: "\u1000\u102d\u102f\u101a\u103a\u1015\u102d\u102f\u1004\u103a prompt \u101b\u1031\u1038\u1015\u102b",
-    ai_more_tools: "\u1014\u1031\u102c\u1000\u103a\u1011\u1015\u103a \u1000\u102d\u101b\u102d\u101a\u102c\u1019\u103b\u102c\u1038",
-    ai_more_sub: "Water Edit \u00b7 Text/Logo \u00b7 workflow \u1021\u102c\u1038\u101c\u102f\u1036\u1038",
-    ai_nav_home: "\u1015\u1004\u103a\u1019",
-    ai_nav_tools: "\u1000\u102d\u101b\u102d\u101a\u102c",
     ai_history: "\u1019\u103e\u1010\u103a\u1010\u1019\u103a\u1038",
     ai_no_gen: "\u1016\u1014\u103a\u1010\u102e\u1038\u1011\u102c\u1038\u1010\u102c \u1019\u101b\u103e\u102d\u101e\u1031\u1038\u1015\u102b\u104b",
     ai_videos: "ဗီဒီယိုများ",
@@ -1921,14 +1049,11 @@ const I18N = {
     ai_lib_pick_first: "Presets tab \u2192 Visual Library \u1000\u1014\u1031 \u1015\u102f\u1036\u1010\u1005\u103a\u1015\u102f\u1036 \u1021\u101b\u1004\u103a\u101b\u103d\u1031\u1038\u1015\u102b\u104b",
     ai_lib_load_fail: "Library \u1015\u102f\u1036\u1000\u102d\u102f \u1019\u1016\u103d\u1004\u1037\u103a\u1014\u102d\u102f\u1004\u103a\u1015\u102b\u104b",
     ai_missing: "\u1019\u101b\u103e\u102d\u101e\u1031\u1038",
-    ai_add: "\u1011\u100a\u1037\u103a",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 model endpoint \u1011\u100a\u1037\u103a\u101b\u1014\u103a (Advanced \u2014 \u1019\u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b)",
     ai_rh_note: "\u1015\u102b\u1015\u103c\u102e\u1038\u101e\u102c\u1038 model \u1010\u103d\u1031\u1000 \u1021\u1015\u1031\u102b\u103a\u1000 key \u1014\u1032\u1037 \u1021\u101c\u102f\u1015\u103a\u101c\u102f\u1015\u103a\u1015\u102b\u1015\u103c\u102e \u2014 \u1018\u102c\u1019\u103e\u101c\u102f\u1015\u103a\u1005\u101b\u102c \u1019\u101c\u102d\u102f\u1015\u102b\u104b model \u1010\u1005\u103a\u1001\u102f\u1000 \"not connected\" \u1015\u103c\u1014\u1031\u101b\u1004\u103a (endpoint path \u1019\u101e\u1031\u1001\u103b\u102c\u101e\u1031\u1038\u101c\u102d\u102f\u1037) RunningHub API docs \u1000\u1014\u1031 path \u1000\u102d\u102f \u1000\u1030\u1038\u1015\u103c\u102e\u1038 \u1012\u102e\u1019\u103e\u102c \u1011\u100a\u1037\u103a\u1015\u102b\u104b",
     ai_rh_save: "\u1012\u102e model \u101b\u1032\u1037 endpoint \u101e\u102d\u1019\u103a\u1038",
     ai_test_conn: "\u1001\u103b\u102d\u1010\u103a\u1006\u1000\u103a\u1019\u103e\u102f \u1005\u1005\u103a",
-    ai_save_verify: "\u101e\u102d\u1019\u103a\u1038\u1015\u103c\u102e\u1038 \u1005\u1005\u103a",
-    ai_settings: "\u1006\u1000\u103a\u1010\u1004\u103a",
     ai_add_layers: "\u101b\u101c\u1012\u103a\u1000\u102d\u102f Layer \u1021\u101e\u1005\u103a\u1021\u1016\u103c\u1005\u103a \u1011\u100a\u1037\u103a",
     ai_done: "\u1015\u103c\u102e\u1038\u1015\u102b\u1015\u103c\u102e\u104b",
     ai_result_ready: "\u101b\u101c\u1012\u103a \u1021\u101e\u1004\u1037\u103a\u1016\u103c\u1005\u103a\u1015\u102b\u1015\u103c\u102e\u104b",
@@ -1939,21 +1064,6 @@ const I18N = {
     ai_placed_group: "\u201c{name}\u201d group \u1011\u1032 Layer \u1021\u101e\u1005\u103a\u1021\u1016\u103c\u1005\u103a \u1011\u100a\u1037\u103a\u1015\u103c\u102e\u1038\u1015\u102b\u1015\u103c\u102e (\u1012\u102e host \u1019\u103e\u102c mask \u1019\u101b\u1014\u102d\u102f\u1004\u103a\u1015\u102b)\u104b",
     ai_placed_plain: "Layer \u1021\u101e\u1005\u103a\u1021\u1016\u103c\u1005\u103a \u1011\u100a\u1037\u103a\u1015\u103c\u102e\u1038\u1015\u102b\u1015\u103c\u102e (\u1012\u102e host \u1019\u103e\u102c group/mask \u1019\u101b\u1014\u102d\u102f\u1004\u103a\u1015\u102b)\u104b",
     ai_start_fail: "AI Tools \u1005\u1010\u1004\u103a\u104d \u1019\u101b\u1015\u102b",
-    pgb_setup: "တစ်ခါချိန်ညှိရုံနဲ့ အမြဲအဆင်သင့် ဖြစ်နေမယ်",
-    pgb_studio: "စိတ်ကူးထဲက မြင်ကွင်းတိုင်းကို လွတ်လပ်စွာ ဖန်တီးပါ",
-    pgb_create: "စာသားတစ်ကြောင်းကနေ ပရော်ဖက်ရှင်နယ်ပုံ ဖြစ်လာမယ်",
-    pgb_presets: "Look ၁၈၅၀ မျိုးထဲက ကြိုက်တာ ရွေးလိုက်ရုံ — ချက်ချင်းစနိုင်",
-    pgb_aitools: "\u1010\u1005\u103a\u1001\u103b\u1000\u103a\u1014\u103e\u102d\u1015\u103a Professional \u2014 Nano Banana \u00b7 RunningHub",
-    pgb_retouch: "မူရင်းအလှ မပျက်စေဘဲ ချောမွေ့ကြည်လင် စေမယ်",
-    wf_sum_bg_replace: "\u1014\u1031\u102c\u1000\u103a\u1001\u1036\u1000\u102d\u102f \u1021\u1005\u102c\u1038\u1011\u102d\u102f\u1038",
-    wf_sum_reference_transfer: "\u101e\u1004\u1037\u103a\u1015\u102f\u1036\u1011\u1032\u1000 \u101c\u1030\u1000\u102d\u102f reference scene \u1011\u1032 \u1011\u100a\u1037\u103a",
-    wf_sum_master_bgfg_replace: "Scene \u1011\u1032\u1000 \u101c\u1030\u1000\u102d\u102f \u1016\u101a\u103a\u104a bg/fg \u1015\u103c\u1014\u103a\u1010\u100a\u103a\u104a \u101e\u1004\u1037\u103a\u101c\u1030\u1000\u102d\u102f \u1011\u100a\u1037\u103a",
-    wf_sum_subject_face: "\u101c\u1030 (\u101e\u102d\u102f\u1037) \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u1000\u102d\u102f base \u1015\u102f\u1036\u1015\u1031\u102b\u103a \u1000\u1030\u1038\u1011\u100a\u1037\u103a",
-    wf_sum_retouch: "\u101e\u1018\u102c\u101d\u1000\u103b\u1000\u103b \u1015\u102f\u1036\u101b\u102d\u1015\u103a \u1019\u103d\u1019\u103a\u1038\u1019\u1036",
-    wf_sum_upscale: "\u1021\u101e\u1031\u1038\u1005\u102d\u1010\u103a \u1019\u1015\u103b\u1000\u103a\u1005\u1031\u1018\u1032 \u1001\u103b\u1032\u1037",
-    wf_sum_object_edit: "\u1021\u101b\u102c\u101d\u1010\u1039\u1011\u102f\u1019\u103b\u102c\u1038 \u1016\u101a\u103a\u104a \u101c\u1032\u104a \u1011\u100a\u1037\u103a",
-    wf_sum_water_edit: "\u101b\u1031\u1014\u103e\u1004\u1037\u103a \u101b\u1031\u102c\u1004\u103a\u1015\u103c\u1014\u103a\u101f\u1015\u103a\u1019\u103e\u102f \u1015\u103c\u1004\u103a\u1006\u1004\u103a",
-    wf_sum_text_logo: "\u1005\u102c\u101e\u102c\u1038\u1014\u103e\u1004\u1037\u103a logo \u1011\u100a\u1037\u103a/\u1015\u103c\u1004\u103a",
     wfin_subject: "\u101e\u1004\u1037\u103a\u1015\u102f\u1036 (\u101c\u1030)",
     wfin_new_bg: "\u1014\u1031\u102c\u1000\u103a\u1001\u1036\u1021\u101e\u1005\u103a (\u1019\u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b)",
     wfin_ref_scene: "Reference scene",
@@ -1965,45 +1075,43 @@ const I18N = {
     wfin_image: "\u1015\u102f\u1036",
     wfin_object_ref: "\u1021\u101b\u102c\u101d\u1010\u1039\u1011\u102f reference (\u1019\u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b)",
     wfin_logo_ref: "Logo reference (\u1019\u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b)",
-    wf_exp_bg_replace: "\u101c\u1030\u1014\u1031\u102c\u1000\u103a\u1000 \u1014\u1031\u102c\u1000\u103a\u1001\u1036\u1000\u102d\u102f \u1021\u1005\u102c\u1038\u1011\u102d\u102f\u1038\u1015\u1031\u1038\u1010\u101a\u103a\u104b \u101c\u1030\u104a \u1000\u102d\u102f\u101a\u103a\u101f\u1014\u103a\u104a \u1021\u1014\u102c\u1038\u101e\u1010\u103a\u1014\u1032\u1037 \u1021\u101c\u1004\u103a\u1038\u1000 \u1021\u1010\u102d\u1021\u1000\u103b \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1018\u1032 \u1014\u1031\u102c\u1000\u103a\u1000\u103d\u101a\u103a\u1000\u1015\u1032 \u1015\u103c\u1031\u102c\u1004\u103a\u1038\u101e\u103d\u102c\u1038\u1019\u101a\u103a\u104b",
-    wf_exp_reference_transfer: "Reference \u1015\u102f\u1036\u101b\u1032\u1037 scene \u1010\u1005\u103a\u1001\u102f\u101c\u102f\u1036\u1038\u1000\u102d\u102f \u101a\u1030\u1010\u101a\u103a (\u1012\u102b\u1015\u1031\u1019\u101a\u1037\u103a \u1021\u1011\u1032\u1000 \u101c\u1030\u1010\u103d\u1031\u1000\u102d\u102f \u1019\u101a\u1030\u1018\u1030\u1038)\u104a \u1015\u103c\u102e\u1038\u101b\u1004\u103a \u101e\u1004\u1037\u103a\u101c\u1030\u1000\u102d\u102f \u1011\u100a\u1037\u103a\u1015\u1031\u1038\u1010\u101a\u103a \u2014 \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u104a \u1000\u102d\u102f\u101a\u103a\u101f\u1014\u103a\u1014\u1032\u1037 frame \u1000\u102d\u102f \u1011\u102d\u1014\u103a\u1038\u1015\u103c\u102e\u1038 scene \u101b\u1032\u1037 \u1021\u101c\u1004\u103a\u1038\u1014\u1032\u1037 \u101b\u103e\u102f\u1011\u1031\u102c\u1004\u1037\u103a\u1000\u102d\u102f \u1000\u102d\u102f\u1000\u103a\u100a\u102e\u1021\u1031\u102c\u1004\u103a \u101c\u102f\u1015\u103a\u1015\u1031\u1038\u1010\u101a\u103a\u104b",
-    wf_exp_master_bgfg_replace: "\u1021\u1010\u102d\u1000\u103b\u1006\u102f\u1036\u1038 subject-in-scene \u1021\u1005\u102c\u1038\u1011\u102d\u102f\u1038\u1019\u103e\u102f \u2014 reference scene \u1011\u1032\u1000 \u101c\u1030\u1000\u102d\u102f \u101c\u102f\u1036\u1038\u101d\u1016\u101a\u103a\u101b\u103e\u102c\u1038\u104a \u1000\u103d\u101a\u103a\u1014\u1031\u1010\u1032\u1037 \u1014\u1031\u102c\u1000\u103a\u1001\u1036\u1014\u1032\u1037 \u101b\u103e\u1031\u1037\u1001\u1036\u1000\u102d\u102f \u101e\u1018\u102c\u101d\u1000\u103b\u1000\u103b \u1015\u103c\u1014\u103a\u1010\u100a\u103a\u1006\u1031\u102c\u1000\u103a\u104a \u1015\u103c\u102e\u1038\u101b\u1004\u103a \u101e\u1004\u1037\u103a\u101c\u1030\u1000\u102d\u102f \u1021\u1032\u1012\u102e\u1014\u1031\u101b\u102c\u1019\u103e\u102c \u1021\u1010\u102d\u1021\u1000\u103b \u1011\u100a\u1037\u103a\u1015\u1031\u1038\u1010\u101a\u103a \u2014 \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u104a \u1000\u102d\u102f\u101a\u103a\u101f\u1014\u103a\u104a \u1021\u1001\u103b\u102d\u102f\u1038\u1021\u1005\u102c\u1038\u104a \u1006\u1036\u1015\u1004\u103a\u104a \u101d\u1010\u103a\u1005\u102f\u1036\u104a \u1021\u101e\u102c\u1038\u1021\u101b\u1031\u1014\u1032\u1037 \u1021\u101c\u1004\u103a\u1038\u1000 \u101e\u1004\u1037\u103a\u1015\u102f\u1036\u1000\u1014\u1031 \u101c\u1031\u102c\u1037\u1001\u103a\u1001\u103b\u1011\u102c\u1038\u1015\u103c\u102e\u1038 reference \u1000\u1010\u1031\u102c\u1037 scene\u104a \u1000\u1004\u103a\u1019\u101b\u102c\u1014\u1032\u1037 \u1021\u1014\u1000\u103a\u1000\u102d\u102f\u1015\u1032 \u1015\u1031\u1038\u1010\u101a\u103a\u104b",
-    wf_exp_subject_face: "Reference \u1011\u1032\u1000 \u101c\u1030 (\u101e\u102d\u102f\u1037) \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u1000\u102d\u102f \u101e\u1004\u1037\u103a base \u1015\u102f\u1036\u1015\u1031\u102b\u103a \u1001\u103b\u1031\u102c\u1019\u103d\u1031\u1037\u1005\u103d\u102c \u1015\u1031\u102b\u1004\u103a\u1038\u1005\u1015\u103a\u1015\u1031\u1038\u1015\u103c\u102e\u1038 base \u101b\u1032\u1037 \u1016\u103d\u1032\u1037\u1005\u100a\u103a\u1038\u1015\u102f\u1036\u1000\u102d\u102f \u1019\u1011\u102d\u1001\u102d\u102f\u1000\u103a\u1005\u1031\u1015\u102b\u104b",
-    wf_exp_retouch: "\u1021\u101e\u102c\u1038\u1021\u101b\u1031\u104a \u1006\u1036\u1015\u1004\u103a\u1014\u1032\u1037 \u1021\u101b\u1031\u102c\u1004\u103a\u1000\u102d\u102f \u101e\u1018\u102c\u101d\u1000\u103b\u1000\u103b \u1019\u103d\u1019\u103a\u1038\u1019\u1036\u1015\u1031\u1038\u1010\u101a\u103a\u104b \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u104a \u1021\u1004\u103a\u1039\u1002\u102b\u101b\u1015\u103a\u1014\u1032\u1037 \u1021\u1019\u1030\u1021\u101b\u102c\u1000 \u1021\u1010\u102d\u102f\u1004\u103a\u1038\u101b\u103e\u102d\u1014\u1031\u1019\u101a\u103a \u2014 \u1021\u101e\u102c\u1038\u1015\u101c\u1015\u103a\u1005\u1010\u1005\u103a \u1019\u1016\u103c\u1005\u103a\u104a \u1019\u103b\u1000\u103a\u1014\u103e\u102c \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u104b",
-    wf_exp_upscale: "\u1015\u102f\u1036\u1000\u102d\u102f \u1001\u103b\u1032\u1037\u1015\u1031\u1038\u101b\u1004\u103a\u1038 \u1021\u101e\u102c\u1038\u1021\u101b\u1031\u104a \u1006\u1036\u1015\u1004\u103a\u1014\u1032\u1037 \u1021\u1011\u100a\u103a\u101b\u1032\u1037 \u101e\u1018\u102c\u101d \u1021\u101e\u1031\u1038\u1005\u102d\u1010\u103a\u1000\u102d\u102f \u1015\u103c\u1014\u103a\u1016\u1031\u102c\u103a\u1015\u1031\u1038\u1010\u101a\u103a\u104b \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u104a \u1000\u102d\u102f\u101a\u103a\u101f\u1014\u103a\u104a \u1016\u103d\u1032\u1037\u1005\u100a\u103a\u1038\u1015\u102f\u1036\u1014\u1032\u1037 \u1021\u101b\u1031\u102c\u1004\u103a\u1010\u103d\u1031 \u1021\u1010\u102d\u1021\u1000\u103b \u1019\u1015\u103c\u1031\u102c\u1004\u103a\u1038 \u2014 \u1015\u101c\u1015\u103a\u1005\u1010\u1005\u103a\u1006\u1014\u103a\u1010\u1032\u1037 \u1001\u103b\u1031\u102c\u1019\u103d\u1031\u1037\u1019\u103e\u102f \u1019\u101b\u103e\u102d\u104b",
-    wf_exp_object_edit: "\u1011\u102d\u1014\u103a\u1038\u1001\u103b\u102f\u1015\u103a\u1011\u102c\u1038\u1010\u1032\u1037 \u1014\u1031\u101b\u102c\u101c\u102d\u102f\u1000\u103a \u1015\u103c\u1004\u103a\u1006\u1004\u103a\u1019\u103e\u102f\u1014\u1032\u1037 \u1021\u101b\u102c\u101d\u1010\u1039\u1011\u102f\u1010\u103d\u1031\u1000\u102d\u102f \u1016\u101a\u103a\u104a \u101c\u1032 (\u101e\u102d\u102f\u1037) \u1011\u100a\u1037\u103a\u1015\u1031\u1038\u1010\u101a\u103a\u104b \u1019\u1011\u102d\u1010\u1032\u1037 \u1021\u101b\u102c\u1021\u102c\u1038\u101c\u102f\u1036\u1038 \u1021\u1010\u102d\u102f\u1004\u103a\u1038\u101b\u103e\u102d\u1014\u1031\u1019\u101a\u103a\u104b",
-    wf_exp_water_edit: "\u101b\u1031\u104a \u101b\u1031\u102c\u1004\u103a\u1015\u103c\u1014\u103a\u101f\u1015\u103a\u1019\u103e\u102f\u1014\u1032\u1037 \u1005\u102d\u102f\u1005\u103d\u1010\u103a\u1010\u1032\u1037 \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u1015\u103c\u1004\u103a\u1010\u103d\u1031\u1000\u102d\u102f \u101b\u1030\u1015\u1017\u1031\u1012\u1021\u101b \u101e\u1018\u102c\u101d\u1000\u103b\u1021\u1031\u102c\u1004\u103a \u1011\u100a\u1037\u103a/\u1015\u103c\u1004\u103a\u1015\u1031\u1038\u1015\u103c\u102e\u1038 \u101e\u1004\u1037\u103a\u101c\u1030\u1000\u102d\u102f \u1019\u1011\u102d\u1001\u102d\u102f\u1000\u103a\u1005\u1031\u1015\u102b\u104b",
-    wf_exp_text_logo: "\u1015\u102f\u1036\u1015\u1031\u102b\u103a\u1019\u103e\u102c \u101e\u1014\u1037\u103a\u101b\u103e\u1004\u103a\u1038\u1015\u103c\u102e\u1038 \u1016\u1010\u103a\u101b\u101c\u103d\u101a\u103a\u1010\u1032\u1037 \u1005\u102c\u101e\u102c\u1038 (\u101e\u102d\u102f\u1037) logo \u1000\u102d\u102f \u1011\u100a\u1037\u103a/\u1015\u103c\u1004\u103a\u1015\u1031\u1038\u1015\u103c\u102e\u1038 \u1016\u103d\u1032\u1037\u1005\u100a\u103a\u1038\u1015\u102f\u1036\u1000\u102d\u102f \u1011\u102d\u1014\u103a\u1038\u1011\u102c\u1038\u1015\u102b\u1010\u101a\u103a\u104b"
   },
   /* ---- Shan (Tai Long) (shn) — 587 keys, complete ---- */
   shn: {
+    rh_err_network: "ထိုင် RunningHub Enterprise ဢမ်ႇလႆႈ — ဢိၼ်ႇထႃႇၼႅတ်ႉၶၢတ်ႇ။ ၵူတ်ႇထတ်းလႅင်းသေ ၶိုၼ်းၸၢမ်း။",
+    rh_err_task_failed: "RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",
+    rh_err_host_blocked: "Photoshop ဢမ်ႇပၼ် host ၼႆႉ — ဢမ်ႇမီးၼႂ်း manifest panel။ သႂ်ႇ panel မႂ်ႇသုတ်း။",
+    rh_err_timeout: "ႁဵတ်းႁၢင်ႈႁိုင်ပူၼ်ႉ — RunningHub ဢမ်ႇတွပ်ႇတၼ်း။ ၶိုၼ်းၸၢမ်း ဢမ်ႇၼၼ် လူတ်းယွမ်း ၶၼၢတ်ႈ / ၸမ်ႉ။",
+    rh_err_rate_limited: "RunningHub Enterprise ယုင်ႈယူႇ — ပႂ်ႉၵမ်းၼိုင်ႈသေ ၶိုၼ်းၸၢမ်း။",
+    rh_err_invalid_key: "RunningHub ဢမ်ႇႁပ်ႉ key — ၵူတ်ႇထတ်းတီႈ Setup ▸ RunningHub Enterprise။",
+    wf_exp_bg_replace: "\u101c\u1085\u1075\u103a\u1088\u1015\u107c\u103a\u107d\u1062\u1086\u1087\u101c\u1004\u103a \u1022\u107c\u103a\u101a\u1030\u1087\u1010\u1062\u1004\u103a\u1038\u101c\u1004\u103a\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u104b \u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038, \u1078\u1083\u1087\u1010\u1083\u1087, \u1081\u102d\u1019\u103a\u1038\u1076\u103d\u1015\u103a\u1087 \u101c\u1084\u1088 \u107e\u1086\u1038 \u1022\u1019\u103a\u1087\u101c\u1085\u1075\u103a\u1088\u101e\u1004\u103a \u2014 \u101c\u1085\u1075\u103a\u1088\u1022\u107c\u103a\u101a\u1030\u1087\u1010\u1062\u1004\u103a\u1038\u101c\u1004\u103a\u1075\u1030\u107a\u103a\u1038\u104b",
+    wf_exp_reference_transfer: "\u1022\u101d\u103a scene \u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088\u1076\u103d\u1004\u103a\u1076\u1085\u1015\u103a\u1038 reference (\u1075\u1030\u107a\u103a\u1038\u1075\u1083\u1088 \u1022\u1019\u103a\u1087\u1022\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u107c\u1082\u103a\u1038\u107c\u107c\u103a\u1089) \u101e\u1031 \u101e\u1082\u103a\u1087\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u1076\u101d\u103a\u1088 \u2014 \u101d\u1086\u1089\u107c\u1083\u1088\u1010\u1083, \u1078\u1083\u1087\u1010\u1083\u1087 \u101c\u1084\u1088 \u1076\u103d\u1015\u103a\u1087, \u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1010\u1004\u103a\u1038\u107e\u1086\u1038\u101c\u1084\u1088\u1019\u102f\u1019\u103a\u1076\u103d\u1004\u103a scene\u104b",
+    wf_exp_master_bgfg_replace: "\u101c\u103d\u1004\u103a\u1088\u101c\u1085\u1075\u103a\u1088\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u107c\u1082\u103a\u1038 scene \u1022\u107c\u103a\u1076\u1035\u1004\u103a\u1088\u101e\u102f\u1010\u103a\u1038 \u2014 \u1022\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u107c\u1082\u103a\u1038 scene reference \u1022\u103d\u1075\u103a\u1087\u1019\u1030\u1010\u103a\u1038, \u101e\u1062\u1004\u103a\u1088\u107d\u1062\u1086\u1087\u101c\u1004\u103a\u101c\u1084\u1088\u107d\u1062\u1086\u1087\u107c\u1083\u1088\u1022\u107c\u103a\u1019\u1030\u1075\u103a\u1038\u101d\u1086\u1089\u1076\u102d\u102f\u107c\u103a\u1038\u1081\u1082\u103a\u1088\u1019\u102d\u1030\u107c\u103a\u101e\u107d\u1083\u1087\u101d, \u101a\u101d\u103a\u1089\u101e\u1031 \u101e\u1082\u103a\u1087\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u1010\u102e\u1088\u107c\u107c\u103a\u1088\u1010\u1085\u1010\u103a\u1088\u1010\u1085\u1010\u103a\u1088 \u2014 \u107c\u1083\u1088\u1010\u1083, \u1078\u1083\u1087\u1010\u1083\u1087, \u1076\u107c\u1062\u1010\u103a\u1088, \u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a, \u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088, \u107d\u102d\u101d\u103a\u107c\u1004\u103a \u101c\u1084\u1088 \u107e\u1086\u1038 \u101c\u103d\u1075\u103a\u1089\u1022\u101d\u103a\u1010\u102e\u1088\u1076\u1085\u1015\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087, reference \u1015\u107c\u103a\u1076\u102d\u102f\u107c\u103a\u1038 scene, \u1075\u103d\u1004\u103a\u1088\u1011\u1062\u1086\u1087 \u101c\u1084\u1088 \u101c\u103d\u1004\u103a\u1088\u101c\u102d\u102f\u1075\u103a\u1089\u1075\u1030\u107a\u103a\u1038\u104b",
+    wf_exp_subject_face: "\u1022\u101d\u103a\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u107c\u1083\u1088\u1010\u1083\u107c\u1082\u103a\u1038 reference \u1081\u1030\u1019\u103a\u1088\u1076\u101d\u103a\u1088\u107c\u102d\u1030\u101d\u103a\u1076\u1085\u1015\u103a\u1038 base \u1081\u1082\u103a\u1088\u1019\u1030\u107c\u103a\u1038, \u101c\u103d\u1004\u103a\u1088\u1078\u1010\u103a\u1038 base \u1022\u1019\u103a\u1087\u101c\u102f\u1010\u103a\u1088\u104b",
+    wf_exp_retouch: "\u1019\u1084\u1038\u107d\u102d\u101d\u103a\u107c\u1004\u103a, \u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a \u101c\u1084\u1088 \u101e\u102e \u1081\u1082\u103a\u1088\u101c\u102e\u1078\u103d\u1019\u103a\u1038\u101e\u107d\u1083\u1087\u101d\u104b \u107c\u1083\u1088\u1010\u1083, \u1081\u1062\u1004\u103a\u1088 \u101c\u1084\u1088 \u101c\u103d\u1004\u103a\u1088\u107c\u1084\u1078\u1082\u103a \u101d\u1086\u1089\u1078\u102d\u1030\u1004\u103a\u1089\u1075\u101d\u103a\u1087 \u2014 \u107d\u102d\u101d\u103a\u107c\u1004\u103a\u1022\u1019\u103a\u1087\u1015\u1035\u107c\u103a\u1015\u101c\u1083\u1087\u101e\u1010\u102d\u1075\u103a\u1089, \u107c\u1083\u1088\u1010\u1083\u1022\u1019\u103a\u1087\u101c\u1085\u1075\u103a\u1088\u104b",
+    wf_exp_upscale: "\u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u101a\u1082\u103a\u1087 \u1015\u1083\u1038\u1010\u1004\u103a\u1038\u1019\u1084\u1038\u1081\u1030\u101d\u103a\u101a\u103d\u1086\u1088\u1076\u103d\u1004\u103a\u107d\u102d\u101d\u103a\u107c\u1004\u103a, \u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a \u101c\u1084\u1088 \u107d\u1083\u1088 \u1076\u102d\u102f\u107c\u103a\u1038\u1081\u1082\u103a\u1088\u1019\u102d\u1030\u107c\u103a\u101e\u107d\u1083\u1087\u101d\u104b \u107c\u1083\u1088\u1010\u1083, \u1078\u1083\u1087\u1010\u1083\u1087, \u101c\u103d\u1004\u103a\u1088\u1078\u1010\u103a\u1038 \u101c\u1084\u1088 \u101e\u102e \u1022\u1019\u103a\u1087\u101c\u1085\u1075\u103a\u1088\u101e\u1004\u103a \u2014 \u1022\u1019\u103a\u1087\u1019\u1030\u107c\u103a\u1038\u1015\u1035\u107c\u103a\u1015\u101c\u1083\u1087\u101e\u1010\u102d\u1075\u103a\u1089\u104b",
+    wf_exp_object_edit: "\u1022\u101d\u103a\u1022\u103d\u1075\u103a\u1087, \u101c\u1085\u1075\u103a\u1088 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u101e\u1082\u103a\u1087\u1076\u1030\u101d\u103a\u1038\u1076\u103d\u1004\u103a \u101c\u1030\u107a\u103a\u1088\u101c\u103d\u1004\u103a\u1088\u1019\u1084\u1038\u1010\u102e\u1088\u101c\u1035\u101d\u103a\u1022\u107c\u103a\u1075\u102f\u1019\u103a\u1038\u101d\u1086\u1089\u104b \u1022\u107c\u103a\u1022\u1019\u103a\u1087\u1010\u102d\u102f\u1075\u103a\u1038 \u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088\u101d\u1086\u1089\u1078\u102d\u1030\u1004\u103a\u1089\u1075\u101d\u103a\u1087\u104b",
+    wf_exp_water_edit: "\u101e\u1082\u103a\u1087 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1019\u1084\u1038\u107c\u1019\u103a\u1089, \u1004\u101d\u1083\u1087\u107c\u1019\u103a\u1089 \u101c\u1084\u1088 \u107c\u1083\u1088\u101c\u102d\u107c\u103a\u1022\u107c\u103a\u1015\u1035\u107c\u103a\u107c\u1019\u103a\u1089 \u1081\u1082\u103a\u1088\u1019\u102d\u1030\u107c\u103a\u1010\u1084\u1089, \u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u1022\u1019\u103a\u1087\u101c\u102f\u1010\u103a\u1088\u104b",
+    wf_exp_text_logo: "\u101e\u1082\u103a\u1087 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1019\u1084\u1038\u101c\u102d\u1075\u103a\u1088 \u1022\u1019\u103a\u1087\u107c\u107c\u103a logo \u1022\u107c\u103a\u1019\u1030\u1010\u103a\u1038\u101e\u1082\u103a\u101c\u1030\u101c\u1086\u1088\u1004\u1062\u1086\u1088 \u107c\u102d\u1030\u101d\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088, \u101c\u103d\u1004\u103a\u1088\u1078\u1010\u103a\u1038\u101d\u1086\u1089\u1075\u101d\u103a\u1087\u104b",
+    ai_key_lives_in_setup: "RunningHub Enterprise key ၸတ်းၵၢၼ်တီႈ Setup tab — သိမ်းၼိုင်ႈပွၵ်ႈ၊ ၸႂ်ႉလႆႈၵူႈတီႈ။",
+    ai_settings_defaults: "AI Tools — ၵႃႈတင်ႈဝႆႉ",
+    ai_learn_mode: "Learn Mode — ၼဵၵ်း GENERATE ၼႆ ဢွၼ်တၢင်းသပ်းလႅင်းပၼ်",
+    job_needkey: "သႂ်ႇ RunningHub key တီႈ Setup ဢွၼ်တၢင်း",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
-    sec_ready: "ငဝ်းလၢႆးႁၢင်ႈႁႅၼ်း",
-    sec_acct: "ဢၶွင်ႉ",
     ava_change: "လႅၵ်ႈႁၢင်ႈ Profile",
     ava_remove: "ထွၼ်ႁၢင်ႈ",
     ava_saved: "သိမ်းႁၢင်ႈယဝ်ႉ",
     ava_removed: "ထွၼ်ႁၢင်ႈယဝ်ႉ",
     ava_fail: "ဢမ်ႇၸႂ်ႉႁၢင်ႈၼႆႉလႆႈ — ၶိုၼ်းလိူၵ်ႈထႅင်ႈ",
     ava_working: "ႁၢင်ႈႁႅၼ်းႁၢင်ႈဝႆႉ…",
-    sec_money: "ၵႃႈၸႂ်ႉၸၢႆႇ လႄႈ ငိုၼ်းလိူဝ်",
-    sec_data: "DATA လႄႈ BACKUP",
-    sec_about: "APP လႄႈ UPDATE",
-    btn_get_update: "လူတ်ဢဝ် Update",
-    upd_hint: "Panel ႁင်းၵူၺ်းလူတ်ဢဝ်ႁဵတ်းဝႆႉ — လူင်ႈၶဝ်ႈဝႆႉယဝ်ႉ။ Photoshop ဢမ်ႇပၼ် plugin လႅၵ်ႈႁင်းၵူၺ်း၊ ၶၵ်ႉလိုၼ်းသုတ်း တဵၵ်း .ccx သွင်းပၼ်။",
     upd_web: "ပိုတ်ႇ Web App — ဢဝ် Panel တီႈ Account → Photoshop Panel။",
-    upd_none: "ၼႆႉပဵၼ်ဢၼ်မႂ်ႇသုတ်းယဝ်ႉ။",
     money_intro: "GENERATE ၵူႈပွၵ်ႈ RunningHub ဢဝ်ငိုၼ်းၵႃႈႁိုဝ် မၢႆဝႆႉတႄႉတႄႉ — ဢမ်ႇၸႂ်ႈလၢမ်း",
     money_bal: "ငိုၼ်းလိူဝ်",
     money_refresh: "တူၺ်းငိုၼ်းလိူဝ်",
     money_nokey: "သႂ်ႇ RunningHub key ဢွၼ်တၢင်း ၸင်ႇတူၺ်းငိုၼ်းလိူဝ်လႆႈ",
     money_fail: "ဢမ်ႇလႆႈငိုၼ်းလိူဝ် — မၢႆတွင်းတႂ်ႈၼႆႉ ထုၵ်ႇမႅၼ်ႈယူႇ။ RunningHub တွပ်ႇဝႃႈ —",
     money_never: "ပႆႇလႆႈတူၺ်း",
-    btn_export_backup: "ဢွၵ်ႇ backup",
-    btn_import_backup: "သႂ်ႇၶိုၼ်း backup",
-    btn_check_update: "ၶူၼ်ႉတူၺ်း update",
-    btn_hard_refresh: "လၢင်ႉ cache + တႄႇၶိုၼ်း",
     gate_sub_login: "ၶဝ်ႈဢၶွင်ႉ HNK သူ ဢွၼ်တၢင်း သေ ၸႂ်ႉ panel ဢၼ်ၼႆႉ။",
     gate_email_ph: "ဢီးမေးလ်",
     gate_pass_ph: "ၶေႃႈလပ်ႉ",
@@ -2032,38 +1140,11 @@ const I18N = {
     gate_service_down: "ၵပ်းသိုပ်ႇ license server ဢမ်ႇလႆႈ — ၵူတ်ႇထတ်း ဢိၼ်ႇထႃႇၼႅတ်ႉသေ ၼဵၵ်းၶိုၼ်း။",
     gate_no_lease: "server ဢမ်ႇပၼ် panel lease — ၼဵၵ်းၵူတ်ႇထတ်းၶိုၼ်း။",
     gate_sent_as: "သူင်ႇ — {E} · {N} တူဝ်",
-    app_title: "HNK Photoshop Ai Panel (\u101c\u102f\u1075\u103a\u1088\u1081\u1035\u107c\u103a\u1038)",
-    sec_api: "RunningHub Enterprise Key",
     btn_show: "\u107c\u1084",
-    btn_hide: "\u1019\u1030\u1075\u103a\u1038",
-    btn_test: "\u1010\u1085\u1010\u103a\u1088 Key",
     btn_save: "\u101e\u102d\u1019\u103a\u1038",
-    st_testing: "\u1010\u102d\u102f\u1075\u103a\u1089\u1010\u1085\u1010\u103a\u1088 key",
-    st_key_ok: "\u2713 API key \u1081\u1035\u1010\u103a\u1038\u1075\u1062\u107c\u103a\u101c\u102e",
-    st_key_bad: "API key \u1022\u1019\u103a\u1087\u1015\u1035\u107c\u103a",
-    st_key_saved: "\u101e\u102d\u1019\u103a\u1038 API key \u101a\u101d\u103a\u1089 \u2713",
     st_need_key: "\u101e\u1082\u103a\u1087 RunningHub Enterprise key \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
-    sec_model: "Model \u101c\u1084\u1088 Output",
-    scope_model_note: "\u1078\u1082\u103a\u1089\u1010\u103d\u107c\u103a\u1088\u1010\u1083\u1087\u1015\u102f\u1019\u103a\u1087 Generate \u107c\u1082\u103a\u1038 tab Prompt \u1010\u1082\u103a\u1088\u107c\u1086\u1089 \u2014 Create \u101c\u1084\u1088 AI Tools \u1019\u102e\u1038 setting model \u1081\u1004\u103a\u1038\u107d\u1082\u103a\u1019\u107c\u103a\u1038\u104b",
-    model_auto: "\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038 (\u1076\u102d\u102f\u1075\u103a\u1089)",
-    model_flash: "Flash \u2014 \u101d\u1086\u1038 (2.5)",
-    model_pro: "Pro \u2014 \u107c\u1019\u103a\u1089\u1078\u107c\u103a\u1089 (3.0)",
-    lbl_ratio: "Ratio",
-    ratio_auto: "Ratio \u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038 (\u1010\u102e\u1088 document)",
-    lbl_size: "\u1076\u107c\u1062\u1010\u103a\u1088",
-    lbl_quality: "\u107c\u1019\u103a\u1089\u1078\u107c\u103a\u1089",
     qual_auto: "\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038",
-    qual_low: "\u1010\u1085\u1019\u103a\u1087",
-    qual_med: "\u1075\u1062\u1004\u103a",
-    qual_high: "\u101e\u102f\u1004\u103a",
-    sec_prompt: "Prompt",
-    hint_prompt: "\u1010\u1085\u1019\u103a\u1088 prompt \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u1010\u102e\u1088\u107c\u1086\u1088\u2026 (\u107c\u1019\u103a\u101e\u102f\u1010\u103a\u1038 20,000 \u1010\u1030\u101d\u103a\u101c\u102d\u1075\u103a\u1088)",
-    btn_improve: "\u1019\u1084\u1038 Prompt \u1081\u1082\u103a\u1088\u101c\u102e",
     btn_clear: "\u1019\u103d\u1010\u103a\u1087",
-    st_improving: "\u1010\u102d\u102f\u1075\u103a\u1089\u1019\u1084\u1038 prompt",
-    st_improved: "\u1019\u1084\u1038 prompt \u101a\u101d\u103a\u1089 \u2713",
-    sec_refs: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 Reference (2 \u101e\u103d\u1004\u103a\u1089)",
-    base_note: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1015\u102d\u102f\u107c\u103a\u1089 = document Photoshop \u1022\u107c\u103a\u1015\u102d\u102f\u1010\u103a\u1087\u101d\u1086\u1089 (\u1022\u101d\u103a\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038)\u104b",
     btn_ref_layer: "+ Layer",
     btn_ref_file: "\u107e\u1062\u1086\u1087",
     btn_ref_web: "Web",
@@ -2071,9 +1152,7 @@ const I18N = {
     st_photo_layer_added: "သႂ်ႇ layer ပဵၼ်ႁၢင်ႈယဝ်ႉ ✓",
     st_ref_file_added: "\u101e\u1082\u103a\u1087\u107e\u1062\u1086\u1087 \u1015\u1035\u107c\u103a reference \u101a\u101d\u103a\u1089 \u2713",
     st_importing: "\u1010\u102d\u102f\u1075\u103a\u1089\u1076\u101d\u103a\u1088\u107e\u1062\u1086\u1087",
-    url_title: "Reference \u1010\u102e\u1088 URL \u2014 Chrome / Pinterest",
     url_ph: "https://\u2026 \u1022\u103d\u1004\u103a\u1088\u1010\u102e\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 \u1022\u1019\u103a\u1087\u107c\u107c\u103a link Pinterest",
-    btn_paste: "\u1015\u1062\u1075\u103a\u1088",
     btn_load: "\u101c\u1030\u1010\u103a\u1087",
     btn_cancel: "\u1075\u102d\u102f\u1010\u103a\u1038",
     btn_ok: "OK",
@@ -2082,178 +1161,22 @@ const I18N = {
     st_ref_web_added: "\u101e\u1082\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 web \u1015\u1035\u107c\u103a reference \u101a\u101d\u103a\u1089 \u2713",
     st_url_bad: "\u1022\u101d\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1010\u102e\u1088 URL \u107c\u1086\u1089\u1022\u1019\u103a\u1087\u101c\u1086\u1088 \u2014 \u1075\u1031\u1083\u1087\u1022\u103d\u1004\u103a\u1088\u1010\u102e\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u101e\u1031 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     no_layer: "\u1015\u1086\u1087\u101c\u102d\u1030\u1075\u103a\u1088 layer",
-    sec_presets: "AI Presets",
-    auto_run: "\u107c\u1035\u1075\u103a\u1038 preset \u2192 Generate \u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038 (\u1015\u102d\u1075\u103a\u1089 = \u101e\u1082\u103a\u1087\u1076\u101d\u103a\u1088 prompt \u1075\u1030\u107a\u103a\u1038)",
-    grp_cleanup: "\u1076\u102d\u1030\u1004\u103a\u1088\u1019\u102d\u102f\u101d\u103a\u1038\u1081\u1035\u1010\u103a\u1038\u1019\u1030\u1010\u103a\u1038\u101e\u1082\u103a",
-    p_remove_people: "\u1022\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1022\u103d\u1075\u103a\u1087",
-    p_fix_hands: "\u1019\u1084\u1038\u1019\u102d\u102f\u101d\u103a\u1038\u101c\u102d\u1030\u101d\u103a",
-    p_fix_legs: "\u1019\u1084\u1038\u1076\u1083\u101c\u102d\u1030\u101d\u103a",
-    p_full_clean: "\u1081\u1035\u1010\u103a\u1038\u1019\u1030\u1010\u103a\u1038\u101e\u1082\u103a\u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088",
-    grp_moved_note: "\u1076\u102d\u1030\u1004\u103a\u1088\u1019\u102d\u102f\u101d\u103a\u1038 Reference \u101a\u1030\u1087\u107c\u1082\u103a\u1038 card Reference Ops Pro \u1010\u1082\u103a\u1088\u107c\u1086\u1089\u101a\u101d\u103a\u1089 (\u1010\u102e\u1088\u101c\u1035\u101d\u103a, \u1015\u1083\u1038 Solo/Couple/Family + \u101c\u103d\u1004\u103a\u1088\u107c\u1084)\u104b",
-    ro_h_detail: "\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a \u00b7 \u1076\u102d\u1030\u1004\u103a\u1088\u1015\u102d\u1030\u1004\u103a \u00b7 \u1078\u1083\u1087\u1010\u1083\u1087 (\u2190 Ref1)",
-    ro_h_comp: "\u107d\u103d\u1019\u103a\u1089\u1076\u1085\u1015\u103a\u1038 \u00b7 Style \u00b7 \u101c\u102d\u1075\u103a\u1088 (\u2190 Ref1)",
-    p_fgbglc: "FG=Doc \u00b7 BG=Ref1 \u00b7 Light=Ref2",
-    p_hair: "\u1081\u1062\u1004\u103a\u1088\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a (\u2190 Ref1)",
-    p_access: "\u1076\u1019\u103a\u1038\u1004\u102d\u102f\u107c\u103a\u1038 + \u1076\u102d\u1030\u1004\u103a\u1088\u1015\u102d\u1030\u1004\u103a (\u2190 Ref1)",
-    p_pose: "\u1081\u1082\u103a\u1088\u1078\u1083\u1087\u1010\u1083\u1087\u1019\u102d\u1030\u107c\u103a (Doc \u2192 Ref1)",
-    p_fgprops: "\u1076\u1030\u101d\u103a\u1038\u107d\u1062\u1086\u1087\u107c\u1083\u1088 (\u2190 Ref1)",
-    p_textlogo: "\u101c\u102d\u1075\u103a\u1088 / Logo (\u2190 Ref1)",
-    p_style: "Style \u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 (\u2190 Ref1)",
-    grp_repsubj: "\u101c\u1085\u1075\u103a\u1088\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038 (Doc \u2192 scene Ref1)",
-    p_rep_solo: "\u101c\u1085\u1075\u103a\u1088\u1075\u1031\u1083\u1089\u101c\u1035\u101d\u103a",
-    p_rep_couple: "\u101c\u1085\u1075\u103a\u1088\u1075\u1030\u1088\u1076\u1030\u1088",
-    p_rep_family: "\u101c\u1085\u1075\u103a\u1088\u1015\u102e\u1088\u107c\u103d\u1004\u103a\u1089",
-    grp_rmix: "Replace Mix \u2014 \u1019\u1062\u1086\u101e\u1031 \u1022\u101d\u103a\u1010\u102e\u1088 Ref1",
-    rm_bg: "\u107d\u1062\u1086\u1087\u101c\u1004\u103a (BG)",
-    rm_fg: "\u107d\u1062\u1086\u1087\u107c\u1083\u1088 (FG)",
-    rm_light: "\u107e\u1086\u1038",
-    rm_color: "\u101e\u102e",
-    rm_object: "\u1076\u1030\u101d\u103a\u1038\u1076\u103d\u1004\u103a / Props",
-    btn_rmix: "REPLACE GENERATE",
-    rm_none: "\u1019\u1062\u1086\u1022\u107c\u103a\u107c\u102d\u102f\u1004\u103a\u1088\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
-    grp_i2p: "Image \u2192 Prompt (Scene Builder)",
-    i2p_note: "1) \u1011\u102f\u1010\u103a\u1087: scene Ref1 \u2192 prompt \u101c\u102d\u1075\u103a\u1088\u1081\u1030\u101d\u103a\u101a\u103d\u1086\u1088 (\u1022\u1019\u103a\u1087\u1015\u1083\u1038\u1075\u1030\u107c\u103a\u1038)\u104b 2) \u1019\u1084\u1038\u1010\u102e\u1088\u107c\u1083\u1088 Prompt\u104b 3) SCENE GENERATE \u101e\u1062\u1004\u103a\u1088\u1081\u103d\u1015\u103a\u1088\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u107c\u1082\u103a\u1038 document \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 \u2014 \u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1010\u1004\u103a\u1038\u1019\u102f\u1019\u103a\u1075\u1030\u1088\u1022\u107c\u103a\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038\u104b \u101c\u103d\u1075\u103a\u1089 Face/Pose/Frame = \u101d\u1086\u1089\u1078\u102d\u1030\u1004\u103a\u1089\u1075\u101d\u103a\u1087\u104b",
-    i2p_objects: "\u1081\u1030\u101d\u103a\u101a\u103d\u1086\u1088 \u1076\u1030\u101d\u103a\u1038\u1076\u103d\u1004\u103a \u101c\u1084\u1088 props",
-    i2p_light: "\u1081\u1030\u101d\u103a\u101a\u103d\u1086\u1088 \u107e\u1086\u1038",
-    i2p_color: "\u1081\u1030\u101d\u103a\u101a\u103d\u1086\u1088 \u101e\u102e / grade",
-    i2p_bg: "\u1081\u1030\u101d\u103a\u101a\u103d\u1086\u1088 \u107d\u1062\u1086\u1087\u101c\u1004\u103a",
-    i2p_fg: "\u1081\u1030\u101d\u103a\u101a\u103d\u1086\u1088 \u107d\u1062\u1086\u1087\u107c\u1083\u1088",
-    btn_i2p: "Image \u2192 Prompt (\u1011\u102f\u1010\u103a\u1087 Scene)",
-    i2p_fit: "Scene Auto-Fit \u2014 \u101e\u1062\u1004\u103a\u1088 scene \u1076\u102d\u102f\u107c\u103a\u1038\u1078\u103d\u1019\u103a\u1038\u1019\u102f\u1019\u103a / \u101c\u103d\u1004\u103a\u1088\u1075\u1086 / lens \u1076\u103d\u1004\u103a document",
-    i2p_adapt: "\u1081\u1082\u103a\u1088\u107e\u1086\u1038\u101c\u1084\u1088\u101e\u102e\u1076\u103d\u1004\u103a\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038 \u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1010\u1004\u103a\u1038 scene",
-    btn_scenegen: "SCENE GENERATE",
-    st_extract: "\u1010\u102d\u102f\u1075\u103a\u1089\u1011\u102f\u1010\u103a\u1087 scene \u1015\u1035\u107c\u103a prompt",
-    st_extract_done: "Prompt scene \u1081\u1062\u1004\u103a\u1088\u1081\u1085\u107c\u103a\u1038\u101a\u101d\u103a\u1089 \u2014 \u1010\u1030\u107a\u103a\u1038\u1010\u102e\u1088\u107c\u1083\u1088 Prompt",
-    scene_no_prompt: "\u1081\u103d\u1004\u103a\u1088 prompt \u1015\u101d\u103a\u1087\u101d\u1086\u1089 \u2014 \u1081\u1035\u1010\u103a\u1038 Image \u2192 Prompt \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
-    i2p_none: "\u1019\u1062\u1086\u1081\u1030\u101d\u103a\u101a\u103d\u1086\u1088\u1022\u107c\u103a\u107c\u102d\u102f\u1004\u103a\u1088\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
-    sec_light: "Studio Lighting \u2014 AI Relight",
-    light_note: "\u1019\u1062\u1086\u1015\u102d\u102f\u1010\u103a\u1087\u107e\u1086\u1038, \u107c\u1035\u1075\u103a\u1038\u1011\u1085\u101d\u103a\u101e\u1031\u101c\u102d\u1030\u1075\u103a\u1088, \u1078\u1082\u103a\u1089 slider \u1019\u1084\u1038 \u2014 \u1081\u1062\u1004\u103a\u1088 3D \u1010\u1030\u107a\u103a\u1038\u1010\u102e\u1088\u107c\u102d\u1030\u101d\u103a \u1015\u1086\u1078\u103d\u1019\u103a\u1038\u1075\u1019\u103a\u1038\u101c\u1035\u101d\u103a (\u25b4 = \u101e\u102f\u1004\u103a, \u25be = \u1010\u1085\u1019\u103a\u1087)\u104b LIGHTING GENERATE \u1010\u1031\u101e\u1082\u103a\u1087\u107e\u1086\u1038\u1076\u102d\u102f\u107c\u103a\u1038\u1078\u103d\u1019\u103a\u1038\u107c\u1086\u1089\u1010\u1085\u1010\u103a\u1088\u1010\u1085\u1010\u103a\u1088; \u107c\u1083\u1088\u1010\u1083 / \u1078\u1083\u1087\u1010\u1083\u1087 / \u1076\u103d\u1015\u103a\u1087 \u101c\u103d\u1075\u103a\u1089\u101d\u1086\u1089\u101a\u1030\u1087\u104b",
-    lbl_my_prompt: "PROMPT \u107d\u1083\u1087\u101e\u1083\u1087\u1010\u1086\u1038",
-    lstage_model: "MODEL",
-    lstage_cam: "CAM",
-    l_key: "\u107e\u1086\u1038\u101c\u1030\u1004\u103a",
-    l_fill: "\u107e\u1086\u1038\u101e\u102d\u102f\u1015\u103a\u1087 / \u107d\u1062\u1086\u1087\u107c\u1083\u1088",
-    l_butterfly: "Butterfly (\u107c\u102d\u1030\u101d\u103a-\u107c\u1083\u1088)",
-    l_side: "\u107e\u1086\u1038\u107d\u1062\u1086\u1087\u1076\u1062\u1004\u103a\u1088",
-    l_rim: "\u107e\u1086\u1038\u1081\u103d\u1015\u103a\u1088",
-    l_back: "\u107e\u1086\u1038\u107d\u1062\u1086\u1087\u101c\u1004\u103a",
-    l_hair: "\u107e\u1086\u1038\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a",
-    l_bglight: "\u107e\u1086\u1038\u107d\u1062\u1086\u1087\u101c\u1004\u103a\u1081\u1062\u1004\u103a\u1088",
-    lt_softbox: "Softbox",
-    lt_octa: "Octa",
-    lt_strip: "Strip",
-    lt_umbrella: "Umbrella",
-    lt_beauty: "Beauty",
-    lt_hard: "Hard",
-    li_int: "\u1081\u1085\u1004\u103a\u1038",
-    li_angle: "\u1019\u102f\u1019\u103a",
-    li_height: "\u101c\u103d\u1004\u103a\u1088\u101e\u102f\u1004\u103a",
-    li_dist: "\u101c\u103d\u1004\u103a\u1088\u1075\u1086",
-    li_size: "\u1076\u107c\u1062\u1010\u103a\u1088",
-    btn_lightgen: "LIGHTING GENERATE",
-    light_none: "\u1015\u102d\u102f\u1010\u103a\u1087\u107e\u1086\u1038\u1022\u107c\u103a\u107c\u102d\u102f\u1004\u103a\u1088\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
-    lg_equip: "\u107c\u1084\u1076\u102d\u1030\u1004\u103a\u1088\u107e\u1086\u1038\u107c\u1082\u103a\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 (\u1081\u107c\u103a softbox / \u1076\u1083\u1010\u1004\u103a\u1088)",
-    grp_chains: "Style Chains \u2014 \u1081\u1030\u1019\u103a\u1088 style \u2713",
-    chains_note: "\u1015\u102d\u102f\u1010\u103a\u1087 style \u1022\u107c\u103a\u101c\u1082\u103a\u1075\u1031\u1083\u1088\u101c\u1086\u1088 \u2014 \u1010\u1031\u101c\u1031\u1083\u1038\u1076\u101d\u103a\u1088\u107c\u1082\u103a\u1038 Generate / preset / Retouch \u1075\u1030\u1088\u1022\u107c\u103a\u1078\u103d\u1019\u103a\u1038\u1075\u107c\u103a\u104b",
-    grp_restore: "\u1019\u1084\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1075\u101d\u103a\u1087",
-    p_restore: "\u1019\u1084\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1075\u101d\u103a\u1087",
-    rest_color: "\u101e\u102e\u1010\u1035\u1019\u103a",
-    rest_bw: "\u1076\u1062\u101d\u103a-\u101c\u1019\u103a",
-    restore_note: "\u1019\u1084\u1038\u1022\u107c\u103a\u1076\u1062\u1010\u103a\u1087, \u101c\u103d\u1004\u103a\u1088\u101c\u102f\u1010\u103a\u1088\u101a\u103d\u107c\u103a\u1089\u107c\u1019\u103a\u1089 / \u107e\u1086\u1038, \u101e\u102e\u1078\u1062\u1004\u103a\u1087 \u2014 \u101d\u1086\u1089\u107c\u1083\u1088\u1010\u1083\u1075\u1030\u1088\u1075\u1031\u1083\u1089\u1019\u102d\u1030\u107c\u103a\u1075\u101d\u103a\u1087 100%\u104b",
-    rt_browstyle: "\u1081\u1062\u1004\u103a\u1088\u1076\u1030\u107c\u103a\u1010\u1083",
-    rt_lashstyle: "\u1081\u1062\u1004\u103a\u1088\u1076\u1030\u107c\u103a\u1010\u1083\u107c\u103d\u1075\u103a\u1088",
-    rt_blush: "\u101e\u102e\u101c\u1085\u1004\u103a\u1075\u1085\u1019\u103a\u1088",
-    rt_contour: "\u1081\u1062\u1004\u103a\u1088 Contour",
-    rt_bust: "\u1022\u1030\u1075\u103a\u1038",
-    rt_butt: "\u1075\u1030\u107c\u103a\u1087",
-    rt_thigh: "\u1076\u1083\u1022\u103d\u107c\u103a",
-    rt_calf: "\u107c\u103d\u1004\u103a\u1089\u1076\u1083",
-    rt_neck: "\u1076\u1031\u1083\u1038",
-    rt_fingers: "\u107c\u102d\u101d\u103a\u1089\u1019\u102d\u102f\u101d\u103a\u1038",
-    hint_prompt_my: "\u1010\u1085\u1019\u103a\u1088\u107d\u1083\u1087\u101e\u1083\u1087\u1010\u1086\u1038\u101c\u1086\u1088\u101a\u1030\u1087 \u2014 \u1019\u102d\u1030\u101d\u103a\u1088 Generate \u1010\u1031\u1015\u102d\u107c\u103a\u1087\u1015\u1035\u107c\u103a English \u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038 (\u107c\u1019\u103a\u101e\u102f\u1010\u103a\u1038 20,000)",
-    st_translate: "\u1010\u102d\u102f\u1075\u103a\u1089\u1015\u102d\u107c\u103a\u1087 prompt \u1015\u1035\u107c\u103a English",
-    live_trans: "\u1015\u102d\u107c\u103a\u1087\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038 \u21c4 (EN \u2194 SHN, \u101d\u1062\u1086\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u1075\u102d\u102f\u1010\u103a\u1038\u1010\u1085\u1019\u103a\u1088)",
-    st_retry: "\u1010\u102d\u102f\u1075\u103a\u1089\u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
-    grp_recipes: "Recipes \u2014 \u101e\u102d\u1019\u103a\u1038 / \u1019\u103d\u1015\u103a\u1088 setting",
-    recipe_note: "\u101e\u102d\u1019\u103a\u1038\u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088 (chains, retouch, \u107e\u1086\u1038, \u101c\u103d\u1075\u103a\u1089, prompt) \u1015\u1035\u107c\u103a\u107e\u1062\u1086\u1087 .json \u1022\u107c\u103a\u101c\u1035\u101d\u103a \u2014 \u101c\u102f\u1075\u103a\u1088\u1081\u1035\u107c\u103a\u1038\u107c\u1035\u1075\u103a\u1038 Load \u1075\u1030\u107a\u103a\u1038\u104b",
-    btn_recipe_save: "\u101e\u102d\u1019\u103a\u1038 Recipe",
-    btn_recipe_load: "\u101c\u1030\u1010\u103a\u1087 Recipe",
-    st_recipe_saved: "\u101e\u102d\u1019\u103a\u1038 Recipe \u101a\u101d\u103a\u1089 \u2713",
-    st_recipe_loaded: "\u101c\u1030\u1010\u103a\u1087 Recipe \u101a\u101d\u103a\u1089 \u2713 \u2014 \u1019\u1084\u1038\u1076\u102d\u1030\u1004\u103a\u1088\u1075\u102f\u1019\u103a\u1038\u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088",
-    st_recipe_bad: "\u1022\u1019\u103a\u1087\u1078\u1082\u103a\u1088\u107e\u1062\u1086\u1087 Recipe \u1076\u103d\u1004\u103a HNK",
-    sec_final: "Prompt \u101c\u102d\u102f\u107c\u103a\u1038\u101e\u102f\u1010\u103a\u1038 (\u101e\u1030\u1004\u103a\u1087\u1011\u102d\u102f\u1004\u103a AI)",
-    btn_copy: "\u1075\u1031\u1083\u1087",
-    st_copied: "\u1075\u1031\u1083\u1087\u101a\u101d\u103a\u1089 \u2713",
-    hist_note: "\u1019\u1062\u1086\u1010\u103d\u1004\u103a\u1038 \u2014 \u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088 6 \u1022\u107c\u103a\u101c\u102d\u102f\u107c\u103a\u1038\u101e\u102f\u1010\u103a\u1038, \u107c\u1035\u1075\u103a\u1038\u1010\u1030\u107a\u103a\u1038:",
-    btn_hist_prompt: "\u2192 Prompt",
-    sec_batch: "Batch Mode",
-    batch_note: "\u101c\u102d\u1030\u1075\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u101c\u1062\u1086\u1022\u107c\u103a + folder \u1022\u103d\u1075\u103a\u1087 \u2014 prompt, chains, cleanup \u101c\u1084\u1088 \u101c\u103d\u1075\u103a\u1089 Keep \u101a\u1062\u1019\u103a\u1038\u101c\u1035\u101d\u103a \u1010\u1031\u1081\u1035\u1010\u103a\u1038\u107c\u102d\u1030\u101d\u103a\u1075\u1030\u1088\u1076\u1085\u1015\u103a\u1038; \u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088\u101e\u102d\u1019\u103a\u1038\u1015\u1035\u107c\u103a *_HNK.png\u104b",
-    btn_batch: "\u1081\u1035\u1010\u103a\u1038 BATCH",
-    btn_batch_stop: "\u1075\u102d\u102f\u1010\u103a\u1038",
-    st_batch: "Batch",
-    st_batch_done: "Batch \u101a\u101d\u103a\u1089",
-    sec_web: "Web AI \u2014 Browser \u1022\u103d\u107c\u103a\u1087",
-    web_note: "\u1015\u102d\u102f\u1010\u103a\u1087 web AI editor \u1022\u107c\u103a\u101c\u1082\u103a\u1075\u1031\u1083\u1088\u101c\u1086\u1088 \u107c\u1082\u103a\u1038 Photoshop\u104b \u101e\u1062\u1004\u103a\u1088\u1010\u102e\u1088\u107c\u107c\u103a\u1088\u101e\u1031 \u1022\u101d\u103a\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088\u1076\u101d\u103a\u1088\u1019\u1083\u1038\u1015\u1035\u107c\u103a layer:",
-    web_import_note: "\u1076\u101d\u103a\u1088: \u2460 \u107c\u1082\u103a\u1038 web app \u1078\u1082\u103a\u1089 Copy image address \u101e\u1031 \u107c\u1035\u1075\u103a\u1038 IMPORT COPIED LINK \u00b7 \u2461 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1022\u101d\u103a\u107e\u1062\u1086\u1087\u101c\u1030\u1004\u103a\u1038\u101e\u1031 \u1078\u1082\u103a\u1089 IMPORT FILE \u00b7 \u2462 web app \u1022\u1030\u107a\u103a\u1038\u1075\u1031\u1083\u1089\u1022\u107c\u103a\u1019\u102e\u1038 HNK bridge \u1010\u1031\u101e\u1030\u1004\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1076\u101d\u103a\u1088\u1019\u1083\u1038\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038\u104b",
-    btn_web_go: "\u1075\u1082\u1083\u1087",
-    btn_web_home: "\u1081\u102d\u1030\u107c\u103a\u1038",
-    btn_web_reload: "\u101c\u1030\u1010\u103a\u1087\u1076\u102d\u102f\u107c\u103a\u1038",
-    btn_web_import_link: "\u1076\u101d\u103a\u1088 LINK \u1022\u107c\u103a\u1075\u1031\u1083\u1087\u101d\u1086\u1089 \u2192 PS",
-    btn_web_import_file: "\u1076\u101d\u103a\u1088\u107e\u1062\u1086\u1087 \u2192 PS",
     st_web_import: "\u1076\u101d\u103a\u1088 Photoshop \u1015\u1035\u107c\u103a layer \u101a\u101d\u103a\u1089 \u2713",
-    st_web_nourl: "\u1075\u1031\u1083\u1087 link \u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038 (\u107c\u1035\u1075\u103a\u1038\u1076\u1082\u1083 \u2192 Copy image address)",
-    st_web_fetch: "\u1010\u102d\u102f\u1075\u103a\u1089\u1022\u101d\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1010\u102e\u1088 link",
-    st_web_notallowed: "Domain \u107c\u1086\u1089\u1022\u1019\u103a\u1087\u1015\u1083\u1038\u107c\u1082\u103a\u1038\u101e\u1035\u107c\u103a\u1088\u1022\u107c\u103a\u1022\u107c\u102f\u107a\u1062\u1010\u103a\u1088 \u2014 \u1010\u1031\u1015\u101d\u103a\u1087\u101d\u1086\u1089\u1075\u1031\u1083\u1088\u1015\u1035\u107c\u103a\u101c\u1086\u1088\u104b \u101a\u103d\u107c\u103a\u1038\u1081\u1082\u103a\u1088 HNK \u101e\u1082\u103a\u1087\u1015\u107c\u103a\u104b",
-    st_need_doc: "\u1015\u102d\u102f\u1010\u103a\u1087 document \u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u107c\u1082\u103a\u1038 Photoshop \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
-    sec_campro: "Camera Pro \u101c\u1084\u1088 \u107c\u1019\u103a\u1089\u1078\u107c\u103a\u1089",
-    autosave_lbl: "Export \u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088\u1075\u1030\u1088\u1022\u107c\u103a\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038 (PNG + log prompt \u2192 folder)",
     st_folder_ok: "\u1019\u1075\u103a\u1038 folder export \u101a\u101d\u103a\u1089 \u2713",
     st_exported: "Export \u101a\u101d\u103a\u1089 \u2713",
     st_export_fail: "Export \u1022\u1019\u103a\u1087\u1015\u1035\u107c\u103a \u2014 \u1010\u1030\u107a\u103a\u1038 folder",
-    st_pro_fallback: "Model Pro \u1022\u1019\u103a\u1087\u101c\u1086\u1088 \u2014 \u101c\u1085\u1075\u103a\u1088\u1015\u1035\u107c\u103a Flash \u1010\u103d\u107c\u103a\u1088\u1010\u1083\u1087\u1015\u103d\u1075\u103a\u1088\u107c\u1086\u1089",
     st_img_bad: "\u1076\u1031\u1083\u1088\u1019\u102f\u107c\u103a\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 \u1022\u1019\u103a\u1087\u107d\u1062\u107c\u103a\u1087\u101c\u103d\u1004\u103a\u1088\u1010\u1085\u1010\u103a\u1088 \u2014 \u101e\u1082\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1076\u102d\u102f\u107c\u103a\u1038",
     st_auto_comp: "\u107d\u103d\u1019\u103a\u1089\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038: \u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038 IMAGE 1 \u2192 scene reference",
-    prov_lbl: "\u107d\u1030\u1088\u1015\u107c\u103a\u101d\u1086\u1089 AI",
-    tab_create: "Create",
-    create_note: "CREATE MODE \u2014 \u1081\u1035\u1010\u103a\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1019\u1082\u103a\u1087\u1010\u102e\u1088 prompt \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 (+ ref 4 \u1022\u107c\u103a\u1081\u1004\u103a\u1038\u1076\u1031\u1083)\u104b \u1081\u1004\u103a\u1038\u1076\u1031\u1083\u1010\u1084\u1089\u1010\u1084\u1089: \u1022\u1019\u103a\u1087\u101c\u1030 document, preset, chains \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u101c\u103d\u1075\u103a\u1089\u101e\u1004\u103a\u104b",
     create_ph: "\u1010\u1085\u1019\u103a\u1088\u101d\u1083\u1088\u101c\u103d\u1004\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u107c\u103a\u101c\u1030\u101d\u103a\u1087",
     btn_create_ps: "\u2b07 \u101e\u1030\u1004\u103a\u1087\u1011\u102d\u102f\u1004\u103a Photoshop",
     btn_to_ref: "\u21ba \u1078\u1082\u103a\u1089\u1015\u1035\u107c\u103a Ref 1",
     st_to_ref: "\u101e\u1082\u103a\u1087\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088\u1076\u101d\u103a\u1088 Ref 1 \u101a\u101d\u103a\u1089 \u2713",
-    scope_create_note: "\u1081\u1004\u103a\u1038\u1076\u1031\u1083\u1010\u102e\u1088 Model & Output \u1076\u103d\u1004\u103a Setup \u2014 setting \u107c\u1086\u1089\u1078\u1082\u103a\u1089\u1010\u103d\u107c\u103a\u1088\u1010\u1083\u1087 Generate \u1076\u103d\u1004\u103a Create \u1075\u1030\u107a\u103a\u1038\u104b",
-    cr_ratio: "Ratio",
-    cr_var: "\u1022\u107c\u103a\u1015\u1085\u1075\u103a\u1087",
     cr_restyle: "\u267b \u101c\u1085\u1075\u103a\u1088 style \u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088",
-    cr_lib: "Prompt Library \u2014 \u107c\u1035\u1075\u103a\u1038\u101e\u1031\u101e\u1082\u103a\u1087",
-    cr_improve: "\u2728 \u1019\u1084\u1038\u101c\u102e",
-    cr_describe: "\ud83d\udd0d \u101c\u1030 Ref 1 \u2192 Prompt",
-    st_describing: "\u1010\u102d\u102f\u1075\u103a\u1089\u101c\u1030\u1076\u1085\u1015\u103a\u1038 reference\u2026",
-    st_described: "\u1010\u1085\u1019\u103a\u1088 prompt \u1010\u102e\u1088 Ref 1 \u101a\u101d\u103a\u1089 \u2713",
-    st_need_ref1: "\u101e\u1082\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1076\u101d\u103a\u1088 Ref 1 \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
-    st_lib_added: "\u101e\u1082\u103a\u1087 prompt \u101a\u101d\u103a\u1089 \u2713",
-    cr_refs: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 Reference (\u1011\u102d\u102f\u1004\u103a 4)",
-    cr_refs_note: "\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088 \u1022\u1019\u103a\u1087\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088 \u2014 \u101e\u1082\u103a\u1087\u101c\u1030\u107a\u103a\u1088 Layer / File / Web\u104b Create \u1010\u1031\u1022\u101d\u103a\u1022\u107c\u103a prompt \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u101a\u103d\u107c\u103a\u1038\u1075\u1030\u107a\u103a\u1038\u104b",
-    cr_results: "\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088",
     cr_gal_empty: "\u1015\u1086\u1087\u1019\u102e\u1038\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088 \u2014 \u107c\u1035\u1075\u103a\u1038 Generate\u104b",
     cr_gal_have: "\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088 \u00b7 \u107c\u1035\u1075\u103a\u1038\u1076\u1085\u1015\u103a\u1038\u1022\u103d\u107c\u103a\u1087\u101e\u1031 \u1010\u1030\u107a\u103a\u1038 / \u1081\u1035\u1010\u103a\u1038\u101e\u1004\u103a",
     cr_save: "\u2b07 \u101e\u102d\u1019\u103a\u1038 PNG",
-    cr_engine: "Engine",
     cr_need_result: "\u101e\u1062\u1004\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
-    btn_web_import_url: "\u2b07 \u1076\u101d\u103a\u1088 URL",
-    st_clip_help: "Clipboard \u1015\u101d\u103a\u1087/\u1011\u102f\u1075\u103a\u1087\u1081\u1062\u1019\u103a\u1088 \u2014 \u1015\u1062\u1075\u103a\u1088 link \u101e\u1082\u103a\u1087\u107c\u1082\u103a\u1038\u1081\u103d\u1004\u103a\u1088 URL \u101e\u1031 \u107c\u1035\u1075\u103a\u1038 \u2b07 Import URL",
-    st_web_blob: "\u1022\u107c\u103a\u107c\u107c\u103a\u1089\u1015\u1035\u107c\u103a link blob: \u1075\u1019\u103a\u1038\u107c\u102d\u102f\u1004\u103a\u1088\u1075\u1030\u107a\u103a\u1038 \u2014 \u107c\u1035\u1075\u103a\u1038\u1076\u1082\u1083 \u2192 Copy IMAGE Address, \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u101e\u102d\u1019\u103a\u1038\u107e\u1062\u1086\u1087\u101e\u1031 \u1078\u1082\u103a\u1089 Import File",
-    err_key: "API key \u1022\u1019\u103a\u1087\u1011\u102f\u1075\u103a\u1087 \u2014 \u1010\u1030\u107a\u103a\u1038 key \u1076\u102d\u102f\u107c\u103a\u1038\u1010\u102e\u1088 tab Setup",
-    err_quota: "Quota / \u1081\u1085\u1004\u103a\u1038\u1076\u1082\u1062\u1004\u103a\u1088\u1010\u1035\u1019\u103a \u2014 \u1015\u1082\u103a\u1089\u1075\u1019\u103a\u1038\u107c\u102d\u102f\u1004\u103a\u1088\u101e\u1031 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
-    err_big: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u101a\u1082\u103a\u1087\u1015\u1030\u107c\u103a\u1089\u1010\u103d\u107c\u103a\u1088\u1010\u1083\u1087 API \u2014 \u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u101c\u1035\u1075\u103a\u1089\u101e\u1031 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
-    err_safety: "\u1011\u102f\u1075\u103a\u1087 safety filter \u1081\u1062\u1019\u103a\u1088 \u2014 \u1019\u1084\u1038 prompt \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u101e\u1031 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
-    err_net: "\u1076\u103d\u1004\u103a\u1087\u101e\u1035\u1004\u103a\u1088 / server \u1019\u102e\u1038\u101c\u103d\u1004\u103a\u1088\u101a\u102f\u1075\u103a\u1038 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
-    rh_err_network: "ထိုင် RunningHub Enterprise ဢမ်ႇလႆႈ — ဢိၼ်ႇထႃႇၼႅတ်ႉၶၢတ်ႇ။ ၵူတ်ႇထတ်းလႅင်းသေ ၶိုၼ်းၸၢမ်း။",
-    rh_err_task_failed: "RunningHub task ဢမ်ႇသေၽွင်ႈ — ၸၢမ်းလႅၵ်ႈ prompt",
-    rh_err_host_blocked: "Photoshop ဢမ်ႇပၼ် host ၼႆႉ — ဢမ်ႇမီးၼႂ်း manifest panel။ သႂ်ႇ panel မႂ်ႇသုတ်း။",
-    rh_err_timeout: "ႁဵတ်းႁၢင်ႈႁိုင်ပူၼ်ႉ — RunningHub ဢမ်ႇတွပ်ႇတၼ်း။ ၶိုၼ်းၸၢမ်း ဢမ်ႇၼၼ် လူတ်းယွမ်း ၶၼၢတ်ႈ / ၸမ်ႉ။",
-    rh_err_rate_limited: "RunningHub Enterprise ယုင်ႈယူႇ — ပႂ်ႉၵမ်းၼိုင်ႈသေ ၶိုၼ်းၸၢမ်း။",
-    rh_err_invalid_key: "RunningHub ဢမ်ႇႁပ်ႉ key — ၵူတ်ႇထတ်းတီႈ Setup ▸ RunningHub Enterprise။",
     /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
     wf_scene_presets: "Scene preset တီႈ Library — ၼဵၵ်းၵမ်းလဵဝ်",
     wf_scene_loading: "တိုၵ်ႉဢဝ် scene…",
@@ -2267,114 +1190,20 @@ const I18N = {
     wf_press_prepare: "ၼဵၵ်း ႁၢင်ႈႁႅၼ်း သေ ပိုတ်ႇ workflow ၼႆႉလႄႈ ၵူတ်ႇထတ်းႁၢင်ႈ။",
     wf_opts: "Model \u00b7 Ratio \u00b7 \u1010\u1031\u1080\u1015\u1030\u1076\u1010\u102d\u1060 \u00b7 Size",
     wf_model_auto: "Auto \u2014 workflow \u101c\u102d\u1030\u1075\u1076\u1088\u1096",
-    err_timeout: "\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1010\u1035\u1019\u103a \u2014 server \u1078\u1082\u103a\u1089\u1076\u1062\u101d\u103a\u1038\u101a\u1062\u1019\u103a\u1038\u1081\u102d\u102f\u1004\u103a\u1015\u1030\u107c\u103a\u1089; \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
-    err_generic: "\u1081\u1035\u1010\u103a\u1038\u1022\u1019\u103a\u1087\u101a\u101d\u103a\u1089 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
-    err_img: "\u1022\u1019\u103a\u1087\u101c\u1086\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u107c\u103a\u1078\u1082\u103a\u1089\u101c\u1086\u1088 \u2014 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
-    err_mode: "Document \u107c\u1086\u1089 \u1022\u1019\u103a\u1087\u1078\u1082\u103a\u1088 RGB mode \u2014 \u101c\u1085\u1075\u103a\u1088\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038 (Image \u25b8 Mode \u25b8 RGB Color) \u101e\u1031 \u1078\u1062\u1019\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
-    cam_master: "\u1015\u102d\u102f\u1010\u103a\u1087 Camera block \u2014 \u101e\u1082\u103a\u1087\u1010\u102e\u1088\u1015\u1062\u1086 prompt \u1075\u1030\u1088\u1022\u107c\u103a",
-    cam_body: "\u1010\u1030\u101d\u103a\u1075\u103d\u1004\u103a\u1088\u1011\u1062\u1086\u1087",
-    cam_lens: "\u101c\u1085\u107c\u103a\u1089 Prime (mm)",
-    cam_f: "Aperture",
-    cam_film: "\u1081\u1062\u1004\u103a\u1088 Film",
-    cam_bokeh: "Style Bokeh",
-    cam_iso: "ISO",
-    cam_k: "WB Kelvin",
-    cam_note: "\u1015\u102d\u102f\u1010\u103a\u1087 block \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038 \u101e\u1031 \u101c\u102d\u1030\u1075\u103a\u1088\u1022\u107c\u103a\u101c\u1030\u101d\u103a\u1087\u1075\u1030\u107a\u103a\u1038 \u2014 chip \u2013 \u1010\u1031\u1022\u1019\u103a\u1087\u1015\u1083\u1038\u104b \u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088\u1010\u1031\u101a\u1030\u1087\u1010\u102e\u1088\u1015\u1062\u1086 prompt \u101c\u102d\u102f\u107c\u103a\u1038\u101e\u102f\u1010\u103a\u1038\u104b",
-    ro_h_main: "REFERENCE OPS PRO (Ref1 / Ref2)",
-    ro_note: "Ref1 = IMAGE 2 (\u101a\u102d\u1004\u103a\u1038) \u00b7 Ref2 = IMAGE 3 (\u1078\u1062\u1086\u1038)\u104b \u101c\u102d\u1030\u1075\u103a\u1088\u1022\u107c\u103a\u1019\u1062\u1086\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038\u101e\u1031 \u1081\u1035\u1010\u103a\u1038 \u2014 \u1075\u1030\u107c\u103a\u1038\u1022\u107c\u103a\u1022\u1019\u103a\u1087\u1019\u1085\u107c\u103a\u1088 \u1010\u1031\u1022\u1019\u103a\u1087\u101c\u1085\u1075\u103a\u1088\u104b",
-    ro_target: "\u1022\u107c\u103a\u1019\u1062\u1086:",
-    ro_solo: "\u1075\u1031\u1083\u1089\u101c\u1035\u101d\u103a",
-    ro_couple: "\u1075\u1030\u1088\u1076\u1030\u1088",
-    ro_family: "\u1015\u102e\u1088\u107c\u103d\u1004\u103a\u1089",
-    ro_mk: "\u1075\u1031\u1083\u1087 makeup \u1010\u102e\u1088 ref",
-    ro_hair: "\u1022\u101d\u103a\u1081\u1062\u1004\u103a\u1088\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a\u1010\u102e\u1088 ref",
-    ro_h_face: "Face Ops",
-    ro_h_bg: "BG / FG Ops",
-    ro_h_sub: "Subject Ops",
-    ro_h_lc: "Light & Color Ops",
-    ro_h_dress: "Dress Ops",
-    ro_h_mk: "Makeup Ops",
-    ro_h_match: "\u2605 Master Match (\u1081\u1062\u1004\u103a\u1088\u101c\u1035\u101d\u103a)",
-    ro_match_note: "\u1081\u1082\u103a\u1088 IMAGE 1 \u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1010\u1004\u103a\u1038 reference \u1081\u1082\u103a\u1088\u1019\u102d\u1030\u107c\u103a\u1019\u1084\u1038\u1015\u103d\u1075\u103a\u1088\u101c\u1035\u101d\u103a\u1075\u107c\u103a \u2014 \u1019\u1062\u1086\u1022\u107c\u103a\u1076\u1082\u103a\u1088\u1081\u1082\u103a\u1088\u1019\u102d\u1030\u107c\u103a:",
-    m_color: "\u101e\u102e",
-    m_light: "\u107e\u1086\u1038",
-    m_makeup: "Makeup",
-    m_skin: "Retouch \u107d\u102d\u101d\u103a\u107c\u1004\u103a",
-    crd_chainsrest: "Style Chains + \u1019\u1084\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1075\u101d\u103a\u1087",
-    crd_refops: "Reference Ops Pro (Ref1 / Ref2)",
-    crd_scenes: "\ud83c\udfac Scenes Pro \u2014 \u101c\u103d\u1075\u103a\u1089\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038 \u00b7 scene \u1076\u101d\u103a\u1088\u1075\u107c\u103a",
-    scn_note: "\u101c\u103d\u1075\u103a\u1089\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 (\u107c\u1083\u1088\u1010\u1083 \u00b7 \u1078\u1083\u1087\u1010\u1083\u1087 \u00b7 \u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088 \u00b7 \u1076\u103d\u1015\u103a\u1087) \u101e\u1031 \u101e\u1062\u1004\u103a\u1088 scene \u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088\u1081\u1082\u103a\u1088\u1076\u101d\u103a\u1088\u1075\u107c\u103a \u2014 \u107e\u1086\u1038, \u1004\u101d\u103a\u1038, \u101e\u102e, \u107d\u1062\u1086\u1087\u101c\u1004\u103a, \u107d\u1062\u1086\u1087\u107c\u1083\u1088 \u101c\u1084\u1088 \u1076\u1030\u101d\u103a\u1038\u1076\u103d\u1004\u103a \u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038 \u1081\u1082\u103a\u1088\u1019\u102d\u1030\u107c\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1010\u1084\u1089\u104b",
-    scn_h_style: "Style Scene (\u107c\u1082\u103a\u1038\u1081\u102d\u1030\u107c\u103a\u1038 / \u107e\u102d\u1004\u103a\u1088\u1011\u102f\u1004\u103a\u1038)",
-    scn_h_bday: "\ud83c\udf82 \u101d\u107c\u103a\u1038\u1075\u102d\u1030\u1010\u103a\u1087 \u2014 \u1022\u1083\u1087\u101a\u102f 1\u201345",
-    scn_h_cap: "\u101c\u102d\u1075\u103a\u1088 Caption (\u101c\u102f\u1075\u103a\u1088\u1022\u103d\u107c\u103a\u1087 \u00b7 Miss Universe \u00b7 \u101d\u107c\u103a\u1038\u1075\u102d\u1030\u1010\u103a\u1087)",
-    scn_h_scarf: "\u107c\u103d\u1075\u103a\u1088\u1081\u102d\u1030\u107c\u103a\u1038 / \u107d\u1083\u1088\u1015\u102d\u101d\u103a",
-    scn_grad: "\u1081\u1015\u103a\u1089\u1078\u102f\u1019\u103a\u1088\u1076\u1030\u1038 \u107c\u1082\u103a\u1038\u1081\u102d\u1030\u107c\u103a\u1038",
-    scn_prewed: "Prewedding \u107c\u1082\u103a\u1038\u1081\u102d\u1030\u107c\u103a\u1038",
-    scn_vietnam: "\u101d\u1085\u1010\u103a\u1089\u107c\u1019\u103a\u1038",
-    scn_myanmar: "\u1019\u1062\u107c\u103a\u1088",
-    scn_chinese: "\u1076\u1084\u1087",
-    scn_shan: "\u1010\u1086\u1038",
-    scn_newborn: "\u101c\u102f\u1075\u103a\u1088\u1022\u103d\u107c\u103a\u1087\u1075\u102d\u1030\u1010\u103a\u1087\u1019\u1082\u103a\u1087",
-    scn_age: "\u1022\u1083\u1087\u101a\u102f",
-    scn_bday_go: "\ud83c\udf82 SCENE \u101d\u107c\u103a\u1038\u1075\u102d\u1030\u1010\u103a\u1087",
-    scn_cap_on: "\u101e\u1082\u103a\u1087\u101c\u102d\u1075\u103a\u1088 caption",
-    scn_cap_ph: "\u101c\u102d\u1075\u103a\u1088 caption (\u107c\u1004\u103a\u1087 Happy 1st Birthday, \u1078\u102d\u102f\u101d\u103a\u1088)\u2026",
-    scn_cap_pos: "\u1010\u102e\u1088\u101a\u1030\u1087",
-    scn_top: "\u107c\u102d\u1030\u101d\u103a",
-    scn_bottom: "\u1010\u1082\u103a\u1088",
-    scn_scarf: "\u2726 SCENE \u107d\u1083\u1088\u1015\u102d\u101d\u103a",
-    scn_dir: "\u1081\u1030\u1038\u1010\u1062\u1004\u103a\u1038",
-    scn_left: "\u101e\u1062\u1086\u1089",
-    scn_right: "\u1076\u1082\u1083",
-    scn_up: "\u107c\u102d\u1030\u101d\u103a",
-    scn_len: "\u101c\u103d\u1004\u103a\u1088\u101a\u1062\u101d\u103a\u1038",
-    scn_short: "\u1015\u103d\u1010\u103a\u1038",
-    scn_long: "\u101a\u1062\u101d\u103a\u1038",
-    g_cat_scene: "SCENE OP \u2014 \u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 \u101c\u103d\u1075\u103a\u1089\u101d\u1086\u1089 (\u107c\u1083\u1088\u1010\u1083 \u00b7 \u1078\u1083\u1087\u1010\u1083\u1087 \u00b7 \u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088 \u00b7 \u1076\u103d\u1015\u103a\u1087); scene \u1022\u107c\u103a\u101e\u1062\u1004\u103a\u1088\u1022\u103d\u1075\u103a\u1087\u1019\u1083\u1038\u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088 (\u107e\u1086\u1038, \u1004\u101d\u103a\u1038, \u101e\u102e, \u107d\u1062\u1086\u1087\u101c\u1004\u103a, \u107d\u1062\u1086\u1087\u107c\u1083\u1088, \u1076\u1030\u101d\u103a\u1038\u1076\u103d\u1004\u103a, \u101d\u1086\u1088\u101c\u1030\u1019\u103a\u1038) \u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1010\u1004\u103a\u1038\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038 \u1081\u1082\u103a\u1088\u1019\u102d\u1030\u107c\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1010\u1084\u1089\u104b",
-    crd_wed: "\u2665 Wedding Pro Suite",
-    crd_recipes: "Recipes \u2014 \u101e\u102d\u1019\u103a\u1038 / \u1019\u103d\u1015\u103a\u1088",
-    learn_lbl: "\ud83c\udf93 Learn Mode \u2014 \u107c\u1035\u1075\u103a\u1038 1 = \u101c\u103d\u1004\u103a\u1088\u107c\u1084 (\u101c\u102d\u1030\u1004\u103a), 2 = prompt (\u1076\u1035\u101d\u103a\u107e\u1083\u1089), 3 = \u1081\u1035\u1010\u103a\u1038 (\u1076\u1035\u101d\u103a)",
     guide_hint: "\u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088: \u101c\u102d\u1030\u1004\u103a \u2192 \u1076\u1035\u101d\u103a\u107e\u1083\u1089 (prompt) \u2192 \u1076\u1035\u101d\u103a (\u1081\u1035\u1010\u103a\u1038) \u25b6",
     g_learn_next_prompt: "\u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088 \u2192 \u107c\u1084 PROMPT \u1010\u1084\u1089 (\u1076\u1035\u101d\u103a\u107e\u1083\u1089)\u104b",
     g_learn_prompt_head: "PROMPT \u1022\u107c\u103a\u1015\u102f\u1019\u103a\u1087\u107c\u1086\u1089\u1010\u1031\u101e\u1030\u1004\u103a\u1087 (\u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088 = \u1081\u1035\u1010\u103a\u1038):",
     g_learn_next_run: "\u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088\u1015\u103d\u1075\u103a\u1088\u107c\u102d\u102f\u1004\u103a\u1088 \u2192 RUN (\u1076\u1035\u101d\u103a) \u1010\u1031\u101e\u1062\u1004\u103a\u1088\u104b",
     st_prompt_ready: "Prompt \u1081\u1062\u1004\u103a\u1088\u1081\u1085\u107c\u103a\u1038\u101a\u101d\u103a\u1089 \u2014 \u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088 (\u1076\u1035\u101d\u103a) \u101e\u1031\u1081\u1035\u1010\u103a\u1038 \u2713",
-    g_step_doc: "\u1015\u102d\u102f\u1010\u103a\u1087 document \u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u107c\u1082\u103a\u1038 Photoshop \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038\u104b",
-    g_step_ref1: "\u101e\u1082\u103a\u1087\u1076\u1085\u1015\u103a\u1038 reference \u1076\u101d\u103a\u1088 Ref1 (\u1010\u1031\u1015\u1035\u107c\u103a IMAGE 2)\u104b \u1015\u1031\u1083\u1038\u1019\u102e\u1038\u1075\u1030\u107c\u103a\u1038\u1011\u1030\u107c\u103a\u1088\u101e\u103d\u1004\u103a \u101e\u1082\u103a\u1087 Ref2\u104b",
-    g_step_target: "\u101c\u102d\u1030\u1075\u103a\u1088 Target: Solo / Couple (Ref1 = \u101a\u102d\u1004\u103a\u1038, Ref2 = \u1078\u1062\u1086\u1038) / Family\u104b",
-    g_step_mkhair: "\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088: \u1019\u1062\u1086 \u2018Copy ref makeup\u2019 / \u2018Take ref hairstyle\u2019 \u1022\u107c\u103a\u101a\u1030\u1087\u107c\u102d\u1030\u101d\u103a Face Ops\u104b",
-    g_step_petal: "\u101c\u102d\u1030\u1075\u103a\u1088\u101e\u102e\u1019\u1062\u1075\u103a\u1087\u1019\u103d\u1075\u103a\u1087\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038 (auto = \u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1010\u1004\u103a\u1038 scene \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087)\u104b",
-    g_step_rest: "\u101c\u102d\u1030\u1075\u103a\u1088 Full Color \u1022\u1019\u103a\u1087\u107c\u107c\u103a B&W \u101c\u1030\u107a\u103a\u1088 \u2713 \u107c\u102d\u1030\u101d\u103a\u107c\u1086\u1089\u104b",
-    g_step_int: "\u1019\u1084\u1038 slider Intensity \u1078\u103d\u1019\u103a\u1038\u1078\u1082\u103a\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u104b",
     g_step_confirm: "\u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088\u101e\u1031\u1075\u1082\u1083\u1087\u107c\u1083\u1088: GUIDE (\u101c\u102d\u1030\u1004\u103a) \u2192 PROMPT (\u1076\u1035\u101d\u103a\u107e\u1083\u1089) \u2192 RUN (\u1076\u1035\u101d\u103a \u1010\u1031\u101e\u1062\u1004\u103a\u1088\u1010\u1084\u1089)\u104b",
-    g_cat_face: "FACE OP \u2014 \u1022\u101d\u103a\u107c\u1083\u1088\u1010\u1083 reference \u101e\u1082\u103a\u1087\u1015\u107c\u103a\u1075\u1030\u107c\u103a\u1038\u1022\u107c\u103a\u1019\u1085\u107c\u103a\u1088; \u1075\u1030\u107c\u103a\u1038\u1010\u1062\u1004\u103a\u1087\u1075\u1031\u1083\u1089\u1022\u1019\u103a\u1087\u101c\u1085\u1075\u103a\u1088\u104b",
-    g_cat_sub: "SUBJECT OP \u2014 \u1022\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u107c\u1082\u103a\u1038 reference \u1076\u101d\u103a\u1088\u1019\u1083\u1038\u107c\u1082\u103a\u1038 scene \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087; scene \u101c\u1084\u1088 \u1076\u103d\u1015\u103a\u1087 \u101d\u1086\u1089\u1075\u101d\u103a\u1087\u104b",
-    g_cat_bgfg: "BG/FG OP \u2014 \u101c\u1085\u1075\u103a\u1088\u107d\u1062\u1086\u1087\u101c\u1004\u103a / \u107d\u1062\u1086\u1087\u107c\u1083\u1088 \u1075\u1030\u107a\u103a\u1038 \u101c\u1030\u107a\u103a\u1088 reference\u104b",
-    g_cat_lc: "LIGHT & COLOR OP \u2014 \u1075\u1031\u1083\u1087\u107e\u1086\u1038\u101c\u1084\u1088\u101e\u102e\u1076\u103d\u1004\u103a reference; \u1075\u1030\u107c\u103a\u1038\u101d\u1086\u1089\u1010\u1085\u1010\u103a\u1088\u1075\u1030\u1088 pixel\u104b",
-    g_cat_dress: "DRESS OP \u2014 \u101c\u1085\u1075\u103a\u1088\u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088\u1075\u1030\u107a\u103a\u1038 \u101c\u1030\u107a\u103a\u1088 reference\u104b",
-    g_cat_mkop: "MAKEUP OP \u2014 \u101c\u1085\u1075\u103a\u1088 makeup \u1075\u1030\u107a\u103a\u1038 \u101c\u1030\u107a\u103a\u1088 reference\u104b",
-    g_cat_match: "MASTER MATCH \u2014 \u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 \u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1010\u1004\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088\u1076\u103d\u1004\u103a reference (\u1019\u1062\u1086\u1078\u107c\u103a\u1089\u107c\u102d\u1030\u101d\u103a)\u104b",
-    g_cat_trail: "WEDDING TRAIL \u2014 \u101a\u102d\u1030\u101d\u103a\u1088\u1019\u1030\u1010\u103a\u1038\u101c\u102e + \u1010\u1062\u1004\u103a\u1038\u1019\u103d\u1075\u103a\u1087\u101a\u1062\u101d\u103a\u1038; \u107c\u1083\u1088\u1010\u1083/\u1078\u1083\u1087\u1010\u1083\u1087/\u1076\u103d\u1015\u103a\u1087 \u101c\u103d\u1075\u103a\u1089\u1076\u1035\u1004\u103a\u1088\u104b",
-    g_cat_veil: "FLYING VEIL \u2014 \u101e\u1082\u103a\u1087/\u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u107d\u1083\u1088\u1076\u101c\u102f\u1019\u103a\u1087\u1015\u102d\u101d\u103a\u101a\u1062\u101d\u103a\u1038\u1078\u102d\u1030\u1004\u103a\u1089\u107c\u1086\u1089; \u1022\u1019\u103a\u1087\u1010\u102d\u102f\u1075\u103a\u1038\u107c\u1083\u1088\u1010\u1083\u101e\u1031\u1015\u103d\u1075\u103a\u1088\u104b",
-    g_cat_gown: "GOWN \u2014 \u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088\u1019\u102e\u1038\u101d\u1086\u1089\u1019\u1030\u1010\u103a\u1038\u101e\u1082\u103a (\u1081\u1062\u1004\u103a\u1088\u1022\u1019\u103a\u1087\u101c\u1085\u1075\u103a\u1088) \u101e\u1031 \u1019\u1075\u103a\u1038\u101c\u103d\u1004\u103a\u1088\u101a\u1062\u101d\u103a\u1038\u1081\u1062\u1004\u103a\u107c\u1086\u1089\u104b",
-    g_cat_petal: "FLYING PETALS \u2014 \u101e\u1082\u103a\u1087\u1019\u1062\u1075\u103a\u1087\u1019\u103d\u1075\u103a\u1087\u1015\u102d\u101d\u103a\u107c\u1082\u103a\u1038\u101c\u1030\u1019\u103a\u1038 \u1078\u102d\u1030\u1004\u103a\u1089 style \u107c\u1086\u1089; \u101e\u102e\u1022\u101d\u103a\u1010\u102e\u1088\u1078\u107c\u103a\u1089\u107c\u102d\u1030\u101d\u103a\u104b",
-    g_cat_wedx: "WEDDING EXTRA \u2014 \u101e\u1082\u103a\u1087\u1022\u107c\u103a\u107c\u1086\u1089\u1081\u1082\u103a\u1088\u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1010\u1004\u103a\u1038 scene \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087; \u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u101c\u103d\u1075\u103a\u1089\u101d\u1086\u1089\u104b",
-    g_cat_canvas: "REPLACE (CANVAS) \u2014 \u1022\u101d\u103a\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 \u101e\u1082\u103a\u1087\u1076\u101d\u103a\u1088 scene \u1076\u103d\u1004\u103a reference; \u1075\u1030\u107c\u103a\u1038\u107c\u1082\u103a\u1038 ref \u1022\u101d\u103a\u1022\u103d\u1075\u103a\u1087\u104b",
-    g_cat_restore: "OLD PHOTO RESTORE \u2014 \u1019\u1084\u1038\u1022\u107c\u103a\u101c\u102f\u1010\u103a\u1088; \u107c\u1083\u1088\u1010\u1083\u1075\u1030\u1088\u1075\u1031\u1083\u1089\u1019\u102d\u1030\u107c\u103a\u1075\u101d\u103a\u1087 100%\u104b",
     g_cat_generic: "PRESET \u2014 \u1078\u1082\u103a\u1089\u101c\u103d\u1004\u103a\u1088\u1019\u1084\u1038\u1078\u107c\u103a\u1089\u1076\u102d\u102f\u1075\u103a\u1089\u107c\u1086\u1089 \u107c\u102d\u1030\u101d\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u104b",
     g_gen: "GENERATE \u2014 \u1081\u1035\u1010\u103a\u1038\u1081\u103d\u1004\u103a\u1088 prompt (+ chains, \u101c\u103d\u1075\u103a\u1089 Keep, camera block) \u107c\u102d\u1030\u101d\u103a document \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u104b",
     g_retouchbtn: "RETOUCH APPLY \u2014 \u1081\u1035\u1010\u103a\u1038 setting slider \u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088 \u1015\u1035\u107c\u103a retouch \u1078\u107c\u103a\u1089\u1076\u102d\u102f\u1075\u103a\u1089\u1015\u103d\u1075\u103a\u1088\u101c\u1035\u101d\u103a\u104b",
-    g_relightbtn: "LIGHTING GENERATE \u2014 \u101e\u1082\u103a\u1087\u107e\u1086\u1038\u1076\u102d\u102f\u107c\u103a\u1038\u1078\u103d\u1019\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u107e\u1086\u1038 3D \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u1010\u1085\u1010\u103a\u1088\u1010\u1085\u1010\u103a\u1088\u104b",
-    g_scene: "SCENE GENERATE \u2014 \u101e\u1062\u1004\u103a\u1088 scene \u1076\u102d\u102f\u107c\u103a\u1038\u1010\u102e\u1088 prompt \u1022\u107c\u103a\u1011\u102f\u1010\u103a\u1087\u101d\u1086\u1089; \u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u101d\u1086\u1089\u1075\u101d\u103a\u1087\u104b",
-    g_rmix: "REPLACE MIX \u2014 \u101c\u1085\u1075\u103a\u1088\u1022\u107c\u103a\u1019\u1062\u1086 \u2713 \u101d\u1086\u1089\u1075\u1030\u107a\u103a\u1038 \u1010\u102e\u1088 reference\u104b",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
     ro_bgSwap: "BG Swap",
     ro_fgRep: "FG Replace",
-    ro_bg_note: "Doc = \u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038 \u00b7 Ref1 = scene \u1019\u1082\u103a\u1087\u104b Target (Solo/Couple/Family) \u101c\u102d\u1030\u1075\u103a\u1088\u101d\u1083\u1088\u1010\u1031\u101d\u1086\u1089\u107d\u1082\u103a\u104b",
-    ro_bg_frame: "\u101d\u1086\u1089\u1076\u103d\u1015\u103a\u1087\u101c\u1084\u1088\u101c\u103d\u1004\u103a\u1088\u1078\u1010\u103a\u1038",
-    ro_bg_light: "\u101d\u1086\u1089\u107e\u1086\u1038/\u101e\u102e\u1076\u103d\u1004\u103a\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038",
     ro_subSwap: "Subject Swap",
     ro_lcRef: "L&C Reference",
     ro_lcCopy: "L&C Copy-Paste",
@@ -2382,94 +1211,8 @@ const I18N = {
     ro_dressRep: "Dress Replace",
     ro_mkCopy: "Makeup Copy",
     ro_matchBtn: "\u2605 MASTER MATCH",
-    grp_retouch: "Preset Retouch \u107d\u102d\u101d\u103a\u107c\u1004\u103a",
-    lbl_intensity: "\u1081\u1085\u1004\u103a\u1038",
-    p_evoto: "Retouch B Style",
-    p_meitu: "Retouch A Style",
-    auto_place: "\u101e\u1082\u103a\u1087\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088\u1076\u101d\u103a\u1088 Photoshop \u1015\u1035\u107c\u103a layer \u1019\u1082\u103a\u1087\u1081\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038",
-    sec_retouchpro: "Retouch Pro \u2014 Sliders",
-    rt_skin: "\u107d\u102d\u101d\u103a\u107c\u1004\u103a",
-    rt_faceai: "Face AI",
-    rt_hair: "\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a",
-    rt_dress: "\u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088",
-    rt_bg: "\u107d\u1062\u1086\u1087\u101c\u1004\u103a",
-    rt_smooth: "\u1081\u1035\u1010\u103a\u1038\u107d\u102d\u101d\u103a\u107c\u1004\u103a\u1019\u1030\u107c\u103a\u1038",
-    rt_acne: "\u1022\u101d\u103a\u1019\u1062\u1075\u103a\u1087\u1022\u103d\u1075\u103a\u1087",
-    rt_spots: "\u1010\u102e\u1088\u101c\u1019\u103a",
-    rt_wrinkle: "\u1081\u103d\u1086\u1038\u101c\u102d\u1030\u1010\u103a\u1087",
-    rt_tone: "\u1076\u1062\u101d\u103a / \u1022\u103d\u107c\u103a\u1087\u101c\u1019\u103a",
-    rt_glow: "\u1081\u102d\u1030\u101d\u103a\u1088",
-    rt_reshape: "AI Reshape",
-    rt_lash: "\u1076\u1030\u107c\u103a\u1010\u1083\u107c\u103d\u1075\u103a\u1088",
-    rt_brow: "\u1076\u1030\u107c\u103a\u1010\u1083",
-    rt_lipsmooth: "\u1019\u1030\u107c\u103a\u1038\u101e\u1030\u1015\u103a\u1038",
-    rt_lipcolor: "\u101e\u102e\u101e\u1030\u1015\u103a\u1038",
-    rt_lenscolor: "\u101e\u102e Lens \u1010\u1083",
-    rt_hairstray: "\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a\u1081\u1075\u103a\u1038",
-    rt_hairsmooth: "\u1019\u1030\u107c\u103a\u1038\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a",
-    rt_hairshine: "\u1081\u102d\u1030\u101d\u103a\u1088\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a (D&B)",
-    rt_dresssmooth: "\u1019\u1030\u107c\u103a\u1038\u107d\u1083\u1088",
-    rt_dressedge: "\u1081\u1035\u1010\u103a\u1038\u1081\u102d\u1019\u103a\u1038\u1076\u103d\u1015\u103a\u1087\u1019\u1030\u1010\u103a\u1038",
-    rt_dresswrinkle: "\u1022\u101d\u103a\u1081\u103d\u1086\u1038\u101a\u103d\u1004\u103a\u1087\u1022\u103d\u1075\u103a\u1087",
-    rt_dresstexture: "\u1019\u1084\u1038\u1081\u1062\u1004\u103a\u1088\u107d\u1083\u1088\u1076\u102d\u102f\u107c\u103a\u1038",
-    rt_bgsmooth: "\u1081\u1035\u1010\u103a\u1038\u107d\u1062\u1086\u1087\u101c\u1004\u103a\u1019\u1030\u1010\u103a\u1038/\u1019\u1030\u107c\u103a\u1038",
-    rt_bgcolor: "\u101e\u102e\u107d\u1062\u1086\u1087\u101c\u1004\u103a",
-    rt_bgrecolor: "\u1019\u1030\u107c\u103a\u1038\u101e\u102e\u107d\u1062\u1086\u1087\u101c\u1004\u103a",
-    rt_shape: "Reshape Pro (\u107c\u1083\u1088\u1010\u1083 + \u1010\u1030\u101d\u103a)",
-    rt_teeth: "\u1081\u1035\u1010\u103a\u1038\u1076\u1035\u101d\u103a\u1088\u1076\u1062\u101d\u103a",
-    rt_eyewhite: "\u1081\u1035\u1010\u103a\u1038\u1010\u1083\u1076\u1062\u101d\u103a\u1019\u1030\u1010\u103a\u1038",
-    rt_faceslim: "\u1081\u1035\u1010\u103a\u1038\u107c\u1083\u1088\u101c\u1035\u1075\u103a\u1089",
-    rt_jaw: "\u101e\u1035\u107c\u103a\u1088\u1076\u1062\u1004\u103a\u1088\u1076\u1035\u101d\u103a\u1088",
-    rt_chin: "\u1076\u1062\u1004\u103a\u1038",
-    rt_nosesize: "\u1076\u107c\u1062\u1010\u103a\u1088\u1076\u1030\u1087",
-    rt_eyesize: "\u1076\u107c\u1062\u1010\u103a\u1088\u1010\u1083",
-    rt_lipfull: "\u101e\u1030\u1015\u103a\u1038\u1010\u1035\u1019\u103a",
-    rt_waist: "\u1022\u1085\u101d\u103a\u101c\u1035\u1075\u103a\u1089",
-    rt_bodyslim: "\u1010\u1030\u101d\u103a\u101c\u1035\u1075\u103a\u1089",
-    rt_shoulder: "\u1015\u1062\u1086\u1088",
-    rt_hip: "\u1075\u1030\u107c\u103a\u1087\u101c\u1035\u1075\u103a\u1089",
-    rt_leglen: "\u101c\u103d\u1004\u103a\u1088\u101a\u1062\u101d\u103a\u1038\u1076\u1083",
-    rt_armslim: "\u1076\u1085\u107c\u103a\u101c\u1035\u1075\u103a\u1089",
-    rt_dressfit: "\u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088\u1019\u1085\u107c\u103a\u1088\u1010\u1030\u101d\u103a",
-    rt_dressclean: "\u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088\u1019\u1030\u1010\u103a\u1038\u101e\u1082\u103a",
-    rt_dresscolorpure: "\u101e\u102e\u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088\u101e\u1082\u103a",
-    rt_bodygrp: "Body Skin Pro",
-    rt_bodysmooth: "\u1019\u1030\u107c\u103a\u1038\u107d\u102d\u101d\u103a\u107c\u1004\u103a\u1010\u1030\u101d\u103a",
-    rt_bodyblemish: "\u1081\u1035\u1010\u103a\u1038\u107d\u102d\u101d\u103a\u107c\u1004\u103a\u1010\u1030\u101d\u103a\u1019\u1030\u1010\u103a\u1038",
-    rt_bodytone: "\u101e\u102e\u107d\u102d\u101d\u103a\u107c\u1004\u103a\u1019\u102d\u1030\u107c\u103a\u1075\u107c\u103a",
-    rt_bodyglow: "\u1010\u1030\u101d\u103a\u1081\u102d\u1030\u101d\u103a\u1088",
-    rt_bodyhairrm: "\u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u1076\u1030\u107c\u103a\u1010\u1030\u101d\u103a\u1022\u1031\u1087",
-    rt_hairvolume: "\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a\u107c\u1019\u103a",
-    rt_hairgloss: "\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a\u1081\u102d\u1030\u101d\u103a\u1088",
-    rt_hairfill: "\u101e\u1082\u103a\u1087\u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a (\u1010\u102e\u1088\u1022\u1031\u1087)",
-    wp_h_trail: "\u2665 Wedding \u2014 \u1010\u1062\u1004\u103a\u1038\u1019\u103d\u1075\u103a\u1087\u1019\u1030\u1010\u103a\u1038\u101c\u102e",
-    wp_h_veil: "\u2665 Wedding \u2014 \u107d\u1083\u1088\u1076\u101c\u102f\u1019\u103a\u1087\u1015\u102d\u101d\u103a",
-    wp_h_gown: "\u2665 Wedding \u2014 \u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088\u1019\u1030\u1010\u103a\u1038 + \u1081\u1062\u1004\u103a",
-    wp_h_petal: "\u2665 Wedding \u2014 \u1019\u1062\u1075\u103a\u1087\u1019\u103d\u1075\u103a\u1087\u1015\u102d\u101d\u103a",
-    wp_h_extra: "\u2665 Wedding \u2014 \u1019\u1083\u1089 \u00b7 \u107c\u1019\u103a\u1089 \u00b7 \u101d\u1086\u1088\u101c\u1030\u1019\u103a\u1038",
-    wp_note: "Face ID / \u1078\u1083\u1087\u1010\u1083\u1087 / \u1076\u103d\u1015\u103a\u1087 / \u1081\u1062\u1004\u103a\u1088\u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088 \u101c\u103d\u1075\u103a\u1089\u1076\u1035\u1004\u103a\u1088 \u2014 \u101c\u1085\u1075\u103a\u1088\u1022\u107c\u103a\u1022\u107c\u103a\u1081\u103d\u1004\u103a\u1089\u1078\u102d\u102f\u101d\u103a\u1088\u101d\u1086\u1089\u1075\u1030\u107a\u103a\u1038\u104b",
-    wp_petalcolor: "\u101e\u102e\u1019\u1062\u1075\u103a\u1087\u1019\u103d\u1075\u103a\u1087 (auto = \u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1010\u1004\u103a\u1038 scene)",
-    wp_trail_c: "\u101e\u102e\u1019\u103d\u1075\u103a\u1087",
-    wp_trail_go: "\u25b6 \u1010\u1062\u1004\u103a\u1038\u1019\u103d\u1075\u103a\u1087",
-    wp_veil_c: "\u101c\u103d\u1004\u103a\u1088\u101a\u1062\u101d\u103a\u1038\u107d\u1083\u1088\u1076\u101c\u102f\u1019\u103a\u1087",
-    wp_veil_go: "\u25b6 \u107d\u1083\u1088\u1076\u101c\u102f\u1019\u103a\u1087\u1015\u102d\u101d\u103a",
-    wp_gown_c: "\u101c\u103d\u1004\u103a\u1088\u101a\u1062\u101d\u103a\u1038\u1081\u1062\u1004\u103a",
-    wp_gown_go: "\u25b6 \u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088\u1019\u1030\u1010\u103a\u1038 + \u1081\u1062\u1004\u103a",
-    wp_pet_c: "Style \u1019\u1062\u1075\u103a\u1087\u1019\u103d\u1075\u103a\u1087",
-    wp_pet_go: "\u25b6 \u1019\u1062\u1075\u103a\u1087\u1019\u103d\u1075\u103a\u1087\u1015\u102d\u101d\u103a",
-    wp_extra_c: "\u1011\u1085\u1004\u103a\u1088",
-    wp_extra_go: "\u25b6 \u101e\u1082\u103a\u1087\u1011\u1085\u1004\u103a\u1088",
-    btn_apply_rt: "\u1078\u1082\u103a\u1089 Retouch",
-    btn_reset: "\u1081\u1035\u1010\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038\u1078\u102d\u1030\u1004\u103a\u1089\u1075\u101d\u103a\u1087",
     rt_none: "\u1019\u1084\u1038 slider \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u101e\u102e retouch \u1022\u107c\u103a\u107c\u102d\u102f\u1004\u103a\u1088\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
-    tab_setup: "Setup",
-    tab_prompt: "Edit",
-    tab_presets: "Library",
-    recent_lbl: "Prompt \u101c\u102d\u102f\u107c\u103a\u1038\u101e\u102f\u1010\u103a\u1038\u2026",
-    tab_retouch: "Retouch",
-    tab_aitools: "Home",
     cap_warn: "Photoshop \u1081\u1062\u1019\u103a\u1088\u1081\u103d\u1004\u103a\u1088 prompt \u107c\u1086\u1089\u1010\u102e\u1088:",
-    cleanup_note: "\u1022\u107c\u103a\u1019\u1062\u1086\u101d\u1086\u1089 \u1010\u1031\u1081\u1035\u1010\u103a\u1038\u1078\u103d\u1019\u103a\u1038 Generate / preset \u1075\u1030\u1088\u1015\u103d\u1075\u103a\u1088\u104b",
     btn_generate: "GENERATE",
     st_ready: "\u1081\u1062\u1004\u103a\u1088\u1081\u1085\u107c\u103a\u1038\u101a\u101d\u103a\u1089",
     st_capture: "\u1010\u102d\u102f\u1075\u103a\u1089\u1022\u101d\u103a document",
@@ -2486,68 +1229,16 @@ const I18N = {
     st_err: "\u107d\u102d\u1010\u103a\u1038",
     st_no_doc: "\u1022\u1019\u103a\u1087\u1019\u102e\u1038 document \u1015\u102d\u102f\u1010\u103a\u1087\u101d\u1086\u1089 \u2014 \u1015\u102d\u102f\u1010\u103a\u1087\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038",
     st_no_prompt: "Prompt \u1015\u101d\u103a\u1087\u101d\u1086\u1089",
-    need_ref: "Preset \u107c\u1086\u1089\u101c\u1030\u101d\u103a\u1087\u1076\u1085\u1015\u103a\u1038 reference \u107c\u1082\u103a\u1038\u101e\u103d\u1004\u103a\u1089 1",
     st_new_doc: "\u1015\u102d\u102f\u1010\u103a\u1087\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088\u1015\u1035\u107c\u103a document \u1019\u1082\u103a\u1087\u101a\u101d\u103a\u1089 \u2713",
-    sec_preview: "\u1081\u1062\u1004\u103a\u1088\u1010\u1030\u107a\u103a\u1038\u101c\u1030\u1004\u103a\u1088\u107c\u1083\u1088 \u2014 Before / After",
     before: "\u1075\u1030\u1088\u1015\u103d\u1075\u103a\u1088",
     after: "\u101d\u1062\u1086\u1038\u101c\u1004\u103a",
     btn_place: "\u101e\u1082\u103a\u1087\u1076\u101d\u103a\u1088 Photoshop",
-    btn_saveas: "\u101e\u102d\u1019\u103a\u1038\u1015\u1035\u107c\u103a\u2026",
     st_saved: "\u101e\u102d\u1019\u103a\u1038\u101a\u101d\u103a\u1089 \u2713",
-    sec_diag: "\u1075\u1030\u1010\u103a\u1087\u1011\u1010\u103a\u1038 System",
-    sec_log: "Log \u1075\u1062\u107c\u103a\u1004\u1062\u107c\u103a\u1038",
-    btn_diag: "\u1075\u1030\u1010\u103a\u1087\u1011\u1010\u103a\u1038",
-    btn_copylog: "\u1075\u1031\u1083\u1087 Log",
-    btn_clearlog: "\u1019\u103d\u1010\u103a\u1087",
-    diag_host: "\u1022\u1085\u1015\u103a\u1089 Photoshop",
-    diag_uxp: "\u107c\u1019\u103a\u1089\u1075\u1010\u103a\u1089 UXP",
-    diag_rh: "RunningHub Enterprise key",
-    diag_doc: "Document \u1022\u107c\u103a\u1015\u102d\u102f\u1010\u103a\u1087\u101d\u1086\u1089",
-    diag_set: "\u1019\u1075\u103a\u1038\u101d\u1086\u1089",
-    diag_unset: "\u1015\u1086\u1087\u1019\u1075\u103a\u1038",
-    diag_open: "\u1015\u102d\u102f\u1010\u103a\u1087\u101d\u1086\u1089",
-    diag_none: "\u1022\u1019\u103a\u1087\u1019\u102e\u1038",
-    diag_missing: "\u1022\u1019\u103a\u1087\u1081\u107c\u103a",
-    diag_done: "\u1075\u1030\u1010\u103a\u1087\u1011\u1010\u103a\u1038 System \u101a\u101d\u103a\u1089 \u2713",
-    diag_lib: "Library Reference",
-    diag_lib_open: "\u107c\u1019\u103a\u1089\u1075\u1010\u103a\u1089\u1015\u102d\u102f\u1010\u103a\u1087 folder",
-    sec_reflib: "Library \u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 Reference",
-    reflib_note: "\u101c\u102d\u1030\u1075\u103a\u1088 folder \u1076\u1085\u1015\u103a\u1038 reference \u1022\u107c\u103a\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u101c\u1086\u1088\u1078\u1082\u103a \u1015\u103d\u1075\u103a\u1088\u101c\u1035\u101d\u103a\u1075\u1030\u107a\u103a\u1038 \u2014 Browse \u1010\u1031\u1019\u1062\u1086\u1010\u103d\u1004\u103a\u1038\u101e\u1031 \u1015\u102d\u102f\u1010\u103a\u1087\u107c\u1082\u103a\u1038\u107c\u107c\u103a\u1089\u1075\u1030\u1088\u1010\u102e\u1088\u104b",
-    btn_browse: "\u101e\u103d\u1075\u103a\u1088\u1010\u1030\u107a\u103a\u1038",
-    lib_choose: "\u101c\u102d\u1030\u1075\u103a\u1088 Folder",
-    lib_open: "\u1015\u102d\u102f\u1010\u103a\u1087 Folder",
-    lib_change: "\u101c\u1085\u1075\u103a\u1088 Folder",
-    lib_reset: "\u1081\u1035\u1010\u103a\u1038\u1076\u102d\u102f\u107c\u103a\u1038",
-    lib_rescan: "Scan \u1076\u102d\u102f\u107c\u103a\u1038",
-    lib_current: "Folder \u101a\u1062\u1019\u103a\u1038\u101c\u1035\u101d\u103a",
-    lib_found: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1022\u107c\u103a\u1081\u107c\u103a",
-    lib_status: "\u1004\u101d\u103a\u1038\u101c\u1062\u1086\u1038",
-    lib_lastscan: "Scan \u101c\u102d\u102f\u107c\u103a\u1038\u101e\u102f\u1010\u103a\u1038",
-    lib_images: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088",
-    lib_connected: "\u1075\u1015\u103a\u1038\u101e\u102d\u102f\u1015\u103a\u1087\u101a\u101d\u103a\u1089",
-    lib_not_config: "\u1015\u1086\u1087\u1019\u1075\u103a\u1038\u1019\u107c\u103a\u1088",
-    lib_perm_lost: "\u1022\u107c\u102f\u107a\u1062\u1010\u103a\u1088\u1081\u1062\u1086 \u2014 \u101c\u102d\u1030\u1075\u103a\u1088\u1076\u102d\u102f\u107c\u103a\u1038",
-    lib_none: "(\u1015\u1086\u1087\u101c\u102d\u1030\u1075\u103a\u1088 folder)",
-    lib_copy_only: "\u1075\u1031\u1083\u1087\u101e\u1035\u107c\u103a\u1088\u1010\u1062\u1004\u103a\u1038\u1075\u1030\u107a\u103a\u1038",
     lib_choose_msg: "\u101c\u102d\u1030\u1075\u103a\u1088 folder Library \u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 Reference \u1076\u103d\u1004\u103a HNK \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u104b",
-    lib_scanning: "\u1010\u102d\u102f\u1075\u103a\u1089 scan library\u2026",
-    lib_scan_done: "Scan \u1076\u102d\u102f\u107c\u103a\u1038\u101a\u101d\u103a\u1089 \u2713",
-    lib_reset_done: "\u1081\u1035\u1010\u103a\u1038 Library \u1076\u102d\u102f\u107c\u103a\u1038\u101a\u101d\u103a\u1089 \u2713",
-    lib_path_copied: "\u1075\u1031\u1083\u1087\u101e\u1035\u107c\u103a\u1088\u1010\u1062\u1004\u103a\u1038\u101a\u101d\u103a\u1089",
     lib_unsupported: "\u1081\u1062\u1004\u103a\u1088\u1019\u1035\u101d\u103a\u1038\u107c\u1086\u1089\u1078\u1082\u103a\u1089\u1022\u1019\u103a\u1087\u101c\u1086\u1088",
     lib_restore_fail: "\u1019\u1084\u1038 reference \u1076\u102d\u102f\u107c\u103a\u1038\u1022\u1019\u103a\u1087\u101c\u1086\u1088",
     on: "\u1015\u102d\u102f\u1010\u103a\u1087",
     off: "\u1015\u102d\u1075\u103a\u1089",
-    ai_home_title: "\u1076\u1082\u103a\u1088\u101e\u1062\u1004\u103a\u1088\u101e\u1004\u103a?",
-    ai_greet_morning: "\u1019\u1082\u103a\u1087\u101e\u102f\u1004\u103a\u1075\u1062\u1004\u103a\u107c\u1082\u103a\u1076\u1083\u1088",
-    ai_greet_afternoon: "\u1019\u1082\u103a\u1087\u101e\u102f\u1004\u103a\u101d\u1062\u1086\u1038\u101d\u107c\u103a\u1038\u1076\u1083\u1088",
-    ai_greet_evening: "\u1019\u1082\u103a\u1087\u101e\u102f\u1004\u103a\u1075\u1062\u1004\u103a\u1076\u1019\u103a\u1088\u1076\u1083\u1088",
-    ai_free_generate: "\u101e\u1062\u1004\u103a\u1088\u101c\u103d\u1010\u103a\u1088\u101c\u1085\u101d\u103a\u1038",
-    ai_free_sub: "\u1010\u1085\u1019\u103a\u1088 prompt \u1081\u1004\u103a\u1038\u1076\u1031\u1083",
-    ai_more_tools: "\u1076\u102d\u1030\u1004\u103a\u1088\u1019\u102d\u102f\u101d\u103a\u1038\u1011\u1085\u1004\u103a\u1088",
-    ai_more_sub: "Water Edit \u00b7 Text/Logo \u00b7 workflow \u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088",
-    ai_nav_home: "\u1081\u102d\u1030\u107c\u103a\u1038",
-    ai_nav_tools: "\u1076\u102d\u1030\u1004\u103a\u1088\u1019\u102d\u102f\u101d\u103a\u1038",
     ai_history: "\u1019\u1062\u1086\u1010\u103d\u1004\u103a\u1038",
     ai_no_gen: "\u1015\u1086\u1087\u1019\u102e\u1038\u1022\u107c\u103a\u101e\u1062\u1004\u103a\u1088\u101d\u1086\u1089\u104b",
     ai_videos: "ဝီဒီရူဝ်ႈ",
@@ -2574,14 +1265,11 @@ const I18N = {
     ai_lib_pick_first: "\u101c\u102d\u1030\u1075\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1010\u102e\u1088 Presets tab \u2192 Visual Library \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038\u104b",
     ai_lib_load_fail: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 Library \u1015\u102d\u102f\u1010\u103a\u1087\u1022\u1019\u103a\u1087\u101c\u1086\u1088\u104b",
     ai_missing: "\u1015\u1086\u1087\u1019\u102e\u1038",
-    ai_add: "\u101e\u1082\u103a\u1087",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 \u101e\u1082\u103a\u1087 model endpoint (Advanced \u2014 \u1022\u1019\u103a\u1087\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088)",
     ai_rh_note: "Model \u1022\u107c\u103a\u1015\u1083\u1038\u1019\u1083\u1038\u1078\u102d\u102f\u1004\u103a \u1078\u1082\u103a\u1089\u1010\u1004\u103a\u1038 key \u107c\u102d\u1030\u101d\u103a\u107c\u1086\u1089\u101c\u1086\u1088\u101a\u101d\u103a\u1089 \u2014 \u1022\u1019\u103a\u1087\u101c\u1030\u101d\u103a\u1087\u1081\u1035\u1010\u103a\u1038\u101e\u1004\u103a\u104b Model \u101c\u1082\u103a\u107c\u1084\u101d\u1083\u1088 \"not connected\" (endpoint path \u1015\u1086\u1087\u1010\u1085\u1010\u103a\u1088) \u1078\u102d\u102f\u1004\u103a \u1022\u101d\u103a path \u1010\u102e\u1088 RunningHub API docs \u101e\u1031 \u101e\u1082\u103a\u1087\u1010\u102e\u1088\u107c\u1086\u1088\u104b",
     ai_rh_save: "\u101e\u102d\u1019\u103a\u1038 endpoint \u1076\u103d\u1004\u103a model \u107c\u1086\u1089",
     ai_test_conn: "\u1010\u1085\u1010\u103a\u1088\u101c\u103d\u1004\u103a\u1088\u1075\u1015\u103a\u1038\u101e\u102d\u102f\u1015\u103a\u1087",
-    ai_save_verify: "\u101e\u102d\u1019\u103a\u1038\u101e\u1031 \u1010\u1085\u1010\u103a\u1088",
-    ai_settings: "\u1078\u1010\u103a\u1038\u101e\u1083\u1087",
     ai_add_layers: "\u101e\u1082\u103a\u1087\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088\u1015\u1035\u107c\u103a Layer \u1019\u1082\u103a\u1087",
     ai_done: "\u101a\u101d\u103a\u1089\u1010\u1030\u101d\u103a\u1088\u104b",
     ai_result_ready: "\u107d\u103d\u107c\u103a\u1038\u101c\u1086\u1088 \u1081\u1062\u1004\u103a\u1088\u1081\u1085\u107c\u103a\u1038\u101a\u101d\u103a\u1089\u104b",
@@ -2592,21 +1280,6 @@ const I18N = {
     ai_placed_group: "\u101e\u1082\u103a\u1087\u1076\u101d\u103a\u1088\u107c\u1082\u103a\u1038 group \u201c{name}\u201d \u1015\u1035\u107c\u103a Layer \u1019\u1082\u103a\u1087\u101a\u101d\u103a\u1089 (\u107c\u102d\u1030\u101d\u103a host \u107c\u1086\u1089 mask \u1022\u1019\u103a\u1087\u101c\u1086\u1088)\u104b",
     ai_placed_plain: "\u101e\u1082\u103a\u1087\u1015\u1035\u107c\u103a Layer \u1019\u1082\u103a\u1087\u101a\u101d\u103a\u1089 (\u107c\u102d\u1030\u101d\u103a host \u107c\u1086\u1089 group/mask \u1022\u1019\u103a\u1087\u101c\u1086\u1088)\u104b",
     ai_start_fail: "AI Tools \u1010\u1084\u1087\u1022\u1019\u103a\u1087\u101c\u1086\u1088",
-    pgb_setup: "Set up once — ready whenever you are",
-    pgb_studio: "Bring every scene you imagine to life — your way",
-    pgb_create: "One line of text becomes a professional image",
-    pgb_presets: "1850 curated looks — pick one and start instantly",
-    pgb_aitools: "\u107c\u1035\u1075\u103a\u1038\u1015\u103d\u1075\u103a\u1088\u101c\u1035\u101d\u103a \u1078\u107c\u103a\u1089\u1076\u102d\u102f\u1075\u103a\u1089 \u2014 Nano Banana \u00b7 RunningHub",
-    pgb_retouch: "Flawless retouching that stays natural",
-    wf_sum_bg_replace: "\u101c\u1085\u1075\u103a\u1088\u107d\u1062\u1086\u1087\u101c\u1004\u103a",
-    wf_sum_reference_transfer: "\u101e\u1082\u103a\u1087\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 \u1076\u101d\u103a\u1088\u107c\u1082\u103a\u1038 scene reference",
-    wf_sum_master_bgfg_replace: "\u1022\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u107c\u1082\u103a\u1038 scene \u1022\u103d\u1075\u103a\u1087, \u101e\u1062\u1004\u103a\u1088 bg/fg \u1076\u102d\u102f\u107c\u103a\u1038, \u101e\u1082\u103a\u1087\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087",
-    wf_sum_subject_face: "\u1022\u101d\u103a\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u107c\u1083\u1088\u1010\u1083 \u101e\u1082\u103a\u1087\u107c\u102d\u1030\u101d\u103a\u1076\u1085\u1015\u103a\u1038 base",
-    wf_sum_retouch: "\u1019\u1084\u1038\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1075\u1030\u107c\u103a\u1038 \u1081\u1082\u103a\u1088\u101c\u102e\u1078\u103d\u1019\u103a\u1038\u101e\u107d\u1083\u1087\u101d",
-    wf_sum_upscale: "\u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u101a\u1082\u103a\u1087 \u1081\u1030\u101d\u103a\u101a\u103d\u1086\u1088\u1022\u1019\u103a\u1087\u101c\u102f\u1010\u103a\u1088",
-    wf_sum_object_edit: "\u1022\u101d\u103a\u1022\u103d\u1075\u103a\u1087, \u101c\u1085\u1075\u103a\u1088 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u101e\u1082\u103a\u1087\u1076\u1030\u101d\u103a\u1038\u1076\u103d\u1004\u103a",
-    wf_sum_water_edit: "\u1019\u1084\u1038\u107c\u1019\u103a\u1089\u101c\u1084\u1088 \u1004\u101d\u1083\u1087\u107c\u1019\u103a\u1089",
-    wf_sum_text_logo: "\u101e\u1082\u103a\u1087 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1019\u1084\u1038\u101c\u102d\u1075\u103a\u1088\u101c\u1084\u1088 logo",
     wfin_subject: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087 (\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038)",
     wfin_new_bg: "\u107d\u1062\u1086\u1087\u101c\u1004\u103a\u1019\u1082\u103a\u1087 (\u1022\u1019\u103a\u1087\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088)",
     wfin_ref_scene: "Scene Reference",
@@ -2618,45 +1291,43 @@ const I18N = {
     wfin_image: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088",
     wfin_object_ref: "Reference \u1076\u1030\u101d\u103a\u1038\u1076\u103d\u1004\u103a (\u1022\u1019\u103a\u1087\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088)",
     wfin_logo_ref: "Reference Logo (\u1022\u1019\u103a\u1087\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088)",
-    wf_exp_bg_replace: "\u101c\u1085\u1075\u103a\u1088\u1015\u107c\u103a\u107d\u1062\u1086\u1087\u101c\u1004\u103a \u1022\u107c\u103a\u101a\u1030\u1087\u1010\u1062\u1004\u103a\u1038\u101c\u1004\u103a\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u104b \u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038, \u1078\u1083\u1087\u1010\u1083\u1087, \u1081\u102d\u1019\u103a\u1038\u1076\u103d\u1015\u103a\u1087 \u101c\u1084\u1088 \u107e\u1086\u1038 \u1022\u1019\u103a\u1087\u101c\u1085\u1075\u103a\u1088\u101e\u1004\u103a \u2014 \u101c\u1085\u1075\u103a\u1088\u1022\u107c\u103a\u101a\u1030\u1087\u1010\u1062\u1004\u103a\u1038\u101c\u1004\u103a\u1075\u1030\u107a\u103a\u1038\u104b",
-    wf_exp_reference_transfer: "\u1022\u101d\u103a scene \u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088\u1076\u103d\u1004\u103a\u1076\u1085\u1015\u103a\u1038 reference (\u1075\u1030\u107a\u103a\u1038\u1075\u1083\u1088 \u1022\u1019\u103a\u1087\u1022\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u107c\u1082\u103a\u1038\u107c\u107c\u103a\u1089) \u101e\u1031 \u101e\u1082\u103a\u1087\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u1076\u101d\u103a\u1088 \u2014 \u101d\u1086\u1089\u107c\u1083\u1088\u1010\u1083, \u1078\u1083\u1087\u1010\u1083\u1087 \u101c\u1084\u1088 \u1076\u103d\u1015\u103a\u1087, \u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u1076\u101d\u103a\u1088\u1075\u107c\u103a\u1010\u1004\u103a\u1038\u107e\u1086\u1038\u101c\u1084\u1088\u1019\u102f\u1019\u103a\u1076\u103d\u1004\u103a scene\u104b",
-    wf_exp_master_bgfg_replace: "\u101c\u103d\u1004\u103a\u1088\u101c\u1085\u1075\u103a\u1088\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u107c\u1082\u103a\u1038 scene \u1022\u107c\u103a\u1076\u1035\u1004\u103a\u1088\u101e\u102f\u1010\u103a\u1038 \u2014 \u1022\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u107c\u1082\u103a\u1038 scene reference \u1022\u103d\u1075\u103a\u1087\u1019\u1030\u1010\u103a\u1038, \u101e\u1062\u1004\u103a\u1088\u107d\u1062\u1086\u1087\u101c\u1004\u103a\u101c\u1084\u1088\u107d\u1062\u1086\u1087\u107c\u1083\u1088\u1022\u107c\u103a\u1019\u1030\u1075\u103a\u1038\u101d\u1086\u1089\u1076\u102d\u102f\u107c\u103a\u1038\u1081\u1082\u103a\u1088\u1019\u102d\u1030\u107c\u103a\u101e\u107d\u1083\u1087\u101d, \u101a\u101d\u103a\u1089\u101e\u1031 \u101e\u1082\u103a\u1087\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u1010\u102e\u1088\u107c\u107c\u103a\u1088\u1010\u1085\u1010\u103a\u1088\u1010\u1085\u1010\u103a\u1088 \u2014 \u107c\u1083\u1088\u1010\u1083, \u1078\u1083\u1087\u1010\u1083\u1087, \u1076\u107c\u1062\u1010\u103a\u1088, \u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a, \u1076\u1030\u101d\u103a\u1038\u107c\u102f\u1004\u103a\u1088, \u107d\u102d\u101d\u103a\u107c\u1004\u103a \u101c\u1084\u1088 \u107e\u1086\u1038 \u101c\u103d\u1075\u103a\u1089\u1022\u101d\u103a\u1010\u102e\u1088\u1076\u1085\u1015\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087, reference \u1015\u107c\u103a\u1076\u102d\u102f\u107c\u103a\u1038 scene, \u1075\u103d\u1004\u103a\u1088\u1011\u1062\u1086\u1087 \u101c\u1084\u1088 \u101c\u103d\u1004\u103a\u1088\u101c\u102d\u102f\u1075\u103a\u1089\u1075\u1030\u107a\u103a\u1038\u104b",
-    wf_exp_subject_face: "\u1022\u101d\u103a\u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u107c\u1083\u1088\u1010\u1083\u107c\u1082\u103a\u1038 reference \u1081\u1030\u1019\u103a\u1088\u1076\u101d\u103a\u1088\u107c\u102d\u1030\u101d\u103a\u1076\u1085\u1015\u103a\u1038 base \u1081\u1082\u103a\u1088\u1019\u1030\u107c\u103a\u1038, \u101c\u103d\u1004\u103a\u1088\u1078\u1010\u103a\u1038 base \u1022\u1019\u103a\u1087\u101c\u102f\u1010\u103a\u1088\u104b",
-    wf_exp_retouch: "\u1019\u1084\u1038\u107d\u102d\u101d\u103a\u107c\u1004\u103a, \u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a \u101c\u1084\u1088 \u101e\u102e \u1081\u1082\u103a\u1088\u101c\u102e\u1078\u103d\u1019\u103a\u1038\u101e\u107d\u1083\u1087\u101d\u104b \u107c\u1083\u1088\u1010\u1083, \u1081\u1062\u1004\u103a\u1088 \u101c\u1084\u1088 \u101c\u103d\u1004\u103a\u1088\u107c\u1084\u1078\u1082\u103a \u101d\u1086\u1089\u1078\u102d\u1030\u1004\u103a\u1089\u1075\u101d\u103a\u1087 \u2014 \u107d\u102d\u101d\u103a\u107c\u1004\u103a\u1022\u1019\u103a\u1087\u1015\u1035\u107c\u103a\u1015\u101c\u1083\u1087\u101e\u1010\u102d\u1075\u103a\u1089, \u107c\u1083\u1088\u1010\u1083\u1022\u1019\u103a\u1087\u101c\u1085\u1075\u103a\u1088\u104b",
-    wf_exp_upscale: "\u1081\u1035\u1010\u103a\u1038\u1081\u1082\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u101a\u1082\u103a\u1087 \u1015\u1083\u1038\u1010\u1004\u103a\u1038\u1019\u1084\u1038\u1081\u1030\u101d\u103a\u101a\u103d\u1086\u1088\u1076\u103d\u1004\u103a\u107d\u102d\u101d\u103a\u107c\u1004\u103a, \u1076\u1030\u107c\u103a\u1081\u1030\u101d\u103a \u101c\u1084\u1088 \u107d\u1083\u1088 \u1076\u102d\u102f\u107c\u103a\u1038\u1081\u1082\u103a\u1088\u1019\u102d\u1030\u107c\u103a\u101e\u107d\u1083\u1087\u101d\u104b \u107c\u1083\u1088\u1010\u1083, \u1078\u1083\u1087\u1010\u1083\u1087, \u101c\u103d\u1004\u103a\u1088\u1078\u1010\u103a\u1038 \u101c\u1084\u1088 \u101e\u102e \u1022\u1019\u103a\u1087\u101c\u1085\u1075\u103a\u1088\u101e\u1004\u103a \u2014 \u1022\u1019\u103a\u1087\u1019\u1030\u107c\u103a\u1038\u1015\u1035\u107c\u103a\u1015\u101c\u1083\u1087\u101e\u1010\u102d\u1075\u103a\u1089\u104b",
-    wf_exp_object_edit: "\u1022\u101d\u103a\u1022\u103d\u1075\u103a\u1087, \u101c\u1085\u1075\u103a\u1088 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u101e\u1082\u103a\u1087\u1076\u1030\u101d\u103a\u1038\u1076\u103d\u1004\u103a \u101c\u1030\u107a\u103a\u1088\u101c\u103d\u1004\u103a\u1088\u1019\u1084\u1038\u1010\u102e\u1088\u101c\u1035\u101d\u103a\u1022\u107c\u103a\u1075\u102f\u1019\u103a\u1038\u101d\u1086\u1089\u104b \u1022\u107c\u103a\u1022\u1019\u103a\u1087\u1010\u102d\u102f\u1075\u103a\u1038 \u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088\u101d\u1086\u1089\u1078\u102d\u1030\u1004\u103a\u1089\u1075\u101d\u103a\u1087\u104b",
-    wf_exp_water_edit: "\u101e\u1082\u103a\u1087 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1019\u1084\u1038\u107c\u1019\u103a\u1089, \u1004\u101d\u1083\u1087\u107c\u1019\u103a\u1089 \u101c\u1084\u1088 \u107c\u1083\u1088\u101c\u102d\u107c\u103a\u1022\u107c\u103a\u1015\u1035\u107c\u103a\u107c\u1019\u103a\u1089 \u1081\u1082\u103a\u1088\u1019\u102d\u1030\u107c\u103a\u1010\u1084\u1089, \u1010\u1030\u101d\u103a\u1075\u1030\u107c\u103a\u1038\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u1022\u1019\u103a\u1087\u101c\u102f\u1010\u103a\u1088\u104b",
-    wf_exp_text_logo: "\u101e\u1082\u103a\u1087 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1019\u1084\u1038\u101c\u102d\u1075\u103a\u1088 \u1022\u1019\u103a\u1087\u107c\u107c\u103a logo \u1022\u107c\u103a\u1019\u1030\u1010\u103a\u1038\u101e\u1082\u103a\u101c\u1030\u101c\u1086\u1088\u1004\u1062\u1086\u1088 \u107c\u102d\u1030\u101d\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088, \u101c\u103d\u1004\u103a\u1088\u1078\u1010\u103a\u1038\u101d\u1086\u1089\u1075\u101d\u103a\u1087\u104b"
   },
   /* ---- Jinghpaw (Kachin) (kac) — 587 keys, complete ---- */
   kac: {
+    rh_err_network: "RunningHub Enterprise de n du lu ai — internet hten nga ai. Internet hpe yu nna bai chyam yu u.",
+    rh_err_task_failed: "RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",
+    rh_err_host_blocked: "Photoshop gaw ndai host hpe n hkap la ai — panel manifest hta n rawng ai. Panel nnan htum bang u.",
+    rh_err_timeout: "Sumla shapraw na na ai — RunningHub aten hta n htai ai. Bai chyam yu u, n rai yang kaba / nsen hpe yawm u.",
+    rh_err_rate_limited: "RunningHub Enterprise bungli law nga ai — jahkring la nna bai chyam yu u.",
+    rh_err_invalid_key: "RunningHub gaw key hpe n hkap la ai — Setup ▸ RunningHub Enterprise hta bai yu u.",
+    wf_exp_bg_replace: "Na a masha a hpang maga hpe galai ya ai. Masha, pose, makau hte nhtoi gaw n galai ai \u2014 hpang maga sha galai ai.",
+    wf_exp_reference_transfer: "Reference sumla a scene yawng hpe la ai (raitim shi kaw na masha ni gaw n la ai), nna NA a masha hpe dai kaw bang ya ai \u2014 myi man, pose hte frame jang da nna, scene a nhtoi hte ang hpe maren shatai ai.",
+    wf_exp_master_bgfg_replace: "Scene kata masha galai ai lam kaw grau ngang dik ai: reference scene kaw na masha hpe hpring tsup shamat kau nna, makoi taw ai hpang maga hte shawng maga hpe sha-sha re bai galaw, dai hpang na a masha hpe dai shara kaw teng sha bang ya ai \u2014 myi man, pose, kaba kaji, kara, palawng, hpyi hte nhtoi gaw na a sumla kaw na lock da ai, reference gaw scene, camera hte sung ai lam sha jaw ai.",
+    wf_exp_subject_face: "Reference kaw na masha shing nrai myi man hpe na a base sumla kaw sha-sha re jawm bang ya nna, base a hkum gaw n hkra ai.",
+    wf_exp_retouch: "Hpyi, kara hte nsam hpe sha-sha re shatsawm ya ai. Na a myi man, hkum hte myit madun gaw jang da ai \u2014 hpyi plastic n byin, myi man n galai ai.",
+    wf_exp_upscale: "Na a sumla hpe kaba shatai nna hpyi, kara hte palawng a sha-sha re atsawm lam ni hpe bai shapraw ya ai. Myi man, pose, hkum hte nsam gaw n galai ai \u2014 plastic zawn hpraw shatai ai n nga.",
+    wf_exp_object_edit: "Shara mi kaw sha jaw ai lam hte rai ni hpe shamat, galai shing nrai bang ya ai. N hkra ai lam ni gaw yawng dai hku sha nga ai.",
+    wf_exp_water_edit: "Hka, hka kaw dan ai lam hte madi ai shara ni hpe teng sha zawn byin hkra bang shing nrai jaw ya ai, na a masha gaw n hkra ai.",
+    wf_exp_text_logo: "Sumla ntsa kaw san seng nna hti mai ai laika shing nrai logo hpe bang shing nrai jaw ya nna, hkum gaw jang da ai.",
+    ai_key_lives_in_setup: "RunningHub Enterprise key hpe Setup tab kaw hkrang ai — kalang mi mahkai, shara shagu jailang.",
+    ai_settings_defaults: "AI Tools — Default ni",
+    ai_learn_mode: "Learn Mode — GENERATE dip yang shawng tsun dan ya",
+    job_needkey: "RunningHub key hpe Setup kaw shawng bang u",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
-    sec_ready: "Jin ai lam",
-    sec_acct: "ACCOUNT",
     ava_change: "Profile sumla galai u",
     ava_remove: "Sumla shaw kau u",
     ava_saved: "Sumla makoi da sai",
     ava_removed: "Sumla shaw kau sai",
     ava_fail: "Ndai sumla n mai lang ai — kaga langai chyam yu u",
     ava_working: "Sumla hkyen nga ai…",
-    sec_money: "Manu hte ngun ngam",
-    sec_data: "DATA hte BACKUP",
-    sec_about: "APP hte UPDATE",
-    btn_get_update: "Update la u",
-    upd_hint: "Panel gaw nnan ai version hpe shi hkrai la ai — nang gaw shang da sai. Photoshop gaw plugin hpe shi hkrai galai na matu n hkraw ai majaw, hpang jahtum lam gaw nang na lam re: makoi da ai .ccx hpe lahkawng lang dip u, Creative Cloud gaw bang ya na re.",
     upd_web: "Web App hpaw nga ai — Panel hpe Account → Photoshop Panel kaw la u.",
-    upd_none: "Ndai gaw nnan htum ai re.",
     money_intro: "GENERATE langai mi hpe RunningHub la ai gumhpraw teng teng hpe mahkrum da ai — myit yu ai n re",
     money_bal: "Ngam ai",
     money_refresh: "Ngun ngam yu na",
     money_nokey: "RunningHub key bang ngut jang ngun ngam yu lu na",
     money_fail: "Ngun ngam n la lu — npu na mahkrum gaw teng nga ai. RunningHub tsun ai gaw:",
     money_never: "n yu shi ai",
-    btn_export_backup: "Backup shapraw u",
-    btn_import_backup: "Backup bai bang u",
-    btn_check_update: "Update sagawn u",
-    btn_hard_refresh: "Cache sausan nna bai hpang u",
     gate_sub_login: "Ndai panel hpe lang na matu na a HNK account hte shang u.",
     gate_email_ph: "Email",
     gate_pass_ph: "Password",
@@ -2685,38 +1356,11 @@ const I18N = {
     gate_service_down: "License server hte matut n lu ai — internet hpe yu nna bai dip u.",
     gate_no_lease: "Server panel lease n jaw ai — bai dip u.",
     gate_sent_as: "Sa dat ai — {E} · {N} letter",
-    app_title: "HNK Photoshop Ai Panel (Sharin ma ni)",
-    sec_api: "RunningHub Enterprise Key",
     btn_show: "Madun",
-    btn_hide: "Makoi",
-    btn_test: "Key sawn yu",
     btn_save: "Makoi da",
-    st_testing: "Key hpe sawn yu nga ai",
-    st_key_ok: "\u2713 API key akyu rawng nga ai",
-    st_key_bad: "API key n byin ai",
-    st_key_saved: "API key makoi da sai \u2713",
     st_need_key: "Na a RunningHub Enterprise key hpe shawng bang u",
-    sec_model: "Model hte Output",
-    scope_model_note: "Npu na Prompt tab a Generate button hpe lang ai \u2014 Create hte AI Tools gaw shada n bung ai model setting nga ai.",
-    model_auto: "Shi hkrai (tsun shadawn ai)",
-    model_flash: "Flash \u2014 lawan (2.5)",
-    model_pro: "Pro \u2014 atsam kaja (3.0)",
-    lbl_ratio: "Ratio",
-    ratio_auto: "Ratio shi hkrai (document kaw na)",
-    lbl_size: "Kaba ai lam",
-    lbl_quality: "Atsam",
     qual_auto: "Shi hkrai",
-    qual_low: "Kaji",
-    qual_med: "Ka-ang",
-    qual_high: "Tsaw",
-    sec_prompt: "Prompt",
-    hint_prompt: "Na a prompt hpe ndai kaw ka u\u2026 (grau law 20,000 laika)",
-    btn_improve: "Prompt grau kaja shatai",
     btn_clear: "Kasat kau",
-    st_improving: "Prompt hpe grau kaja shatai nga ai",
-    st_improved: "Prompt grau kaja sai \u2713",
-    sec_refs: "Reference sumla (slot 2)",
-    base_note: "Ningpawt sumla = na hpaw da ai Photoshop document (shi hkrai la ai).",
     btn_ref_layer: "+ Layer",
     btn_ref_file: "Laika daw",
     btn_ref_web: "Web",
@@ -2724,9 +1368,7 @@ const I18N = {
     st_photo_layer_added: "Layer hpe sumla hku bang sai ✓",
     st_ref_file_added: "Laika daw hpe reference hku bang sai \u2713",
     st_importing: "Laika daw shang la nga ai",
-    url_title: "URL kaw na reference \u2014 Chrome / Pinterest",
     url_ph: "https://\u2026 sumla shara shing nrai Pinterest pin link",
-    btn_paste: "Kap da",
     btn_load: "La",
     btn_cancel: "Hkring",
     btn_ok: "OK",
@@ -2735,178 +1377,22 @@ const I18N = {
     st_ref_web_added: "Web sumla hpe reference hku bang sai \u2713",
     st_url_bad: "Ndai URL kaw na sumla n lu la ai \u2014 sumla shara hpe copy nna bai chyam u",
     no_layer: "Layer n lata shi ai",
-    sec_presets: "AI Presets",
-    auto_run: "Preset dip yang \u2192 shi hkrai Generate (PAT = prompt kaw sha bang na)",
-    grp_cleanup: "Kasan ai arung arai",
-    p_remove_people: "Masha shamat kau",
-    p_fix_hands: "Lata jat ai hpe jaw",
-    p_fix_legs: "Lagaw jat ai hpe jaw",
-    p_full_clean: "Yawng kasan",
-    grp_moved_note: "Reference arung arai ni gaw npu na Reference Ops Pro card kaw du sai (shara langai kaw, Solo/Couple/Family + madun lam hte).",
-    ro_h_detail: "Kara \u00b7 Arung arai \u00b7 Pose (\u2190 Ref1)",
-    ro_h_comp: "Composite \u00b7 Style \u00b7 Laika (\u2190 Ref1)",
-    p_fgbglc: "FG=Doc \u00b7 BG=Ref1 \u00b7 Light=Ref2",
-    p_hair: "Kara hkum (\u2190 Ref1)",
-    p_access: "Ja gumhpraw + arung arai (\u2190 Ref1)",
-    p_pose: "Pose bung shangun (Doc \u2192 Ref1)",
-    p_fgprops: "Shawng maga na rai (\u2190 Ref1)",
-    p_textlogo: "Laika / Logo (\u2190 Ref1)",
-    p_style: "Sumla a style (\u2190 Ref1)",
-    grp_repsubj: "Masha galai (Doc \u2192 Ref1 scene)",
-    p_rep_solo: "Langai galai",
-    p_rep_couple: "Num la galai",
-    p_rep_family: "Dinghku galai",
-    grp_rmix: "Replace Mix \u2014 matsing nna Ref1 kaw na la",
-    rm_bg: "Hpang maga (BG)",
-    rm_fg: "Shawng maga (FG)",
-    rm_light: "Nhtoi",
-    rm_color: "Nsam",
-    rm_object: "Rai / Props",
-    btn_rmix: "REPLACE GENERATE",
-    rm_none: "Shawng langai mi matsing u",
-    grp_i2p: "Image \u2192 Prompt (Scene Builder)",
-    i2p_note: "1) Shaw la: Ref1 scene \u2192 atsawm ka da ai prompt (masha n lawm). 2) Prompt shara kaw jaw u. 3) SCENE GENERATE gaw na document masha hpe hkum shingdu nna galaw ya na \u2014 ang shagu hte shi hkrai maren ai. Face/Pose/Frame lock = shawng na hku rawng na.",
-    i2p_objects: "Rai hte props a lam",
-    i2p_light: "Nhtoi a lam",
-    i2p_color: "Nsam / grade a lam",
-    i2p_bg: "Hpang maga a lam",
-    i2p_fg: "Shawng maga a lam",
-    btn_i2p: "Image \u2192 Prompt (Scene shaw la)",
-    i2p_fit: "Scene Auto-Fit \u2014 document a ang / tsan ai lam / lens hte maren scene bai galaw",
-    i2p_adapt: "Masha a nhtoi hte nsam hpe scene hte maren shatai",
-    btn_scenegen: "SCENE GENERATE",
-    st_extract: "Scene hpe prompt hku shaw la nga ai",
-    st_extract_done: "Scene prompt hkyen sai \u2014 Prompt shara kaw yu u",
-    scene_no_prompt: "Prompt kaw hpa n nga ai \u2014 Image \u2192 Prompt shawng galaw u",
-    i2p_none: "Shawng langai mi matsing u",
-    sec_light: "Studio Lighting \u2014 AI Relight",
-    light_note: "Nhtoi hpe matsing nna hpaw u, lahkawng dip nna lata u, slider hte hkum shatai u \u2014 3D lahta yu ai sumla gaw kalang ta hkan nang ai (\u25b4 = tsaw, \u25be = layang). LIGHTING GENERATE gaw ndai hku sha nhtoi bai jaw na; myi man / pose / frame gaw lock rawng na.",
-    lbl_my_prompt: "JINGHPAW PROMPT",
-    lstage_model: "MODEL",
-    lstage_cam: "CAM",
-    l_key: "Key Light",
-    l_fill: "Fill / Shawng",
-    l_butterfly: "Butterfly (lahta-shawng)",
-    l_side: "Makau nhtoi",
-    l_rim: "Rim Light",
-    l_back: "Back Light",
-    l_hair: "Hair Light",
-    l_bglight: "Hpang maga nhtoi",
-    lt_softbox: "Softbox",
-    lt_octa: "Octa",
-    lt_strip: "Strip",
-    lt_umbrella: "Umbrella",
-    lt_beauty: "Beauty",
-    lt_hard: "Hard",
-    li_int: "N-gun",
-    li_angle: "Ang",
-    li_height: "Tsaw ai lam",
-    li_dist: "Tsan ai lam",
-    li_size: "Kaba ai lam",
-    btn_lightgen: "LIGHTING GENERATE",
-    light_none: "Nhtoi langai mi shawng hpaw u",
-    lg_equip: "Sumla kaw nhtoi arung arai madun (softbox / stand mu na)",
-    grp_chains: "Style Chains \u2014 style \u2713 ni jawm",
-    chains_note: "Style langai mi hpaw yang \u2014 Generate / preset / Retouch SHAGU kaw rau lawm wa na.",
-    grp_restore: "Sumla dingsa bai jaw",
-    p_restore: "Sumla dingsa bai jaw",
-    rest_color: "Nsam hkum",
-    rest_bw: "Ahpraw-achyang",
-    restore_note: "Je ai, hka / wan hte hkra ai, nsam mat ai ni hpe bai jaw ai \u2014 shawng na myi man shagu hpe 100% maren jang da ai.",
-    rt_browstyle: "Myi hkyi hkum",
-    rt_lashstyle: "Myi mun hkum",
-    rt_blush: "Blush nsam",
-    rt_contour: "Contour hkum",
-    rt_bust: "Sinda",
-    rt_butt: "Maidang",
-    rt_thigh: "Magyi",
-    rt_calf: "Lagaw shan",
-    rt_neck: "Du",
-    rt_fingers: "Lata di",
-    hint_prompt_my: "Jinghpaw hku ka u \u2014 Generate ten hta English de shi hkrai galai ya na (grau law 20,000)",
-    st_translate: "Prompt hpe English hku galai nga ai",
-    live_trans: "Shi hkrai galai \u21c4 (EN \u2194 KAC, ka hkring ai hpang)",
-    st_retry: "Bai chyam nga ai",
-    grp_recipes: "Recipes \u2014 setting makoi / garan",
-    recipe_note: "Yawng (chains, retouch, nhtoi, lock, prompt) hpe .json laika daw langai hku makoi u \u2014 sharin ma ni gaw Load sha dip na.",
-    btn_recipe_save: "Recipe makoi",
-    btn_recipe_load: "Recipe la",
-    st_recipe_saved: "Recipe makoi da sai \u2713",
-    st_recipe_loaded: "Recipe la sai \u2713 \u2014 yawng bai hkrat sai",
-    st_recipe_bad: "HNK a recipe laika daw n re",
-    sec_final: "Hpang jahtum Prompt (AI de shagun na)",
-    btn_copy: "Copy",
-    st_copied: "Copy la sai \u2713",
-    hist_note: "Labau \u2014 hpang jahtum pru ai 6, yu na matu dip u:",
-    btn_hist_prompt: "\u2192 Prompt",
-    sec_batch: "Batch Mode",
-    batch_note: "Sumla law law + pru na folder langai lata u \u2014 ya na prompt, chains, cleanup hte Keep lock ni gaw sumla shagu hta galaw na; pru ai gaw *_HNK.png hku makoi na.",
-    btn_batch: "BATCH GALAW",
-    btn_batch_stop: "Hkring",
-    st_batch: "Batch",
-    st_batch_done: "Batch ngut sai",
-    sec_web: "Web AI \u2014 Browser kachyi",
-    web_note: "Photoshop kata kaw web AI editor langai mi hpaw u. Dai kaw galaw nna, pru ai hpe layer hku la wa u:",
-    web_import_note: "Shang la: \u2460 web app kaw Copy image address lang nna IMPORT COPIED LINK dip u \u00b7 \u2461 shing nrai laika daw hpe download la nna IMPORT FILE lang u \u00b7 \u2462 HNK bridge lawm ai manang web app ni gaw sumla hpe shi hkrai shagun ya ai.",
-    btn_web_go: "Sa",
-    btn_web_home: "Nta",
-    btn_web_reload: "Bai la",
-    btn_web_import_link: "COPY DA AI LINK SHANG \u2192 PS",
-    btn_web_import_file: "LAIKA DAW SHANG \u2192 PS",
     st_web_import: "Photoshop kaw layer hku shang sai \u2713",
-    st_web_nourl: "Sumla link hpe shawng copy u (hkra maga dip \u2192 Copy image address)",
-    st_web_fetch: "Link kaw na sumla la nga ai",
-    st_web_notallowed: "Ndai domain gaw hkap la ai list kaw n lawm ai \u2014 hpa n pru mung mai byin ai. HNK hpe bang ya na matu tsun u.",
-    st_need_doc: "Photoshop kaw sumla document langai shawng hpaw u",
-    sec_campro: "Camera Pro hte Atsam",
-    autosave_lbl: "Pru ai shagu shi hkrai export (PNG + prompt log \u2192 folder)",
     st_folder_ok: "Export folder masat sai \u2713",
     st_exported: "Export ngut sai \u2713",
     st_export_fail: "Export n byin ai \u2014 folder hpe yu u",
-    st_pro_fallback: "Pro model n lu ai \u2014 ndai lang gaw Flash de galai sai",
     st_img_bad: "Sumla data gaw sawn yu ai lam n lai ai \u2014 sumla bai bang u",
     st_auto_comp: "Shi hkrai composite: IMAGE 1 masha \u2192 reference scene",
-    prov_lbl: "AI jaw ai",
-    tab_create: "Create",
-    create_note: "CREATE MODE \u2014 na a prompt kaw na sumla nnan (+ shi a ref 4). Shi hkrai tsap ai: document, preset, chains, lock ni hpe galoi mung n hti ai.",
     create_ph: "Sumla n gara hku ra ai ni tsun dan u",
     btn_create_ps: "\u2b07 Photoshop de shagun",
     btn_to_ref: "\u21ba Ref 1 hku lang",
     st_to_ref: "Pru ai hpe Ref 1 kaw bang sai \u2713",
-    scope_create_note: "Setup a Model & Output hte n seng ai \u2014 ndai setting ni gaw Create a Generate hta sha akyu rawng ai.",
-    cr_ratio: "Ratio",
-    cr_var: "Amyu shai",
     cr_restyle: "\u267b Pru ai a style galai",
-    cr_lib: "Prompt Library \u2014 bang na matu dip u",
-    cr_improve: "\u2728 Grau kaja",
-    cr_describe: "\ud83d\udd0d Ref 1 hti \u2192 Prompt",
-    st_describing: "Reference sumla hpe hti nga ai\u2026",
-    st_described: "Ref 1 kaw na prompt ka sai \u2713",
-    st_need_ref1: "Ref 1 kaw sumla shawng bang u",
-    st_lib_added: "Prompt bang sai \u2713",
-    cr_refs: "Reference sumla (4 du hkra)",
-    cr_refs_note: "Bang mung mai, n bang mung mai \u2014 Layer / File / Web hte bang u. Create gaw na a prompt hpyi ai lam sha la na.",
-    cr_results: "Pru ai lam",
     cr_gal_empty: "Pru ai n nga shi ai \u2014 Generate dip u.",
     cr_gal_have: "pru ai \u00b7 sumla kachyi dip nna yu / galaw u",
     cr_save: "\u2b07 PNG makoi",
-    cr_engine: "Engine",
     cr_need_result: "Sumla langai shawng galaw u",
-    btn_web_import_url: "\u2b07 URL shang",
-    st_clip_help: "Clipboard hkum shing nrai pat da ai \u2014 link hpe URL kahtawng kaw kap nna \u2b07 Import URL dip u",
-    st_web_blob: "Dai gaw ten kadun blob: link re \u2014 hkra maga dip \u2192 Copy IMAGE Address lang u, shing nrai laika daw makoi nna Import File lang u",
-    err_key: "API key n hkrak ai \u2014 Setup tab kaw key hpe bai yu u",
-    err_quota: "Quota / hkan shatai ai lam hpring sai \u2014 kachyi mi la nna bai chyam u",
-    err_big: "API a matu sumla grau kaba ai \u2014 kaji shatai nna bai chyam u",
-    err_safety: "Safety filter gaw pat kau ai \u2014 prompt shing nrai sumla hpe jaw nna bai chyam u",
-    err_net: "Network / server jam jau ai \u2014 bai chyam yu u",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
-    rh_err_network: "RunningHub Enterprise de n du lu ai — internet hten nga ai. Internet hpe yu nna bai chyam yu u.",
-    rh_err_task_failed: "RunningHub task n byin ai — prompt shing nrai sumla galai kau nna bai chyam u",
-    rh_err_host_blocked: "Photoshop gaw ndai host hpe n hkap la ai — panel manifest hta n rawng ai. Panel nnan htum bang u.",
-    rh_err_timeout: "Sumla shapraw na na ai — RunningHub aten hta n htai ai. Bai chyam yu u, n rai yang kaba / nsen hpe yawm u.",
-    rh_err_rate_limited: "RunningHub Enterprise bungli law nga ai — jahkring la nna bai chyam yu u.",
-    rh_err_invalid_key: "RunningHub gaw key hpe n hkap la ai — Setup ▸ RunningHub Enterprise hta bai yu u.",
     /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
     wf_scene_presets: "Library kaw na Scene preset — kalang dip u",
     wf_scene_loading: "Scene la nga ai…",
@@ -2920,114 +1406,20 @@ const I18N = {
     wf_press_prepare: "Ndai workflow hpaw nna sumla ni jep na matu Prepare dip u.",
     wf_opts: "Model \u00b7 Ratio \u00b7 Hkum \u00b7 Size",
     wf_model_auto: "Auto \u2014 workflow a lata ai",
-    err_timeout: "Ten hpring mat sai \u2014 server grau na ai; bai chyam yu u",
-    err_generic: "Ndai lam n ngut lu ai \u2014 bai chyam yu u",
-    err_img: "Lang mai ai sumla n pru ai \u2014 bai chyam yu u",
-    err_mode: "Ndai document gaw RGB mode n re \u2014 shawng galai u (Image \u25b8 Mode \u25b8 RGB Color), ngut jang bai chyam u",
-    cam_master: "Camera block HPAW \u2014 prompt SHAGU a jahtum kaw jailang",
-    cam_body: "Camera hkum",
-    cam_lens: "Prime Lens (mm)",
-    cam_f: "Aperture",
-    cam_film: "Film hkum",
-    cam_bokeh: "Bokeh style",
-    cam_iso: "ISO",
-    cam_k: "WB Kelvin",
-    cam_note: "Block hpe shawng hpaw nna, ra ai lam sha lata u \u2014 chip \u2013 ni gaw n lawm na. Yawng gaw hpang jahtum prompt a jahtum kaw du na.",
-    ro_h_main: "REFERENCE OPS PRO (Ref1 / Ref2)",
-    ro_note: "Ref1 = IMAGE 2 (num) \u00b7 Ref2 = IMAGE 3 (la). Target hpe shawng lata nna galaw u \u2014 n maren ai masha ni gaw galoi mung n galai ai.",
-    ro_target: "Target:",
-    ro_solo: "Langai",
-    ro_couple: "Num la",
-    ro_family: "Dinghku",
-    ro_mk: "Ref makeup copy",
-    ro_hair: "Ref kara hkum la",
-    ro_h_face: "Face Ops",
-    ro_h_bg: "BG / FG Ops",
-    ro_h_sub: "Subject Ops",
-    ro_h_lc: "Light & Color Ops",
-    ro_h_dress: "Dress Ops",
-    ro_h_mk: "Makeup Ops",
-    ro_h_match: "\u2605 Master Match (hkum langai)",
-    ro_match_note: "IMAGE 1 hpe reference hte maren shatai nna lahkawng yen kalang sha jaw da ai zawn byin shangun u \u2014 maren shangun na lam ni hpe matsing u:",
-    m_color: "Nsam",
-    m_light: "Nhtoi",
-    m_makeup: "Makeup",
-    m_skin: "Hpyi retouch",
-    crd_chainsrest: "Style Chains + Sumla dingsa bai jaw",
-    crd_refops: "Reference Ops Pro (Ref1 / Ref2)",
-    crd_scenes: "\ud83c\udfac Scenes Pro \u2014 masha lock \u00b7 scene maren",
-    scn_note: "Na a masha hpe lock u (myi man \u00b7 pose \u00b7 palawng \u00b7 frame) nna scene yawng hpe shi hte maren bai galaw u \u2014 nhtoi, nsin, nsam, hpang maga, shawng maga hte rai ni yawng shi hkrai hkan nang nna, sumla teng zawn byin wa ai.",
-    scn_h_style: "Scene Style (nta kata / htunghking)",
-    scn_h_bday: "\ud83c\udf82 Shangai poi \u2014 asak 1\u201345",
-    scn_h_cap: "Caption / Laika (ma \u00b7 Miss Universe \u00b7 shangai poi)",
-    scn_h_scarf: "Shinggan / Pali pyen",
-    scn_grad: "Nta kata Graduation",
-    scn_prewed: "Nta kata Prewedding",
-    scn_vietnam: "Vietnam",
-    scn_myanmar: "Myen mung",
-    scn_chinese: "Miwa",
-    scn_shan: "Sam",
-    scn_newborn: "Ma shangai nnan",
-    scn_age: "Asak",
-    scn_bday_go: "\ud83c\udf82 SHANGAI POI SCENE",
-    scn_cap_on: "Caption laika bang",
-    scn_cap_ph: "Caption laika (zawn Happy 1st Birthday, amying)\u2026",
-    scn_cap_pos: "Shara",
-    scn_top: "Lahta",
-    scn_bottom: "Npu",
-    scn_scarf: "\u2726 PALI PYEN SCENE",
-    scn_dir: "Maga",
-    scn_left: "Pai",
-    scn_right: "Hkra",
-    scn_up: "Lahta",
-    scn_len: "Galu ai lam",
-    scn_short: "Kadun",
-    scn_long: "Galu",
-    g_cat_scene: "SCENE OP \u2014 na a masha gaw lock rawng ai (myi man \u00b7 pose \u00b7 palawng \u00b7 frame); galaw pru ai scene yawng (nhtoi, nsin, nsam, hpang maga, shawng maga, rai, nbung) gaw masha hte shi hkrai maren nna, sumla teng zawn composite byin ai.",
-    crd_wed: "\u2665 Wedding Pro Suite",
-    crd_recipes: "Recipes \u2014 makoi / garan",
-    learn_lbl: "\ud83c\udf93 Learn Mode \u2014 1 dip = madun lam (ahkyeng tsit), 2 = prompt (mut), 3 = GALAW (tsit)",
     guide_hint: "Bai dip u: ahkyeng tsit \u2192 mut (prompt) \u2192 tsit (galaw) \u25b6",
     g_learn_next_prompt: "Bai dip u \u2192 shagun na PROMPT teng hpe madun na (mut).",
     g_learn_prompt_head: "Ndai button shagun na PROMPT (bai dip yang = GALAW):",
     g_learn_next_run: "Kalang bai dip u \u2192 RUN (tsit) galaw hpang na.",
     st_prompt_ready: "Prompt hkyen sai \u2014 galaw na matu bai dip u (tsit) \u2713",
-    g_step_doc: "Photoshop kaw na a sumla document hpe shawng hpaw u.",
-    g_step_ref1: "Reference sumla hpe Ref1 kaw bang u (IMAGE 2 byin na). Masha lahkawng ngu yang Ref2 bang u.",
-    g_step_target: "Target lata u: Solo / Couple (Ref1 = num, Ref2 = la) / Family.",
-    g_step_mkhair: "Ra yang: Face Ops a lahta na \u2018Copy ref makeup\u2019 / \u2018Take ref hairstyle\u2019 hpe matsing u.",
-    g_step_petal: "Nampan lap nsam hpe shawng lata u (auto = na a scene hte maren na).",
-    g_step_rest: "Lahta na \u2713 hte Full Color shing nrai B&W lata u.",
-    g_step_int: "Intensity slider hpe na ra ai daram jaw u.",
     g_step_confirm: "Matut na matu bai dip u: GUIDE (ahkyeng tsit) \u2192 PROMPT (mut) \u2192 RUN (TSIT gaw galaw hpang sai).",
-    g_cat_face: "FACE OP \u2014 reference myi man hpe maren ai masha kaw htawt ya ai; kaga ni gaw n galai ai.",
-    g_cat_sub: "SUBJECT OP \u2014 reference kaw na MASHA hpe na a scene kaw shang shangun ai; scene hte frame gaw rawng na.",
-    g_cat_bgfg: "BG/FG OP \u2014 reference lang nna hpang maga / shawng maga sha galai ai.",
-    g_cat_lc: "LIGHT & COLOR OP \u2014 reference a nhtoi hte grade hpe copy ai; masha ni gaw pixel shagu teng sha rawng ai.",
-    g_cat_dress: "DRESS OP \u2014 reference lang nna palawng sha galai ai.",
-    g_cat_mkop: "MAKEUP OP \u2014 reference lang nna makeup sha galai ai.",
-    g_cat_match: "MASTER MATCH \u2014 na a sumla hpe reference a hkum tsup hte maren shatai ai (lahta na layer ni matsing u).",
-    g_cat_trail: "WEDDING TRAIL \u2014 tsawm ai tsing pa + nampan lam galu; myi man/pose/frame gaw ngang ngang lock ai.",
-    g_cat_veil: "FLYING VEIL \u2014 nbung hte pyen ai veil hpe ndai galu ai daram bang/galu shatai ai; myi man gaw galoi mung n magap ai.",
-    g_cat_gown: "GOWN \u2014 nga sai palawng hpe kasan ai (hkum n galai) nna ndai train galu ai lam masat ai.",
-    g_cat_petal: "FLYING PETALS \u2014 ndai style hku nampan hpun lap ni hpe nbung kaw bang ai; nsam gaw lahta na swatch kaw na.",
-    g_cat_wedx: "WEDDING EXTRA \u2014 ndai lam hpe na a scene hte maren nna bang ai; masha gaw lock rawng ai.",
-    g_cat_canvas: "REPLACE (CANVAS) \u2014 NA a masha hpe reference a scene kaw bang ai; ref kaw na masha ni gaw shamat kau ai.",
-    g_cat_restore: "OLD PHOTO RESTORE \u2014 hkrat ai lam ni hpe bai jaw ai; shawng na myi man shagu 100% maren rawng ai.",
     g_cat_generic: "PRESET \u2014 ndai atsawm jaw da ai lam hpe na a sumla kaw jailang ai.",
     g_gen: "GENERATE \u2014 prompt kahtawng (+ chains, Keep lock, camera block) hpe na a document kaw galaw ai.",
     g_retouchbtn: "RETOUCH APPLY \u2014 na a slider setting yawng hpe atsawm retouch kalang hku galaw ai.",
-    g_relightbtn: "LIGHTING GENERATE \u2014 na a 3D nhtoi sumla hte maren sha sumla hpe nhtoi bai jaw ai.",
-    g_scene: "SCENE GENERATE \u2014 shaw la da ai prompt kaw na scene bai galaw ai; masha gaw rawng na.",
-    g_rmix: "REPLACE MIX \u2014 reference kaw na \u2713 matsing da ai daw ni sha galai ai.",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
     ro_bgSwap: "BG Swap",
     ro_fgRep: "FG Replace",
-    ro_bg_note: "Doc = masha \u00b7 Ref1 = scene nnan. Target (Solo/Couple/Family) gaw kadai hpe jang da na lata ai.",
-    ro_bg_frame: "Frame hte composition jang da",
-    ro_bg_light: "Masha a nhtoi/nsam jang da",
     ro_subSwap: "Subject Swap",
     ro_lcRef: "L&C Reference",
     ro_lcCopy: "L&C Copy-Paste",
@@ -3035,94 +1427,8 @@ const I18N = {
     ro_dressRep: "Dress Replace",
     ro_mkCopy: "Makeup Copy",
     ro_matchBtn: "\u2605 MASTER MATCH",
-    grp_retouch: "Hpyi retouch preset",
-    lbl_intensity: "N-gun",
-    p_evoto: "Retouch B Style",
-    p_meitu: "Retouch A Style",
-    auto_place: "Pru ai hpe Photoshop kaw layer nnan hku shi hkrai bang",
-    sec_retouchpro: "Retouch Pro \u2014 Sliders",
-    rt_skin: "Hpyi",
-    rt_faceai: "Face AI",
-    rt_hair: "Kara",
-    rt_dress: "Palawng",
-    rt_bg: "Hpang maga",
-    rt_smooth: "Hpyi hpraw shatai",
-    rt_acne: "Ju shamat",
-    rt_spots: "Achyang tsawm",
-    rt_wrinkle: "Nyaw ai lam",
-    rt_tone: "Hpraw / chyang",
-    rt_glow: "Kabrim",
-    rt_reshape: "AI Reshape",
-    rt_lash: "Myi mun",
-    rt_brow: "Myi hkyi",
-    rt_lipsmooth: "Ningma hpraw",
-    rt_lipcolor: "Ningma nsam",
-    rt_lenscolor: "Myi lens nsam",
-    rt_hairstray: "Kara pru ai",
-    rt_hairsmooth: "Kara hpraw",
-    rt_hairshine: "Kara kabrim (D&B)",
-    rt_dresssmooth: "Palawng hpraw",
-    rt_dressedge: "Makau kasan",
-    rt_dresswrinkle: "Nyaw shamat",
-    rt_dresstexture: "Texture bai jaw",
-    rt_bgsmooth: "Hpang maga kasan/hpraw",
-    rt_bgcolor: "Hpang maga nsam",
-    rt_bgrecolor: "Hpang maga nsam hpraw",
-    rt_shape: "Reshape Pro (Myi man + Hkum)",
-    rt_teeth: "Wa hpraw shatai",
-    rt_eyewhite: "Myi hpraw kasan",
-    rt_faceslim: "Myi man kaji",
-    rt_jaw: "Ngup nra",
-    rt_chin: "Ngup dung",
-    rt_nosesize: "Ladi kaba ai lam",
-    rt_eyesize: "Myi kaba ai lam",
-    rt_lipfull: "Ningma hpring",
-    rt_waist: "Sinnyen kaji",
-    rt_bodyslim: "Hkum kaji",
-    rt_shoulder: "Lahpaw",
-    rt_hip: "Maidang kaji",
-    rt_leglen: "Lagaw galu",
-    rt_armslim: "Lata kaji",
-    rt_dressfit: "Palawng hkrak",
-    rt_dressclean: "Palawng kasan",
-    rt_dresscolorpure: "Palawng nsam san",
-    rt_bodygrp: "Body Skin Pro",
-    rt_bodysmooth: "Hkum hpyi hpraw",
-    rt_bodyblemish: "Hkum hpyi kasan",
-    rt_bodytone: "Hpyi nsam maren",
-    rt_bodyglow: "Hkum kabrim",
-    rt_bodyhairrm: "Hkum mun kaji shatai",
-    rt_hairvolume: "Kara law ai lam",
-    rt_hairgloss: "Kara gloss",
-    rt_hairfill: "Kara bang (kaji ai shara)",
-    wp_h_trail: "\u2665 Wedding \u2014 Nampan lam tsawm",
-    wp_h_veil: "\u2665 Wedding \u2014 Veil pyen",
-    wp_h_gown: "\u2665 Wedding \u2014 Gown kasan + Train",
-    wp_h_petal: "\u2665 Wedding \u2014 Nampan lap pyen",
-    wp_h_extra: "\u2665 Wedding \u2014 Gumra \u00b7 Hka \u00b7 Nbung",
-    wp_note: "Face ID / pose / frame / palawng hkum gaw ngang ngang lock ai \u2014 tsun da ai lam sha galai ai.",
-    wp_petalcolor: "Nampan lap nsam (auto = scene hte maren)",
-    wp_trail_c: "Nampan nsam",
-    wp_trail_go: "\u25b6 Nampan lam",
-    wp_veil_c: "Veil galu ai lam",
-    wp_veil_go: "\u25b6 Veil pyen",
-    wp_gown_c: "Train galu ai lam",
-    wp_gown_go: "\u25b6 Gown kasan + Train",
-    wp_pet_c: "Nampan lap style",
-    wp_pet_go: "\u25b6 Nampan lap pyen",
-    wp_extra_c: "Kaga",
-    wp_extra_go: "\u25b6 Kaga bang",
-    btn_apply_rt: "Retouch jailang",
-    btn_reset: "Bai masat",
     rt_none: "Retouch slider shing nrai nsam langai mi shawng masat u",
-    tab_setup: "Setup",
-    tab_prompt: "Edit",
-    tab_presets: "Library",
-    recent_lbl: "Nnan na prompt ni\u2026",
-    tab_retouch: "Retouch",
-    tab_aitools: "Home",
     cap_warn: "Photoshop gaw ndai prompt kahtawng hpe ndai daram sha jaw ai:",
-    cleanup_note: "Matsing da ai lam ni gaw Generate / preset SHAGU hte rau galaw na.",
     btn_generate: "GENERATE",
     st_ready: "Hkyen sai",
     st_capture: "Document la nga ai",
@@ -3139,68 +1445,16 @@ const I18N = {
     st_err: "Shut ai",
     st_no_doc: "Hpaw da ai document n nga ai \u2014 sumla shawng hpaw u",
     st_no_prompt: "Prompt kaw hpa n nga ai",
-    need_ref: "Ndai preset gaw slot 1 kaw reference sumla ra ai",
     st_new_doc: "Pru ai hpe document nnan hku hpaw sai \u2713",
-    sec_preview: "Shawng yu \u2014 Before / After",
     before: "SHAWNG",
     after: "HPANG",
     btn_place: "Photoshop kaw bang",
-    btn_saveas: "Ndai hku makoi\u2026",
     st_saved: "Makoi da sai \u2713",
-    sec_diag: "System sawn yu",
-    sec_log: "Bungli Log",
-    btn_diag: "Sawn yu",
-    btn_copylog: "Log copy",
-    btn_clearlog: "Kasat kau",
-    diag_host: "Photoshop nta madu",
-    diag_uxp: "UXP atsam",
-    diag_rh: "RunningHub Enterprise key",
-    diag_doc: "Hpaw da ai document",
-    diag_set: "masat da sai",
-    diag_unset: "n masat shi ai",
-    diag_open: "hpaw da ai",
-    diag_none: "n nga ai",
-    diag_missing: "n mu ai",
-    diag_done: "System sawn yu ngut sai \u2713",
-    diag_lib: "Reference Library",
-    diag_lib_open: "Folder hpaw lu ai atsam",
-    sec_reflib: "Reference sumla Library",
-    reflib_note: "Na ra sharawng ai reference sumla folder hpe kalang sha lata u \u2014 Browse gaw dai hpe matsing nna shara shagu dai kata kaw hpaw ya na.",
-    btn_browse: "Tam yu",
-    lib_choose: "Folder lata",
-    lib_open: "Folder hpaw",
-    lib_change: "Folder galai",
-    lib_reset: "Bai masat",
-    lib_rescan: "Bai scan",
-    lib_current: "Ya na folder",
-    lib_found: "Mu ai sumla",
-    lib_status: "Status",
-    lib_lastscan: "Hpang jahtum scan",
-    lib_images: "sumla",
-    lib_connected: "Matut da sai",
-    lib_not_config: "N hkyen shi ai",
-    lib_perm_lost: "Ahkang mat sai \u2014 bai lata u",
-    lib_none: "(folder n lata shi ai)",
-    lib_copy_only: "lam sha copy",
     lib_choose_msg: "Na a HNK Reference sumla Library folder hpe lata u.",
-    lib_scanning: "Library scan nga ai\u2026",
-    lib_scan_done: "Bai scan ngut sai \u2713",
-    lib_reset_done: "Library bai masat sai \u2713",
-    lib_path_copied: "Lam copy la sai",
     lib_unsupported: "Ndai sumla amyu n lu lang ai",
     lib_restore_fail: "Reference bai la n lu ai",
     on: "HPAW",
     off: "PAT",
-    ai_home_title: "Hpa baw galaw mayu ai rai?",
-    ai_greet_morning: "Jahpawt manap kaja u ga",
-    ai_greet_afternoon: "Shani kaang kaja u ga",
-    ai_greet_evening: "Shana maga kaja u ga",
-    ai_free_generate: "Lawt lat Generate",
-    ai_free_sub: "Nang a prompt ka u",
-    ai_more_tools: "Arung arai kaga",
-    ai_more_sub: "Water Edit \u00b7 Text/Logo \u00b7 workflow yawng",
-    ai_nav_home: "Nta",
-    ai_nav_tools: "Arung arai",
     ai_history: "Labau",
     ai_no_gen: "Galaw da ai n nga shi ai.",
     ai_videos: "Video ni",
@@ -3227,14 +1481,11 @@ const I18N = {
     ai_lib_pick_first: "Presets tab \u2192 Visual Library kaw na sumla langai shawng lata u.",
     ai_lib_load_fail: "Library sumla hpe n hpaw lu ai.",
     ai_missing: "N nga shi ai",
-    ai_add: "Bang",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 model endpoint bang (Advanced \u2014 n bang mung mai)",
     ai_rh_note: "Nlung ai model ni gaw ntsa na key hte galaw sai \u2014 hpa galaw ra ai n nga. Model langai \"not connected\" madun yang (endpoint path teng sha n chye shi ai), RunningHub API docs kaw na path hpe la nna ndai kaw bang u.",
     ai_rh_save: "Ndai model a endpoint makoi",
     ai_test_conn: "Matut lam sawn yu",
-    ai_save_verify: "Makoi nna sawn",
-    ai_settings: "Setting",
     ai_add_layers: "Pru ai lam hpe Layer nnan hku bang",
     ai_done: "Ngut sai.",
     ai_result_ready: "Pru ai lam hkyen sai.",
@@ -3245,21 +1496,6 @@ const I18N = {
     ai_placed_group: "\u201c{name}\u201d group kaw Layer nnan hku bang ngut sai (ndai host kaw mask n lu ai).",
     ai_placed_plain: "Layer nnan hku bang ngut sai (ndai host kaw group/mask n lu ai).",
     ai_start_fail: "AI Tools n hpang lu ai",
-    pgb_setup: "Set up once — ready whenever you are",
-    pgb_studio: "Bring every scene you imagine to life — your way",
-    pgb_create: "One line of text becomes a professional image",
-    pgb_presets: "1850 curated looks — pick one and start instantly",
-    pgb_aitools: "Kalang dip sha atsawm \u2014 Nano Banana \u00b7 RunningHub",
-    pgb_retouch: "Flawless retouching that stays natural",
-    wf_sum_bg_replace: "Hpang maga galai",
-    wf_sum_reference_transfer: "Na a masha hpe reference scene kaw bang",
-    wf_sum_master_bgfg_replace: "Scene kaw na masha shamat, bg/fg bai galaw, na a masha bang",
-    wf_sum_subject_face: "Masha shing nrai myi man hpe base sumla kaw htawt",
-    wf_sum_retouch: "Masha sumla hpe sha-sha re shatsawm",
-    wf_sum_upscale: "Atsawm lam n mat ai sha kaba shatai",
-    wf_sum_object_edit: "Rai ni hpe shamat, galai shing nrai bang",
-    wf_sum_water_edit: "Hka hte hka kaw dan ai lam jaw",
-    wf_sum_text_logo: "Laika hte logo bang shing nrai jaw",
     wfin_subject: "Na a sumla (masha)",
     wfin_new_bg: "Hpang maga nnan (n bang mung mai)",
     wfin_ref_scene: "Reference scene",
@@ -3271,45 +1507,43 @@ const I18N = {
     wfin_image: "Sumla",
     wfin_object_ref: "Rai reference (n bang mung mai)",
     wfin_logo_ref: "Logo reference (n bang mung mai)",
-    wf_exp_bg_replace: "Na a masha a hpang maga hpe galai ya ai. Masha, pose, makau hte nhtoi gaw n galai ai \u2014 hpang maga sha galai ai.",
-    wf_exp_reference_transfer: "Reference sumla a scene yawng hpe la ai (raitim shi kaw na masha ni gaw n la ai), nna NA a masha hpe dai kaw bang ya ai \u2014 myi man, pose hte frame jang da nna, scene a nhtoi hte ang hpe maren shatai ai.",
-    wf_exp_master_bgfg_replace: "Scene kata masha galai ai lam kaw grau ngang dik ai: reference scene kaw na masha hpe hpring tsup shamat kau nna, makoi taw ai hpang maga hte shawng maga hpe sha-sha re bai galaw, dai hpang na a masha hpe dai shara kaw teng sha bang ya ai \u2014 myi man, pose, kaba kaji, kara, palawng, hpyi hte nhtoi gaw na a sumla kaw na lock da ai, reference gaw scene, camera hte sung ai lam sha jaw ai.",
-    wf_exp_subject_face: "Reference kaw na masha shing nrai myi man hpe na a base sumla kaw sha-sha re jawm bang ya nna, base a hkum gaw n hkra ai.",
-    wf_exp_retouch: "Hpyi, kara hte nsam hpe sha-sha re shatsawm ya ai. Na a myi man, hkum hte myit madun gaw jang da ai \u2014 hpyi plastic n byin, myi man n galai ai.",
-    wf_exp_upscale: "Na a sumla hpe kaba shatai nna hpyi, kara hte palawng a sha-sha re atsawm lam ni hpe bai shapraw ya ai. Myi man, pose, hkum hte nsam gaw n galai ai \u2014 plastic zawn hpraw shatai ai n nga.",
-    wf_exp_object_edit: "Shara mi kaw sha jaw ai lam hte rai ni hpe shamat, galai shing nrai bang ya ai. N hkra ai lam ni gaw yawng dai hku sha nga ai.",
-    wf_exp_water_edit: "Hka, hka kaw dan ai lam hte madi ai shara ni hpe teng sha zawn byin hkra bang shing nrai jaw ya ai, na a masha gaw n hkra ai.",
-    wf_exp_text_logo: "Sumla ntsa kaw san seng nna hti mai ai laika shing nrai logo hpe bang shing nrai jaw ya nna, hkum gaw jang da ai."
   },
   /* ---- Thai (th) — 587 keys, complete ---- */
   th: {
+    rh_err_network: "เชื่อมต่อ RunningHub Enterprise ไม่ได้ — อินเทอร์เน็ตขาด ตรวจสอบการเชื่อมต่อแล้วลองใหม่",
+    rh_err_task_failed: "งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",
+    rh_err_host_blocked: "Photoshop ปฏิเสธโฮสต์นี้ — ไม่อยู่ใน manifest ของแผง ติดตั้งแผงเวอร์ชันล่าสุด",
+    rh_err_timeout: "สร้างภาพนานเกินไป — RunningHub ไม่ตอบทันเวลา ลองใหม่ หรือลดขนาด / จำนวนภาพ",
+    rh_err_rate_limited: "RunningHub Enterprise กำลังยุ่ง — รอสักครู่แล้วลองใหม่",
+    rh_err_invalid_key: "RunningHub ไม่รับคีย์นี้ — ตรวจสอบที่ Setup ▸ RunningHub Enterprise",
+    wf_exp_bg_replace: "\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07\u0e14\u0e49\u0e32\u0e19\u0e2b\u0e25\u0e31\u0e07\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a \u0e15\u0e31\u0e27\u0e04\u0e19 \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 \u0e02\u0e2d\u0e1a\u0e20\u0e32\u0e1e \u0e41\u0e25\u0e30\u0e41\u0e2a\u0e07\u0e22\u0e31\u0e07\u0e04\u0e07\u0e40\u0e14\u0e34\u0e21\u0e17\u0e38\u0e01\u0e2d\u0e22\u0e48\u0e32\u0e07 \u2014 \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e2a\u0e34\u0e48\u0e07\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e14\u0e49\u0e32\u0e19\u0e2b\u0e25\u0e31\u0e07\u0e40\u0e17\u0e48\u0e32\u0e19\u0e31\u0e49\u0e19",
+    wf_exp_reference_transfer: "\u0e19\u0e33\u0e09\u0e32\u0e01\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14\u0e02\u0e2d\u0e07\u0e20\u0e32\u0e1e reference \u0e21\u0e32\u0e43\u0e0a\u0e49 (\u0e41\u0e15\u0e48\u0e44\u0e21\u0e48\u0e40\u0e2d\u0e32\u0e04\u0e19\u0e43\u0e19\u0e20\u0e32\u0e1e) \u0e41\u0e25\u0e49\u0e27\u0e27\u0e32\u0e07\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e25\u0e07\u0e44\u0e1b \u2014 \u0e04\u0e07\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 \u0e41\u0e25\u0e30\u0e40\u0e1f\u0e23\u0e21\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e44\u0e27\u0e49 \u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e1b\u0e23\u0e31\u0e1a\u0e43\u0e2b\u0e49\u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a\u0e41\u0e2a\u0e07\u0e41\u0e25\u0e30\u0e21\u0e38\u0e21\u0e21\u0e2d\u0e07\u0e02\u0e2d\u0e07\u0e09\u0e32\u0e01",
+    wf_exp_master_bgfg_replace: "\u0e01\u0e32\u0e23\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e43\u0e19\u0e09\u0e32\u0e01\u0e17\u0e35\u0e48\u0e40\u0e02\u0e49\u0e21\u0e07\u0e27\u0e14\u0e17\u0e35\u0e48\u0e2a\u0e38\u0e14: \u0e25\u0e1a\u0e04\u0e19\u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e09\u0e32\u0e01 reference \u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14 \u0e2a\u0e23\u0e49\u0e32\u0e07\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07\u0e41\u0e25\u0e30\u0e09\u0e32\u0e01\u0e2b\u0e19\u0e49\u0e32\u0e17\u0e35\u0e48\u0e16\u0e39\u0e01\u0e1a\u0e31\u0e07\u0e02\u0e36\u0e49\u0e19\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e40\u0e1b\u0e47\u0e19\u0e18\u0e23\u0e23\u0e21\u0e0a\u0e32\u0e15\u0e34 \u0e41\u0e25\u0e49\u0e27\u0e27\u0e32\u0e07\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e25\u0e07\u0e15\u0e23\u0e07\u0e15\u0e33\u0e41\u0e2b\u0e19\u0e48\u0e07\u0e19\u0e31\u0e49\u0e19\u0e1e\u0e2d\u0e14\u0e35 \u2014 \u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 \u0e2a\u0e31\u0e14\u0e2a\u0e48\u0e27\u0e19 \u0e17\u0e23\u0e07\u0e1c\u0e21 \u0e40\u0e2a\u0e37\u0e49\u0e2d\u0e1c\u0e49\u0e32 \u0e1c\u0e34\u0e27 \u0e41\u0e25\u0e30\u0e41\u0e2a\u0e07 \u0e16\u0e39\u0e01\u0e25\u0e47\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e20\u0e32\u0e1e\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13 \u0e2a\u0e48\u0e27\u0e19 reference \u0e43\u0e2b\u0e49\u0e40\u0e1e\u0e35\u0e22\u0e07\u0e09\u0e32\u0e01 \u0e21\u0e38\u0e21\u0e01\u0e25\u0e49\u0e2d\u0e07 \u0e41\u0e25\u0e30\u0e04\u0e27\u0e32\u0e21\u0e25\u0e36\u0e01\u0e40\u0e17\u0e48\u0e32\u0e19\u0e31\u0e49\u0e19",
+    wf_exp_subject_face: "\u0e1c\u0e2a\u0e32\u0e19\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e2b\u0e23\u0e37\u0e2d\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32\u0e08\u0e32\u0e01 reference \u0e25\u0e07\u0e1a\u0e19\u0e20\u0e32\u0e1e base \u0e2d\u0e22\u0e48\u0e32\u0e07\u0e41\u0e19\u0e1a\u0e40\u0e19\u0e35\u0e22\u0e19 \u0e42\u0e14\u0e22\u0e04\u0e07\u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e02\u0e2d\u0e07\u0e20\u0e32\u0e1e base \u0e44\u0e27\u0e49",
+    wf_exp_retouch: "\u0e23\u0e35\u0e17\u0e31\u0e0a\u0e1c\u0e34\u0e27 \u0e1c\u0e21 \u0e41\u0e25\u0e30\u0e42\u0e17\u0e19\u0e2a\u0e35\u0e43\u0e2b\u0e49\u0e14\u0e39\u0e40\u0e1b\u0e47\u0e19\u0e18\u0e23\u0e23\u0e21\u0e0a\u0e32\u0e15\u0e34 \u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 \u0e40\u0e2d\u0e01\u0e25\u0e31\u0e01\u0e29\u0e13\u0e4c \u0e41\u0e25\u0e30\u0e2a\u0e35\u0e2b\u0e19\u0e49\u0e32\u0e22\u0e31\u0e07\u0e04\u0e07\u0e40\u0e14\u0e34\u0e21 \u2014 \u0e1c\u0e34\u0e27\u0e44\u0e21\u0e48\u0e1e\u0e25\u0e32\u0e2a\u0e15\u0e34\u0e01 \u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32\u0e44\u0e21\u0e48\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19",
+    wf_exp_upscale: "\u0e02\u0e22\u0e32\u0e22\u0e20\u0e32\u0e1e\u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e01\u0e39\u0e49\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e18\u0e23\u0e23\u0e21\u0e0a\u0e32\u0e15\u0e34\u0e02\u0e2d\u0e07\u0e1c\u0e34\u0e27 \u0e1c\u0e21 \u0e41\u0e25\u0e30\u0e40\u0e19\u0e37\u0e49\u0e2d\u0e1c\u0e49\u0e32\u0e01\u0e25\u0e31\u0e1a\u0e21\u0e32 \u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 \u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a \u0e41\u0e25\u0e30\u0e2a\u0e35\u0e22\u0e31\u0e07\u0e04\u0e07\u0e40\u0e14\u0e34\u0e21\u0e17\u0e38\u0e01\u0e2d\u0e22\u0e48\u0e32\u0e07 \u2014 \u0e44\u0e21\u0e48\u0e21\u0e35\u0e01\u0e32\u0e23\u0e40\u0e01\u0e25\u0e35\u0e48\u0e22\u0e08\u0e19\u0e14\u0e39\u0e1e\u0e25\u0e32\u0e2a\u0e15\u0e34\u0e01",
+    wf_exp_object_edit: "\u0e25\u0e1a \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19 \u0e2b\u0e23\u0e37\u0e2d\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e49\u0e27\u0e22\u0e01\u0e32\u0e23\u0e41\u0e01\u0e49\u0e44\u0e02\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e08\u0e38\u0e14\u0e17\u0e35\u0e48\u0e04\u0e27\u0e1a\u0e04\u0e38\u0e21\u0e44\u0e14\u0e49 \u0e17\u0e38\u0e01\u0e2a\u0e34\u0e48\u0e07\u0e17\u0e35\u0e48\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e41\u0e15\u0e30\u0e22\u0e31\u0e07\u0e04\u0e07\u0e40\u0e14\u0e34\u0e21",
+    wf_exp_water_edit: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e2b\u0e23\u0e37\u0e2d\u0e41\u0e01\u0e49\u0e44\u0e02\u0e19\u0e49\u0e33 \u0e40\u0e07\u0e32\u0e2a\u0e30\u0e17\u0e49\u0e2d\u0e19 \u0e41\u0e25\u0e30\u0e1e\u0e37\u0e49\u0e19\u0e1c\u0e34\u0e27\u0e40\u0e1b\u0e35\u0e22\u0e01\u0e43\u0e2b\u0e49\u0e14\u0e39\u0e2a\u0e21\u0e08\u0e23\u0e34\u0e07\u0e15\u0e32\u0e21\u0e1f\u0e34\u0e2a\u0e34\u0e01\u0e2a\u0e4c \u0e42\u0e14\u0e22\u0e44\u0e21\u0e48\u0e01\u0e23\u0e30\u0e17\u0e1a\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
+    wf_exp_text_logo: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e2b\u0e23\u0e37\u0e2d\u0e41\u0e01\u0e49\u0e44\u0e02\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e2b\u0e23\u0e37\u0e2d\u0e42\u0e25\u0e42\u0e01\u0e49\u0e17\u0e35\u0e48\u0e2a\u0e30\u0e2d\u0e32\u0e14\u0e41\u0e25\u0e30\u0e2d\u0e48\u0e32\u0e19\u0e07\u0e48\u0e32\u0e22\u0e1a\u0e19\u0e20\u0e32\u0e1e \u0e42\u0e14\u0e22\u0e22\u0e31\u0e07\u0e04\u0e07\u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e40\u0e14\u0e34\u0e21",
+    ai_key_lives_in_setup: "คีย์ RunningHub Enterprise จัดการที่แท็บ Setup — บันทึกครั้งเดียว ใช้ได้ทุกที่",
+    ai_settings_defaults: "AI Tools — ค่าเริ่มต้น",
+    ai_learn_mode: "Learn Mode — แตะ GENERATE แล้วอธิบายก่อน",
+    job_needkey: "เพิ่มคีย์ RunningHub ใน Setup ก่อน",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
-    sec_ready: "สถานะความพร้อม",
-    sec_acct: "บัญชี",
     ava_change: "เปลี่ยนรูปโปรไฟล์",
     ava_remove: "ลบรูป",
     ava_saved: "บันทึกรูปแล้ว",
     ava_removed: "ลบรูปแล้ว",
     ava_fail: "ใช้รูปนี้ไม่ได้ — ลองรูปอื่น",
     ava_working: "กำลังเตรียมรูป…",
-    sec_money: "ค่าใช้จ่ายและยอดคงเหลือ",
-    sec_data: "ข้อมูลและสำรอง",
-    sec_about: "แอปและอัปเดต",
-    btn_get_update: "ดาวน์โหลดอัปเดต",
-    upd_hint: "แผงดึงเวอร์ชันใหม่มาให้เอง — คุณลงชื่อเข้าใช้อยู่แล้ว Photoshop ไม่ให้ปลั๊กอินแทนที่ไฟล์ตัวเอง ขั้นสุดท้ายจึงเป็นของคุณ: ดับเบิลคลิกไฟล์ .ccx ที่บันทึกไว้ แล้ว Creative Cloud จะติดตั้งให้",
     upd_web: "กำลังเปิด Web App — รับ Panel ได้ที่ Account → Photoshop Panel",
-    upd_none: "นี่คือเวอร์ชันล่าสุด",
     money_intro: "ทุกครั้งที่ GENERATE จะบันทึกยอดที่ RunningHub เก็บจริง ไม่ใช่ค่าประมาณ ยอดคงเหลืออ่านจากบัญชี RunningHub โดยตรง",
     money_bal: "คงเหลือ",
     money_refresh: "ตรวจยอดคงเหลือ",
     money_nokey: "บันทึกคีย์ RunningHub ก่อน จึงจะอ่านยอดคงเหลือได้",
     money_fail: "อ่านยอดคงเหลือไม่ได้ — บันทึกด้านล่างยังแม่นยำ RunningHub ตอบว่า:",
     money_never: "ยังไม่เคยตรวจ",
-    btn_export_backup: "ส่งออกสำรอง",
-    btn_import_backup: "กู้คืนสำรอง",
-    btn_check_update: "ตรวจหาอัปเดต",
-    btn_hard_refresh: "ล้างแคช + เริ่มใหม่",
     gate_sub_login: "เข้าสู่ระบบด้วยบัญชี HNK ของคุณเพื่อใช้แผงนี้",
     gate_email_ph: "อีเมล",
     gate_pass_ph: "รหัสผ่าน",
@@ -3338,38 +1572,11 @@ const I18N = {
     gate_service_down: "ติดต่อเซิร์ฟเวอร์ลิขสิทธิ์ไม่ได้ — ตรวจอินเทอร์เน็ตแล้วกดตรวจอีกครั้ง",
     gate_no_lease: "เซิร์ฟเวอร์ไม่ได้ให้สิทธิ์ใช้งานแผง — กดตรวจอีกครั้ง",
     gate_sent_as: "ส่งเป็น {E} · {N} ตัวอักษร",
-    app_title: "HNK Ai Panel (\u0e19\u0e31\u0e01\u0e40\u0e23\u0e35\u0e22\u0e19)",
-    sec_api: "RunningHub Enterprise Key",
     btn_show: "\u0e41\u0e2a\u0e14\u0e07",
-    btn_hide: "\u0e0b\u0e48\u0e2d\u0e19",
-    btn_test: "\u0e17\u0e14\u0e2a\u0e2d\u0e1a",
     btn_save: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01",
-    st_testing: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e17\u0e14\u0e2a\u0e2d\u0e1a\u0e04\u0e35\u0e22\u0e4c",
-    st_key_ok: "\u2713 API key \u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49",
-    st_key_bad: "API key \u0e25\u0e49\u0e21\u0e40\u0e2b\u0e25\u0e27",
-    st_key_saved: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 API key \u0e41\u0e25\u0e49\u0e27 \u2713",
     st_need_key: "\u0e43\u0e2a\u0e48 RunningHub Enterprise key \u0e01\u0e48\u0e2d\u0e19",
-    sec_model: "\u0e42\u0e21\u0e40\u0e14\u0e25 & \u0e40\u0e2d\u0e32\u0e15\u0e4c\u0e1e\u0e38\u0e15",
-    scope_model_note: "\u0e43\u0e0a\u0e49\u0e01\u0e31\u0e1a\u0e1b\u0e38\u0e48\u0e21 Generate \u0e02\u0e2d\u0e07\u0e41\u0e17\u0e47\u0e1a Prompt \u0e14\u0e49\u0e32\u0e19\u0e25\u0e48\u0e32\u0e07 \u2014 Create \u0e41\u0e25\u0e30 AI Tools \u0e21\u0e35\u0e01\u0e32\u0e23\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32\u0e42\u0e21\u0e40\u0e14\u0e25\u0e41\u0e22\u0e01\u0e02\u0e2d\u0e07\u0e15\u0e31\u0e27\u0e40\u0e2d\u0e07",
-    model_auto: "\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 (\u0e41\u0e19\u0e30\u0e19\u0e33)",
-    model_flash: "Flash \u2014 \u0e40\u0e23\u0e47\u0e27 (2.5)",
-    model_pro: "Pro \u2014 \u0e04\u0e38\u0e13\u0e20\u0e32\u0e1e (3.0)",
-    lbl_ratio: "\u0e2d\u0e31\u0e15\u0e23\u0e32\u0e2a\u0e48\u0e27\u0e19",
-    ratio_auto: "\u0e2d\u0e31\u0e15\u0e23\u0e32\u0e2a\u0e48\u0e27\u0e19\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 (\u0e08\u0e32\u0e01\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23)",
-    lbl_size: "\u0e02\u0e19\u0e32\u0e14",
-    lbl_quality: "\u0e04\u0e38\u0e13\u0e20\u0e32\u0e1e",
     qual_auto: "\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34",
-    qual_low: "\u0e15\u0e48\u0e33",
-    qual_med: "\u0e01\u0e25\u0e32\u0e07",
-    qual_high: "\u0e2a\u0e39\u0e07",
-    sec_prompt: "\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c",
-    hint_prompt: "\u0e1e\u0e34\u0e21\u0e1e\u0e4c\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e17\u0e35\u0e48\u0e19\u0e35\u0e48\u2026 (\u0e2a\u0e39\u0e07\u0e2a\u0e38\u0e14 20,000 \u0e15\u0e31\u0e27\u0e2d\u0e31\u0e01\u0e29\u0e23)",
-    btn_improve: "\u0e1b\u0e23\u0e31\u0e1a\u0e1b\u0e23\u0e38\u0e07",
     btn_clear: "\u0e25\u0e49\u0e32\u0e07",
-    st_improving: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e1b\u0e23\u0e31\u0e1a\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c",
-    st_improved: "\u0e1b\u0e23\u0e31\u0e1a\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e41\u0e25\u0e49\u0e27 \u2713",
-    sec_refs: "\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07",
-    base_note: "\u0e20\u0e32\u0e1e\u0e15\u0e49\u0e19\u0e17\u0e32\u0e07 = \u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23 Photoshop \u0e17\u0e35\u0e48\u0e40\u0e1b\u0e34\u0e14\u0e2d\u0e22\u0e39\u0e48 (\u0e14\u0e36\u0e07\u0e21\u0e32\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34)",
     btn_ref_layer: "+ \u0e40\u0e25\u0e40\u0e22\u0e2d\u0e23\u0e4c",
     btn_ref_file: "\u0e44\u0e1f\u0e25\u0e4c",
     btn_ref_web: "\u0e40\u0e27\u0e47\u0e1a",
@@ -3377,9 +1584,7 @@ const I18N = {
     st_photo_layer_added: "เพิ่มเลเยอร์เป็นรูปแล้ว ✓",
     st_ref_file_added: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e44\u0e1f\u0e25\u0e4c\u0e40\u0e1b\u0e47\u0e19\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e41\u0e25\u0e49\u0e27 \u2713",
     st_importing: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e19\u0e33\u0e40\u0e02\u0e49\u0e32\u0e44\u0e1f\u0e25\u0e4c",
-    url_title: "\u0e42\u0e2b\u0e25\u0e14\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01 URL",
     url_ph: "https://\u2026 \u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e20\u0e32\u0e1e \u0e2b\u0e23\u0e37\u0e2d\u0e25\u0e34\u0e07\u0e01\u0e4c\u0e1e\u0e34\u0e19 Pinterest",
-    btn_paste: "\u0e27\u0e32\u0e07",
     btn_load: "\u0e42\u0e2b\u0e25\u0e14",
     btn_cancel: "\u0e22\u0e01\u0e40\u0e25\u0e34\u0e01",
     btn_ok: "ตกลง",
@@ -3388,178 +1593,22 @@ const I18N = {
     st_ref_web_added: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e20\u0e32\u0e1e\u0e40\u0e27\u0e47\u0e1a\u0e40\u0e1b\u0e47\u0e19\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e41\u0e25\u0e49\u0e27 \u2713",
     st_url_bad: "\u0e42\u0e2b\u0e25\u0e14\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01 URL \u0e19\u0e35\u0e49\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49 \u2014 \u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e02\u0e2d\u0e07\u0e20\u0e32\u0e1e\u0e41\u0e25\u0e49\u0e27\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
     no_layer: "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e40\u0e25\u0e40\u0e22\u0e2d\u0e23\u0e4c",
-    sec_presets: "\u0e1e\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15 AI",
-    auto_run: "\u0e04\u0e25\u0e34\u0e01\u0e1e\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15 \u2192 \u0e2a\u0e23\u0e49\u0e32\u0e07\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 (\u0e1b\u0e34\u0e14 = \u0e41\u0e17\u0e23\u0e01\u0e25\u0e07\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e40\u0e17\u0e48\u0e32\u0e19\u0e31\u0e49\u0e19)",
-    grp_cleanup: "\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e21\u0e37\u0e2d\u0e17\u0e33\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e30\u0e2d\u0e32\u0e14",
-    p_remove_people: "\u0e25\u0e1a\u0e1c\u0e39\u0e49\u0e04\u0e19",
-    p_fix_hands: "\u0e41\u0e01\u0e49\u0e21\u0e37\u0e2d\u0e40\u0e01\u0e34\u0e19",
-    p_fix_legs: "\u0e41\u0e01\u0e49\u0e02\u0e32\u0e40\u0e01\u0e34\u0e19",
-    p_full_clean: "\u0e17\u0e33\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e30\u0e2d\u0e32\u0e14\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14",
-    grp_moved_note: "\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e21\u0e37\u0e2d Reference \u0e22\u0e49\u0e32\u0e22\u0e44\u0e1b\u0e2d\u0e22\u0e39\u0e48\u0e43\u0e19\u0e01\u0e32\u0e23\u0e4c\u0e14 Reference Ops Pro \u0e14\u0e49\u0e32\u0e19\u0e25\u0e48\u0e32\u0e07\u0e41\u0e25\u0e49\u0e27 (\u0e23\u0e27\u0e21\u0e17\u0e35\u0e48\u0e40\u0e14\u0e35\u0e22\u0e27 \u0e1e\u0e23\u0e49\u0e2d\u0e21 Solo/Couple/Family \u0e41\u0e25\u0e30\u0e04\u0e33\u0e41\u0e19\u0e30\u0e19\u0e33)",
-    ro_h_detail: "\u0e1c\u0e21 \u00b7 \u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e1b\u0e23\u0e30\u0e14\u0e31\u0e1a \u00b7 \u0e17\u0e48\u0e32\u0e42\u0e1e\u0e2a (\u2190 Ref1)",
-    ro_h_comp: "\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a \u00b7 \u0e2a\u0e44\u0e15\u0e25\u0e4c \u00b7 \u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21 (\u2190 Ref1)",
-    p_fgbglc: "FG=\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23 \u00b7 BG=Ref1 \u00b7 \u0e41\u0e2a\u0e07=Ref2",
-    p_hair: "\u0e17\u0e23\u0e07\u0e1c\u0e21 (\u2190 Ref1)",
-    p_access: "\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e1b\u0e23\u0e30\u0e14\u0e31\u0e1a+\u0e2d\u0e31\u0e0d\u0e21\u0e13\u0e35 (\u2190 Ref1)",
-    p_pose: "\u0e08\u0e31\u0e1a\u0e04\u0e39\u0e48\u0e17\u0e48\u0e32\u0e42\u0e1e\u0e2a (\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23 \u2192 Ref1)",
-    p_fgprops: "\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e49\u0e32\u0e19\u0e2b\u0e19\u0e49\u0e32 (\u2190 Ref1)",
-    p_textlogo: "\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21 / \u0e42\u0e25\u0e42\u0e01\u0e49 (\u2190 Ref1)",
-    p_style: "\u0e2a\u0e44\u0e15\u0e25\u0e4c\u0e20\u0e32\u0e1e (\u2190 Ref1)",
-    grp_repsubj: "\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a (\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23 \u2192 \u0e09\u0e32\u0e01 Ref1)",
-    p_rep_solo: "\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e40\u0e14\u0e35\u0e48\u0e22\u0e27",
-    p_rep_couple: "\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e04\u0e39\u0e48",
-    p_rep_family: "\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e04\u0e23\u0e2d\u0e1a\u0e04\u0e23\u0e31\u0e27",
-    grp_rmix: "\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e41\u0e1a\u0e1a\u0e1c\u0e2a\u0e21 \u2014 \u0e15\u0e34\u0e4a\u0e01\u0e41\u0e25\u0e49\u0e27\u0e14\u0e36\u0e07\u0e08\u0e32\u0e01 Ref1",
-    rm_bg: "\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07 (BG)",
-    rm_fg: "\u0e09\u0e32\u0e01\u0e2b\u0e19\u0e49\u0e32 (FG)",
-    rm_light: "\u0e41\u0e2a\u0e07",
-    rm_color: "\u0e2a\u0e35",
-    rm_object: "\u0e27\u0e31\u0e15\u0e16\u0e38 / \u0e1e\u0e23\u0e47\u0e2d\u0e1e",
-    btn_rmix: "\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e41\u0e1a\u0e1a\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48",
-    rm_none: "\u0e15\u0e34\u0e4a\u0e01\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e19\u0e49\u0e2d\u0e22\u0e2b\u0e19\u0e36\u0e48\u0e07\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e01\u0e48\u0e2d\u0e19",
-    grp_i2p: "\u0e20\u0e32\u0e1e \u2192 \u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c (\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e09\u0e32\u0e01)",
-    i2p_note: "1) \u0e2a\u0e01\u0e31\u0e14: \u0e09\u0e32\u0e01\u0e43\u0e19 Ref1 \u2192 prompt \u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14 (\u0e44\u0e21\u0e48\u0e23\u0e27\u0e21\u0e04\u0e19) 2) \u0e41\u0e01\u0e49\u0e44\u0e02\u0e44\u0e14\u0e49\u0e17\u0e35\u0e48\u0e2b\u0e19\u0e49\u0e32 Prompt 3) SCENE GENERATE \u0e08\u0e30\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e09\u0e32\u0e01\u0e19\u0e31\u0e49\u0e19\u0e23\u0e2d\u0e1a\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e43\u0e19\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13 \u2014 \u0e1b\u0e23\u0e31\u0e1a\u0e40\u0e02\u0e49\u0e32\u0e21\u0e38\u0e21\u0e01\u0e25\u0e49\u0e2d\u0e07\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 \u0e25\u0e47\u0e2d\u0e01 Face/Pose/Frame = \u0e04\u0e07\u0e02\u0e2d\u0e07\u0e40\u0e14\u0e34\u0e21",
-    i2p_objects: "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e27\u0e31\u0e15\u0e16\u0e38 & \u0e1e\u0e23\u0e47\u0e2d\u0e1e",
-    i2p_light: "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e41\u0e2a\u0e07",
-    i2p_color: "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e2a\u0e35 / \u0e40\u0e01\u0e23\u0e14",
-    i2p_bg: "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07",
-    i2p_fg: "\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e09\u0e32\u0e01\u0e2b\u0e19\u0e49\u0e32",
-    btn_i2p: "\u0e20\u0e32\u0e1e \u2192 \u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c (\u0e14\u0e36\u0e07\u0e09\u0e32\u0e01)",
-    i2p_fit: "Scene Auto-Fit \u2014 \u0e1b\u0e23\u0e31\u0e1a\u0e09\u0e32\u0e01\u0e43\u0e2b\u0e21\u0e48\u0e43\u0e2b\u0e49\u0e15\u0e23\u0e07\u0e21\u0e38\u0e21 / \u0e23\u0e30\u0e22\u0e30 / \u0e40\u0e25\u0e19\u0e2a\u0e4c \u0e02\u0e2d\u0e07\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23",
-    i2p_adapt: "\u0e1b\u0e23\u0e31\u0e1a\u0e41\u0e2a\u0e07 & \u0e2a\u0e35\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e43\u0e2b\u0e49\u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a\u0e09\u0e32\u0e01",
-    btn_scenegen: "\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e09\u0e32\u0e01",
-    st_extract: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e14\u0e36\u0e07\u0e09\u0e32\u0e01\u0e40\u0e1b\u0e47\u0e19\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c",
-    st_extract_done: "\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e09\u0e32\u0e01\u0e1e\u0e23\u0e49\u0e2d\u0e21 \u2014 \u0e15\u0e23\u0e27\u0e08\u0e14\u0e39\u0e17\u0e35\u0e48\u0e2b\u0e19\u0e49\u0e32\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c",
-    scene_no_prompt: "\u0e0a\u0e48\u0e2d\u0e07\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e27\u0e48\u0e32\u0e07 \u2014 \u0e23\u0e31\u0e19 \u0e20\u0e32\u0e1e \u2192 \u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c \u0e01\u0e48\u0e2d\u0e19",
-    i2p_none: "\u0e15\u0e34\u0e4a\u0e01\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e19\u0e49\u0e2d\u0e22\u0e2b\u0e19\u0e36\u0e48\u0e07\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e01\u0e48\u0e2d\u0e19",
-    sec_light: "\u0e41\u0e2a\u0e07\u0e2a\u0e15\u0e39\u0e14\u0e34\u0e42\u0e2d \u2014 \u0e08\u0e31\u0e14\u0e41\u0e2a\u0e07\u0e43\u0e2b\u0e21\u0e48\u0e14\u0e49\u0e27\u0e22 AI",
-    light_note: "\u0e15\u0e34\u0e4a\u0e01\u0e40\u0e1b\u0e34\u0e14\u0e44\u0e1f \u0e41\u0e15\u0e30\u0e41\u0e16\u0e27\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e40\u0e25\u0e37\u0e2d\u0e01 \u0e41\u0e25\u0e49\u0e27\u0e1b\u0e23\u0e31\u0e1a\u0e14\u0e49\u0e27\u0e22\u0e2a\u0e44\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c \u2014 \u0e41\u0e1c\u0e19\u0e20\u0e32\u0e1e\u0e21\u0e38\u0e21\u0e1a\u0e19 3D \u0e2d\u0e31\u0e1b\u0e40\u0e14\u0e15\u0e2a\u0e14 (\u25b4 = \u0e2a\u0e39\u0e07, \u25be = \u0e15\u0e48\u0e33) LIGHTING GENERATE \u0e08\u0e30\u0e08\u0e31\u0e14\u0e41\u0e2a\u0e07\u0e20\u0e32\u0e1e\u0e43\u0e2b\u0e21\u0e48\u0e15\u0e32\u0e21\u0e0a\u0e38\u0e14\u0e19\u0e35\u0e49\u0e40\u0e1b\u0e4a\u0e30 \u0e2a\u0e48\u0e27\u0e19\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 / \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 / \u0e40\u0e1f\u0e23\u0e21 \u0e22\u0e31\u0e07\u0e25\u0e47\u0e2d\u0e01\u0e44\u0e27\u0e49",
-    lbl_my_prompt: "Prompt \u0e20\u0e32\u0e29\u0e32\u0e1e\u0e21\u0e48\u0e32",
-    lstage_model: "\u0e41\u0e1a\u0e1a",
-    lstage_cam: "\u0e01\u0e25\u0e49\u0e2d\u0e07",
-    l_key: "\u0e44\u0e1f\u0e2b\u0e25\u0e31\u0e01",
-    l_fill: "\u0e44\u0e1f\u0e40\u0e2a\u0e23\u0e34\u0e21 / \u0e14\u0e49\u0e32\u0e19\u0e2b\u0e19\u0e49\u0e32",
-    l_butterfly: "\u0e1a\u0e31\u0e15\u0e40\u0e15\u0e2d\u0e23\u0e4c\u0e1f\u0e25\u0e32\u0e22 (\u0e1a\u0e19-\u0e2b\u0e19\u0e49\u0e32)",
-    l_side: "\u0e44\u0e1f\u0e14\u0e49\u0e32\u0e19\u0e02\u0e49\u0e32\u0e07",
-    l_rim: "\u0e44\u0e1f\u0e02\u0e2d\u0e1a",
-    l_back: "\u0e44\u0e1f\u0e14\u0e49\u0e32\u0e19\u0e2b\u0e25\u0e31\u0e07",
-    l_hair: "\u0e44\u0e1f\u0e2a\u0e48\u0e2d\u0e07\u0e1c\u0e21",
-    l_bglight: "\u0e44\u0e1f\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07",
-    lt_softbox: "\u0e0b\u0e2d\u0e1f\u0e15\u0e4c\u0e1a\u0e47\u0e2d\u0e01\u0e0b\u0e4c",
-    lt_octa: "\u0e2d\u0e2d\u0e04\u0e15\u0e32",
-    lt_strip: "\u0e2a\u0e15\u0e23\u0e34\u0e1b",
-    lt_umbrella: "\u0e23\u0e48\u0e21",
-    lt_beauty: "\u0e1a\u0e34\u0e27\u0e15\u0e35\u0e49",
-    lt_hard: "\u0e44\u0e1f\u0e41\u0e02\u0e47\u0e07",
-    li_int: "\u0e04\u0e27\u0e32\u0e21\u0e40\u0e02\u0e49\u0e21",
-    li_angle: "\u0e21\u0e38\u0e21",
-    li_height: "\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e39\u0e07",
-    li_dist: "\u0e23\u0e30\u0e22\u0e30\u0e2b\u0e48\u0e32\u0e07",
-    li_size: "\u0e02\u0e19\u0e32\u0e14",
-    btn_lightgen: "\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e41\u0e2a\u0e07",
-    light_none: "\u0e40\u0e1b\u0e34\u0e14\u0e44\u0e1f\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e19\u0e49\u0e2d\u0e22\u0e2b\u0e19\u0e36\u0e48\u0e07\u0e14\u0e27\u0e07\u0e01\u0e48\u0e2d\u0e19",
-    lg_equip: "\u0e41\u0e2a\u0e14\u0e07\u0e2d\u0e38\u0e1b\u0e01\u0e23\u0e13\u0e4c\u0e44\u0e1f\u0e43\u0e19\u0e20\u0e32\u0e1e (\u0e40\u0e2b\u0e47\u0e19\u0e0b\u0e2d\u0e1f\u0e15\u0e4c\u0e1a\u0e47\u0e2d\u0e01\u0e0b\u0e4c / \u0e02\u0e32\u0e15\u0e31\u0e49\u0e07)",
-    grp_chains: "\u0e40\u0e0a\u0e19\u0e2a\u0e44\u0e15\u0e25\u0e4c \u2014 \u0e1c\u0e2a\u0e21 \u2713 \u0e2a\u0e44\u0e15\u0e25\u0e4c",
-    chains_note: "\u0e40\u0e1b\u0e34\u0e14\u0e2a\u0e44\u0e15\u0e25\u0e4c\u0e43\u0e14\u0e01\u0e47\u0e44\u0e14\u0e49 \u2014 \u0e08\u0e30\u0e1c\u0e2a\u0e21\u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a\u0e17\u0e38\u0e01 Generate / preset / Retouch \u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e01\u0e31\u0e19",
-    grp_restore: "\u0e01\u0e39\u0e49\u0e20\u0e32\u0e1e\u0e40\u0e01\u0e48\u0e32",
-    p_restore: "\u0e01\u0e39\u0e49\u0e20\u0e32\u0e1e\u0e40\u0e01\u0e48\u0e32",
-    rest_color: "\u0e2a\u0e35\u0e40\u0e15\u0e47\u0e21",
-    rest_bw: "\u0e02\u0e32\u0e27-\u0e14\u0e33",
-    restore_note: "\u0e0b\u0e48\u0e2d\u0e21\u0e23\u0e2d\u0e22\u0e09\u0e35\u0e01 \u0e04\u0e27\u0e32\u0e21\u0e40\u0e2a\u0e35\u0e22\u0e2b\u0e32\u0e22\u0e08\u0e32\u0e01\u0e19\u0e49\u0e33 / \u0e44\u0e1f \u0e41\u0e25\u0e30\u0e2a\u0e35\u0e0b\u0e35\u0e14 \u2014 \u0e23\u0e31\u0e01\u0e29\u0e32\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32\u0e40\u0e14\u0e34\u0e21\u0e17\u0e38\u0e01\u0e04\u0e19\u0e43\u0e2b\u0e49\u0e40\u0e2b\u0e21\u0e37\u0e2d\u0e19\u0e40\u0e14\u0e34\u0e21 100%",
-    rt_browstyle: "\u0e2a\u0e44\u0e15\u0e25\u0e4c\u0e04\u0e34\u0e49\u0e27",
-    rt_lashstyle: "\u0e2a\u0e44\u0e15\u0e25\u0e4c\u0e02\u0e19\u0e15\u0e32",
-    rt_blush: "\u0e2a\u0e35\u0e1a\u0e25\u0e31\u0e0a",
-    rt_contour: "\u0e2a\u0e44\u0e15\u0e25\u0e4c\u0e04\u0e2d\u0e19\u0e17\u0e31\u0e27\u0e23\u0e4c",
-    rt_bust: "\u0e2b\u0e19\u0e49\u0e32\u0e2d\u0e01",
-    rt_butt: "\u0e2a\u0e30\u0e42\u0e1e\u0e01",
-    rt_thigh: "\u0e15\u0e49\u0e19\u0e02\u0e32",
-    rt_calf: "\u0e19\u0e48\u0e2d\u0e07",
-    rt_neck: "\u0e04\u0e2d",
-    rt_fingers: "\u0e19\u0e34\u0e49\u0e27\u0e21\u0e37\u0e2d",
-    hint_prompt_my: "\u0e40\u0e02\u0e35\u0e22\u0e19\u0e20\u0e32\u0e29\u0e32\u0e44\u0e17\u0e22\u0e44\u0e14\u0e49\u0e40\u0e25\u0e22 \u2014 \u0e15\u0e2d\u0e19 Generate \u0e23\u0e30\u0e1a\u0e1a\u0e08\u0e30\u0e41\u0e1b\u0e25\u0e40\u0e1b\u0e47\u0e19\u0e2d\u0e31\u0e07\u0e01\u0e24\u0e29\u0e43\u0e2b\u0e49\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 (\u0e2a\u0e39\u0e07\u0e2a\u0e38\u0e14 20,000)",
-    st_translate: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e41\u0e1b\u0e25\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e1e\u0e21\u0e48\u0e32\u0e40\u0e1b\u0e47\u0e19\u0e2d\u0e31\u0e07\u0e01\u0e24\u0e29",
-    live_trans: "\u0e41\u0e1b\u0e25\u0e2a\u0e14 (EN \u21c4 MY)",
-    st_retry: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
-    grp_recipes: "\u0e2a\u0e39\u0e15\u0e23 \u2014 \u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 / \u0e41\u0e0a\u0e23\u0e4c\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32",
-    recipe_note: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e17\u0e38\u0e01\u0e2d\u0e22\u0e48\u0e32\u0e07 (chains, retouch, \u0e44\u0e1f, \u0e25\u0e47\u0e2d\u0e01, prompt) \u0e40\u0e1b\u0e47\u0e19\u0e44\u0e1f\u0e25\u0e4c .json \u0e40\u0e14\u0e35\u0e22\u0e27 \u2014 \u0e19\u0e31\u0e01\u0e40\u0e23\u0e35\u0e22\u0e19\u0e41\u0e04\u0e48\u0e01\u0e14 Load",
-    btn_recipe_save: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e2a\u0e39\u0e15\u0e23",
-    btn_recipe_load: "\u0e42\u0e2b\u0e25\u0e14\u0e2a\u0e39\u0e15\u0e23",
-    st_recipe_saved: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e2a\u0e39\u0e15\u0e23\u0e41\u0e25\u0e49\u0e27 \u2713",
-    st_recipe_loaded: "\u0e42\u0e2b\u0e25\u0e14\u0e2a\u0e39\u0e15\u0e23\u0e41\u0e25\u0e49\u0e27 \u2713 \u2014 \u0e2d\u0e31\u0e1b\u0e40\u0e14\u0e15\u0e17\u0e38\u0e01\u0e15\u0e31\u0e27\u0e04\u0e27\u0e1a\u0e04\u0e38\u0e21",
-    st_recipe_bad: "\u0e44\u0e21\u0e48\u0e43\u0e0a\u0e48\u0e44\u0e1f\u0e25\u0e4c\u0e2a\u0e39\u0e15\u0e23 HNK",
-    sec_final: "\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e2a\u0e38\u0e14\u0e17\u0e49\u0e32\u0e22",
-    btn_copy: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01",
-    st_copied: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e41\u0e25\u0e49\u0e27 \u2713",
-    hist_note: "\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34 \u2014 6 \u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c\u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14 \u0e41\u0e15\u0e30\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e39:",
-    btn_hist_prompt: "\u2192 \u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c",
-    sec_batch: "\u0e42\u0e2b\u0e21\u0e14\u0e41\u0e1a\u0e15\u0e0a\u0e4c",
-    batch_note: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e2b\u0e25\u0e32\u0e22\u0e20\u0e32\u0e1e + \u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e1b\u0e25\u0e32\u0e22\u0e17\u0e32\u0e07 \u2014 prompt, chains, cleanup \u0e41\u0e25\u0e30\u0e25\u0e47\u0e2d\u0e01 Keep \u0e1b\u0e31\u0e08\u0e08\u0e38\u0e1a\u0e31\u0e19\u0e08\u0e30\u0e23\u0e31\u0e19\u0e01\u0e31\u0e1a\u0e17\u0e38\u0e01\u0e20\u0e32\u0e1e \u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e40\u0e1b\u0e47\u0e19 *_HNK.png",
-    btn_batch: "\u0e23\u0e31\u0e19\u0e41\u0e1a\u0e15\u0e0a\u0e4c",
-    btn_batch_stop: "\u0e2b\u0e22\u0e38\u0e14",
-    st_batch: "\u0e41\u0e1a\u0e15\u0e0a\u0e4c",
-    st_batch_done: "\u0e41\u0e1a\u0e15\u0e0a\u0e4c\u0e40\u0e2a\u0e23\u0e47\u0e08",
-    sec_web: "Web AI \u2014 \u0e40\u0e1a\u0e23\u0e32\u0e27\u0e4c\u0e40\u0e0b\u0e2d\u0e23\u0e4c\u0e22\u0e48\u0e2d",
-    web_note: "\u0e40\u0e1b\u0e34\u0e14\u0e40\u0e27\u0e47\u0e1a AI editor \u0e43\u0e14\u0e01\u0e47\u0e44\u0e14\u0e49\u0e20\u0e32\u0e22\u0e43\u0e19 Photoshop \u0e2a\u0e23\u0e49\u0e32\u0e07\u0e07\u0e32\u0e19\u0e17\u0e35\u0e48\u0e19\u0e31\u0e48\u0e19 \u0e41\u0e25\u0e49\u0e27\u0e14\u0e36\u0e07\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c\u0e40\u0e02\u0e49\u0e32\u0e21\u0e32\u0e40\u0e1b\u0e47\u0e19 layer:",
-    web_import_note: "\u0e19\u0e33\u0e40\u0e02\u0e49\u0e32: \u2460 \u0e43\u0e19\u0e40\u0e27\u0e47\u0e1a\u0e41\u0e2d\u0e1b\u0e43\u0e2b\u0e49\u0e43\u0e0a\u0e49 Copy image address \u0e41\u0e25\u0e49\u0e27\u0e01\u0e14 IMPORT COPIED LINK \u00b7 \u2461 \u0e2b\u0e23\u0e37\u0e2d\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14\u0e44\u0e1f\u0e25\u0e4c\u0e41\u0e25\u0e49\u0e27\u0e43\u0e0a\u0e49 IMPORT FILE \u00b7 \u2462 \u0e40\u0e27\u0e47\u0e1a\u0e41\u0e2d\u0e1b\u0e1e\u0e32\u0e23\u0e4c\u0e15\u0e40\u0e19\u0e2d\u0e23\u0e4c\u0e17\u0e35\u0e48\u0e21\u0e35 HNK bridge \u0e08\u0e30\u0e2a\u0e48\u0e07\u0e20\u0e32\u0e1e\u0e40\u0e02\u0e49\u0e32\u0e21\u0e32\u0e43\u0e2b\u0e49\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34",
-    btn_web_go: "\u0e44\u0e1b",
-    btn_web_home: "\u0e2b\u0e19\u0e49\u0e32\u0e41\u0e23\u0e01",
-    btn_web_reload: "\u0e42\u0e2b\u0e25\u0e14\u0e43\u0e2b\u0e21\u0e48",
-    btn_web_import_link: "\u0e19\u0e33\u0e40\u0e02\u0e49\u0e32\u0e25\u0e34\u0e07\u0e01\u0e4c\u0e17\u0e35\u0e48\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01 \u2192 PS",
-    btn_web_import_file: "\u0e19\u0e33\u0e40\u0e02\u0e49\u0e32\u0e44\u0e1f\u0e25\u0e4c \u2192 PS",
     st_web_import: "\u0e19\u0e33\u0e40\u0e02\u0e49\u0e32\u0e2a\u0e39\u0e48 Photoshop \u0e40\u0e1b\u0e47\u0e19\u0e40\u0e25\u0e40\u0e22\u0e2d\u0e23\u0e4c\u0e41\u0e25\u0e49\u0e27 \u2713",
-    st_web_nourl: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e25\u0e34\u0e07\u0e01\u0e4c\u0e20\u0e32\u0e1e\u0e01\u0e48\u0e2d\u0e19 (\u0e04\u0e25\u0e34\u0e01\u0e02\u0e27\u0e32 \u2192 \u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e20\u0e32\u0e1e)",
-    st_web_fetch: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e14\u0e36\u0e07\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01\u0e25\u0e34\u0e07\u0e01\u0e4c",
-    st_web_notallowed: "\u0e42\u0e14\u0e40\u0e21\u0e19\u0e19\u0e35\u0e49\u0e44\u0e21\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e43\u0e19\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e17\u0e35\u0e48\u0e2d\u0e19\u0e38\u0e0d\u0e32\u0e15 \u2014 \u0e2d\u0e32\u0e08\u0e41\u0e2a\u0e14\u0e07\u0e40\u0e1b\u0e47\u0e19\u0e2b\u0e19\u0e49\u0e32\u0e27\u0e48\u0e32\u0e07 \u0e41\u0e08\u0e49\u0e07 HNK \u0e43\u0e2b\u0e49\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e44\u0e14\u0e49",
-    st_need_doc: "\u0e40\u0e1b\u0e34\u0e14\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e20\u0e32\u0e1e\u0e43\u0e19 Photoshop \u0e01\u0e48\u0e2d\u0e19",
-    sec_campro: "\u0e01\u0e25\u0e49\u0e2d\u0e07\u0e42\u0e1b\u0e23 & \u0e04\u0e38\u0e13\u0e20\u0e32\u0e1e",
-    autosave_lbl: "\u0e2a\u0e48\u0e07\u0e2d\u0e2d\u0e01\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34\u0e17\u0e38\u0e01\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c (PNG + \u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c \u2192 \u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c)",
     st_folder_ok: "\u0e15\u0e31\u0e49\u0e07\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e2a\u0e48\u0e07\u0e2d\u0e2d\u0e01\u0e41\u0e25\u0e49\u0e27 \u2713",
     st_exported: "\u0e2a\u0e48\u0e07\u0e2d\u0e2d\u0e01\u0e41\u0e25\u0e49\u0e27 \u2713",
     st_export_fail: "\u0e2a\u0e48\u0e07\u0e2d\u0e2d\u0e01\u0e25\u0e49\u0e21\u0e40\u0e2b\u0e25\u0e27 \u2014 \u0e15\u0e23\u0e27\u0e08\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c",
-    st_pro_fallback: "\u0e42\u0e21\u0e40\u0e14\u0e25 Pro \u0e44\u0e21\u0e48\u0e1e\u0e23\u0e49\u0e2d\u0e21 \u2014 \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e40\u0e1b\u0e47\u0e19 Flash \u0e23\u0e2d\u0e1a\u0e19\u0e35\u0e49",
     st_img_bad: "\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e20\u0e32\u0e1e\u0e44\u0e21\u0e48\u0e1c\u0e48\u0e32\u0e19\u0e01\u0e32\u0e23\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a \u2014 \u0e40\u0e1e\u0e34\u0e48\u0e21\u0e20\u0e32\u0e1e\u0e43\u0e2b\u0e21\u0e48",
     st_auto_comp: "\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34: \u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a IMAGE 1 \u2192 \u0e09\u0e32\u0e01\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07",
-    prov_lbl: "\u0e1c\u0e39\u0e49\u0e43\u0e2b\u0e49\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23 AI",
-    tab_create: "Create",
-    create_note: "\u0e42\u0e2b\u0e21\u0e14 CREATE \u2014 \u0e20\u0e32\u0e1e\u0e43\u0e2b\u0e21\u0e48\u0e08\u0e32\u0e01\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c (\u0e21\u0e35 ref \u0e02\u0e2d\u0e07\u0e15\u0e31\u0e27\u0e40\u0e2d\u0e07 4 \u0e23\u0e39\u0e1b)",
     create_ph: "\u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23",
     btn_create_ps: "\u2b07 \u0e2a\u0e48\u0e07\u0e44\u0e1b Photoshop",
     btn_to_ref: "\u21ba \u0e43\u0e0a\u0e49\u0e40\u0e1b\u0e47\u0e19 Ref 1",
     st_to_ref: "\u0e42\u0e2b\u0e25\u0e14\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c\u0e25\u0e07 Ref 1 \u0e41\u0e25\u0e49\u0e27 \u2713",
-    scope_create_note: "\u0e41\u0e22\u0e01\u0e08\u0e32\u0e01 Model & Output \u0e02\u0e2d\u0e07 Setup \u2014 \u0e04\u0e48\u0e32\u0e40\u0e2b\u0e25\u0e48\u0e32\u0e19\u0e35\u0e49\u0e43\u0e0a\u0e49\u0e01\u0e31\u0e1a Generate \u0e02\u0e2d\u0e07 Create \u0e40\u0e17\u0e48\u0e32\u0e19\u0e31\u0e49\u0e19",
-    cr_ratio: "\u0e2d\u0e31\u0e15\u0e23\u0e32\u0e2a\u0e48\u0e27\u0e19",
-    cr_var: "\u0e08\u0e33\u0e19\u0e27\u0e19\u0e41\u0e1a\u0e1a",
     cr_restyle: "\u267b \u0e23\u0e35\u0e2a\u0e44\u0e15\u0e25\u0e4c",
-    cr_lib: "\u0e04\u0e25\u0e31\u0e07\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c \u2014 \u0e41\u0e15\u0e30\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e41\u0e17\u0e23\u0e01",
-    cr_improve: "\u2728 \u0e1b\u0e23\u0e31\u0e1a\u0e1b\u0e23\u0e38\u0e07",
-    cr_describe: "\ud83d\udd0d \u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22 Ref 1 \u2192 \u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c",
-    st_describing: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2d\u0e48\u0e32\u0e19\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u2026",
-    st_described: "\u0e40\u0e02\u0e35\u0e22\u0e19\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e08\u0e32\u0e01 Ref 1 \u0e41\u0e25\u0e49\u0e27 \u2713",
-    st_need_ref1: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e20\u0e32\u0e1e\u0e25\u0e07 Ref 1 \u0e01\u0e48\u0e2d\u0e19",
-    st_lib_added: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e41\u0e25\u0e49\u0e27 \u2713",
-    cr_refs: "\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 (\u0e2a\u0e39\u0e07\u0e2a\u0e38\u0e14 4)",
-    cr_refs_note: "\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a \u2014 \u0e40\u0e1e\u0e34\u0e48\u0e21\u0e14\u0e49\u0e27\u0e22 Layer / File / Web \u0e2a\u0e48\u0e27\u0e19 Create \u0e08\u0e30\u0e14\u0e36\u0e07\u0e21\u0e32\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e2a\u0e34\u0e48\u0e07\u0e17\u0e35\u0e48 prompt \u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e23\u0e30\u0e1a\u0e38",
-    cr_results: "\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c",
     cr_gal_empty: "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c \u2014 \u0e41\u0e15\u0e30\u0e2a\u0e23\u0e49\u0e32\u0e07",
     cr_gal_have: "\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c \u00b7 \u0e41\u0e15\u0e30\u0e23\u0e39\u0e1b\u0e22\u0e48\u0e2d\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e39 / \u0e14\u0e33\u0e40\u0e19\u0e34\u0e19\u0e01\u0e32\u0e23",
     cr_save: "\u2b07 \u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 PNG",
-    cr_engine: "\u0e40\u0e2d\u0e19\u0e08\u0e34\u0e19",
     cr_need_result: "\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e20\u0e32\u0e1e\u0e01\u0e48\u0e2d\u0e19",
-    btn_web_import_url: "\u2b07 \u0e19\u0e33\u0e40\u0e02\u0e49\u0e32 URL",
-    st_clip_help: "\u0e04\u0e25\u0e34\u0e1b\u0e1a\u0e2d\u0e23\u0e4c\u0e14\u0e27\u0e48\u0e32\u0e07\u0e2b\u0e23\u0e37\u0e2d\u0e16\u0e39\u0e01\u0e1a\u0e25\u0e47\u0e2d\u0e01 \u2014 \u0e27\u0e32\u0e07\u0e25\u0e34\u0e07\u0e01\u0e4c\u0e25\u0e07\u0e43\u0e19\u0e0a\u0e48\u0e2d\u0e07 URL \u0e41\u0e25\u0e49\u0e27\u0e01\u0e14 \u2b07 Import URL",
-    st_web_blob: "\u0e19\u0e31\u0e48\u0e19\u0e40\u0e1b\u0e47\u0e19\u0e25\u0e34\u0e07\u0e01\u0e4c blob: \u0e0a\u0e31\u0e48\u0e27\u0e04\u0e23\u0e32\u0e27 \u2014 \u0e43\u0e0a\u0e49\u0e04\u0e25\u0e34\u0e01\u0e02\u0e27\u0e32 \u2192 Copy IMAGE Address \u0e2b\u0e23\u0e37\u0e2d\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e44\u0e1f\u0e25\u0e4c\u0e41\u0e25\u0e49\u0e27\u0e43\u0e0a\u0e49 Import File",
-    err_key: "API key \u0e44\u0e21\u0e48\u0e16\u0e39\u0e01\u0e15\u0e49\u0e2d\u0e07 \u2014 \u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e04\u0e35\u0e22\u0e4c\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07\u0e43\u0e19\u0e41\u0e17\u0e47\u0e1a Setup",
-    err_quota: "\u0e42\u0e04\u0e27\u0e15\u0e32 / \u0e16\u0e39\u0e01\u0e08\u0e33\u0e01\u0e31\u0e14\u0e2d\u0e31\u0e15\u0e23\u0e32\u0e40\u0e23\u0e35\u0e22\u0e01\u0e43\u0e0a\u0e49 \u2014 \u0e23\u0e2d\u0e2a\u0e31\u0e01\u0e04\u0e23\u0e39\u0e48\u0e41\u0e25\u0e49\u0e27\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
-    err_big: "\u0e20\u0e32\u0e1e\u0e43\u0e2b\u0e0d\u0e48\u0e40\u0e01\u0e34\u0e19\u0e2a\u0e33\u0e2b\u0e23\u0e31\u0e1a API \u2014 \u0e22\u0e48\u0e2d\u0e02\u0e19\u0e32\u0e14\u0e41\u0e25\u0e49\u0e27\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
-    err_safety: "\u0e16\u0e39\u0e01\u0e1a\u0e25\u0e47\u0e2d\u0e01\u0e42\u0e14\u0e22\u0e15\u0e31\u0e27\u0e01\u0e23\u0e2d\u0e07\u0e04\u0e27\u0e32\u0e21\u0e1b\u0e25\u0e2d\u0e14\u0e20\u0e31\u0e22 \u2014 \u0e1b\u0e23\u0e31\u0e1a prompt \u0e2b\u0e23\u0e37\u0e2d\u0e20\u0e32\u0e1e\u0e41\u0e25\u0e49\u0e27\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
-    err_net: "\u0e1b\u0e31\u0e0d\u0e2b\u0e32\u0e40\u0e04\u0e23\u0e37\u0e2d\u0e02\u0e48\u0e32\u0e22 / \u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c \u2014 \u0e01\u0e23\u0e38\u0e13\u0e32\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
-    rh_err_network: "เชื่อมต่อ RunningHub Enterprise ไม่ได้ — อินเทอร์เน็ตขาด ตรวจสอบการเชื่อมต่อแล้วลองใหม่",
-    rh_err_task_failed: "งาน RunningHub ล้มเหลว — ลองเปลี่ยน prompt หรือรูป",
-    rh_err_host_blocked: "Photoshop ปฏิเสธโฮสต์นี้ — ไม่อยู่ใน manifest ของแผง ติดตั้งแผงเวอร์ชันล่าสุด",
-    rh_err_timeout: "สร้างภาพนานเกินไป — RunningHub ไม่ตอบทันเวลา ลองใหม่ หรือลดขนาด / จำนวนภาพ",
-    rh_err_rate_limited: "RunningHub Enterprise กำลังยุ่ง — รอสักครู่แล้วลองใหม่",
-    rh_err_invalid_key: "RunningHub ไม่รับคีย์นี้ — ตรวจสอบที่ Setup ▸ RunningHub Enterprise",
     /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
     wf_scene_presets: "พรีเซ็ตฉากจาก Library — แตะครั้งเดียว",
     wf_scene_loading: "กำลังโหลดฉาก…",
@@ -3573,114 +1622,20 @@ const I18N = {
     wf_press_prepare: "กด Prepare เพื่อโหลด workflow นี้และตรวจรูปของคุณ",
     wf_opts: "Model \u00b7 Ratio \u00b7 \u0e08\u0e33\u0e19\u0e27\u0e19 \u00b7 Size",
     wf_model_auto: "Auto \u2014 \u0e15\u0e32\u0e21\u0e17\u0e35\u0e48 workflow \u0e40\u0e25\u0e37\u0e2d\u0e01",
-    err_timeout: "\u0e04\u0e33\u0e02\u0e2d\u0e2b\u0e21\u0e14\u0e40\u0e27\u0e25\u0e32 \u2014 \u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c\u0e43\u0e0a\u0e49\u0e40\u0e27\u0e25\u0e32\u0e19\u0e32\u0e19\u0e40\u0e01\u0e34\u0e19\u0e44\u0e1b \u0e01\u0e23\u0e38\u0e13\u0e32\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
-    err_generic: "\u0e44\u0e21\u0e48\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e14\u0e33\u0e40\u0e19\u0e34\u0e19\u0e01\u0e32\u0e23\u0e15\u0e32\u0e21\u0e04\u0e33\u0e02\u0e2d\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
-    err_img: "\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49 \u2014 \u0e42\u0e1b\u0e23\u0e14\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07",
-    err_mode: "\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e19\u0e35\u0e49\u0e44\u0e21\u0e48\u0e43\u0e0a\u0e48\u0e42\u0e2b\u0e21\u0e14 RGB \u2014 \u0e41\u0e1b\u0e25\u0e07\u0e01\u0e48\u0e2d\u0e19 (Image \u25b8 Mode \u25b8 RGB Color) \u0e41\u0e25\u0e49\u0e27\u0e25\u0e2d\u0e07\u0e43\u0e2b\u0e21\u0e48",
-    cam_master: "\u0e1a\u0e25\u0e47\u0e2d\u0e01\u0e01\u0e25\u0e49\u0e2d\u0e07\u0e40\u0e1b\u0e34\u0e14 \u2014 \u0e15\u0e48\u0e2d\u0e17\u0e49\u0e32\u0e22\u0e17\u0e38\u0e01\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c",
-    cam_body: "\u0e1a\u0e2d\u0e14\u0e35\u0e49\u0e01\u0e25\u0e49\u0e2d\u0e07",
-    cam_lens: "\u0e40\u0e25\u0e19\u0e2a\u0e4c\u0e44\u0e1e\u0e23\u0e21\u0e4c (mm)",
-    cam_f: "\u0e23\u0e39\u0e23\u0e31\u0e1a\u0e41\u0e2a\u0e07",
-    cam_film: "\u0e25\u0e38\u0e04\u0e1f\u0e34\u0e25\u0e4c\u0e21",
-    cam_bokeh: "\u0e2a\u0e44\u0e15\u0e25\u0e4c\u0e42\u0e1a\u0e40\u0e01\u0e49",
-    cam_iso: "ISO",
-    cam_k: "WB \u0e40\u0e04\u0e25\u0e27\u0e34\u0e19",
-    cam_note: "\u0e40\u0e1b\u0e34\u0e14\u0e1a\u0e25\u0e47\u0e2d\u0e01\u0e01\u0e48\u0e2d\u0e19 \u0e41\u0e25\u0e49\u0e27\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e17\u0e35\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23 \u2014 \u0e0a\u0e34\u0e1b \u2013 \u0e08\u0e30\u0e44\u0e21\u0e48\u0e16\u0e39\u0e01\u0e43\u0e2a\u0e48 \u0e17\u0e38\u0e01\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e08\u0e30\u0e44\u0e1b\u0e15\u0e48\u0e2d\u0e17\u0e49\u0e32\u0e22 prompt \u0e2a\u0e38\u0e14\u0e17\u0e49\u0e32\u0e22",
-    ro_h_main: "REFERENCE OPS PRO (Ref1 / Ref2)",
-    ro_note: "Ref1 = IMAGE 2 (\u0e1c\u0e39\u0e49\u0e2b\u0e0d\u0e34\u0e07) \u00b7 Ref2 = IMAGE 3 (\u0e1c\u0e39\u0e49\u0e0a\u0e32\u0e22) \u0e40\u0e25\u0e37\u0e2d\u0e01\u0e40\u0e1b\u0e49\u0e32\u0e2b\u0e21\u0e32\u0e22\u0e01\u0e48\u0e2d\u0e19 \u0e41\u0e25\u0e49\u0e27\u0e08\u0e36\u0e07\u0e23\u0e31\u0e19 \u2014 \u0e04\u0e19\u0e17\u0e35\u0e48\u0e44\u0e21\u0e48\u0e15\u0e23\u0e07\u0e40\u0e1b\u0e49\u0e32\u0e2b\u0e21\u0e32\u0e22\u0e08\u0e30\u0e44\u0e21\u0e48\u0e16\u0e39\u0e01\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19",
-    ro_target: "\u0e40\u0e1b\u0e49\u0e32\u0e2b\u0e21\u0e32\u0e22",
-    ro_solo: "\u0e40\u0e14\u0e35\u0e48\u0e22\u0e27",
-    ro_couple: "\u0e04\u0e39\u0e48",
-    ro_family: "\u0e04\u0e23\u0e2d\u0e1a\u0e04\u0e23\u0e31\u0e27",
-    ro_mk: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e40\u0e21\u0e04\u0e2d\u0e31\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07",
-    ro_hair: "\u0e40\u0e2d\u0e32\u0e17\u0e23\u0e07\u0e1c\u0e21\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07",
-    ro_h_face: "\u0e07\u0e32\u0e19\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32",
-    ro_h_bg: "\u0e07\u0e32\u0e19 BG / FG",
-    ro_h_sub: "\u0e07\u0e32\u0e19\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a",
-    ro_h_lc: "\u0e07\u0e32\u0e19\u0e41\u0e2a\u0e07 & \u0e2a\u0e35",
-    ro_h_dress: "\u0e07\u0e32\u0e19\u0e0a\u0e38\u0e14",
-    ro_h_mk: "\u0e07\u0e32\u0e19\u0e40\u0e21\u0e04\u0e2d\u0e31\u0e1e",
-    ro_h_match: "\u2605 \u0e08\u0e31\u0e1a\u0e04\u0e39\u0e48\u0e2b\u0e25\u0e31\u0e01 (\u0e25\u0e38\u0e04\u0e40\u0e14\u0e35\u0e22\u0e27)",
-    ro_match_note: "\u0e1b\u0e23\u0e31\u0e1a IMAGE 1 \u0e43\u0e2b\u0e49\u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a reference \u0e08\u0e19\u0e14\u0e39\u0e40\u0e2b\u0e21\u0e37\u0e2d\u0e19\u0e41\u0e01\u0e49\u0e21\u0e32\u0e0a\u0e38\u0e14\u0e40\u0e14\u0e35\u0e22\u0e27\u0e01\u0e31\u0e19 \u2014 \u0e15\u0e34\u0e4a\u0e01\u0e2a\u0e34\u0e48\u0e07\u0e17\u0e35\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23\u0e43\u0e2b\u0e49\u0e15\u0e23\u0e07\u0e01\u0e31\u0e19:",
-    m_color: "\u0e2a\u0e35",
-    m_light: "\u0e41\u0e2a\u0e07",
-    m_makeup: "\u0e40\u0e21\u0e04\u0e2d\u0e31\u0e1e",
-    m_skin: "\u0e23\u0e35\u0e17\u0e31\u0e0a\u0e1c\u0e34\u0e27",
-    crd_chainsrest: "\u0e2a\u0e44\u0e15\u0e25\u0e4c\u0e40\u0e0a\u0e19 + \u0e01\u0e39\u0e49\u0e20\u0e32\u0e1e\u0e40\u0e01\u0e48\u0e32",
-    crd_refops: "Reference Ops Pro (Ref1 / Ref2)",
-    crd_scenes: "\ud83c\udfac Scenes Pro \u2014 \u0e25\u0e47\u0e2d\u0e04\u0e0b\u0e31\u0e1a\u0e40\u0e08\u0e01\u0e15\u0e4c \u00b7 \u0e0b\u0e35\u0e19\u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e19",
-    scn_note: "\u0e25\u0e47\u0e2d\u0e04\u0e0b\u0e31\u0e1a\u0e40\u0e08\u0e01\u0e15\u0e4c (\u0e2b\u0e19\u0e49\u0e32 \u00b7 \u0e17\u0e48\u0e32\u0e42\u0e1e\u0e2a \u00b7 \u0e0a\u0e38\u0e14 \u00b7 \u0e40\u0e1f\u0e23\u0e21) \u0e41\u0e25\u0e49\u0e27\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e0b\u0e35\u0e19\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14\u0e43\u0e2b\u0e49\u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a\u0e0b\u0e31\u0e1a\u0e40\u0e08\u0e01\u0e15\u0e4c \u2014 \u0e41\u0e2a\u0e07 \u0e40\u0e07\u0e32 \u0e2a\u0e35 \u0e09\u0e32\u0e01\u0e2b\u0e25\u0e31\u0e07 \u0e09\u0e32\u0e01\u0e2b\u0e19\u0e49\u0e32 \u0e27\u0e31\u0e15\u0e16\u0e38 \u0e1b\u0e23\u0e31\u0e1a\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34",
-    scn_h_style: "\u0e2a\u0e44\u0e15\u0e25\u0e4c\u0e0b\u0e35\u0e19 (\u0e43\u0e19\u0e23\u0e48\u0e21 / \u0e27\u0e31\u0e12\u0e19\u0e18\u0e23\u0e23\u0e21)",
-    scn_h_bday: "\ud83c\udf82 \u0e27\u0e31\u0e19\u0e40\u0e01\u0e34\u0e14 \u2014 \u0e2d\u0e32\u0e22\u0e38 1\u201345",
-    scn_h_cap: "\u0e41\u0e04\u0e1b\u0e0a\u0e31\u0e19 / \u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21",
-    scn_h_scarf: "\u0e01\u0e25\u0e32\u0e07\u0e41\u0e08\u0e49\u0e07 / \u0e1c\u0e49\u0e32\u0e1e\u0e31\u0e19\u0e04\u0e2d\u0e1b\u0e25\u0e34\u0e27",
-    scn_grad: "\u0e23\u0e31\u0e1a\u0e1b\u0e23\u0e34\u0e0d\u0e0d\u0e32 (\u0e43\u0e19\u0e23\u0e48\u0e21)",
-    scn_prewed: "\u0e1e\u0e23\u0e35\u0e40\u0e27\u0e14\u0e14\u0e34\u0e49\u0e07 (\u0e43\u0e19\u0e23\u0e48\u0e21)",
-    scn_vietnam: "\u0e40\u0e27\u0e35\u0e22\u0e14\u0e19\u0e32\u0e21",
-    scn_myanmar: "\u0e40\u0e21\u0e35\u0e22\u0e19\u0e21\u0e32",
-    scn_chinese: "\u0e08\u0e35\u0e19",
-    scn_shan: "\u0e44\u0e17\u0e43\u0e2b\u0e0d\u0e48",
-    scn_newborn: "\u0e17\u0e32\u0e23\u0e01\u0e41\u0e23\u0e01\u0e40\u0e01\u0e34\u0e14",
-    scn_age: "\u0e2d\u0e32\u0e22\u0e38",
-    scn_bday_go: "\ud83c\udf82 \u0e09\u0e32\u0e01\u0e27\u0e31\u0e19\u0e40\u0e01\u0e34\u0e14",
-    scn_cap_on: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e41\u0e04\u0e1b\u0e0a\u0e31\u0e19",
-    scn_cap_ph: "\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e41\u0e04\u0e1b\u0e0a\u0e31\u0e19 (\u0e40\u0e0a\u0e48\u0e19 Happy 1st Birthday, \u0e0a\u0e37\u0e48\u0e2d)\u2026",
-    scn_cap_pos: "\u0e15\u0e33\u0e41\u0e2b\u0e19\u0e48\u0e07",
-    scn_top: "\u0e1a\u0e19",
-    scn_bottom: "\u0e25\u0e48\u0e32\u0e07",
-    scn_scarf: "\u2726 \u0e09\u0e32\u0e01\u0e1c\u0e49\u0e32\u0e1e\u0e31\u0e19\u0e04\u0e2d\u0e1b\u0e25\u0e34\u0e27",
-    scn_dir: "\u0e17\u0e34\u0e28\u0e17\u0e32\u0e07",
-    scn_left: "\u0e0b\u0e49\u0e32\u0e22",
-    scn_right: "\u0e02\u0e27\u0e32",
-    scn_up: "\u0e02\u0e36\u0e49\u0e19",
-    scn_len: "\u0e04\u0e27\u0e32\u0e21\u0e22\u0e32\u0e27",
-    scn_short: "\u0e2a\u0e31\u0e49\u0e19",
-    scn_long: "\u0e22\u0e32\u0e27",
-    g_cat_scene: "SCENE OP \u2014 \u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e16\u0e39\u0e01\u0e25\u0e47\u0e2d\u0e01 (\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 \u00b7 \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 \u00b7 \u0e0a\u0e38\u0e14 \u00b7 \u0e40\u0e1f\u0e23\u0e21) \u0e2a\u0e48\u0e27\u0e19\u0e09\u0e32\u0e01\u0e17\u0e35\u0e48\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e02\u0e36\u0e49\u0e19\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14 (\u0e41\u0e2a\u0e07 \u0e40\u0e07\u0e32 \u0e2a\u0e35 \u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07 \u0e09\u0e32\u0e01\u0e2b\u0e19\u0e49\u0e32 \u0e27\u0e31\u0e15\u0e16\u0e38 \u0e1a\u0e23\u0e23\u0e22\u0e32\u0e01\u0e32\u0e28) \u0e08\u0e30\u0e16\u0e39\u0e01\u0e1b\u0e23\u0e31\u0e1a\u0e43\u0e2b\u0e49\u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 \u0e43\u0e2b\u0e49\u0e44\u0e14\u0e49\u0e20\u0e32\u0e1e\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e17\u0e35\u0e48\u0e14\u0e39\u0e40\u0e2b\u0e21\u0e37\u0e2d\u0e19\u0e16\u0e48\u0e32\u0e22\u0e08\u0e23\u0e34\u0e07",
-    crd_wed: "\u2665 Wedding Pro Suite",
-    crd_recipes: "\u0e2a\u0e39\u0e15\u0e23 \u2014 \u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 / \u0e41\u0e0a\u0e23\u0e4c",
-    learn_lbl: "\ud83c\udf93 \u0e42\u0e2b\u0e21\u0e14\u0e40\u0e23\u0e35\u0e22\u0e19\u0e23\u0e39\u0e49 \u2014 \u0e41\u0e15\u0e30 1=\u0e04\u0e39\u0e48\u0e21\u0e37\u0e2d (\u0e40\u0e2b\u0e25\u0e37\u0e2d\u0e07), 2=\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c (\u0e19\u0e49\u0e33\u0e40\u0e07\u0e34\u0e19), 3=\u0e23\u0e31\u0e19 (\u0e40\u0e02\u0e35\u0e22\u0e27)",
     guide_hint: "\u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07: \u0e40\u0e2b\u0e25\u0e37\u0e2d\u0e07 \u2192 \u0e19\u0e49\u0e33\u0e40\u0e07\u0e34\u0e19 (\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c) \u2192 \u0e40\u0e02\u0e35\u0e22\u0e27 (\u0e23\u0e31\u0e19) \u25b6",
     g_learn_next_prompt: "\u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07 \u2192 \u0e41\u0e2a\u0e14\u0e07\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e17\u0e35\u0e48\u0e41\u0e19\u0e48\u0e19\u0e2d\u0e19 (\u0e19\u0e49\u0e33\u0e40\u0e07\u0e34\u0e19)",
     g_learn_prompt_head: "\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e17\u0e35\u0e48\u0e1b\u0e38\u0e48\u0e21\u0e19\u0e35\u0e49\u0e08\u0e30\u0e2a\u0e48\u0e07 (\u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07 = \u0e23\u0e31\u0e19):",
     g_learn_next_run: "\u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07 \u2192 \u0e23\u0e31\u0e19 (\u0e40\u0e02\u0e35\u0e22\u0e27) \u0e2a\u0e23\u0e49\u0e32\u0e07",
     st_prompt_ready: "\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e1e\u0e23\u0e49\u0e2d\u0e21 \u2014 \u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07 (\u0e40\u0e02\u0e35\u0e22\u0e27) \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e23\u0e31\u0e19 \u2713",
-    g_step_doc: "\u0e40\u0e1b\u0e34\u0e14\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e20\u0e32\u0e1e\u0e43\u0e19 Photoshop \u0e01\u0e48\u0e2d\u0e19",
-    g_step_ref1: "\u0e42\u0e2b\u0e25\u0e14\u0e20\u0e32\u0e1e reference \u0e25\u0e07\u0e43\u0e19 Ref1 (\u0e08\u0e30\u0e01\u0e25\u0e32\u0e22\u0e40\u0e1b\u0e47\u0e19 IMAGE 2) \u0e2b\u0e32\u0e01\u0e21\u0e35\u0e04\u0e19\u0e17\u0e35\u0e48\u0e2a\u0e2d\u0e07 \u0e43\u0e2b\u0e49\u0e40\u0e1e\u0e34\u0e48\u0e21 Ref2",
-    g_step_target: "\u0e40\u0e25\u0e37\u0e2d\u0e01 Target: Solo / Couple (Ref1 = \u0e1c\u0e39\u0e49\u0e2b\u0e0d\u0e34\u0e07, Ref2 = \u0e1c\u0e39\u0e49\u0e0a\u0e32\u0e22) / Family",
-    g_step_mkhair: "\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a: \u0e15\u0e34\u0e4a\u0e01 \u2018Copy ref makeup\u2019 / \u2018Take ref hairstyle\u2019 \u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e40\u0e2b\u0e19\u0e37\u0e2d Face Ops",
-    g_step_petal: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e2a\u0e35\u0e01\u0e25\u0e35\u0e1a\u0e01\u0e48\u0e2d\u0e19 (\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 = \u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a\u0e09\u0e32\u0e01)",
-    g_step_rest: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e2a\u0e35\u0e40\u0e15\u0e47\u0e21\u0e2b\u0e23\u0e37\u0e2d\u0e02\u0e32\u0e27-\u0e14\u0e33\u0e14\u0e49\u0e27\u0e22 \u2713 \u0e02\u0e49\u0e32\u0e07\u0e1a\u0e19",
-    g_step_int: "\u0e15\u0e31\u0e49\u0e07\u0e2a\u0e44\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e04\u0e27\u0e32\u0e21\u0e40\u0e02\u0e49\u0e21\u0e15\u0e32\u0e21\u0e0a\u0e2d\u0e1a",
     g_step_confirm: "\u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e44\u0e1b\u0e02\u0e31\u0e49\u0e19\u0e16\u0e31\u0e14\u0e44\u0e1b: GUIDE (\u0e40\u0e2b\u0e25\u0e37\u0e2d\u0e07) \u2192 PROMPT (\u0e19\u0e49\u0e33\u0e40\u0e07\u0e34\u0e19) \u2192 RUN (\u0e40\u0e02\u0e35\u0e22\u0e27 = \u0e2a\u0e23\u0e49\u0e32\u0e07\u0e08\u0e23\u0e34\u0e07)",
-    g_cat_face: "FACE OP \u2014 \u0e22\u0e49\u0e32\u0e22\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32\u0e08\u0e32\u0e01 reference \u0e44\u0e1b\u0e22\u0e31\u0e07\u0e04\u0e19\u0e17\u0e35\u0e48\u0e15\u0e23\u0e07\u0e01\u0e31\u0e19 \u0e2a\u0e48\u0e27\u0e19\u0e04\u0e19\u0e2d\u0e37\u0e48\u0e19\u0e44\u0e21\u0e48\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19",
-    g_cat_sub: "SUBJECT OP \u2014 \u0e19\u0e33/\u0e41\u0e1b\u0e25\u0e07\u0e04\u0e19\u0e08\u0e32\u0e01 reference \u0e40\u0e02\u0e49\u0e32\u0e21\u0e32\u0e43\u0e19\u0e09\u0e32\u0e01\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13 \u0e09\u0e32\u0e01\u0e41\u0e25\u0e30\u0e01\u0e32\u0e23\u0e08\u0e31\u0e14\u0e40\u0e1f\u0e23\u0e21\u0e04\u0e07\u0e40\u0e14\u0e34\u0e21",
-    g_cat_bgfg: "BG/FG OP \u2014 \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07 / \u0e09\u0e32\u0e01\u0e2b\u0e19\u0e49\u0e32 \u0e42\u0e14\u0e22\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e08\u0e32\u0e01 reference",
-    g_cat_lc: "LIGHT & COLOR OP \u2014 \u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e41\u0e2a\u0e07\u0e41\u0e25\u0e30\u0e42\u0e17\u0e19\u0e2a\u0e35\u0e08\u0e32\u0e01 reference \u0e15\u0e31\u0e27\u0e1a\u0e38\u0e04\u0e04\u0e25\u0e22\u0e31\u0e07\u0e04\u0e07\u0e17\u0e38\u0e01\u0e1e\u0e34\u0e01\u0e40\u0e0b\u0e25",
-    g_cat_dress: "\u0e07\u0e32\u0e19\u0e0a\u0e38\u0e14 \u2014 \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e0a\u0e38\u0e14\u0e42\u0e14\u0e22\u0e43\u0e0a\u0e49\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07",
-    g_cat_mkop: "\u0e07\u0e32\u0e19\u0e40\u0e21\u0e04\u0e2d\u0e31\u0e1e \u2014 \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e40\u0e21\u0e04\u0e2d\u0e31\u0e1e\u0e42\u0e14\u0e22\u0e43\u0e0a\u0e49\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07",
-    g_cat_match: "MASTER MATCH \u2014 \u0e1b\u0e23\u0e31\u0e1a\u0e20\u0e32\u0e1e\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e43\u0e2b\u0e49\u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a\u0e25\u0e38\u0e04\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14\u0e02\u0e2d\u0e07 reference (\u0e15\u0e34\u0e4a\u0e01\u0e0a\u0e31\u0e49\u0e19\u0e17\u0e35\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23\u0e14\u0e49\u0e32\u0e19\u0e1a\u0e19)",
-    g_cat_trail: "WEDDING TRAIL \u2014 \u0e2a\u0e19\u0e32\u0e21\u0e2b\u0e0d\u0e49\u0e32\u0e2b\u0e23\u0e39\u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e17\u0e32\u0e07\u0e14\u0e2d\u0e01\u0e44\u0e21\u0e49\u0e17\u0e2d\u0e14\u0e22\u0e32\u0e27 \u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32/\u0e17\u0e48\u0e32\u0e17\u0e32\u0e07/\u0e40\u0e1f\u0e23\u0e21\u0e16\u0e39\u0e01\u0e25\u0e47\u0e2d\u0e01\u0e41\u0e19\u0e48\u0e19",
-    g_cat_veil: "FLYING VEIL \u2014 \u0e40\u0e1e\u0e34\u0e48\u0e21/\u0e15\u0e48\u0e2d\u0e1c\u0e49\u0e32\u0e04\u0e25\u0e38\u0e21\u0e2b\u0e19\u0e49\u0e32\u0e1b\u0e25\u0e34\u0e27\u0e25\u0e21\u0e15\u0e32\u0e21\u0e04\u0e27\u0e32\u0e21\u0e22\u0e32\u0e27\u0e19\u0e35\u0e49 \u0e42\u0e14\u0e22\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32",
-    g_cat_gown: "GOWN \u2014 \u0e40\u0e01\u0e47\u0e1a\u0e07\u0e32\u0e19\u0e0a\u0e38\u0e14\u0e40\u0e14\u0e34\u0e21\u0e43\u0e2b\u0e49\u0e40\u0e19\u0e35\u0e49\u0e22\u0e1a (\u0e14\u0e35\u0e44\u0e0b\u0e19\u0e4c\u0e44\u0e21\u0e48\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19) \u0e41\u0e25\u0e30\u0e15\u0e31\u0e49\u0e07\u0e04\u0e27\u0e32\u0e21\u0e22\u0e32\u0e27\u0e2b\u0e32\u0e07\u0e0a\u0e38\u0e14\u0e15\u0e32\u0e21\u0e19\u0e35\u0e49",
-    g_cat_petal: "FLYING PETALS \u2014 \u0e40\u0e1e\u0e34\u0e48\u0e21\u0e01\u0e25\u0e35\u0e1a\u0e14\u0e2d\u0e01\u0e44\u0e21\u0e49\u0e1b\u0e25\u0e34\u0e27\u0e43\u0e19\u0e2d\u0e32\u0e01\u0e32\u0e28\u0e15\u0e32\u0e21\u0e2a\u0e44\u0e15\u0e25\u0e4c\u0e19\u0e35\u0e49 \u0e2a\u0e35\u0e15\u0e32\u0e21\u0e41\u0e16\u0e1a\u0e2a\u0e35\u0e14\u0e49\u0e32\u0e19\u0e1a\u0e19",
-    g_cat_wedx: "WEDDING EXTRA \u2014 \u0e40\u0e1e\u0e34\u0e48\u0e21\u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e19\u0e35\u0e49\u0e43\u0e2b\u0e49\u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a\u0e09\u0e32\u0e01\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13 \u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e22\u0e31\u0e07\u0e25\u0e47\u0e2d\u0e01\u0e2d\u0e22\u0e39\u0e48",
-    g_cat_canvas: "REPLACE (CANVAS) \u2014 \u0e22\u0e49\u0e32\u0e22\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e40\u0e02\u0e49\u0e32\u0e44\u0e1b\u0e43\u0e19\u0e09\u0e32\u0e01\u0e02\u0e2d\u0e07 reference \u0e42\u0e14\u0e22\u0e25\u0e1a\u0e04\u0e19\u0e43\u0e19 reference \u0e2d\u0e2d\u0e01",
-    g_cat_restore: "OLD PHOTO RESTORE \u2014 \u0e0b\u0e48\u0e2d\u0e21\u0e04\u0e27\u0e32\u0e21\u0e40\u0e2a\u0e35\u0e22\u0e2b\u0e32\u0e22 \u0e42\u0e14\u0e22\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32\u0e40\u0e14\u0e34\u0e21\u0e17\u0e38\u0e01\u0e04\u0e19\u0e22\u0e31\u0e07\u0e40\u0e2b\u0e21\u0e37\u0e2d\u0e19\u0e40\u0e14\u0e34\u0e21 100%",
     g_cat_generic: "\u0e1e\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15 \u2014 \u0e43\u0e0a\u0e49\u0e01\u0e32\u0e23\u0e41\u0e15\u0e48\u0e07\u0e21\u0e37\u0e2d\u0e2d\u0e32\u0e0a\u0e35\u0e1e\u0e19\u0e35\u0e49\u0e01\u0e31\u0e1a\u0e20\u0e32\u0e1e\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
     g_gen: "GENERATE \u2014 \u0e23\u0e31\u0e19\u0e0a\u0e48\u0e2d\u0e07 prompt (+ chains, \u0e25\u0e47\u0e2d\u0e01 Keep, \u0e1a\u0e25\u0e47\u0e2d\u0e01\u0e01\u0e25\u0e49\u0e2d\u0e07) \u0e01\u0e31\u0e1a\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
     g_retouchbtn: "RETOUCH APPLY \u2014 \u0e23\u0e31\u0e19\u0e04\u0e48\u0e32\u0e2a\u0e44\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e40\u0e1b\u0e47\u0e19\u0e01\u0e32\u0e23\u0e23\u0e35\u0e17\u0e31\u0e0a\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e21\u0e37\u0e2d\u0e2d\u0e32\u0e0a\u0e35\u0e1e\u0e04\u0e23\u0e31\u0e49\u0e07\u0e40\u0e14\u0e35\u0e22\u0e27",
-    g_relightbtn: "LIGHTING GENERATE \u2014 \u0e08\u0e31\u0e14\u0e41\u0e2a\u0e07\u0e20\u0e32\u0e1e\u0e43\u0e2b\u0e21\u0e48\u0e43\u0e2b\u0e49\u0e15\u0e23\u0e07\u0e01\u0e31\u0e1a\u0e41\u0e1c\u0e19\u0e20\u0e32\u0e1e\u0e44\u0e1f 3D \u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e40\u0e1b\u0e4a\u0e30",
-    g_scene: "SCENE GENERATE \u2014 \u0e2a\u0e23\u0e49\u0e32\u0e07\u0e09\u0e32\u0e01\u0e43\u0e2b\u0e21\u0e48\u0e08\u0e32\u0e01 prompt \u0e17\u0e35\u0e48\u0e2a\u0e01\u0e31\u0e14\u0e44\u0e27\u0e49 \u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e22\u0e31\u0e07\u0e04\u0e07\u0e40\u0e14\u0e34\u0e21",
-    g_rmix: "REPLACE MIX \u2014 \u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e2a\u0e48\u0e27\u0e19\u0e17\u0e35\u0e48\u0e15\u0e34\u0e4a\u0e01 \u2713 \u0e44\u0e27\u0e49 \u0e08\u0e32\u0e01 reference",
     ro_faceRep: "\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32",
     ro_faceSwap: "\u0e2a\u0e25\u0e31\u0e1a\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32",
     ro_bgRep: "\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07",
     ro_bgSwap: "\u0e2a\u0e25\u0e31\u0e1a\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07",
     ro_fgRep: "\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e09\u0e32\u0e01\u0e2b\u0e19\u0e49\u0e32",
-    ro_bg_note: "Doc = \u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a \u00b7 Ref1 = \u0e09\u0e32\u0e01\u0e43\u0e2b\u0e21\u0e48 Target (Solo/Couple/Family) \u0e40\u0e1b\u0e47\u0e19\u0e15\u0e31\u0e27\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e27\u0e48\u0e32\u0e08\u0e30\u0e40\u0e01\u0e47\u0e1a\u0e43\u0e04\u0e23\u0e44\u0e27\u0e49",
-    ro_bg_frame: "\u0e04\u0e07\u0e40\u0e1f\u0e23\u0e21 & \u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a",
-    ro_bg_light: "\u0e04\u0e07\u0e41\u0e2a\u0e07/\u0e2a\u0e35\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a",
     ro_subSwap: "\u0e2a\u0e25\u0e31\u0e1a\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a",
     ro_lcRef: "\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e41\u0e2a\u0e07&\u0e2a\u0e35",
     ro_lcCopy: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e41\u0e2a\u0e07&\u0e2a\u0e35",
@@ -3688,94 +1643,8 @@ const I18N = {
     ro_dressRep: "\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e0a\u0e38\u0e14",
     ro_mkCopy: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e40\u0e21\u0e04\u0e2d\u0e31\u0e1e",
     ro_matchBtn: "\u2605 MASTER MATCH",
-    grp_retouch: "\u0e1e\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15\u0e23\u0e35\u0e17\u0e31\u0e0a\u0e1c\u0e34\u0e27",
-    lbl_intensity: "\u0e04\u0e27\u0e32\u0e21\u0e41\u0e23\u0e07",
-    p_evoto: "\u0e2a\u0e44\u0e15\u0e25\u0e4c Retouch B",
-    p_meitu: "\u0e2a\u0e44\u0e15\u0e25\u0e4c Retouch A",
-    auto_place: "\u0e27\u0e32\u0e07\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c\u0e40\u0e1b\u0e47\u0e19\u0e40\u0e25\u0e40\u0e22\u0e2d\u0e23\u0e4c\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34",
-    sec_retouchpro: "\u0e23\u0e35\u0e17\u0e31\u0e0a\u0e42\u0e1b\u0e23 \u2014 \u0e2a\u0e44\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c",
-    rt_skin: "\u0e1c\u0e34\u0e27",
-    rt_faceai: "\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 AI",
-    rt_hair: "\u0e1c\u0e21",
-    rt_dress: "\u0e0a\u0e38\u0e14",
-    rt_bg: "\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07",
-    rt_smooth: "\u0e40\u0e01\u0e25\u0e35\u0e48\u0e22\u0e1c\u0e34\u0e27",
-    rt_acne: "\u0e25\u0e1a\u0e2a\u0e34\u0e27",
-    rt_spots: "\u0e08\u0e38\u0e14\u0e14\u0e48\u0e32\u0e07\u0e14\u0e33",
-    rt_wrinkle: "\u0e23\u0e34\u0e49\u0e27\u0e23\u0e2d\u0e22",
-    rt_tone: "\u0e02\u0e32\u0e27 / \u0e41\u0e17\u0e19",
-    rt_glow: "\u0e2d\u0e2d\u0e23\u0e48\u0e32",
-    rt_reshape: "AI \u0e08\u0e31\u0e14\u0e23\u0e39\u0e1b",
-    rt_lash: "\u0e02\u0e19\u0e15\u0e32",
-    rt_brow: "\u0e04\u0e34\u0e49\u0e27",
-    rt_lipsmooth: "\u0e40\u0e01\u0e25\u0e35\u0e48\u0e22\u0e1b\u0e32\u0e01",
-    rt_lipcolor: "\u0e2a\u0e35\u0e1b\u0e32\u0e01",
-    rt_lenscolor: "\u0e2a\u0e35\u0e40\u0e25\u0e19\u0e2a\u0e4c",
-    rt_hairstray: "\u0e1c\u0e21\u0e1f\u0e38\u0e49\u0e07",
-    rt_hairsmooth: "\u0e40\u0e01\u0e25\u0e35\u0e48\u0e22\u0e1c\u0e21",
-    rt_hairshine: "\u0e1c\u0e21\u0e40\u0e07\u0e32 (D&B)",
-    rt_dresssmooth: "\u0e40\u0e01\u0e25\u0e35\u0e48\u0e22\u0e1c\u0e49\u0e32",
-    rt_dressedge: "\u0e40\u0e01\u0e47\u0e1a\u0e02\u0e2d\u0e1a",
-    rt_dresswrinkle: "\u0e25\u0e1a\u0e23\u0e2d\u0e22\u0e22\u0e31\u0e1a",
-    rt_dresstexture: "\u0e1f\u0e37\u0e49\u0e19\u0e40\u0e17\u0e47\u0e01\u0e0b\u0e4c\u0e40\u0e08\u0e2d\u0e23\u0e4c",
-    rt_bgsmooth: "\u0e17\u0e33\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e30\u0e2d\u0e32\u0e14/\u0e40\u0e01\u0e25\u0e35\u0e48\u0e22 BG",
-    rt_bgcolor: "\u0e2a\u0e35 BG",
-    rt_bgrecolor: "\u0e40\u0e01\u0e25\u0e35\u0e48\u0e22\u0e2a\u0e35 BG",
-    rt_shape: "\u0e08\u0e31\u0e14\u0e23\u0e39\u0e1b\u0e42\u0e1b\u0e23 (\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 + \u0e23\u0e39\u0e1b\u0e23\u0e48\u0e32\u0e07)",
-    rt_teeth: "\u0e1f\u0e31\u0e19\u0e02\u0e32\u0e27",
-    rt_eyewhite: "\u0e15\u0e32\u0e02\u0e32\u0e27\u0e43\u0e2a",
-    rt_faceslim: "\u0e2b\u0e19\u0e49\u0e32\u0e40\u0e23\u0e35\u0e22\u0e27",
-    rt_jaw: "\u0e01\u0e23\u0e32\u0e21",
-    rt_chin: "\u0e04\u0e32\u0e07",
-    rt_nosesize: "\u0e02\u0e19\u0e32\u0e14\u0e08\u0e21\u0e39\u0e01",
-    rt_eyesize: "\u0e02\u0e19\u0e32\u0e14\u0e15\u0e32",
-    rt_lipfull: "\u0e1b\u0e32\u0e01\u0e2d\u0e34\u0e48\u0e21",
-    rt_waist: "\u0e40\u0e2d\u0e27\u0e04\u0e2d\u0e14",
-    rt_bodyslim: "\u0e23\u0e39\u0e1b\u0e23\u0e48\u0e32\u0e07\u0e40\u0e1e\u0e23\u0e35\u0e22\u0e27",
-    rt_shoulder: "\u0e44\u0e2b\u0e25\u0e48",
-    rt_hip: "\u0e2a\u0e30\u0e42\u0e1e\u0e01\u0e40\u0e23\u0e35\u0e22\u0e27",
-    rt_leglen: "\u0e04\u0e27\u0e32\u0e21\u0e22\u0e32\u0e27\u0e02\u0e32",
-    rt_armslim: "\u0e41\u0e02\u0e19\u0e40\u0e23\u0e35\u0e22\u0e27",
-    rt_dressfit: "\u0e0a\u0e38\u0e14\u0e40\u0e02\u0e49\u0e32\u0e23\u0e39\u0e1b",
-    rt_dressclean: "\u0e0a\u0e38\u0e14\u0e2a\u0e30\u0e2d\u0e32\u0e14",
-    rt_dresscolorpure: "\u0e2a\u0e35\u0e0a\u0e38\u0e14\u0e1a\u0e23\u0e34\u0e2a\u0e38\u0e17\u0e18\u0e34\u0e4c",
-    rt_bodygrp: "\u0e1c\u0e34\u0e27\u0e01\u0e32\u0e22\u0e42\u0e1b\u0e23",
-    rt_bodysmooth: "\u0e40\u0e01\u0e25\u0e35\u0e48\u0e22\u0e1c\u0e34\u0e27\u0e01\u0e32\u0e22",
-    rt_bodyblemish: "\u0e25\u0e1a\u0e23\u0e2d\u0e22\u0e1c\u0e34\u0e27\u0e01\u0e32\u0e22",
-    rt_bodytone: "\u0e1c\u0e34\u0e27\u0e01\u0e32\u0e22\u0e2a\u0e21\u0e48\u0e33\u0e40\u0e2a\u0e21\u0e2d",
-    rt_bodyglow: "\u0e1c\u0e34\u0e27\u0e01\u0e32\u0e22\u0e2d\u0e2d\u0e23\u0e48\u0e32",
-    rt_bodyhairrm: "\u0e25\u0e14\u0e02\u0e19\u0e01\u0e32\u0e22",
-    rt_hairvolume: "\u0e27\u0e2d\u0e25\u0e38\u0e48\u0e21\u0e1c\u0e21",
-    rt_hairgloss: "\u0e1c\u0e21\u0e40\u0e07\u0e32\u0e07\u0e32\u0e21",
-    rt_hairfill: "\u0e40\u0e15\u0e34\u0e21\u0e1c\u0e21 (\u0e08\u0e38\u0e14\u0e1a\u0e32\u0e07)",
-    wp_h_trail: "\u2665 \u0e07\u0e32\u0e19\u0e41\u0e15\u0e48\u0e07 \u2014 \u0e2a\u0e32\u0e22\u0e14\u0e2d\u0e01\u0e44\u0e21\u0e49\u0e2b\u0e23\u0e39",
-    wp_h_veil: "\u2665 \u0e07\u0e32\u0e19\u0e41\u0e15\u0e48\u0e07 \u2014 \u0e1c\u0e49\u0e32\u0e04\u0e25\u0e38\u0e21\u0e1b\u0e25\u0e34\u0e27",
-    wp_h_gown: "\u2665 \u0e07\u0e32\u0e19\u0e41\u0e15\u0e48\u0e07 \u2014 \u0e0a\u0e38\u0e14\u0e2a\u0e30\u0e2d\u0e32\u0e14 + \u0e2b\u0e32\u0e07\u0e01\u0e23\u0e30\u0e42\u0e1b\u0e23\u0e07",
-    wp_h_petal: "\u2665 \u0e07\u0e32\u0e19\u0e41\u0e15\u0e48\u0e07 \u2014 \u0e01\u0e25\u0e35\u0e1a\u0e1b\u0e25\u0e34\u0e27",
-    wp_h_extra: "\u2665 \u0e07\u0e32\u0e19\u0e41\u0e15\u0e48\u0e07 \u2014 \u0e21\u0e49\u0e32 \u00b7 \u0e19\u0e49\u0e33 \u00b7 \u0e2d\u0e32\u0e23\u0e21\u0e13\u0e4c",
-    wp_note: "Face ID / \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 / \u0e40\u0e1f\u0e23\u0e21 / \u0e14\u0e35\u0e44\u0e0b\u0e19\u0e4c\u0e0a\u0e38\u0e14 \u0e16\u0e39\u0e01\u0e25\u0e47\u0e2d\u0e01\u0e41\u0e19\u0e48\u0e19 \u2014 \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e17\u0e35\u0e48\u0e23\u0e30\u0e1a\u0e38\u0e40\u0e17\u0e48\u0e32\u0e19\u0e31\u0e49\u0e19",
-    wp_petalcolor: "\u0e2a\u0e35\u0e01\u0e25\u0e35\u0e1a (\u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34 = \u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a\u0e09\u0e32\u0e01)",
-    wp_trail_c: "\u0e2a\u0e35\u0e14\u0e2d\u0e01\u0e44\u0e21\u0e49",
-    wp_trail_go: "\u25b6 \u0e2a\u0e32\u0e22\u0e14\u0e2d\u0e01\u0e44\u0e21\u0e49",
-    wp_veil_c: "\u0e04\u0e27\u0e32\u0e21\u0e22\u0e32\u0e27\u0e1c\u0e49\u0e32\u0e04\u0e25\u0e38\u0e21",
-    wp_veil_go: "\u25b6 \u0e1c\u0e49\u0e32\u0e04\u0e25\u0e38\u0e21\u0e1b\u0e25\u0e34\u0e27",
-    wp_gown_c: "\u0e04\u0e27\u0e32\u0e21\u0e22\u0e32\u0e27\u0e2b\u0e32\u0e07",
-    wp_gown_go: "\u25b6 \u0e0a\u0e38\u0e14\u0e2a\u0e30\u0e2d\u0e32\u0e14 + \u0e2b\u0e32\u0e07",
-    wp_pet_c: "\u0e2a\u0e44\u0e15\u0e25\u0e4c\u0e01\u0e25\u0e35\u0e1a",
-    wp_pet_go: "\u25b6 \u0e01\u0e25\u0e35\u0e1a\u0e1b\u0e25\u0e34\u0e27",
-    wp_extra_c: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e40\u0e15\u0e34\u0e21",
-    wp_extra_go: "\u25b6 \u0e40\u0e1e\u0e34\u0e48\u0e21\u0e1e\u0e34\u0e40\u0e28\u0e29",
-    btn_apply_rt: "\u0e43\u0e0a\u0e49\u0e23\u0e35\u0e17\u0e31\u0e0a",
-    btn_reset: "\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15",
     rt_none: "\u0e15\u0e31\u0e49\u0e07\u0e2a\u0e44\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e23\u0e35\u0e17\u0e31\u0e0a\u0e2b\u0e23\u0e37\u0e2d\u0e2a\u0e35\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e19\u0e49\u0e2d\u0e22\u0e2b\u0e19\u0e36\u0e48\u0e07\u0e01\u0e48\u0e2d\u0e19",
-    tab_setup: "Setup",
-    tab_prompt: "Edit",
-    tab_presets: "Library",
-    recent_lbl: "\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14\u2026",
-    tab_retouch: "Retouch",
-    tab_aitools: "Home",
     cap_warn: "Photoshop \u0e08\u0e33\u0e01\u0e31\u0e14\u0e0a\u0e48\u0e2d\u0e07\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e19\u0e35\u0e49\u0e17\u0e35\u0e48:",
-    cleanup_note: "\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23\u0e17\u0e35\u0e48\u0e15\u0e34\u0e4a\u0e01\u0e17\u0e33\u0e07\u0e32\u0e19\u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e17\u0e38\u0e01 \u0e2a\u0e23\u0e49\u0e32\u0e07 / \u0e1e\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15",
     btn_generate: "\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e20\u0e32\u0e1e",
     st_ready: "\u0e1e\u0e23\u0e49\u0e2d\u0e21",
     st_capture: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e08\u0e31\u0e1a\u0e20\u0e32\u0e1e\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23",
@@ -3792,68 +1661,16 @@ const I18N = {
     st_err: "\u0e02\u0e49\u0e2d\u0e1c\u0e34\u0e14\u0e1e\u0e25\u0e32\u0e14",
     st_no_doc: "\u0e44\u0e21\u0e48\u0e21\u0e35\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19 \u2014 \u0e40\u0e1b\u0e34\u0e14\u0e20\u0e32\u0e1e\u0e01\u0e48\u0e2d\u0e19",
     st_no_prompt: "\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e27\u0e48\u0e32\u0e07",
-    need_ref: "\u0e1e\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15\u0e19\u0e35\u0e49\u0e15\u0e49\u0e2d\u0e07\u0e21\u0e35\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e43\u0e19\u0e0a\u0e48\u0e2d\u0e07 1",
     st_new_doc: "\u0e40\u0e1b\u0e34\u0e14\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c\u0e40\u0e1b\u0e47\u0e19\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e43\u0e2b\u0e21\u0e48\u0e41\u0e25\u0e49\u0e27 \u2713",
-    sec_preview: "\u0e15\u0e31\u0e27\u0e2d\u0e22\u0e48\u0e32\u0e07 \u2014 \u0e01\u0e48\u0e2d\u0e19 / \u0e2b\u0e25\u0e31\u0e07",
     before: "\u0e01\u0e48\u0e2d\u0e19",
     after: "\u0e2b\u0e25\u0e31\u0e07",
     btn_place: "\u0e27\u0e32\u0e07\u0e25\u0e07 Photoshop",
-    btn_saveas: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e40\u0e1b\u0e47\u0e19\u2026",
     st_saved: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e41\u0e25\u0e49\u0e27 \u2713",
-    sec_diag: "\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e23\u0e30\u0e1a\u0e1a",
-    sec_log: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e01\u0e34\u0e08\u0e01\u0e23\u0e23\u0e21",
-    btn_diag: "\u0e23\u0e31\u0e19\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a",
-    btn_copylog: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01",
-    btn_clearlog: "\u0e25\u0e49\u0e32\u0e07",
-    diag_host: "\u0e42\u0e2e\u0e2a\u0e15\u0e4c Photoshop",
-    diag_uxp: "\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16 UXP",
-    diag_rh: "RunningHub Enterprise key",
-    diag_doc: "\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e17\u0e35\u0e48\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19",
-    diag_set: "\u0e15\u0e31\u0e49\u0e07\u0e41\u0e25\u0e49\u0e27",
-    diag_unset: "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e15\u0e31\u0e49\u0e07",
-    diag_open: "\u0e40\u0e1b\u0e34\u0e14",
-    diag_none: "\u0e44\u0e21\u0e48\u0e21\u0e35\u0e17\u0e35\u0e48\u0e40\u0e1b\u0e34\u0e14",
-    diag_missing: "\u0e02\u0e32\u0e14",
-    diag_done: "\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e23\u0e30\u0e1a\u0e1a\u0e40\u0e2a\u0e23\u0e47\u0e08 \u2713",
-    diag_lib: "\u0e04\u0e25\u0e31\u0e07\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07",
-    diag_lib_open: "\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e40\u0e1b\u0e34\u0e14\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c",
-    sec_reflib: "\u0e04\u0e25\u0e31\u0e07\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07",
-    reflib_note: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e20\u0e32\u0e1e reference \u0e17\u0e35\u0e48\u0e04\u0e38\u0e13\u0e0a\u0e2d\u0e1a\u0e44\u0e27\u0e49\u0e04\u0e23\u0e31\u0e49\u0e07\u0e40\u0e14\u0e35\u0e22\u0e27 \u2014 Browse \u0e08\u0e30\u0e08\u0e33\u0e41\u0e25\u0e30\u0e40\u0e1b\u0e34\u0e14\u0e40\u0e02\u0e49\u0e32\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e19\u0e31\u0e49\u0e19\u0e43\u0e2b\u0e49\u0e17\u0e38\u0e01\u0e17\u0e35\u0e48",
-    btn_browse: "\u0e40\u0e23\u0e35\u0e22\u0e01\u0e14\u0e39",
-    lib_choose: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c",
-    lib_open: "\u0e40\u0e1b\u0e34\u0e14\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c",
-    lib_change: "\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c",
-    lib_reset: "\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15",
-    lib_rescan: "\u0e2a\u0e41\u0e01\u0e19\u0e43\u0e2b\u0e21\u0e48",
-    lib_current: "\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e1b\u0e31\u0e08\u0e08\u0e38\u0e1a\u0e31\u0e19",
-    lib_found: "\u0e20\u0e32\u0e1e\u0e17\u0e35\u0e48\u0e1e\u0e1a",
-    lib_status: "\u0e2a\u0e16\u0e32\u0e19\u0e30",
-    lib_lastscan: "\u0e2a\u0e41\u0e01\u0e19\u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14",
-    lib_images: "\u0e20\u0e32\u0e1e",
-    lib_connected: "\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d\u0e41\u0e25\u0e49\u0e27",
-    lib_not_config: "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32",
-    lib_perm_lost: "\u0e2a\u0e34\u0e17\u0e18\u0e34\u0e4c\u0e2b\u0e32\u0e22 \u2014 \u0e40\u0e25\u0e37\u0e2d\u0e01\u0e43\u0e2b\u0e21\u0e48",
-    lib_none: "(\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c)",
-    lib_copy_only: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e1e\u0e32\u0e18\u0e40\u0e17\u0e48\u0e32\u0e19\u0e31\u0e49\u0e19",
     lib_choose_msg: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e42\u0e1f\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e04\u0e25\u0e31\u0e07\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 HNK \u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
-    lib_scanning: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2a\u0e41\u0e01\u0e19\u0e04\u0e25\u0e31\u0e07\u2026",
-    lib_scan_done: "\u0e2a\u0e41\u0e01\u0e19\u0e43\u0e2b\u0e21\u0e48\u0e40\u0e2a\u0e23\u0e47\u0e08 \u2713",
-    lib_reset_done: "\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15\u0e04\u0e25\u0e31\u0e07\u0e41\u0e25\u0e49\u0e27 \u2713",
-    lib_path_copied: "\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01\u0e1e\u0e32\u0e18\u0e41\u0e25\u0e49\u0e27",
     lib_unsupported: "\u0e0a\u0e19\u0e34\u0e14\u0e20\u0e32\u0e1e\u0e44\u0e21\u0e48\u0e23\u0e2d\u0e07\u0e23\u0e31\u0e1a",
     lib_restore_fail: "\u0e01\u0e39\u0e49\u0e04\u0e37\u0e19\u0e20\u0e32\u0e1e\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49",
     on: "\u0e40\u0e1b\u0e34\u0e14",
     off: "\u0e1b\u0e34\u0e14",
-    ai_home_title: "\u0e04\u0e38\u0e13\u0e2d\u0e22\u0e32\u0e01\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e2d\u0e30\u0e44\u0e23",
-    ai_greet_morning: "\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e35\u0e15\u0e2d\u0e19\u0e40\u0e0a\u0e49\u0e32",
-    ai_greet_afternoon: "\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e35\u0e15\u0e2d\u0e19\u0e1a\u0e48\u0e32\u0e22",
-    ai_greet_evening: "\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e35\u0e15\u0e2d\u0e19\u0e40\u0e22\u0e47\u0e19",
-    ai_free_generate: "\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e2a\u0e23\u0e30",
-    ai_free_sub: "\u0e40\u0e02\u0e35\u0e22\u0e19 prompt \u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e40\u0e2d\u0e07",
-    ai_more_tools: "\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e21\u0e37\u0e2d\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e40\u0e15\u0e34\u0e21",
-    ai_more_sub: "Water Edit \u00b7 Text/Logo \u00b7 workflow \u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14",
-    ai_nav_home: "\u0e2b\u0e19\u0e49\u0e32\u0e41\u0e23\u0e01",
-    ai_nav_tools: "\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e21\u0e37\u0e2d",
     ai_history: "\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34",
     ai_no_gen: "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e1c\u0e25\u0e07\u0e32\u0e19",
     ai_videos: "วิดีโอ",
@@ -3880,14 +1697,11 @@ const I18N = {
     ai_lib_pick_first: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01\u0e41\u0e17\u0e47\u0e1a Presets \u2192 Visual Library \u0e01\u0e48\u0e2d\u0e19",
     ai_lib_load_fail: "\u0e42\u0e2b\u0e25\u0e14\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01 Library \u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08",
     ai_missing: "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35",
-    ai_add: "\u0e40\u0e1e\u0e34\u0e48\u0e21",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 \u0e40\u0e1e\u0e34\u0e48\u0e21 model endpoint (\u0e02\u0e31\u0e49\u0e19\u0e2a\u0e39\u0e07 \u2014 \u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)",
     ai_rh_note: "\u0e42\u0e21\u0e40\u0e14\u0e25\u0e17\u0e35\u0e48\u0e21\u0e35\u0e21\u0e32\u0e43\u0e2b\u0e49\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49\u0e14\u0e49\u0e27\u0e22\u0e04\u0e35\u0e22\u0e4c\u0e14\u0e49\u0e32\u0e19\u0e1a\u0e19\u0e41\u0e25\u0e49\u0e27 \u2014 \u0e44\u0e21\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e17\u0e33\u0e2d\u0e30\u0e44\u0e23 \u0e2b\u0e32\u0e01\u0e42\u0e21\u0e40\u0e14\u0e25\u0e43\u0e14\u0e02\u0e36\u0e49\u0e19\u0e27\u0e48\u0e32 \"not connected\" (\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19 endpoint path) \u0e43\u0e2b\u0e49\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01 path \u0e08\u0e32\u0e01 API docs \u0e02\u0e2d\u0e07 RunningHub \u0e21\u0e32\u0e27\u0e32\u0e07\u0e17\u0e35\u0e48\u0e19\u0e35\u0e48",
     ai_rh_save: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 endpoint \u0e02\u0e2d\u0e07\u0e42\u0e21\u0e40\u0e14\u0e25\u0e19\u0e35\u0e49",
     ai_test_conn: "\u0e17\u0e14\u0e2a\u0e2d\u0e1a\u0e01\u0e32\u0e23\u0e40\u0e0a\u0e37\u0e48\u0e2d\u0e21\u0e15\u0e48\u0e2d",
-    ai_save_verify: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e41\u0e25\u0e30\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a",
-    ai_settings: "\u0e15\u0e31\u0e49\u0e07\u0e04\u0e48\u0e32",
     ai_add_layers: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c\u0e40\u0e1b\u0e47\u0e19 Layer \u0e43\u0e2b\u0e21\u0e48",
     ai_done: "\u0e40\u0e2a\u0e23\u0e47\u0e08\u0e41\u0e25\u0e49\u0e27",
     ai_result_ready: "\u0e1c\u0e25\u0e25\u0e31\u0e1e\u0e18\u0e4c\u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e41\u0e25\u0e49\u0e27",
@@ -3898,21 +1712,6 @@ const I18N = {
     ai_placed_group: "\u0e27\u0e32\u0e07\u0e25\u0e07\u0e43\u0e19\u0e01\u0e25\u0e38\u0e48\u0e21 \u201c{name}\u201d \u0e40\u0e1b\u0e47\u0e19 Layer \u0e43\u0e2b\u0e21\u0e48\u0e41\u0e25\u0e49\u0e27 (\u0e42\u0e2e\u0e2a\u0e15\u0e4c\u0e19\u0e35\u0e49\u0e43\u0e0a\u0e49 mask \u0e44\u0e21\u0e48\u0e44\u0e14\u0e49)",
     ai_placed_plain: "\u0e27\u0e32\u0e07\u0e40\u0e1b\u0e47\u0e19 Layer \u0e43\u0e2b\u0e21\u0e48\u0e41\u0e25\u0e49\u0e27 (\u0e42\u0e2e\u0e2a\u0e15\u0e4c\u0e19\u0e35\u0e49\u0e43\u0e0a\u0e49 group/mask \u0e44\u0e21\u0e48\u0e44\u0e14\u0e49)",
     ai_start_fail: "\u0e40\u0e23\u0e34\u0e48\u0e21 AI Tools \u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08",
-    pgb_setup: "Set up once — ready whenever you are",
-    pgb_studio: "Bring every scene you imagine to life — your way",
-    pgb_create: "One line of text becomes a professional image",
-    pgb_presets: "1850 curated looks — pick one and start instantly",
-    pgb_aitools: "\u0e41\u0e15\u0e30\u0e04\u0e23\u0e31\u0e49\u0e07\u0e40\u0e14\u0e35\u0e22\u0e27\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e21\u0e37\u0e2d\u0e2d\u0e32\u0e0a\u0e35\u0e1e \u2014 Nano Banana \u00b7 RunningHub",
-    pgb_retouch: "Flawless retouching that stays natural",
-    wf_sum_bg_replace: "\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07",
-    wf_sum_reference_transfer: "\u0e22\u0e49\u0e32\u0e22\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e40\u0e02\u0e49\u0e32\u0e44\u0e1b\u0e43\u0e19\u0e09\u0e32\u0e01 reference",
-    wf_sum_master_bgfg_replace: "\u0e25\u0e1a\u0e04\u0e19\u0e43\u0e19\u0e09\u0e32\u0e01\u0e2d\u0e2d\u0e01 \u0e2a\u0e23\u0e49\u0e32\u0e07 bg/fg \u0e43\u0e2b\u0e21\u0e48 \u0e41\u0e25\u0e49\u0e27\u0e43\u0e2a\u0e48\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
-    wf_sum_subject_face: "\u0e22\u0e49\u0e32\u0e22\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e2b\u0e23\u0e37\u0e2d\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32\u0e44\u0e1b\u0e22\u0e31\u0e07\u0e20\u0e32\u0e1e base",
-    wf_sum_retouch: "\u0e23\u0e35\u0e17\u0e31\u0e0a\u0e20\u0e32\u0e1e\u0e1a\u0e38\u0e04\u0e04\u0e25\u0e43\u0e2b\u0e49\u0e14\u0e39\u0e40\u0e1b\u0e47\u0e19\u0e18\u0e23\u0e23\u0e21\u0e0a\u0e32\u0e15\u0e34",
-    wf_sum_upscale: "\u0e02\u0e22\u0e32\u0e22\u0e20\u0e32\u0e1e\u0e42\u0e14\u0e22\u0e04\u0e07\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14",
-    wf_sum_object_edit: "\u0e25\u0e1a \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19 \u0e2b\u0e23\u0e37\u0e2d\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e27\u0e31\u0e15\u0e16\u0e38",
-    wf_sum_water_edit: "\u0e41\u0e01\u0e49\u0e44\u0e02\u0e19\u0e49\u0e33\u0e41\u0e25\u0e30\u0e40\u0e07\u0e32\u0e2a\u0e30\u0e17\u0e49\u0e2d\u0e19",
-    wf_sum_text_logo: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e2b\u0e23\u0e37\u0e2d\u0e41\u0e01\u0e49\u0e44\u0e02\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e41\u0e25\u0e30\u0e42\u0e25\u0e42\u0e01\u0e49",
     wfin_subject: "\u0e20\u0e32\u0e1e\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13 (\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a)",
     wfin_new_bg: "\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07\u0e43\u0e2b\u0e21\u0e48 (\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)",
     wfin_ref_scene: "\u0e09\u0e32\u0e01 reference",
@@ -3924,45 +1723,43 @@ const I18N = {
     wfin_image: "\u0e23\u0e39\u0e1b\u0e20\u0e32\u0e1e",
     wfin_object_ref: "reference \u0e27\u0e31\u0e15\u0e16\u0e38 (\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)",
     wfin_logo_ref: "reference \u0e42\u0e25\u0e42\u0e01\u0e49 (\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)",
-    wf_exp_bg_replace: "\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07\u0e14\u0e49\u0e32\u0e19\u0e2b\u0e25\u0e31\u0e07\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a \u0e15\u0e31\u0e27\u0e04\u0e19 \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 \u0e02\u0e2d\u0e1a\u0e20\u0e32\u0e1e \u0e41\u0e25\u0e30\u0e41\u0e2a\u0e07\u0e22\u0e31\u0e07\u0e04\u0e07\u0e40\u0e14\u0e34\u0e21\u0e17\u0e38\u0e01\u0e2d\u0e22\u0e48\u0e32\u0e07 \u2014 \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e2a\u0e34\u0e48\u0e07\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e14\u0e49\u0e32\u0e19\u0e2b\u0e25\u0e31\u0e07\u0e40\u0e17\u0e48\u0e32\u0e19\u0e31\u0e49\u0e19",
-    wf_exp_reference_transfer: "\u0e19\u0e33\u0e09\u0e32\u0e01\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14\u0e02\u0e2d\u0e07\u0e20\u0e32\u0e1e reference \u0e21\u0e32\u0e43\u0e0a\u0e49 (\u0e41\u0e15\u0e48\u0e44\u0e21\u0e48\u0e40\u0e2d\u0e32\u0e04\u0e19\u0e43\u0e19\u0e20\u0e32\u0e1e) \u0e41\u0e25\u0e49\u0e27\u0e27\u0e32\u0e07\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e25\u0e07\u0e44\u0e1b \u2014 \u0e04\u0e07\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 \u0e41\u0e25\u0e30\u0e40\u0e1f\u0e23\u0e21\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e44\u0e27\u0e49 \u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e1b\u0e23\u0e31\u0e1a\u0e43\u0e2b\u0e49\u0e40\u0e02\u0e49\u0e32\u0e01\u0e31\u0e1a\u0e41\u0e2a\u0e07\u0e41\u0e25\u0e30\u0e21\u0e38\u0e21\u0e21\u0e2d\u0e07\u0e02\u0e2d\u0e07\u0e09\u0e32\u0e01",
-    wf_exp_master_bgfg_replace: "\u0e01\u0e32\u0e23\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e43\u0e19\u0e09\u0e32\u0e01\u0e17\u0e35\u0e48\u0e40\u0e02\u0e49\u0e21\u0e07\u0e27\u0e14\u0e17\u0e35\u0e48\u0e2a\u0e38\u0e14: \u0e25\u0e1a\u0e04\u0e19\u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e09\u0e32\u0e01 reference \u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14 \u0e2a\u0e23\u0e49\u0e32\u0e07\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07\u0e41\u0e25\u0e30\u0e09\u0e32\u0e01\u0e2b\u0e19\u0e49\u0e32\u0e17\u0e35\u0e48\u0e16\u0e39\u0e01\u0e1a\u0e31\u0e07\u0e02\u0e36\u0e49\u0e19\u0e43\u0e2b\u0e21\u0e48\u0e2d\u0e22\u0e48\u0e32\u0e07\u0e40\u0e1b\u0e47\u0e19\u0e18\u0e23\u0e23\u0e21\u0e0a\u0e32\u0e15\u0e34 \u0e41\u0e25\u0e49\u0e27\u0e27\u0e32\u0e07\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e25\u0e07\u0e15\u0e23\u0e07\u0e15\u0e33\u0e41\u0e2b\u0e19\u0e48\u0e07\u0e19\u0e31\u0e49\u0e19\u0e1e\u0e2d\u0e14\u0e35 \u2014 \u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 \u0e2a\u0e31\u0e14\u0e2a\u0e48\u0e27\u0e19 \u0e17\u0e23\u0e07\u0e1c\u0e21 \u0e40\u0e2a\u0e37\u0e49\u0e2d\u0e1c\u0e49\u0e32 \u0e1c\u0e34\u0e27 \u0e41\u0e25\u0e30\u0e41\u0e2a\u0e07 \u0e16\u0e39\u0e01\u0e25\u0e47\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e20\u0e32\u0e1e\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13 \u0e2a\u0e48\u0e27\u0e19 reference \u0e43\u0e2b\u0e49\u0e40\u0e1e\u0e35\u0e22\u0e07\u0e09\u0e32\u0e01 \u0e21\u0e38\u0e21\u0e01\u0e25\u0e49\u0e2d\u0e07 \u0e41\u0e25\u0e30\u0e04\u0e27\u0e32\u0e21\u0e25\u0e36\u0e01\u0e40\u0e17\u0e48\u0e32\u0e19\u0e31\u0e49\u0e19",
-    wf_exp_subject_face: "\u0e1c\u0e2a\u0e32\u0e19\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e2b\u0e23\u0e37\u0e2d\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32\u0e08\u0e32\u0e01 reference \u0e25\u0e07\u0e1a\u0e19\u0e20\u0e32\u0e1e base \u0e2d\u0e22\u0e48\u0e32\u0e07\u0e41\u0e19\u0e1a\u0e40\u0e19\u0e35\u0e22\u0e19 \u0e42\u0e14\u0e22\u0e04\u0e07\u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e02\u0e2d\u0e07\u0e20\u0e32\u0e1e base \u0e44\u0e27\u0e49",
-    wf_exp_retouch: "\u0e23\u0e35\u0e17\u0e31\u0e0a\u0e1c\u0e34\u0e27 \u0e1c\u0e21 \u0e41\u0e25\u0e30\u0e42\u0e17\u0e19\u0e2a\u0e35\u0e43\u0e2b\u0e49\u0e14\u0e39\u0e40\u0e1b\u0e47\u0e19\u0e18\u0e23\u0e23\u0e21\u0e0a\u0e32\u0e15\u0e34 \u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 \u0e40\u0e2d\u0e01\u0e25\u0e31\u0e01\u0e29\u0e13\u0e4c \u0e41\u0e25\u0e30\u0e2a\u0e35\u0e2b\u0e19\u0e49\u0e32\u0e22\u0e31\u0e07\u0e04\u0e07\u0e40\u0e14\u0e34\u0e21 \u2014 \u0e1c\u0e34\u0e27\u0e44\u0e21\u0e48\u0e1e\u0e25\u0e32\u0e2a\u0e15\u0e34\u0e01 \u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32\u0e44\u0e21\u0e48\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19",
-    wf_exp_upscale: "\u0e02\u0e22\u0e32\u0e22\u0e20\u0e32\u0e1e\u0e1e\u0e23\u0e49\u0e2d\u0e21\u0e01\u0e39\u0e49\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e18\u0e23\u0e23\u0e21\u0e0a\u0e32\u0e15\u0e34\u0e02\u0e2d\u0e07\u0e1c\u0e34\u0e27 \u0e1c\u0e21 \u0e41\u0e25\u0e30\u0e40\u0e19\u0e37\u0e49\u0e2d\u0e1c\u0e49\u0e32\u0e01\u0e25\u0e31\u0e1a\u0e21\u0e32 \u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32 \u0e17\u0e48\u0e32\u0e17\u0e32\u0e07 \u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a \u0e41\u0e25\u0e30\u0e2a\u0e35\u0e22\u0e31\u0e07\u0e04\u0e07\u0e40\u0e14\u0e34\u0e21\u0e17\u0e38\u0e01\u0e2d\u0e22\u0e48\u0e32\u0e07 \u2014 \u0e44\u0e21\u0e48\u0e21\u0e35\u0e01\u0e32\u0e23\u0e40\u0e01\u0e25\u0e35\u0e48\u0e22\u0e08\u0e19\u0e14\u0e39\u0e1e\u0e25\u0e32\u0e2a\u0e15\u0e34\u0e01",
-    wf_exp_object_edit: "\u0e25\u0e1a \u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19 \u0e2b\u0e23\u0e37\u0e2d\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e27\u0e31\u0e15\u0e16\u0e38\u0e14\u0e49\u0e27\u0e22\u0e01\u0e32\u0e23\u0e41\u0e01\u0e49\u0e44\u0e02\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e08\u0e38\u0e14\u0e17\u0e35\u0e48\u0e04\u0e27\u0e1a\u0e04\u0e38\u0e21\u0e44\u0e14\u0e49 \u0e17\u0e38\u0e01\u0e2a\u0e34\u0e48\u0e07\u0e17\u0e35\u0e48\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e41\u0e15\u0e30\u0e22\u0e31\u0e07\u0e04\u0e07\u0e40\u0e14\u0e34\u0e21",
-    wf_exp_water_edit: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e2b\u0e23\u0e37\u0e2d\u0e41\u0e01\u0e49\u0e44\u0e02\u0e19\u0e49\u0e33 \u0e40\u0e07\u0e32\u0e2a\u0e30\u0e17\u0e49\u0e2d\u0e19 \u0e41\u0e25\u0e30\u0e1e\u0e37\u0e49\u0e19\u0e1c\u0e34\u0e27\u0e40\u0e1b\u0e35\u0e22\u0e01\u0e43\u0e2b\u0e49\u0e14\u0e39\u0e2a\u0e21\u0e08\u0e23\u0e34\u0e07\u0e15\u0e32\u0e21\u0e1f\u0e34\u0e2a\u0e34\u0e01\u0e2a\u0e4c \u0e42\u0e14\u0e22\u0e44\u0e21\u0e48\u0e01\u0e23\u0e30\u0e17\u0e1a\u0e15\u0e31\u0e27\u0e41\u0e1a\u0e1a\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
-    wf_exp_text_logo: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e2b\u0e23\u0e37\u0e2d\u0e41\u0e01\u0e49\u0e44\u0e02\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e2b\u0e23\u0e37\u0e2d\u0e42\u0e25\u0e42\u0e01\u0e49\u0e17\u0e35\u0e48\u0e2a\u0e30\u0e2d\u0e32\u0e14\u0e41\u0e25\u0e30\u0e2d\u0e48\u0e32\u0e19\u0e07\u0e48\u0e32\u0e22\u0e1a\u0e19\u0e20\u0e32\u0e1e \u0e42\u0e14\u0e22\u0e22\u0e31\u0e07\u0e04\u0e07\u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e40\u0e14\u0e34\u0e21"
   },
   /* ---- Chinese (Simplified) (zh) — 587 keys, complete ---- */
   zh: {
+    rh_err_network: "无法连接 RunningHub Enterprise — 网络已断开。请检查网络连接后重试。",
+    rh_err_task_failed: "RunningHub 任务失败 — 请更换 prompt 或图片",
+    rh_err_host_blocked: "Photoshop 拒绝了此主机 — 面板 manifest 未允许。请安装最新面板。",
+    rh_err_timeout: "生成耗时过长 — RunningHub 未及时响应。请重试，或减小尺寸 / 数量。",
+    rh_err_rate_limited: "RunningHub Enterprise 正忙 — 请稍候再试。",
+    rh_err_invalid_key: "RunningHub 拒绝了该 key — 请到 Setup ▸ RunningHub Enterprise 检查。",
+    wf_exp_bg_replace: "\u66ff\u6362\u4e3b\u4f53\u8eab\u540e\u7684\u80cc\u666f\u3002\u4eba\u7269\u3001\u59ff\u52bf\u3001\u8fb9\u7f18\u548c\u5149\u7ebf\u5b8c\u5168\u4fdd\u6301\u4e0d\u53d8 \u2014 \u53ea\u6709\u8eab\u540e\u7684\u5185\u5bb9\u6539\u53d8\u3002",
+    wf_exp_reference_transfer: "\u53d6\u7528 reference \u7167\u7247\u7684\u6574\u4e2a\u573a\u666f\uff08\u4f46\u4e0d\u53d6\u5176\u4e2d\u7684\u4eba\u7269\uff09\uff0c\u628a\u4f60\u7684\u4e3b\u4f53\u653e\u8fdb\u53bb \u2014 \u4fdd\u7559\u4e3b\u4f53\u7684\u8eab\u4efd\u3001\u59ff\u52bf\u4e0e\u6784\u56fe\uff0c\u5e76\u5339\u914d\u573a\u666f\u7684\u5149\u7ebf\u548c\u900f\u89c6\u3002",
+    wf_exp_master_bgfg_replace: "\u6700\u4e25\u683c\u7684\u573a\u666f\u6362\u4eba\uff1a\u628a reference \u573a\u666f\u4e2d\u7684\u4eba\u7269\u5f7b\u5e95\u79fb\u9664\uff0c\u81ea\u7136\u91cd\u5efa\u88ab\u906e\u6321\u7684\u80cc\u666f\u4e0e\u524d\u666f\uff0c\u518d\u628a\u4f60\u7684\u4e3b\u4f53\u7cbe\u786e\u653e\u5165\u90a3\u4e2a\u4f4d\u7f6e \u2014 \u8eab\u4efd\u3001\u59ff\u52bf\u3001\u6bd4\u4f8b\u3001\u53d1\u578b\u3001\u670d\u88c5\u3001\u80a4\u8d28\u4e0e\u5149\u7ebf\u5168\u90e8\u9501\u5b9a\u81ea\u4f60\u7684\u7167\u7247\uff0creference \u53ea\u63d0\u4f9b\u573a\u666f\u3001\u673a\u4f4d\u4e0e\u666f\u6df1\u3002",
+    wf_exp_subject_face: "\u628a reference \u4e2d\u7684\u4e3b\u4f53\u6216\u8138\u81ea\u7136\u878d\u5408\u5230\u4f60\u7684 base \u56fe\u4e0a\uff0c\u540c\u65f6\u4fdd\u6301 base \u7684\u6784\u56fe\u4e0d\u53d8\u3002",
+    wf_exp_retouch: "\u5bf9\u808c\u80a4\u3001\u5934\u53d1\u4e0e\u8272\u8c03\u505a\u81ea\u7136\u7cbe\u4fee\u3002\u8eab\u4efd\u3001\u4e94\u5b98\u4e0e\u8868\u60c5\u90fd\u4fdd\u7559 \u2014 \u4e0d\u4f1a\u6709\u5851\u6599\u611f\u808c\u80a4\uff0c\u4e5f\u4e0d\u6539\u8138\u3002",
+    wf_exp_upscale: "\u5728\u653e\u5927\u7684\u540c\u65f6\u6062\u590d\u808c\u80a4\u3001\u5934\u53d1\u4e0e\u7ec7\u7269\u7684\u81ea\u7136\u7ec6\u8282\u3002\u8eab\u4efd\u3001\u59ff\u52bf\u3001\u6784\u56fe\u4e0e\u8272\u5f69\u5b8c\u5168\u4e0d\u53d8 \u2014 \u4e0d\u505a\u5851\u6599\u611f\u78e8\u76ae\u3002",
+    wf_exp_object_edit: "\u4ee5\u53ef\u63a7\u7684\u5c40\u90e8\u7f16\u8f91\u79fb\u9664\u3001\u66ff\u6362\u6216\u6dfb\u52a0\u7269\u4ef6\u3002\u4f60\u6ca1\u6709\u52a8\u5230\u7684\u90e8\u5206\u4e00\u5f8b\u4fdd\u6301\u539f\u6837\u3002",
+    wf_exp_water_edit: "\u6dfb\u52a0\u6216\u8c03\u6574\u6c34\u4f53\u3001\u5012\u5f71\u4e0e\u6e7f\u6da6\u8868\u9762\uff0c\u4f7f\u5176\u7b26\u5408\u7269\u7406\u76f4\u89c9\uff0c\u540c\u65f6\u4e0d\u5f71\u54cd\u4f60\u7684\u4e3b\u4f53\u3002",
+    wf_exp_text_logo: "\u5728\u56fe\u4e0a\u6dfb\u52a0\u6216\u4fee\u6539\u5e72\u51c0\u6613\u8bfb\u7684\u6587\u5b57\u6216 logo\uff0c\u540c\u65f6\u4fdd\u6301\u539f\u6709\u6784\u56fe\u3002",
+    ai_key_lives_in_setup: "RunningHub Enterprise key 在 Setup 标签页管理 — 保存一次，处处可用。",
+    ai_settings_defaults: "AI Tools — 默认值",
+    ai_learn_mode: "Learn Mode — 点按 GENERATE 会先说明",
+    job_needkey: "请先在 Setup 中添加 RunningHub key",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
-    sec_ready: "就绪状态",
-    sec_acct: "账户",
     ava_change: "更换头像",
     ava_remove: "移除头像",
     ava_saved: "头像已保存",
     ava_removed: "头像已移除",
     ava_fail: "无法使用该图片 — 请换一张",
     ava_working: "正在处理图片…",
-    sec_money: "花费与余额",
-    sec_data: "数据与备份",
-    sec_about: "应用与更新",
-    btn_get_update: "下载更新",
-    upd_hint: "面板会自行下载新版本——你已经登录。Photoshop 不允许插件替换自身文件，所以最后一步由你完成：双击保存的 .ccx，Creative Cloud 会安装它。",
     upd_web: "正在打开 Web App — 请在 Account → Photoshop Panel 处获取面板。",
-    upd_none: "这已是最新版本。",
     money_intro: "每次 GENERATE 都按 RunningHub 实际扣费记账，不是估算。余额直接从你的 RunningHub 账户读取。",
     money_bal: "余额",
     money_refresh: "查询余额",
     money_nokey: "先保存 RunningHub 密钥，才能查询余额。",
     money_fail: "无法读取余额 — 下方的账本仍然准确。RunningHub 的回应：",
     money_never: "尚未查询",
-    btn_export_backup: "导出备份",
-    btn_import_backup: "恢复备份",
-    btn_check_update: "检查更新",
-    btn_hard_refresh: "清缓存并重启",
     gate_sub_login: "请用你的 HNK 账户登录后使用本面板。",
     gate_email_ph: "邮箱",
     gate_pass_ph: "密码",
@@ -3991,38 +1788,11 @@ const I18N = {
     gate_service_down: "无法连接授权服务器 — 请检查网络后再次点击检查。",
     gate_no_lease: "服务器未返回有效的面板授权 — 请再次点击检查。",
     gate_sent_as: "已发送 {E} · {N} 个字符",
-    app_title: "HNK Ai \u9762\u677f\uff08\u5b66\u751f\u7248\uff09",
-    sec_api: "RunningHub Enterprise \u5bc6\u94a5",
     btn_show: "\u663e\u793a",
-    btn_hide: "\u9690\u85cf",
-    btn_test: "\u6d4b\u8bd5",
     btn_save: "\u4fdd\u5b58",
-    st_testing: "\u6b63\u5728\u6d4b\u8bd5\u5bc6\u94a5",
-    st_key_ok: "\u2713 API \u5bc6\u94a5\u53ef\u7528",
-    st_key_bad: "API \u5bc6\u94a5\u5931\u8d25",
-    st_key_saved: "\u5df2\u4fdd\u5b58 API \u5bc6\u94a5 \u2713",
     st_need_key: "\u8bf7\u5148\u8f93\u5165 RunningHub Enterprise \u5bc6\u94a5",
-    sec_model: "\u6a21\u578b\u4e0e\u8f93\u51fa",
-    scope_model_note: "\u7528\u4e8e\u4e0b\u65b9 Prompt \u6807\u7b7e\u9875\u7684 Generate \u6309\u94ae \u2014 Create \u4e0e AI Tools \u5404\u6709\u72ec\u7acb\u7684\u6a21\u578b\u8bbe\u7f6e\u3002",
-    model_auto: "\u81ea\u52a8\uff08\u63a8\u8350\uff09",
-    model_flash: "Flash \u2014 \u5feb\u901f (2.5)",
-    model_pro: "Pro \u2014 \u9ad8\u8d28 (3.0)",
-    lbl_ratio: "\u6bd4\u4f8b",
-    ratio_auto: "\u81ea\u52a8\u6bd4\u4f8b\uff08\u6765\u81ea\u6587\u6863\uff09",
-    lbl_size: "\u5c3a\u5bf8",
-    lbl_quality: "\u8d28\u91cf",
     qual_auto: "\u81ea\u52a8",
-    qual_low: "\u4f4e",
-    qual_med: "\u4e2d",
-    qual_high: "\u9ad8",
-    sec_prompt: "\u63d0\u793a\u8bcd",
-    hint_prompt: "\u5728\u6b64\u8f93\u5165\u63d0\u793a\u8bcd\u2026\uff08\u6700\u591a 20,000 \u5b57\u7b26\uff09",
-    btn_improve: "\u4f18\u5316",
     btn_clear: "\u6e05\u9664",
-    st_improving: "\u6b63\u5728\u4f18\u5316\u63d0\u793a\u8bcd",
-    st_improved: "\u63d0\u793a\u8bcd\u5df2\u4f18\u5316 \u2713",
-    sec_refs: "\u53c2\u8003\u56fe",
-    base_note: "\u57fa\u7840\u56fe = \u5f53\u524d\u6253\u5f00\u7684 Photoshop \u6587\u6863\uff08\u81ea\u52a8\u6293\u53d6\uff09\u3002",
     btn_ref_layer: "+ \u56fe\u5c42",
     btn_ref_file: "\u6587\u4ef6",
     btn_ref_web: "\u7f51\u9875",
@@ -4030,9 +1800,7 @@ const I18N = {
     st_photo_layer_added: "图层已添加为照片 ✓",
     st_ref_file_added: "\u6587\u4ef6\u5df2\u6dfb\u52a0\u4e3a\u53c2\u8003\u56fe \u2713",
     st_importing: "\u6b63\u5728\u5bfc\u5165\u6587\u4ef6",
-    url_title: "\u4ece URL \u52a0\u8f7d\u56fe\u7247",
     url_ph: "https://\u2026 \u56fe\u7247\u5730\u5740\u6216 Pinterest \u94fe\u63a5",
-    btn_paste: "\u7c98\u8d34",
     btn_load: "\u52a0\u8f7d",
     btn_cancel: "\u53d6\u6d88",
     btn_ok: "确定",
@@ -4041,178 +1809,22 @@ const I18N = {
     st_ref_web_added: "\u7f51\u7edc\u56fe\u7247\u5df2\u6dfb\u52a0\u4e3a\u53c2\u8003\u56fe \u2713",
     st_url_bad: "\u65e0\u6cd5\u4ece\u8be5 URL \u8f7d\u5165\u56fe\u7247 \u2014 \u8bf7\u590d\u5236\u56fe\u7247\u5730\u5740\u540e\u91cd\u8bd5",
     no_layer: "\u672a\u9009\u62e9\u56fe\u5c42",
-    sec_presets: "AI \u9884\u8bbe",
-    auto_run: "\u70b9\u51fb\u9884\u8bbe \u2192 \u81ea\u52a8\u751f\u6210\uff08\u5173 = \u4ec5\u63d2\u5165\u63d0\u793a\u8bcd\uff09",
-    grp_cleanup: "\u6e05\u7406\u5de5\u5177",
-    p_remove_people: "\u79fb\u9664\u4eba\u7269",
-    p_fix_hands: "\u4fee\u590d\u591a\u4f59\u7684\u624b",
-    p_fix_legs: "\u4fee\u590d\u591a\u4f59\u7684\u817f",
-    p_full_clean: "\u5168\u9762\u6e05\u7406",
-    grp_moved_note: "Reference \u5de5\u5177\u5df2\u79fb\u5230\u4e0b\u65b9\u7684 Reference Ops Pro \u5361\u7247\uff08\u96c6\u4e2d\u4e00\u5904\uff0c\u542b Solo/Couple/Family \u4e0e\u6307\u5f15\uff09\u3002",
-    ro_h_detail: "\u5934\u53d1 \u00b7 \u914d\u9970 \u00b7 \u59ff\u52bf (\u2190 Ref1)",
-    ro_h_comp: "\u5408\u6210 \u00b7 \u98ce\u683c \u00b7 \u6587\u5b57 (\u2190 Ref1)",
-    p_fgbglc: "\u524d\u666f=\u6587\u6863 \u00b7 \u80cc\u666f=Ref1 \u00b7 \u5149=Ref2",
-    p_hair: "\u53d1\u578b (\u2190 Ref1)",
-    p_access: "\u73e0\u5b9d+\u914d\u9970 (\u2190 Ref1)",
-    p_pose: "\u59ff\u52bf\u5339\u914d\uff08\u6587\u6863 \u2192 Ref1\uff09",
-    p_fgprops: "\u524d\u666f\u9053\u5177 (\u2190 Ref1)",
-    p_textlogo: "\u6587\u5b57 / \u6807\u5fd7 (\u2190 Ref1)",
-    p_style: "\u7167\u7247\u98ce\u683c (\u2190 Ref1)",
-    grp_repsubj: "\u66ff\u6362\u4e3b\u4f53\uff08\u6587\u6863 \u2192 Ref1 \u573a\u666f\uff09",
-    p_rep_solo: "\u66ff\u6362\u5355\u4eba",
-    p_rep_couple: "\u66ff\u6362\u60c5\u4fa3",
-    p_rep_family: "\u66ff\u6362\u5bb6\u5ead",
-    grp_rmix: "\u6df7\u5408\u66ff\u6362 \u2014 \u52fe\u9009\u5e76\u53d6\u81ea Ref1",
-    rm_bg: "\u80cc\u666f (BG)",
-    rm_fg: "\u524d\u666f (FG)",
-    rm_light: "\u5149\u7ebf",
-    rm_color: "\u989c\u8272",
-    rm_object: "\u7269\u4f53 / \u9053\u5177",
-    btn_rmix: "\u66ff\u6362\u751f\u6210",
-    rm_none: "\u8bf7\u5148\u52fe\u9009\u81f3\u5c11\u4e00\u9879",
-    grp_i2p: "\u56fe\u7247 \u2192 \u63d0\u793a\u8bcd\uff08\u573a\u666f\u6784\u5efa\uff09",
-    i2p_note: "1) \u63d0\u53d6\uff1aRef1 \u573a\u666f \u2192 \u8be6\u7ec6\u6587\u5b57 prompt\uff08\u4e0d\u542b\u4eba\u7269\uff09\u30022) \u5728 Prompt \u9875\u9762\u7f16\u8f91\u30023) SCENE GENERATE \u56f4\u7ed5\u4f60\u6587\u6863\u4e2d\u7684\u4e3b\u4f53\u91cd\u5efa\u573a\u666f \u2014 \u81ea\u52a8\u9002\u914d\u4efb\u610f\u89d2\u5ea6\u3002Face/Pose/Frame \u9501 = \u4fdd\u6301\u539f\u6837\u3002",
-    i2p_objects: "\u7269\u4f53\u4e0e\u9053\u5177\u7ec6\u8282",
-    i2p_light: "\u5149\u7ebf\u7ec6\u8282",
-    i2p_color: "\u989c\u8272 / \u8c03\u8272\u7ec6\u8282",
-    i2p_bg: "\u80cc\u666f\u7ec6\u8282",
-    i2p_fg: "\u524d\u666f\u7ec6\u8282",
-    btn_i2p: "\u56fe\u7247 \u2192 \u63d0\u793a\u8bcd\uff08\u63d0\u53d6\u573a\u666f\uff09",
-    i2p_fit: "Scene Auto-Fit \u2014 \u5c06\u573a\u666f\u91cd\u6295\u5f71\u5230\u6587\u6863\u7684\u89d2\u5ea6\uff0f\u8ddd\u79bb\uff0f\u955c\u5934",
-    i2p_adapt: "\u8ba9\u4e3b\u4f53\u5149\u8272\u9002\u914d\u573a\u666f",
-    btn_scenegen: "\u573a\u666f\u751f\u6210",
-    st_extract: "\u6b63\u5728\u628a\u573a\u666f\u63d0\u53d6\u4e3a\u63d0\u793a\u8bcd",
-    st_extract_done: "\u573a\u666f\u63d0\u793a\u8bcd\u5c31\u7eea \u2014 \u5728\u63d0\u793a\u8bcd\u9875\u67e5\u770b",
-    scene_no_prompt: "\u63d0\u793a\u6846\u4e3a\u7a7a \u2014 \u8bf7\u5148\u8fd0\u884c \u56fe\u7247 \u2192 \u63d0\u793a\u8bcd",
-    i2p_none: "\u8bf7\u5148\u52fe\u9009\u81f3\u5c11\u4e00\u9879\u7ec6\u8282",
-    sec_light: "\u5f71\u5ba4\u706f\u5149 \u2014 AI \u91cd\u65b0\u5e03\u5149",
-    light_note: "\u52fe\u9009\u5f00\u706f\uff0c\u70b9\u6309\u67d0\u4e00\u884c\u9009\u4e2d\uff0c\u518d\u7528\u6ed1\u6746\u5851\u5f62 \u2014 3D \u9876\u89c6\u56fe\u5b9e\u65f6\u8ddf\u968f\uff08\u25b4 = \u9ad8\u4f4d\uff0c\u25be = \u4f4e\u4f4d\uff09\u3002LIGHTING GENERATE \u4f1a\u4e25\u683c\u6309\u6b64\u5e03\u5149\u91cd\u65b0\u6253\u5149\uff1b\u8138\u90e8\uff0f\u59ff\u52bf\uff0f\u6784\u56fe\u4fdd\u6301\u9501\u5b9a\u3002",
-    lbl_my_prompt: "\u7f05\u7538\u8bed\u63d0\u793a\u8bcd",
-    lstage_model: "\u6a21\u7279",
-    lstage_cam: "\u76f8\u673a",
-    l_key: "\u4e3b\u5149",
-    l_fill: "\u8865\u5149 / \u6b63\u9762",
-    l_butterfly: "\u8774\u8776\u5149\uff08\u4e0a-\u524d\uff09",
-    l_side: "\u4fa7\u5149",
-    l_rim: "\u8f6e\u5ed3\u5149",
-    l_back: "\u80cc\u5149",
-    l_hair: "\u53d1\u5149",
-    l_bglight: "\u80cc\u666f\u5149",
-    lt_softbox: "\u67d4\u5149\u7bb1",
-    lt_octa: "\u516b\u89d2",
-    lt_strip: "\u957f\u6761",
-    lt_umbrella: "\u4f1e",
-    lt_beauty: "\u7f8e\u989c\u7897",
-    lt_hard: "\u786c\u5149",
-    li_int: "\u5f3a\u5ea6",
-    li_angle: "\u89d2\u5ea6",
-    li_height: "\u9ad8\u5ea6",
-    li_dist: "\u8ddd\u79bb",
-    li_size: "\u5c3a\u5bf8",
-    btn_lightgen: "\u706f\u5149\u751f\u6210",
-    light_none: "\u8bf7\u5148\u6253\u5f00\u81f3\u5c11\u4e00\u76cf\u706f",
-    lg_equip: "\u5728\u7167\u7247\u4e2d\u663e\u793a\u706f\u5177\uff08\u53ef\u89c1\u67d4\u5149\u7bb1 / \u706f\u67b6\uff09",
-    grp_chains: "\u98ce\u683c\u94fe \u2014 \u7ec4\u5408 \u2713 \u98ce\u683c",
-    chains_note: "\u5f00\u542f\u4efb\u610f\u98ce\u683c \u2014 \u5b83\u4eec\u4f1a\u4e00\u5e76\u878d\u5165\u6bcf\u4e00\u6b21 Generate / preset / Retouch\u3002",
-    grp_restore: "\u8001\u7167\u7247\u4fee\u590d",
-    p_restore: "\u8001\u7167\u7247\u4fee\u590d",
-    rest_color: "\u5168\u5f69",
-    rest_bw: "\u9ed1\u767d",
-    restore_note: "\u4fee\u590d\u6495\u88c2\u3001\u6c34\u6e0d\uff0f\u70e7\u635f\u4e0e\u892a\u8272 \u2014 \u6bcf\u4e00\u5f20\u539f\u59cb\u9762\u5b54\u4fdd\u6301 100% \u4e00\u81f4\u3002",
-    rt_browstyle: "\u7709\u5f62",
-    rt_lashstyle: "\u776b\u6bdb\u6837\u5f0f",
-    rt_blush: "\u816e\u7ea2\u989c\u8272",
-    rt_contour: "\u4fee\u5bb9\u6837\u5f0f",
-    rt_bust: "\u80f8\u90e8",
-    rt_butt: "\u81c0\u90e8",
-    rt_thigh: "\u5927\u817f",
-    rt_calf: "\u5c0f\u817f",
-    rt_neck: "\u9888\u90e8",
-    rt_fingers: "\u624b\u6307",
-    hint_prompt_my: "\u53ef\u4ee5\u76f4\u63a5\u7528\u4e2d\u6587\u5199 \u2014 Generate \u65f6\u4f1a\u81ea\u52a8\u7ffb\u8bd1\u6210\u82f1\u6587\uff08\u6700\u591a 20,000 \u5b57\u7b26\uff09",
-    st_translate: "\u6b63\u5728\u628a\u7f05\u7538\u8bed\u63d0\u793a\u8bcd\u8bd1\u4e3a\u82f1\u6587",
-    live_trans: "\u5b9e\u65f6\u7ffb\u8bd1 (EN \u21c4 MY)",
-    st_retry: "\u6b63\u5728\u91cd\u8bd5",
-    grp_recipes: "\u914d\u65b9 \u2014 \u4fdd\u5b58 / \u5206\u4eab\u8bbe\u7f6e",
-    recipe_note: "\u628a\u5168\u90e8\u8bbe\u7f6e\uff08chains\u3001retouch\u3001\u706f\u5149\u3001\u9501\u5b9a\u3001prompt\uff09\u5b58\u6210\u4e00\u4e2a .json \u914d\u65b9 \u2014 \u5b66\u751f\u53ea\u9700 Load\u3002",
-    btn_recipe_save: "\u4fdd\u5b58\u914d\u65b9",
-    btn_recipe_load: "\u8f7d\u5165\u914d\u65b9",
-    st_recipe_saved: "\u914d\u65b9\u5df2\u4fdd\u5b58 \u2713",
-    st_recipe_loaded: "\u914d\u65b9\u5df2\u8f7d\u5165 \u2713 \u2014 \u6240\u6709\u63a7\u4ef6\u5df2\u66f4\u65b0",
-    st_recipe_bad: "\u4e0d\u662f HNK \u914d\u65b9\u6587\u4ef6",
-    sec_final: "\u6700\u7ec8\u63d0\u793a\u8bcd",
-    btn_copy: "\u590d\u5236",
-    st_copied: "\u5df2\u590d\u5236 \u2713",
-    hist_note: "\u5386\u53f2 \u2014 \u6700\u8fd1 6 \u4e2a\u7ed3\u679c\uff0c\u70b9\u6309\u67e5\u770b\uff1a",
-    btn_hist_prompt: "\u2192 \u63d0\u793a\u8bcd",
-    sec_batch: "\u6279\u5904\u7406\u6a21\u5f0f",
-    batch_note: "\u9009\u62e9\u591a\u5f20\u7167\u7247 + \u4e00\u4e2a\u8f93\u51fa\u6587\u4ef6\u5939 \u2014 \u5f53\u524d\u7684 prompt\u3001chains\u3001cleanup \u4e0e Keep \u9501\u4f1a\u4f5c\u7528\u4e8e\u6bcf\u5f20\u7167\u7247\uff1b\u7ed3\u679c\u4fdd\u5b58\u4e3a *_HNK.png\u3002",
-    btn_batch: "\u8fd0\u884c\u6279\u5904\u7406",
-    btn_batch_stop: "\u505c\u6b62",
-    st_batch: "\u6279\u5904\u7406",
-    st_batch_done: "\u6279\u5904\u7406\u5b8c\u6210",
-    sec_web: "Web AI \u2014 \u8ff7\u4f60\u6d4f\u89c8\u5668",
-    web_note: "\u5728 Photoshop \u5185\u6253\u5f00\u4efb\u610f\u7f51\u9875\u7248 AI \u7f16\u8f91\u5668\u3002\u5728\u90a3\u91cc\u751f\u6210\uff0c\u518d\u628a\u7ed3\u679c\u4f5c\u4e3a layer \u53d6\u56de\uff1a",
-    web_import_note: "\u5bfc\u5165\uff1a\u2460 \u5728\u7f51\u9875\u5e94\u7528\u4e2d\u4f7f\u7528 Copy image address\uff0c\u7136\u540e\u70b9 IMPORT COPIED LINK \u00b7 \u2461 \u6216\u4e0b\u8f7d\u6587\u4ef6\u540e\u4f7f\u7528 IMPORT FILE \u00b7 \u2462 \u5e26 HNK bridge \u7684\u5408\u4f5c\u7f51\u9875\u5e94\u7528\u4f1a\u81ea\u52a8\u9001\u5165\u56fe\u7247\u3002",
-    btn_web_go: "\u524d\u5f80",
-    btn_web_home: "\u4e3b\u9875",
-    btn_web_reload: "\u91cd\u8f7d",
-    btn_web_import_link: "\u5bfc\u5165\u5df2\u590d\u5236\u94fe\u63a5 \u2192 PS",
-    btn_web_import_file: "\u5bfc\u5165\u6587\u4ef6 \u2192 PS",
     st_web_import: "\u5df2\u4f5c\u4e3a\u56fe\u5c42\u5bfc\u5165 Photoshop \u2713",
-    st_web_nourl: "\u8bf7\u5148\u590d\u5236\u56fe\u7247\u94fe\u63a5\uff08\u53f3\u952e \u2192 \u590d\u5236\u56fe\u7247\u5730\u5740\uff09",
-    st_web_fetch: "\u6b63\u5728\u4ece\u94fe\u63a5\u83b7\u53d6\u56fe\u7247",
-    st_web_notallowed: "\u8be5\u57df\u540d\u4e0d\u5728\u5141\u8bb8\u5217\u8868\u4e2d \u2014 \u9875\u9762\u53ef\u80fd\u4fdd\u6301\u7a7a\u767d\u3002\u53ef\u8bf7 HNK \u6dfb\u52a0\u3002",
-    st_need_doc: "\u8bf7\u5148\u5728 Photoshop \u4e2d\u6253\u5f00\u7167\u7247\u6587\u6863",
-    sec_campro: "\u76f8\u673a Pro \u4e0e\u753b\u8d28",
-    autosave_lbl: "\u6bcf\u4e2a\u7ed3\u679c\u81ea\u52a8\u5bfc\u51fa\uff08PNG + \u63d0\u793a\u8bcd\u65e5\u5fd7 \u2192 \u6587\u4ef6\u5939\uff09",
     st_folder_ok: "\u5df2\u8bbe\u7f6e\u5bfc\u51fa\u6587\u4ef6\u5939 \u2713",
     st_exported: "\u5df2\u5bfc\u51fa \u2713",
     st_export_fail: "\u5bfc\u51fa\u5931\u8d25 \u2014 \u8bf7\u68c0\u67e5\u6587\u4ef6\u5939",
-    st_pro_fallback: "Pro \u6a21\u578b\u4e0d\u53ef\u7528 \u2014 \u672c\u6b21\u6539\u7528 Flash",
     st_img_bad: "\u56fe\u7247\u6570\u636e\u672a\u901a\u8fc7\u5b8c\u6574\u6027\u68c0\u67e5 \u2014 \u8bf7\u91cd\u65b0\u6dfb\u52a0\u7167\u7247",
     st_auto_comp: "\u81ea\u52a8\u5408\u6210\uff1aIMAGE 1 \u4e3b\u4f53 \u2192 \u53c2\u8003\u573a\u666f",
-    prov_lbl: "AI \u63d0\u4f9b\u65b9",
-    tab_create: "Create",
-    create_note: "\u521b\u5efa\u6a21\u5f0f \u2014 \u4ec5\u51ed\u63d0\u793a\u8bcd\u751f\u6210\u5168\u65b0\u56fe\u7247\uff08\u542b\u81ea\u5e26 4 \u5f20\u53c2\u8003\u56fe\uff09",
     create_ph: "\u63cf\u8ff0\u4f60\u60f3\u8981\u7684\u56fe\u7247",
     btn_create_ps: "\u2b07 \u53d1\u9001\u5230 Photoshop",
     btn_to_ref: "\u21ba \u7528\u4f5c Ref 1",
     st_to_ref: "\u7ed3\u679c\u5df2\u8f7d\u5165 Ref 1 \u2713",
-    scope_create_note: "\u72ec\u7acb\u4e8e Setup \u7684 Model & Output \u2014 \u8fd9\u4e9b\u8bbe\u7f6e\u53ea\u4f5c\u7528\u4e8e Create \u7684 Generate\u3002",
-    cr_ratio: "\u6bd4\u4f8b",
-    cr_var: "\u53d8\u4f53\u6570",
     cr_restyle: "\u267b \u91cd\u5851\u98ce\u683c",
-    cr_lib: "\u63d0\u793a\u8bcd\u5e93 \u2014 \u70b9\u6309\u63d2\u5165",
-    cr_improve: "\u2728 \u4f18\u5316",
-    cr_describe: "\ud83d\udd0d \u63cf\u8ff0 Ref 1 \u2192 \u63d0\u793a\u8bcd",
-    st_describing: "\u6b63\u5728\u8bfb\u53d6\u53c2\u8003\u56fe\u2026",
-    st_described: "\u5df2\u7531 Ref 1 \u751f\u6210\u63d0\u793a\u8bcd \u2713",
-    st_need_ref1: "\u8bf7\u5148\u7ed9 Ref 1 \u6dfb\u52a0\u56fe\u7247",
-    st_lib_added: "\u5df2\u6dfb\u52a0\u63d0\u793a\u8bcd \u2713",
-    cr_refs: "\u53c2\u8003\u56fe\uff08\u6700\u591a 4 \u5f20\uff09",
-    cr_refs_note: "\u53ef\u9009 \u2014 \u7528 Layer / File / Web \u6dfb\u52a0\u3002Create \u53ea\u53d6\u7528\u4f60 prompt \u4e2d\u8981\u6c42\u7684\u5185\u5bb9\u3002",
-    cr_results: "\u7ed3\u679c",
     cr_gal_empty: "\u6682\u65e0\u7ed3\u679c \u2014 \u70b9\u6309\u751f\u6210\u3002",
     cr_gal_have: "\u4e2a\u7ed3\u679c \u00b7 \u70b9\u7f29\u7565\u56fe\u9884\u89c8 / \u64cd\u4f5c",
     cr_save: "\u2b07 \u4fdd\u5b58 PNG",
-    cr_engine: "\u5f15\u64ce",
     cr_need_result: "\u8bf7\u5148\u751f\u6210\u56fe\u7247",
-    btn_web_import_url: "\u2b07 \u5bfc\u5165 URL",
-    st_clip_help: "\u526a\u8d34\u677f\u4e3a\u7a7a\u6216\u88ab\u963b\u6b62 \u2014 \u8bf7\u628a\u94fe\u63a5\u7c98\u8d34\u5230 URL \u680f\uff0c\u518d\u70b9 \u2b07 Import URL",
-    st_web_blob: "\u90a3\u662f\u4e34\u65f6\u7684 blob: \u94fe\u63a5 \u2014 \u8bf7\u53f3\u952e \u2192 Copy IMAGE Address\uff0c\u6216\u4fdd\u5b58\u6587\u4ef6\u540e\u4f7f\u7528 Import File",
-    err_key: "API key \u65e0\u6548 \u2014 \u8bf7\u5728 Setup \u6807\u7b7e\u9875\u91cd\u65b0\u68c0\u67e5\u5bc6\u94a5",
-    err_quota: "\u914d\u989d\uff0f\u901f\u7387\u53d7\u9650 \u2014 \u8bf7\u7a0d\u5019\u518d\u91cd\u8bd5",
-    err_big: "\u56fe\u7247\u8d85\u51fa API \u9650\u5236 \u2014 \u8bf7\u7f29\u5c0f\u540e\u91cd\u8bd5",
-    err_safety: "\u88ab\u5b89\u5168\u8fc7\u6ee4\u5668\u62e6\u622a \u2014 \u8bf7\u8c03\u6574 prompt \u6216\u7167\u7247\u540e\u91cd\u8bd5",
-    err_net: "\u7f51\u7edc\uff0f\u670d\u52a1\u5668\u95ee\u9898 \u2014 \u8bf7\u91cd\u8bd5",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
-    rh_err_network: "无法连接 RunningHub Enterprise — 网络已断开。请检查网络连接后重试。",
-    rh_err_task_failed: "RunningHub 任务失败 — 请更换 prompt 或图片",
-    rh_err_host_blocked: "Photoshop 拒绝了此主机 — 面板 manifest 未允许。请安装最新面板。",
-    rh_err_timeout: "生成耗时过长 — RunningHub 未及时响应。请重试，或减小尺寸 / 数量。",
-    rh_err_rate_limited: "RunningHub Enterprise 正忙 — 请稍候再试。",
-    rh_err_invalid_key: "RunningHub 拒绝了该 key — 请到 Setup ▸ RunningHub Enterprise 检查。",
     /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
     wf_scene_presets: "来自 Library 的场景预设 — 一键",
     wf_scene_loading: "正在加载场景…",
@@ -4226,114 +1838,20 @@ const I18N = {
     wf_press_prepare: "点 Prepare 载入此工作流并检查图片。",
     wf_opts: "\u6a21\u578b \u00b7 \u6bd4\u4f8b \u00b7 \u6570\u91cf \u00b7 \u5c3a\u5bf8",
     wf_model_auto: "\u81ea\u52a8 \u2014 \u7531 workflow \u9009\u62e9",
-    err_timeout: "\u8bf7\u6c42\u8d85\u65f6 \u2014 \u670d\u52a1\u5668\u8017\u65f6\u8fc7\u957f\uff0c\u8bf7\u91cd\u8bd5",
-    err_generic: "\u8bf7\u6c42\u672a\u80fd\u5b8c\u6210 \u2014 \u8bf7\u91cd\u8bd5",
-    err_img: "\u672a\u751f\u6210\u53ef\u7528\u7684\u56fe\u7247 \u2014 \u8bf7\u91cd\u8bd5",
-    err_mode: "\u6b64\u6587\u6863\u4e0d\u662f RGB \u6a21\u5f0f \u2014 \u8bf7\u5148\u8f6c\u6362\uff08\u56fe\u50cf \u25b8 \u6a21\u5f0f \u25b8 RGB \u989c\u8272\uff09\u518d\u91cd\u8bd5",
-    cam_master: "\u76f8\u673a\u5757\u5f00\u542f \u2014 \u8ffd\u52a0\u5230\u6bcf\u4e2a\u63d0\u793a\u8bcd\u672b\u5c3e",
-    cam_body: "\u673a\u8eab",
-    cam_lens: "\u5b9a\u7126\u955c\u5934 (mm)",
-    cam_f: "\u5149\u5708",
-    cam_film: "\u80f6\u7247\u98ce\u683c",
-    cam_bokeh: "\u6563\u666f\u6837\u5f0f",
-    cam_iso: "ISO",
-    cam_k: "\u767d\u5e73\u8861\u5f00\u5c14\u6587",
-    cam_note: "\u5148\u5f00\u542f\u6b64\u533a\u5757\uff0c\u518d\u53ea\u6311\u4f60\u9700\u8981\u7684 \u2014 \u6807\u4e3a \u2013 \u7684 chip \u4e0d\u4f1a\u5199\u5165\u3002\u6240\u6709\u5185\u5bb9\u90fd\u8ffd\u52a0\u5230\u6700\u7ec8 prompt \u672b\u5c3e\u3002",
-    ro_h_main: "REFERENCE OPS PRO (Ref1 / Ref2)",
-    ro_note: "Ref1 = IMAGE 2\uff08\u5973\u65b9\uff09\u00b7 Ref2 = IMAGE 3\uff08\u7537\u65b9\uff09\u3002\u5148\u9009\u76ee\u6807\u518d\u6267\u884c \u2014 \u672a\u5339\u914d\u7684\u4eba\u7269\u7edd\u4e0d\u4f1a\u88ab\u6539\u52a8\u3002",
-    ro_target: "\u76ee\u6807",
-    ro_solo: "\u5355\u4eba",
-    ro_couple: "\u60c5\u4fa3",
-    ro_family: "\u5bb6\u5ead",
-    ro_mk: "\u590d\u5236\u53c2\u8003\u5986\u5bb9",
-    ro_hair: "\u53d6\u53c2\u8003\u53d1\u578b",
-    ro_h_face: "\u9762\u90e8\u64cd\u4f5c",
-    ro_h_bg: "\u80cc\u666f / \u524d\u666f\u64cd\u4f5c",
-    ro_h_sub: "\u4e3b\u4f53\u64cd\u4f5c",
-    ro_h_lc: "\u5149\u4e0e\u8272\u64cd\u4f5c",
-    ro_h_dress: "\u670d\u88c5\u64cd\u4f5c",
-    ro_h_mk: "\u5986\u5bb9\u64cd\u4f5c",
-    ro_h_match: "\u2605 \u4e3b\u5339\u914d\uff08\u7edf\u4e00\u98ce\u683c\uff09",
-    ro_match_note: "\u8ba9 IMAGE 1 \u4e0e reference \u76f8\u5339\u914d\uff0c\u770b\u8d77\u6765\u50cf\u540c\u4e00\u6b21\u8c03\u8272 \u2014 \u52fe\u9009\u8981\u5339\u914d\u7684\u9879\uff1a",
-    m_color: "\u989c\u8272",
-    m_light: "\u5149\u7ebf",
-    m_makeup: "\u5986\u5bb9",
-    m_skin: "\u76ae\u80a4\u4fee\u9970",
-    crd_chainsrest: "\u98ce\u683c\u94fe + \u8001\u7167\u7247\u4fee\u590d",
-    crd_refops: "Reference Ops Pro (Ref1 / Ref2)",
-    crd_scenes: "\ud83c\udfac Scenes Pro \u2014 \u9501\u5b9a\u4e3b\u4f53 \u00b7 \u573a\u666f\u5339\u914d",
-    scn_note: "\u9501\u5b9a\u4e3b\u4f53\uff08\u8138 \u00b7 \u59ff\u52bf \u00b7 \u670d\u88c5 \u00b7 \u6784\u56fe\uff09\uff0c\u7136\u540e\u91cd\u5efa\u6574\u4e2a\u573a\u666f\u6765\u5339\u914d\u4e3b\u4f53 \u2014 \u5149\u7ebf\u3001\u9634\u5f71\u3001\u989c\u8272\u3001\u80cc\u666f\u3001\u524d\u666f\u3001\u7269\u4f53\u5168\u90e8\u81ea\u52a8\u9002\u914d",
-    scn_h_style: "\u573a\u666f\u98ce\u683c\uff08\u5ba4\u5185 / \u6587\u5316\uff09",
-    scn_h_bday: "\ud83c\udf82 \u751f\u65e5 \u2014 \u5e74\u9f84 1\u201345",
-    scn_h_cap: "\u6807\u9898 / \u6587\u5b57",
-    scn_h_scarf: "\u6237\u5916 / \u98d8\u52a8\u4e1d\u5dfe",
-    scn_grad: "\u6bd5\u4e1a\uff08\u5ba4\u5185\uff09",
-    scn_prewed: "\u5a5a\u7eb1\uff08\u5ba4\u5185\uff09",
-    scn_vietnam: "\u8d8a\u5357",
-    scn_myanmar: "\u7f05\u7538",
-    scn_chinese: "\u4e2d\u5f0f",
-    scn_shan: "\u63b8\u65cf",
-    scn_newborn: "\u65b0\u751f\u513f",
-    scn_age: "\u5e74\u9f84",
-    scn_bday_go: "\ud83c\udf82 \u751f\u65e5\u573a\u666f",
-    scn_cap_on: "\u6dfb\u52a0\u6807\u9898\u6587\u5b57",
-    scn_cap_ph: "\u6807\u9898\u6587\u5b57\uff08\u4f8b\u5982 Happy 1st Birthday\u3001\u540d\u5b57\uff09\u2026",
-    scn_cap_pos: "\u4f4d\u7f6e",
-    scn_top: "\u9876\u90e8",
-    scn_bottom: "\u5e95\u90e8",
-    scn_scarf: "\u2726 \u98d8\u52a8\u4e1d\u5dfe\u573a\u666f",
-    scn_dir: "\u65b9\u5411",
-    scn_left: "\u5de6",
-    scn_right: "\u53f3",
-    scn_up: "\u4e0a",
-    scn_len: "\u957f\u5ea6",
-    scn_short: "\u77ed",
-    scn_long: "\u957f",
-    g_cat_scene: "SCENE OP \u2014 \u4f60\u7684\u4e3b\u4f53\u88ab\u9501\u5b9a\uff08\u8138\u90e8 \u00b7 \u59ff\u52bf \u00b7 \u670d\u88c5 \u00b7 \u6784\u56fe\uff09\uff1b\u751f\u6210\u7684\u6574\u4e2a\u573a\u666f\uff08\u5149\u7ebf\u3001\u9634\u5f71\u3001\u8272\u5f69\u3001\u80cc\u666f\u3001\u524d\u666f\u3001\u7269\u4ef6\u3001\u6c1b\u56f4\uff09\u90fd\u4f1a\u81ea\u52a8\u5339\u914d\u4e3b\u4f53\uff0c\u5408\u6210\u51fa\u771f\u5b9e\u7167\u7247\u822c\u7684\u6548\u679c\u3002",
-    crd_wed: "\u2665 \u5a5a\u793c\u4e13\u4e1a\u5957\u4ef6",
-    crd_recipes: "\u914d\u65b9 \u2014 \u4fdd\u5b58 / \u5206\u4eab",
-    learn_lbl: "\ud83c\udf93 \u5b66\u4e60\u6a21\u5f0f \u2014 \u7b2c1\u6b21\u70b9\u6309=\u6307\u5357(\u9ec4), \u7b2c2\u6b21=\u63d0\u793a\u8bcd(\u84dd), \u7b2c3\u6b21=\u8fd0\u884c(\u7eff)",
     guide_hint: "\u518d\u6b21\u70b9\u6309\uff1a\u9ec4 \u2192 \u84dd\uff08\u63d0\u793a\u8bcd\uff09\u2192 \u7eff\uff08\u8fd0\u884c\uff09\u25b6",
     g_learn_next_prompt: "\u518d\u6b21\u70b9\u6309 \u2192 \u663e\u793a\u786e\u5207\u63d0\u793a\u8bcd\uff08\u84dd\uff09",
     g_learn_prompt_head: "\u6b64\u6309\u94ae\u5c06\u53d1\u9001\u7684\u63d0\u793a\u8bcd\uff08\u518d\u6b21\u70b9\u6309 = \u8fd0\u884c\uff09\uff1a",
     g_learn_next_run: "\u518d\u70b9\u4e00\u6b21 \u2192 \u8fd0\u884c\uff08\u7eff\uff09\u751f\u6210",
     st_prompt_ready: "\u63d0\u793a\u8bcd\u5c31\u7eea \u2014 \u518d\u6b21\u70b9\u6309\uff08\u7eff\uff09\u8fd0\u884c \u2713",
-    g_step_doc: "\u8bf7\u5148\u5728 Photoshop \u6253\u5f00\u7167\u7247\u6587\u6863",
-    g_step_ref1: "\u628a\u53c2\u8003\u56fe\u8f7d\u5165 Ref1\uff08\u5b83\u4f1a\u6210\u4e3a IMAGE 2\uff09\u3002\u82e5\u6709\u7b2c\u4e8c\u4e2a\u4eba\uff0c\u8bf7\u518d\u52a0 Ref2\u3002",
-    g_step_target: "\u9009\u62e9 Target\uff1aSolo / Couple\uff08Ref1 = \u5973\u65b9\uff0cRef2 = \u7537\u65b9\uff09/ Family\u3002",
-    g_step_mkhair: "\u53ef\u9009\uff1a\u52fe\u9009 Face Ops \u4e0a\u65b9\u7684 \u2018Copy ref makeup\u2019 / \u2018Take ref hairstyle\u2019\u3002",
-    g_step_petal: "\u8bf7\u5148\u9009\u82b1\u74e3\u989c\u8272\uff08\u81ea\u52a8 = \u5339\u914d\u573a\u666f\uff09",
-    g_step_rest: "\u7528\u4e0a\u65b9 \u2713 \u9009\u62e9\u5168\u5f69\u6216\u9ed1\u767d",
-    g_step_int: "\u6309\u559c\u597d\u8bbe\u7f6e\u5f3a\u5ea6\u6ed1\u5757",
     g_step_confirm: "\u518d\u6b21\u70b9\u6309\u4ee5\u63a8\u8fdb\uff1aGUIDE\uff08\u9ec4\uff09\u2192 PROMPT\uff08\u84dd\uff09\u2192 RUN\uff08\u7eff\u8272\u5373\u5f00\u59cb\u751f\u6210\uff09\u3002",
-    g_cat_face: "FACE OP \u2014 \u5c06\u53c2\u8003\u56fe\u7684\u8138\u79fb\u690d\u5230\u5bf9\u5e94\u7684\u4eba\u7269\u8eab\u4e0a\uff1b\u5176\u4ed6\u4eba\u4fdd\u6301\u4e0d\u53d8\u3002",
-    g_cat_sub: "SUBJECT OP \u2014 \u628a\u53c2\u8003\u56fe\u4e2d\u7684\u4eba\u7269\u5e26\u5165\uff0f\u878d\u5408\u8fdb\u4f60\u7684\u573a\u666f\uff1b\u573a\u666f\u4e0e\u6784\u56fe\u4fdd\u6301\u4e0d\u53d8\u3002",
-    g_cat_bgfg: "BG/FG OP \u2014 \u53ea\u4f9d\u636e reference \u66f4\u6362\u80cc\u666f\uff0f\u524d\u666f\u3002",
-    g_cat_lc: "LIGHT & COLOR OP \u2014 \u590d\u5236 reference \u7684\u5149\u7ebf\u4e0e\u8272\u8c03\uff1b\u4eba\u7269\u4fdd\u6301\u9010\u50cf\u7d20\u5fe0\u5b9e\u3002",
-    g_cat_dress: "\u670d\u88c5\u64cd\u4f5c \u2014 \u4ec5\u7528\u53c2\u8003\u56fe\u66f4\u6362\u670d\u88c5",
-    g_cat_mkop: "\u5986\u5bb9\u64cd\u4f5c \u2014 \u4ec5\u7528\u53c2\u8003\u56fe\u66f4\u6362\u5986\u5bb9",
-    g_cat_match: "MASTER MATCH \u2014 \u8ba9\u4f60\u7684\u7167\u7247\u5339\u914d reference \u7684\u6574\u4f53\u8d28\u611f\uff08\u52fe\u9009\u4e0a\u65b9\u5404\u5c42\uff09\u3002",
-    g_cat_trail: "WEDDING TRAIL \u2014 \u534e\u4e3d\u8349\u5730 + \u873f\u8712\u82b1\u5f84\uff1b\u8138\u90e8\uff0f\u59ff\u52bf\uff0f\u6784\u56fe\u88ab\u786c\u9501\u5b9a\u3002",
-    g_cat_veil: "FLYING VEIL \u2014 \u6309\u6b64\u957f\u5ea6\u6dfb\u52a0\uff0f\u5ef6\u957f\u968f\u98ce\u98d8\u626c\u7684\u5934\u7eb1\uff1b\u7edd\u4e0d\u906e\u6321\u9762\u90e8\u3002",
-    g_cat_gown: "GOWN \u2014 \u6e05\u6574\u73b0\u6709\u793c\u670d\uff08\u8bbe\u8ba1\u4e0d\u53d8\uff09\u5e76\u8bbe\u5b9a\u6b64\u62d6\u5c3e\u957f\u5ea6\u3002",
-    g_cat_petal: "FLYING PETALS \u2014 \u6309\u6b64\u98ce\u683c\u5728\u7a7a\u4e2d\u52a0\u5165\u82b1\u74e3\uff1b\u989c\u8272\u53d6\u81ea\u4e0a\u65b9\u8272\u677f\u3002",
-    g_cat_wedx: "WEDDING EXTRA \u2014 \u6dfb\u52a0\u4e0e\u4f60\u573a\u666f\u76f8\u914d\u7684\u8be5\u5143\u7d20\uff1b\u4e3b\u4f53\u4fdd\u6301\u9501\u5b9a\u3002",
-    g_cat_canvas: "REPLACE (CANVAS) \u2014 \u628a\u4f60\u7684\u4e3b\u4f53\u653e\u8fdb reference \u7684\u573a\u666f\uff1b\u79fb\u9664 reference \u4e2d\u7684\u4eba\u7269\u3002",
-    g_cat_restore: "OLD PHOTO RESTORE \u2014 \u4fee\u590d\u7834\u635f\uff1b\u6bcf\u4e00\u5f20\u539f\u59cb\u9762\u5b54\u4fdd\u6301 100% \u4e00\u81f4\u3002",
     g_cat_generic: "\u9884\u8bbe \u2014 \u5bf9\u4f60\u7684\u7167\u7247\u5e94\u7528\u8fd9\u9879\u4e13\u4e1a\u4fee\u9970",
     g_gen: "GENERATE \u2014 \u5c06 prompt \u6846\uff08+ chains\u3001Keep \u9501\u3001\u76f8\u673a\u533a\u5757\uff09\u4f5c\u7528\u4e8e\u4f60\u7684\u6587\u6863\u3002",
     g_retouchbtn: "RETOUCH APPLY \u2014 \u628a\u4f60\u6240\u6709\u6ed1\u6746\u8bbe\u7f6e\u4f5c\u4e3a\u4e00\u6b21\u4e13\u4e1a\u7cbe\u4fee\u6267\u884c\u3002",
-    g_relightbtn: "LIGHTING GENERATE \u2014 \u4e25\u683c\u6309\u4f60\u7684 3D \u706f\u4f4d\u56fe\u4e3a\u7167\u7247\u91cd\u65b0\u6253\u5149\u3002",
-    g_scene: "SCENE GENERATE \u2014 \u4f9d\u636e\u63d0\u53d6\u51fa\u7684 prompt \u91cd\u5efa\u573a\u666f\uff1b\u4e3b\u4f53\u4fdd\u6301\u4e0d\u53d8\u3002",
-    g_rmix: "REPLACE MIX \u2014 \u53ea\u66ff\u6362\u4ece reference \u4e2d\u52fe\u9009 \u2713 \u7684\u90e8\u5206\u3002",
     ro_faceRep: "\u66ff\u6362\u9762\u90e8",
     ro_faceSwap: "\u6362\u8138",
     ro_bgRep: "\u66ff\u6362\u80cc\u666f",
     ro_bgSwap: "\u4ea4\u6362\u80cc\u666f",
     ro_fgRep: "\u66ff\u6362\u524d\u666f",
-    ro_bg_note: "Doc = \u4e3b\u4f53 \u00b7 Ref1 = \u65b0\u573a\u666f\u3002Target\uff08Solo/Couple/Family\uff09\u51b3\u5b9a\u4fdd\u7559\u8c01\u3002",
-    ro_bg_frame: "\u4fdd\u6301\u753b\u6846\u4e0e\u6784\u56fe",
-    ro_bg_light: "\u4fdd\u7559\u4e3b\u4f53\u5149/\u8272",
     ro_subSwap: "\u66ff\u6362\u4e3b\u4f53",
     ro_lcRef: "\u5149\u8272\u53c2\u8003",
     ro_lcCopy: "\u5149\u8272\u590d\u5236",
@@ -4341,94 +1859,8 @@ const I18N = {
     ro_dressRep: "\u66ff\u6362\u670d\u88c5",
     ro_mkCopy: "\u590d\u5236\u5986\u5bb9",
     ro_matchBtn: "\u2605 MASTER MATCH",
-    grp_retouch: "\u76ae\u80a4\u4fee\u9970\u9884\u8bbe",
-    lbl_intensity: "\u5f3a\u5ea6",
-    p_evoto: "Retouch B \u98ce\u683c",
-    p_meitu: "\u7f8e\u56fe\u98ce\u683c",
-    auto_place: "\u81ea\u52a8\u5c06\u7ed3\u679c\u4f5c\u4e3a\u65b0\u56fe\u5c42\u653e\u5165",
-    sec_retouchpro: "\u4fee\u9970 Pro \u2014 \u6ed1\u5757",
-    rt_skin: "\u76ae\u80a4",
-    rt_faceai: "\u9762\u90e8 AI",
-    rt_hair: "\u5934\u53d1",
-    rt_dress: "\u670d\u88c5",
-    rt_bg: "\u80cc\u666f",
-    rt_smooth: "\u78e8\u76ae",
-    rt_acne: "\u53bb\u75d8",
-    rt_spots: "\u53bb\u6591",
-    rt_wrinkle: "\u76b1\u7eb9",
-    rt_tone: "\u7f8e\u767d / \u5c0f\u9ea6\u8272",
-    rt_glow: "\u5149\u6cfd",
-    rt_reshape: "AI \u5851\u5f62",
-    rt_lash: "\u776b\u6bdb",
-    rt_brow: "\u7709\u6bdb",
-    rt_lipsmooth: "\u5507\u90e8\u5e73\u6ed1",
-    rt_lipcolor: "\u5507\u8272",
-    rt_lenscolor: "\u955c\u7247\u989c\u8272",
-    rt_hairstray: "\u788e\u53d1",
-    rt_hairsmooth: "\u987a\u53d1",
-    rt_hairshine: "\u53d1\u4e1d\u5149\u6cfd (D&B)",
-    rt_dresssmooth: "\u5e03\u6599\u5e73\u6ed1",
-    rt_dressedge: "\u8fb9\u7f18\u6e05\u7406",
-    rt_dresswrinkle: "\u53bb\u8936\u76b1",
-    rt_dresstexture: "\u6062\u590d\u7eb9\u7406",
-    rt_bgsmooth: "\u80cc\u666f\u6e05\u7406/\u5e73\u6ed1",
-    rt_bgcolor: "\u80cc\u666f\u989c\u8272",
-    rt_bgrecolor: "\u80cc\u666f\u989c\u8272\u5e73\u6ed1",
-    rt_shape: "\u5851\u5f62 Pro\uff08\u9762\u90e8 + \u8eab\u5f62\uff09",
-    rt_teeth: "\u7259\u9f7f\u7f8e\u767d",
-    rt_eyewhite: "\u773c\u767d\u6e05\u6d01",
-    rt_faceslim: "\u7626\u8138",
-    rt_jaw: "\u4e0b\u988c\u7ebf",
-    rt_chin: "\u4e0b\u5df4",
-    rt_nosesize: "\u9f3b\u5b50\u5927\u5c0f",
-    rt_eyesize: "\u773c\u775b\u5927\u5c0f",
-    rt_lipfull: "\u5507\u90e8\u4e30\u76c8",
-    rt_waist: "\u6536\u8170",
-    rt_bodyslim: "\u8eab\u5f62\u7ea4\u7ec6",
-    rt_shoulder: "\u80a9\u8180",
-    rt_hip: "\u7626\u81c0",
-    rt_leglen: "\u817f\u957f",
-    rt_armslim: "\u7626\u81c2",
-    rt_dressfit: "\u670d\u88c5\u8d34\u5408",
-    rt_dressclean: "\u670d\u88c5\u6e05\u6d01",
-    rt_dresscolorpure: "\u670d\u88c5\u7eaf\u8272",
-    rt_bodygrp: "\u8eab\u4f53\u76ae\u80a4 Pro",
-    rt_bodysmooth: "\u8eab\u4f53\u78e8\u76ae",
-    rt_bodyblemish: "\u8eab\u4f53\u7455\u75b5\u6e05\u7406",
-    rt_bodytone: "\u8eab\u4f53\u5300\u80a4",
-    rt_bodyglow: "\u8eab\u4f53\u5149\u6cfd",
-    rt_bodyhairrm: "\u51cf\u5c11\u4f53\u6bdb",
-    rt_hairvolume: "\u53d1\u91cf",
-    rt_hairgloss: "\u53d1\u4e1d\u4eae\u6cfd",
-    rt_hairfill: "\u8865\u53d1\uff08\u7a00\u758f\u5904\uff09",
-    wp_h_trail: "\u2665 \u5a5a\u793c \u2014 \u5962\u534e\u82b1\u5f84",
-    wp_h_veil: "\u2665 \u5a5a\u793c \u2014 \u98d8\u52a8\u5934\u7eb1",
-    wp_h_gown: "\u2665 \u5a5a\u793c \u2014 \u793c\u670d\u6e05\u7406 + \u62d6\u5c3e",
-    wp_h_petal: "\u2665 \u5a5a\u793c \u2014 \u98d8\u843d\u82b1\u74e3",
-    wp_h_extra: "\u2665 \u5a5a\u793c \u2014 \u9a6c \u00b7 \u6c34 \u00b7 \u6c1b\u56f4",
-    wp_note: "Face ID\uff0f\u59ff\u52bf\uff0f\u6784\u56fe\uff0f\u793c\u670d\u8bbe\u8ba1\u5747\u88ab\u786c\u9501\u5b9a \u2014 \u53ea\u6539\u52a8\u6307\u5b9a\u7684\u90a3\u4e00\u9879\u5143\u7d20\u3002",
-    wp_petalcolor: "\u82b1\u74e3\u989c\u8272\uff08\u81ea\u52a8 = \u5339\u914d\u573a\u666f\uff09",
-    wp_trail_c: "\u82b1\u8272",
-    wp_trail_go: "\u25b6 \u82b1\u5f84",
-    wp_veil_c: "\u5934\u7eb1\u957f\u5ea6",
-    wp_veil_go: "\u25b6 \u98d8\u52a8\u5934\u7eb1",
-    wp_gown_c: "\u62d6\u5c3e\u957f\u5ea6",
-    wp_gown_go: "\u25b6 \u793c\u670d\u6e05\u7406 + \u62d6\u5c3e",
-    wp_pet_c: "\u82b1\u74e3\u6837\u5f0f",
-    wp_pet_go: "\u25b6 \u98d8\u843d\u82b1\u74e3",
-    wp_extra_c: "\u989d\u5916",
-    wp_extra_go: "\u25b6 \u6dfb\u52a0\u989d\u5916",
-    btn_apply_rt: "\u5e94\u7528\u4fee\u9970",
-    btn_reset: "\u91cd\u7f6e",
     rt_none: "\u8bf7\u5148\u8bbe\u7f6e\u81f3\u5c11\u4e00\u4e2a\u4fee\u9970\u6ed1\u5757\u6216\u989c\u8272",
-    tab_setup: "Setup",
-    tab_prompt: "Edit",
-    tab_presets: "Library",
-    recent_lbl: "\u6700\u8fd1\u63d0\u793a\u8bcd\u2026",
-    tab_retouch: "Retouch",
-    tab_aitools: "Home",
     cap_warn: "Photoshop \u5c06\u6b64\u63d0\u793a\u6846\u9650\u5236\u4e3a\uff1a",
-    cleanup_note: "\u52fe\u9009\u9879\u4f1a\u968f\u6bcf\u6b21 \u751f\u6210 / \u9884\u8bbe \u4e00\u8d77\u8fd0\u884c\u3002",
     btn_generate: "\u751f\u6210",
     st_ready: "\u5c31\u7eea",
     st_capture: "\u6b63\u5728\u6355\u83b7\u6587\u6863",
@@ -4445,68 +1877,16 @@ const I18N = {
     st_err: "\u9519\u8bef",
     st_no_doc: "\u6ca1\u6709\u6d3b\u52a8\u6587\u6863 \u2014 \u8bf7\u5148\u6253\u5f00\u7167\u7247",
     st_no_prompt: "\u63d0\u793a\u8bcd\u4e3a\u7a7a",
-    need_ref: "\u6b64\u9884\u8bbe\u9700\u8981\u5728\u69fd 1 \u653e\u53c2\u8003\u56fe",
     st_new_doc: "\u7ed3\u679c\u5df2\u4f5c\u4e3a\u65b0\u6587\u6863\u6253\u5f00 \u2713",
-    sec_preview: "\u9884\u89c8 \u2014 \u524d / \u540e",
     before: "\u524d",
     after: "\u540e",
     btn_place: "\u653e\u5165 Photoshop",
-    btn_saveas: "\u53e6\u5b58\u4e3a\u2026",
     st_saved: "\u5df2\u4fdd\u5b58 \u2713",
-    sec_diag: "\u7cfb\u7edf\u68c0\u67e5",
-    sec_log: "\u6d3b\u52a8\u65e5\u5fd7",
-    btn_diag: "\u8fd0\u884c\u68c0\u67e5",
-    btn_copylog: "\u590d\u5236\u65e5\u5fd7",
-    btn_clearlog: "\u6e05\u7a7a",
-    diag_host: "Photoshop \u4e3b\u673a",
-    diag_uxp: "UXP \u80fd\u529b",
-    diag_rh: "RunningHub Enterprise \u5bc6\u94a5",
-    diag_doc: "\u6d3b\u52a8\u6587\u6863",
-    diag_set: "\u5df2\u8bbe\u7f6e",
-    diag_unset: "\u672a\u8bbe\u7f6e",
-    diag_open: "\u5df2\u6253\u5f00",
-    diag_none: "\u65e0\u6253\u5f00",
-    diag_missing: "\u7f3a\u5931",
-    diag_done: "\u7cfb\u7edf\u68c0\u67e5\u5b8c\u6210 \u2713",
-    diag_lib: "\u53c2\u8003\u56fe\u5e93",
-    diag_lib_open: "\u6253\u5f00\u6587\u4ef6\u5939\u80fd\u529b",
-    sec_reflib: "\u53c2\u8003\u56fe\u5e93",
-    reflib_note: "\u53ea\u9700\u9009\u5b9a\u4e00\u6b21\u4f60\u5e38\u7528\u7684 reference \u56fe\u7247\u6587\u4ef6\u5939 \u2014 Browse \u4f1a\u8bb0\u4f4f\u5b83\uff0c\u5e76\u5728\u5404\u5904\u76f4\u63a5\u4ece\u4e2d\u6253\u5f00\u3002",
-    btn_browse: "\u6d4f\u89c8",
-    lib_choose: "\u9009\u62e9\u6587\u4ef6\u5939",
-    lib_open: "\u6253\u5f00\u6587\u4ef6\u5939",
-    lib_change: "\u66f4\u6539\u6587\u4ef6\u5939",
-    lib_reset: "\u91cd\u7f6e",
-    lib_rescan: "\u91cd\u65b0\u626b\u63cf",
-    lib_current: "\u5f53\u524d\u6587\u4ef6\u5939",
-    lib_found: "\u627e\u5230\u56fe\u7247",
-    lib_status: "\u72b6\u6001",
-    lib_lastscan: "\u4e0a\u6b21\u626b\u63cf",
-    lib_images: "\u5f20",
-    lib_connected: "\u5df2\u8fde\u63a5",
-    lib_not_config: "\u672a\u914d\u7f6e",
-    lib_perm_lost: "\u6743\u9650\u4e22\u5931 \u2014 \u8bf7\u91cd\u65b0\u9009\u62e9",
-    lib_none: "\uff08\u672a\u9009\u62e9\u6587\u4ef6\u5939\uff09",
-    lib_copy_only: "\u4ec5\u590d\u5236\u8def\u5f84",
     lib_choose_msg: "\u9009\u62e9\u4f60\u7684 HNK \u53c2\u8003\u56fe\u5e93\u6587\u4ef6\u5939\u3002",
-    lib_scanning: "\u6b63\u5728\u626b\u63cf\u56fe\u5e93\u2026",
-    lib_scan_done: "\u91cd\u65b0\u626b\u63cf\u5b8c\u6210 \u2713",
-    lib_reset_done: "\u56fe\u5e93\u5df2\u91cd\u7f6e \u2713",
-    lib_path_copied: "\u5df2\u590d\u5236\u8def\u5f84",
     lib_unsupported: "\u4e0d\u652f\u6301\u7684\u56fe\u7247\u7c7b\u578b",
     lib_restore_fail: "\u65e0\u6cd5\u6062\u590d\u53c2\u8003\u56fe",
     on: "\u5f00",
     off: "\u5173",
-    ai_home_title: "\u4f60\u60f3\u521b\u4f5c\u4ec0\u4e48\uff1f",
-    ai_greet_morning: "\u65e9\u4e0a\u597d",
-    ai_greet_afternoon: "\u4e0b\u5348\u597d",
-    ai_greet_evening: "\u665a\u4e0a\u597d",
-    ai_free_generate: "\u81ea\u7531\u751f\u6210",
-    ai_free_sub: "\u81ea\u5df1\u5199 prompt",
-    ai_more_tools: "\u66f4\u591a\u5de5\u5177",
-    ai_more_sub: "Water Edit \u00b7 Text/Logo \u00b7 \u5168\u90e8 workflow",
-    ai_nav_home: "\u4e3b\u9875",
-    ai_nav_tools: "\u5de5\u5177",
     ai_history: "\u5386\u53f2\u8bb0\u5f55",
     ai_no_gen: "\u8fd8\u6ca1\u6709\u751f\u6210\u8bb0\u5f55\u3002",
     ai_videos: "视频",
@@ -4533,14 +1913,11 @@ const I18N = {
     ai_lib_pick_first: "\u8bf7\u5148\u5728 Presets \u6807\u7b7e\u9875 \u2192 Visual Library \u4e2d\u9009\u4e00\u5f20\u56fe\u7247\u3002",
     ai_lib_load_fail: "\u65e0\u6cd5\u8f7d\u5165 Library \u56fe\u7247\u3002",
     ai_missing: "\u7f3a\u5c11",
-    ai_add: "\u6dfb\u52a0",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 \u6dfb\u52a0 model endpoint\uff08\u9ad8\u7ea7 \u2014 \u53ef\u9009\uff09",
     ai_rh_note: "\u5185\u7f6e model \u5df2\u53ef\u7528\u4e0a\u65b9\u7684 key \u8fd0\u884c\uff0c\u65e0\u9700\u8bbe\u7f6e\u3002\u82e5\u67d0\u4e2a model \u663e\u793a \"not connected\"\uff08\u5176 endpoint path \u5c1a\u672a\u786e\u8ba4\uff09\uff0c\u8bf7\u4ece RunningHub \u7684 API \u6587\u6863\u590d\u5236 path \u5e76\u7c98\u8d34\u5230\u8fd9\u91cc\u3002",
     ai_rh_save: "\u4fdd\u5b58\u6b64 model \u7684 endpoint",
     ai_test_conn: "\u6d4b\u8bd5\u8fde\u63a5",
-    ai_save_verify: "\u4fdd\u5b58\u5e76\u9a8c\u8bc1",
-    ai_settings: "\u8bbe\u7f6e",
     ai_add_layers: "\u5c06\u7ed3\u679c\u6dfb\u52a0\u4e3a\u65b0 Layer",
     ai_done: "\u5b8c\u6210\u3002",
     ai_result_ready: "\u7ed3\u679c\u5df2\u5c31\u7eea\u3002",
@@ -4551,21 +1928,6 @@ const I18N = {
     ai_placed_group: "\u5df2\u4f5c\u4e3a\u65b0 Layer \u7f6e\u5165 \u201c{name}\u201d \u7ec4\uff08\u6b64 host \u4e0d\u652f\u6301 mask\uff09\u3002",
     ai_placed_plain: "\u5df2\u4f5c\u4e3a\u65b0 Layer \u7f6e\u5165\uff08\u6b64 host \u4e0d\u652f\u6301 group/mask\uff09\u3002",
     ai_start_fail: "AI Tools \u542f\u52a8\u5931\u8d25",
-    pgb_setup: "Set up once — ready whenever you are",
-    pgb_studio: "Bring every scene you imagine to life — your way",
-    pgb_create: "One line of text becomes a professional image",
-    pgb_presets: "1850 curated looks — pick one and start instantly",
-    pgb_aitools: "\u4e00\u952e\u4e13\u4e1a\u51fa\u56fe \u2014 Nano Banana \u00b7 RunningHub",
-    pgb_retouch: "Flawless retouching that stays natural",
-    wf_sum_bg_replace: "\u66ff\u6362\u80cc\u666f",
-    wf_sum_reference_transfer: "\u628a\u4f60\u7684\u4e3b\u4f53\u653e\u8fdb reference \u573a\u666f",
-    wf_sum_master_bgfg_replace: "\u79fb\u9664\u573a\u666f\u4e2d\u7684\u4eba\u7269\uff0c\u91cd\u5efa bg/fg\uff0c\u518d\u653e\u5165\u4f60\u7684\u4e3b\u4f53",
-    wf_sum_subject_face: "\u628a\u4e3b\u4f53\u6216\u8138\u8fc1\u79fb\u5230 base \u56fe\u4e0a",
-    wf_sum_retouch: "\u81ea\u7136\u611f\u4eba\u50cf\u7cbe\u4fee",
-    wf_sum_upscale: "\u4fdd\u7ec6\u8282\u653e\u5927",
-    wf_sum_object_edit: "\u79fb\u9664\u3001\u66ff\u6362\u6216\u6dfb\u52a0\u7269\u4ef6",
-    wf_sum_water_edit: "\u6c34\u9762\u4e0e\u5012\u5f71\u5904\u7406",
-    wf_sum_text_logo: "\u6dfb\u52a0\u6216\u7f16\u8f91\u6587\u5b57\u4e0e logo",
     wfin_subject: "\u4f60\u7684\u7167\u7247\uff08\u4e3b\u4f53\uff09",
     wfin_new_bg: "\u65b0\u80cc\u666f\uff08\u53ef\u9009\uff09",
     wfin_ref_scene: "Reference \u573a\u666f",
@@ -4577,45 +1939,43 @@ const I18N = {
     wfin_image: "\u56fe\u7247",
     wfin_object_ref: "\u7269\u4ef6 reference\uff08\u53ef\u9009\uff09",
     wfin_logo_ref: "Logo reference\uff08\u53ef\u9009\uff09",
-    wf_exp_bg_replace: "\u66ff\u6362\u4e3b\u4f53\u8eab\u540e\u7684\u80cc\u666f\u3002\u4eba\u7269\u3001\u59ff\u52bf\u3001\u8fb9\u7f18\u548c\u5149\u7ebf\u5b8c\u5168\u4fdd\u6301\u4e0d\u53d8 \u2014 \u53ea\u6709\u8eab\u540e\u7684\u5185\u5bb9\u6539\u53d8\u3002",
-    wf_exp_reference_transfer: "\u53d6\u7528 reference \u7167\u7247\u7684\u6574\u4e2a\u573a\u666f\uff08\u4f46\u4e0d\u53d6\u5176\u4e2d\u7684\u4eba\u7269\uff09\uff0c\u628a\u4f60\u7684\u4e3b\u4f53\u653e\u8fdb\u53bb \u2014 \u4fdd\u7559\u4e3b\u4f53\u7684\u8eab\u4efd\u3001\u59ff\u52bf\u4e0e\u6784\u56fe\uff0c\u5e76\u5339\u914d\u573a\u666f\u7684\u5149\u7ebf\u548c\u900f\u89c6\u3002",
-    wf_exp_master_bgfg_replace: "\u6700\u4e25\u683c\u7684\u573a\u666f\u6362\u4eba\uff1a\u628a reference \u573a\u666f\u4e2d\u7684\u4eba\u7269\u5f7b\u5e95\u79fb\u9664\uff0c\u81ea\u7136\u91cd\u5efa\u88ab\u906e\u6321\u7684\u80cc\u666f\u4e0e\u524d\u666f\uff0c\u518d\u628a\u4f60\u7684\u4e3b\u4f53\u7cbe\u786e\u653e\u5165\u90a3\u4e2a\u4f4d\u7f6e \u2014 \u8eab\u4efd\u3001\u59ff\u52bf\u3001\u6bd4\u4f8b\u3001\u53d1\u578b\u3001\u670d\u88c5\u3001\u80a4\u8d28\u4e0e\u5149\u7ebf\u5168\u90e8\u9501\u5b9a\u81ea\u4f60\u7684\u7167\u7247\uff0creference \u53ea\u63d0\u4f9b\u573a\u666f\u3001\u673a\u4f4d\u4e0e\u666f\u6df1\u3002",
-    wf_exp_subject_face: "\u628a reference \u4e2d\u7684\u4e3b\u4f53\u6216\u8138\u81ea\u7136\u878d\u5408\u5230\u4f60\u7684 base \u56fe\u4e0a\uff0c\u540c\u65f6\u4fdd\u6301 base \u7684\u6784\u56fe\u4e0d\u53d8\u3002",
-    wf_exp_retouch: "\u5bf9\u808c\u80a4\u3001\u5934\u53d1\u4e0e\u8272\u8c03\u505a\u81ea\u7136\u7cbe\u4fee\u3002\u8eab\u4efd\u3001\u4e94\u5b98\u4e0e\u8868\u60c5\u90fd\u4fdd\u7559 \u2014 \u4e0d\u4f1a\u6709\u5851\u6599\u611f\u808c\u80a4\uff0c\u4e5f\u4e0d\u6539\u8138\u3002",
-    wf_exp_upscale: "\u5728\u653e\u5927\u7684\u540c\u65f6\u6062\u590d\u808c\u80a4\u3001\u5934\u53d1\u4e0e\u7ec7\u7269\u7684\u81ea\u7136\u7ec6\u8282\u3002\u8eab\u4efd\u3001\u59ff\u52bf\u3001\u6784\u56fe\u4e0e\u8272\u5f69\u5b8c\u5168\u4e0d\u53d8 \u2014 \u4e0d\u505a\u5851\u6599\u611f\u78e8\u76ae\u3002",
-    wf_exp_object_edit: "\u4ee5\u53ef\u63a7\u7684\u5c40\u90e8\u7f16\u8f91\u79fb\u9664\u3001\u66ff\u6362\u6216\u6dfb\u52a0\u7269\u4ef6\u3002\u4f60\u6ca1\u6709\u52a8\u5230\u7684\u90e8\u5206\u4e00\u5f8b\u4fdd\u6301\u539f\u6837\u3002",
-    wf_exp_water_edit: "\u6dfb\u52a0\u6216\u8c03\u6574\u6c34\u4f53\u3001\u5012\u5f71\u4e0e\u6e7f\u6da6\u8868\u9762\uff0c\u4f7f\u5176\u7b26\u5408\u7269\u7406\u76f4\u89c9\uff0c\u540c\u65f6\u4e0d\u5f71\u54cd\u4f60\u7684\u4e3b\u4f53\u3002",
-    wf_exp_text_logo: "\u5728\u56fe\u4e0a\u6dfb\u52a0\u6216\u4fee\u6539\u5e72\u51c0\u6613\u8bfb\u7684\u6587\u5b57\u6216 logo\uff0c\u540c\u65f6\u4fdd\u6301\u539f\u6709\u6784\u56fe\u3002"
   },
   /* ---- Vietnamese (vi) — 587 keys, complete ---- */
   vi: {
+    rh_err_network: "Không kết nối được RunningHub Enterprise — mất mạng. Kiểm tra kết nối rồi thử lại.",
+    rh_err_task_failed: "Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",
+    rh_err_host_blocked: "Photoshop từ chối host này — manifest của panel không cho phép. Hãy cài panel mới nhất.",
+    rh_err_timeout: "Tạo ảnh quá lâu — RunningHub không trả lời kịp. Thử lại, hoặc giảm kích thước / số lượng.",
+    rh_err_rate_limited: "RunningHub Enterprise đang bận — đợi một lát rồi thử lại.",
+    rh_err_invalid_key: "RunningHub từ chối key — kiểm tra tại Setup ▸ RunningHub Enterprise.",
+    wf_exp_bg_replace: "Thay n\u1ec1n ph\u00eda sau ch\u1ee7 th\u1ec3. Con ng\u01b0\u1eddi, d\u00e1ng, vi\u1ec1n v\u00e0 \u00e1nh s\u00e1ng gi\u1eef nguy\u00ean ho\u00e0n to\u00e0n \u2014 ch\u1ec9 ph\u1ea7n ph\u00eda sau thay \u0111\u1ed5i.",
+    wf_exp_reference_transfer: "L\u1ea5y to\u00e0n b\u1ed9 c\u1ea3nh c\u1ee7a \u1ea3nh reference (nh\u01b0ng KH\u00d4NG l\u1ea5y ng\u01b0\u1eddi trong \u0111\u00f3) v\u00e0 \u0111\u1eb7t ch\u1ee7 th\u1ec3 C\u1ee6A B\u1ea0N v\u00e0o \u2014 gi\u1eef nguy\u00ean nh\u1eadn d\u1ea1ng, d\u00e1ng v\u00e0 khung h\u00ecnh, \u0111\u1ed3ng th\u1eddi kh\u1edbp \u00e1nh s\u00e1ng v\u00e0 ph\u1ed1i c\u1ea3nh c\u1ee7a c\u1ea3nh.",
+    wf_exp_master_bgfg_replace: "Ki\u1ec3u thay ch\u1ee7 th\u1ec3 trong c\u1ea3nh nghi\u00eam ng\u1eb7t nh\u1ea5t: x\u00f3a ho\u00e0n to\u00e0n ng\u01b0\u1eddi kh\u1ecfi c\u1ea3nh reference, d\u1ef1ng l\u1ea1i t\u1ef1 nhi\u00ean ph\u1ea7n n\u1ec1n v\u00e0 ti\u1ec1n c\u1ea3nh b\u1ecb che, r\u1ed3i \u0111\u1eb7t \u0111\u00fang ch\u1ee7 th\u1ec3 c\u1ee7a b\u1ea1n v\u00e0o \u0111\u00fang ch\u1ed7 \u0111\u00f3 \u2014 nh\u1eadn d\u1ea1ng, d\u00e1ng, t\u1ec9 l\u1ec7, ki\u1ec3u t\u00f3c, trang ph\u1ee5c, da v\u00e0 \u00e1nh s\u00e1ng \u0111\u1ec1u kh\u00f3a theo \u1ea3nh c\u1ee7a b\u1ea1n, c\u00f2n reference ch\u1ec9 cung c\u1ea5p c\u1ea3nh, g\u00f3c m\u00e1y v\u00e0 chi\u1ec1u s\u00e2u.",
+    wf_exp_subject_face: "H\u00f2a tr\u1ed9n ch\u1ee7 th\u1ec3 ho\u1eb7c khu\u00f4n m\u1eb7t t\u1eeb reference l\u00ean \u1ea3nh base m\u1ed9t c\u00e1ch li\u1ec1n m\u1ea1ch, gi\u1eef nguy\u00ean b\u1ed1 c\u1ee5c c\u1ee7a \u1ea3nh base.",
+    wf_exp_retouch: "Tinh ch\u1ec9nh t\u1ef1 nhi\u00ean cho da, t\u00f3c v\u00e0 t\u00f4ng m\u00e0u. Nh\u1eadn d\u1ea1ng, \u0111\u01b0\u1eddng n\u00e9t v\u00e0 bi\u1ec3u c\u1ea3m \u0111\u01b0\u1ee3c gi\u1eef nguy\u00ean \u2014 kh\u00f4ng da nh\u1ef1a, kh\u00f4ng \u0111\u1ed5i m\u1eb7t.",
+    wf_exp_upscale: "Ph\u00f3ng to \u1ea3nh \u0111\u1ed3ng th\u1eddi ph\u1ee5c h\u1ed3i chi ti\u1ebft t\u1ef1 nhi\u00ean \u1edf da, t\u00f3c v\u00e0 v\u1ea3i. Nh\u1eadn d\u1ea1ng, d\u00e1ng, b\u1ed1 c\u1ee5c v\u00e0 m\u00e0u s\u1eafc gi\u1eef nguy\u00ean ho\u00e0n to\u00e0n \u2014 kh\u00f4ng l\u00e0m m\u1ecbn ki\u1ec3u nh\u1ef1a.",
+    wf_exp_object_edit: "X\u00f3a, thay ho\u1eb7c th\u00eam v\u1eadt th\u1ec3 b\u1eb1ng m\u1ed9t ch\u1ec9nh s\u1eeda c\u1ee5c b\u1ed9 c\u00f3 ki\u1ec3m so\u00e1t. M\u1ecdi th\u1ee9 b\u1ea1n kh\u00f4ng \u0111\u1ee5ng t\u1edbi \u0111\u1ec1u gi\u1eef nguy\u00ean.",
+    wf_exp_water_edit: "Th\u00eam ho\u1eb7c ch\u1ec9nh n\u01b0\u1edbc, ph\u1ea3n chi\u1ebfu v\u00e0 b\u1ec1 m\u1eb7t \u01b0\u1edbt sao cho tr\u00f4ng \u0111\u00fang v\u1eadt l\u00fd, \u0111\u1ed3ng th\u1eddi gi\u1eef nguy\u00ean ch\u1ee7 th\u1ec3 c\u1ee7a b\u1ea1n.",
+    wf_exp_text_logo: "Th\u00eam ho\u1eb7c s\u1eeda ch\u1eef hay logo s\u1ea1ch, d\u1ec5 \u0111\u1ecdc tr\u00ean \u1ea3nh m\u00e0 v\u1eabn gi\u1eef nguy\u00ean b\u1ed1 c\u1ee5c.",
+    ai_key_lives_in_setup: "Key RunningHub Enterprise được quản lý ở tab Setup — lưu một lần, dùng mọi nơi.",
+    ai_settings_defaults: "AI Tools — Mặc định",
+    ai_learn_mode: "Learn Mode — chạm GENERATE sẽ giải thích trước",
+    job_needkey: "Thêm key RunningHub trong Setup trước",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
-    sec_ready: "Trạng thái sẵn sàng",
-    sec_acct: "TÀI KHOẢN",
     ava_change: "Đổi ảnh đại diện",
     ava_remove: "Xóa ảnh",
     ava_saved: "Đã lưu ảnh",
     ava_removed: "Đã xóa ảnh",
     ava_fail: "Không dùng được ảnh này — thử ảnh khác",
     ava_working: "Đang xử lý ảnh…",
-    sec_money: "CHI PHÍ & SỐ DƯ",
-    sec_data: "Dữ liệu & sao lưu",
-    sec_about: "Ứng dụng & cập nhật",
-    btn_get_update: "Tải bản cập nhật",
-    upd_hint: "Panel tự tải bản mới — bạn đã đăng nhập rồi. Photoshop không cho plugin tự thay tệp của chính nó, nên bước cuối là của bạn: nhấp đúp tệp .ccx đã lưu, Creative Cloud sẽ cài đặt.",
     upd_web: "Đang mở Web App — tải Panel tại Account → Photoshop Panel.",
-    upd_none: "Đây là bản mới nhất.",
     money_intro: "Mỗi lần GENERATE được ghi sổ theo số tiền RunningHub thực sự thu — không phải ước tính. Số dư đọc thẳng từ tài khoản RunningHub.",
     money_bal: "Số dư",
     money_refresh: "Kiểm tra số dư",
     money_nokey: "Lưu khóa RunningHub trước thì mới đọc được số dư.",
     money_fail: "Không đọc được số dư — sổ chi bên dưới vẫn chính xác. RunningHub trả lời:",
     money_never: "chưa kiểm tra",
-    btn_export_backup: "Xuất bản sao lưu",
-    btn_import_backup: "Khôi phục sao lưu",
-    btn_check_update: "Kiểm tra cập nhật",
-    btn_hard_refresh: "Xóa cache + khởi động lại",
     gate_sub_login: "Đăng nhập bằng tài khoản HNK của bạn để dùng bảng này.",
     gate_email_ph: "Email",
     gate_pass_ph: "Mật khẩu",
@@ -4644,38 +2004,11 @@ const I18N = {
     gate_service_down: "Không kết nối được máy chủ bản quyền — kiểm tra mạng rồi bấm Kiểm tra lại.",
     gate_no_lease: "Máy chủ không cấp quyền dùng bảng — bấm Kiểm tra lại.",
     gate_sent_as: "Đã gửi {E} · {N} ký tự",
-    app_title: "HNK Photoshop Ai Panel (H\u1ecdc vi\u00ean)",
-    sec_api: "RunningHub Enterprise Key",
     btn_show: "Hi\u1ec7n",
-    btn_hide: "\u1ea8n",
-    btn_test: "Ki\u1ec3m tra key",
     btn_save: "L\u01b0u",
-    st_testing: "\u0110ang ki\u1ec3m tra key",
-    st_key_ok: "\u2713 API key ho\u1ea1t \u0111\u1ed9ng t\u1ed1t",
-    st_key_bad: "API key kh\u00f4ng d\u00f9ng \u0111\u01b0\u1ee3c",
-    st_key_saved: "\u0110\u00e3 l\u01b0u API key \u2713",
     st_need_key: "H\u00e3y nh\u1eadp RunningHub Enterprise key tr\u01b0\u1edbc",
-    sec_model: "Model & Output",
-    scope_model_note: "D\u00f9ng cho n\u00fat Generate c\u1ee7a tab Prompt b\u00ean d\u01b0\u1edbi \u2014 Create v\u00e0 AI Tools \u0111\u1ec1u c\u00f3 thi\u1ebft l\u1eadp model ri\u00eang.",
-    model_auto: "T\u1ef1 \u0111\u1ed9ng (khuy\u00ean d\u00f9ng)",
-    model_flash: "Flash \u2014 nhanh (2.5)",
-    model_pro: "Pro \u2014 ch\u1ea5t l\u01b0\u1ee3ng (3.0)",
-    lbl_ratio: "T\u1ec9 l\u1ec7",
-    ratio_auto: "T\u1ec9 l\u1ec7 t\u1ef1 \u0111\u1ed9ng (theo t\u00e0i li\u1ec7u)",
-    lbl_size: "K\u00edch th\u01b0\u1edbc",
-    lbl_quality: "Ch\u1ea5t l\u01b0\u1ee3ng",
     qual_auto: "T\u1ef1 \u0111\u1ed9ng",
-    qual_low: "Th\u1ea5p",
-    qual_med: "Trung b\u00ecnh",
-    qual_high: "Cao",
-    sec_prompt: "Prompt",
-    hint_prompt: "Nh\u1eadp prompt c\u1ee7a b\u1ea1n t\u1ea1i \u0111\u00e2y\u2026 (t\u1ed1i \u0111a 20.000 k\u00fd t\u1ef1)",
-    btn_improve: "C\u1ea3i thi\u1ec7n prompt",
     btn_clear: "X\u00f3a",
-    st_improving: "\u0110ang c\u1ea3i thi\u1ec7n prompt",
-    st_improved: "\u0110\u00e3 c\u1ea3i thi\u1ec7n prompt \u2713",
-    sec_refs: "\u1ea2nh tham chi\u1ebfu (2 \u00f4)",
-    base_note: "\u1ea2nh g\u1ed1c = t\u00e0i li\u1ec7u Photoshop \u0111ang m\u1edf c\u1ee7a b\u1ea1n (t\u1ef1 \u0111\u1ed9ng l\u1ea5y).",
     btn_ref_layer: "+ Layer",
     btn_ref_file: "T\u1ec7p",
     btn_ref_web: "Web",
@@ -4683,9 +2016,7 @@ const I18N = {
     st_photo_layer_added: "Đã thêm layer làm ảnh ✓",
     st_ref_file_added: "\u0110\u00e3 th\u00eam t\u1ec7p l\u00e0m tham chi\u1ebfu \u2713",
     st_importing: "\u0110ang nh\u1eadp t\u1ec7p",
-    url_title: "Tham chi\u1ebfu t\u1eeb URL \u2014 Chrome / Pinterest",
     url_ph: "https://\u2026 \u0111\u1ecba ch\u1ec9 \u1ea3nh ho\u1eb7c link ghim Pinterest",
-    btn_paste: "D\u00e1n",
     btn_load: "T\u1ea3i",
     btn_cancel: "H\u1ee7y",
     btn_ok: "OK",
@@ -4694,178 +2025,22 @@ const I18N = {
     st_ref_web_added: "\u0110\u00e3 th\u00eam \u1ea3nh web l\u00e0m tham chi\u1ebfu \u2713",
     st_url_bad: "Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c \u1ea3nh t\u1eeb URL n\u00e0y \u2014 h\u00e3y copy \u0111\u1ecba ch\u1ec9 \u1ea3nh r\u1ed3i th\u1eed l\u1ea1i",
     no_layer: "Ch\u01b0a ch\u1ecdn layer n\u00e0o",
-    sec_presets: "AI Presets",
-    auto_run: "B\u1ea5m preset \u2192 t\u1ef1 Generate (T\u1eaeT = ch\u1ec9 ch\u00e8n v\u00e0o prompt)",
-    grp_cleanup: "C\u00f4ng c\u1ee5 d\u1ecdn \u1ea3nh",
-    p_remove_people: "X\u00f3a ng\u01b0\u1eddi th\u1eeba",
-    p_fix_hands: "S\u1eeda tay th\u1eeba",
-    p_fix_legs: "S\u1eeda ch\u00e2n th\u1eeba",
-    p_full_clean: "D\u1ecdn to\u00e0n b\u1ed9",
-    grp_moved_note: "C\u00e1c c\u00f4ng c\u1ee5 Reference nay n\u1eb1m trong th\u1ebb Reference Ops Pro b\u00ean d\u01b0\u1edbi (m\u1ed9t ch\u1ed7 duy nh\u1ea5t, c\u00f3 Solo/Couple/Family + h\u01b0\u1edbng d\u1eabn).",
-    ro_h_detail: "T\u00f3c \u00b7 Ph\u1ee5 ki\u1ec7n \u00b7 D\u00e1ng (\u2190 Ref1)",
-    ro_h_comp: "Gh\u00e9p \u00b7 Phong c\u00e1ch \u00b7 Ch\u1eef (\u2190 Ref1)",
-    p_fgbglc: "FG=Doc \u00b7 BG=Ref1 \u00b7 Light=Ref2",
-    p_hair: "Ki\u1ec3u t\u00f3c (\u2190 Ref1)",
-    p_access: "Trang s\u1ee9c + ph\u1ee5 ki\u1ec7n (\u2190 Ref1)",
-    p_pose: "Kh\u1edbp d\u00e1ng (Doc \u2192 Ref1)",
-    p_fgprops: "V\u1eadt th\u1ec3 ti\u1ec1n c\u1ea3nh (\u2190 Ref1)",
-    p_textlogo: "Ch\u1eef / Logo (\u2190 Ref1)",
-    p_style: "Phong c\u00e1ch \u1ea3nh (\u2190 Ref1)",
-    grp_repsubj: "Thay ch\u1ee7 th\u1ec3 (Doc \u2192 c\u1ea3nh Ref1)",
-    p_rep_solo: "Thay ng\u01b0\u1eddi \u0111\u01a1n",
-    p_rep_couple: "Thay c\u1eb7p \u0111\u00f4i",
-    p_rep_family: "Thay gia \u0111\u00ecnh",
-    grp_rmix: "Replace Mix \u2014 tick r\u1ed3i l\u1ea5y t\u1eeb Ref1",
-    rm_bg: "N\u1ec1n (BG)",
-    rm_fg: "Ti\u1ec1n c\u1ea3nh (FG)",
-    rm_light: "\u00c1nh s\u00e1ng",
-    rm_color: "M\u00e0u s\u1eafc",
-    rm_object: "V\u1eadt th\u1ec3 / \u0111\u1ea1o c\u1ee5",
-    btn_rmix: "REPLACE GENERATE",
-    rm_none: "H\u00e3y tick \u00edt nh\u1ea5t m\u1ed9t m\u1ee5c tr\u01b0\u1edbc",
-    grp_i2p: "Image \u2192 Prompt (Scene Builder)",
-    i2p_note: "1) Tr\u00edch: c\u1ea3nh Ref1 \u2192 prompt ch\u1eef chi ti\u1ebft (b\u1ecf ng\u01b0\u1eddi). 2) S\u1eeda l\u1ea1i \u1edf trang Prompt. 3) SCENE GENERATE d\u1ef1ng c\u1ea3nh \u0111\u00f3 quanh ch\u1ee7 th\u1ec3 trong t\u00e0i li\u1ec7u \u2014 t\u1ef1 kh\u1edbp m\u1ecdi g\u00f3c m\u00e1y. Kh\u00f3a Face/Pose/Frame = gi\u1eef nguy\u00ean b\u1ea3n.",
-    i2p_objects: "Chi ti\u1ebft v\u1eadt th\u1ec3 & \u0111\u1ea1o c\u1ee5",
-    i2p_light: "Chi ti\u1ebft \u00e1nh s\u00e1ng",
-    i2p_color: "Chi ti\u1ebft m\u00e0u / grade",
-    i2p_bg: "Chi ti\u1ebft n\u1ec1n",
-    i2p_fg: "Chi ti\u1ebft ti\u1ec1n c\u1ea3nh",
-    btn_i2p: "Image \u2192 Prompt (Tr\u00edch c\u1ea3nh)",
-    i2p_fit: "Scene Auto-Fit \u2014 chi\u1ebfu l\u1ea1i c\u1ea3nh theo g\u00f3c / kho\u1ea3ng c\u00e1ch / \u1ed1ng k\u00ednh c\u1ee7a t\u00e0i li\u1ec7u",
-    i2p_adapt: "\u0110i\u1ec1u ch\u1ec9nh s\u00e1ng & m\u00e0u c\u1ee7a ch\u1ee7 th\u1ec3 theo c\u1ea3nh",
-    btn_scenegen: "SCENE GENERATE",
-    st_extract: "\u0110ang tr\u00edch c\u1ea3nh th\u00e0nh prompt",
-    st_extract_done: "Prompt c\u1ea3nh \u0111\u00e3 s\u1eb5n s\u00e0ng \u2014 xem l\u1ea1i \u1edf trang Prompt",
-    scene_no_prompt: "\u00d4 prompt tr\u1ed1ng \u2014 h\u00e3y ch\u1ea1y Image \u2192 Prompt tr\u01b0\u1edbc",
-    i2p_none: "H\u00e3y tick \u00edt nh\u1ea5t m\u1ed9t m\u1ee5c chi ti\u1ebft tr\u01b0\u1edbc",
-    sec_light: "Studio Lighting \u2014 AI Relight",
-    light_note: "Tick b\u1eadt \u0111\u00e8n, ch\u1ea1m m\u1ed9t h\u00e0ng \u0111\u1ec3 ch\u1ecdn, r\u1ed3i t\u1ea1o d\u00e1ng s\u00e1ng b\u1eb1ng sliders \u2014 s\u01a1 \u0111\u1ed3 3D nh\u00ecn t\u1eeb tr\u00ean c\u1eadp nh\u1eadt tr\u1ef1c ti\u1ebfp (\u25b4 = cao, \u25be = th\u1ea5p). LIGHTING GENERATE \u0111\u00e1nh s\u00e1ng l\u1ea1i \u0111\u00fang theo b\u1ed9 \u0111\u00e8n n\u00e0y; m\u1eb7t / d\u00e1ng / khung v\u1eabn kh\u00f3a.",
-    lbl_my_prompt: "PROMPT TI\u1ebeNG VI\u1ec6T",
-    lstage_model: "MODEL",
-    lstage_cam: "CAM",
-    l_key: "\u0110\u00e8n ch\u00ednh",
-    l_fill: "\u0110\u00e8n ph\u1ee5 / tr\u01b0\u1edbc",
-    l_butterfly: "Butterfly (tr\u00ean-tr\u01b0\u1edbc)",
-    l_side: "\u0110\u00e8n c\u1ea1nh",
-    l_rim: "\u0110\u00e8n vi\u1ec1n",
-    l_back: "\u0110\u00e8n sau",
-    l_hair: "\u0110\u00e8n t\u00f3c",
-    l_bglight: "\u0110\u00e8n n\u1ec1n",
-    lt_softbox: "Softbox",
-    lt_octa: "Octa",
-    lt_strip: "Strip",
-    lt_umbrella: "Umbrella",
-    lt_beauty: "Beauty",
-    lt_hard: "Hard",
-    li_int: "C\u01b0\u1eddng \u0111\u1ed9",
-    li_angle: "G\u00f3c",
-    li_height: "\u0110\u1ed9 cao",
-    li_dist: "Kho\u1ea3ng c\u00e1ch",
-    li_size: "K\u00edch th\u01b0\u1edbc",
-    btn_lightgen: "LIGHTING GENERATE",
-    light_none: "H\u00e3y b\u1eadt \u00edt nh\u1ea5t m\u1ed9t \u0111\u00e8n tr\u01b0\u1edbc",
-    lg_equip: "Cho th\u1ea5y thi\u1ebft b\u1ecb \u0111\u00e8n trong \u1ea3nh (softbox / ch\u00e2n \u0111\u00e8n l\u1ed9 ra)",
-    grp_chains: "Style Chains \u2014 k\u1ebft h\u1ee3p c\u00e1c style \u2713",
-    chains_note: "B\u1eadt b\u1ea5t k\u1ef3 style n\u00e0o \u2014 ch\u00fang h\u00f2a v\u00e0o M\u1eccI Generate / preset / Retouch c\u00f9ng l\u00fac.",
-    grp_restore: "Ph\u1ee5c ch\u1ebf \u1ea3nh c\u0169",
-    p_restore: "Ph\u1ee5c ch\u1ebf \u1ea3nh c\u0169",
-    rest_color: "M\u00e0u \u0111\u1ea7y \u0111\u1ee7",
-    rest_bw: "\u0110en & tr\u1eafng",
-    restore_note: "V\u00e1 v\u1ebft r\u00e1ch, h\u01b0 h\u1ea1i do n\u01b0\u1edbc / ch\u00e1y, b\u1ea1c m\u00e0u \u2014 gi\u1eef m\u1ecdi khu\u00f4n m\u1eb7t g\u1ed1c gi\u1ed1ng h\u1ec7t 100%.",
-    rt_browstyle: "Ki\u1ec3u l\u00f4ng m\u00e0y",
-    rt_lashstyle: "Ki\u1ec3u mi",
-    rt_blush: "M\u00e0u m\u00e1 h\u1ed3ng",
-    rt_contour: "Ki\u1ec3u t\u1ea1o kh\u1ed1i",
-    rt_bust: "V\u00f2ng m\u1ed9t",
-    rt_butt: "V\u00f2ng ba",
-    rt_thigh: "\u0110\u00f9i",
-    rt_calf: "B\u1eafp ch\u00e2n",
-    rt_neck: "C\u1ed5",
-    rt_fingers: "Ng\u00f3n tay",
-    hint_prompt_my: "C\u1ee9 vi\u1ebft ti\u1ebfng Vi\u1ec7t \u2014 khi Generate s\u1ebd t\u1ef1 d\u1ecbch sang ti\u1ebfng Anh (t\u1ed1i \u0111a 20.000)",
-    st_translate: "\u0110ang d\u1ecbch prompt sang ti\u1ebfng Anh",
-    live_trans: "T\u1ef1 d\u1ecbch tr\u1ef1c ti\u1ebfp \u21c4 (EN \u2194 VI, sau khi b\u1ea1n ng\u1eebng g\u00f5)",
-    st_retry: "\u0110ang th\u1eed l\u1ea1i",
-    grp_recipes: "Recipes \u2014 l\u01b0u / chia s\u1ebb c\u00e0i \u0111\u1eb7t",
-    recipe_note: "L\u01b0u T\u1ea4T C\u1ea2 (chains, retouch, \u0111\u00e8n, kh\u00f3a, prompt) th\u00e0nh m\u1ed9t t\u1ec7p .json \u2014 h\u1ecdc vi\u00ean ch\u1ec9 c\u1ea7n Load.",
-    btn_recipe_save: "L\u01b0u Recipe",
-    btn_recipe_load: "T\u1ea3i Recipe",
-    st_recipe_saved: "\u0110\u00e3 l\u01b0u Recipe \u2713",
-    st_recipe_loaded: "\u0110\u00e3 t\u1ea3i Recipe \u2713 \u2014 m\u1ecdi thi\u1ebft l\u1eadp \u0111\u00e3 c\u1eadp nh\u1eadt",
-    st_recipe_bad: "Kh\u00f4ng ph\u1ea3i t\u1ec7p Recipe c\u1ee7a HNK",
-    sec_final: "Prompt cu\u1ed1i (g\u1eedi t\u1edbi AI)",
-    btn_copy: "Sao ch\u00e9p",
-    st_copied: "\u0110\u00e3 sao ch\u00e9p \u2713",
-    hist_note: "L\u1ecbch s\u1eed \u2014 6 k\u1ebft qu\u1ea3 g\u1ea7n nh\u1ea5t, ch\u1ea1m \u0111\u1ec3 xem:",
-    btn_hist_prompt: "\u2192 Prompt",
-    sec_batch: "Batch Mode",
-    batch_note: "Ch\u1ecdn nhi\u1ec1u \u1ea3nh + m\u1ed9t th\u01b0 m\u1ee5c xu\u1ea5t \u2014 prompt, chains, cleanup v\u00e0 kh\u00f3a Keep hi\u1ec7n t\u1ea1i s\u1ebd ch\u1ea1y tr\u00ean m\u1ecdi \u1ea3nh; k\u1ebft qu\u1ea3 l\u01b0u d\u1ea1ng *_HNK.png.",
-    btn_batch: "CH\u1ea0Y BATCH",
-    btn_batch_stop: "D\u1eebng",
-    st_batch: "Batch",
-    st_batch_done: "Batch xong",
-    sec_web: "Web AI \u2014 tr\u00ecnh duy\u1ec7t mini",
-    web_note: "M\u1edf b\u1ea5t k\u1ef3 tr\u00ecnh s\u1eeda \u1ea3nh AI tr\u00ean web ngay trong Photoshop. T\u1ea1o \u1edf \u0111\u00f3, r\u1ed3i mang k\u1ebft qu\u1ea3 v\u1ec1 th\u00e0nh layer:",
-    web_import_note: "Nh\u1eadp: \u2460 trong web app d\u00f9ng Copy image address r\u1ed3i b\u1ea5m IMPORT COPIED LINK \u00b7 \u2461 ho\u1eb7c t\u1ea3i t\u1ec7p v\u1ec1 v\u00e0 d\u00f9ng IMPORT FILE \u00b7 \u2462 c\u00e1c web app \u0111\u1ed1i t\u00e1c c\u00f3 HNK bridge s\u1ebd t\u1ef1 g\u1eedi \u1ea3nh v\u00e0o.",
-    btn_web_go: "\u0110i",
-    btn_web_home: "Trang ch\u1ee7",
-    btn_web_reload: "T\u1ea3i l\u1ea1i",
-    btn_web_import_link: "NH\u1eacP LINK \u0110\u00c3 COPY \u2192 PS",
-    btn_web_import_file: "NH\u1eacP T\u1ec6P \u2192 PS",
     st_web_import: "\u0110\u00e3 nh\u1eadp v\u00e0o Photoshop th\u00e0nh layer \u2713",
-    st_web_nourl: "H\u00e3y copy link \u1ea3nh tr\u01b0\u1edbc (chu\u1ed9t ph\u1ea3i \u2192 Copy image address)",
-    st_web_fetch: "\u0110ang l\u1ea5y \u1ea3nh t\u1eeb link",
-    st_web_notallowed: "T\u00ean mi\u1ec1n n\u00e0y kh\u00f4ng n\u1eb1m trong danh s\u00e1ch cho ph\u00e9p \u2014 c\u00f3 th\u1ec3 s\u1ebd tr\u1eafng trang. H\u00e3y nh\u1edd HNK th\u00eam v\u00e0o.",
-    st_need_doc: "H\u00e3y m\u1edf m\u1ed9t t\u00e0i li\u1ec7u \u1ea3nh trong Photoshop tr\u01b0\u1edbc",
-    sec_campro: "Camera Pro & ch\u1ea5t l\u01b0\u1ee3ng",
-    autosave_lbl: "T\u1ef1 xu\u1ea5t m\u1ecdi k\u1ebft qu\u1ea3 (PNG + nh\u1eadt k\u00fd prompt \u2192 th\u01b0 m\u1ee5c)",
     st_folder_ok: "\u0110\u00e3 \u0111\u1eb7t th\u01b0 m\u1ee5c xu\u1ea5t \u2713",
     st_exported: "\u0110\u00e3 xu\u1ea5t \u2713",
     st_export_fail: "Xu\u1ea5t th\u1ea5t b\u1ea1i \u2014 ki\u1ec3m tra l\u1ea1i th\u01b0 m\u1ee5c",
-    st_pro_fallback: "Model Pro kh\u00f4ng kh\u1ea3 d\u1ee5ng \u2014 \u0111\u00e3 chuy\u1ec3n sang Flash cho l\u1ea7n ch\u1ea1y n\u00e0y",
     st_img_bad: "D\u1eef li\u1ec7u \u1ea3nh kh\u00f4ng qua \u0111\u01b0\u1ee3c ki\u1ec3m tra to\u00e0n v\u1eb9n \u2014 h\u00e3y th\u00eam l\u1ea1i \u1ea3nh",
     st_auto_comp: "Gh\u00e9p t\u1ef1 \u0111\u1ed9ng: ch\u1ee7 th\u1ec3 IMAGE 1 \u2192 c\u1ea3nh tham chi\u1ebfu",
-    prov_lbl: "Nh\u00e0 cung c\u1ea5p AI",
-    tab_create: "Create",
-    create_note: "CH\u1ebe \u0110\u1ed8 CREATE \u2014 t\u1ea1o \u1ea3nh ho\u00e0n to\u00e0n m\u1edbi t\u1eeb prompt c\u1ee7a b\u1ea1n (+ 4 ref ri\u00eang). Ho\u00e0n to\u00e0n \u0111\u1ed9c l\u1eadp: kh\u00f4ng \u0111\u1ecdc t\u00e0i li\u1ec7u, preset, chains hay kh\u00f3a n\u00e0o.",
     create_ph: "M\u00f4 t\u1ea3 b\u1ee9c \u1ea3nh b\u1ea1n mu\u1ed1n",
     btn_create_ps: "\u2b07 G\u1eedi sang Photoshop",
     btn_to_ref: "\u21ba D\u00f9ng l\u00e0m Ref 1",
     st_to_ref: "\u0110\u00e3 n\u1ea1p k\u1ebft qu\u1ea3 v\u00e0o Ref 1 \u2713",
-    scope_create_note: "\u0110\u1ed9c l\u1eadp v\u1edbi Model & Output c\u1ee7a Setup \u2014 c\u00e1c thi\u1ebft l\u1eadp n\u00e0y ch\u1ec9 \u00e1p d\u1ee5ng cho Generate c\u1ee7a Create.",
-    cr_ratio: "T\u1ec9 l\u1ec7",
-    cr_var: "Bi\u1ebfn th\u1ec3",
     cr_restyle: "\u267b \u0110\u1ed5i style k\u1ebft qu\u1ea3",
-    cr_lib: "Th\u01b0 vi\u1ec7n prompt \u2014 ch\u1ea1m \u0111\u1ec3 ch\u00e8n",
-    cr_improve: "\u2728 C\u1ea3i thi\u1ec7n",
-    cr_describe: "\ud83d\udd0d \u0110\u1ecdc Ref 1 \u2192 Prompt",
-    st_describing: "\u0110ang \u0111\u1ecdc \u1ea3nh tham chi\u1ebfu\u2026",
-    st_described: "\u0110\u00e3 vi\u1ebft prompt t\u1eeb Ref 1 \u2713",
-    st_need_ref1: "H\u00e3y th\u00eam \u1ea3nh v\u00e0o Ref 1 tr\u01b0\u1edbc",
-    st_lib_added: "\u0110\u00e3 th\u00eam prompt \u2713",
-    cr_refs: "\u1ea2nh tham chi\u1ebfu (t\u1ed1i \u0111a 4)",
-    cr_refs_note: "T\u00f9y ch\u1ecdn \u2014 th\u00eam b\u1eb1ng Layer / File / Web. Create ch\u1ec9 l\u1ea5y nh\u1eefng g\u00ec prompt c\u1ee7a b\u1ea1n y\u00eau c\u1ea7u.",
-    cr_results: "K\u1ebft qu\u1ea3",
     cr_gal_empty: "Ch\u01b0a c\u00f3 k\u1ebft qu\u1ea3 \u2014 h\u00e3y b\u1ea5m Generate.",
     cr_gal_have: "k\u1ebft qu\u1ea3 \u00b7 ch\u1ea1m v\u00e0o \u1ea3nh nh\u1ecf \u0111\u1ec3 xem / thao t\u00e1c",
     cr_save: "\u2b07 L\u01b0u PNG",
-    cr_engine: "Engine",
     cr_need_result: "H\u00e3y t\u1ea1o m\u1ed9t \u1ea3nh tr\u01b0\u1edbc",
-    btn_web_import_url: "\u2b07 Nh\u1eadp URL",
-    st_clip_help: "Clipboard tr\u1ed1ng ho\u1eb7c b\u1ecb ch\u1eb7n \u2014 h\u00e3y d\u00e1n link v\u00e0o thanh URL r\u1ed3i b\u1ea5m \u2b07 Import URL",
-    st_web_blob: "\u0110\u00f3 l\u00e0 link blob: t\u1ea1m th\u1eddi \u2014 h\u00e3y chu\u1ed9t ph\u1ea3i \u2192 Copy IMAGE Address, ho\u1eb7c l\u01b0u t\u1ec7p r\u1ed3i d\u00f9ng Import File",
-    err_key: "API key kh\u00f4ng h\u1ee3p l\u1ec7 \u2014 ki\u1ec3m tra l\u1ea1i key \u1edf tab Setup",
-    err_quota: "H\u1ebft quota / b\u1ecb gi\u1edbi h\u1ea1n t\u1ea7n su\u1ea5t \u2014 ch\u1edd m\u1ed9t l\u00e1t r\u1ed3i th\u1eed l\u1ea1i",
-    err_big: "\u1ea2nh qu\u00e1 l\u1edbn so v\u1edbi API \u2014 h\u00e3y thu nh\u1ecf r\u1ed3i th\u1eed l\u1ea1i",
-    err_safety: "B\u1ecb b\u1ed9 l\u1ecdc an to\u00e0n ch\u1eb7n \u2014 h\u00e3y ch\u1ec9nh prompt ho\u1eb7c \u1ea3nh r\u1ed3i th\u1eed l\u1ea1i",
-    err_net: "S\u1ef1 c\u1ed1 m\u1ea1ng / m\u00e1y ch\u1ee7 \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
-    rh_err_network: "Không kết nối được RunningHub Enterprise — mất mạng. Kiểm tra kết nối rồi thử lại.",
-    rh_err_task_failed: "Tác vụ RunningHub thất bại — thử prompt hoặc ảnh khác",
-    rh_err_host_blocked: "Photoshop từ chối host này — manifest của panel không cho phép. Hãy cài panel mới nhất.",
-    rh_err_timeout: "Tạo ảnh quá lâu — RunningHub không trả lời kịp. Thử lại, hoặc giảm kích thước / số lượng.",
-    rh_err_rate_limited: "RunningHub Enterprise đang bận — đợi một lát rồi thử lại.",
-    rh_err_invalid_key: "RunningHub từ chối key — kiểm tra tại Setup ▸ RunningHub Enterprise.",
     /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
     wf_scene_presets: "Preset cảnh từ Library — một chạm",
     wf_scene_loading: "Đang tải cảnh…",
@@ -4879,114 +2054,20 @@ const I18N = {
     wf_press_prepare: "Bấm Prepare để nạp workflow này và kiểm tra ảnh.",
     wf_opts: "Model \u00b7 Ratio \u00b7 S\u1ed1 l\u01b0\u1ee3ng \u00b7 Size",
     wf_model_auto: "Auto \u2014 workflow t\u1ef1 ch\u1ecdn",
-    err_timeout: "Y\u00eau c\u1ea7u qu\u00e1 h\u1ea1n \u2014 m\u00e1y ch\u1ee7 ph\u1ea3n h\u1ed3i qu\u00e1 l\u00e2u; vui l\u00f2ng th\u1eed l\u1ea1i",
-    err_generic: "Kh\u00f4ng th\u1ec3 ho\u00e0n t\u1ea5t y\u00eau c\u1ea7u \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
-    err_img: "Kh\u00f4ng t\u1ea1o \u0111\u01b0\u1ee3c \u1ea3nh d\u00f9ng \u0111\u01b0\u1ee3c \u2014 vui l\u00f2ng th\u1eed l\u1ea1i",
-    err_mode: "T\u00e0i li\u1ec7u n\u00e0y kh\u00f4ng \u1edf ch\u1ebf \u0111\u1ed9 RGB \u2014 h\u00e3y chuy\u1ec3n \u0111\u1ed5i tr\u01b0\u1edbc (Image \u25b8 Mode \u25b8 RGB Color) r\u1ed3i th\u1eed l\u1ea1i",
-    cam_master: "B\u1eadt kh\u1ed1i Camera \u2014 n\u1ed1i v\u00e0o cu\u1ed1i M\u1eccI prompt",
-    cam_body: "Th\u00e2n m\u00e1y",
-    cam_lens: "\u1ed0ng k\u00ednh prime (mm)",
-    cam_f: "Kh\u1ea9u \u0111\u1ed9",
-    cam_film: "Ch\u1ea5t phim",
-    cam_bokeh: "Ki\u1ec3u bokeh",
-    cam_iso: "ISO",
-    cam_k: "WB Kelvin",
-    cam_note: "B\u1eadt kh\u1ed1i n\u00e0y tr\u01b0\u1edbc, r\u1ed3i ch\u1ec9 ch\u1ecdn th\u1ee9 b\u1ea1n c\u1ea7n \u2014 chip \u2013 s\u1ebd kh\u00f4ng \u0111\u01b0\u1ee3c ghi. M\u1ecdi th\u1ee9 n\u1ed1i v\u00e0o cu\u1ed1i prompt cu\u1ed1i c\u00f9ng.",
-    ro_h_main: "REFERENCE OPS PRO (Ref1 / Ref2)",
-    ro_note: "Ref1 = IMAGE 2 (n\u1eef) \u00b7 Ref2 = IMAGE 3 (nam). Ch\u1ecdn m\u1ee5c ti\u00eau r\u1ed3i ch\u1ea1y \u2014 ng\u01b0\u1eddi kh\u00f4ng kh\u1edbp kh\u00f4ng bao gi\u1edd b\u1ecb \u0111\u1ed5i.",
-    ro_target: "M\u1ee5c ti\u00eau:",
-    ro_solo: "\u0110\u01a1n",
-    ro_couple: "C\u1eb7p \u0111\u00f4i",
-    ro_family: "Gia \u0111\u00ecnh",
-    ro_mk: "Ch\u00e9p makeup t\u1eeb ref",
-    ro_hair: "L\u1ea5y ki\u1ec3u t\u00f3c t\u1eeb ref",
-    ro_h_face: "Face Ops",
-    ro_h_bg: "BG / FG Ops",
-    ro_h_sub: "Subject Ops",
-    ro_h_lc: "Light & Color Ops",
-    ro_h_dress: "Dress Ops",
-    ro_h_mk: "Makeup Ops",
-    ro_h_match: "\u2605 Master Match (m\u1ed9t l\u1ed1i nh\u00ecn)",
-    ro_match_note: "Kh\u1edbp IMAGE 1 v\u1edbi \u1ea3nh tham chi\u1ebfu \u0111\u1ec3 c\u1ea3 hai nh\u01b0 c\u00f9ng m\u1ed9t b\u1ea3n ch\u1ec9nh \u2014 tick nh\u1eefng g\u00ec c\u1ea7n kh\u1edbp:",
-    m_color: "M\u00e0u",
-    m_light: "S\u00e1ng",
-    m_makeup: "Makeup",
-    m_skin: "Retouch da",
-    crd_chainsrest: "Style Chains + ph\u1ee5c ch\u1ebf \u1ea3nh c\u0169",
-    crd_refops: "Reference Ops Pro (Ref1 / Ref2)",
-    crd_scenes: "\ud83c\udfac Scenes Pro \u2014 ch\u1ee7 th\u1ec3 kh\u00f3a \u00b7 c\u1ea3nh kh\u1edbp theo",
-    scn_note: "Kh\u00f3a ch\u1ee7 th\u1ec3 c\u1ee7a b\u1ea1n (m\u1eb7t \u00b7 d\u00e1ng \u00b7 trang ph\u1ee5c \u00b7 khung) r\u1ed3i d\u1ef1ng l\u1ea1i to\u00e0n c\u1ea3nh cho kh\u1edbp \u2014 \u00e1nh s\u00e1ng, b\u00f3ng \u0111\u1ed5, m\u00e0u, n\u1ec1n, ti\u1ec1n c\u1ea3nh v\u00e0 v\u1eadt th\u1ec3 \u0111\u1ec1u t\u1ef1 th\u00edch \u1ee9ng \u0111\u1ec3 ra \u1ea3nh nh\u01b0 ch\u1ee5p th\u1eadt.",
-    scn_h_style: "Phong c\u00e1ch c\u1ea3nh (trong nh\u00e0 / v\u0103n h\u00f3a)",
-    scn_h_bday: "\ud83c\udf82 Sinh nh\u1eadt \u2014 s\u1ed1 tu\u1ed5i 1\u201345",
-    scn_h_cap: "Ch\u00fa th\u00edch / ch\u1eef (b\u00e9 \u00b7 Miss Universe \u00b7 sinh nh\u1eadt)",
-    scn_h_scarf: "Ngo\u00e0i tr\u1eddi / kh\u0103n bay",
-    scn_grad: "T\u1ed1t nghi\u1ec7p trong nh\u00e0",
-    scn_prewed: "Prewedding trong nh\u00e0",
-    scn_vietnam: "Vi\u1ec7t Nam",
-    scn_myanmar: "Myanmar",
-    scn_chinese: "Trung Hoa",
-    scn_shan: "Shan",
-    scn_newborn: "S\u01a1 sinh / em b\u00e9",
-    scn_age: "Tu\u1ed5i",
-    scn_bday_go: "\ud83c\udf82 C\u1ea2NH SINH NH\u1eacT",
-    scn_cap_on: "Th\u00eam ch\u1eef ch\u00fa th\u00edch",
-    scn_cap_ph: "N\u1ed9i dung ch\u1eef (vd. Happy 1st Birthday, t\u00ean)\u2026",
-    scn_cap_pos: "V\u1ecb tr\u00ed",
-    scn_top: "Tr\u00ean",
-    scn_bottom: "D\u01b0\u1edbi",
-    scn_scarf: "\u2726 C\u1ea2NH KH\u0102N BAY",
-    scn_dir: "H\u01b0\u1edbng",
-    scn_left: "Tr\u00e1i",
-    scn_right: "Ph\u1ea3i",
-    scn_up: "L\u00ean",
-    scn_len: "\u0110\u1ed9 d\u00e0i",
-    scn_short: "Ng\u1eafn",
-    scn_long: "D\u00e0i",
-    g_cat_scene: "SCENE OP \u2014 ch\u1ee7 th\u1ec3 c\u1ee7a b\u1ea1n b\u1ecb kh\u00f3a (m\u1eb7t \u00b7 d\u00e1ng \u00b7 trang ph\u1ee5c \u00b7 khung); to\u00e0n b\u1ed9 c\u1ea3nh \u0111\u01b0\u1ee3c t\u1ea1o (s\u00e1ng, b\u00f3ng, m\u00e0u, n\u1ec1n, ti\u1ec1n c\u1ea3nh, v\u1eadt th\u1ec3, kh\u00f4ng kh\u00ed) t\u1ef1 kh\u1edbp theo ch\u1ee7 th\u1ec3 \u0111\u1ec3 ra \u1ea3nh gh\u00e9p nh\u01b0 ch\u1ee5p th\u1eadt.",
-    crd_wed: "\u2665 Wedding Pro Suite",
-    crd_recipes: "Recipes \u2014 l\u01b0u / chia s\u1ebb",
-    learn_lbl: "\ud83c\udf93 Learn Mode \u2014 ch\u1ea1m 1 = h\u01b0\u1edbng d\u1eabn (v\u00e0ng), 2 = prompt (xanh d\u01b0\u01a1ng), 3 = CH\u1ea0Y (xanh l\u00e1)",
     guide_hint: "Ch\u1ea1m l\u1ea7n n\u1eefa: v\u00e0ng \u2192 xanh d\u01b0\u01a1ng (prompt) \u2192 xanh l\u00e1 (ch\u1ea1y) \u25b6",
     g_learn_next_prompt: "Ch\u1ea1m l\u1ea7n n\u1eefa \u2192 hi\u1ec7n \u0111\u00fang PROMPT s\u1ebd g\u1eedi (xanh d\u01b0\u01a1ng).",
     g_learn_prompt_head: "PROMPT n\u00fat n\u00e0y s\u1ebd g\u1eedi (ch\u1ea1m l\u1ea7n n\u1eefa = CH\u1ea0Y):",
     g_learn_next_run: "Ch\u1ea1m th\u00eam m\u1ed9t l\u1ea7n \u2192 RUN (xanh l\u00e1) b\u1eaft \u0111\u1ea7u t\u1ea1o.",
     st_prompt_ready: "Prompt \u0111\u00e3 s\u1eb5n s\u00e0ng \u2014 ch\u1ea1m l\u1ea7n n\u1eefa (xanh l\u00e1) \u0111\u1ec3 ch\u1ea1y \u2713",
-    g_step_doc: "H\u00e3y m\u1edf t\u00e0i li\u1ec7u \u1ea3nh c\u1ee7a b\u1ea1n trong Photoshop tr\u01b0\u1edbc.",
-    g_step_ref1: "N\u1ea1p \u1ea3nh tham chi\u1ebfu v\u00e0o Ref1 (n\u00f3 th\u00e0nh IMAGE 2). Th\u00eam Ref2 n\u1ebfu c\u00f3 ng\u01b0\u1eddi th\u1ee9 hai.",
-    g_step_target: "Ch\u1ecdn Target: Solo / Couple (Ref1 = n\u1eef, Ref2 = nam) / Family.",
-    g_step_mkhair: "T\u00f9y ch\u1ecdn: tick \u2018Copy ref makeup\u2019 / \u2018Take ref hairstyle\u2019 ph\u00eda tr\u00ean Face Ops.",
-    g_step_petal: "H\u00e3y ch\u1ecdn m\u00e0u c\u00e1nh hoa tr\u01b0\u1edbc (auto = kh\u1edbp c\u1ea3nh c\u1ee7a b\u1ea1n).",
-    g_step_rest: "Ch\u1ecdn Full Color ho\u1eb7c B&W b\u1eb1ng d\u1ea5u \u2713 ph\u00eda tr\u00ean.",
-    g_step_int: "Ch\u1ec9nh thanh Intensity theo \u00fd b\u1ea1n.",
     g_step_confirm: "Ch\u1ea1m l\u1ea7n n\u1eefa \u0111\u1ec3 \u0111i ti\u1ebfp: GUIDE (v\u00e0ng) \u2192 PROMPT (xanh d\u01b0\u01a1ng) \u2192 RUN (XANH L\u00c1 l\u00e0 ch\u1ea1y th\u1eadt).",
-    g_cat_face: "FACE OP \u2014 chuy\u1ec3n khu\u00f4n m\u1eb7t tham chi\u1ebfu sang \u0111\u00fang ng\u01b0\u1eddi t\u01b0\u01a1ng \u1ee9ng; nh\u1eefng ng\u01b0\u1eddi kh\u00e1c gi\u1eef nguy\u00ean.",
-    g_cat_sub: "SUBJECT OP \u2014 \u0111\u01b0a/bi\u1ebfn NG\u01af\u1edcI trong \u1ea3nh tham chi\u1ebfu v\u00e0o c\u1ea3nh c\u1ee7a b\u1ea1n; c\u1ea3nh v\u00e0 khung h\u00ecnh gi\u1eef nguy\u00ean.",
-    g_cat_bgfg: "BG/FG OP \u2014 ch\u1ec9 \u0111\u1ed5i n\u1ec1n / ti\u1ec1n c\u1ea3nh theo \u1ea3nh tham chi\u1ebfu.",
-    g_cat_lc: "LIGHT & COLOR OP \u2014 ch\u00e9p \u00e1nh s\u00e1ng v\u00e0 t\u00f4ng m\u00e0u c\u1ee7a \u1ea3nh tham chi\u1ebfu; con ng\u01b0\u1eddi gi\u1eef trung th\u1ef1c t\u1eebng pixel.",
-    g_cat_dress: "DRESS OP \u2014 ch\u1ec9 \u0111\u1ed5i trang ph\u1ee5c theo \u1ea3nh tham chi\u1ebfu.",
-    g_cat_mkop: "MAKEUP OP \u2014 ch\u1ec9 \u0111\u1ed5i l\u1edbp trang \u0111i\u1ec3m theo \u1ea3nh tham chi\u1ebfu.",
-    g_cat_match: "MASTER MATCH \u2014 l\u00e0m \u1ea3nh c\u1ee7a b\u1ea1n kh\u1edbp to\u00e0n b\u1ed9 l\u1ed1i nh\u00ecn c\u1ee7a \u1ea3nh tham chi\u1ebfu (tick c\u00e1c l\u1edbp ph\u00eda tr\u00ean).",
-    g_cat_trail: "WEDDING TRAIL \u2014 th\u1ea3m c\u1ecf sang tr\u1ecdng + l\u1ed1i hoa tr\u1ea3i d\u00e0i; m\u1eb7t/d\u00e1ng/khung b\u1ecb kh\u00f3a ch\u1eb7t.",
-    g_cat_veil: "FLYING VEIL \u2014 th\u00eam/k\u00e9o d\u00e0i voan bay trong gi\u00f3 theo \u0111\u1ed9 d\u00e0i n\u00e0y; kh\u00f4ng bao gi\u1edd che m\u1eb7t.",
-    g_cat_gown: "GOWN \u2014 l\u00e0m s\u1ea1ch chi\u1ebfc v\u00e1y s\u1eb5n c\u00f3 (gi\u1eef nguy\u00ean thi\u1ebft k\u1ebf) v\u00e0 \u0111\u1eb7t \u0111\u1ed9 d\u00e0i \u0111u\u00f4i v\u00e1y n\u00e0y.",
-    g_cat_petal: "FLYING PETALS \u2014 th\u00eam c\u00e1nh hoa bay theo ki\u1ec3u n\u00e0y; m\u00e0u l\u1ea5y t\u1eeb b\u1ea3ng m\u00e0u ph\u00eda tr\u00ean.",
-    g_cat_wedx: "WEDDING EXTRA \u2014 th\u00eam chi ti\u1ebft n\u00e0y cho kh\u1edbp c\u1ea3nh c\u1ee7a b\u1ea1n; ch\u1ee7 th\u1ec3 v\u1eabn kh\u00f3a.",
-    g_cat_canvas: "REPLACE (CANVAS) \u2014 \u0111\u01b0a ch\u1ee7 th\u1ec3 C\u1ee6A B\u1ea0N v\u00e0o c\u1ea3nh c\u1ee7a \u1ea3nh tham chi\u1ebfu; ng\u01b0\u1eddi trong ref b\u1ecb x\u00f3a.",
-    g_cat_restore: "OLD PHOTO RESTORE \u2014 v\u00e1 h\u01b0 h\u1ea1i; m\u1ecdi khu\u00f4n m\u1eb7t g\u1ed1c gi\u1eef gi\u1ed1ng h\u1ec7t 100%.",
     g_cat_generic: "PRESET \u2014 \u00e1p d\u1ee5ng b\u1ea3n ch\u1ec9nh chuy\u00ean nghi\u1ec7p n\u00e0y l\u00ean \u1ea3nh c\u1ee7a b\u1ea1n.",
     g_gen: "GENERATE \u2014 ch\u1ea1y \u00f4 prompt (+ chains, kh\u00f3a Keep, kh\u1ed1i camera) tr\u00ean t\u00e0i li\u1ec7u c\u1ee7a b\u1ea1n.",
     g_retouchbtn: "RETOUCH APPLY \u2014 ch\u1ea1y to\u00e0n b\u1ed9 thi\u1ebft l\u1eadp sliders th\u00e0nh m\u1ed9t l\u01b0\u1ee3t retouch chuy\u00ean nghi\u1ec7p.",
-    g_relightbtn: "LIGHTING GENERATE \u2014 \u0111\u00e1nh s\u00e1ng l\u1ea1i \u1ea3nh \u0111\u00fang theo s\u01a1 \u0111\u1ed3 \u0111\u00e8n 3D c\u1ee7a b\u1ea1n.",
-    g_scene: "SCENE GENERATE \u2014 d\u1ef1ng l\u1ea1i c\u1ea3nh t\u1eeb prompt \u0111\u00e3 tr\u00edch; ch\u1ee7 th\u1ec3 gi\u1eef nguy\u00ean.",
-    g_rmix: "REPLACE MIX \u2014 ch\u1ec9 thay c\u00e1c ph\u1ea7n \u0111\u00e3 tick \u2713 t\u1eeb \u1ea3nh tham chi\u1ebfu.",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
     ro_bgSwap: "BG Swap",
     ro_fgRep: "FG Replace",
-    ro_bg_note: "Doc = ch\u1ee7 th\u1ec3 \u00b7 Ref1 = c\u1ea3nh m\u1edbi. Target (Solo/Couple/Family) ch\u1ecdn gi\u1eef l\u1ea1i ai.",
-    ro_bg_frame: "Gi\u1eef khung & b\u1ed1 c\u1ee5c",
-    ro_bg_light: "Gi\u1eef s\u00e1ng/m\u00e0u c\u1ee7a ch\u1ee7 th\u1ec3",
     ro_subSwap: "Subject Swap",
     ro_lcRef: "L&C Reference",
     ro_lcCopy: "L&C Copy-Paste",
@@ -4994,94 +2075,8 @@ const I18N = {
     ro_dressRep: "Dress Replace",
     ro_mkCopy: "Makeup Copy",
     ro_matchBtn: "\u2605 MASTER MATCH",
-    grp_retouch: "Preset retouch da",
-    lbl_intensity: "C\u01b0\u1eddng \u0111\u1ed9",
-    p_evoto: "Retouch B Style",
-    p_meitu: "Retouch A Style",
-    auto_place: "T\u1ef1 \u0111\u1eb7t k\u1ebft qu\u1ea3 v\u00e0o Photoshop th\u00e0nh layer m\u1edbi",
-    sec_retouchpro: "Retouch Pro \u2014 Sliders",
-    rt_skin: "Da",
-    rt_faceai: "Face AI",
-    rt_hair: "T\u00f3c",
-    rt_dress: "Trang ph\u1ee5c",
-    rt_bg: "N\u1ec1n",
-    rt_smooth: "M\u1ecbn da",
-    rt_acne: "X\u00f3a m\u1ee5n",
-    rt_spots: "\u0110\u1ed1m th\u00e2m",
-    rt_wrinkle: "N\u1ebfp nh\u0103n",
-    rt_tone: "Tr\u1eafng / n\u00e2u da",
-    rt_glow: "R\u1ea1ng r\u1ee1",
-    rt_reshape: "AI Reshape",
-    rt_lash: "L\u00f4ng mi",
-    rt_brow: "L\u00f4ng m\u00e0y",
-    rt_lipsmooth: "M\u1ecbn m\u00f4i",
-    rt_lipcolor: "M\u00e0u m\u00f4i",
-    rt_lenscolor: "M\u00e0u lens m\u1eaft",
-    rt_hairstray: "T\u00f3c con",
-    rt_hairsmooth: "M\u01b0\u1ee3t t\u00f3c",
-    rt_hairshine: "B\u00f3ng t\u00f3c (D&B)",
-    rt_dresssmooth: "M\u1ecbn v\u1ea3i",
-    rt_dressedge: "D\u1ecdn vi\u1ec1n",
-    rt_dresswrinkle: "X\u00f3a nh\u0103n v\u1ea3i",
-    rt_dresstexture: "Ph\u1ee5c h\u1ed3i v\u00e2n v\u1ea3i",
-    rt_bgsmooth: "L\u00e0m s\u1ea1ch/m\u1ecbn n\u1ec1n",
-    rt_bgcolor: "M\u00e0u n\u1ec1n",
-    rt_bgrecolor: "M\u01b0\u1ee3t m\u00e0u n\u1ec1n",
-    rt_shape: "Reshape Pro (m\u1eb7t + d\u00e1ng)",
-    rt_teeth: "Tr\u1eafng r\u0103ng",
-    rt_eyewhite: "L\u00e0m s\u1ea1ch l\u00f2ng tr\u1eafng m\u1eaft",
-    rt_faceslim: "Thon m\u1eb7t",
-    rt_jaw: "\u0110\u01b0\u1eddng h\u00e0m",
-    rt_chin: "C\u1eb1m",
-    rt_nosesize: "K\u00edch c\u1ee1 m\u0169i",
-    rt_eyesize: "K\u00edch c\u1ee1 m\u1eaft",
-    rt_lipfull: "M\u00f4i \u0111\u1ea7y",
-    rt_waist: "Thon eo",
-    rt_bodyslim: "Thon d\u00e1ng",
-    rt_shoulder: "Vai",
-    rt_hip: "Thon h\u00f4ng",
-    rt_leglen: "D\u00e0i ch\u00e2n",
-    rt_armslim: "Thon tay",
-    rt_dressfit: "V\u1eeba v\u1eb7n trang ph\u1ee5c",
-    rt_dressclean: "L\u00e0m s\u1ea1ch trang ph\u1ee5c",
-    rt_dresscolorpure: "M\u00e0u trang ph\u1ee5c thu\u1ea7n",
-    rt_bodygrp: "Body Skin Pro",
-    rt_bodysmooth: "M\u1ecbn da to\u00e0n th\u00e2n",
-    rt_bodyblemish: "X\u00f3a khuy\u1ebft \u0111i\u1ec3m da",
-    rt_bodytone: "\u0110\u1ec1u m\u00e0u da",
-    rt_bodyglow: "Da r\u1ea1ng r\u1ee1",
-    rt_bodyhairrm: "Gi\u1ea3m l\u00f4ng",
-    rt_hairvolume: "\u0110\u1ed9 ph\u1ed3ng t\u00f3c",
-    rt_hairgloss: "\u00d3ng t\u00f3c",
-    rt_hairfill: "L\u1ea5p t\u00f3c (v\u00f9ng th\u01b0a)",
-    wp_h_trail: "\u2665 Wedding \u2014 th\u1ea3m hoa sang tr\u1ecdng",
-    wp_h_veil: "\u2665 Wedding \u2014 voan bay",
-    wp_h_gown: "\u2665 Wedding \u2014 l\u00e0m s\u1ea1ch v\u00e1y + \u0111u\u00f4i v\u00e1y",
-    wp_h_petal: "\u2665 Wedding \u2014 c\u00e1nh hoa bay",
-    wp_h_extra: "\u2665 Wedding \u2014 ng\u1ef1a \u00b7 n\u01b0\u1edbc \u00b7 kh\u00f4ng kh\u00ed",
-    wp_note: "Face ID / d\u00e1ng / khung / thi\u1ebft k\u1ebf v\u00e1y b\u1ecb kh\u00f3a ch\u1eb7t \u2014 ch\u1ec9 chi ti\u1ebft \u0111\u01b0\u1ee3c n\u00eau t\u00ean m\u1edbi thay \u0111\u1ed5i.",
-    wp_petalcolor: "M\u00e0u c\u00e1nh hoa (auto = kh\u1edbp c\u1ea3nh)",
-    wp_trail_c: "M\u00e0u hoa",
-    wp_trail_go: "\u25b6 Th\u1ea3m hoa",
-    wp_veil_c: "\u0110\u1ed9 d\u00e0i voan",
-    wp_veil_go: "\u25b6 Voan bay",
-    wp_gown_c: "\u0110\u1ed9 d\u00e0i \u0111u\u00f4i v\u00e1y",
-    wp_gown_go: "\u25b6 L\u00e0m s\u1ea1ch v\u00e1y + \u0111u\u00f4i",
-    wp_pet_c: "Ki\u1ec3u c\u00e1nh hoa",
-    wp_pet_go: "\u25b6 C\u00e1nh hoa bay",
-    wp_extra_c: "Th\u00eam",
-    wp_extra_go: "\u25b6 Th\u00eam chi ti\u1ebft",
-    btn_apply_rt: "\u00c1p d\u1ee5ng Retouch",
-    btn_reset: "\u0110\u1eb7t l\u1ea1i",
     rt_none: "H\u00e3y ch\u1ec9nh \u00edt nh\u1ea5t m\u1ed9t slider ho\u1eb7c m\u00e0u retouch tr\u01b0\u1edbc",
-    tab_setup: "Setup",
-    tab_prompt: "Edit",
-    tab_presets: "Library",
-    recent_lbl: "Prompt g\u1ea7n \u0111\u00e2y\u2026",
-    tab_retouch: "Retouch",
-    tab_aitools: "Home",
     cap_warn: "Photoshop gi\u1edbi h\u1ea1n \u00f4 prompt n\u00e0y \u1edf:",
-    cleanup_note: "C\u00e1c m\u1ee5c \u0111\u00e3 tick s\u1ebd ch\u1ea1y k\u00e8m M\u1eccI Generate / preset.",
     btn_generate: "GENERATE",
     st_ready: "S\u1eb5n s\u00e0ng",
     st_capture: "\u0110ang l\u1ea5y t\u00e0i li\u1ec7u",
@@ -5098,68 +2093,16 @@ const I18N = {
     st_err: "L\u1ed7i",
     st_no_doc: "Kh\u00f4ng c\u00f3 t\u00e0i li\u1ec7u \u0111ang m\u1edf \u2014 h\u00e3y m\u1edf m\u1ed9t \u1ea3nh tr\u01b0\u1edbc",
     st_no_prompt: "Prompt \u0111ang tr\u1ed1ng",
-    need_ref: "Preset n\u00e0y c\u1ea7n m\u1ed9t \u1ea3nh tham chi\u1ebfu \u1edf \u00f4 1",
     st_new_doc: "K\u1ebft qu\u1ea3 \u0111\u00e3 m\u1edf th\u00e0nh t\u00e0i li\u1ec7u m\u1edbi \u2713",
-    sec_preview: "Xem tr\u01b0\u1edbc \u2014 Before / After",
     before: "TR\u01af\u1edaC",
     after: "SAU",
     btn_place: "\u0110\u1eb7t v\u00e0o Photoshop",
-    btn_saveas: "L\u01b0u th\u00e0nh\u2026",
     st_saved: "\u0110\u00e3 l\u01b0u \u2713",
-    sec_diag: "Ki\u1ec3m tra h\u1ec7 th\u1ed1ng",
-    sec_log: "Nh\u1eadt k\u00fd ho\u1ea1t \u0111\u1ed9ng",
-    btn_diag: "Ch\u1ea1y ki\u1ec3m tra",
-    btn_copylog: "Copy log",
-    btn_clearlog: "X\u00f3a",
-    diag_host: "\u1ee8ng d\u1ee5ng Photoshop",
-    diag_uxp: "Kh\u1ea3 n\u0103ng UXP",
-    diag_rh: "RunningHub Enterprise key",
-    diag_doc: "T\u00e0i li\u1ec7u \u0111ang m\u1edf",
-    diag_set: "\u0111\u00e3 \u0111\u1eb7t",
-    diag_unset: "ch\u01b0a \u0111\u1eb7t",
-    diag_open: "\u0111ang m\u1edf",
-    diag_none: "kh\u00f4ng c\u00f3",
-    diag_missing: "thi\u1ebfu",
-    diag_done: "Ki\u1ec3m tra h\u1ec7 th\u1ed1ng ho\u00e0n t\u1ea5t \u2713",
-    diag_lib: "Th\u01b0 vi\u1ec7n tham chi\u1ebfu",
-    diag_lib_open: "Kh\u1ea3 n\u0103ng m\u1edf th\u01b0 m\u1ee5c",
-    sec_reflib: "Th\u01b0 vi\u1ec7n \u1ea3nh tham chi\u1ebfu",
-    reflib_note: "Ch\u1ec9 c\u1ea7n ch\u1ecdn m\u1ed9t l\u1ea7n th\u01b0 m\u1ee5c \u1ea3nh tham chi\u1ebfu \u01b0a th\u00edch \u2014 Browse s\u1ebd nh\u1edb v\u00e0 m\u1edf s\u1eb5n trong \u0111\u00f3 \u1edf m\u1ecdi n\u01a1i.",
-    btn_browse: "Duy\u1ec7t",
-    lib_choose: "Ch\u1ecdn th\u01b0 m\u1ee5c",
-    lib_open: "M\u1edf th\u01b0 m\u1ee5c",
-    lib_change: "\u0110\u1ed5i th\u01b0 m\u1ee5c",
-    lib_reset: "\u0110\u1eb7t l\u1ea1i",
-    lib_rescan: "Qu\u00e9t l\u1ea1i",
-    lib_current: "Th\u01b0 m\u1ee5c hi\u1ec7n t\u1ea1i",
-    lib_found: "\u1ea2nh t\u00ecm th\u1ea5y",
-    lib_status: "Tr\u1ea1ng th\u00e1i",
-    lib_lastscan: "L\u1ea7n qu\u00e9t cu\u1ed1i",
-    lib_images: "\u1ea3nh",
-    lib_connected: "\u0110\u00e3 k\u1ebft n\u1ed1i",
-    lib_not_config: "Ch\u01b0a thi\u1ebft l\u1eadp",
-    lib_perm_lost: "M\u1ea5t quy\u1ec1n \u2014 h\u00e3y ch\u1ecdn l\u1ea1i",
-    lib_none: "(ch\u01b0a ch\u1ecdn th\u01b0 m\u1ee5c)",
-    lib_copy_only: "ch\u1ec9 copy \u0111\u01b0\u1eddng d\u1eabn",
     lib_choose_msg: "H\u00e3y ch\u1ecdn th\u01b0 m\u1ee5c Th\u01b0 vi\u1ec7n \u1ea3nh tham chi\u1ebfu HNK c\u1ee7a b\u1ea1n.",
-    lib_scanning: "\u0110ang qu\u00e9t th\u01b0 vi\u1ec7n\u2026",
-    lib_scan_done: "Qu\u00e9t l\u1ea1i ho\u00e0n t\u1ea5t \u2713",
-    lib_reset_done: "\u0110\u00e3 \u0111\u1eb7t l\u1ea1i th\u01b0 vi\u1ec7n \u2713",
-    lib_path_copied: "\u0110\u00e3 copy \u0111\u01b0\u1eddng d\u1eabn",
     lib_unsupported: "\u0110\u1ecbnh d\u1ea1ng \u1ea3nh kh\u00f4ng h\u1ed7 tr\u1ee3",
     lib_restore_fail: "Kh\u00f4ng kh\u00f4i ph\u1ee5c \u0111\u01b0\u1ee3c \u1ea3nh tham chi\u1ebfu",
     on: "B\u1eacT",
     off: "T\u1eaeT",
-    ai_home_title: "B\u1ea1n mu\u1ed1n t\u1ea1o g\u00ec?",
-    ai_greet_morning: "Ch\u00e0o bu\u1ed5i s\u00e1ng",
-    ai_greet_afternoon: "Ch\u00e0o bu\u1ed5i chi\u1ec1u",
-    ai_greet_evening: "Ch\u00e0o bu\u1ed5i t\u1ed1i",
-    ai_free_generate: "T\u1ea1o t\u1ef1 do",
-    ai_free_sub: "T\u1ef1 vi\u1ebft prompt",
-    ai_more_tools: "Th\u00eam c\u00f4ng c\u1ee5",
-    ai_more_sub: "Water Edit \u00b7 Text/Logo \u00b7 m\u1ecdi workflow",
-    ai_nav_home: "Trang ch\u00ednh",
-    ai_nav_tools: "C\u00f4ng c\u1ee5",
     ai_history: "L\u1ecbch s\u1eed",
     ai_no_gen: "Ch\u01b0a c\u00f3 k\u1ebft qu\u1ea3 n\u00e0o.",
     ai_videos: "Video",
@@ -5186,14 +2129,11 @@ const I18N = {
     ai_lib_pick_first: "H\u00e3y ch\u1ecdn \u1ea3nh \u1edf tab Presets \u2192 Visual Library tr\u01b0\u1edbc.",
     ai_lib_load_fail: "Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c \u1ea3nh t\u1eeb Library.",
     ai_missing: "C\u00f2n thi\u1ebfu",
-    ai_add: "Th\u00eam",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 th\u00eam model endpoint (N\u00e2ng cao \u2014 t\u00f9y ch\u1ecdn)",
     ai_rh_note: "C\u00e1c model t\u00edch h\u1ee3p \u0111\u00e3 ch\u1ea1y \u0111\u01b0\u1ee3c v\u1edbi key \u1edf tr\u00ean \u2014 kh\u00f4ng c\u1ea7n l\u00e0m g\u00ec. N\u1ebfu m\u1ed9t model hi\u1ec7n \"not connected\" (endpoint path ch\u01b0a \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn), h\u00e3y sao ch\u00e9p path t\u1eeb t\u00e0i li\u1ec7u API c\u1ee7a RunningHub v\u00e0 d\u00e1n v\u00e0o \u0111\u00e2y.",
     ai_rh_save: "L\u01b0u endpoint c\u1ee7a model n\u00e0y",
     ai_test_conn: "Ki\u1ec3m tra k\u1ebft n\u1ed1i",
-    ai_save_verify: "L\u01b0u & x\u00e1c minh",
-    ai_settings: "C\u00e0i \u0111\u1eb7t",
     ai_add_layers: "Th\u00eam k\u1ebft qu\u1ea3 th\u00e0nh Layer m\u1edbi",
     ai_done: "Xong.",
     ai_result_ready: "K\u1ebft qu\u1ea3 \u0111\u00e3 s\u1eb5n s\u00e0ng.",
@@ -5204,21 +2144,6 @@ const I18N = {
     ai_placed_group: "\u0110\u00e3 \u0111\u1eb7t v\u00e0o nh\u00f3m \u201c{name}\u201d d\u01b0\u1edbi d\u1ea1ng Layer m\u1edbi (host n\u00e0y kh\u00f4ng h\u1ed7 tr\u1ee3 mask).",
     ai_placed_plain: "\u0110\u00e3 \u0111\u1eb7t th\u00e0nh Layer m\u1edbi (host n\u00e0y kh\u00f4ng h\u1ed7 tr\u1ee3 group/mask).",
     ai_start_fail: "AI Tools kh\u00f4ng kh\u1edfi \u0111\u1ed9ng \u0111\u01b0\u1ee3c",
-    pgb_setup: "Set up once — ready whenever you are",
-    pgb_studio: "Bring every scene you imagine to life — your way",
-    pgb_create: "One line of text becomes a professional image",
-    pgb_presets: "1850 curated looks — pick one and start instantly",
-    pgb_aitools: "M\u1ed9t ch\u1ea1m chuy\u00ean nghi\u1ec7p \u2014 Nano Banana \u00b7 RunningHub",
-    pgb_retouch: "Flawless retouching that stays natural",
-    wf_sum_bg_replace: "Thay n\u1ec1n",
-    wf_sum_reference_transfer: "\u0110\u01b0a ch\u1ee7 th\u1ec3 c\u1ee7a b\u1ea1n v\u00e0o c\u1ea3nh reference",
-    wf_sum_master_bgfg_replace: "X\u00f3a ng\u01b0\u1eddi trong c\u1ea3nh, d\u1ef1ng l\u1ea1i bg/fg, r\u1ed3i \u0111\u01b0a ch\u1ee7 th\u1ec3 c\u1ee7a b\u1ea1n v\u00e0o",
-    wf_sum_subject_face: "Chuy\u1ec3n ch\u1ee7 th\u1ec3 ho\u1eb7c khu\u00f4n m\u1eb7t l\u00ean \u1ea3nh base",
-    wf_sum_retouch: "Tinh ch\u1ec9nh ch\u00e2n dung t\u1ef1 nhi\u00ean",
-    wf_sum_upscale: "Ph\u00f3ng to gi\u1eef nguy\u00ean chi ti\u1ebft",
-    wf_sum_object_edit: "X\u00f3a, thay ho\u1eb7c th\u00eam v\u1eadt th\u1ec3",
-    wf_sum_water_edit: "Ch\u1ec9nh n\u01b0\u1edbc v\u00e0 ph\u1ea3n chi\u1ebfu",
-    wf_sum_text_logo: "Th\u00eam ho\u1eb7c s\u1eeda ch\u1eef v\u00e0 logo",
     wfin_subject: "\u1ea2nh c\u1ee7a b\u1ea1n (ch\u1ee7 th\u1ec3)",
     wfin_new_bg: "N\u1ec1n m\u1edbi (t\u00f9y ch\u1ecdn)",
     wfin_ref_scene: "C\u1ea3nh reference",
@@ -5230,45 +2155,43 @@ const I18N = {
     wfin_image: "H\u00ecnh \u1ea3nh",
     wfin_object_ref: "Reference v\u1eadt th\u1ec3 (t\u00f9y ch\u1ecdn)",
     wfin_logo_ref: "Reference logo (t\u00f9y ch\u1ecdn)",
-    wf_exp_bg_replace: "Thay n\u1ec1n ph\u00eda sau ch\u1ee7 th\u1ec3. Con ng\u01b0\u1eddi, d\u00e1ng, vi\u1ec1n v\u00e0 \u00e1nh s\u00e1ng gi\u1eef nguy\u00ean ho\u00e0n to\u00e0n \u2014 ch\u1ec9 ph\u1ea7n ph\u00eda sau thay \u0111\u1ed5i.",
-    wf_exp_reference_transfer: "L\u1ea5y to\u00e0n b\u1ed9 c\u1ea3nh c\u1ee7a \u1ea3nh reference (nh\u01b0ng KH\u00d4NG l\u1ea5y ng\u01b0\u1eddi trong \u0111\u00f3) v\u00e0 \u0111\u1eb7t ch\u1ee7 th\u1ec3 C\u1ee6A B\u1ea0N v\u00e0o \u2014 gi\u1eef nguy\u00ean nh\u1eadn d\u1ea1ng, d\u00e1ng v\u00e0 khung h\u00ecnh, \u0111\u1ed3ng th\u1eddi kh\u1edbp \u00e1nh s\u00e1ng v\u00e0 ph\u1ed1i c\u1ea3nh c\u1ee7a c\u1ea3nh.",
-    wf_exp_master_bgfg_replace: "Ki\u1ec3u thay ch\u1ee7 th\u1ec3 trong c\u1ea3nh nghi\u00eam ng\u1eb7t nh\u1ea5t: x\u00f3a ho\u00e0n to\u00e0n ng\u01b0\u1eddi kh\u1ecfi c\u1ea3nh reference, d\u1ef1ng l\u1ea1i t\u1ef1 nhi\u00ean ph\u1ea7n n\u1ec1n v\u00e0 ti\u1ec1n c\u1ea3nh b\u1ecb che, r\u1ed3i \u0111\u1eb7t \u0111\u00fang ch\u1ee7 th\u1ec3 c\u1ee7a b\u1ea1n v\u00e0o \u0111\u00fang ch\u1ed7 \u0111\u00f3 \u2014 nh\u1eadn d\u1ea1ng, d\u00e1ng, t\u1ec9 l\u1ec7, ki\u1ec3u t\u00f3c, trang ph\u1ee5c, da v\u00e0 \u00e1nh s\u00e1ng \u0111\u1ec1u kh\u00f3a theo \u1ea3nh c\u1ee7a b\u1ea1n, c\u00f2n reference ch\u1ec9 cung c\u1ea5p c\u1ea3nh, g\u00f3c m\u00e1y v\u00e0 chi\u1ec1u s\u00e2u.",
-    wf_exp_subject_face: "H\u00f2a tr\u1ed9n ch\u1ee7 th\u1ec3 ho\u1eb7c khu\u00f4n m\u1eb7t t\u1eeb reference l\u00ean \u1ea3nh base m\u1ed9t c\u00e1ch li\u1ec1n m\u1ea1ch, gi\u1eef nguy\u00ean b\u1ed1 c\u1ee5c c\u1ee7a \u1ea3nh base.",
-    wf_exp_retouch: "Tinh ch\u1ec9nh t\u1ef1 nhi\u00ean cho da, t\u00f3c v\u00e0 t\u00f4ng m\u00e0u. Nh\u1eadn d\u1ea1ng, \u0111\u01b0\u1eddng n\u00e9t v\u00e0 bi\u1ec3u c\u1ea3m \u0111\u01b0\u1ee3c gi\u1eef nguy\u00ean \u2014 kh\u00f4ng da nh\u1ef1a, kh\u00f4ng \u0111\u1ed5i m\u1eb7t.",
-    wf_exp_upscale: "Ph\u00f3ng to \u1ea3nh \u0111\u1ed3ng th\u1eddi ph\u1ee5c h\u1ed3i chi ti\u1ebft t\u1ef1 nhi\u00ean \u1edf da, t\u00f3c v\u00e0 v\u1ea3i. Nh\u1eadn d\u1ea1ng, d\u00e1ng, b\u1ed1 c\u1ee5c v\u00e0 m\u00e0u s\u1eafc gi\u1eef nguy\u00ean ho\u00e0n to\u00e0n \u2014 kh\u00f4ng l\u00e0m m\u1ecbn ki\u1ec3u nh\u1ef1a.",
-    wf_exp_object_edit: "X\u00f3a, thay ho\u1eb7c th\u00eam v\u1eadt th\u1ec3 b\u1eb1ng m\u1ed9t ch\u1ec9nh s\u1eeda c\u1ee5c b\u1ed9 c\u00f3 ki\u1ec3m so\u00e1t. M\u1ecdi th\u1ee9 b\u1ea1n kh\u00f4ng \u0111\u1ee5ng t\u1edbi \u0111\u1ec1u gi\u1eef nguy\u00ean.",
-    wf_exp_water_edit: "Th\u00eam ho\u1eb7c ch\u1ec9nh n\u01b0\u1edbc, ph\u1ea3n chi\u1ebfu v\u00e0 b\u1ec1 m\u1eb7t \u01b0\u1edbt sao cho tr\u00f4ng \u0111\u00fang v\u1eadt l\u00fd, \u0111\u1ed3ng th\u1eddi gi\u1eef nguy\u00ean ch\u1ee7 th\u1ec3 c\u1ee7a b\u1ea1n.",
-    wf_exp_text_logo: "Th\u00eam ho\u1eb7c s\u1eeda ch\u1eef hay logo s\u1ea1ch, d\u1ec5 \u0111\u1ecdc tr\u00ean \u1ea3nh m\u00e0 v\u1eabn gi\u1eef nguy\u00ean b\u1ed1 c\u1ee5c."
   },
   /* ---- Indonesian (id) — 587 keys, complete ---- */
   id: {
+    rh_err_network: "Tidak dapat menjangkau RunningHub Enterprise — koneksi terputus. Periksa internet lalu coba lagi.",
+    rh_err_task_failed: "Tugas RunningHub gagal — coba prompt/foto lain",
+    rh_err_host_blocked: "Photoshop menolak host ini — manifest panel tidak mengizinkannya. Pasang panel terbaru.",
+    rh_err_timeout: "Pembuatan terlalu lama — RunningHub tidak menjawab tepat waktu. Coba lagi, atau kurangi ukuran / jumlah.",
+    rh_err_rate_limited: "RunningHub Enterprise sedang sibuk — tunggu sebentar lalu coba lagi.",
+    rh_err_invalid_key: "RunningHub menolak key — periksa di Setup ▸ RunningHub Enterprise.",
+    wf_exp_bg_replace: "Mengganti latar di belakang subjek. Orang, pose, tepi, dan pencahayaan tetap persis sama \u2014 hanya bagian di belakangnya yang berubah.",
+    wf_exp_reference_transfer: "Mengambil seluruh adegan foto reference (tetapi BUKAN orang di dalamnya) lalu menempatkan subjek ANDA ke sana \u2014 menjaga identitas, pose, dan bingkai subjek, serta menyelaraskan cahaya dan perspektif adegan.",
+    wf_exp_master_bgfg_replace: "Penggantian subjek dalam adegan yang paling ketat: menghapus orang dari adegan reference sepenuhnya, merekonstruksi latar dan latar depan yang tertutup secara alami, lalu menempatkan subjek Anda persis di titik itu \u2014 identitas, pose, proporsi, gaya rambut, busana, kulit, dan pencahayaan dikunci dari foto Anda, sedangkan reference hanya menyediakan adegan, sudut kamera, dan kedalaman.",
+    wf_exp_subject_face: "Memadukan subjek atau wajah dari reference ke gambar base secara mulus, dengan komposisi base tetap utuh.",
+    wf_exp_retouch: "Memberi retouch alami pada kulit, rambut, dan tona. Identitas, fitur, dan ekspresi tetap dipertahankan \u2014 tanpa kulit plastik, tanpa perubahan wajah.",
+    wf_exp_upscale: "Memperbesar gambar sekaligus memulihkan detail alami pada kulit, rambut, dan kain. Identitas, pose, komposisi, dan warna tetap persis sama \u2014 tanpa penghalusan plastik.",
+    wf_exp_object_edit: "Menghapus, mengganti, atau menambah objek lewat edit lokal yang terkontrol. Semua yang tidak Anda sentuh tetap sama.",
+    wf_exp_water_edit: "Menambah atau mengedit air, pantulan, dan permukaan basah agar tampak wajar secara fisik, tanpa mengubah subjek Anda.",
+    wf_exp_text_logo: "Menambah atau mengedit teks atau logo yang bersih dan mudah dibaca pada gambar, dengan komposisi tetap terjaga.",
+    ai_key_lives_in_setup: "Key RunningHub Enterprise dikelola di tab Setup — simpan sekali, dipakai di mana saja.",
+    ai_settings_defaults: "AI Tools — Bawaan",
+    ai_learn_mode: "Learn Mode — ketuk GENERATE dijelaskan dulu",
+    job_needkey: "Tambahkan key RunningHub di Setup dulu",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
-    sec_ready: "Status kesiapan",
-    sec_acct: "AKUN",
     ava_change: "Ganti foto profil",
     ava_remove: "Hapus foto",
     ava_saved: "Foto tersimpan",
     ava_removed: "Foto dihapus",
     ava_fail: "Gambar tidak bisa dipakai — coba yang lain",
     ava_working: "Menyiapkan foto…",
-    sec_money: "BIAYA & SALDO",
-    sec_data: "Data & cadangan",
-    sec_about: "Aplikasi & pembaruan",
-    btn_get_update: "Unduh pembaruan",
-    upd_hint: "Panel mengunduh rilis baru sendiri — Anda sudah masuk. Photoshop tidak mengizinkan plugin mengganti berkasnya sendiri, jadi langkah terakhir milik Anda: klik dua kali berkas .ccx yang tersimpan dan Creative Cloud akan memasangnya.",
     upd_web: "Membuka Web App — ambil Panel di Account → Photoshop Panel.",
-    upd_none: "Ini rilis terbaru.",
     money_intro: "Setiap GENERATE dicatat sebesar yang benar-benar ditagih RunningHub — bukan perkiraan. Saldo dibaca langsung dari akun RunningHub Anda.",
     money_bal: "Saldo",
     money_refresh: "Cek saldo",
     money_nokey: "Simpan kunci RunningHub dulu, baru saldo bisa dibaca.",
     money_fail: "Saldo tidak terbaca — buku di bawah tetap akurat. RunningHub menjawab:",
     money_never: "belum dicek",
-    btn_export_backup: "Ekspor cadangan",
-    btn_import_backup: "Pulihkan cadangan",
-    btn_check_update: "Periksa pembaruan",
-    btn_hard_refresh: "Bersihkan cache + mulai ulang",
     gate_sub_login: "Masuk dengan akun HNK Anda untuk memakai panel ini.",
     gate_email_ph: "Email",
     gate_pass_ph: "Kata sandi",
@@ -5297,38 +2220,11 @@ const I18N = {
     gate_service_down: "Tidak dapat menghubungi server lisensi — periksa internet lalu tekan Periksa lagi.",
     gate_no_lease: "Server tidak memberi lisensi panel — tekan Periksa lagi.",
     gate_sent_as: "Dikirim sebagai {E} · {N} karakter",
-    app_title: "HNK Photoshop Ai Panel (Pelajar)",
-    sec_api: "RunningHub Enterprise Key",
     btn_show: "Tampilkan",
-    btn_hide: "Sembunyikan",
-    btn_test: "Uji Key",
     btn_save: "Simpan",
-    st_testing: "Menguji key",
-    st_key_ok: "\u2713 API key berfungsi",
-    st_key_bad: "API key gagal",
-    st_key_saved: "API key tersimpan \u2713",
     st_need_key: "Masukkan RunningHub Enterprise key Anda dulu",
-    sec_model: "Model & Output",
-    scope_model_note: "Dipakai oleh tombol Generate di tab Prompt bawah \u2014 Create dan AI Tools punya pengaturan model sendiri-sendiri.",
-    model_auto: "Otomatis (disarankan)",
-    model_flash: "Flash \u2014 cepat (2.5)",
-    model_pro: "Pro \u2014 kualitas (3.0)",
-    lbl_ratio: "Rasio",
-    ratio_auto: "Rasio otomatis (dari dokumen)",
-    lbl_size: "Ukuran",
-    lbl_quality: "Kualitas",
     qual_auto: "Otomatis",
-    qual_low: "Rendah",
-    qual_med: "Sedang",
-    qual_high: "Tinggi",
-    sec_prompt: "Prompt",
-    hint_prompt: "Tulis prompt Anda di sini\u2026 (maks 20.000 karakter)",
-    btn_improve: "Perbaiki Prompt",
     btn_clear: "Bersihkan",
-    st_improving: "Memperbaiki prompt",
-    st_improved: "Prompt diperbaiki \u2713",
-    sec_refs: "Gambar Referensi (2 slot)",
-    base_note: "Gambar dasar = dokumen Photoshop Anda yang aktif (diambil otomatis).",
     btn_ref_layer: "+ Layer",
     btn_ref_file: "Berkas",
     btn_ref_web: "Web",
@@ -5336,9 +2232,7 @@ const I18N = {
     st_photo_layer_added: "Layer ditambahkan sebagai foto ✓",
     st_ref_file_added: "Berkas ditambahkan sebagai referensi \u2713",
     st_importing: "Mengimpor berkas",
-    url_title: "Referensi dari URL \u2014 Chrome / Pinterest",
     url_ph: "https://\u2026 alamat gambar atau tautan pin Pinterest",
-    btn_paste: "Tempel",
     btn_load: "Muat",
     btn_cancel: "Batal",
     btn_ok: "OK",
@@ -5347,178 +2241,22 @@ const I18N = {
     st_ref_web_added: "Gambar web ditambahkan sebagai referensi \u2713",
     st_url_bad: "Gagal memuat gambar dari URL ini \u2014 salin alamat gambarnya lalu coba lagi",
     no_layer: "Belum ada layer yang dipilih",
-    sec_presets: "AI Presets",
-    auto_run: "Klik preset \u2192 Generate otomatis (MATI = hanya sisipkan ke prompt)",
-    grp_cleanup: "Alat Pembersih",
-    p_remove_people: "Hapus Orang",
-    p_fix_hands: "Perbaiki Tangan Berlebih",
-    p_fix_legs: "Perbaiki Kaki Berlebih",
-    p_full_clean: "Bersihkan Total",
-    grp_moved_note: "Alat Reference kini ada di kartu Reference Ops Pro di bawah (satu tempat, lengkap dengan Solo/Couple/Family + panduan).",
-    ro_h_detail: "Rambut \u00b7 Aksesori \u00b7 Pose (\u2190 Ref1)",
-    ro_h_comp: "Komposit \u00b7 Gaya \u00b7 Teks (\u2190 Ref1)",
-    p_fgbglc: "FG=Doc \u00b7 BG=Ref1 \u00b7 Light=Ref2",
-    p_hair: "Gaya Rambut (\u2190 Ref1)",
-    p_access: "Perhiasan + Aksesori (\u2190 Ref1)",
-    p_pose: "Samakan Pose (Doc \u2192 Ref1)",
-    p_fgprops: "Properti Depan (\u2190 Ref1)",
-    p_textlogo: "Teks / Logo (\u2190 Ref1)",
-    p_style: "Gaya Foto (\u2190 Ref1)",
-    grp_repsubj: "Ganti Subjek (Doc \u2192 adegan Ref1)",
-    p_rep_solo: "Ganti Solo",
-    p_rep_couple: "Ganti Pasangan",
-    p_rep_family: "Ganti Keluarga",
-    grp_rmix: "Replace Mix \u2014 centang lalu ambil dari Ref1",
-    rm_bg: "Latar (BG)",
-    rm_fg: "Latar Depan (FG)",
-    rm_light: "Pencahayaan",
-    rm_color: "Warna",
-    rm_object: "Objek / Properti",
-    btn_rmix: "REPLACE GENERATE",
-    rm_none: "Centang minimal satu aspek dulu",
-    grp_i2p: "Image \u2192 Prompt (Scene Builder)",
-    i2p_note: "1) Ekstrak: adegan Ref1 \u2192 prompt teks terperinci (tanpa orang). 2) Sunting di halaman Prompt. 3) SCENE GENERATE membangunnya di sekitar subjek dokumen Anda \u2014 otomatis menyesuaikan sudut apa pun. Kunci Face/Pose/Frame = pertahankan aslinya.",
-    i2p_objects: "Detail objek & properti",
-    i2p_light: "Detail pencahayaan",
-    i2p_color: "Detail warna / grade",
-    i2p_bg: "Detail latar",
-    i2p_fg: "Detail latar depan",
-    btn_i2p: "Image \u2192 Prompt (Ekstrak Adegan)",
-    i2p_fit: "Scene Auto-Fit \u2014 proyeksikan ulang adegan ke sudut / jarak / lensa dokumen",
-    i2p_adapt: "Sesuaikan cahaya & warna subjek dengan adegan",
-    btn_scenegen: "SCENE GENERATE",
-    st_extract: "Mengekstrak adegan menjadi prompt",
-    st_extract_done: "Prompt adegan siap \u2014 periksa di halaman Prompt",
-    scene_no_prompt: "Kotak prompt kosong \u2014 jalankan Image \u2192 Prompt dulu",
-    i2p_none: "Centang minimal satu aspek detail dulu",
-    sec_light: "Studio Lighting \u2014 AI Relight",
-    light_note: "Centang lampu untuk menyalakan, ketuk satu baris untuk memilihnya, bentuk dengan slider \u2014 diagram 3D tampak-atas mengikuti langsung (\u25b4 = tinggi, \u25be = rendah). LIGHTING GENERATE menyinari ulang dokumen persis sesuai susunan ini; wajah / pose / bingkai tetap terkunci.",
-    lbl_my_prompt: "PROMPT BAHASA INDONESIA",
-    lstage_model: "MODEL",
-    lstage_cam: "CAM",
-    l_key: "Key Light",
-    l_fill: "Fill / Depan",
-    l_butterfly: "Butterfly (atas-depan)",
-    l_side: "Cahaya Samping",
-    l_rim: "Rim Light",
-    l_back: "Back Light",
-    l_hair: "Hair Light",
-    l_bglight: "Cahaya Latar",
-    lt_softbox: "Softbox",
-    lt_octa: "Octa",
-    lt_strip: "Strip",
-    lt_umbrella: "Umbrella",
-    lt_beauty: "Beauty",
-    lt_hard: "Hard",
-    li_int: "Intensitas",
-    li_angle: "Sudut",
-    li_height: "Tinggi",
-    li_dist: "Jarak",
-    li_size: "Ukuran",
-    btn_lightgen: "LIGHTING GENERATE",
-    light_none: "Nyalakan minimal satu lampu dulu",
-    lg_equip: "Tampilkan peralatan lampu dalam foto (softbox / stand terlihat)",
-    grp_chains: "Style Chains \u2014 gabungkan gaya \u2713",
-    chains_note: "Nyalakan gaya mana pun \u2014 semuanya menyatu ke SETIAP Generate / preset / Retouch sekaligus.",
-    grp_restore: "Restorasi Foto Lama",
-    p_restore: "Restorasi Foto Lama",
-    rest_color: "Berwarna Penuh",
-    rest_bw: "Hitam & Putih",
-    restore_note: "Memperbaiki sobekan, kerusakan air / terbakar, dan pudar \u2014 menjaga setiap wajah asli tetap 100% sama.",
-    rt_browstyle: "Gaya Alis",
-    rt_lashstyle: "Gaya Bulu Mata",
-    rt_blush: "Warna Perona",
-    rt_contour: "Gaya Contour",
-    rt_bust: "Dada",
-    rt_butt: "Bokong",
-    rt_thigh: "Paha",
-    rt_calf: "Betis",
-    rt_neck: "Leher",
-    rt_fingers: "Jari",
-    hint_prompt_my: "Tulis saja dalam bahasa Indonesia \u2014 saat Generate akan diterjemahkan otomatis ke Inggris (maks 20.000)",
-    st_translate: "Menerjemahkan prompt ke bahasa Inggris",
-    live_trans: "Terjemah otomatis langsung \u21c4 (EN \u2194 ID, setelah Anda berhenti mengetik)",
-    st_retry: "Mencoba lagi",
-    grp_recipes: "Recipes \u2014 simpan / bagikan pengaturan",
-    recipe_note: "Simpan SEMUANYA (chains, retouch, lampu, kunci, prompt) sebagai satu berkas .json \u2014 pelajar tinggal Load.",
-    btn_recipe_save: "Simpan Recipe",
-    btn_recipe_load: "Muat Recipe",
-    st_recipe_saved: "Recipe tersimpan \u2713",
-    st_recipe_loaded: "Recipe dimuat \u2713 \u2014 semua kontrol diperbarui",
-    st_recipe_bad: "Bukan berkas Recipe HNK",
-    sec_final: "Prompt Akhir (dikirim ke AI)",
-    btn_copy: "Salin",
-    st_copied: "Tersalin \u2713",
-    hist_note: "Riwayat \u2014 6 hasil terakhir, ketuk untuk melihat:",
-    btn_hist_prompt: "\u2192 Prompt",
-    sec_batch: "Batch Mode",
-    batch_note: "Pilih banyak foto + satu folder keluaran \u2014 prompt, chains, cleanup, dan kunci Keep saat ini dijalankan pada tiap foto; hasil disimpan sebagai *_HNK.png.",
-    btn_batch: "JALANKAN BATCH",
-    btn_batch_stop: "Berhenti",
-    st_batch: "Batch",
-    st_batch_done: "Batch selesai",
-    sec_web: "Web AI \u2014 Peramban Mini",
-    web_note: "Buka editor AI web mana pun di dalam Photoshop. Buat di sana, lalu bawa hasilnya masuk sebagai layer:",
-    web_import_note: "Impor: \u2460 di web app pakai Copy image address, lalu IMPORT COPIED LINK \u00b7 \u2461 atau unduh berkasnya dan pakai IMPORT FILE \u00b7 \u2462 web app mitra dengan HNK bridge mengirim gambar masuk secara otomatis.",
-    btn_web_go: "Buka",
-    btn_web_home: "Beranda",
-    btn_web_reload: "Muat ulang",
-    btn_web_import_link: "IMPOR TAUTAN TERSALIN \u2192 PS",
-    btn_web_import_file: "IMPOR BERKAS \u2192 PS",
     st_web_import: "Diimpor ke Photoshop sebagai layer \u2713",
-    st_web_nourl: "Salin tautan gambar dulu (klik kanan \u2192 Copy image address)",
-    st_web_fetch: "Mengambil gambar dari tautan",
-    st_web_notallowed: "Domain ini tidak ada di daftar izin \u2014 halaman bisa tetap kosong. Minta HNK menambahkannya.",
-    st_need_doc: "Buka dokumen foto di Photoshop dulu",
-    sec_campro: "Camera Pro & Kualitas",
-    autosave_lbl: "Ekspor otomatis setiap hasil (PNG + catatan prompt \u2192 folder)",
     st_folder_ok: "Folder ekspor ditetapkan \u2713",
     st_exported: "Terekspor \u2713",
     st_export_fail: "Ekspor gagal \u2014 periksa foldernya",
-    st_pro_fallback: "Model Pro tidak tersedia \u2014 dialihkan ke Flash untuk kali ini",
     st_img_bad: "Data gambar gagal pemeriksaan integritas \u2014 tambahkan ulang fotonya",
     st_auto_comp: "Komposit Otomatis: subjek IMAGE 1 \u2192 adegan referensi",
-    prov_lbl: "Penyedia AI",
-    tab_create: "Create",
-    create_note: "MODE CREATE \u2014 gambar baru sepenuhnya dari prompt Anda (+ 4 ref miliknya sendiri). Berdiri sendiri: tidak pernah membaca dokumen, preset, chains, atau kunci.",
     create_ph: "Jelaskan gambar yang Anda inginkan",
     btn_create_ps: "\u2b07 Kirim ke Photoshop",
     btn_to_ref: "\u21ba Pakai sebagai Ref 1",
     st_to_ref: "Hasil dimuat ke Ref 1 \u2713",
-    scope_create_note: "Terpisah dari Model & Output milik Setup \u2014 pengaturan ini hanya berlaku untuk Generate di Create.",
-    cr_ratio: "Rasio",
-    cr_var: "Variasi",
     cr_restyle: "\u267b Ubah gaya hasil",
-    cr_lib: "Pustaka Prompt \u2014 ketuk untuk menyisipkan",
-    cr_improve: "\u2728 Perbaiki",
-    cr_describe: "\ud83d\udd0d Baca Ref 1 \u2192 Prompt",
-    st_describing: "Membaca gambar referensi\u2026",
-    st_described: "Prompt ditulis dari Ref 1 \u2713",
-    st_need_ref1: "Tambahkan gambar ke Ref 1 dulu",
-    st_lib_added: "Prompt ditambahkan \u2713",
-    cr_refs: "Gambar Referensi (maks 4)",
-    cr_refs_note: "Opsional \u2014 tambahkan lewat Layer / File / Web. Create hanya mengambil apa yang diminta prompt Anda.",
-    cr_results: "Hasil",
     cr_gal_empty: "Belum ada hasil \u2014 ketuk Generate.",
     cr_gal_have: "hasil \u00b7 ketuk gambar kecil untuk melihat / mengolah",
     cr_save: "\u2b07 Simpan PNG",
-    cr_engine: "Engine",
     cr_need_result: "Buat gambar dulu",
-    btn_web_import_url: "\u2b07 Impor URL",
-    st_clip_help: "Papan klip kosong/diblokir \u2014 tempel tautannya ke bilah URL, lalu ketuk \u2b07 Import URL",
-    st_web_blob: "Itu tautan blob: sementara \u2014 pakai klik kanan \u2192 Copy IMAGE Address, atau simpan berkasnya lalu pakai Import File",
-    err_key: "API key tidak valid \u2014 periksa ulang key di tab Setup",
-    err_quota: "Kuota / batas laju tercapai \u2014 tunggu sebentar lalu coba lagi",
-    err_big: "Gambar terlalu besar untuk API \u2014 perkecil lalu coba lagi",
-    err_safety: "Diblokir filter keamanan \u2014 sesuaikan prompt atau fotonya lalu coba lagi",
-    err_net: "Masalah jaringan / server \u2014 silakan coba lagi",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
-    rh_err_network: "Tidak dapat menjangkau RunningHub Enterprise — koneksi terputus. Periksa internet lalu coba lagi.",
-    rh_err_task_failed: "Tugas RunningHub gagal — coba prompt/foto lain",
-    rh_err_host_blocked: "Photoshop menolak host ini — manifest panel tidak mengizinkannya. Pasang panel terbaru.",
-    rh_err_timeout: "Pembuatan terlalu lama — RunningHub tidak menjawab tepat waktu. Coba lagi, atau kurangi ukuran / jumlah.",
-    rh_err_rate_limited: "RunningHub Enterprise sedang sibuk — tunggu sebentar lalu coba lagi.",
-    rh_err_invalid_key: "RunningHub menolak key — periksa di Setup ▸ RunningHub Enterprise.",
     /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
     wf_scene_presets: "Preset adegan dari Library — satu ketuk",
     wf_scene_loading: "Memuat adegan…",
@@ -5532,114 +2270,20 @@ const I18N = {
     wf_press_prepare: "Tekan Prepare untuk memuat workflow ini dan memeriksa gambar.",
     wf_opts: "Model \u00b7 Ratio \u00b7 Jumlah \u00b7 Size",
     wf_model_auto: "Auto \u2014 pilihan workflow",
-    err_timeout: "Permintaan kehabisan waktu \u2014 server terlalu lama merespons; silakan coba lagi",
-    err_generic: "Permintaan tidak dapat diselesaikan \u2014 silakan coba lagi",
-    err_img: "Tidak ada gambar yang dapat dipakai \u2014 silakan coba lagi",
-    err_mode: "Dokumen ini bukan mode RGB \u2014 konversikan dulu (Image \u25b8 Mode \u25b8 RGB Color), lalu coba lagi",
-    cam_master: "Blok Camera AKTIF \u2014 tempelkan ke akhir SETIAP prompt",
-    cam_body: "Bodi Kamera",
-    cam_lens: "Lensa Prime (mm)",
-    cam_f: "Bukaan",
-    cam_film: "Nuansa Film",
-    cam_bokeh: "Gaya Bokeh",
-    cam_iso: "ISO",
-    cam_k: "WB Kelvin",
-    cam_note: "Nyalakan bloknya dulu, lalu pilih hanya yang Anda perlukan \u2014 chip \u2013 tidak ikut ditulis. Semuanya menempel di akhir prompt final.",
-    ro_h_main: "REFERENCE OPS PRO (Ref1 / Ref2)",
-    ro_note: "Ref1 = IMAGE 2 (perempuan) \u00b7 Ref2 = IMAGE 3 (laki-laki). Pilih target dulu, baru jalankan \u2014 orang yang tidak cocok tidak pernah berubah.",
-    ro_target: "Target:",
-    ro_solo: "Solo",
-    ro_couple: "Pasangan",
-    ro_family: "Keluarga",
-    ro_mk: "Salin makeup ref",
-    ro_hair: "Ambil gaya rambut ref",
-    ro_h_face: "Face Ops",
-    ro_h_bg: "BG / FG Ops",
-    ro_h_sub: "Subject Ops",
-    ro_h_lc: "Light & Color Ops",
-    ro_h_dress: "Dress Ops",
-    ro_h_mk: "Makeup Ops",
-    ro_h_match: "\u2605 Master Match (satu tampilan)",
-    ro_match_note: "Samakan IMAGE 1 dengan referensi agar keduanya tampak seperti satu hasil edit \u2014 centang apa yang harus disamakan:",
-    m_color: "Warna",
-    m_light: "Cahaya",
-    m_makeup: "Makeup",
-    m_skin: "Retouch Kulit",
-    crd_chainsrest: "Style Chains + Restorasi Foto Lama",
-    crd_refops: "Reference Ops Pro (Ref1 / Ref2)",
-    crd_scenes: "\ud83c\udfac Scenes Pro \u2014 subjek terkunci \u00b7 adegan menyesuaikan",
-    scn_note: "Kunci subjek Anda (wajah \u00b7 pose \u00b7 busana \u00b7 bingkai) lalu bangun ulang seluruh adegan agar cocok \u2014 cahaya, bayangan, warna, latar, latar depan, dan objek menyesuaikan otomatis demi tampilan foto sungguhan.",
-    scn_h_style: "Gaya Adegan (dalam ruang / budaya)",
-    scn_h_bday: "\ud83c\udf82 Ulang tahun \u2014 angka usia 1\u201345",
-    scn_h_cap: "Keterangan / Teks (anak \u00b7 Miss Universe \u00b7 ulang tahun)",
-    scn_h_scarf: "Luar Ruang / Selendang Terbang",
-    scn_grad: "Wisuda Dalam Ruang",
-    scn_prewed: "Prewedding Dalam Ruang",
-    scn_vietnam: "Vietnam",
-    scn_myanmar: "Myanmar",
-    scn_chinese: "Tionghoa",
-    scn_shan: "Shan",
-    scn_newborn: "Bayi Baru Lahir",
-    scn_age: "Usia",
-    scn_bday_go: "\ud83c\udf82 ADEGAN ULANG TAHUN",
-    scn_cap_on: "Tambahkan teks keterangan",
-    scn_cap_ph: "Teks keterangan (mis. Happy 1st Birthday, nama)\u2026",
-    scn_cap_pos: "Posisi",
-    scn_top: "Atas",
-    scn_bottom: "Bawah",
-    scn_scarf: "\u2726 ADEGAN SELENDANG TERBANG",
-    scn_dir: "Arah",
-    scn_left: "Kiri",
-    scn_right: "Kanan",
-    scn_up: "Atas",
-    scn_len: "Panjang",
-    scn_short: "Pendek",
-    scn_long: "Panjang",
-    g_cat_scene: "SCENE OP \u2014 subjek Anda terkunci (wajah \u00b7 pose \u00b7 busana \u00b7 bingkai); seluruh adegan yang dihasilkan (cahaya, bayangan, warna, latar, latar depan, objek, atmosfer) otomatis diselaraskan dengan subjek agar hasil komposit tampak seperti foto sungguhan.",
-    crd_wed: "\u2665 Wedding Pro Suite",
-    crd_recipes: "Recipes \u2014 simpan / bagikan",
-    learn_lbl: "\ud83c\udf93 Learn Mode \u2014 ketukan 1 = panduan (kuning), 2 = prompt (biru), 3 = JALANKAN (hijau)",
     guide_hint: "Ketuk lagi: kuning \u2192 biru (prompt) \u2192 hijau (jalankan) \u25b6",
     g_learn_next_prompt: "Ketuk lagi \u2192 menampilkan PROMPT persisnya (biru).",
     g_learn_prompt_head: "PROMPT yang akan dikirim tombol ini (ketuk lagi = JALANKAN):",
     g_learn_next_run: "Ketuk sekali lagi \u2192 RUN (hijau) mulai membuat.",
     st_prompt_ready: "Prompt siap \u2014 ketuk lagi (hijau) untuk menjalankan \u2713",
-    g_step_doc: "Buka dokumen foto Anda di Photoshop dulu.",
-    g_step_ref1: "Muat gambar referensi ke Ref1 (jadi IMAGE 2). Tambahkan Ref2 untuk orang kedua.",
-    g_step_target: "Pilih Target: Solo / Couple (Ref1 = perempuan, Ref2 = laki-laki) / Family.",
-    g_step_mkhair: "Opsional: centang \u2018Copy ref makeup\u2019 / \u2018Take ref hairstyle\u2019 di atas Face Ops.",
-    g_step_petal: "Pilih warna kelopak dulu (auto = mengikuti adegan Anda).",
-    g_step_rest: "Pilih Full Color atau B&W dengan \u2713 di atas.",
-    g_step_int: "Atur slider Intensity sesuai selera.",
     g_step_confirm: "Ketuk lagi untuk lanjut: GUIDE (kuning) \u2192 PROMPT (biru) \u2192 RUN (HIJAU mulai membuat).",
-    g_cat_face: "FACE OP \u2014 memindahkan wajah referensi ke orang yang bersesuaian; yang lain tetap tidak berubah.",
-    g_cat_sub: "SUBJECT OP \u2014 membawa/melebur ORANG dari referensi ke adegan Anda; adegan dan bingkai tetap.",
-    g_cat_bgfg: "BG/FG OP \u2014 hanya mengubah latar / latar depan memakai referensi.",
-    g_cat_lc: "LIGHT & COLOR OP \u2014 menyalin pencahayaan dan grade referensi; orangnya tetap setia piksel demi piksel.",
-    g_cat_dress: "DRESS OP \u2014 hanya mengubah busana memakai referensi.",
-    g_cat_mkop: "MAKEUP OP \u2014 hanya mengubah riasan memakai referensi.",
-    g_cat_match: "MASTER MATCH \u2014 membuat foto Anda menyamai keseluruhan tampilan referensi (centang lapisannya di atas).",
-    g_cat_trail: "WEDDING TRAIL \u2014 rumput mewah + jalur bunga yang mengalir; wajah/pose/bingkai terkunci mati.",
-    g_cat_veil: "FLYING VEIL \u2014 menambah/memanjangkan kerudung tertiup angin sepanjang ini; wajah tak pernah tertutup.",
-    g_cat_gown: "GOWN \u2014 merapikan gaun yang ada (desain tidak berubah) dan menetapkan panjang ekor ini.",
-    g_cat_petal: "FLYING PETALS \u2014 menambahkan kelopak melayang dengan gaya ini; warnanya dari palet di atas.",
-    g_cat_wedx: "WEDDING EXTRA \u2014 menambahkan elemen ini agar selaras dengan adegan Anda; subjek tetap terkunci.",
-    g_cat_canvas: "REPLACE (CANVAS) \u2014 menempatkan subjek ANDA ke adegan referensi; orang di referensi dihapus.",
-    g_cat_restore: "OLD PHOTO RESTORE \u2014 memperbaiki kerusakan; setiap wajah asli tetap 100% sama.",
     g_cat_generic: "PRESET \u2014 menerapkan hasil edit profesional ini ke foto Anda.",
     g_gen: "GENERATE \u2014 menjalankan kotak prompt (+ chains, kunci Keep, blok kamera) pada dokumen Anda.",
     g_retouchbtn: "RETOUCH APPLY \u2014 menjalankan seluruh setelan slider Anda sebagai satu proses retouch profesional.",
-    g_relightbtn: "LIGHTING GENERATE \u2014 menyinari ulang foto persis sesuai diagram lampu 3D Anda.",
-    g_scene: "SCENE GENERATE \u2014 membangun ulang adegan dari prompt hasil ekstraksi; subjek tetap.",
-    g_rmix: "REPLACE MIX \u2014 hanya mengganti bagian yang dicentang \u2713 dari referensi.",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
     ro_bgSwap: "BG Swap",
     ro_fgRep: "FG Replace",
-    ro_bg_note: "Doc = subjek \u00b7 Ref1 = adegan baru. Target (Solo/Couple/Family) menentukan siapa yang dipertahankan.",
-    ro_bg_frame: "Pertahankan bingkai & komposisi",
-    ro_bg_light: "Pertahankan cahaya/warna subjek",
     ro_subSwap: "Subject Swap",
     ro_lcRef: "L&C Reference",
     ro_lcCopy: "L&C Copy-Paste",
@@ -5647,94 +2291,8 @@ const I18N = {
     ro_dressRep: "Dress Replace",
     ro_mkCopy: "Makeup Copy",
     ro_matchBtn: "\u2605 MASTER MATCH",
-    grp_retouch: "Preset Retouch Kulit",
-    lbl_intensity: "Kekuatan",
-    p_evoto: "Retouch B Style",
-    p_meitu: "Retouch A Style",
-    auto_place: "Otomatis tempatkan hasil ke Photoshop sebagai layer baru",
-    sec_retouchpro: "Retouch Pro \u2014 Sliders",
-    rt_skin: "Kulit",
-    rt_faceai: "Face AI",
-    rt_hair: "Rambut",
-    rt_dress: "Busana",
-    rt_bg: "Latar",
-    rt_smooth: "Haluskan Kulit",
-    rt_acne: "Hapus Jerawat",
-    rt_spots: "Noda Gelap",
-    rt_wrinkle: "Kerutan",
-    rt_tone: "Cerah / Sawo Matang",
-    rt_glow: "Kilau",
-    rt_reshape: "AI Reshape",
-    rt_lash: "Bulu Mata",
-    rt_brow: "Alis",
-    rt_lipsmooth: "Haluskan Bibir",
-    rt_lipcolor: "Warna Bibir",
-    rt_lenscolor: "Warna Lensa Mata",
-    rt_hairstray: "Rambut Liar",
-    rt_hairsmooth: "Haluskan Rambut",
-    rt_hairshine: "Kilau Rambut (D&B)",
-    rt_dresssmooth: "Haluskan Kain",
-    rt_dressedge: "Rapikan Tepi",
-    rt_dresswrinkle: "Hapus Kusut",
-    rt_dresstexture: "Pulihkan Tekstur",
-    rt_bgsmooth: "Bersihkan/Haluskan Latar",
-    rt_bgcolor: "Warna Latar",
-    rt_bgrecolor: "Haluskan Warna Latar",
-    rt_shape: "Reshape Pro (Wajah + Tubuh)",
-    rt_teeth: "Putihkan Gigi",
-    rt_eyewhite: "Bersihkan Putih Mata",
-    rt_faceslim: "Tirus Wajah",
-    rt_jaw: "Garis Rahang",
-    rt_chin: "Dagu",
-    rt_nosesize: "Ukuran Hidung",
-    rt_eyesize: "Ukuran Mata",
-    rt_lipfull: "Bibir Berisi",
-    rt_waist: "Ramping Pinggang",
-    rt_bodyslim: "Ramping Tubuh",
-    rt_shoulder: "Bahu",
-    rt_hip: "Ramping Pinggul",
-    rt_leglen: "Panjang Kaki",
-    rt_armslim: "Ramping Lengan",
-    rt_dressfit: "Kepasan Busana",
-    rt_dressclean: "Bersihkan Busana",
-    rt_dresscolorpure: "Murnikan Warna Busana",
-    rt_bodygrp: "Body Skin Pro",
-    rt_bodysmooth: "Haluskan Kulit Tubuh",
-    rt_bodyblemish: "Bersihkan Noda Tubuh",
-    rt_bodytone: "Ratakan Warna Kulit",
-    rt_bodyglow: "Kilau Tubuh",
-    rt_bodyhairrm: "Kurangi Bulu",
-    rt_hairvolume: "Volume Rambut",
-    rt_hairgloss: "Gloss Rambut",
-    rt_hairfill: "Isi Rambut (area tipis)",
-    wp_h_trail: "\u2665 Wedding \u2014 Jalur Bunga Mewah",
-    wp_h_veil: "\u2665 Wedding \u2014 Kerudung Terbang",
-    wp_h_gown: "\u2665 Wedding \u2014 Rapikan Gaun + Ekor",
-    wp_h_petal: "\u2665 Wedding \u2014 Kelopak Terbang",
-    wp_h_extra: "\u2665 Wedding \u2014 Kuda \u00b7 Air \u00b7 Suasana",
-    wp_note: "Face ID / pose / bingkai / desain gaun terkunci mati \u2014 hanya elemen yang disebut yang berubah.",
-    wp_petalcolor: "Warna Kelopak (auto = ikut adegan)",
-    wp_trail_c: "Warna bunga",
-    wp_trail_go: "\u25b6 Jalur Bunga",
-    wp_veil_c: "Panjang kerudung",
-    wp_veil_go: "\u25b6 Kerudung Terbang",
-    wp_gown_c: "Panjang ekor",
-    wp_gown_go: "\u25b6 Rapikan Gaun + Ekor",
-    wp_pet_c: "Gaya kelopak",
-    wp_pet_go: "\u25b6 Kelopak Terbang",
-    wp_extra_c: "Tambahan",
-    wp_extra_go: "\u25b6 Tambah Elemen",
-    btn_apply_rt: "Terapkan Retouch",
-    btn_reset: "Atur Ulang",
     rt_none: "Atur minimal satu slider atau warna retouch dulu",
-    tab_setup: "Setup",
-    tab_prompt: "Edit",
-    tab_presets: "Library",
-    recent_lbl: "Prompt terbaru\u2026",
-    tab_retouch: "Retouch",
-    tab_aitools: "Home",
     cap_warn: "Photoshop membatasi kotak prompt ini pada:",
-    cleanup_note: "Item yang dicentang ikut berjalan pada SETIAP Generate / preset.",
     btn_generate: "GENERATE",
     st_ready: "Siap",
     st_capture: "Mengambil dokumen",
@@ -5751,68 +2309,16 @@ const I18N = {
     st_err: "Kesalahan",
     st_no_doc: "Tidak ada dokumen aktif \u2014 buka foto dulu",
     st_no_prompt: "Prompt masih kosong",
-    need_ref: "Preset ini butuh gambar referensi di slot 1",
     st_new_doc: "Hasil dibuka sebagai dokumen baru \u2713",
-    sec_preview: "Pratinjau \u2014 Before / After",
     before: "SEBELUM",
     after: "SESUDAH",
     btn_place: "Tempatkan ke Photoshop",
-    btn_saveas: "Simpan Sebagai\u2026",
     st_saved: "Tersimpan \u2713",
-    sec_diag: "Pemeriksaan Sistem",
-    sec_log: "Catatan Aktivitas",
-    btn_diag: "Jalankan Pemeriksaan",
-    btn_copylog: "Salin Log",
-    btn_clearlog: "Bersihkan",
-    diag_host: "Aplikasi Photoshop",
-    diag_uxp: "Kemampuan UXP",
-    diag_rh: "RunningHub Enterprise key",
-    diag_doc: "Dokumen aktif",
-    diag_set: "tersetel",
-    diag_unset: "belum disetel",
-    diag_open: "terbuka",
-    diag_none: "tidak ada",
-    diag_missing: "tidak ditemukan",
-    diag_done: "Pemeriksaan sistem selesai \u2713",
-    diag_lib: "Pustaka Referensi",
-    diag_lib_open: "Kemampuan buka folder",
-    sec_reflib: "Pustaka Gambar Referensi",
-    reflib_note: "Pilih sekali saja folder gambar referensi favorit Anda \u2014 Browse akan mengingatnya dan langsung membukanya di mana pun.",
-    btn_browse: "Telusuri",
-    lib_choose: "Pilih Folder",
-    lib_open: "Buka Folder",
-    lib_change: "Ganti Folder",
-    lib_reset: "Atur Ulang",
-    lib_rescan: "Pindai Ulang",
-    lib_current: "Folder Saat Ini",
-    lib_found: "Gambar Ditemukan",
-    lib_status: "Status",
-    lib_lastscan: "Pindai Terakhir",
-    lib_images: "gambar",
-    lib_connected: "Terhubung",
-    lib_not_config: "Belum dikonfigurasi",
-    lib_perm_lost: "Izin hilang \u2014 pilih ulang",
-    lib_none: "(belum ada folder dipilih)",
-    lib_copy_only: "salin path saja",
     lib_choose_msg: "Pilih folder Pustaka Gambar Referensi HNK Anda.",
-    lib_scanning: "Memindai pustaka\u2026",
-    lib_scan_done: "Pindai ulang selesai \u2713",
-    lib_reset_done: "Pustaka diatur ulang \u2713",
-    lib_path_copied: "Path tersalin",
     lib_unsupported: "Jenis gambar tidak didukung",
     lib_restore_fail: "Referensi tidak dapat dipulihkan",
     on: "AKTIF",
     off: "MATI",
-    ai_home_title: "Anda ingin membuat apa?",
-    ai_greet_morning: "Selamat pagi",
-    ai_greet_afternoon: "Selamat siang",
-    ai_greet_evening: "Selamat malam",
-    ai_free_generate: "Buat Bebas",
-    ai_free_sub: "Tulis prompt Anda sendiri",
-    ai_more_tools: "Alat Lainnya",
-    ai_more_sub: "Water Edit \u00b7 Text/Logo \u00b7 semua workflow",
-    ai_nav_home: "Beranda",
-    ai_nav_tools: "Alat",
     ai_history: "Riwayat",
     ai_no_gen: "Belum ada hasil.",
     ai_videos: "Video",
@@ -5839,14 +2345,11 @@ const I18N = {
     ai_lib_pick_first: "Pilih foto dari tab Presets \u2192 Visual Library dulu.",
     ai_lib_load_fail: "Gambar Library gagal dimuat.",
     ai_missing: "Belum ada",
-    ai_add: "Tambah",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 tambah model endpoint (Lanjutan \u2014 opsional)",
     ai_rh_note: "Model bawaan sudah berjalan dengan key di atas \u2014 tidak perlu diatur. Jika sebuah model menampilkan \"not connected\" (endpoint path-nya belum dipastikan), salin path dari dokumentasi API RunningHub lalu tempel di sini.",
     ai_rh_save: "Simpan endpoint model ini",
     ai_test_conn: "Uji koneksi",
-    ai_save_verify: "Simpan & Verifikasi",
-    ai_settings: "Pengaturan",
     ai_add_layers: "Tambahkan hasil sebagai Layer baru",
     ai_done: "Selesai.",
     ai_result_ready: "Hasil siap.",
@@ -5857,21 +2360,6 @@ const I18N = {
     ai_placed_group: "Ditempatkan ke grup \u201c{name}\u201d sebagai Layer baru (mask tidak tersedia di host ini).",
     ai_placed_plain: "Ditempatkan sebagai Layer baru (group/mask tidak tersedia di host ini).",
     ai_start_fail: "AI Tools gagal dijalankan",
-    pgb_setup: "Set up once — ready whenever you are",
-    pgb_studio: "Bring every scene you imagine to life — your way",
-    pgb_create: "One line of text becomes a professional image",
-    pgb_presets: "1850 curated looks — pick one and start instantly",
-    pgb_aitools: "Sekali ketuk profesional \u2014 Nano Banana \u00b7 RunningHub",
-    pgb_retouch: "Flawless retouching that stays natural",
-    wf_sum_bg_replace: "Ganti latar",
-    wf_sum_reference_transfer: "Masukkan subjek Anda ke adegan reference",
-    wf_sum_master_bgfg_replace: "Hapus orang di adegan, bangun ulang bg/fg, masukkan subjek Anda",
-    wf_sum_subject_face: "Pindahkan subjek atau wajah ke gambar base",
-    wf_sum_retouch: "Penyempurnaan potret yang natural",
-    wf_sum_upscale: "Perbesar tanpa kehilangan detail",
-    wf_sum_object_edit: "Hapus, ganti, atau tambah objek",
-    wf_sum_water_edit: "Edit air dan pantulan",
-    wf_sum_text_logo: "Tambah atau edit teks dan logo",
     wfin_subject: "Foto Anda (subjek)",
     wfin_new_bg: "Latar baru (opsional)",
     wfin_ref_scene: "Adegan reference",
@@ -5883,45 +2371,43 @@ const I18N = {
     wfin_image: "Gambar",
     wfin_object_ref: "Reference objek (opsional)",
     wfin_logo_ref: "Reference logo (opsional)",
-    wf_exp_bg_replace: "Mengganti latar di belakang subjek. Orang, pose, tepi, dan pencahayaan tetap persis sama \u2014 hanya bagian di belakangnya yang berubah.",
-    wf_exp_reference_transfer: "Mengambil seluruh adegan foto reference (tetapi BUKAN orang di dalamnya) lalu menempatkan subjek ANDA ke sana \u2014 menjaga identitas, pose, dan bingkai subjek, serta menyelaraskan cahaya dan perspektif adegan.",
-    wf_exp_master_bgfg_replace: "Penggantian subjek dalam adegan yang paling ketat: menghapus orang dari adegan reference sepenuhnya, merekonstruksi latar dan latar depan yang tertutup secara alami, lalu menempatkan subjek Anda persis di titik itu \u2014 identitas, pose, proporsi, gaya rambut, busana, kulit, dan pencahayaan dikunci dari foto Anda, sedangkan reference hanya menyediakan adegan, sudut kamera, dan kedalaman.",
-    wf_exp_subject_face: "Memadukan subjek atau wajah dari reference ke gambar base secara mulus, dengan komposisi base tetap utuh.",
-    wf_exp_retouch: "Memberi retouch alami pada kulit, rambut, dan tona. Identitas, fitur, dan ekspresi tetap dipertahankan \u2014 tanpa kulit plastik, tanpa perubahan wajah.",
-    wf_exp_upscale: "Memperbesar gambar sekaligus memulihkan detail alami pada kulit, rambut, dan kain. Identitas, pose, komposisi, dan warna tetap persis sama \u2014 tanpa penghalusan plastik.",
-    wf_exp_object_edit: "Menghapus, mengganti, atau menambah objek lewat edit lokal yang terkontrol. Semua yang tidak Anda sentuh tetap sama.",
-    wf_exp_water_edit: "Menambah atau mengedit air, pantulan, dan permukaan basah agar tampak wajar secara fisik, tanpa mengubah subjek Anda.",
-    wf_exp_text_logo: "Menambah atau mengedit teks atau logo yang bersih dan mudah dibaca pada gambar, dengan komposisi tetap terjaga."
   },
   /* ---- Malay (ms) — 587 keys, complete ---- */
   ms: {
+    rh_err_network: "Tidak dapat mencapai RunningHub Enterprise — talian terputus. Semak internet dan cuba lagi.",
+    rh_err_task_failed: "Tugas RunningHub gagal — cuba prompt/foto lain",
+    rh_err_host_blocked: "Photoshop menolak hos ini — manifest panel tidak membenarkannya. Pasang panel terkini.",
+    rh_err_timeout: "Penjanaan terlalu lama — RunningHub tidak menjawab tepat pada masanya. Cuba lagi, atau kurangkan saiz / bilangan.",
+    rh_err_rate_limited: "RunningHub Enterprise sibuk sekarang — tunggu sebentar dan cuba lagi.",
+    rh_err_invalid_key: "RunningHub menolak key — semak di Setup ▸ RunningHub Enterprise.",
+    wf_exp_bg_replace: "Menggantikan latar di belakang subjek. Orang, pose, tepi dan pencahayaan kekal sama \u2014 hanya bahagian di belakangnya berubah.",
+    wf_exp_reference_transfer: "Mengambil keseluruhan adegan foto reference (tetapi BUKAN orang di dalamnya) dan meletakkan subjek ANDA ke dalamnya \u2014 mengekalkan identiti, pose dan bingkai subjek, serta memadankan cahaya dan perspektif adegan.",
+    wf_exp_master_bgfg_replace: "Penggantian subjek dalam adegan yang paling ketat: membuang orang dari adegan reference sepenuhnya, membina semula latar dan latar depan yang terlindung secara semula jadi, kemudian meletakkan subjek anda tepat di tempat itu \u2014 identiti, pose, perkadaran, gaya rambut, pakaian, kulit dan pencahayaan dikunci dari foto anda, manakala reference hanya membekalkan adegan, sudut kamera dan kedalaman.",
+    wf_exp_subject_face: "Menggabungkan subjek atau wajah dari reference ke imej base dengan lancar, sambil mengekalkan komposisi base.",
+    wf_exp_retouch: "Memberikan retouch semula jadi pada kulit, rambut dan tona. Identiti, ciri wajah dan ekspresi dikekalkan \u2014 tiada kulit plastik, tiada perubahan wajah.",
+    wf_exp_upscale: "Membesarkan imej sambil memulihkan perincian semula jadi pada kulit, rambut dan kain. Identiti, pose, komposisi dan warna kekal sama \u2014 tiada pelicinan plastik.",
+    wf_exp_object_edit: "Membuang, mengganti atau menambah objek melalui suntingan setempat yang terkawal. Segala yang anda tidak sentuh kekal sama.",
+    wf_exp_water_edit: "Menambah atau menyunting air, pantulan dan permukaan basah supaya kelihatan wajar dari segi fizikal, tanpa mengubah subjek anda.",
+    wf_exp_text_logo: "Menambah atau menyunting teks atau logo yang bersih dan mudah dibaca pada imej, sambil mengekalkan komposisi.",
+    ai_key_lives_in_setup: "Kunci RunningHub Enterprise diurus di tab Setup — simpan sekali, digunakan di mana-mana.",
+    ai_settings_defaults: "AI Tools — Lalai",
+    ai_learn_mode: "Learn Mode — ketik GENERATE dijelaskan dahulu",
+    job_needkey: "Tambah kunci RunningHub di Setup dahulu",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
-    sec_ready: "Status kesediaan",
-    sec_acct: "AKAUN",
     ava_change: "Tukar foto profil",
     ava_remove: "Buang foto",
     ava_saved: "Foto disimpan",
     ava_removed: "Foto dibuang",
     ava_fail: "Imej tidak boleh digunakan — cuba yang lain",
     ava_working: "Menyediakan foto…",
-    sec_money: "KOS & BAKI",
-    sec_data: "Data & sandaran",
-    sec_about: "Aplikasi & kemas kini",
-    btn_get_update: "Muat turun kemas kini",
-    upd_hint: "Panel memuat turun keluaran baharu sendiri — anda sudah log masuk. Photoshop tidak membenarkan pemalam menggantikan failnya sendiri, jadi langkah terakhir milik anda: klik dua kali fail .ccx yang disimpan dan Creative Cloud akan memasangnya.",
     upd_web: "Membuka Web App — dapatkan Panel di Account → Photoshop Panel.",
-    upd_none: "Ini keluaran terbaharu.",
     money_intro: "Setiap GENERATE direkod pada jumlah yang RunningHub benar-benar caj — bukan anggaran. Baki dibaca terus daripada akaun RunningHub anda.",
     money_bal: "Baki",
     money_refresh: "Semak baki",
     money_nokey: "Simpan kunci RunningHub dahulu, barulah baki boleh dibaca.",
     money_fail: "Baki tidak dapat dibaca — lejar di bawah tetap tepat. RunningHub menjawab:",
     money_never: "belum disemak",
-    btn_export_backup: "Eksport sandaran",
-    btn_import_backup: "Pulihkan sandaran",
-    btn_check_update: "Semak kemas kini",
-    btn_hard_refresh: "Kosongkan cache + mula semula",
     gate_sub_login: "Log masuk dengan akaun HNK anda untuk menggunakan panel ini.",
     gate_email_ph: "E-mel",
     gate_pass_ph: "Kata laluan",
@@ -5950,38 +2436,11 @@ const I18N = {
     gate_service_down: "Tidak dapat menghubungi pelayan lesen — semak internet dan tekan Semak semula.",
     gate_no_lease: "Pelayan tidak memberi lesen panel — tekan Semak semula.",
     gate_sent_as: "Dihantar sebagai {E} · {N} aksara",
-    app_title: "HNK Photoshop Ai Panel (Pelajar)",
-    sec_api: "RunningHub Enterprise Key",
     btn_show: "Papar",
-    btn_hide: "Sembunyi",
-    btn_test: "Uji Key",
     btn_save: "Simpan",
-    st_testing: "Menguji key",
-    st_key_ok: "\u2713 API key berfungsi",
-    st_key_bad: "API key gagal",
-    st_key_saved: "API key disimpan \u2713",
     st_need_key: "Masukkan RunningHub Enterprise key anda dahulu",
-    sec_model: "Model & Output",
-    scope_model_note: "Digunakan oleh butang Generate pada tab Prompt di bawah \u2014 Create dan AI Tools masing-masing ada tetapan model tersendiri.",
-    model_auto: "Automatik (disyorkan)",
-    model_flash: "Flash \u2014 pantas (2.5)",
-    model_pro: "Pro \u2014 kualiti (3.0)",
-    lbl_ratio: "Nisbah",
-    ratio_auto: "Nisbah automatik (dari dokumen)",
-    lbl_size: "Saiz",
-    lbl_quality: "Kualiti",
     qual_auto: "Automatik",
-    qual_low: "Rendah",
-    qual_med: "Sederhana",
-    qual_high: "Tinggi",
-    sec_prompt: "Prompt",
-    hint_prompt: "Taip prompt anda di sini\u2026 (maks 20,000 aksara)",
-    btn_improve: "Perbaik Prompt",
     btn_clear: "Kosongkan",
-    st_improving: "Memperbaik prompt",
-    st_improved: "Prompt diperbaik \u2713",
-    sec_refs: "Imej Rujukan (2 slot)",
-    base_note: "Imej asas = dokumen Photoshop anda yang aktif (diambil secara automatik).",
     btn_ref_layer: "+ Layer",
     btn_ref_file: "Fail",
     btn_ref_web: "Web",
@@ -5989,9 +2448,7 @@ const I18N = {
     st_photo_layer_added: "Layer ditambah sebagai gambar ✓",
     st_ref_file_added: "Fail ditambah sebagai rujukan \u2713",
     st_importing: "Mengimport fail",
-    url_title: "Rujukan dari URL \u2014 Chrome / Pinterest",
     url_ph: "https://\u2026 alamat imej atau pautan pin Pinterest",
-    btn_paste: "Tampal",
     btn_load: "Muat",
     btn_cancel: "Batal",
     btn_ok: "OK",
@@ -6000,178 +2457,22 @@ const I18N = {
     st_ref_web_added: "Imej web ditambah sebagai rujukan \u2713",
     st_url_bad: "Tidak dapat memuatkan imej dari URL ini \u2014 salin alamat imej dan cuba lagi",
     no_layer: "Tiada layer dipilih",
-    sec_presets: "AI Presets",
-    auto_run: "Klik preset \u2192 Generate automatik (MATI = sisip ke prompt sahaja)",
-    grp_cleanup: "Alat Pembersihan",
-    p_remove_people: "Buang Orang",
-    p_fix_hands: "Betulkan Tangan Berlebihan",
-    p_fix_legs: "Betulkan Kaki Berlebihan",
-    p_full_clean: "Bersih Sepenuhnya",
-    grp_moved_note: "Alat Reference kini berada dalam kad Reference Ops Pro di bawah (satu tempat, dengan Solo/Couple/Family + panduan).",
-    ro_h_detail: "Rambut \u00b7 Aksesori \u00b7 Pose (\u2190 Ref1)",
-    ro_h_comp: "Komposit \u00b7 Gaya \u00b7 Teks (\u2190 Ref1)",
-    p_fgbglc: "FG=Doc \u00b7 BG=Ref1 \u00b7 Light=Ref2",
-    p_hair: "Gaya Rambut (\u2190 Ref1)",
-    p_access: "Barang Kemas + Aksesori (\u2190 Ref1)",
-    p_pose: "Padan Pose (Doc \u2192 Ref1)",
-    p_fgprops: "Prop Latar Depan (\u2190 Ref1)",
-    p_textlogo: "Teks / Logo (\u2190 Ref1)",
-    p_style: "Gaya Foto (\u2190 Ref1)",
-    grp_repsubj: "Ganti Subjek (Doc \u2192 adegan Ref1)",
-    p_rep_solo: "Ganti Solo",
-    p_rep_couple: "Ganti Pasangan",
-    p_rep_family: "Ganti Keluarga",
-    grp_rmix: "Replace Mix \u2014 tanda dan ambil dari Ref1",
-    rm_bg: "Latar (BG)",
-    rm_fg: "Latar Depan (FG)",
-    rm_light: "Pencahayaan",
-    rm_color: "Warna",
-    rm_object: "Objek / Prop",
-    btn_rmix: "REPLACE GENERATE",
-    rm_none: "Tandakan sekurang-kurangnya satu aspek dahulu",
-    grp_i2p: "Image \u2192 Prompt (Scene Builder)",
-    i2p_note: "1) Ekstrak: adegan Ref1 \u2192 prompt teks terperinci (tanpa orang). 2) Sunting di halaman Prompt. 3) SCENE GENERATE membinanya mengelilingi subjek dokumen anda \u2014 dipadankan automatik ke sebarang sudut. Kunci Face/Pose/Frame = kekalkan asal.",
-    i2p_objects: "Perincian objek & prop",
-    i2p_light: "Perincian pencahayaan",
-    i2p_color: "Perincian warna / grade",
-    i2p_bg: "Perincian latar",
-    i2p_fg: "Perincian latar depan",
-    btn_i2p: "Image \u2192 Prompt (Ekstrak Adegan)",
-    i2p_fit: "Scene Auto-Fit \u2014 unjur semula adegan mengikut sudut / jarak / lensa dokumen",
-    i2p_adapt: "Sesuaikan cahaya & warna subjek dengan adegan",
-    btn_scenegen: "SCENE GENERATE",
-    st_extract: "Mengekstrak adegan menjadi prompt",
-    st_extract_done: "Prompt adegan sedia \u2014 semak di halaman Prompt",
-    scene_no_prompt: "Kotak prompt kosong \u2014 jalankan Image \u2192 Prompt dahulu",
-    i2p_none: "Tandakan sekurang-kurangnya satu aspek perincian dahulu",
-    sec_light: "Studio Lighting \u2014 AI Relight",
-    light_note: "Tandakan lampu untuk hidupkan, ketik satu baris untuk memilihnya, bentuknya dengan slider \u2014 rajah pandangan atas 3D mengikut secara langsung (\u25b4 = tinggi, \u25be = rendah). LIGHTING GENERATE menyinari semula dokumen tepat mengikut susunan ini; wajah / pose / bingkai kekal terkunci.",
-    lbl_my_prompt: "PROMPT BAHASA MELAYU",
-    lstage_model: "MODEL",
-    lstage_cam: "CAM",
-    l_key: "Key Light",
-    l_fill: "Fill / Depan",
-    l_butterfly: "Butterfly (atas-depan)",
-    l_side: "Cahaya Sisi",
-    l_rim: "Rim Light",
-    l_back: "Back Light",
-    l_hair: "Hair Light",
-    l_bglight: "Cahaya Latar",
-    lt_softbox: "Softbox",
-    lt_octa: "Octa",
-    lt_strip: "Strip",
-    lt_umbrella: "Umbrella",
-    lt_beauty: "Beauty",
-    lt_hard: "Hard",
-    li_int: "Keamatan",
-    li_angle: "Sudut",
-    li_height: "Ketinggian",
-    li_dist: "Jarak",
-    li_size: "Saiz",
-    btn_lightgen: "LIGHTING GENERATE",
-    light_none: "Hidupkan sekurang-kurangnya satu lampu dahulu",
-    lg_equip: "Tunjuk peralatan lampu dalam foto (softbox / stand kelihatan)",
-    grp_chains: "Style Chains \u2014 gabungkan gaya \u2713",
-    chains_note: "Hidupkan mana-mana gaya \u2014 semuanya bergabung ke dalam SETIAP Generate / preset / Retouch sekali gus.",
-    grp_restore: "Pemulihan Foto Lama",
-    p_restore: "Pemulihan Foto Lama",
-    rest_color: "Warna Penuh",
-    rest_bw: "Hitam & Putih",
-    restore_note: "Membaiki koyakan, kerosakan air / terbakar dan warna pudar \u2014 mengekalkan setiap wajah asal 100% serupa.",
-    rt_browstyle: "Gaya Kening",
-    rt_lashstyle: "Gaya Bulu Mata",
-    rt_blush: "Warna Pemerah Pipi",
-    rt_contour: "Gaya Kontur",
-    rt_bust: "Dada",
-    rt_butt: "Punggung",
-    rt_thigh: "Peha",
-    rt_calf: "Betis",
-    rt_neck: "Leher",
-    rt_fingers: "Jari",
-    hint_prompt_my: "Tulis sahaja dalam bahasa Melayu \u2014 semasa Generate ia diterjemah automatik ke bahasa Inggeris (maks 20,000)",
-    st_translate: "Menterjemah prompt ke bahasa Inggeris",
-    live_trans: "Terjemah automatik langsung \u21c4 (EN \u2194 MS, selepas anda berhenti menaip)",
-    st_retry: "Mencuba semula",
-    grp_recipes: "Recipes \u2014 simpan / kongsi tetapan",
-    recipe_note: "Simpan SEMUANYA (chains, retouch, lampu, kunci, prompt) sebagai satu fail .json \u2014 pelajar hanya perlu Load.",
-    btn_recipe_save: "Simpan Recipe",
-    btn_recipe_load: "Muat Recipe",
-    st_recipe_saved: "Recipe disimpan \u2713",
-    st_recipe_loaded: "Recipe dimuat \u2713 \u2014 semua kawalan dikemas kini",
-    st_recipe_bad: "Bukan fail Recipe HNK",
-    sec_final: "Prompt Akhir (dihantar ke AI)",
-    btn_copy: "Salin",
-    st_copied: "Disalin \u2713",
-    hist_note: "Sejarah \u2014 6 hasil terkini, ketik untuk lihat:",
-    btn_hist_prompt: "\u2192 Prompt",
-    sec_batch: "Batch Mode",
-    batch_note: "Pilih banyak foto + satu folder output \u2014 prompt, chains, cleanup dan kunci Keep semasa dijalankan pada setiap foto; hasil disimpan sebagai *_HNK.png.",
-    btn_batch: "JALANKAN BATCH",
-    btn_batch_stop: "Berhenti",
-    st_batch: "Batch",
-    st_batch_done: "Batch selesai",
-    sec_web: "Web AI \u2014 Pelayar Mini",
-    web_note: "Buka mana-mana editor AI web di dalam Photoshop. Jana di sana, kemudian bawa hasilnya masuk sebagai layer:",
-    web_import_note: "Import: \u2460 dalam web app guna Copy image address, kemudian IMPORT COPIED LINK \u00b7 \u2461 atau muat turun failnya dan guna IMPORT FILE \u00b7 \u2462 web app rakan yang mempunyai HNK bridge menghantar imej masuk secara automatik.",
-    btn_web_go: "Pergi",
-    btn_web_home: "Utama",
-    btn_web_reload: "Muat semula",
-    btn_web_import_link: "IMPORT PAUTAN DISALIN \u2192 PS",
-    btn_web_import_file: "IMPORT FAIL \u2192 PS",
     st_web_import: "Diimport ke Photoshop sebagai layer \u2713",
-    st_web_nourl: "Salin pautan imej dahulu (klik kanan \u2192 Copy image address)",
-    st_web_fetch: "Mengambil imej dari pautan",
-    st_web_notallowed: "Domain ini tiada dalam senarai dibenarkan \u2014 ia mungkin kekal kosong. Minta HNK menambahkannya.",
-    st_need_doc: "Buka dokumen foto dalam Photoshop dahulu",
-    sec_campro: "Camera Pro & Kualiti",
-    autosave_lbl: "Auto-eksport setiap hasil (PNG + log prompt \u2192 folder)",
     st_folder_ok: "Folder eksport ditetapkan \u2713",
     st_exported: "Dieksport \u2713",
     st_export_fail: "Eksport gagal \u2014 periksa foldernya",
-    st_pro_fallback: "Model Pro tidak tersedia \u2014 beralih ke Flash untuk larian ini",
     st_img_bad: "Data imej gagal pemeriksaan integriti \u2014 tambah semula fotonya",
     st_auto_comp: "Komposit Automatik: subjek IMAGE 1 \u2192 adegan rujukan",
-    prov_lbl: "Pembekal AI",
-    tab_create: "Create",
-    create_note: "MOD CREATE \u2014 imej baharu sepenuhnya daripada prompt anda (+ 4 ref tersendiri). Berdiri sendiri: tidak pernah membaca dokumen, preset, chains atau kunci.",
     create_ph: "Terangkan imej yang anda mahu",
     btn_create_ps: "\u2b07 Hantar ke Photoshop",
     btn_to_ref: "\u21ba Guna sebagai Ref 1",
     st_to_ref: "Hasil dimuat ke Ref 1 \u2713",
-    scope_create_note: "Berasingan daripada Model & Output milik Setup \u2014 tetapan ini hanya digunakan untuk Generate dalam Create.",
-    cr_ratio: "Nisbah",
-    cr_var: "Variasi",
     cr_restyle: "\u267b Ubah gaya hasil",
-    cr_lib: "Pustaka Prompt \u2014 ketik untuk sisip",
-    cr_improve: "\u2728 Perbaik",
-    cr_describe: "\ud83d\udd0d Baca Ref 1 \u2192 Prompt",
-    st_describing: "Membaca imej rujukan\u2026",
-    st_described: "Prompt ditulis daripada Ref 1 \u2713",
-    st_need_ref1: "Tambah imej ke Ref 1 dahulu",
-    st_lib_added: "Prompt ditambah \u2713",
-    cr_refs: "Imej Rujukan (sehingga 4)",
-    cr_refs_note: "Pilihan \u2014 tambah melalui Layer / File / Web. Create hanya mengambil apa yang diminta oleh prompt anda.",
-    cr_results: "Hasil",
     cr_gal_empty: "Belum ada hasil \u2014 ketik Generate.",
     cr_gal_have: "hasil \u00b7 ketik imej kecil untuk lihat / bertindak",
     cr_save: "\u2b07 Simpan PNG",
-    cr_engine: "Engine",
     cr_need_result: "Jana satu imej dahulu",
-    btn_web_import_url: "\u2b07 Import URL",
-    st_clip_help: "Papan keratan kosong/disekat \u2014 tampal pautan ke bar URL, kemudian ketik \u2b07 Import URL",
-    st_web_blob: "Itu pautan blob: sementara \u2014 guna klik kanan \u2192 Copy IMAGE Address, atau simpan failnya dan guna Import File",
-    err_key: "API key tidak sah \u2014 semak semula key pada tab Setup",
-    err_quota: "Kuota / had kadar dicapai \u2014 tunggu sebentar, kemudian cuba lagi",
-    err_big: "Imej terlalu besar untuk API \u2014 kecilkan, kemudian cuba lagi",
-    err_safety: "Disekat penapis keselamatan \u2014 laraskan prompt atau fotonya, kemudian cuba lagi",
-    err_net: "Masalah rangkaian / pelayan \u2014 sila cuba lagi",
     /* v6.75.0 — a RunningHub refusal in the panel's own language (bootstrap.js status) */
-    rh_err_network: "Tidak dapat mencapai RunningHub Enterprise — talian terputus. Semak internet dan cuba lagi.",
-    rh_err_task_failed: "Tugas RunningHub gagal — cuba prompt/foto lain",
-    rh_err_host_blocked: "Photoshop menolak hos ini — manifest panel tidak membenarkannya. Pasang panel terkini.",
-    rh_err_timeout: "Penjanaan terlalu lama — RunningHub tidak menjawab tepat pada masanya. Cuba lagi, atau kurangkan saiz / bilangan.",
-    rh_err_rate_limited: "RunningHub Enterprise sibuk sekarang — tunggu sebentar dan cuba lagi.",
-    rh_err_invalid_key: "RunningHub menolak key — semak di Setup ▸ RunningHub Enterprise.",
     /* v6.76.0 — the Library scene presets under a Smart Workflow scene slot */
     wf_scene_presets: "Preset adegan dari Library — satu ketik",
     wf_scene_loading: "Memuatkan adegan…",
@@ -6185,114 +2486,20 @@ const I18N = {
     wf_press_prepare: "Tekan Prepare untuk memuatkan workflow ini dan menyemak gambar.",
     wf_opts: "Model \u00b7 Ratio \u00b7 Bilangan \u00b7 Size",
     wf_model_auto: "Auto \u2014 pilihan workflow",
-    err_timeout: "Permintaan tamat masa \u2014 pelayan mengambil masa terlalu lama; sila cuba lagi",
-    err_generic: "Permintaan tidak dapat diselesaikan \u2014 sila cuba lagi",
-    err_img: "Tiada imej yang boleh digunakan dihasilkan \u2014 sila cuba lagi",
-    err_mode: "Dokumen ini bukan dalam mod RGB \u2014 tukar dahulu (Image \u25b8 Mode \u25b8 RGB Color), kemudian cuba lagi",
-    cam_master: "Blok Camera HIDUP \u2014 tambah pada hujung SETIAP prompt",
-    cam_body: "Badan Kamera",
-    cam_lens: "Lensa Prime (mm)",
-    cam_f: "Bukaan",
-    cam_film: "Rupa Filem",
-    cam_bokeh: "Gaya Bokeh",
-    cam_iso: "ISO",
-    cam_k: "WB Kelvin",
-    cam_note: "Hidupkan blok ini dahulu, kemudian pilih hanya apa yang anda perlukan \u2014 chip \u2013 kekal senyap. Semuanya diletakkan di hujung prompt akhir.",
-    ro_h_main: "REFERENCE OPS PRO (Ref1 / Ref2)",
-    ro_note: "Ref1 = IMAGE 2 (perempuan) \u00b7 Ref2 = IMAGE 3 (lelaki). Pilih sasaran, kemudian jalankan \u2014 orang yang tidak sepadan tidak pernah berubah.",
-    ro_target: "Sasaran:",
-    ro_solo: "Solo",
-    ro_couple: "Pasangan",
-    ro_family: "Keluarga",
-    ro_mk: "Salin makeup ref",
-    ro_hair: "Ambil gaya rambut ref",
-    ro_h_face: "Face Ops",
-    ro_h_bg: "BG / FG Ops",
-    ro_h_sub: "Subject Ops",
-    ro_h_lc: "Light & Color Ops",
-    ro_h_dress: "Dress Ops",
-    ro_h_mk: "Makeup Ops",
-    ro_h_match: "\u2605 Master Match (satu rupa)",
-    ro_match_note: "Padankan IMAGE 1 dengan rujukan supaya kedua-duanya kelihatan seperti satu suntingan \u2014 tandakan apa yang perlu dipadankan:",
-    m_color: "Warna",
-    m_light: "Cahaya",
-    m_makeup: "Makeup",
-    m_skin: "Retouch Kulit",
-    crd_chainsrest: "Style Chains + Pemulihan Foto Lama",
-    crd_refops: "Reference Ops Pro (Ref1 / Ref2)",
-    crd_scenes: "\ud83c\udfac Scenes Pro \u2014 subjek dikunci \u00b7 adegan menyesuaikan",
-    scn_note: "Kunci subjek anda (wajah \u00b7 pose \u00b7 pakaian \u00b7 bingkai) dan bina semula keseluruhan adegan supaya padan \u2014 cahaya, bayang, warna, latar, latar depan dan objek semuanya menyesuaikan sendiri untuk rupa foto sebenar.",
-    scn_h_style: "Gaya Adegan (dalam bangunan / budaya)",
-    scn_h_bday: "\ud83c\udf82 Hari jadi \u2014 nombor umur 1\u201345",
-    scn_h_cap: "Kapsyen / Teks (kanak-kanak \u00b7 Miss Universe \u00b7 hari jadi)",
-    scn_h_scarf: "Luar / Selendang Berterbangan",
-    scn_grad: "Konvokesyen Dalam Bangunan",
-    scn_prewed: "Prewedding Dalam Bangunan",
-    scn_vietnam: "Vietnam",
-    scn_myanmar: "Myanmar",
-    scn_chinese: "Cina",
-    scn_shan: "Shan",
-    scn_newborn: "Bayi Baru Lahir",
-    scn_age: "Umur",
-    scn_bday_go: "\ud83c\udf82 ADEGAN HARI JADI",
-    scn_cap_on: "Tambah teks kapsyen",
-    scn_cap_ph: "Teks kapsyen (cth. Happy 1st Birthday, nama)\u2026",
-    scn_cap_pos: "Kedudukan",
-    scn_top: "Atas",
-    scn_bottom: "Bawah",
-    scn_scarf: "\u2726 ADEGAN SELENDANG BERTERBANGAN",
-    scn_dir: "Arah",
-    scn_left: "Kiri",
-    scn_right: "Kanan",
-    scn_up: "Atas",
-    scn_len: "Panjang",
-    scn_short: "Pendek",
-    scn_long: "Panjang",
-    g_cat_scene: "SCENE OP \u2014 subjek anda dikunci (wajah \u00b7 pose \u00b7 pakaian \u00b7 bingkai); keseluruhan adegan yang dijana (cahaya, bayang, warna, latar, latar depan, objek, suasana) dipadankan automatik dengan subjek untuk komposit seperti foto sebenar.",
-    crd_wed: "\u2665 Wedding Pro Suite",
-    crd_recipes: "Recipes \u2014 simpan / kongsi",
-    learn_lbl: "\ud83c\udf93 Learn Mode \u2014 ketikan 1 = panduan (kuning), 2 = prompt (biru), 3 = JALAN (hijau)",
     guide_hint: "Ketik lagi: kuning \u2192 biru (prompt) \u2192 hijau (jalan) \u25b6",
     g_learn_next_prompt: "Ketik lagi \u2192 memaparkan PROMPT sebenar (biru).",
     g_learn_prompt_head: "PROMPT yang akan dihantar butang ini (ketik lagi = JALAN):",
     g_learn_next_run: "Ketik sekali lagi \u2192 RUN (hijau) mula menjana.",
     st_prompt_ready: "Prompt sedia \u2014 ketik lagi (hijau) untuk jalankan \u2713",
-    g_step_doc: "Buka dokumen foto anda dalam Photoshop dahulu.",
-    g_step_ref1: "Muatkan imej rujukan ke Ref1 (ia menjadi IMAGE 2). Tambah Ref2 untuk orang kedua.",
-    g_step_target: "Pilih Target: Solo / Couple (Ref1 = perempuan, Ref2 = lelaki) / Family.",
-    g_step_mkhair: "Pilihan: tandakan \u2018Copy ref makeup\u2019 / \u2018Take ref hairstyle\u2019 di atas Face Ops.",
-    g_step_petal: "Pilih warna kelopak dahulu (auto = padan dengan adegan anda).",
-    g_step_rest: "Pilih Full Color atau B&W dengan \u2713 di atas.",
-    g_step_int: "Laraskan slider Intensity mengikut citarasa anda.",
     g_step_confirm: "Ketik lagi untuk maju: GUIDE (kuning) \u2192 PROMPT (biru) \u2192 RUN (HIJAU mula menjana).",
-    g_cat_face: "FACE OP \u2014 memindahkan wajah rujukan kepada orang yang sepadan; orang lain kekal tidak berubah.",
-    g_cat_sub: "SUBJECT OP \u2014 membawa/mengadun ORANG dalam rujukan ke adegan anda; adegan dan bingkai kekal.",
-    g_cat_bgfg: "BG/FG OP \u2014 hanya menukar latar / latar depan menggunakan rujukan.",
-    g_cat_lc: "LIGHT & COLOR OP \u2014 menyalin pencahayaan dan grade rujukan; orangnya kekal setia piksel demi piksel.",
-    g_cat_dress: "DRESS OP \u2014 hanya menukar pakaian menggunakan rujukan.",
-    g_cat_mkop: "MAKEUP OP \u2014 hanya menukar solekan menggunakan rujukan.",
-    g_cat_match: "MASTER MATCH \u2014 menjadikan foto anda padan dengan keseluruhan rupa rujukan (tandakan lapisan di atas).",
-    g_cat_trail: "WEDDING TRAIL \u2014 rumput mewah + laluan bunga yang mengalir; wajah/pose/bingkai dikunci ketat.",
-    g_cat_veil: "FLYING VEIL \u2014 menambah/memanjangkan tudung ditiup angin pada panjang ini; wajah tidak pernah terlindung.",
-    g_cat_gown: "GOWN \u2014 mengemas gaun sedia ada (reka bentuk tidak berubah) dan menetapkan panjang ekor ini.",
-    g_cat_petal: "FLYING PETALS \u2014 menambah kelopak berterbangan dalam gaya ini; warna daripada palet di atas.",
-    g_cat_wedx: "WEDDING EXTRA \u2014 menambah elemen ini supaya padan dengan adegan anda; subjek kekal terkunci.",
-    g_cat_canvas: "REPLACE (CANVAS) \u2014 meletakkan subjek ANDA ke dalam adegan rujukan; orang dalam rujukan dibuang.",
-    g_cat_restore: "OLD PHOTO RESTORE \u2014 membaiki kerosakan; setiap wajah asal kekal 100% serupa.",
     g_cat_generic: "PRESET \u2014 menggunakan suntingan profesional ini pada foto anda.",
     g_gen: "GENERATE \u2014 menjalankan kotak prompt (+ chains, kunci Keep, blok kamera) pada dokumen anda.",
     g_retouchbtn: "RETOUCH APPLY \u2014 menjalankan semua tetapan slider anda sebagai satu pusingan retouch profesional.",
-    g_relightbtn: "LIGHTING GENERATE \u2014 menyinari semula foto tepat mengikut rajah lampu 3D anda.",
-    g_scene: "SCENE GENERATE \u2014 membina semula adegan daripada prompt yang diekstrak; subjek kekal.",
-    g_rmix: "REPLACE MIX \u2014 hanya menggantikan bahagian bertanda \u2713 daripada rujukan.",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
     ro_bgSwap: "BG Swap",
     ro_fgRep: "FG Replace",
-    ro_bg_note: "Doc = subjek \u00b7 Ref1 = adegan baharu. Target (Solo/Couple/Family) menentukan siapa yang dikekalkan.",
-    ro_bg_frame: "Kekalkan bingkai & komposisi",
-    ro_bg_light: "Kekalkan cahaya/warna subjek",
     ro_subSwap: "Subject Swap",
     ro_lcRef: "L&C Reference",
     ro_lcCopy: "L&C Copy-Paste",
@@ -6300,94 +2507,8 @@ const I18N = {
     ro_dressRep: "Dress Replace",
     ro_mkCopy: "Makeup Copy",
     ro_matchBtn: "\u2605 MASTER MATCH",
-    grp_retouch: "Preset Retouch Kulit",
-    lbl_intensity: "Kekuatan",
-    p_evoto: "Retouch B Style",
-    p_meitu: "Retouch A Style",
-    auto_place: "Letak hasil ke Photoshop sebagai layer baharu secara automatik",
-    sec_retouchpro: "Retouch Pro \u2014 Sliders",
-    rt_skin: "Kulit",
-    rt_faceai: "Face AI",
-    rt_hair: "Rambut",
-    rt_dress: "Pakaian",
-    rt_bg: "Latar",
-    rt_smooth: "Haluskan Kulit",
-    rt_acne: "Buang Jerawat",
-    rt_spots: "Tompok Gelap",
-    rt_wrinkle: "Kedutan",
-    rt_tone: "Cerah / Sawo",
-    rt_glow: "Seri",
-    rt_reshape: "AI Reshape",
-    rt_lash: "Bulu Mata",
-    rt_brow: "Kening",
-    rt_lipsmooth: "Haluskan Bibir",
-    rt_lipcolor: "Warna Bibir",
-    rt_lenscolor: "Warna Kanta Mata",
-    rt_hairstray: "Rambut Terurai",
-    rt_hairsmooth: "Haluskan Rambut",
-    rt_hairshine: "Kilau Rambut (D&B)",
-    rt_dresssmooth: "Haluskan Kain",
-    rt_dressedge: "Kemas Tepi",
-    rt_dresswrinkle: "Buang Kedutan Kain",
-    rt_dresstexture: "Pulih Tekstur",
-    rt_bgsmooth: "Bersih/Haluskan Latar",
-    rt_bgcolor: "Warna Latar",
-    rt_bgrecolor: "Haluskan Warna Latar",
-    rt_shape: "Reshape Pro (Wajah + Badan)",
-    rt_teeth: "Putihkan Gigi",
-    rt_eyewhite: "Bersihkan Putih Mata",
-    rt_faceslim: "Tirus Wajah",
-    rt_jaw: "Garis Rahang",
-    rt_chin: "Dagu",
-    rt_nosesize: "Saiz Hidung",
-    rt_eyesize: "Saiz Mata",
-    rt_lipfull: "Bibir Penuh",
-    rt_waist: "Ramping Pinggang",
-    rt_bodyslim: "Ramping Badan",
-    rt_shoulder: "Bahu",
-    rt_hip: "Ramping Punggung",
-    rt_leglen: "Panjang Kaki",
-    rt_armslim: "Ramping Lengan",
-    rt_dressfit: "Kesesuaian Pakaian",
-    rt_dressclean: "Bersihkan Pakaian",
-    rt_dresscolorpure: "Warna Pakaian Tulen",
-    rt_bodygrp: "Body Skin Pro",
-    rt_bodysmooth: "Haluskan Kulit Badan",
-    rt_bodyblemish: "Bersihkan Cacat Kulit",
-    rt_bodytone: "Ratakan Warna Kulit",
-    rt_bodyglow: "Seri Badan",
-    rt_bodyhairrm: "Kurangkan Bulu",
-    rt_hairvolume: "Volum Rambut",
-    rt_hairgloss: "Gilap Rambut",
-    rt_hairfill: "Isi Rambut (kawasan nipis)",
-    wp_h_trail: "\u2665 Wedding \u2014 Laluan Bunga Mewah",
-    wp_h_veil: "\u2665 Wedding \u2014 Tudung Berterbangan",
-    wp_h_gown: "\u2665 Wedding \u2014 Kemas Gaun + Ekor",
-    wp_h_petal: "\u2665 Wedding \u2014 Kelopak Berterbangan",
-    wp_h_extra: "\u2665 Wedding \u2014 Kuda \u00b7 Air \u00b7 Suasana",
-    wp_note: "Face ID / pose / bingkai / reka bentuk gaun dikunci ketat \u2014 hanya elemen yang dinamakan berubah.",
-    wp_petalcolor: "Warna Kelopak (auto = padan adegan)",
-    wp_trail_c: "Warna bunga",
-    wp_trail_go: "\u25b6 Laluan Bunga",
-    wp_veil_c: "Panjang tudung",
-    wp_veil_go: "\u25b6 Tudung Berterbangan",
-    wp_gown_c: "Panjang ekor",
-    wp_gown_go: "\u25b6 Kemas Gaun + Ekor",
-    wp_pet_c: "Gaya kelopak",
-    wp_pet_go: "\u25b6 Kelopak Berterbangan",
-    wp_extra_c: "Tambahan",
-    wp_extra_go: "\u25b6 Tambah Elemen",
-    btn_apply_rt: "Guna Retouch",
-    btn_reset: "Set Semula",
     rt_none: "Tetapkan sekurang-kurangnya satu slider atau warna retouch dahulu",
-    tab_setup: "Setup",
-    tab_prompt: "Edit",
-    tab_presets: "Library",
-    recent_lbl: "Prompt terkini\u2026",
-    tab_retouch: "Retouch",
-    tab_aitools: "Home",
     cap_warn: "Photoshop mengehadkan kotak prompt ini kepada:",
-    cleanup_note: "Item bertanda dijalankan bersama SETIAP Generate / preset.",
     btn_generate: "GENERATE",
     st_ready: "Sedia",
     st_capture: "Mengambil dokumen",
@@ -6404,68 +2525,16 @@ const I18N = {
     st_err: "Ralat",
     st_no_doc: "Tiada dokumen aktif \u2014 buka foto dahulu",
     st_no_prompt: "Prompt masih kosong",
-    need_ref: "Preset ini memerlukan imej rujukan dalam slot 1",
     st_new_doc: "Hasil dibuka sebagai dokumen baharu \u2713",
-    sec_preview: "Pratonton \u2014 Before / After",
     before: "SEBELUM",
     after: "SELEPAS",
     btn_place: "Letak ke Photoshop",
-    btn_saveas: "Simpan Sebagai\u2026",
     st_saved: "Disimpan \u2713",
-    sec_diag: "Pemeriksaan Sistem",
-    sec_log: "Log Aktiviti",
-    btn_diag: "Jalankan Pemeriksaan",
-    btn_copylog: "Salin Log",
-    btn_clearlog: "Kosongkan",
-    diag_host: "Aplikasi Photoshop",
-    diag_uxp: "Keupayaan UXP",
-    diag_rh: "RunningHub Enterprise key",
-    diag_doc: "Dokumen aktif",
-    diag_set: "ditetapkan",
-    diag_unset: "belum ditetapkan",
-    diag_open: "terbuka",
-    diag_none: "tiada",
-    diag_missing: "tiada",
-    diag_done: "Pemeriksaan sistem selesai \u2713",
-    diag_lib: "Pustaka Rujukan",
-    diag_lib_open: "Keupayaan buka folder",
-    sec_reflib: "Pustaka Imej Rujukan",
-    reflib_note: "Pilih sekali sahaja folder imej rujukan kegemaran anda \u2014 Browse akan mengingatinya dan terus membukanya di mana-mana.",
-    btn_browse: "Semak Imbas",
-    lib_choose: "Pilih Folder",
-    lib_open: "Buka Folder",
-    lib_change: "Tukar Folder",
-    lib_reset: "Set Semula",
-    lib_rescan: "Imbas Semula",
-    lib_current: "Folder Semasa",
-    lib_found: "Imej Dijumpai",
-    lib_status: "Status",
-    lib_lastscan: "Imbasan Terakhir",
-    lib_images: "imej",
-    lib_connected: "Bersambung",
-    lib_not_config: "Belum dikonfigurasi",
-    lib_perm_lost: "Kebenaran hilang \u2014 pilih semula",
-    lib_none: "(tiada folder dipilih)",
-    lib_copy_only: "salin laluan sahaja",
     lib_choose_msg: "Pilih folder Pustaka Imej Rujukan HNK anda.",
-    lib_scanning: "Mengimbas pustaka\u2026",
-    lib_scan_done: "Imbasan semula selesai \u2713",
-    lib_reset_done: "Pustaka diset semula \u2713",
-    lib_path_copied: "Laluan disalin",
     lib_unsupported: "Jenis imej tidak disokong",
     lib_restore_fail: "Rujukan tidak dapat dipulihkan",
     on: "HIDUP",
     off: "MATI",
-    ai_home_title: "Anda mahu cipta apa?",
-    ai_greet_morning: "Selamat pagi",
-    ai_greet_afternoon: "Selamat tengah hari",
-    ai_greet_evening: "Selamat petang",
-    ai_free_generate: "Jana Bebas",
-    ai_free_sub: "Tulis prompt anda sendiri",
-    ai_more_tools: "Lagi Alat",
-    ai_more_sub: "Water Edit \u00b7 Text/Logo \u00b7 semua workflow",
-    ai_nav_home: "Utama",
-    ai_nav_tools: "Alat",
     ai_history: "Sejarah",
     ai_no_gen: "Belum ada hasil.",
     ai_videos: "Video",
@@ -6492,14 +2561,11 @@ const I18N = {
     ai_lib_pick_first: "Pilih foto dari tab Presets \u2192 Visual Library dahulu.",
     ai_lib_load_fail: "Imej Library gagal dimuatkan.",
     ai_missing: "Belum ada",
-    ai_add: "Tambah",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 tambah model endpoint (Lanjutan \u2014 pilihan)",
     ai_rh_note: "Model terbina dalam sudah berfungsi dengan key di atas \u2014 tiada apa perlu dibuat. Jika sesuatu model memaparkan \"not connected\" (endpoint path belum disahkan), salin path dari dokumentasi API RunningHub dan tampal di sini.",
     ai_rh_save: "Simpan endpoint model ini",
     ai_test_conn: "Uji sambungan",
-    ai_save_verify: "Simpan & Sahkan",
-    ai_settings: "Tetapan",
     ai_add_layers: "Tambah hasil sebagai Layer baharu",
     ai_done: "Selesai.",
     ai_result_ready: "Hasil sedia.",
@@ -6510,21 +2576,6 @@ const I18N = {
     ai_placed_group: "Diletakkan ke dalam kumpulan \u201c{name}\u201d sebagai Layer baharu (mask tiada pada host ini).",
     ai_placed_plain: "Diletakkan sebagai Layer baharu (group/mask tiada pada host ini).",
     ai_start_fail: "AI Tools gagal dimulakan",
-    pgb_setup: "Set up once — ready whenever you are",
-    pgb_studio: "Bring every scene you imagine to life — your way",
-    pgb_create: "One line of text becomes a professional image",
-    pgb_presets: "1850 curated looks — pick one and start instantly",
-    pgb_aitools: "Satu ketikan profesional \u2014 Nano Banana \u00b7 RunningHub",
-    pgb_retouch: "Flawless retouching that stays natural",
-    wf_sum_bg_replace: "Ganti latar",
-    wf_sum_reference_transfer: "Letak subjek anda ke dalam adegan reference",
-    wf_sum_master_bgfg_replace: "Buang orang dalam adegan, bina semula bg/fg, masukkan subjek anda",
-    wf_sum_subject_face: "Pindahkan subjek atau wajah ke imej base",
-    wf_sum_retouch: "Penambahbaikan potret yang semula jadi",
-    wf_sum_upscale: "Besarkan tanpa hilang perincian",
-    wf_sum_object_edit: "Buang, ganti atau tambah objek",
-    wf_sum_water_edit: "Sunting air dan pantulan",
-    wf_sum_text_logo: "Tambah atau sunting teks dan logo",
     wfin_subject: "Foto anda (subjek)",
     wfin_new_bg: "Latar baharu (pilihan)",
     wfin_ref_scene: "Adegan reference",
@@ -6536,15 +2587,6 @@ const I18N = {
     wfin_image: "Imej",
     wfin_object_ref: "Reference objek (pilihan)",
     wfin_logo_ref: "Reference logo (pilihan)",
-    wf_exp_bg_replace: "Menggantikan latar di belakang subjek. Orang, pose, tepi dan pencahayaan kekal sama \u2014 hanya bahagian di belakangnya berubah.",
-    wf_exp_reference_transfer: "Mengambil keseluruhan adegan foto reference (tetapi BUKAN orang di dalamnya) dan meletakkan subjek ANDA ke dalamnya \u2014 mengekalkan identiti, pose dan bingkai subjek, serta memadankan cahaya dan perspektif adegan.",
-    wf_exp_master_bgfg_replace: "Penggantian subjek dalam adegan yang paling ketat: membuang orang dari adegan reference sepenuhnya, membina semula latar dan latar depan yang terlindung secara semula jadi, kemudian meletakkan subjek anda tepat di tempat itu \u2014 identiti, pose, perkadaran, gaya rambut, pakaian, kulit dan pencahayaan dikunci dari foto anda, manakala reference hanya membekalkan adegan, sudut kamera dan kedalaman.",
-    wf_exp_subject_face: "Menggabungkan subjek atau wajah dari reference ke imej base dengan lancar, sambil mengekalkan komposisi base.",
-    wf_exp_retouch: "Memberikan retouch semula jadi pada kulit, rambut dan tona. Identiti, ciri wajah dan ekspresi dikekalkan \u2014 tiada kulit plastik, tiada perubahan wajah.",
-    wf_exp_upscale: "Membesarkan imej sambil memulihkan perincian semula jadi pada kulit, rambut dan kain. Identiti, pose, komposisi dan warna kekal sama \u2014 tiada pelicinan plastik.",
-    wf_exp_object_edit: "Membuang, mengganti atau menambah objek melalui suntingan setempat yang terkawal. Segala yang anda tidak sentuh kekal sama.",
-    wf_exp_water_edit: "Menambah atau menyunting air, pantulan dan permukaan basah supaya kelihatan wajar dari segi fizikal, tanpa mengubah subjek anda.",
-    wf_exp_text_logo: "Menambah atau menyunting teks atau logo yang bersih dan mudah dibaca pada imej, sambil mengekalkan komposisi."
   }
 };
 /*I18N_END*/
@@ -6555,7 +2597,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.160.0";
+const PANEL_VERSION = "6.161.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6777,16 +2819,6 @@ async function gateRefresh(ticket) {
      answered  a real 200. `prof` may be null, and null is a definitive "there
                is no such profile" -- which must CLEAR the cache, not leave the
                last good one standing. */
-async function gateLoadProfile() {
-  const path = "/rest/v1/profiles?select=*&id=eq." + encodeURIComponent(gateS.sess.uid) + "&limit=1";
-  try {
-    const r = await gateReq(path, { method: "GET" }, gateS.sess.access);
-    if (r.status === 401) return { dead: true };
-    if (!r.ok) return { offline: true };
-    const rows = await r.json();
-    return { answered: true, prof: (rows && rows[0]) || null };
-  } catch (e) { return { offline: true }; }
-}
 
 /* Mirrors the web app's isPremium() field for field. BOTH fields, because the
    server extends plan_expires_at on approval but never sweeps plan_status back
@@ -6908,16 +2940,6 @@ function gateGraceOpen() {
   try { homeRefresh(); } catch (e) { }
   try { setStatus(gateT("gate_grace"), "err"); } catch (e) { }
   return true;
-}
-function retiredOfflineDaysLeft() {
-  if (!gateS.seenAt) return 0;
-  const used = Math.max(0, Date.now() - gateS.seenAt);
-  return Math.max(0, Math.ceil((7 * GATE_DAY - used) / GATE_DAY));
-}
-function retiredOfflineEligible() {
-  if (!gateS.prof || !gateS.seenAt) return false;
-  if (!gatePremium(gateS.prof)) return false;      /* the expiry date still rules */
-  return Math.max(0, Date.now() - gateS.seenAt) < 7 * GATE_DAY;
 }
 
 /* ---------------- views ---------------- */
@@ -7424,11 +3446,6 @@ async function gateCheck() {
   gateBusy(false);
 }
 
-function retiredOfflinePath() {
-  gateShow(gateS.sess ? "locked" : "login");
-  gateErr(gateT("gate_offline"));
-}
-
 /* v6.102.4 — WHICH refusal this is. Until now everything that was not 429 or 503 —
    a suspended account (403), an unconfirmed address (400 email_not_confirmed), a
    deleted account (404), every 5xx — was shown as "Wrong email or password", so the
@@ -7817,21 +3834,21 @@ const LANG_FB = { kyu: "my", ksw: "my", cnh: "my", mnw: "my", rki: "my", ahk: "m
    Long-form text falls through LANG_FB. Same honest posture as the web app:
    Myanmar ethnic languages ship no guessed text. */
 const I18N_L = {
-bn:{app_title:"HNK Photoshop Ai Panel (শিক্ষার্থীদের জন্য)",sec_api:"RunningHub Enterprise Key",btn_show:"দেখান",btn_hide:"লুকান",btn_test:"Key পরীক্ষা",btn_save:"সংরক্ষণ",st_testing:"কী পরীক্ষা করা হচ্ছে",st_key_ok:"✓ API key কাজ করছে",st_key_bad:"API key কাজ করেনি",st_key_saved:"API key সংরক্ষিত হয়েছে ✓",st_need_key:"আগে RunningHub Enterprise key দিন",sec_model:"মডেল ও আউটপুট",scope_model_note:"নিচের প্রম্পট ট্যাবের জেনারেট বোতামে এটি ব্যবহৃত হয় — Create এবং AI Tools-এর প্রতিটির নিজস্ব আলাদা মডেল সেটিংস আছে।",model_auto:"অটো (প্রস্তাবিত)",model_flash:"Flash — দ্রুত (2.5)",model_pro:"Pro — উন্নত মান (3.0)",lbl_ratio:"অনুপাত",ratio_auto:"অটো অনুপাত (ডকুমেন্ট থেকে)",lbl_size:"আকার",lbl_quality:"মান",qual_auto:"অটো",qual_low:"নিম্ন",qual_med:"মাঝারি",qual_high:"উচ্চ",sec_prompt:"প্রম্পট",hint_prompt:"এখানে আপনার প্রম্পট লিখুন… (সর্বোচ্চ 20,000 অক্ষর)",btn_improve:"Prompt উন্নত করুন",btn_clear:"মুছুন",st_improving:"প্রম্পট উন্নত করা হচ্ছে",st_improved:"প্রম্পট উন্নত হয়েছে ✓",sec_refs:"রেফারেন্স ছবি (2টি স্লট)",base_note:"বেস ছবি = আপনার সক্রিয় Photoshop ডকুমেন্ট (স্বয়ংক্রিয়ভাবে নেওয়া হয়)।",btn_ref_layer:"+ লেয়ার",btn_ref_file:"ফাইল",btn_ref_web:"ওয়েব",st_ref_layer_added:"লেয়ার রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_ref_file_added:"ফাইল রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_importing:"ফাইল ইমপোর্ট হচ্ছে",url_title:"URL থেকে রেফারেন্স — Chrome / Pinterest",url_ph:"https://… ছবির ঠিকানা বা Pinterest পিন লিংক",btn_paste:"পেস্ট",btn_load:"লোড",btn_cancel:"বাতিল",st_url_loading:"ওয়েব ছবি ডাউনলোড হচ্ছে",st_ref_web_added:"ওয়েব ছবি রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_url_bad:"এই URL থেকে ছবি লোড করা যায়নি — ছবির ঠিকানা কপি করে আবার চেষ্টা করুন",no_layer:"কোনো লেয়ার নির্বাচিত নেই",sec_presets:"AI প্রিসেট",auto_run:"প্রিসেটে ক্লিক → অটো জেনারেট (OFF = শুধু প্রম্পটে যোগ হবে)",grp_cleanup:"ক্লিনআপ টুল",p_remove_people:"মানুষ সরান",p_fix_hands:"অতিরিক্ত হাত ঠিক করুন",p_fix_legs:"অতিরিক্ত পা ঠিক করুন",p_full_clean:"সম্পূর্ণ ক্লিনআপ",grp_moved_note:"রেফারেন্স টুলগুলো এখন নিচের Reference Ops Pro কার্ডে আছে (এক জায়গায়, Solo/Couple/Family + গাইডসহ)।",ro_h_detail:"চুল · অ্যাক্সেসরিজ · পোজ (← Ref1)",ro_h_comp:"কম্পোজিট · স্টাইল · টেক্সট (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"হেয়ারস্টাইল (← Ref1)",p_access:"গয়না+অ্যাক্সেসরিজ (← Ref1)",p_pose:"পোজ মিলিয়ে নিন (Doc → Ref1)",p_fgprops:"FG প্রপস (← Ref1)",p_textlogo:"টেক্সট / লোগো (← Ref1)",p_style:"ফটো স্টাইল (← Ref1)",grp_repsubj:"সাবজেক্ট প্রতিস্থাপন (Doc → Ref1 দৃশ্য)",p_rep_solo:"সোলো প্রতিস্থাপন",p_rep_couple:"কাপল প্রতিস্থাপন",p_rep_family:"পরিবার প্রতিস্থাপন",grp_rmix:"Replace Mix — টিক দিয়ে Ref1 থেকে নিন",rm_bg:"ব্যাকগ্রাউন্ড (BG)",rm_fg:"ফোরগ্রাউন্ড (FG)",rm_light:"লাইটিং",rm_color:"রং",rm_object:"অবজেক্ট / প্রপস",btn_rmix:"রিপ্লেস জেনারেট",rm_none:"আগে অন্তত একটি দিক টিক দিন",grp_i2p:"Image → Prompt (সিন বিল্ডার)",i2p_note:"1) এক্সট্র্যাক্ট: Ref1 দৃশ্য → বিস্তারিত টেক্সট প্রম্পট (মানুষ বাদ)। 2) প্রম্পট পেজে সেটি সম্পাদনা করুন। 3) সিন জেনারেট সেটিকে আপনার ডকুমেন্টের সাবজেক্ট ঘিরে তৈরি করে — যেকোনো অ্যাঙ্গেলে অটো-ফিট হয়। Face/Pose/Frame লক = আসলটা অপরিবর্তিত থাকে।",i2p_objects:"অবজেক্ট ও প্রপসের বিবরণ",i2p_light:"লাইটিংয়ের বিবরণ",i2p_color:"রং / গ্রেডের বিবরণ",i2p_bg:"ব্যাকগ্রাউন্ডের বিবরণ",i2p_fg:"ফোরগ্রাউন্ডের বিবরণ",btn_i2p:"Image → Prompt (সিন এক্সট্র্যাক্ট)",i2p_fit:"সিন অটো-ফিট — ডকুমেন্টের অ্যাঙ্গেল / দূরত্ব / লেন্স অনুযায়ী দৃশ্য পুনর্বিন্যাস",i2p_adapt:"সাবজেক্টের আলো ও রং দৃশ্যের সাথে মানিয়ে নিন",btn_scenegen:"সিন জেনারেট",st_extract:"দৃশ্য থেকে প্রম্পট তৈরি হচ্ছে",st_extract_done:"সিন প্রম্পট প্রস্তুত — প্রম্পট পেজে দেখে নিন",scene_no_prompt:"প্রম্পট বক্স খালি — আগে Image → Prompt চালান",i2p_none:"আগে অন্তত একটি বিবরণের দিক টিক দিন",sec_light:"স্টুডিও লাইটিং — AI রিলাইট",light_note:"লাইটগুলো ON করুন, একটি সারিতে ট্যাপ করে নির্বাচন করুন, স্লাইডার দিয়ে আকার দিন — 3D টপ-ভিউ ডায়াগ্রাম সাথে সাথে বদলায় (▴ = উঁচু, ▾ = নিচু)। লাইটিং জেনারেট আপনার ডকুমেন্টকে ঠিক এই সেটআপ অনুযায়ী রিলাইট করে; মুখ / পোজ / ফ্রেম লক থাকে।",lbl_my_prompt:"মিয়ানমার প্রম্পট",lstage_model:"মডেল",lstage_cam:"ক্যাম",l_key:"কী লাইট",l_fill:"ফিল / ফ্রন্ট",l_butterfly:"বাটারফ্লাই (উপরে-সামনে)",l_side:"সাইড লাইট",l_rim:"রিম লাইট",l_back:"ব্যাক লাইট",l_hair:"হেয়ার লাইট",l_bglight:"ব্যাকগ্রাউন্ড লাইট",lt_softbox:"সফটবক্স",lt_octa:"অক্টা",lt_strip:"স্ট্রিপ",lt_umbrella:"আমব্রেলা",lt_beauty:"বিউটি",lt_hard:"হার্ড",li_int:"তীব্রতা",li_angle:"কোণ",li_height:"উচ্চতা",li_dist:"দূরত্ব",li_size:"আকার",btn_lightgen:"লাইটিং জেনারেট",light_none:"আগে অন্তত একটি লাইট ON করুন",lg_equip:"ছবিতে লাইটের সরঞ্জাম দেখান (সফটবক্স / স্ট্যান্ড দৃশ্যমান)",grp_chains:"স্টাইল চেইন — ✓ স্টাইলগুলো একসাথে মেশান",chains_note:"যেকোনো স্টাইল ON করুন — সেগুলো প্রতিটি জেনারেট / প্রিসেট / রিটাচে একসাথে মিশে যায়।",grp_restore:"পুরনো ছবি পুনরুদ্ধার",p_restore:"পুরনো ছবি পুনরুদ্ধার",rest_color:"সম্পূর্ণ রঙিন",rest_bw:"সাদা-কালো",restore_note:"ছেঁড়া, পানি / পোড়া দাগ ও বিবর্ণতা মেরামত করে — প্রতিটি আসল মুখ 100% অবিকল থাকে।",rt_browstyle:"ভ্রুর স্টাইল",rt_lashstyle:"আইল্যাশ স্টাইল",rt_blush:"ব্লাশের রং",rt_contour:"কনট্যুর স্টাইল",rt_bust:"বাস্ট",rt_butt:"নিতম্ব",rt_thigh:"ঊরু",rt_calf:"কাফ",rt_neck:"ঘাড়",rt_fingers:"আঙুল",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"মিয়ানমার প্রম্পট ইংরেজিতে অনুবাদ হচ্ছে",live_trans:"লাইভ ⇄ স্বয়ংক্রিয় অনুবাদ (EN ↔ MY, টাইপ থামানোর পরে)",st_retry:"আবার চেষ্টা করা হচ্ছে",grp_recipes:"রেসিপি — সেটিংস সংরক্ষণ / শেয়ার",recipe_note:"সবকিছু (চেইন, রিটাচ, লাইট, লক, প্রম্পট) একটি .json রেসিপি হিসেবে সংরক্ষণ করুন — শিক্ষার্থীরা শুধু লোড করলেই হবে।",btn_recipe_save:"রেসিপি সংরক্ষণ",btn_recipe_load:"রেসিপি লোড",st_recipe_saved:"রেসিপি সংরক্ষিত ✓",st_recipe_loaded:"রেসিপি লোড হয়েছে ✓ — সব কন্ট্রোল আপডেট হয়েছে",st_recipe_bad:"এটি HNK রেসিপি ফাইল নয়",sec_final:"চূড়ান্ত প্রম্পট (AI-এ পাঠানো হয়)",btn_copy:"কপি",st_copied:"কপি হয়েছে ✓",hist_note:"ইতিহাস — শেষ 6টি ফলাফল, দেখতে ট্যাপ করুন:",btn_hist_prompt:"→ প্রম্পট",sec_batch:"ব্যাচ মোড",batch_note:"একাধিক ছবি + একটি আউটপুট ফোল্ডার বেছে নিন — বর্তমান প্রম্পট, চেইন, ক্লিনআপ ও Keep লক প্রতিটি ছবিতে চলবে; ফলাফল *_HNK.png নামে সংরক্ষিত হয়।",btn_batch:"ব্যাচ চালান",btn_batch_stop:"থামান",st_batch:"ব্যাচ",st_batch_done:"ব্যাচ সম্পন্ন",sec_web:"ওয়েব AI — মিনি ব্রাউজার",web_note:"যেকোনো ওয়েব AI এডিটর Photoshop-এর ভেতরেই খুলুন। সেখানে জেনারেট করুন, তারপর ফলাফলটি লেয়ার হিসেবে নিয়ে আসুন:",web_import_note:"ইমপোর্ট: ① ওয়েব অ্যাপে Copy image address ব্যবহার করুন, তারপর 'কপি করা লিংক ইমপোর্ট' চাপুন · ② অথবা ফাইলটি ডাউনলোড করে 'ফাইল ইমপোর্ট' ব্যবহার করুন · ③ HNK ব্রিজযুক্ত পার্টনার ওয়েব অ্যাপ ছবি স্বয়ংক্রিয়ভাবে পাঠায়।",btn_web_go:"যান",btn_web_home:"হোম",btn_web_reload:"রিলোড",btn_web_import_link:"কপি করা লিংক ইমপোর্ট → PS",btn_web_import_file:"ফাইল ইমপোর্ট → PS",st_web_import:"লেয়ার হিসেবে Photoshop-এ ইমপোর্ট হয়েছে ✓",st_web_nourl:"আগে একটি ছবির লিংক কপি করুন (রাইট-ক্লিক → Copy image address)",st_web_fetch:"লিংক থেকে ছবি আনা হচ্ছে",st_web_notallowed:"এই ডোমেইনটি allow-list-এ নেই — ফাঁকা থাকতে পারে। HNK-কে এটি যোগ করতে বলুন।",st_need_doc:"প্রথমে Photoshop-এ একটি ফটো ডকুমেন্ট খুলুন",sec_campro:"ক্যামেরা প্রো ও কোয়ালিটি",autosave_lbl:"প্রতিটি ফলাফল অটো-এক্সপোর্ট (PNG + prompt লগ → ফোল্ডার)",st_folder_ok:"এক্সপোর্ট ফোল্ডার সেট হয়েছে ✓",st_exported:"এক্সপোর্ট হয়েছে ✓",st_export_fail:"এক্সপোর্ট ব্যর্থ — ফোল্ডারটি পরীক্ষা করুন",st_pro_fallback:"Pro মডেল পাওয়া যাচ্ছে না — এই রানের জন্য Flash-এ পরিবর্তন করা হয়েছে",st_img_bad:"ছবির ডেটা ইন্টিগ্রিটি চেক-এ ব্যর্থ — ছবিটি আবার যোগ করুন",st_auto_comp:"অটো কম্পোজিট: IMAGE 1 সাবজেক্ট → রেফারেন্স দৃশ্য",prov_lbl:"AI প্রোভাইডার",tab_create: "Create",create_note:"ক্রিয়েট মোড — আপনার prompt থেকে সম্পূর্ণ নতুন ছবি (+ নিজস্ব 4টি রেফ)। পুরোপুরি স্বাধীন: ডকুমেন্ট, প্রিসেট, চেইন বা লক কখনও পড়ে না।",create_ph:"যে ছবিটি তৈরি করতে চান তা বর্ণনা করুন…",btn_create_ps:"⬇ Photoshop-এ পাঠান",btn_to_ref:"↺ Ref 1 হিসেবে ব্যবহার করুন",st_to_ref:"ফলাফল Ref 1-এ লোড হয়েছে ✓",scope_create_note:"Setup-এর Model ও Output থেকে স্বাধীন — এই সেটিংগুলি শুধু Create-এর Generate-এ প্রযোজ্য।",cr_ratio:"অনুপাত",cr_var:"ভ্যারিয়েশন",cr_restyle:"♻ ফলাফল রিস্টাইল করুন",cr_lib:"Prompt লাইব্রেরি — ঢোকাতে ট্যাপ করুন",cr_improve:"উন্নত করুন",cr_describe:"Ref 1 বর্ণনা → Prompt",st_describing:"রেফারেন্স পড়া হচ্ছে…",st_described:"Ref 1 থেকে prompt লেখা হয়েছে ✓",st_need_ref1:"প্রথমে Ref 1-এ একটি ছবি যোগ করুন",st_lib_added:"Prompt যোগ হয়েছে ✓",cr_refs:"রেফারেন্স ছবি (সর্বোচ্চ 4টি)",cr_refs_note:"ঐচ্ছিক — Layer / File / Web দিয়ে যোগ করুন। আপনার prompt যা চায়, Create শুধু সেটুকুই নেয়।",cr_results:"ফলাফল",cr_gal_empty:"এখনও কোনো ফলাফল নেই — Generate ট্যাপ করুন।",cr_gal_have:"টি ফলাফল · প্রিভিউ / কাজ করতে থাম্বনেইলে ট্যাপ করুন",cr_save:"⬇ PNG সংরক্ষণ করুন",cr_engine:"ইঞ্জিন",cr_need_result:"প্রথমে একটি ছবি জেনারেট করুন",btn_web_import_url:"⬇ URL ইমপোর্ট করুন",st_clip_help:"ক্লিপবোর্ড ফাঁকা/ব্লক করা — লিংকটি URL বারে পেস্ট করুন, তারপর ⬇ Import URL ট্যাপ করুন",st_web_blob:"এটি একটি অস্থায়ী blob: লিংক — রাইট-ক্লিক → Copy IMAGE Address ব্যবহার করুন, অথবা ফাইলটি সংরক্ষণ করে Import File ব্যবহার করুন",err_key:"API key অবৈধ — Setup ট্যাবে key আবার পরীক্ষা করুন · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"কোটা / রেট লিমিট — একটু অপেক্ষা করে আবার চেষ্টা করুন · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"ছবিটি API-এর জন্য খুব বড় — ছোট করে আবার চেষ্টা করুন · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"সেফটি ফিল্টার আটকে দিয়েছে — prompt বা ছবিটি বদলে আবার চেষ্টা করুন · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"নেটওয়ার্ক / সার্ভার সমস্যা — অনুগ্রহ করে আবার চেষ্টা করুন · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"অনুরোধের সময় শেষ — সার্ভার খুব বেশি সময় নিয়েছে; আবার চেষ্টা করুন · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"অনুরোধটি সম্পন্ন করা যায়নি — অনুগ্রহ করে আবার চেষ্টা করুন",err_img:"কোনো ব্যবহারযোগ্য ছবি তৈরি হয়নি — অনুগ্রহ করে আবার চেষ্টা করুন",err_mode:"এই ডকুমেন্টটি RGB মোডে নেই — প্রথমে রূপান্তর করুন (Image ▸ Mode ▸ RGB Color), তারপর আবার চেষ্টা করুন",cam_master:"ক্যামেরা ব্লক ON — প্রতিটি prompt-এর শেষে যোগ হবে",cam_body:"ক্যামেরা বডি",cam_lens:"প্রাইম লেন্স (mm)",cam_f:"অ্যাপারচার",cam_film:"ফিল্ম লুক",cam_bokeh:"বোকেহ স্টাইল",cam_iso:"ISO",cam_k:"WB কেলভিন",cam_note:"ব্লকটি ON করুন, তারপর যা দরকার শুধু সেটুকু বাছুন — – চিপগুলি নীরব থাকে। সবকিছু চূড়ান্ত prompt-এর শেষে যুক্ত হয়।",ro_h_main:"রেফারেন্স অপস প্রো (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (নারী) · Ref2 = IMAGE 3 (পুরুষ)। একটি টার্গেট বেছে নিয়ে একটি অপ চালান — মিল না-থাকা ব্যক্তিরা কখনও বদলায় না।",ro_target:"টার্গেট:",ro_solo:"একক",ro_couple:"যুগল",ro_family:"পরিবার",ro_mk:"রেফ-এর মেকআপ কপি করুন",ro_hair:"রেফ-এর হেয়ারস্টাইল নিন",ro_h_face:"ফেস অপস",ro_h_bg:"BG / FG অপস",ro_h_sub:"সাবজেক্ট অপস",ro_h_lc:"আলো ও রং অপস",ro_h_dress:"পোশাক অপস",ro_h_mk:"মেকআপ অপস",ro_h_match:"★ মাস্টার ম্যাচ (এক লুক)",ro_match_note:"IMAGE 1-কে রেফারেন্সের সাথে মেলান, যাতে দুটোই এক সম্পাদনার মতো দেখায় — কী মেলাতে হবে টিক দিন:",m_color:"রং",m_light:"আলো",m_makeup:"মেকআপ",m_skin:"স্কিন রিটাচ",crd_chainsrest:"স্টাইল চেইন + পুরোনো ছবি পুনরুদ্ধার",crd_refops:"রেফারেন্স অপস প্রো (Ref1 / Ref2)",crd_scenes:"সিন প্রো — সাবজেক্ট লক · দৃশ্য মিলে যায়",scn_note:"আপনার সাবজেক্ট লক করুন (মুখ · ভঙ্গি · পোশাক · ফ্রেম) — পুরো দৃশ্য তাদের সাথে মিলিয়ে নতুন করে তৈরি হয়; আলো, ছায়া, রং, ব্যাকগ্রাউন্ড, ফোরগ্রাউন্ড ও বস্তু সবই আসল ছবির মতো লুকের জন্য স্বয়ংক্রিয়ভাবে মানিয়ে নেয়।",scn_h_style:"দৃশ্যের স্টাইল (ইনডোর / সাংস্কৃতিক)",scn_h_bday:"জন্মদিন — বয়সের সংখ্যা 1–45",scn_h_cap:"ক্যাপশন / টেক্সট (শিশু · Miss Universe · জন্মদিন)",scn_h_scarf:"আউটডোর / উড়ন্ত স্কার্ফ",scn_grad:"গ্র্যাজুয়েশন ইনডোর",scn_prewed:"প্রি-ওয়েডিং ইনডোর",scn_vietnam:"ভিয়েতনাম",scn_myanmar:"মিয়ানমার",scn_chinese:"চীনা",scn_shan:"শান",scn_newborn:"নবজাতক / শিশু",scn_age:"বয়স",scn_bday_go:"জন্মদিনের দৃশ্য",scn_cap_on:"ক্যাপশন টেক্সট যোগ করুন",scn_cap_ph:"ক্যাপশন টেক্সট (যেমন Happy 1st Birthday, নাম)…",scn_cap_pos:"অবস্থান",scn_top:"উপরে",scn_bottom:"নিচে",scn_scarf:"✦ উড়ন্ত স্কার্ফ দৃশ্য",scn_dir:"দিক",scn_left:"বাম",scn_right:"ডান",scn_up:"উপর",scn_len:"দৈর্ঘ্য",scn_short:"ছোট",scn_long:"লম্বা",g_cat_scene:"সিন অপ — আপনার সাবজেক্ট লক থাকে (মুখ · ভঙ্গি · পোশাক · ফ্রেম); জেনারেট হওয়া পুরো দৃশ্য (আলো, ছায়া, রং, ব্যাকগ্রাউন্ড, ফোরগ্রাউন্ড, বস্তু, আবহ) আসল ছবির মতো কম্পোজিটের জন্য সাবজেক্টের সাথে স্বয়ংক্রিয়ভাবে মেলানো হয়।",crd_wed:"♥ ওয়েডিং প্রো স্যুট",crd_recipes:"রেসিপি — সংরক্ষণ / শেয়ার",learn_lbl:"লার্ন মোড — প্রথম ট্যাপ = গাইড (হলুদ), দ্বিতীয় = prompt (নীল), তৃতীয় = রান (সবুজ)",guide_hint:"আবার ট্যাপ করুন: হলুদ → নীল (prompt) → সবুজ (রান) ▶",g_learn_next_prompt:"আবার ট্যাপ করুন → হুবহু PROMPT দেখায় (নীল)।",g_learn_prompt_head:"এই বোতামটি যে PROMPT পাঠাবে (আবার ট্যাপ = রান):",g_learn_next_run:"আরেকবার ট্যাপ করুন → রান (সবুজ) জেনারেট করে।",st_prompt_ready:"Prompt প্রস্তুত — চালাতে আবার ট্যাপ করুন (সবুজ) ✓",g_step_doc:"প্রথমে Photoshop-এ আপনার ফটো ডকুমেন্ট খুলুন।",g_step_ref1:"রেফারেন্স ছবিটি Ref1-এ লোড করুন (এটি IMAGE 2 হয়ে যায়)। দ্বিতীয় ব্যক্তির জন্য Ref2 যোগ করুন।",g_step_target:"টার্গেট বাছুন: একক / যুগল (Ref1 = নারী, Ref2 = পুরুষ) / পরিবার।",g_step_mkhair:"ঐচ্ছিক: ফেস অপস-এর উপরে ‘রেফ-এর মেকআপ কপি করুন’ / ‘রেফ-এর হেয়ারস্টাইল নিন’ টিক দিন।",g_step_petal:"প্রথমে পাপড়ির রং বাছুন (auto = আপনার দৃশ্যের সাথে মেলে)।",g_step_rest:"উপরের ✓ দিয়ে ফুল কালার বা সাদা-কালো বেছে নিন।",g_step_int:"পছন্দমতো ইনটেনসিটি স্লাইডার সেট করুন।",g_step_confirm:"এগোতে আবার ট্যাপ করুন: গাইড (হলুদ) → PROMPT (নীল) → রান (সবুজ জেনারেট করে)।",g_cat_face:"ফেস অপ — রেফারেন্সের মুখ মিল-থাকা ব্যক্তির উপর স্থানান্তর করে; বাকি সবাই অপরিবর্তিত থাকে।",g_cat_sub:"সাবজেক্ট অপ — রেফারেন্সের ব্যক্তিকে আপনার দৃশ্যে আনে/রূপান্তর করে; দৃশ্য ও ফ্রেমিং অপরিবর্তিত থাকে।",g_cat_bgfg:"BG/FG অপ — রেফারেন্স ব্যবহার করে শুধু ব্যাকগ্রাউন্ড / ফোরগ্রাউন্ড বদলায়।",g_cat_lc:"আলো ও রং অপ — রেফারেন্সের লাইটিং ও গ্রেড কপি করে; মানুষজন পিক্সেল-নিখুঁত থাকে।",g_cat_dress:"পোশাক অপ — রেফারেন্স ব্যবহার করে শুধু পোশাক বদলায়।",g_cat_mkop:"মেকআপ অপ — রেফারেন্স ব্যবহার করে শুধু মেকআপ বদলায়।",g_cat_match:"মাস্টার ম্যাচ — আপনার ছবিকে রেফারেন্সের সম্পূর্ণ লুকের সাথে মেলায় (উপরের স্তরগুলিতে টিক দিন)।",g_cat_trail:"ওয়েডিং ট্রেইল — বিলাসবহুল ঘাস + প্রবাহিত ফুলের পথ; মুখ/ভঙ্গি/ফ্রেম সম্পূর্ণ লক থাকে।",g_cat_veil:"উড়ন্ত ভেইল — এই দৈর্ঘ্যে বাতাসে-ওড়া ভেইল যোগ/প্রসারিত করে; মুখ কখনও ঢাকা পড়ে না।",g_cat_gown:"গাউন — বর্তমান গাউনটি পরিষ্কার করে (ডিজাইন অপরিবর্তিত) এবং এই ট্রেন-দৈর্ঘ্য সেট করে।",g_cat_petal:"উড়ন্ত পাপড়ি — এই স্টাইলে বাতাসে পাপড়ি যোগ করে; রং উপরের সোয়াচ থেকে।",g_cat_wedx:"ওয়েডিং এক্সট্রা — আপনার দৃশ্যের সাথে মিলিয়ে এই উপাদান যোগ করে; সাবজেক্ট লক থাকে।",g_cat_canvas:"রিপ্লেস (ক্যানভাস) — আপনার সাবজেক্টকে রেফারেন্সের দৃশ্যে বসায়; রেফ-এর মানুষজন সরিয়ে দেওয়া হয়।",g_cat_restore:"পুরোনো ছবি পুনরুদ্ধার — ক্ষতি মেরামত করে; প্রতিটি মূল মুখ 100% অবিকল থাকে।",g_cat_generic:"প্রিসেট — আপনার ছবিতে এই পেশাদার সম্পাদনা প্রয়োগ করে।",g_gen:"জেনারেট — আপনার ডকুমেন্টে prompt বক্স (+ চেইন, কিপ, ক্যামেরা ব্লক) চালায়।",g_retouchbtn:"রিটাচ প্রয়োগ — আপনার সব স্লাইডার সেটিং এক পেশাদার রিটাচ পাস হিসেবে চালায়।",g_relightbtn:"লাইটিং জেনারেট — আপনার 3D লাইট ডায়াগ্রাম অনুযায়ী ছবিটি হুবহু রিলাইট করে।",g_scene:"সিন জেনারেট — এক্সট্র্যাক্ট করা prompt থেকে দৃশ্য নতুন করে তৈরি করে; সাবজেক্ট অপরিবর্তিত থাকে।",g_rmix:"রিপ্লেস মিক্স — রেফারেন্স থেকে শুধু ✓ টিক দেওয়া অংশগুলি প্রতিস্থাপন করে।",ro_faceRep:"ফেস রিপ্লেস",ro_faceSwap:"ফেস সোয়াপ",ro_bgRep:"BG রিপ্লেস",ro_bgSwap:"BG সোয়াপ",ro_fgRep:"FG রিপ্লেস",ro_bg_note:"Doc = সাবজেক্ট · Ref1 = নতুন দৃশ্য। Target (Solo/Couple/Family) নির্ধারণ করে কাকে রাখা হবে।",ro_bg_frame:"ফ্রেম ও কম্পোজিশন বজায় রাখুন",ro_bg_light:"সাবজেক্টের আলো/রং অক্ষুণ্ণ রাখুন",ro_subSwap:"সাবজেক্ট বদল",ro_lcRef:"L&C রেফারেন্স",ro_lcCopy:"L&C কপি-পেস্ট",ro_dressRef:"পোশাক রেফারেন্স",ro_dressRep:"পোশাক বদল",ro_mkCopy:"মেকআপ কপি",ro_matchBtn:"★ মাস্টার ম্যাচ",grp_retouch:"স্কিন রিটাচ প্রিসেট",lbl_intensity:"তীব্রতা",p_evoto:"Retouch B স্টাইল",p_meitu:"Retouch A স্টাইল",auto_place:"ফলাফল স্বয়ংক্রিয়ভাবে Photoshop-এ নতুন লেয়ার হিসেবে বসান",sec_retouchpro:"রিটাচ প্রো — স্লাইডার",rt_skin:"ত্বক",rt_faceai:"ফেস AI",rt_hair:"চুল",rt_dress:"পোশাক",rt_bg:"ব্যাকগ্রাউন্ড",rt_smooth:"ত্বক মসৃণ",rt_acne:"ব্রণ দূর",rt_spots:"কালো দাগ",rt_wrinkle:"বলিরেখা",rt_tone:"ফরসা / ট্যান",rt_glow:"গ্লো",rt_reshape:"AI রিশেপ",rt_lash:"চোখের পাপড়ি",rt_brow:"ভ্রু",rt_lipsmooth:"ঠোঁট মসৃণ",rt_lipcolor:"ঠোঁটের রং",rt_lenscolor:"লেন্সের রং",rt_hairstray:"এলোমেলো চুল",rt_hairsmooth:"চুল মসৃণ",rt_hairshine:"চুলের ঝলক (D&B)",rt_dresssmooth:"কাপড় মসৃণ",rt_dressedge:"কিনারা পরিষ্কার",rt_dresswrinkle:"ভাঁজ দূর",rt_dresstexture:"টেক্সচার পুনরুদ্ধার",rt_bgsmooth:"BG পরিষ্কার/মসৃণ",rt_bgcolor:"BG রং",rt_bgrecolor:"BG রং মসৃণ",rt_shape:"রিশেপ প্রো (মুখ + শরীর)",rt_teeth:"দাঁত সাদা",rt_eyewhite:"চোখের সাদা অংশ পরিষ্কার",rt_faceslim:"মুখ চিকন",rt_jaw:"চোয়ালের রেখা",rt_chin:"থুতনি",rt_nosesize:"নাকের আকার",rt_eyesize:"চোখের আকার",rt_lipfull:"ভরাট ঠোঁট",rt_waist:"কোমর চিকন",rt_bodyslim:"শরীর চিকন",rt_shoulder:"কাঁধ",rt_hip:"নিতম্ব চিকন",rt_leglen:"পায়ের দৈর্ঘ্য",rt_armslim:"বাহু চিকন",rt_dressfit:"পোশাক ফিট",rt_dressclean:"পোশাক পরিষ্কার",rt_dresscolorpure:"পোশাকের রং নিখুঁত",rt_bodygrp:"বডি স্কিন প্রো",rt_bodysmooth:"শরীরের ত্বক মসৃণ",rt_bodyblemish:"শরীরের দাগ পরিষ্কার",rt_bodytone:"শরীরের সমান টোন",rt_bodyglow:"বডি গ্লো",rt_bodyhairrm:"শরীরের লোম কমান",rt_hairvolume:"চুলের ভলিউম",rt_hairgloss:"চুলের গ্লস",rt_hairfill:"চুল ভরাট (পাতলা জায়গা)",wp_h_trail:"♥ ওয়েডিং — লাক্সারি ফ্লাওয়ার ট্রেইল",wp_h_veil:"♥ ওয়েডিং — উড়ন্ত ভেইল",wp_h_gown:"♥ ওয়েডিং — গাউন ক্লিন + ট্রেন",wp_h_petal:"♥ ওয়েডিং — উড়ন্ত পাপড়ি",wp_h_extra:"♥ ওয়েডিং — ঘোড়া · পানি · মুড",wp_note:"Face ID / পোজ / ফ্রেম / পোশাকের ডিজাইন সম্পূর্ণ লক থাকে — শুধু নির্দিষ্ট উপাদানটিই বদলায়।",wp_petalcolor:"পাপড়ির রং (auto = দৃশ্যের সাথে মিল)",wp_trail_c:"ফুলের রং",wp_trail_go:"▶ ফ্লাওয়ার ট্রেইল",wp_veil_c:"ভেইলের দৈর্ঘ্য",wp_veil_go:"▶ উড়ন্ত ভেইল",wp_gown_c:"ট্রেনের দৈর্ঘ্য",wp_gown_go:"▶ গাউন ক্লিন + ট্রেন",wp_pet_c:"পাপড়ির স্টাইল",wp_pet_go:"▶ উড়ন্ত পাপড়ি",wp_extra_c:"অতিরিক্ত",wp_extra_go:"▶ অতিরিক্ত যোগ করুন",btn_apply_rt:"রিটাচ প্রয়োগ করুন",btn_reset:"রিসেট",rt_none:"আগে অন্তত একটি রিটাচ স্লাইডার বা রং সেট করুন",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",recent_lbl:"সাম্প্রতিক prompt…",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop এই prompt বক্সের সীমা:",cleanup_note:"টিক দেওয়া আইটেমগুলো প্রতিবার জেনারেট / প্রিসেট চালানোর সাথে একসাথে চলে।",btn_generate:"তৈরি করুন",st_ready:"প্রস্তুত",st_capture:"ডকুমেন্ট ক্যাপচার হচ্ছে",st_gen:"জেনারেট হচ্ছে…",st_place:"Photoshop-এ বসানো হচ্ছে…",st_placed_masked:"লেয়ার + মাস্ক গ্রুপ হিসেবে বসানো হয়েছে — মূল ছবি অক্ষত ✓",st_placed_plain:"সাধারণ লেয়ার হিসেবে বসানো হয়েছে (এই হোস্টে মাস্ক/গ্রুপ পাওয়া যায় না)",stage_queued:"সারিতে আছে",stage_uploading:"আপলোড হচ্ছে",stage_generating:"জেনারেট হচ্ছে",stage_downloading:"ডাউনলোড হচ্ছে",stage_placing:"বসানো হচ্ছে",st_done:"হয়ে গেছে ✓",st_err:"ত্রুটি",st_no_doc:"কোনো সক্রিয় ডকুমেন্ট নেই — আগে একটি ছবি খুলুন",st_no_prompt:"Prompt খালি",need_ref:"এই প্রিসেটের জন্য স্লট 1-এ একটি রেফারেন্স ছবি দরকার",st_new_doc:"ফলাফল নতুন ডকুমেন্ট হিসেবে খোলা হয়েছে ✓",sec_preview:"প্রিভিউ — আগে / পরে",before:"আগে",after:"পরে",btn_place:"Photoshop-এ বসান",btn_saveas:"নতুন নামে সেভ করুন…",st_saved:"সেভ হয়েছে ✓",sec_diag:"সিস্টেম চেক",sec_log:"কার্যকলাপ লগ",btn_diag:"চেক চালান",btn_copylog:"লগ কপি করুন",btn_clearlog:"মুছুন",diag_host:"Photoshop হোস্ট",diag_uxp:"UXP সক্ষমতা",diag_rh:"RunningHub Enterprise key",diag_doc:"সক্রিয় ডকুমেন্ট",diag_set:"সেট করা",diag_unset:"সেট করা নেই",diag_open:"খোলা",diag_none:"কোনোটি খোলা নেই",diag_missing:"অনুপস্থিত",diag_done:"সিস্টেম চেক সম্পন্ন ✓",diag_lib:"রেফারেন্স লাইব্রেরি",diag_lib_open:"ফোল্ডার খোলার সক্ষমতা",sec_reflib:"রেফারেন্স ইমেজ লাইব্রেরি",reflib_note:"আপনার পছন্দের রেফারেন্স ছবির ফোল্ডারটি একবার বেছে নিন — ব্রাউজ সেটি মনে রাখে এবং সব জায়গায় সেটির ভেতরেই খোলে।",btn_browse:"ব্রাউজ",lib_choose:"ফোল্ডার বাছুন",lib_open:"ফোল্ডার খুলুন",lib_change:"ফোল্ডার বদলান",lib_reset:"রিসেট",lib_rescan:"পুনরায় স্ক্যান",lib_current:"বর্তমান ফোল্ডার",lib_found:"পাওয়া ছবি",lib_status:"অবস্থা",lib_lastscan:"শেষ স্ক্যান",lib_images:"ছবি",lib_connected:"সংযুক্ত",lib_not_config:"কনফিগার করা নেই",lib_perm_lost:"অনুমতি হারিয়ে গেছে — আবার নির্বাচন করুন",lib_none:"(কোনো ফোল্ডার নির্বাচিত নয়)",lib_copy_only:"শুধু পাথ কপি",lib_choose_msg:"আপনার HNK রেফারেন্স ইমেজ লাইব্রেরি ফোল্ডারটি বেছে নিন।",lib_scanning:"লাইব্রেরি স্ক্যান হচ্ছে…",lib_scan_done:"পুনরায় স্ক্যান সম্পন্ন ✓",lib_reset_done:"লাইব্রেরি রিসেট হয়েছে ✓",lib_path_copied:"পাথ কপি হয়েছে",lib_unsupported:"অসমর্থিত ছবির ধরন",lib_restore_fail:"রেফারেন্স পুনরুদ্ধার করা যায়নি",on:"চালু",off:"বন্ধ"},
-gu:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"બનાવો",st_ready:"તૈયાર",st_done:"થઈ ગયું ✓",st_need_key:"પહેલા RunningHub Enterprise key નાખો",btn_show:"બતાવો",btn_hide:"છુપાવો",btn_save:"સાચવો",btn_test:"Key ચકાસો",btn_clear:"કાઢી નાખો",btn_cancel:"રદ કરો",btn_load:"લોડ",btn_paste:"પેસ્ટ",btn_improve:"Prompt સુધારો",lbl_ratio:"ગુણોત્તર",lbl_size:"કદ",lbl_quality:"ગુણવત્તા"},
-hi:{app_title:"HNK Photoshop Ai पैनल (छात्रों के लिए)",sec_api:"RunningHub Enterprise key",btn_show:"दिखाएँ",btn_hide:"छिपाएँ",btn_test:"Key परखें",btn_save:"सहेजें",st_testing:"Key की जाँच हो रही है",st_key_ok:"✓ API key काम कर रही है",st_key_bad:"API key विफल रही",st_key_saved:"API key सेव हो गई ✓",st_need_key:"पहले RunningHub Enterprise key डालें",sec_model:"मॉडल और आउटपुट",scope_model_note:"नीचे Prompt टैब के Generate बटन में उपयोग होता है — Create और AI Tools की अपनी-अपनी अलग मॉडल सेटिंग्स हैं।",model_auto:"ऑटो (अनुशंसित)",model_flash:"Flash — तेज़ (2.5)",model_pro:"Pro — गुणवत्ता (3.0)",lbl_ratio:"अनुपात",ratio_auto:"ऑटो अनुपात (डॉक्यूमेंट से)",lbl_size:"आकार",lbl_quality:"गुणवत्ता",qual_auto:"ऑटो",qual_low:"कम",qual_med:"मध्यम",qual_high:"उच्च",sec_prompt:"Prompt",hint_prompt:"अपना prompt यहाँ लिखें… (अधिकतम 20,000 अक्षर)",btn_improve:"Prompt सुधारें",btn_clear:"हटाएँ",st_improving:"Prompt बेहतर बनाया जा रहा है",st_improved:"Prompt बेहतर हो गया ✓",sec_refs:"संदर्भ इमेज (2 स्लॉट)",base_note:"बेस इमेज = आपका सक्रिय Photoshop डॉक्यूमेंट (अपने आप कैप्चर होता है)।",btn_ref_layer:"+ लेयर",btn_ref_file:"फ़ाइल",btn_ref_web:"वेब",st_ref_layer_added:"लेयर संदर्भ के रूप में जुड़ गई ✓",st_ref_file_added:"फ़ाइल संदर्भ के रूप में जुड़ गई ✓",st_importing:"फ़ाइल इंपोर्ट हो रही है",url_title:"URL से संदर्भ — Chrome / Pinterest",url_ph:"https://… इमेज का पता या Pinterest पिन लिंक",btn_paste:"पेस्ट",btn_load:"लोड करें",btn_cancel:"रद्द करें",st_url_loading:"वेब इमेज डाउनलोड हो रही है",st_ref_web_added:"वेब इमेज संदर्भ के रूप में जुड़ गई ✓",st_url_bad:"इस URL से इमेज लोड नहीं हो सकी — इमेज का पता कॉपी करके फिर से आज़माएँ",no_layer:"कोई लेयर चयनित नहीं है",sec_presets:"AI प्रीसेट",auto_run:"प्रीसेट क्लिक → ऑटो Generate (OFF = केवल prompt में जोड़ें)",grp_cleanup:"क्लीनअप टूल",p_remove_people:"लोग हटाएँ",p_fix_hands:"अतिरिक्त हाथ ठीक करें",p_fix_legs:"अतिरिक्त पैर ठीक करें",p_full_clean:"पूरा क्लीनअप",grp_moved_note:"संदर्भ टूल अब नीचे Reference Ops Pro कार्ड में हैं (एक ही जगह, Solo/Couple/Family + गाइड के साथ)।",ro_h_detail:"हेयर · एक्सेसरीज़ · पोज़ (← Ref1)",ro_h_comp:"कंपोज़िट · स्टाइल · टेक्स्ट (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"हेयरस्टाइल (← Ref1)",p_access:"ज्वेलरी+एक्सेसरीज़ (← Ref1)",p_pose:"पोज़ मिलान (Doc → Ref1)",p_fgprops:"FG प्रॉप्स (← Ref1)",p_textlogo:"टेक्स्ट / लोगो (← Ref1)",p_style:"फ़ोटो स्टाइल (← Ref1)",grp_repsubj:"सब्जेक्ट बदलें (Doc → Ref1 दृश्य)",p_rep_solo:"सोलो बदलें",p_rep_couple:"कपल बदलें",p_rep_family:"परिवार बदलें",grp_rmix:"Replace Mix — टिक करें और Ref1 से लें",rm_bg:"बैकग्राउंड (BG)",rm_fg:"फ़ोरग्राउंड (FG)",rm_light:"लाइटिंग",rm_color:"रंग",rm_object:"ऑब्जेक्ट / प्रॉप्स",btn_rmix:"रिप्लेस जनरेट करें",rm_none:"पहले कम से कम एक पहलू टिक करें",grp_i2p:"इमेज → Prompt (सीन बिल्डर)",i2p_note:"1) Extract: Ref1 का दृश्य → विस्तृत टेक्स्ट prompt (लोग शामिल नहीं)। 2) इसे Prompt पेज पर संपादित करें। 3) 'सीन जनरेट करें' इसे आपके डॉक्यूमेंट के सब्जेक्ट के चारों ओर बनाता है — किसी भी एंगल पर अपने आप फ़िट। फ़ेस/पोज़/फ़्रेम लॉक = मूल बनाए रखें।",i2p_objects:"ऑब्जेक्ट और प्रॉप्स का विवरण",i2p_light:"लाइटिंग का विवरण",i2p_color:"रंग / ग्रेड का विवरण",i2p_bg:"बैकग्राउंड का विवरण",i2p_fg:"फ़ोरग्राउंड का विवरण",btn_i2p:"इमेज → Prompt (सीन निकालें)",i2p_fit:"सीन ऑटो-फ़िट — दृश्य को डॉक्यूमेंट के एंगल / दूरी / लेंस के अनुसार री-प्रोजेक्ट करें",i2p_adapt:"सब्जेक्ट की रोशनी और रंग दृश्य के अनुसार ढालें",btn_scenegen:"सीन जनरेट करें",st_extract:"दृश्य से prompt निकाला जा रहा है",st_extract_done:"सीन prompt तैयार है — Prompt पेज पर देख लें",scene_no_prompt:"Prompt बॉक्स खाली है — पहले इमेज → Prompt चलाएँ",i2p_none:"पहले कम से कम एक विवरण पहलू टिक करें",sec_light:"स्टूडियो लाइटिंग — AI रीलाइट",light_note:"लाइटें ON टिक करें, चुनने के लिए पंक्ति पर टैप करें, स्लाइडर से उन्हें आकार दें — 3D टॉप-व्यू डायग्राम लाइव बदलता है (▴ = ऊँचा, ▾ = नीचा)। 'लाइटिंग जनरेट करें' आपके डॉक्यूमेंट को ठीक इसी सेटअप के अनुसार रीलाइट करता है; फ़ेस / पोज़ / फ़्रेम लॉक रहते हैं।",lbl_my_prompt:"म्यांमार PROMPT",lstage_model:"मॉडल",lstage_cam:"कैमरा",l_key:"की लाइट",l_fill:"फ़िल / फ्रंट",l_butterfly:"बटरफ़्लाई (ऊपर-सामने)",l_side:"साइड लाइट",l_rim:"रिम लाइट",l_back:"बैक लाइट",l_hair:"हेयर लाइट",l_bglight:"बैकग्राउंड लाइट",lt_softbox:"सॉफ्टबॉक्स",lt_octa:"ऑक्टा",lt_strip:"स्ट्रिप",lt_umbrella:"अम्ब्रेला",lt_beauty:"ब्यूटी",lt_hard:"हार्ड",li_int:"तीव्रता",li_angle:"कोण",li_height:"ऊँचाई",li_dist:"दूरी",li_size:"आकार",btn_lightgen:"लाइटिंग जनरेट करें",light_none:"पहले कम से कम एक लाइट ON करें",lg_equip:"फ़ोटो में लाइट उपकरण दिखाएँ (सॉफ्टबॉक्स / स्टैंड दिखें)",grp_chains:"स्टाइल चेन — ✓ स्टाइल मिलाएँ",chains_note:"कोई भी स्टाइल ON करें — वे हर Generate / प्रीसेट / रीटच में एक साथ मिल जाती हैं।",grp_restore:"पुरानी फ़ोटो बहाली",p_restore:"पुरानी फ़ोटो बहाली",rest_color:"पूर्ण रंगीन",rest_bw:"ब्लैक एंड व्हाइट",restore_note:"फटने, पानी / जलने के नुकसान और फीकेपन की मरम्मत करता है — हर मूल चेहरा 100% वैसा ही रहता है।",rt_browstyle:"आइब्रो स्टाइल",rt_lashstyle:"लैश स्टाइल",rt_blush:"ब्लश रंग",rt_contour:"कंटूर स्टाइल",rt_bust:"वक्ष",rt_butt:"नितंब",rt_thigh:"जाँघें",rt_calf:"पिंडलियाँ",rt_neck:"गर्दन",rt_fingers:"उँगलियाँ",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"म्यांमार prompt का अंग्रेज़ी में अनुवाद हो रहा है",live_trans:"लाइव ⇄ ऑटो-अनुवाद (EN ↔ MY, टाइपिंग रुकने के बाद)",st_retry:"फिर से कोशिश की जा रही है",grp_recipes:"रेसिपी — सेटिंग्स सेव / शेयर करें",recipe_note:"सब कुछ (चेन, रीटच, लाइटें, लॉक, prompt) एक ही .json रेसिपी में सेव करें — छात्र बस उसे लोड कर लें।",btn_recipe_save:"रेसिपी सेव करें",btn_recipe_load:"रेसिपी लोड करें",st_recipe_saved:"रेसिपी सेव हो गई ✓",st_recipe_loaded:"रेसिपी लोड हो गई ✓ — सभी कंट्रोल अपडेट हो गए",st_recipe_bad:"यह HNK रेसिपी फ़ाइल नहीं है",sec_final:"अंतिम Prompt (AI को भेजा जाता है)",btn_copy:"कॉपी करें",st_copied:"कॉपी हो गया ✓",hist_note:"इतिहास — पिछले 6 परिणाम, देखने के लिए टैप करें:",btn_hist_prompt:"→ Prompt",sec_batch:"बैच मोड",batch_note:"कई फ़ोटो + एक आउटपुट फ़ोल्डर चुनें — मौजूदा prompt, चेन, क्लीनअप और Keep लॉक हर फ़ोटो पर चलते हैं; परिणाम *_HNK.png के रूप में सेव होते हैं।",btn_batch:"बैच चलाएँ",btn_batch_stop:"रोकें",st_batch:"बैच",st_batch_done:"बैच पूरा हुआ",sec_web:"वेब AI — मिनी ब्राउज़र",web_note:"Photoshop के अंदर कोई भी वेब AI एडिटर खोलें। वहाँ जनरेट करें, फिर परिणाम को लेयर के रूप में लाएँ:",web_import_note:"इंपोर्ट: ① वेब ऐप में 'इमेज का पता कॉपी करें' उपयोग करें, फिर 'कॉपी किया लिंक इंपोर्ट करें' दबाएँ · ② या फ़ाइल डाउनलोड करके 'फ़ाइल इंपोर्ट करें' उपयोग करें · ③ HNK ब्रिज वाले पार्टनर वेब ऐप इमेज अपने आप भेज देते हैं।",btn_web_go:"जाएँ",btn_web_home:"होम",btn_web_reload:"रीलोड करें",btn_web_import_link:"कॉपी किया लिंक इंपोर्ट करें → PS",btn_web_import_file:"फ़ाइल इंपोर्ट करें → PS",st_web_import:"Photoshop में लेयर के रूप में इंपोर्ट हो गया ✓",st_web_nourl:"पहले इमेज लिंक कॉपी करें (राइट-क्लिक → इमेज का पता कॉपी करें)",st_web_fetch:"लिंक से इमेज लाई जा रही है",st_web_notallowed:"यह डोमेन allow-list में नहीं है — यह खाली रह सकता है। इसे जुड़वाने के लिए HNK से कहें।",st_need_doc:"पहले Photoshop में कोई फोटो डॉक्यूमेंट खोलें",sec_campro:"Camera Pro और क्वालिटी",autosave_lbl:"हर परिणाम का ऑटो-एक्सपोर्ट (PNG + prompt लॉग → फ़ोल्डर)",st_folder_ok:"एक्सपोर्ट फ़ोल्डर सेट हो गया ✓",st_exported:"एक्सपोर्ट हो गया ✓",st_export_fail:"एक्सपोर्ट विफल — फ़ोल्डर जाँचें",st_pro_fallback:"Pro मॉडल उपलब्ध नहीं — इस बार Flash पर स्विच किया गया",st_img_bad:"इमेज डेटा इंटीग्रिटी जाँच में विफल रहा — फोटो दोबारा जोड़ें",st_auto_comp:"ऑटो कंपोज़िट: IMAGE 1 सब्जेक्ट → रेफ़रेंस सीन",prov_lbl:"AI प्रोवाइडर",tab_create: "Create",create_note:"क्रिएट मोड — आपके prompt से बिल्कुल नई इमेज (+ इसके अपने 4 रेफ़)। पूरी तरह स्वतंत्र: डॉक्यूमेंट, प्रीसेट, चेन या लॉक कभी नहीं पढ़ता।",create_ph:"जो इमेज बनाना चाहते हैं उसका वर्णन करें…",btn_create_ps:"⬇ Photoshop में भेजें",btn_to_ref:"↺ Ref 1 के रूप में इस्तेमाल करें",st_to_ref:"परिणाम Ref 1 में लोड हो गया ✓",scope_create_note:"Setup के Model और Output से स्वतंत्र — ये सेटिंग्स सिर्फ़ Create के Generate पर लागू होती हैं।",cr_ratio:"अनुपात",cr_var:"वेरिएशन",cr_restyle:"♻ परिणाम को नया स्टाइल दें",cr_lib:"Prompt लाइब्रेरी — डालने के लिए टैप करें",cr_improve:"बेहतर बनाएँ",cr_describe:"Ref 1 का वर्णन → Prompt",st_describing:"रेफ़रेंस पढ़ा जा रहा है…",st_described:"Ref 1 से prompt तैयार हो गया ✓",st_need_ref1:"पहले Ref 1 में कोई इमेज जोड़ें",st_lib_added:"Prompt जोड़ा गया ✓",cr_refs:"रेफ़रेंस इमेज (अधिकतम 4)",cr_refs_note:"वैकल्पिक — Layer / File / Web से जोड़ें। Create सिर्फ़ वही लेता है जो आपका prompt माँगता है।",cr_results:"परिणाम",cr_gal_empty:"अभी कोई परिणाम नहीं — Generate टैप करें।",cr_gal_have:"परिणाम · प्रीव्यू / कार्रवाई के लिए थंबनेल टैप करें",cr_save:"⬇ PNG सेव करें",cr_engine:"इंजन",cr_need_result:"पहले कोई इमेज जनरेट करें",btn_web_import_url:"⬇ URL इंपोर्ट करें",st_clip_help:"क्लिपबोर्ड खाली/ब्लॉक है — लिंक को URL बार में पेस्ट करें, फिर ⬇ URL इंपोर्ट करें टैप करें",st_web_blob:"यह एक अस्थायी blob: लिंक है — राइट-क्लिक → Copy IMAGE Address इस्तेमाल करें, या फ़ाइल सेव करके Import File इस्तेमाल करें",err_key:"API key अमान्य — Setup टैब पर key दोबारा जाँचें · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"कोटा / रेट लिमिट — थोड़ा रुककर फिर कोशिश करें · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"API के लिए इमेज बहुत बड़ी है — छोटा करके फिर कोशिश करें · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"सेफ़्टी फ़िल्टर ने रोका — prompt या फोटो बदलकर देखें · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"नेटवर्क / सर्वर समस्या — कृपया फिर कोशिश करें · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"अनुरोध का समय समाप्त — सर्वर ने बहुत देर लगाई; कृपया फिर कोशिश करें · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"अनुरोध पूरा नहीं हो सका — कृपया फिर कोशिश करें",err_img:"कोई उपयोगी इमेज नहीं बनी — कृपया फिर कोशिश करें",err_mode:"यह डॉक्यूमेंट RGB मोड में नहीं है — पहले कन्वर्ट करें (Image ▸ Mode ▸ RGB Color), फिर दोबारा कोशिश करें",cam_master:"कैमरा ब्लॉक ON — हर prompt के अंत में जोड़ा जाएगा",cam_body:"कैमरा बॉडी",cam_lens:"प्राइम लेंस (mm)",cam_f:"अपर्चर",cam_film:"फ़िल्म लुक",cam_bokeh:"बोकेह स्टाइल",cam_iso:"ISO",cam_k:"WB केल्विन",cam_note:"ब्लॉक ON करें, फिर सिर्फ़ ज़रूरी चीज़ें चुनें — – चिप्स चुप रहती हैं। सब कुछ अंतिम prompt के अंत में जुड़ता है।",ro_h_main:"रेफ़रेंस ऑप्स प्रो (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (महिला) · Ref2 = IMAGE 3 (पुरुष)। टारगेट चुनें, फिर कोई ऑप चलाएँ — जिनसे मेल नहीं है वे लोग कभी नहीं बदलते।",ro_target:"टारगेट:",ro_solo:"सोलो",ro_couple:"कपल",ro_family:"परिवार",ro_mk:"रेफ़ का मेकअप कॉपी करें",ro_hair:"रेफ़ का हेयरस्टाइल लें",ro_h_face:"फेस ऑप्स",ro_h_bg:"BG / FG ऑप्स",ro_h_sub:"सब्जेक्ट ऑप्स",ro_h_lc:"लाइट और कलर ऑप्स",ro_h_dress:"ड्रेस ऑप्स",ro_h_mk:"मेकअप ऑप्स",ro_h_match:"★ मास्टर मैच (एक जैसा लुक)",ro_match_note:"IMAGE 1 को रेफ़रेंस से मिलाएँ ताकि दोनों एक ही एडिट जैसे दिखें — जो मैच करना है उसे टिक करें:",m_color:"कलर",m_light:"लाइट",m_makeup:"मेकअप",m_skin:"स्किन रीटच",crd_chainsrest:"स्टाइल चेन + पुरानी फोटो रिस्टोर",crd_refops:"रेफ़रेंस ऑप्स प्रो (Ref1 / Ref2)",crd_scenes:"सीन प्रो — लॉक्ड सब्जेक्ट · मैचिंग सीन",scn_note:"अपने सब्जेक्ट को लॉक करें (चेहरा · पोज़ · ड्रेस · फ्रेम) और पूरा सीन उनके अनुसार दोबारा बनाएँ — लाइट, शैडो, कलर, बैकग्राउंड, फ़ोरग्राउंड और ऑब्जेक्ट सब अपने आप ढलकर असली फोटो जैसा लुक देते हैं।",scn_h_style:"सीन स्टाइल (इनडोर / सांस्कृतिक)",scn_h_bday:"जन्मदिन — उम्र का अंक 1–45",scn_h_cap:"कैप्शन / टेक्स्ट (बच्चा · Miss Universe · जन्मदिन)",scn_h_scarf:"आउटडोर / फ्लाइंग स्कार्फ़",scn_grad:"ग्रेजुएशन इनडोर",scn_prewed:"प्रीवेडिंग इनडोर",scn_vietnam:"वियतनाम",scn_myanmar:"म्यांमार",scn_chinese:"चीनी",scn_shan:"शान",scn_newborn:"नवजात / शिशु",scn_age:"उम्र",scn_bday_go:"जन्मदिन सीन",scn_cap_on:"कैप्शन टेक्स्ट जोड़ें",scn_cap_ph:"कैप्शन टेक्स्ट (जैसे Happy 1st Birthday, नाम)…",scn_cap_pos:"पोज़िशन",scn_top:"ऊपर",scn_bottom:"नीचे",scn_scarf:"✦ फ्लाइंग स्कार्फ़ सीन",scn_dir:"दिशा",scn_left:"बाएँ",scn_right:"दाएँ",scn_up:"ऊपर",scn_len:"लंबाई",scn_short:"छोटा",scn_long:"लंबा",g_cat_scene:"सीन ऑप — आपका सब्जेक्ट लॉक है (चेहरा · पोज़ · ड्रेस · फ्रेम); पूरा जनरेट किया गया सीन (लाइट, शैडो, कलर, बैकग्राउंड, फ़ोरग्राउंड, ऑब्जेक्ट, माहौल) असली फोटो जैसे कंपोज़िट के लिए सब्जेक्ट से अपने आप मैच किया जाता है।",crd_wed:"♥ वेडिंग प्रो सूट",crd_recipes:"रेसिपी — सेव / शेयर करें",learn_lbl:"लर्न मोड — पहला टैप = गाइड (पीला), दूसरा = prompt (नीला), तीसरा = रन (हरा)",guide_hint:"फिर टैप करें: पीला → नीला (prompt) → हरा (रन) ▶",g_learn_next_prompt:"फिर टैप करें → सटीक PROMPT दिखेगा (नीला)।",g_learn_prompt_head:"यह बटन जो PROMPT भेजेगा (फिर टैप = रन):",g_learn_next_run:"एक बार और टैप करें → रन (हरा) जनरेट करता है।",st_prompt_ready:"Prompt तैयार — चलाने के लिए फिर टैप करें (हरा) ✓",g_step_doc:"पहले Photoshop में अपना फोटो डॉक्यूमेंट खोलें।",g_step_ref1:"रेफ़रेंस इमेज को Ref1 में लोड करें (वह IMAGE 2 बन जाती है)। दूसरे व्यक्ति के लिए Ref2 जोड़ें।",g_step_target:"टारगेट चुनें: सोलो / कपल (Ref1 = महिला, Ref2 = पुरुष) / परिवार।",g_step_mkhair:"वैकल्पिक: फेस ऑप्स के ऊपर ‘रेफ़ का मेकअप कॉपी करें’ / ‘रेफ़ का हेयरस्टाइल लें’ टिक करें।",g_step_petal:"पहले पंखुड़ी का रंग चुनें (auto = आपके सीन से मैच)।",g_step_rest:"ऊपर दिए ✓ से फुल कलर या B&W चुनें।",g_step_int:"इंटेंसिटी स्लाइडर अपनी पसंद से सेट करें।",g_step_confirm:"आगे बढ़ने के लिए फिर टैप करें: गाइड (पीला) → PROMPT (नीला) → रन (हरा जनरेट करता है)।",g_cat_face:"फेस ऑप — रेफ़रेंस चेहरा मिलते-जुलते व्यक्ति पर ट्रांसफ़र करता है; बाकी सब जस के तस रहते हैं।",g_cat_sub:"सब्जेक्ट ऑप — रेफ़रेंस व्यक्ति को आपके सीन में लाता/ढालता है; सीन और फ्रेमिंग वही रहती है।",g_cat_bgfg:"BG/FG ऑप — रेफ़रेंस के आधार पर सिर्फ़ बैकग्राउंड / फ़ोरग्राउंड बदलता है।",g_cat_lc:"लाइट और कलर ऑप — रेफ़रेंस की लाइटिंग और ग्रेड कॉपी करता है; लोग पिक्सेल-दर-पिक्सेल वैसे ही रहते हैं।",g_cat_dress:"ड्रेस ऑप — रेफ़रेंस के आधार पर सिर्फ़ पोशाक बदलता है।",g_cat_mkop:"मेकअप ऑप — रेफ़रेंस के आधार पर सिर्फ़ मेकअप बदलता है।",g_cat_match:"मास्टर मैच — आपकी फोटो को रेफ़रेंस के पूरे लुक से मैच करता है (ऊपर की परतें टिक करें)।",g_cat_trail:"वेडिंग ट्रेल — लक्ज़री घास + बहती फूलों की राह; चेहरे/पोज़/फ्रेम पूरी तरह लॉक रहते हैं।",g_cat_veil:"फ्लाइंग वेल — इस लंबाई का हवा में उड़ता वेल जोड़ता/बढ़ाता है; चेहरा कभी नहीं ढकता।",g_cat_gown:"गाउन — मौजूदा गाउन साफ़ करता है (डिज़ाइन वही रहता है) और ट्रेन की यह लंबाई सेट करता है।",g_cat_petal:"फ्लाइंग पेटल्स — इस स्टाइल में हवा में पंखुड़ियाँ जोड़ता है; रंग ऊपर के स्वैच से।",g_cat_wedx:"वेडिंग एक्स्ट्रा — आपके सीन से मैच करता यह एलिमेंट जोड़ता है; सब्जेक्ट लॉक रहता है।",g_cat_canvas:"रिप्लेस (कैनवस) — आपके सब्जेक्ट को रेफ़रेंस के सीन में रखता है; रेफ़ के लोग हटा दिए जाते हैं।",g_cat_restore:"पुरानी फोटो रिस्टोर — नुक़सान की मरम्मत करता है; हर मूल चेहरा 100% वैसा ही रहता है।",g_cat_generic:"प्रीसेट — आपकी फोटो पर यह प्रोफ़ेशनल एडिट लागू करता है।",g_gen:"जनरेट — prompt बॉक्स (+ चेन, कीप्स, कैमरा ब्लॉक) आपके डॉक्यूमेंट पर चलाता है।",g_retouchbtn:"रीटच अप्लाई — आपकी सभी स्लाइडर सेटिंग्स को एक प्रोफ़ेशनल रीटच पास के रूप में चलाता है।",g_relightbtn:"लाइटिंग जनरेट — आपके 3D लाइट डायग्राम के हिसाब से फोटो को हूबहू रीलाइट करता है।",g_scene:"सीन जनरेट — निकाले गए prompt से सीन दोबारा बनाता है; सब्जेक्ट वही रहता है।",g_rmix:"रिप्लेस मिक्स — रेफ़रेंस से सिर्फ़ ✓ टिक किए गए हिस्से बदलता है।",ro_faceRep:"फेस रिप्लेस",ro_faceSwap:"फेस स्वैप",ro_bgRep:"BG रिप्लेस",ro_bgSwap:"BG स्वैप",ro_fgRep:"FG रिप्लेस",ro_bg_note:"Doc = सब्जेक्ट · Ref1 = नया सीन। Target (Solo/Couple/Family) तय करता है कि किसे रखा जाए।",ro_bg_frame:"फ़्रेम और कंपोज़िशन बनाए रखें",ro_bg_light:"सब्जेक्ट की रोशनी/रंग सुरक्षित रखें",ro_subSwap:"सब्जेक्ट स्वैप",ro_lcRef:"L&C रेफ़रेंस",ro_lcCopy:"L&C कॉपी-पेस्ट",ro_dressRef:"ड्रेस रेफ़रेंस",ro_dressRep:"ड्रेस रिप्लेस",ro_mkCopy:"मेकअप कॉपी",ro_matchBtn:"★ मास्टर मैच",grp_retouch:"स्किन रीटच प्रीसेट",lbl_intensity:"तीव्रता",p_evoto:"Retouch B स्टाइल",p_meitu:"Retouch A स्टाइल",auto_place:"परिणाम को नई लेयर के रूप में Photoshop में अपने-आप रखें",sec_retouchpro:"रीटच प्रो — स्लाइडर",rt_skin:"स्किन",rt_faceai:"फ़ेस AI",rt_hair:"बाल",rt_dress:"ड्रेस",rt_bg:"बैकग्राउंड",rt_smooth:"स्किन स्मूद",rt_acne:"मुँहासे हटाएँ",rt_spots:"काले धब्बे",rt_wrinkle:"झुर्रियाँ",rt_tone:"गोरापन / टैन",rt_glow:"ग्लो",rt_reshape:"AI रीशेप",rt_lash:"पलकें",rt_brow:"भौंहें",rt_lipsmooth:"होंठ स्मूद",rt_lipcolor:"होंठों का रंग",rt_lenscolor:"लेंस का रंग",rt_hairstray:"बिखरे बाल",rt_hairsmooth:"बाल स्मूद",rt_hairshine:"बालों की चमक (D&B)",rt_dresssmooth:"कपड़ा स्मूद",rt_dressedge:"किनारों की सफ़ाई",rt_dresswrinkle:"सिलवटें हटाएँ",rt_dresstexture:"टेक्सचर वापस लाएँ",rt_bgsmooth:"BG साफ़/स्मूद",rt_bgcolor:"BG रंग",rt_bgrecolor:"BG रंग स्मूद",rt_shape:"रीशेप प्रो (चेहरा + शरीर)",rt_teeth:"दाँत सफ़ेद करें",rt_eyewhite:"आँखों की सफ़ेदी साफ़",rt_faceslim:"चेहरा स्लिम",rt_jaw:"जॉलाइन",rt_chin:"ठोड़ी",rt_nosesize:"नाक का आकार",rt_eyesize:"आँखों का आकार",rt_lipfull:"भरे होंठ",rt_waist:"कमर स्लिम",rt_bodyslim:"बॉडी स्लिम",rt_shoulder:"कंधे",rt_hip:"हिप स्लिम",rt_leglen:"टाँगों की लंबाई",rt_armslim:"बाँह स्लिम",rt_dressfit:"ड्रेस फ़िट",rt_dressclean:"ड्रेस साफ़",rt_dresscolorpure:"ड्रेस का शुद्ध रंग",rt_bodygrp:"बॉडी स्किन प्रो",rt_bodysmooth:"बॉडी स्किन स्मूद",rt_bodyblemish:"बॉडी दाग़-धब्बे साफ़",rt_bodytone:"बॉडी एक-सा टोन",rt_bodyglow:"बॉडी ग्लो",rt_bodyhairrm:"शरीर के बाल कम करें",rt_hairvolume:"बालों का वॉल्यूम",rt_hairgloss:"हेयर ग्लॉस",rt_hairfill:"हेयर फ़िल (पतले हिस्से)",wp_h_trail:"♥ वेडिंग — लक्ज़री फ्लावर ट्रेल",wp_h_veil:"♥ वेडिंग — उड़ता वेल",wp_h_gown:"♥ वेडिंग — गाउन क्लीन + ट्रेन",wp_h_petal:"♥ वेडिंग — उड़ती पंखुड़ियाँ",wp_h_extra:"♥ वेडिंग — घोड़ा · पानी · मूड",wp_note:"फ़ेस ID / पोज़ / फ़्रेम / ड्रेस डिज़ाइन पूरी तरह लॉक हैं — केवल चुना गया तत्व ही बदलता है।",wp_petalcolor:"पंखुड़ी का रंग (auto = सीन से मेल)",wp_trail_c:"फूल का रंग",wp_trail_go:"▶ फ्लावर ट्रेल",wp_veil_c:"वेल की लंबाई",wp_veil_go:"▶ उड़ता वेल",wp_gown_c:"ट्रेन की लंबाई",wp_gown_go:"▶ गाउन क्लीन + ट्रेन",wp_pet_c:"पंखुड़ी की शैली",wp_pet_go:"▶ उड़ती पंखुड़ियाँ",wp_extra_c:"अतिरिक्त",wp_extra_go:"▶ अतिरिक्त जोड़ें",btn_apply_rt:"रीटच लागू करें",btn_reset:"रीसेट",rt_none:"पहले कम से कम एक रीटच स्लाइडर या रंग सेट करें",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",recent_lbl:"हाल के prompts…",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop इस prompt बॉक्स की सीमा रखता है:",cleanup_note:"टिक किए गए आइटम हर जनरेट / प्रीसेट के साथ चलते हैं।",btn_generate:"बनाएँ",st_ready:"तैयार",st_capture:"दस्तावेज़ कैप्चर हो रहा है",st_gen:"जनरेट हो रहा है…",st_place:"Photoshop में रखा जा रहा है…",st_placed_masked:"लेयर + मास्क ग्रुप के रूप में रखा गया — मूल छवि ज्यों की त्यों ✓",st_placed_plain:"सादी लेयर के रूप में रखा गया (इस होस्ट पर मास्क/ग्रुप उपलब्ध नहीं)",stage_queued:"कतार में",stage_uploading:"अपलोड हो रहा है",stage_generating:"जनरेट हो रहा है",stage_downloading:"डाउनलोड हो रहा है",stage_placing:"रखा जा रहा है",st_done:"हो गया ✓",st_err:"त्रुटि",st_no_doc:"कोई सक्रिय दस्तावेज़ नहीं — पहले कोई फ़ोटो खोलें",st_no_prompt:"Prompt खाली है",need_ref:"इस प्रीसेट के लिए स्लॉट 1 में रेफ़रेंस इमेज चाहिए",st_new_doc:"परिणाम नए दस्तावेज़ के रूप में खुल गया ✓",sec_preview:"पूर्वावलोकन — पहले / बाद",before:"पहले",after:"बाद",btn_place:"Photoshop में रखें",btn_saveas:"इस रूप में सहेजें…",st_saved:"सहेजा गया ✓",sec_diag:"सिस्टम जाँच",sec_log:"गतिविधि लॉग",btn_diag:"जाँच चलाएँ",btn_copylog:"लॉग कॉपी करें",btn_clearlog:"साफ़ करें",diag_host:"Photoshop होस्ट",diag_uxp:"UXP क्षमताएँ",diag_rh:"RunningHub Enterprise key",diag_doc:"सक्रिय दस्तावेज़",diag_set:"सेट है",diag_unset:"सेट नहीं",diag_open:"खुला है",diag_none:"कोई खुला नहीं",diag_missing:"अनुपलब्ध",diag_done:"सिस्टम जाँच पूरी ✓",diag_lib:"रेफ़रेंस लाइब्रेरी",diag_lib_open:"फ़ोल्डर खोलने की क्षमता",sec_reflib:"रेफ़रेंस इमेज लाइब्रेरी",reflib_note:"अपनी पसंदीदा रेफ़रेंस इमेज का फ़ोल्डर एक बार चुनें — ब्राउज़ इसे याद रखता है और हर जगह इसी में खुलता है।",btn_browse:"ब्राउज़ करें",lib_choose:"फ़ोल्डर चुनें",lib_open:"फ़ोल्डर खोलें",lib_change:"फ़ोल्डर बदलें",lib_reset:"रीसेट",lib_rescan:"फिर स्कैन करें",lib_current:"वर्तमान फ़ोल्डर",lib_found:"इमेज मिलीं",lib_status:"स्थिति",lib_lastscan:"अंतिम स्कैन",lib_images:"इमेज",lib_connected:"कनेक्टेड",lib_not_config:"कॉन्फ़िगर नहीं",lib_perm_lost:"अनुमति खो गई — फिर से चुनें",lib_none:"(कोई फ़ोल्डर चयनित नहीं)",lib_copy_only:"केवल पथ कॉपी करें",lib_choose_msg:"अपना HNK रेफ़रेंस इमेज लाइब्रेरी फ़ोल्डर चुनें।",lib_scanning:"लाइब्रेरी स्कैन हो रही है…",lib_scan_done:"री-स्कैन पूरा ✓",lib_reset_done:"लाइब्रेरी रीसेट हो गई ✓",lib_path_copied:"पथ कॉपी हुआ",lib_unsupported:"असमर्थित इमेज प्रकार",lib_restore_fail:"रेफ़रेंस पुनर्स्थापित नहीं हो सका",on:"चालू",off:"बंद"},
-ja:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"生成",st_ready:"準備完了",st_done:"完了 ✓",st_need_key:"先に RunningHub Enterprise key を入力してください",btn_show:"表示",btn_hide:"隠す",btn_save:"保存",btn_test:"キーをテスト",btn_clear:"クリア",btn_cancel:"キャンセル",btn_load:"読み込み",btn_paste:"貼り付け",btn_improve:"プロンプト改善",lbl_ratio:"比率",lbl_size:"サイズ",lbl_quality:"品質"},
-km:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"បង្កើត",st_ready:"រួចរាល់",st_done:"រួចរាល់ហើយ ✓",st_need_key:"សូមបញ្ចូល RunningHub Enterprise key ជាមុន",btn_show:"បង្ហាញ",btn_hide:"លាក់",btn_save:"រក្សាទុក",btn_test:"សាកល្បង Key",btn_clear:"លុប",btn_cancel:"បោះបង់",btn_load:"ផ្ទុក",btn_paste:"បិទភ្ជាប់",btn_improve:"កែលម្អ Prompt",lbl_ratio:"សមាមាត្រ",lbl_size:"ទំហំ",lbl_quality:"គុណភាព"},
-kn:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"ರಚಿಸಿ",st_ready:"ಸಿದ್ಧ",st_done:"ಮುಗಿದಿದೆ ✓",st_need_key:"ಮೊದಲು RunningHub Enterprise key ಹಾಕಿ",btn_show:"ತೋರಿಸಿ",btn_hide:"ಮರೆಮಾಡಿ",btn_save:"ಉಳಿಸಿ",btn_test:"Key ಪರೀಕ್ಷಿಸಿ",btn_clear:"ಅಳಿಸಿ",btn_cancel:"ರದ್ದು",btn_load:"ಲೋಡ್",btn_paste:"ಪೇಸ್ಟ್",btn_improve:"Prompt ಸುಧಾರಿಸಿ",lbl_ratio:"ಅನುಪಾತ",lbl_size:"ಗಾತ್ರ",lbl_quality:"ಗುಣಮಟ್ಟ"},
-ko:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"생성",st_ready:"준비 완료",st_done:"완료 ✓",st_need_key:"먼저 RunningHub Enterprise key를 입력하세요",btn_show:"보기",btn_hide:"숨기기",btn_save:"저장",btn_test:"키 테스트",btn_clear:"지우기",btn_cancel:"취소",btn_load:"불러오기",btn_paste:"붙여넣기",btn_improve:"프롬프트 개선",lbl_ratio:"비율",lbl_size:"크기",lbl_quality:"품질"},
-lo:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"ສ້າງພາບ",st_ready:"ພ້ອມ",st_done:"ສຳເລັດ ✓",st_need_key:"ກະລຸນາໃສ່ RunningHub Enterprise key ກ່ອນ",btn_show:"ສະແດງ",btn_hide:"ເຊື່ອງ",btn_save:"ບັນທຶກ",btn_test:"ທົດສອບ Key",btn_clear:"ລຶບ",btn_cancel:"ຍົກເລີກ",btn_load:"ໂຫຼດ",btn_paste:"ວາງ",btn_improve:"ປັບປຸງ Prompt",lbl_ratio:"ອັດຕາສ່ວນ",lbl_size:"ຂະໜາດ",lbl_quality:"ຄຸນນະພາບ"},
-ml:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"സൃഷ്ടിക്കുക",st_ready:"തയ്യാർ",st_done:"കഴിഞ്ഞു ✓",st_need_key:"ആദ്യം RunningHub Enterprise key ചേർക്കുക",btn_show:"കാണിക്കുക",btn_hide:"മറയ്ക്കുക",btn_save:"സേവ്",btn_test:"Key പരിശോധിക്കുക",btn_clear:"മായ്ക്കുക",btn_cancel:"റദ്ദാക്കുക",btn_load:"ലോഡ്",btn_paste:"പേസ്റ്റ്",btn_improve:"Prompt മെച്ചപ്പെടുത്തുക",lbl_ratio:"അനുപാതം",lbl_size:"വലുപ്പം",lbl_quality:"നിലവാരം"},
-mr:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"तयार करा",st_ready:"तयार",st_done:"झाले ✓",st_need_key:"आधी RunningHub Enterprise key टाका",btn_show:"दाखवा",btn_hide:"लपवा",btn_save:"जतन करा",btn_test:"Key तपासा",btn_clear:"काढा",btn_cancel:"रद्द",btn_load:"लोड",btn_paste:"पेस्ट",btn_improve:"Prompt सुधारा",lbl_ratio:"गुणोत्तर",lbl_size:"आकार",lbl_quality:"गुणवत्ता"},
-ne:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"बनाउनुहोस्",st_ready:"तयार",st_done:"भयो ✓",st_need_key:"पहिले RunningHub Enterprise key राख्नुहोस्",btn_show:"देखाउनुहोस्",btn_hide:"लुकाउनुहोस्",btn_save:"सेभ",btn_test:"Key जाँच",btn_clear:"हटाउनुहोस्",btn_cancel:"रद्द",btn_load:"लोड",btn_paste:"पेस्ट",btn_improve:"Prompt सुधार्नुहोस्",lbl_ratio:"अनुपात",lbl_size:"आकार",lbl_quality:"गुणस्तर"},
-pa:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"ਬਣਾਓ",st_ready:"ਤਿਆਰ",st_done:"ਹੋ ਗਿਆ ✓",st_need_key:"ਪਹਿਲਾਂ RunningHub Enterprise key ਪਾਓ",btn_show:"ਦਿਖਾਓ",btn_hide:"ਲੁਕਾਓ",btn_save:"ਸੰਭਾਲੋ",btn_test:"Key ਪਰਖੋ",btn_clear:"ਹਟਾਓ",btn_cancel:"ਰੱਦ ਕਰੋ",btn_load:"ਲੋਡ",btn_paste:"ਪੇਸਟ",btn_improve:"Prompt ਸੁਧਾਰੋ",lbl_ratio:"ਅਨੁਪਾਤ",lbl_size:"ਆਕਾਰ",lbl_quality:"ਗੁਣਵੱਤਾ"},
-ta:{app_title:"HNK Photoshop Ai பேனல் (மாணவர்கள்)",sec_api:"RunningHub Enterprise Key",btn_show:"காட்டு",btn_hide:"மறை",btn_test:"Key சோதி",btn_save:"சேமி",st_testing:"Key சோதிக்கப்படுகிறது",st_key_ok:"✓ API key வேலை செய்கிறது",st_key_bad:"API key செயல்படவில்லை",st_key_saved:"API key சேமிக்கப்பட்டது ✓",st_need_key:"முதலில் RunningHub Enterprise key சேர்க்கவும்",sec_model:"மாடல் & வெளியீடு",scope_model_note:"கீழே உள்ள Prompt தாவலின் Generate பொத்தானுக்கு மட்டுமே இது பயன்படும் — Create மற்றும் AI Tools ஒவ்வொன்றுக்கும் தனித்தனி மாடல் அமைப்புகள் உள்ளன.",model_auto:"ஆட்டோ (பரிந்துரைக்கப்படுகிறது)",model_flash:"Flash — வேகமானது (2.5)",model_pro:"Pro — தரமானது (3.0)",lbl_ratio:"விகிதம்",ratio_auto:"ஆட்டோ விகிதம் (ஆவணத்திலிருந்து)",lbl_size:"அளவு",lbl_quality:"தரம்",qual_auto:"ஆட்டோ",qual_low:"குறைவு",qual_med:"நடுத்தரம்",qual_high:"உயர்",sec_prompt:"Prompt",hint_prompt:"உங்கள் prompt-ஐ இங்கே தட்டச்சு செய்யவும்… (அதிகபட்சம் 20,000 எழுத்துகள்)",btn_improve:"Prompt மேம்படுத்து",btn_clear:"அழி",st_improving:"Prompt மேம்படுத்தப்படுகிறது",st_improved:"Prompt மேம்படுத்தப்பட்டது ✓",sec_refs:"ரெஃபரன்ஸ் படங்கள் (2 இடங்கள்)",base_note:"அடிப்படைப் படம் = செயலில் உள்ள உங்கள் Photoshop ஆவணம் (தானாகவே எடுக்கப்படும்).",btn_ref_layer:"+ லேயர்",btn_ref_file:"கோப்பு",btn_ref_web:"வெப்",st_ref_layer_added:"லேயர் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_ref_file_added:"கோப்பு ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_importing:"கோப்பு இறக்குமதியாகிறது",url_title:"URL-இலிருந்து ரெஃபரன்ஸ் — Chrome / Pinterest",url_ph:"https://… படத்தின் முகவரி அல்லது Pinterest pin இணைப்பு",btn_paste:"ஒட்டு",btn_load:"ஏற்று",btn_cancel:"ரத்து",st_url_loading:"வெப் படம் பதிவிறக்கப்படுகிறது",st_ref_web_added:"வெப் படம் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_url_bad:"இந்த URL-இலிருந்து படத்தை ஏற்ற முடியவில்லை — படத்தின் முகவரியை நகலெடுத்து மீண்டும் முயற்சிக்கவும்",no_layer:"லேயர் எதுவும் தேர்ந்தெடுக்கப்படவில்லை",sec_presets:"AI ப்ரீசெட்கள்",auto_run:"ப்ரீசெட் கிளிக் → தானாக Generate (OFF = prompt-இல் மட்டும் சேர்க்கும்)",grp_cleanup:"சுத்தம் செய்யும் கருவிகள்",p_remove_people:"நபர்களை நீக்கு",p_fix_hands:"கூடுதல் கைகளைச் சரிசெய்",p_fix_legs:"கூடுதல் கால்களைச் சரிசெய்",p_full_clean:"முழு சுத்தம்",grp_moved_note:"ரெஃபரன்ஸ் கருவிகள் இப்போது கீழே உள்ள Reference Ops Pro கார்டில் உள்ளன (ஒரே இடத்தில் — தனிநபர்/ஜோடி/குடும்பம் + வழிகாட்டிகளுடன்).",ro_h_detail:"முடி · அணிகலன்கள் · போஸ் (← Ref1)",ro_h_comp:"காம்போசிட் · ஸ்டைல் · உரை (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"ஹேர்ஸ்டைல் (← Ref1)",p_access:"நகைகள்+அணிகலன்கள் (← Ref1)",p_pose:"போஸ் பொருத்தம் (Doc → Ref1)",p_fgprops:"FG ப்ராப்ஸ் (← Ref1)",p_textlogo:"உரை / லோகோ (← Ref1)",p_style:"புகைப்பட ஸ்டைல் (← Ref1)",grp_repsubj:"சப்ஜெக்ட்டை மாற்று (Doc → Ref1 காட்சி)",p_rep_solo:"தனிநபரை மாற்று",p_rep_couple:"ஜோடியை மாற்று",p_rep_family:"குடும்பத்தை மாற்று",grp_rmix:"Replace Mix — டிக் செய்து Ref1-இலிருந்து எடு",rm_bg:"பின்னணி (BG)",rm_fg:"முன்னணி (FG)",rm_light:"ஒளியமைப்பு",rm_color:"நிறம்",rm_object:"பொருட்கள் / ப்ராப்ஸ்",btn_rmix:"REPLACE GENERATE",rm_none:"முதலில் குறைந்தது ஒரு அம்சத்தையாவது டிக் செய்யவும்",grp_i2p:"படம் → Prompt (காட்சி உருவாக்கி)",i2p_note:"1) Extract: Ref1 காட்சி → விரிவான உரை prompt (நபர்கள் நீங்கலாக). 2) அதை Prompt பக்கத்தில் திருத்தவும். 3) SCENE GENERATE அதை உங்கள் ஆவணத்தின் சப்ஜெக்ட்டைச் சுற்றி உருவாக்கும் — எந்தக் கோணத்திற்கும் தானாகப் பொருந்தும். முகம்/போஸ்/ஃப்ரேம் பூட்டுகள் = அசல் அப்படியே.",i2p_objects:"பொருட்கள் & ப்ராப்ஸ் விவரம்",i2p_light:"ஒளியமைப்பு விவரம்",i2p_color:"நிறம் / கிரேடு விவரம்",i2p_bg:"பின்னணி விவரம்",i2p_fg:"முன்னணி விவரம்",btn_i2p:"படம் → Prompt (காட்சியைப் பிரித்தெடு)",i2p_fit:"காட்சி ஆட்டோ-பொருத்தம் — ஆவணத்தின் கோணம் / தூரம் / லென்ஸுக்கு ஏற்பக் காட்சியை மறு-அமைக்கும்",i2p_adapt:"சப்ஜெக்ட்டின் ஒளி & நிறத்தைக் காட்சிக்கு ஏற்ப மாற்று",btn_scenegen:"SCENE GENERATE",st_extract:"காட்சி prompt-ஆகப் பிரித்தெடுக்கப்படுகிறது",st_extract_done:"காட்சி prompt தயார் — Prompt பக்கத்தில் சரிபார்க்கவும்",scene_no_prompt:"Prompt பெட்டி காலியாக உள்ளது — முதலில் படம் → Prompt-ஐ இயக்கவும்",i2p_none:"முதலில் குறைந்தது ஒரு விவர அம்சத்தையாவது டிக் செய்யவும்",sec_light:"ஸ்டுடியோ லைட்டிங் — AI Relight",light_note:"விளக்குகளை ON செய்யவும், ஒரு வரிசையைத் தட்டித் தேர்வு செய்யவும், ஸ்லைடர்களால் வடிவமைக்கவும் — 3D மேல்-பார்வை வரைபடம் நேரடியாக மாறும் (▴ = உயரம், ▾ = தாழ்வு). LIGHTING GENERATE உங்கள் ஆவணத்தை இந்த அமைப்புக்கு ஏற்பத் துல்லியமாக மறு-ஒளியூட்டும்; முகம் / போஸ் / ஃப்ரேம் பூட்டப்பட்டே இருக்கும்.",lbl_my_prompt:"மியான்மர் PROMPT",lstage_model:"மாடல்",lstage_cam:"கேம்",l_key:"கீ லைட்",l_fill:"ஃபில் / முன்",l_butterfly:"பட்டர்ஃபிளை (மேல்-முன்)",l_side:"சைட் லைட்",l_rim:"ரிம் லைட்",l_back:"பேக் லைட்",l_hair:"ஹேர் லைட்",l_bglight:"பின்னணி லைட்",lt_softbox:"சாஃப்ட்பாக்ஸ்",lt_octa:"ஆக்டா",lt_strip:"ஸ்ட்ரிப்",lt_umbrella:"அம்ப்ரெல்லா",lt_beauty:"பியூட்டி",lt_hard:"ஹார்ட்",li_int:"தீவிரம்",li_angle:"கோணம்",li_height:"உயரம்",li_dist:"தூரம்",li_size:"அளவு",btn_lightgen:"LIGHTING GENERATE",light_none:"முதலில் குறைந்தது ஒரு விளக்கையாவது ON செய்யவும்",lg_equip:"புகைப்படத்தில் லைட் உபகரணங்களைக் காட்டு (சாஃப்ட்பாக்ஸ் / ஸ்டாண்டுகள் தெரியும்)",grp_chains:"ஸ்டைல் செயின்கள் — ✓ ஸ்டைல்களை இணை",chains_note:"எந்த ஸ்டைல்களையும் ON செய்யலாம் — அவை ஒவ்வொரு Generate / ப்ரீசெட் / ரீடச்சிலும் ஒன்றாகக் கலந்து சேரும்.",grp_restore:"பழைய புகைப்பட மீட்டெடுப்பு",p_restore:"பழைய புகைப்பட மீட்டெடுப்பு",rest_color:"முழு வண்ணம்",rest_bw:"கருப்பு & வெள்ளை",restore_note:"கிழிசல்கள், நீர் / தீக்காயச் சேதம், மங்கல் ஆகியவற்றைச் சரிசெய்யும் — ஒவ்வொரு அசல் முகத்தையும் 100% அப்படியே வைத்திருக்கும்.",rt_browstyle:"புருவ ஸ்டைல்",rt_lashstyle:"இமை ஸ்டைல்",rt_blush:"ப்ளஷ் நிறம்",rt_contour:"கான்டூர் ஸ்டைல்",rt_bust:"மார்பு",rt_butt:"பிட்டம்",rt_thigh:"தொடைகள்",rt_calf:"கெண்டைக்கால்கள்",rt_neck:"கழுத்து",rt_fingers:"விரல்கள்",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"மியான்மர் prompt ஆங்கிலத்தில் மொழிபெயர்க்கப்படுகிறது",live_trans:"Live ⇄ தானியங்கு மொழிபெயர்ப்பு (EN ↔ MY, தட்டச்சை நிறுத்திய பிறகு)",st_retry:"மீண்டும் முயற்சிக்கப்படுகிறது",grp_recipes:"ரெசிபிகள் — அமைப்புகளைச் சேமி / பகிர்",recipe_note:"எல்லாவற்றையும் (செயின்கள், ரீடச், லைட்கள், Keep பூட்டுகள், prompt-கள்) ஒரே .json ரெசிபியாகச் சேமிக்கவும் — மாணவர்கள் அதை Load செய்தால் போதும்.",btn_recipe_save:"ரெசிபியைச் சேமி",btn_recipe_load:"ரெசிபியை ஏற்று",st_recipe_saved:"ரெசிபி சேமிக்கப்பட்டது ✓",st_recipe_loaded:"ரெசிபி ஏற்றப்பட்டது ✓ — எல்லா கட்டுப்பாடுகளும் புதுப்பிக்கப்பட்டன",st_recipe_bad:"இது HNK ரெசிபி கோப்பு அல்ல",sec_final:"இறுதி Prompt (AI-க்கு அனுப்பப்படுவது)",btn_copy:"நகலெடு",st_copied:"நகலெடுக்கப்பட்டது ✓",hist_note:"வரலாறு — கடைசி 6 முடிவுகள், பார்க்கத் தட்டவும்:",btn_hist_prompt:"→ Prompt",sec_batch:"பேட்ச் பயன்முறை",batch_note:"பல புகைப்படங்களையும் + ஒரு அவுட்புட் கோப்புறையையும் தேர்வு செய்யவும் — தற்போதைய prompt, செயின்கள், சுத்தம் மற்றும் Keep பூட்டுகள் ஒவ்வொரு புகைப்படத்திலும் இயங்கும்; முடிவுகள் *_HNK.png ஆகச் சேமிக்கப்படும்.",btn_batch:"பேட்ச்சை இயக்கு",btn_batch_stop:"நிறுத்து",st_batch:"பேட்ச்",st_batch_done:"பேட்ச் முடிந்தது",sec_web:"வெப் AI — மினி பிரவுசர்",web_note:"எந்த வெப் AI எடிட்டரையும் Photoshop-க்குள்ளேயே திறக்கலாம். அங்கே உருவாக்கிய பிறகு, முடிவை லேயராகக் கொண்டு வரலாம்:",web_import_note:"இறக்குமதி: ① வெப் ஆப்பில் Copy image address (படத்தின் முகவரியை நகலெடு) பயன்படுத்தி, பிறகு 'நகலெடுத்த இணைப்பை இறக்குமதி' · ② அல்லது கோப்பைப் பதிவிறக்கி 'கோப்பை இறக்குமதி' பயன்படுத்தவும் · ③ HNK bridge உள்ள கூட்டாளர் வெப் ஆப்கள் படங்களைத் தானாகவே அனுப்பும்.",btn_web_go:"செல்",btn_web_home:"முகப்பு",btn_web_reload:"மீண்டும் ஏற்று",btn_web_import_link:"நகலெடுத்த இணைப்பை இறக்குமதி → PS",btn_web_import_file:"கோப்பை இறக்குமதி → PS",st_web_import:"Photoshop-இல் லேயராக இறக்குமதி செய்யப்பட்டது ✓",st_web_nourl:"முதலில் படத்தின் இணைப்பை நகலெடுக்கவும் (வலது-கிளிக் → Copy image address)",st_web_fetch:"இணைப்பிலிருந்து படத்தைப் பெறுகிறது",st_web_notallowed:"இந்த டொமைன் அனுமதிப் பட்டியலில் இல்லை — வெறுமையாக இருக்கலாம். இதைச் சேர்க்க HNK-ஐக் கேளுங்கள்.",st_need_doc:"முதலில் Photoshop-இல் ஒரு புகைப்பட ஆவணத்தைத் திறக்கவும்",sec_campro:"கேமரா Pro & தரம்",autosave_lbl:"ஒவ்வொரு முடிவையும் தானாக ஏற்றுமதி செய் (PNG + prompt பதிவு → கோப்புறை)",st_folder_ok:"ஏற்றுமதி கோப்புறை அமைக்கப்பட்டது ✓",st_exported:"ஏற்றுமதி செய்யப்பட்டது ✓",st_export_fail:"ஏற்றுமதி தோல்வி — கோப்புறையைச் சரிபார்க்கவும்",st_pro_fallback:"Pro மாடல் கிடைக்கவில்லை — இந்த முறைக்கு Flash-க்கு மாற்றப்பட்டது",st_img_bad:"படத் தரவு ஒருமைப்பாடு சரிபார்ப்பில் தோல்வி — புகைப்படத்தை மீண்டும் சேர்க்கவும்",st_auto_comp:"தானியங்கு காம்போசிட்: IMAGE 1 சப்ஜெக்ட் → ரெஃபரன்ஸ் காட்சி",prov_lbl:"AI வழங்குநர்",tab_create: "Create",create_note:"CREATE பயன்முறை — உங்கள் prompt-இலிருந்து முற்றிலும் புதிய படம் (+ அதற்கென 4 ரெஃப்கள்). முழுவதும் தனித்தியங்கும்: ஆவணம், ப்ரீசெட்கள், செயின்கள் அல்லது லாக்குகள் எதையும் படிக்காது.",create_ph:"உருவாக்க விரும்பும் படத்தை விவரிக்கவும்…",btn_create_ps:"⬇ Photoshop-க்கு அனுப்பு",btn_to_ref:"↺ Ref 1 ஆகப் பயன்படுத்து",st_to_ref:"முடிவு Ref 1-இல் ஏற்றப்பட்டது ✓",scope_create_note:"Setup-இன் Model & Output அமைப்புகளிலிருந்து தனித்தது — இவை Create-இன் Generate-க்கு மட்டுமே பொருந்தும்.",cr_ratio:"விகிதம்",cr_var:"மாறுபாடுகள்",cr_restyle:"♻ முடிவை மறுஸ்டைல் செய்",cr_lib:"Prompt நூலகம் — சேர்க்கத் தட்டவும்",cr_improve:"மேம்படுத்து",cr_describe:"Ref 1-ஐ விவரி → Prompt",st_describing:"ரெஃபரன்ஸைப் படிக்கிறது…",st_described:"Ref 1-இலிருந்து prompt எழுதப்பட்டது ✓",st_need_ref1:"முதலில் Ref 1-இல் ஒரு படத்தைச் சேர்க்கவும்",st_lib_added:"Prompt சேர்க்கப்பட்டது ✓",cr_refs:"ரெஃபரன்ஸ் படங்கள் (அதிகபட்சம் 4)",cr_refs_note:"விருப்பத்தேர்வு — Layer / File / Web மூலம் சேர்க்கவும். உங்கள் prompt கேட்பதை மட்டுமே Create எடுத்துக்கொள்ளும்.",cr_results:"முடிவுகள்",cr_gal_empty:"இன்னும் முடிவுகள் இல்லை — Generate-ஐத் தட்டவும்.",cr_gal_have:"முடிவு(கள்) · முன்னோட்டம் காண / செயல்படுத்த ஒரு சிறுபடத்தைத் தட்டவும்",cr_save:"⬇ PNG சேமி",cr_engine:"எஞ்சின்",cr_need_result:"முதலில் ஒரு படத்தை உருவாக்கவும்",btn_web_import_url:"⬇ URL இறக்குமதி",st_clip_help:"கிளிப்போர்டு காலி/தடுக்கப்பட்டது — இணைப்பை URL பட்டியில் ஒட்டி, பிறகு ⬇ URL இறக்குமதி-ஐத் தட்டவும்",st_web_blob:"அது தற்காலிக blob: இணைப்பு — வலது-கிளிக் → Copy IMAGE Address பயன்படுத்தவும், அல்லது கோப்பைச் சேமித்து Import File மூலம் சேர்க்கவும்",err_key:"API key தவறானது — Setup தாவலில் key-ஐ மீண்டும் சரிபார்க்கவும் · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"கோட்டா / வேக வரம்பு — சிறிது நேரம் காத்திருந்து மீண்டும் முயற்சிக்கவும் · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"API-க்கு படம் மிகப் பெரியது — அளவைக் குறைத்து மீண்டும் முயற்சிக்கவும் · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"பாதுகாப்பு வடிப்பானால் தடுக்கப்பட்டது — prompt அல்லது புகைப்படத்தை மாற்றவும் · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"நெட்வொர்க் / சர்வர் சிக்கல் — மீண்டும் முயற்சிக்கவும் · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"கோரிக்கை நேரம் முடிந்தது — சர்வர் அதிக நேரம் எடுத்தது; மீண்டும் முயற்சிக்கவும் · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"கோரிக்கையை நிறைவேற்ற முடியவில்லை — மீண்டும் முயற்சிக்கவும்",err_img:"பயன்படுத்தக்கூடிய படம் உருவாகவில்லை — மீண்டும் முயற்சிக்கவும்",err_mode:"இந்த ஆவணம் RGB பயன்முறையில் இல்லை — முதலில் மாற்றவும் (Image ▸ Mode ▸ RGB Color), பிறகு மீண்டும் முயற்சிக்கவும்",cam_master:"கேமரா தொகுதி ON — ஒவ்வொரு prompt-இன் இறுதியிலும் சேர்க்கப்படும்",cam_body:"கேமரா பாடி",cam_lens:"ப்ரைம் லென்ஸ் (mm)",cam_f:"அபெர்ச்சர்",cam_film:"ஃபிலிம் லுக்",cam_bokeh:"போகே ஸ்டைல்",cam_iso:"ISO",cam_k:"WB கெல்வின்",cam_note:"தொகுதியை ON செய்து, தேவையானதை மட்டும் தேர்வு செய்யவும் — – சிப்கள் எதுவும் சேர்க்காது. அனைத்தும் இறுதி prompt-இன் கடைசியில் சேரும்.",ro_h_main:"ரெஃபரன்ஸ் ஆப்ஸ் PRO (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (பெண்) · Ref2 = IMAGE 3 (ஆண்). ஒரு இலக்கைத் தேர்ந்தெடுத்து, பிறகு ஒரு செயல்பாட்டை இயக்கவும் — பொருந்தாத நபர்கள் ஒருபோதும் மாற மாட்டார்கள்.",ro_target:"இலக்கு:",ro_solo:"தனி",ro_couple:"ஜோடி",ro_family:"குடும்பம்",ro_mk:"ரெஃப் மேக்கப்பை நகலெடு",ro_hair:"ரெஃப் ஹேர்ஸ்டைலை எடு",ro_h_face:"முக ஆப்ஸ்",ro_h_bg:"BG / FG ஆப்ஸ்",ro_h_sub:"சப்ஜெக்ட் ஆப்ஸ்",ro_h_lc:"ஒளி & வண்ண ஆப்ஸ்",ro_h_dress:"உடை ஆப்ஸ்",ro_h_mk:"மேக்கப் ஆப்ஸ்",ro_h_match:"★ மாஸ்டர் மேட்ச் (ஒரே லுக்)",ro_match_note:"IMAGE 1-ஐ ரெஃபரன்ஸுடன் பொருத்தி இரண்டும் ஒரே எடிட் போலத் தோன்றச் செய்யும் — எதைப் பொருத்த வேண்டுமோ அதைத் டிக் செய்யவும்:",m_color:"வண்ணம்",m_light:"ஒளி",m_makeup:"மேக்கப்",m_skin:"சரும ரீடச்",crd_chainsrest:"ஸ்டைல் செயின்கள் + பழைய புகைப்பட மீட்டமைப்பு",crd_refops:"ரெஃபரன்ஸ் ஆப்ஸ் ப்ரோ (Ref1 / Ref2)",crd_scenes:"சீன்ஸ் ப்ரோ — லாக் செய்த சப்ஜெக்ட் · பொருந்தும் காட்சி",scn_note:"உங்கள் சப்ஜெக்டை லாக் செய்து (முகம் · போஸ் · உடை · ஃப்ரேம்) முழுக் காட்சியையும் அவர்களுக்குப் பொருந்த மறு-உருவாக்கும் — ஒளி, நிழல், வண்ணம், பின்னணி, முன்னணி, பொருள்கள் அனைத்தும் உண்மையான புகைப்படத் தோற்றத்திற்குத் தானாகவே பொருந்திக்கொள்ளும்.",scn_h_style:"காட்சி ஸ்டைல் (உட்புறம் / கலாச்சாரம்)",scn_h_bday:"பிறந்தநாள் — வயது எண் 1–45",scn_h_cap:"தலைப்பு / உரை (குழந்தை · Miss Universe · பிறந்தநாள்)",scn_h_scarf:"வெளிப்புறம் / பறக்கும் ஸ்கார்ஃப்",scn_grad:"பட்டமளிப்பு உட்புறம்",scn_prewed:"ப்ரீவெடிங் உட்புறம்",scn_vietnam:"வியட்நாம்",scn_myanmar:"மியான்மர்",scn_chinese:"சீன",scn_shan:"ஷான்",scn_newborn:"பச்சிளம் குழந்தை / பேபி",scn_age:"வயது",scn_bday_go:"பிறந்தநாள் காட்சி",scn_cap_on:"தலைப்பு உரையைச் சேர்",scn_cap_ph:"தலைப்பு உரை (எ.கா. Happy 1st Birthday, பெயர்)…",scn_cap_pos:"இடம்",scn_top:"மேலே",scn_bottom:"கீழே",scn_scarf:"✦ பறக்கும் ஸ்கார்ஃப் காட்சி",scn_dir:"திசை",scn_left:"இடது",scn_right:"வலது",scn_up:"மேல்",scn_len:"நீளம்",scn_short:"குட்டை",scn_long:"நீண்டது",g_cat_scene:"காட்சி OP — உங்கள் சப்ஜெக்ட் லாக் செய்யப்பட்டுள்ளது (முகம் · போஸ் · உடை · ஃப்ரேம்); உருவாக்கப்படும் முழுக் காட்சியும் (ஒளி, நிழல், வண்ணம், பின்னணி, முன்னணி, பொருள்கள், சூழல்) உண்மையான புகைப்படக் காம்போசிட்டுக்காக சப்ஜெக்டுடன் தானாகப் பொருத்தப்படும்.",crd_wed:"♥ திருமண ப்ரோ தொகுப்பு",crd_recipes:"ரெசிபிகள் — சேமி / பகிர்",learn_lbl:"கற்றல் பயன்முறை — 1-ஆம் தட்டு = வழிகாட்டி (மஞ்சள்), 2-ஆம் = prompt (நீலம்), 3-ஆம் = இயக்கு (பச்சை)",guide_hint:"மீண்டும் தட்டவும்: மஞ்சள் → நீலம் (prompt) → பச்சை (இயக்கு) ▶",g_learn_next_prompt:"மீண்டும் தட்டவும் → சரியான PROMPT-ஐக் காட்டும் (நீலம்).",g_learn_prompt_head:"இந்தப் பொத்தான் அனுப்பும் PROMPT (மீண்டும் தட்டினால் = இயக்கம்):",g_learn_next_run:"இன்னொரு முறை தட்டவும் → இயக்கு (பச்சை) உருவாக்கும்.",st_prompt_ready:"Prompt தயார் — இயக்க மீண்டும் தட்டவும் (பச்சை) ✓",g_step_doc:"முதலில் உங்கள் புகைப்பட ஆவணத்தை Photoshop-இல் திறக்கவும்.",g_step_ref1:"ரெஃபரன்ஸ் படத்தை Ref1-இல் ஏற்றவும் (அது IMAGE 2 ஆகும்). இரண்டாவது நபருக்கு Ref2 சேர்க்கவும்.",g_step_target:"இலக்கைத் தேர்ந்தெடுக்கவும்: தனி / ஜோடி (Ref1 = பெண், Ref2 = ஆண்) / குடும்பம்.",g_step_mkhair:"விருப்பம்: முக ஆப்ஸுக்கு மேலே உள்ள ‘ரெஃப் மேக்கப்பை நகலெடு’ / ‘ரெஃப் ஹேர்ஸ்டைலை எடு’ என்பதைத் டிக் செய்யவும்.",g_step_petal:"முதலில் இதழ் வண்ணத்தைத் தேர்ந்தெடுக்கவும் (auto = உங்கள் காட்சிக்குப் பொருந்தும்).",g_step_rest:"மேலே உள்ள ✓ மூலம் முழு வண்ணம் அல்லது B&W தேர்வு செய்யவும்.",g_step_int:"தீவிரம் ஸ்லைடரை விருப்பப்படி அமைக்கவும்.",g_step_confirm:"முன்னேற மீண்டும் தட்டவும்: வழிகாட்டி (மஞ்சள்) → PROMPT (நீலம்) → இயக்கு (பச்சை உருவாக்கும்).",g_cat_face:"முக OP — ரெஃபரன்ஸ் முகத்தைப் பொருந்தும் நபருக்கு மாற்றும்; மற்ற அனைவரும் மாறாமல் இருப்பார்கள்.",g_cat_sub:"சப்ஜெக்ட் OP — ரெஃபரன்ஸ் நபரை உங்கள் காட்சிக்குள் கொண்டுவரும்/உருமாற்றும்; காட்சியும் ஃப்ரேமிங்கும் அப்படியே இருக்கும்.",g_cat_bgfg:"BG/FG OP — ரெஃபரன்ஸைப் பயன்படுத்தி பின்னணி / முன்னணியை மட்டும் மாற்றும்.",g_cat_lc:"ஒளி & வண்ண OP — ரெஃபரன்ஸின் ஒளியமைப்பையும் கலர் கிரேடையும் நகலெடுக்கும்; நபர்கள் பிக்சல் அளவில் மாறாமல் இருப்பார்கள்.",g_cat_dress:"உடை OP — ரெஃபரன்ஸைப் பயன்படுத்தி உடையை மட்டும் மாற்றும்.",g_cat_mkop:"மேக்கப் OP — ரெஃபரன்ஸைப் பயன்படுத்தி மேக்கப்பை மட்டும் மாற்றும்.",g_cat_match:"மாஸ்டர் மேட்ச் — உங்கள் புகைப்படத்தை ரெஃபரன்ஸின் முழு லுக்குடன் பொருத்தும் (மேலே உள்ள அடுக்குகளைத் டிக் செய்யவும்).",g_cat_trail:"வெடிங் ட்ரெயில் — ஆடம்பரப் புல் + பாயும் மலர்ப் பாதை; முகங்கள்/போஸ்/ஃப்ரேம் முழுமையாக லாக் செய்யப்படும்.",g_cat_veil:"பறக்கும் முக்காடு — இந்த நீளத்தில் காற்றில் பறக்கும் முக்காட்டைச் சேர்க்கும்/நீட்டிக்கும்; முகம் ஒருபோதும் மறைக்கப்படாது.",g_cat_gown:"கவுன் — தற்போதைய கவுனைச் சுத்தப்படுத்தி (வடிவமைப்பு மாறாது) இந்த டிரெயின் நீளத்தை அமைக்கும்.",g_cat_petal:"பறக்கும் இதழ்கள் — இந்த ஸ்டைலில் காற்றில் இதழ்களைச் சேர்க்கும்; வண்ணம் மேலே உள்ள ஸ்வாட்சிலிருந்து.",g_cat_wedx:"வெடிங் எக்ஸ்ட்ரா — உங்கள் காட்சிக்குப் பொருந்தும் வகையில் இந்த உறுப்பைச் சேர்க்கும்; சப்ஜெக்ட் லாக்கிலேயே இருக்கும்.",g_cat_canvas:"மாற்று (கேன்வாஸ்) — உங்கள் சப்ஜெக்டை ரெஃபரன்ஸின் காட்சிக்குள் வைக்கும்; ரெஃப் நபர்கள் நீக்கப்படுவர்.",g_cat_restore:"பழைய புகைப்பட மீட்டமைப்பு — சேதங்களைச் சரிசெய்யும்; ஒவ்வொரு அசல் முகமும் 100% அப்படியே இருக்கும்.",g_cat_generic:"ப்ரீசெட் — இந்த ப்ரொஃபஷனல் எடிட்டை உங்கள் புகைப்படத்தில் பயன்படுத்தும்.",g_gen:"GENERATE — உங்கள் ஆவணத்தில் prompt பெட்டியை (+ செயின்கள், கீப்கள், கேமரா தொகுதி) இயக்கும்.",g_retouchbtn:"ரீடச் அப்ளை — உங்கள் எல்லா ஸ்லைடர் அமைப்புகளையும் ஒரே ப்ரொஃபஷனல் ரீடச் பாஸாக இயக்கும்.",g_relightbtn:"ஒளியமைப்பு GENERATE — உங்கள் 3D ஒளி வரைபடத்தின்படி புகைப்படத்தைத் துல்லியமாக மறு-ஒளியமைக்கும்.",g_scene:"காட்சி GENERATE — பிரித்தெடுத்த prompt-இலிருந்து காட்சியை மறு-உருவாக்கும்; சப்ஜெக்ட் அப்படியே இருக்கும்.",g_rmix:"REPLACE MIX — ரெஃபரன்ஸிலிருந்து ✓ டிக் செய்த பகுதிகளை மட்டும் மாற்றும்.",ro_faceRep:"முக மாற்றீடு",ro_faceSwap:"முக ஸ்வாப்",ro_bgRep:"BG மாற்றீடு",ro_bgSwap:"BG ஸ்வாப்",ro_fgRep:"FG மாற்றீடு",ro_bg_note:"Doc = சப்ஜெக்ட் · Ref1 = புதிய காட்சி. Target (Solo/Couple/Family) யாரை வைத்திருப்பது என்பதைத் தேர்வுசெய்கிறது.",ro_bg_frame:"ஃபிரேம் & காட்சியமைப்பைத் தக்கவை",ro_bg_light:"சப்ஜெக்ட்டின் ஒளி/நிறத்தைப் பாதுகாக்கவும்",ro_subSwap:"நபர் மாற்றம்",ro_lcRef:"L&C ரெஃபரன்ஸ்",ro_lcCopy:"L&C காப்பி-பேஸ்ட்",ro_dressRef:"உடை ரெஃபரன்ஸ்",ro_dressRep:"உடை மாற்றம்",ro_mkCopy:"மேக்கப் காப்பி",ro_matchBtn:"★ மாஸ்டர் மேட்ச்",grp_retouch:"சரும ரீடச் ப்ரீசெட்கள்",lbl_intensity:"தீவிரம்",p_evoto:"Retouch B ஸ்டைல்",p_meitu:"Retouch A ஸ்டைல்",auto_place:"முடிவை Photoshop-இல் புதிய லேயராகத் தானாக வைக்கவும்",sec_retouchpro:"ரீடச் ப்ரோ — ஸ்லைடர்கள்",rt_skin:"சருமம்",rt_faceai:"முக AI",rt_hair:"முடி",rt_dress:"உடை",rt_bg:"பின்னணி",rt_smooth:"சரும மென்மை",rt_acne:"பரு நீக்கம்",rt_spots:"கரும்புள்ளிகள்",rt_wrinkle:"சுருக்கங்கள்",rt_tone:"வெளுப்பு / டேன்",rt_glow:"பொலிவு",rt_reshape:"AI ரீஷேப்",rt_lash:"இமை முடி",rt_brow:"புருவங்கள்",rt_lipsmooth:"உதடு மென்மை",rt_lipcolor:"உதடு நிறம்",rt_lenscolor:"லென்ஸ் நிறம்",rt_hairstray:"சிதறிய முடி",rt_hairsmooth:"முடி மென்மை",rt_hairshine:"முடி பளபளப்பு (D&B)",rt_dresssmooth:"துணி மென்மை",rt_dressedge:"விளிம்பு சுத்தம்",rt_dresswrinkle:"சுருக்கம் நீக்கம்",rt_dresstexture:"டெக்ஸ்சர் மீட்பு",rt_bgsmooth:"பின்னணி சுத்தம்/மென்மை",rt_bgcolor:"பின்னணி நிறம்",rt_bgrecolor:"பின்னணி நிற மென்மை",rt_shape:"ரீஷேப் ப்ரோ (முகம் + உடல்)",rt_teeth:"பல் வெண்மை",rt_eyewhite:"கண் வெள்ளைப் பகுதி சுத்தம்",rt_faceslim:"முக மெலிவு",rt_jaw:"தாடைக் கோடு",rt_chin:"மோவாய்",rt_nosesize:"மூக்கு அளவு",rt_eyesize:"கண் அளவு",rt_lipfull:"உதடு திரட்சி",rt_waist:"இடை மெலிவு",rt_bodyslim:"உடல் மெலிவு",rt_shoulder:"தோள்கள்",rt_hip:"இடுப்பு மெலிவு",rt_leglen:"கால் நீளம்",rt_armslim:"கை மெலிவு",rt_dressfit:"உடை பொருத்தம்",rt_dressclean:"உடை சுத்தம்",rt_dresscolorpure:"உடை நிறத் தூய்மை",rt_bodygrp:"உடல் சருமம் ப்ரோ",rt_bodysmooth:"உடல் சரும மென்மை",rt_bodyblemish:"உடல் கறை சுத்தம்",rt_bodytone:"உடல் சீரான நிறம்",rt_bodyglow:"உடல் பொலிவு",rt_bodyhairrm:"உடல் முடி குறைப்பு",rt_hairvolume:"முடி அடர்த்தி",rt_hairgloss:"முடி மினுமினுப்பு",rt_hairfill:"முடி நிரப்பல் (மெலிந்த பகுதிகள்)",wp_h_trail:"♥ திருமணம் — சொகுசு மலர்ப் பாதை",wp_h_veil:"♥ திருமணம் — பறக்கும் முக்காடு",wp_h_gown:"♥ திருமணம் — கவுன் சுத்தம் + ட்ரெயின்",wp_h_petal:"♥ திருமணம் — பறக்கும் மலர் இதழ்கள்",wp_h_extra:"♥ திருமணம் — குதிரை · நீர் · மூட்",wp_note:"முக அடையாளம் / போஸ் / ஃபிரேம் / உடை டிசைன் உறுதியாகப் பூட்டப்பட்டுள்ளன — குறிப்பிடப்பட்ட உறுப்பு மட்டுமே மாறும்.",wp_petalcolor:"இதழ் நிறம் (auto = காட்சிப் பொருத்தம்)",wp_trail_c:"மலர் நிறம்",wp_trail_go:"▶ மலர்ப் பாதை",wp_veil_c:"முக்காடு நீளம்",wp_veil_go:"▶ பறக்கும் முக்காடு",wp_gown_c:"ட்ரெயின் நீளம்",wp_gown_go:"▶ கவுன் சுத்தம் + ட்ரெயின்",wp_pet_c:"இதழ் ஸ்டைல்",wp_pet_go:"▶ பறக்கும் இதழ்கள்",wp_extra_c:"கூடுதல்",wp_extra_go:"▶ கூடுதல் சேர்",btn_apply_rt:"ரீடச்சைப் பயன்படுத்து",btn_reset:"மீட்டமை",rt_none:"முதலில் ஏதேனும் ஒரு ரீடச் ஸ்லைடரையோ நிறத்தையோ அமைக்கவும்",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",recent_lbl:"சமீபத்திய prompt-கள்…",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"இந்த prompt பெட்டிக்கான Photoshop வரம்பு:",cleanup_note:"டிக் செய்யப்பட்டவை ஒவ்வொரு 'உருவாக்கு' / ப்ரீசெட்டுடனும் சேர்ந்து இயங்கும்.",btn_generate:"உருவாக்கு",st_ready:"தயார்",st_capture:"ஆவணம் எடுக்கப்படுகிறது",st_gen:"உருவாக்கப்படுகிறது…",st_place:"Photoshop-இல் வைக்கப்படுகிறது…",st_placed_masked:"லேயர் + மாஸ்க் குழுவாக வைக்கப்பட்டது — அசல் அப்படியே உள்ளது ✓",st_placed_plain:"சாதாரண லேயராக வைக்கப்பட்டது (இந்த ஹோஸ்டில் மாஸ்க்/குழு கிடைக்கவில்லை)",stage_queued:"வரிசையில்",stage_uploading:"பதிவேற்றம்",stage_generating:"உருவாக்கம்",stage_downloading:"பதிவிறக்கம்",stage_placing:"வைத்தல்",st_done:"முடிந்தது ✓",st_err:"பிழை",st_no_doc:"செயலில் உள்ள ஆவணம் இல்லை — முதலில் ஒரு புகைப்படத்தைத் திறக்கவும்",st_no_prompt:"Prompt காலியாக உள்ளது",need_ref:"இந்த ப்ரீசெட்டுக்கு ஸ்லாட் 1-இல் ஒரு ரெஃபரன்ஸ் படம் தேவை",st_new_doc:"முடிவு புதிய ஆவணமாகத் திறக்கப்பட்டது ✓",sec_preview:"முன்னோட்டம் — முன் / பின்",before:"முன்",after:"பின்",btn_place:"Photoshop-இல் வை",btn_saveas:"இவ்வாறு சேமி…",st_saved:"சேமிக்கப்பட்டது ✓",sec_diag:"சிஸ்டம் சரிபார்ப்பு",sec_log:"செயல்பாட்டுப் பதிவு",btn_diag:"சரிபார்ப்பை இயக்கு",btn_copylog:"பதிவை நகலெடு",btn_clearlog:"அழி",diag_host:"Photoshop ஹோஸ்ட்",diag_uxp:"UXP திறன்கள்",diag_rh:"RunningHub Enterprise key",diag_doc:"செயலில் உள்ள ஆவணம்",diag_set:"அமைக்கப்பட்டது",diag_unset:"அமைக்கப்படவில்லை",diag_open:"திறந்துள்ளது",diag_none:"எதுவும் திறக்கவில்லை",diag_missing:"காணவில்லை",diag_done:"சிஸ்டம் சரிபார்ப்பு முடிந்தது ✓",diag_lib:"ரெஃபரன்ஸ் லைப்ரரி",diag_lib_open:"கோப்புறை திறக்கும் திறன்",sec_reflib:"ரெஃபரன்ஸ் பட லைப்ரரி",reflib_note:"உங்களுக்குப் பிடித்த ரெஃபரன்ஸ் படங்களின் கோப்புறையை ஒருமுறை தேர்வுசெய்யுங்கள் — 'உலாவு' அதை நினைவில் வைத்து எங்கும் அதற்குள்ளேயே திறக்கும்.",btn_browse:"உலாவு",lib_choose:"கோப்புறையைத் தேர்வுசெய்",lib_open:"கோப்புறையைத் திற",lib_change:"கோப்புறையை மாற்று",lib_reset:"மீட்டமை",lib_rescan:"மீண்டும் ஸ்கேன்",lib_current:"தற்போதைய கோப்புறை",lib_found:"கண்டறிந்த படங்கள்",lib_status:"நிலை",lib_lastscan:"கடைசி ஸ்கேன்",lib_images:"படங்கள்",lib_connected:"இணைக்கப்பட்டது",lib_not_config:"கட்டமைக்கப்படவில்லை",lib_perm_lost:"அனுமதி இழக்கப்பட்டது — மீண்டும் தேர்வுசெய்யவும்",lib_none:"(கோப்புறை தேர்வு செய்யப்படவில்லை)",lib_copy_only:"பாதையை மட்டும் நகலெடு",lib_choose_msg:"உங்கள் HNK ரெஃபரன்ஸ் பட லைப்ரரி கோப்புறையைத் தேர்வுசெய்யவும்.",lib_scanning:"லைப்ரரி ஸ்கேன் செய்யப்படுகிறது…",lib_scan_done:"மீண்டும் ஸ்கேன் முடிந்தது ✓",lib_reset_done:"லைப்ரரி மீட்டமைக்கப்பட்டது ✓",lib_path_copied:"பாதை நகலெடுக்கப்பட்டது",lib_unsupported:"ஆதரிக்கப்படாத பட வகை",lib_restore_fail:"ரெஃபரன்ஸை மீட்டெடுக்க முடியவில்லை",on:"ஆன்",off:"ஆஃப்"},
-te:{app_title:"HNK Photoshop Ai ప్యానెల్ (విద్యార్థులు)",sec_api:"RunningHub Enterprise Key",btn_show:"చూపించు",btn_hide:"దాచు",btn_test:"Key పరీక్ష",btn_save:"సేవ్",st_testing:"కీని పరీక్షిస్తోంది",st_key_ok:"✓ API key పని చేస్తోంది",st_key_bad:"API key విఫలమైంది",st_key_saved:"API key సేవ్ అయింది ✓",st_need_key:"ముందుగా RunningHub Enterprise key ఇవ్వండి",sec_model:"మోడల్ & అవుట్‌పుట్",scope_model_note:"ఇది కింద ఉన్న Prompt ట్యాబ్‌లోని జనరేట్ బటన్‌కు మాత్రమే వర్తిస్తుంది — Create, AI Tools లకు వేటికవే ప్రత్యేక మోడల్ సెట్టింగ్‌లు ఉంటాయి.",model_auto:"ఆటో (సిఫార్సు చేయబడింది)",model_flash:"Flash — వేగం (2.5)",model_pro:"Pro — నాణ్యత (3.0)",lbl_ratio:"నిష్పత్తి",ratio_auto:"ఆటో నిష్పత్తి (డాక్యుమెంట్ నుండి)",lbl_size:"పరిమాణం",lbl_quality:"నాణ్యత",qual_auto:"ఆటో",qual_low:"తక్కువ",qual_med:"మధ్యస్థం",qual_high:"అధికం",sec_prompt:"Prompt",hint_prompt:"మీ prompt ఇక్కడ టైప్ చేయండి… (గరిష్ఠంగా 20,000 అక్షరాలు)",btn_improve:"Prompt మెరుగుపరచు",btn_clear:"తొలగించు",st_improving:"Prompt మెరుగుపరుస్తోంది",st_improved:"Prompt మెరుగుపడింది ✓",sec_refs:"రిఫరెన్స్ చిత్రాలు (2 స్లాట్‌లు)",base_note:"బేస్ చిత్రం = మీ యాక్టివ్ Photoshop డాక్యుమెంట్ (ఆటోమేటిక్‌గా తీసుకోబడుతుంది).",btn_ref_layer:"+ లేయర్",btn_ref_file:"ఫైల్",btn_ref_web:"వెబ్",st_ref_layer_added:"లేయర్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_ref_file_added:"ఫైల్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_importing:"ఫైల్ దిగుమతి అవుతోంది",url_title:"URL నుండి రిఫరెన్స్ — Chrome / Pinterest",url_ph:"https://… చిత్ర చిరునామా లేదా Pinterest పిన్ లింక్",btn_paste:"పేస్ట్",btn_load:"లోడ్",btn_cancel:"రద్దు",st_url_loading:"వెబ్ చిత్రం డౌన్‌లోడ్ అవుతోంది",st_ref_web_added:"వెబ్ చిత్రం రిఫరెన్స్‌గా జోడించబడింది ✓",st_url_bad:"ఈ URL నుండి చిత్రం లోడ్ కాలేదు — చిత్ర చిరునామాను కాపీ చేసి మళ్లీ ప్రయత్నించండి",no_layer:"ఏ లేయర్ ఎంపిక కాలేదు",sec_presets:"AI ప్రీసెట్‌లు",auto_run:"ప్రీసెట్ క్లిక్ → ఆటో జనరేట్ (OFF = promptలో మాత్రమే చేరుస్తుంది)",grp_cleanup:"క్లీనప్ టూల్స్",p_remove_people:"వ్యక్తులను తొలగించు",p_fix_hands:"అదనపు చేతులు సరిచేయి",p_fix_legs:"అదనపు కాళ్లు సరిచేయి",p_full_clean:"పూర్తి క్లీనప్",grp_moved_note:"రిఫరెన్స్ టూల్స్ ఇప్పుడు కింద ఉన్న Reference Ops Pro కార్డ్‌లో ఉన్నాయి (అన్నీ ఒకే చోట — సోలో/జంట/కుటుంబం + గైడ్‌లతో).",ro_h_detail:"జుట్టు · యాక్సెసరీలు · భంగిమ (← Ref1)",ro_h_comp:"కాంపోజిట్ · స్టైల్ · టెక్స్ట్ (← Ref1)",p_fgbglc:"FG=Doc · BG=Ref1 · Light=Ref2",p_hair:"హెయిర్‌స్టైల్ (← Ref1)",p_access:"నగలు+యాక్సెసరీలు (← Ref1)",p_pose:"భంగిమ మ్యాచ్ (Doc → Ref1)",p_fgprops:"FG ప్రాప్స్ (← Ref1)",p_textlogo:"టెక్స్ట్ / లోగో (← Ref1)",p_style:"ఫోటో స్టైల్ (← Ref1)",grp_repsubj:"సబ్జెక్ట్ రీప్లేస్ (Doc → Ref1 సన్నివేశం)",p_rep_solo:"సోలో రీప్లేస్",p_rep_couple:"జంట రీప్లేస్",p_rep_family:"కుటుంబం రీప్లేస్",grp_rmix:"రీప్లేస్ మిక్స్ — టిక్ చేసి Ref1 నుండి తీసుకోండి",rm_bg:"నేపథ్యం (BG)",rm_fg:"ముందుభాగం (FG)",rm_light:"లైటింగ్",rm_color:"రంగు",rm_object:"వస్తువులు / ప్రాప్స్",btn_rmix:"రీప్లేస్ జనరేట్",rm_none:"ముందుగా కనీసం ఒక అంశాన్ని టిక్ చేయండి",grp_i2p:"చిత్రం → Prompt (సీన్ బిల్డర్)",i2p_note:"1) ఎక్స్‌ట్రాక్ట్: Ref1 సన్నివేశం → వివరమైన టెక్స్ట్ prompt (వ్యక్తులు ఉండరు). 2) దాన్ని Prompt పేజీలో సవరించండి. 3) సీన్ జనరేట్ దాన్ని మీ డాక్యుమెంట్ సబ్జెక్ట్ చుట్టూ నిర్మిస్తుంది — ఏ కోణానికైనా ఆటోగా సరిపోతుంది. ముఖం/భంగిమ/ఫ్రేమ్ లాక్‌లు = ఒరిజినల్ అలాగే ఉంటాయి.",i2p_objects:"వస్తువులు & ప్రాప్స్ వివరాలు",i2p_light:"లైటింగ్ వివరాలు",i2p_color:"రంగు / గ్రేడ్ వివరాలు",i2p_bg:"నేపథ్యం వివరాలు",i2p_fg:"ముందుభాగం వివరాలు",btn_i2p:"చిత్రం → Prompt (సీన్ ఎక్స్‌ట్రాక్ట్)",i2p_fit:"సీన్ ఆటో-ఫిట్ — సన్నివేశాన్ని డాక్యుమెంట్ కోణం / దూరం / లెన్స్‌కు తగినట్లు మళ్లీ అమర్చుతుంది",i2p_adapt:"సబ్జెక్ట్ లైట్ & రంగును సన్నివేశానికి సర్దుబాటు చేయి",btn_scenegen:"సీన్ జనరేట్",st_extract:"సన్నివేశాన్ని promptగా మారుస్తోంది",st_extract_done:"సీన్ prompt సిద్ధం — Prompt పేజీలో సమీక్షించండి",scene_no_prompt:"Prompt బాక్స్ ఖాళీగా ఉంది — ముందుగా చిత్రం → Prompt రన్ చేయండి",i2p_none:"ముందుగా కనీసం ఒక వివరాల అంశాన్ని టిక్ చేయండి",sec_light:"స్టూడియో లైటింగ్ — AI రీలైట్",light_note:"లైట్‌లను ON చేయండి, వరుసను ఎంచుకోవడానికి దానిపై ట్యాప్ చేయండి, స్లయిడర్‌లతో మలచండి — 3D టాప్-వ్యూ డయాగ్రామ్ లైవ్‌గా మారుతూ ఉంటుంది (▴ = ఎత్తుగా, ▾ = కిందుగా). లైటింగ్ జనరేట్ మీ డాక్యుమెంట్‌ను సరిగ్గా ఈ సెటప్ ప్రకారం రీలైట్ చేస్తుంది; ముఖం / భంగిమ / ఫ్రేమ్ లాక్ అయ్యే ఉంటాయి.",lbl_my_prompt:"మయన్మార్ PROMPT",lstage_model:"మోడల్",lstage_cam:"కెమెరా",l_key:"కీ లైట్",l_fill:"ఫిల్ / ఫ్రంట్",l_butterfly:"బటర్‌ఫ్లై (పైన-ముందు)",l_side:"సైడ్ లైట్",l_rim:"రిమ్ లైట్",l_back:"బ్యాక్ లైట్",l_hair:"హెయిర్ లైట్",l_bglight:"బ్యాక్‌గ్రౌండ్ లైట్",lt_softbox:"సాఫ్ట్‌బాక్స్",lt_octa:"ఆక్టా",lt_strip:"స్ట్రిప్",lt_umbrella:"అంబ్రెల్లా",lt_beauty:"బ్యూటీ",lt_hard:"హార్డ్",li_int:"తీవ్రత",li_angle:"కోణం",li_height:"ఎత్తు",li_dist:"దూరం",li_size:"పరిమాణం",btn_lightgen:"లైటింగ్ జనరేట్",light_none:"ముందుగా కనీసం ఒక లైట్‌ను ON చేయండి",lg_equip:"ఫోటోలో లైట్ పరికరాలు చూపించు (సాఫ్ట్‌బాక్స్ / స్టాండ్‌లు కనిపిస్తాయి)",grp_chains:"స్టైల్ చెయిన్స్ — ✓ స్టైల్స్ కలపండి",chains_note:"ఏ స్టైల్స్ అయినా ON చేయండి — అవి ప్రతి జనరేట్ / ప్రీసెట్ / రీటచ్‌లోనూ కలిసి మిళితమవుతాయి.",grp_restore:"పాత ఫోటో పునరుద్ధరణ",p_restore:"పాత ఫోటో పునరుద్ధరణ",rest_color:"పూర్తి రంగు",rest_bw:"నలుపు & తెలుపు",restore_note:"చిరుగులు, నీరు / కాలిన నష్టం, రంగు వెలిసిపోవడం సరిచేస్తుంది — ప్రతి ఒరిజినల్ ముఖాన్ని 100% అలాగే ఉంచుతుంది.",rt_browstyle:"కనుబొమల స్టైల్",rt_lashstyle:"ఐల్యాష్ స్టైల్",rt_blush:"బ్లష్ రంగు",rt_contour:"కాంటూర్ స్టైల్",rt_bust:"వక్షం",rt_butt:"పిరుదులు",rt_thigh:"తొడలు",rt_calf:"పిక్కలు",rt_neck:"మెడ",rt_fingers:"వేళ్లు",hint_prompt_my:"မြန်မာလို ရေးပါ — Generate မှာ English အလိုပြောင်းပေးမယ် (အများဆုံး 20,000)",st_translate:"మయన్మార్ promptను ఇంగ్లీషులోకి అనువదిస్తోంది",live_trans:"లైవ్ ⇄ ఆటో-అనువాదం (EN ↔ MY, టైపింగ్ ఆపిన తర్వాత)",st_retry:"మళ్లీ ప్రయత్నిస్తోంది",grp_recipes:"రెసిపీలు — సెట్టింగ్‌లను సేవ్ / షేర్ చేయండి",recipe_note:"అన్నింటినీ (చెయిన్స్, రీటచ్, లైట్లు, కీప్ లాక్‌లు, prompts) ఒకే .json రెసిపీగా సేవ్ చేయండి — విద్యార్థులు దాన్ని లోడ్ చేస్తే చాలు.",btn_recipe_save:"రెసిపీ సేవ్ చేయండి",btn_recipe_load:"రెసిపీ లోడ్ చేయండి",st_recipe_saved:"రెసిపీ సేవ్ అయింది ✓",st_recipe_loaded:"రెసిపీ లోడ్ అయింది ✓ — అన్ని కంట్రోల్స్ అప్‌డేట్ అయ్యాయి",st_recipe_bad:"ఇది HNK రెసిపీ ఫైల్ కాదు",sec_final:"తుది Prompt (AIకి పంపబడేది)",btn_copy:"కాపీ",st_copied:"కాపీ అయింది ✓",hist_note:"చరిత్ర — చివరి 6 ఫలితాలు, చూడటానికి ట్యాప్ చేయండి:",btn_hist_prompt:"→ Prompt",sec_batch:"బ్యాచ్ మోడ్",batch_note:"అనేక ఫోటోలు + అవుట్‌పుట్ ఫోల్డర్ ఎంచుకోండి — ప్రస్తుత prompt, చెయిన్స్, క్లీనప్, Keep లాక్‌లు ప్రతి ఫోటోపైనా అమలవుతాయి; ఫలితాలు *_HNK.png గా సేవ్ అవుతాయి.",btn_batch:"బ్యాచ్ రన్ చేయండి",btn_batch_stop:"ఆపు",st_batch:"బ్యాచ్",st_batch_done:"బ్యాచ్ పూర్తయింది",sec_web:"వెబ్ AI — మినీ బ్రౌజర్",web_note:"ఏ వెబ్ AI ఎడిటర్‌నైనా Photoshop లోపలే తెరవండి. అక్కడ జనరేట్ చేసి, ఫలితాన్ని లేయర్‌గా తీసుకురండి:",web_import_note:"దిగుమతి: ① వెబ్ యాప్‌లో Copy image address ఉపయోగించి, ఆపై 'కాపీ చేసిన లింక్ దిగుమతి' నొక్కండి · ② లేదా ఫైల్‌ను డౌన్‌లోడ్ చేసి 'ఫైల్ దిగుమతి' ఉపయోగించండి · ③ HNK బ్రిడ్జ్ ఉన్న భాగస్వామ్య వెబ్ యాప్‌లు చిత్రాలను ఆటోమేటిక్‌గా పంపుతాయి.",btn_web_go:"వెళ్లు",btn_web_home:"హోమ్",btn_web_reload:"రీలోడ్",btn_web_import_link:"కాపీ చేసిన లింక్ దిగుమతి → PS",btn_web_import_file:"ఫైల్ దిగుమతి → PS",st_web_import:"Photoshopలోకి లేయర్‌గా దిగుమతి అయింది ✓",st_web_nourl:"ముందుగా చిత్రం లింక్ కాపీ చేయండి (రైట్-క్లిక్ → Copy image address)",st_web_fetch:"లింక్ నుండి చిత్రాన్ని తెస్తోంది",st_web_notallowed:"ఈ డొమైన్ అనుమతి జాబితాలో లేదు — ఖాళీగా ఉండిపోవచ్చు. దీన్ని చేర్చమని HNK ని అడగండి.",st_need_doc:"ముందుగా Photoshop లో ఒక ఫోటో డాక్యుమెంట్ తెరవండి",sec_campro:"కెమెరా ప్రో & నాణ్యత",autosave_lbl:"ప్రతి ఫలితాన్ని ఆటో-ఎక్స్‌పోర్ట్ చేయి (PNG + prompt లాగ్ → ఫోల్డర్)",st_folder_ok:"ఎక్స్‌పోర్ట్ ఫోల్డర్ సెట్ అయింది ✓",st_exported:"ఎక్స్‌పోర్ట్ అయింది ✓",st_export_fail:"ఎక్స్‌పోర్ట్ విఫలమైంది — ఫోల్డర్‌ను తనిఖీ చేయండి",st_pro_fallback:"Pro మోడల్ అందుబాటులో లేదు — ఈ రన్ కోసం Flash కు మార్చబడింది",st_img_bad:"చిత్ర డేటా సమగ్రత తనిఖీలో విఫలమైంది — ఫోటోను మళ్లీ జోడించండి",st_auto_comp:"ఆటో కాంపోజిట్: IMAGE 1 సబ్జెక్ట్ → రిఫరెన్స్ సీన్",prov_lbl:"AI ప్రొవైడర్",tab_create: "Create",create_note:"క్రియేట్ మోడ్ — మీ prompt నుండి పూర్తిగా కొత్త చిత్రం (+ దీని సొంత 4 రిఫరెన్స్‌లు). పూర్తిగా స్వతంత్రం: డాక్యుమెంట్, ప్రీసెట్లు, చైన్‌లు లేదా లాక్‌లను ఎప్పుడూ చదవదు.",create_ph:"మీరు సృష్టించాలనుకునే చిత్రాన్ని వివరించండి…",btn_create_ps:"⬇ Photoshop కు పంపు",btn_to_ref:"↺ Ref 1 గా వాడు",st_to_ref:"ఫలితం Ref 1 లోకి లోడ్ అయింది ✓",scope_create_note:"Setup లోని Model & Output నుండి స్వతంత్రం — ఈ సెట్టింగ్‌లు క్రియేట్‌లోని Generate కు మాత్రమే వర్తిస్తాయి.",cr_ratio:"నిష్పత్తి",cr_var:"వేరియేషన్లు",cr_restyle:"♻ ఫలితాన్ని రీస్టైల్ చేయి",cr_lib:"Prompt లైబ్రరీ — చొప్పించడానికి నొక్కండి",cr_improve:"మెరుగుపరచు",cr_describe:"Ref 1 ను వివరించు → Prompt",st_describing:"రిఫరెన్స్‌ను చదువుతోంది…",st_described:"Ref 1 నుండి prompt రాయబడింది ✓",st_need_ref1:"ముందుగా Ref 1 కు ఒక చిత్రాన్ని జోడించండి",st_lib_added:"Prompt జోడించబడింది ✓",cr_refs:"రిఫరెన్స్ చిత్రాలు (గరిష్ఠంగా 4)",cr_refs_note:"ఐచ్ఛికం — Layer / File / Web ద్వారా జోడించండి. మీ prompt అడిగినవి మాత్రమే క్రియేట్ తీసుకుంటుంది.",cr_results:"ఫలితాలు",cr_gal_empty:"ఇంకా ఫలితాలు లేవు — Generate నొక్కండి.",cr_gal_have:"ఫలితం(లు) · ప్రివ్యూ / చర్య కోసం థంబ్‌నెయిల్ నొక్కండి",cr_save:"⬇ PNG సేవ్ చేయి",cr_engine:"ఇంజిన్",cr_need_result:"ముందుగా ఒక చిత్రాన్ని జనరేట్ చేయండి",btn_web_import_url:"⬇ URL ఇంపోర్ట్",st_clip_help:"క్లిప్‌బోర్డ్ ఖాళీ/బ్లాక్ అయింది — లింక్‌ను URL బార్‌లో పేస్ట్ చేసి, ఆపై ⬇ URL ఇంపోర్ట్ నొక్కండి",st_web_blob:"అది తాత్కాలిక blob: లింక్ — రైట్-క్లిక్ → Copy IMAGE Address వాడండి, లేదా ఫైల్‌ను సేవ్ చేసి Import File వాడండి",err_key:"API key చెల్లదు — Setup ట్యాబ్‌లో key ను మళ్లీ తనిఖీ చేయండి · API key မှားနေ — Setup မှာ ပြန်စစ်ပါ",err_quota:"కోటా / రేట్ పరిమితి — కాసేపు ఆగి, మళ్లీ ప్రయత్నించండి · Quota ပြည့်/နှုန်းကန့် — ခဏနေပြန်စမ်းပါ",err_big:"API కి చిత్రం చాలా పెద్దది — పరిమాణం తగ్గించి, మళ్లీ ప్రయత్నించండి · ပုံကြီးလွန်း — ချုံ့ပြီးပြန်စမ်းပါ",err_safety:"సేఫ్టీ ఫిల్టర్ బ్లాక్ చేసింది — prompt లేదా ఫోటోను సవరించండి · Safety ငြင်း — prompt/ပုံ ပြင်ပြီးပြန်စမ်းပါ",err_net:"నెట్‌వర్క్ / సర్వర్ సమస్య — దయచేసి మళ్లీ ప్రయత్నించండి · ကွန်ရက်/ဆာဗာပြစနာ — ပြန်စမ်းပါ",err_timeout:"అభ్యర్థన సమయం మించిపోయింది — సర్వర్ చాలా ఆలస్యం చేసింది; దయచేసి మళ్లీ ప్రయత్నించండి · အချိန်ပြည့် — ပြန်စမ်းပါ",err_generic:"అభ్యర్థన పూర్తి కాలేదు — దయచేసి మళ్లీ ప్రయత్నించండి",err_img:"వాడదగిన చిత్రం ఏదీ రాలేదు — దయచేసి మళ్లీ ప్రయత్నించండి",err_mode:"ఈ డాక్యుమెంట్ RGB మోడ్‌లో లేదు — ముందుగా మార్చండి (Image ▸ Mode ▸ RGB Color), ఆపై మళ్లీ ప్రయత్నించండి",cam_master:"కెమెరా బ్లాక్ ON — ప్రతి prompt చివరన జోడించబడుతుంది",cam_body:"కెమెరా బాడీ",cam_lens:"ప్రైమ్ లెన్స్ (mm)",cam_f:"అపెర్చర్",cam_film:"ఫిల్మ్ లుక్",cam_bokeh:"బొకే స్టైల్",cam_iso:"ISO",cam_k:"WB కెల్విన్",cam_note:"బ్లాక్‌ను ON చేసి, మీకు కావాల్సినవి మాత్రమే ఎంచుకోండి — – చిప్‌లు ఏమీ జోడించవు. అన్నీ తుది prompt చివరన చేరతాయి.",ro_h_main:"రిఫరెన్స్ ఆప్స్ ప్రో (Ref1 / Ref2)",ro_note:"Ref1 = IMAGE 2 (మహిళ) · Ref2 = IMAGE 3 (పురుషుడు). టార్గెట్ ఎంచుకుని, ఒక ఆప్ నడపండి — సరిపోలని వ్యక్తులు ఎప్పుడూ మారరు.",ro_target:"టార్గెట్:",ro_solo:"సోలో",ro_couple:"జంట",ro_family:"కుటుంబం",ro_mk:"రిఫ్ మేకప్ కాపీ చేయి",ro_hair:"రిఫ్ హెయిర్‌స్టైల్ తీసుకో",ro_h_face:"ఫేస్ ఆప్స్",ro_h_bg:"BG / FG ఆప్స్",ro_h_sub:"సబ్జెక్ట్ ఆప్స్",ro_h_lc:"లైట్ & కలర్ ఆప్స్",ro_h_dress:"డ్రెస్ ఆప్స్",ro_h_mk:"మేకప్ ఆప్స్",ro_h_match:"★ మాస్టర్ మ్యాచ్ (ఒకే లుక్)",ro_match_note:"రెండూ ఒకే ఎడిట్‌లా కనిపించేలా IMAGE 1 ను రిఫరెన్స్‌తో మ్యాచ్ చేయండి — దేన్ని మ్యాచ్ చేయాలో టిక్ చేయండి:",m_color:"కలర్",m_light:"లైట్",m_makeup:"మేకప్",m_skin:"స్కిన్ రీటచ్",crd_chainsrest:"స్టైల్ చైన్స్ + పాత ఫోటో పునరుద్ధరణ",crd_refops:"రిఫరెన్స్ ఆప్స్ ప్రో (Ref1 / Ref2)",crd_scenes:"సీన్స్ ప్రో — లాక్ చేసిన సబ్జెక్ట్ · సీన్ మ్యాచ్ అవుతుంది",scn_note:"మీ సబ్జెక్ట్‌ను లాక్ చేసి (ముఖం · పోజ్ · డ్రెస్ · ఫ్రేమ్), వారికి సరిపోయేలా మొత్తం సీన్‌ను మళ్లీ నిర్మిస్తుంది — లైట్, నీడ, రంగు, బ్యాక్‌గ్రౌండ్, ఫోర్‌గ్రౌండ్, వస్తువులు అన్నీ రియల్-ఫోటో లుక్ కోసం ఆటోమేటిక్‌గా సర్దుబాటవుతాయి.",scn_h_style:"సీన్ స్టైల్ (ఇండోర్ / సాంస్కృతిక)",scn_h_bday:"పుట్టినరోజు — వయసు సంఖ్య 1–45",scn_h_cap:"క్యాప్షన్ / టెక్స్ట్ (పిల్లలు · Miss Universe · పుట్టినరోజు)",scn_h_scarf:"అవుట్‌డోర్ / ఎగిరే స్కార్ఫ్",scn_grad:"గ్రాడ్యుయేషన్ ఇండోర్",scn_prewed:"ప్రీవెడ్డింగ్ ఇండోర్",scn_vietnam:"వియత్నాం",scn_myanmar:"మయన్మార్",scn_chinese:"చైనీస్",scn_shan:"షాన్",scn_newborn:"నవజాత శిశువు / బేబీ",scn_age:"వయసు",scn_bday_go:"పుట్టినరోజు సీన్",scn_cap_on:"క్యాప్షన్ టెక్స్ట్ జోడించు",scn_cap_ph:"క్యాప్షన్ టెక్స్ట్ (ఉదా. Happy 1st Birthday, పేరు)…",scn_cap_pos:"స్థానం",scn_top:"పైన",scn_bottom:"కింద",scn_scarf:"✦ ఎగిరే స్కార్ఫ్ సీన్",scn_dir:"దిశ",scn_left:"ఎడమ",scn_right:"కుడి",scn_up:"పైకి",scn_len:"పొడవు",scn_short:"పొట్టి",scn_long:"పొడవైనది",g_cat_scene:"సీన్ ఆప్ — మీ సబ్జెక్ట్ లాక్ అయి ఉంటుంది (ముఖం · పోజ్ · డ్రెస్ · ఫ్రేమ్); జనరేట్ అయిన మొత్తం సీన్ (లైట్, నీడ, రంగు, బ్యాక్‌గ్రౌండ్, ఫోర్‌గ్రౌండ్, వస్తువులు, వాతావరణం) రియల్-ఫోటో కాంపోజిట్ కోసం సబ్జెక్ట్‌కు ఆటో-మ్యాచ్ అవుతుంది.",crd_wed:"♥ వెడ్డింగ్ ప్రో స్యూట్",crd_recipes:"రెసిపీలు — సేవ్ / షేర్",learn_lbl:"లెర్న్ మోడ్ — 1వ ట్యాప్ = గైడ్ (పసుపు), 2వ = prompt (నీలం), 3వ = రన్ (ఆకుపచ్చ)",guide_hint:"మళ్లీ నొక్కండి: పసుపు → నీలం (prompt) → ఆకుపచ్చ (రన్) ▶",g_learn_next_prompt:"మళ్లీ నొక్కండి → ఖచ్చితమైన PROMPT చూపుతుంది (నీలం).",g_learn_prompt_head:"ఈ బటన్ పంపే PROMPT (మళ్లీ నొక్కితే = రన్):",g_learn_next_run:"మరోసారి నొక్కండి → రన్ (ఆకుపచ్చ) జనరేట్ చేస్తుంది.",st_prompt_ready:"Prompt సిద్ధం — నడపడానికి మళ్లీ నొక్కండి (ఆకుపచ్చ) ✓",g_step_doc:"ముందుగా మీ ఫోటో డాక్యుమెంట్‌ను Photoshop లో తెరవండి.",g_step_ref1:"రిఫరెన్స్ చిత్రాన్ని Ref1 లోకి లోడ్ చేయండి (అది IMAGE 2 అవుతుంది). రెండో వ్యక్తి కోసం Ref2 జోడించండి.",g_step_target:"టార్గెట్ ఎంచుకోండి: సోలో / జంట (Ref1 = మహిళ, Ref2 = పురుషుడు) / కుటుంబం.",g_step_mkhair:"ఐచ్ఛికం: ఫేస్ ఆప్స్ పైన ఉన్న ‘రిఫ్ మేకప్ కాపీ చేయి’ / ‘రిఫ్ హెయిర్‌స్టైల్ తీసుకో’ టిక్ చేయండి.",g_step_petal:"ముందుగా పూరేకుల రంగు ఎంచుకోండి (auto = మీ సీన్‌కు సరిపోతుంది).",g_step_rest:"పైన ఉన్న ✓ తో ఫుల్ కలర్ లేదా B&W ఎంచుకోండి.",g_step_int:"ఇంటెన్సిటీ స్లయిడర్‌ను మీకు నచ్చినట్టు సెట్ చేయండి.",g_step_confirm:"ముందుకు వెళ్లడానికి మళ్లీ నొక్కండి: గైడ్ (పసుపు) → PROMPT (నీలం) → రన్ (ఆకుపచ్చ జనరేట్ చేస్తుంది).",g_cat_face:"ఫేస్ ఆప్ — రిఫరెన్స్ ముఖాన్ని సరిపోలే వ్యక్తిపైకి బదిలీ చేస్తుంది; మిగతా వారందరూ మారకుండా ఉంటారు.",g_cat_sub:"సబ్జెక్ట్ ఆప్ — రిఫరెన్స్ వ్యక్తిని మీ సీన్‌లోకి తెస్తుంది/మార్ఫ్ చేస్తుంది; సీన్, ఫ్రేమింగ్ అలాగే ఉంటాయి.",g_cat_bgfg:"BG/FG ఆప్ — రిఫరెన్స్ ఉపయోగించి బ్యాక్‌గ్రౌండ్ / ఫోర్‌గ్రౌండ్ మాత్రమే మారుస్తుంది.",g_cat_lc:"లైట్ & కలర్ ఆప్ — రిఫరెన్స్ లైటింగ్, కలర్ గ్రేడ్‌ను కాపీ చేస్తుంది; వ్యక్తులు పిక్సెల్-స్థాయిలో యథాతథంగా ఉంటారు.",g_cat_dress:"డ్రెస్ ఆప్ — రిఫరెన్స్ ఉపయోగించి దుస్తులు మాత్రమే మారుస్తుంది.",g_cat_mkop:"మేకప్ ఆప్ — రిఫరెన్స్ ఉపయోగించి మేకప్ మాత్రమే మారుస్తుంది.",g_cat_match:"మాస్టర్ మ్యాచ్ — మీ ఫోటోను రిఫరెన్స్ మొత్తం లుక్‌కు సరిపోయేలా చేస్తుంది (పైన లేయర్‌లను టిక్ చేయండి).",g_cat_trail:"వెడ్డింగ్ ట్రైల్ — లగ్జరీ గడ్డి + ప్రవహించే పూల దారి; ముఖాలు/పోజ్/ఫ్రేమ్ పూర్తిగా లాక్ అవుతాయి.",g_cat_veil:"ఎగిరే వెయిల్ — ఈ పొడవులో గాలికి ఎగిరే వెయిల్‌ను జోడిస్తుంది/పొడిగిస్తుంది; ముఖం ఎప్పుడూ కప్పబడదు.",g_cat_gown:"గౌన్ — ఉన్న గౌన్‌ను శుభ్రం చేస్తుంది (డిజైన్ మారదు), ఈ ట్రైన్ పొడవును సెట్ చేస్తుంది.",g_cat_petal:"ఎగిరే పూరేకులు — ఈ స్టైల్‌లో గాలిలో పూరేకులను జోడిస్తుంది; రంగు పైన ఉన్న స్వాచ్ నుండి.",g_cat_wedx:"వెడ్డింగ్ ఎక్స్‌ట్రా — మీ సీన్‌కు సరిపోయేలా ఈ ఎలిమెంట్‌ను జోడిస్తుంది; సబ్జెక్ట్ లాక్ అయి ఉంటుంది.",g_cat_canvas:"రీప్లేస్ (కాన్వాస్) — మీ సబ్జెక్ట్‌ను రిఫరెన్స్ సీన్‌లో ఉంచుతుంది; రిఫ్‌లోని వ్యక్తులు తీసివేయబడతారు.",g_cat_restore:"పాత ఫోటో పునరుద్ధరణ — పాడైన భాగాలను బాగు చేస్తుంది; ప్రతి అసలు ముఖం 100% అలాగే ఉంటుంది.",g_cat_generic:"ప్రీసెట్ — ఈ ప్రొఫెషనల్ ఎడిట్‌ను మీ ఫోటోకు వర్తింపజేస్తుంది.",g_gen:"జనరేట్ — మీ డాక్యుమెంట్‌పై prompt బాక్స్‌ను (+ చైన్‌లు, కీప్‌లు, కెమెరా బ్లాక్) నడుపుతుంది.",g_retouchbtn:"రీటచ్ అప్లై — మీ అన్ని స్లయిడర్ సెట్టింగ్‌లను ఒకే ప్రొఫెషనల్ రీటచ్ పాస్‌గా నడుపుతుంది.",g_relightbtn:"లైటింగ్ జనరేట్ — మీ 3D లైట్ డయాగ్రామ్‌కు సరిగ్గా అనుగుణంగా ఫోటోను రీలైట్ చేస్తుంది.",g_scene:"సీన్ జనరేట్ — సేకరించిన prompt నుండి సీన్‌ను మళ్లీ నిర్మిస్తుంది; సబ్జెక్ట్ అలాగే ఉంటుంది.",g_rmix:"రీప్లేస్ మిక్స్ — రిఫరెన్స్ నుండి ✓ టిక్ చేసిన భాగాలను మాత్రమే రీప్లేస్ చేస్తుంది.",ro_faceRep:"ఫేస్ రీప్లేస్",ro_faceSwap:"ఫేస్ స్వాప్",ro_bgRep:"BG రీప్లేస్",ro_bgSwap:"BG స్వాప్",ro_fgRep:"FG రీప్లేస్",ro_bg_note:"Doc = సబ్జెక్ట్ · Ref1 = కొత్త సీన్. టార్గెట్ (సోలో/జంట/కుటుంబం) ఎవరిని ఉంచాలో నిర్ణయిస్తుంది.",ro_bg_frame:"ఫ్రేమ్ & కంపోజిషన్‌ను అలాగే ఉంచు",ro_bg_light:"సబ్జెక్ట్ లైట్/రంగును అలాగే ఉంచు",ro_subSwap:"సబ్జెక్ట్ స్వాప్",ro_lcRef:"L&C రిఫరెన్స్",ro_lcCopy:"L&C కాపీ-పేస్ట్",ro_dressRef:"డ్రెస్ రిఫరెన్స్",ro_dressRep:"డ్రెస్ రీప్లేస్",ro_mkCopy:"మేకప్ కాపీ",ro_matchBtn:"★ మాస్టర్ మ్యాచ్",grp_retouch:"స్కిన్ రీటచ్ ప్రీసెట్‌లు",lbl_intensity:"తీవ్రత",p_evoto:"Retouch B స్టైల్",p_meitu:"Retouch A స్టైల్",auto_place:"ఫలితాన్ని Photoshopలో కొత్త లేయర్‌గా ఆటోమేటిక్‌గా ప్లేస్ చేయి",sec_retouchpro:"రీటచ్ ప్రో — స్లయిడర్లు",rt_skin:"స్కిన్",rt_faceai:"ఫేస్ AI",rt_hair:"జుట్టు",rt_dress:"డ్రెస్",rt_bg:"బ్యాక్‌గ్రౌండ్",rt_smooth:"స్కిన్ స్మూత్",rt_acne:"మొటిమల తొలగింపు",rt_spots:"నల్ల మచ్చలు",rt_wrinkle:"ముడతలు",rt_tone:"వైటెన్ / టాన్",rt_glow:"గ్లో",rt_reshape:"AI రీషేప్",rt_lash:"ఐలాషెస్",rt_brow:"కనుబొమ్మలు",rt_lipsmooth:"లిప్ స్మూత్",rt_lipcolor:"లిప్ కలర్",rt_lenscolor:"లెన్స్ కలర్",rt_hairstray:"చెదిరిన వెంట్రుకలు",rt_hairsmooth:"హెయిర్ స్మూత్",rt_hairshine:"హెయిర్ షైన్ (D&B)",rt_dresssmooth:"ఫ్యాబ్రిక్ స్మూత్",rt_dressedge:"అంచుల క్లీనప్",rt_dresswrinkle:"ముడతల తొలగింపు",rt_dresstexture:"టెక్స్చర్ రికవరీ",rt_bgsmooth:"BG క్లీన్/స్మూత్",rt_bgcolor:"BG కలర్",rt_bgrecolor:"BG కలర్ స్మూత్",rt_shape:"రీషేప్ ప్రో (ముఖం + శరీరం)",rt_teeth:"పళ్ల వైటెనింగ్",rt_eyewhite:"కంటి తెల్లభాగం క్లీన్",rt_faceslim:"ఫేస్ స్లిమ్",rt_jaw:"జాలైన్",rt_chin:"గడ్డం",rt_nosesize:"ముక్కు పరిమాణం",rt_eyesize:"కళ్ల పరిమాణం",rt_lipfull:"నిండైన పెదవులు",rt_waist:"నడుము స్లిమ్",rt_bodyslim:"బాడీ స్లిమ్",rt_shoulder:"భుజాలు",rt_hip:"హిప్ స్లిమ్",rt_leglen:"కాళ్ల పొడవు",rt_armslim:"చేతుల స్లిమ్",rt_dressfit:"డ్రెస్ ఫిట్",rt_dressclean:"డ్రెస్ క్లీన్",rt_dresscolorpure:"డ్రెస్ కలర్ ప్యూర్",rt_bodygrp:"బాడీ స్కిన్ ప్రో",rt_bodysmooth:"బాడీ స్కిన్ స్మూత్",rt_bodyblemish:"బాడీ మచ్చల క్లీన్",rt_bodytone:"బాడీ ఈవెన్ టోన్",rt_bodyglow:"బాడీ గ్లో",rt_bodyhairrm:"బాడీ హెయిర్ తగ్గింపు",rt_hairvolume:"హెయిర్ వాల్యూమ్",rt_hairgloss:"హెయిర్ గ్లోస్",rt_hairfill:"హెయిర్ ఫిల్ (పలుచని చోట్లు)",wp_h_trail:"♥ వెడ్డింగ్ — లగ్జరీ ఫ్లవర్ ట్రెయిల్",wp_h_veil:"♥ వెడ్డింగ్ — ఎగిరే వెయిల్",wp_h_gown:"♥ వెడ్డింగ్ — గౌన్ క్లీన్ + ట్రెయిన్",wp_h_petal:"♥ వెడ్డింగ్ — ఎగిరే పూల రేకులు",wp_h_extra:"♥ వెడ్డింగ్ — గుర్రం · నీరు · మూడ్",wp_note:"ఫేస్ ID / పోజ్ / ఫ్రేమ్ / డ్రెస్ డిజైన్ పూర్తిగా లాక్ అయి ఉంటాయి — పేర్కొన్న అంశం మాత్రమే మారుతుంది.",wp_petalcolor:"పూల రేకుల రంగు (ఆటో = సీన్ మ్యాచ్)",wp_trail_c:"పూల రంగు",wp_trail_go:"▶ ఫ్లవర్ ట్రెయిల్",wp_veil_c:"వెయిల్ పొడవు",wp_veil_go:"▶ ఎగిరే వెయిల్",wp_gown_c:"ట్రెయిన్ పొడవు",wp_gown_go:"▶ గౌన్ క్లీన్ + ట్రెయిన్",wp_pet_c:"పూల రేకుల స్టైల్",wp_pet_go:"▶ ఎగిరే పూల రేకులు",wp_extra_c:"ఎక్స్‌ట్రా",wp_extra_go:"▶ ఎక్స్‌ట్రా జోడించండి",btn_apply_rt:"రీటచ్ వర్తింపజేయండి",btn_reset:"రీసెట్",rt_none:"ముందుగా కనీసం ఒక రీటచ్ స్లయిడర్ లేదా రంగు సెట్ చేయండి",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",recent_lbl:"ఇటీవలి prompts…",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop ఈ prompt బాక్స్ పరిమితి:",cleanup_note:"టిక్ చేసిన అంశాలు ప్రతి జనరేట్ / ప్రీసెట్‌తో కలిసి అమలవుతాయి.",btn_generate:"సృష్టించు",st_ready:"సిద్ధం",st_capture:"డాక్యుమెంట్ క్యాప్చర్ అవుతోంది",st_gen:"జనరేట్ అవుతోంది…",st_place:"Photoshopలో ప్లేస్ అవుతోంది…",st_placed_masked:"లేయర్ + మాస్క్ గ్రూప్‌గా ప్లేస్ అయింది — ఒరిజినల్‌కు ఎలాంటి మార్పు లేదు ✓",st_placed_plain:"సాధారణ లేయర్‌గా ప్లేస్ అయింది (ఈ హోస్ట్‌లో మాస్క్/గ్రూప్ అందుబాటులో లేదు)",stage_queued:"క్యూలో ఉంది",stage_uploading:"అప్‌లోడ్ అవుతోంది",stage_generating:"జనరేట్ అవుతోంది",stage_downloading:"డౌన్‌లోడ్ అవుతోంది",stage_placing:"ప్లేస్ అవుతోంది",st_done:"పూర్తయింది ✓",st_err:"లోపం",st_no_doc:"యాక్టివ్ డాక్యుమెంట్ లేదు — ముందుగా ఒక ఫోటో తెరవండి",st_no_prompt:"Prompt ఖాళీగా ఉంది",need_ref:"ఈ ప్రీసెట్‌కు స్లాట్ 1లో రిఫరెన్స్ ఇమేజ్ అవసరం",st_new_doc:"ఫలితం కొత్త డాక్యుమెంట్‌గా తెరుచుకుంది ✓",sec_preview:"ప్రివ్యూ — ముందు / తర్వాత",before:"ముందు",after:"తర్వాత",btn_place:"Photoshopలో ప్లేస్ చేయండి",btn_saveas:"ఇలా సేవ్ చేయండి…",st_saved:"సేవ్ అయింది ✓",sec_diag:"సిస్టమ్ చెక్",sec_log:"యాక్టివిటీ లాగ్",btn_diag:"చెక్ రన్ చేయండి",btn_copylog:"లాగ్ కాపీ చేయండి",btn_clearlog:"క్లియర్",diag_host:"Photoshop హోస్ట్",diag_uxp:"UXP సామర్థ్యాలు",diag_rh:"RunningHub Enterprise key",diag_doc:"యాక్టివ్ డాక్యుమెంట్",diag_set:"సెట్ అయింది",diag_unset:"సెట్ కాలేదు",diag_open:"తెరిచి ఉంది",diag_none:"ఏదీ తెరిచి లేదు",diag_missing:"లేదు",diag_done:"సిస్టమ్ చెక్ పూర్తయింది ✓",diag_lib:"రిఫరెన్స్ లైబ్రరీ",diag_lib_open:"ఫోల్డర్ తెరిచే సామర్థ్యం",sec_reflib:"రిఫరెన్స్ ఇమేజ్ లైబ్రరీ",reflib_note:"మీకు ఇష్టమైన రిఫరెన్స్ ఇమేజ్‌ల ఫోల్డర్‌ను ఒక్కసారి ఎంచుకోండి — బ్రౌజ్ దాన్ని గుర్తుంచుకుని ప్రతిచోటా అందులోనే తెరుస్తుంది.",btn_browse:"బ్రౌజ్",lib_choose:"ఫోల్డర్ ఎంచుకోండి",lib_open:"ఫోల్డర్ తెరవండి",lib_change:"ఫోల్డర్ మార్చండి",lib_reset:"రీసెట్",lib_rescan:"మళ్లీ స్కాన్ చేయండి",lib_current:"ప్రస్తుత ఫోల్డర్",lib_found:"దొరికిన ఇమేజ్‌లు",lib_status:"స్థితి",lib_lastscan:"చివరి స్కాన్",lib_images:"ఇమేజ్‌లు",lib_connected:"కనెక్ట్ అయింది",lib_not_config:"కాన్ఫిగర్ కాలేదు",lib_perm_lost:"అనుమతి పోయింది — మళ్లీ ఎంచుకోండి",lib_none:"(ఫోల్డర్ ఎంపిక కాలేదు)",lib_copy_only:"పాత్ కాపీ మాత్రమే",lib_choose_msg:"మీ HNK రిఫరెన్స్ ఇమేజ్ లైబ్రరీ ఫోల్డర్‌ను ఎంచుకోండి.",lib_scanning:"లైబ్రరీ స్కాన్ అవుతోంది…",lib_scan_done:"మళ్లీ స్కాన్ పూర్తయింది ✓",lib_reset_done:"లైబ్రరీ రీసెట్ అయింది ✓",lib_path_copied:"పాత్ కాపీ అయింది",lib_unsupported:"మద్దతు లేని ఇమేజ్ రకం",lib_restore_fail:"రిఫరెన్స్‌ను పునరుద్ధరించడం సాధ్యపడలేదు",on:"ఆన్",off:"ఆఫ్"},
-ur:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"بنائیں",st_ready:"تیار",st_done:"ہو گیا ✓",st_need_key:"پہلے RunningHub Enterprise key ڈالیں",btn_show:"دکھائیں",btn_hide:"چھپائیں",btn_save:"محفوظ کریں",btn_test:"Key جانچیں",btn_clear:"صاف کریں",btn_cancel:"منسوخ",btn_load:"لوڈ",btn_paste:"پیسٹ",btn_improve:"Prompt بہتر بنائیں",lbl_ratio:"تناسب",lbl_size:"سائز",lbl_quality:"معیار"}
+bn:{btn_show:"দেখান",btn_save:"সংরক্ষণ",st_need_key:"আগে RunningHub Enterprise key দিন",qual_auto:"অটো",btn_clear:"মুছুন",btn_ref_layer:"+ লেয়ার",btn_ref_file:"ফাইল",btn_ref_web:"ওয়েব",st_ref_layer_added:"লেয়ার রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_ref_file_added:"ফাইল রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_importing:"ফাইল ইমপোর্ট হচ্ছে",url_ph:"https://… ছবির ঠিকানা বা Pinterest পিন লিংক",btn_load:"লোড",btn_cancel:"বাতিল",st_url_loading:"ওয়েব ছবি ডাউনলোড হচ্ছে",st_ref_web_added:"ওয়েব ছবি রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_url_bad:"এই URL থেকে ছবি লোড করা যায়নি — ছবির ঠিকানা কপি করে আবার চেষ্টা করুন",no_layer:"কোনো লেয়ার নির্বাচিত নেই",st_web_import:"লেয়ার হিসেবে Photoshop-এ ইমপোর্ট হয়েছে ✓",st_folder_ok:"এক্সপোর্ট ফোল্ডার সেট হয়েছে ✓",st_exported:"এক্সপোর্ট হয়েছে ✓",st_export_fail:"এক্সপোর্ট ব্যর্থ — ফোল্ডারটি পরীক্ষা করুন",st_img_bad:"ছবির ডেটা ইন্টিগ্রিটি চেক-এ ব্যর্থ — ছবিটি আবার যোগ করুন",st_auto_comp:"অটো কম্পোজিট: IMAGE 1 সাবজেক্ট → রেফারেন্স দৃশ্য",tab_create: "Create",create_ph:"যে ছবিটি তৈরি করতে চান তা বর্ণনা করুন…",btn_create_ps:"⬇ Photoshop-এ পাঠান",btn_to_ref:"↺ Ref 1 হিসেবে ব্যবহার করুন",st_to_ref:"ফলাফল Ref 1-এ লোড হয়েছে ✓",cr_restyle:"♻ ফলাফল রিস্টাইল করুন",cr_gal_empty:"এখনও কোনো ফলাফল নেই — Generate ট্যাপ করুন।",cr_gal_have:"টি ফলাফল · প্রিভিউ / কাজ করতে থাম্বনেইলে ট্যাপ করুন",cr_save:"⬇ PNG সংরক্ষণ করুন",cr_need_result:"প্রথমে একটি ছবি জেনারেট করুন",guide_hint:"আবার ট্যাপ করুন: হলুদ → নীল (prompt) → সবুজ (রান) ▶",g_learn_next_prompt:"আবার ট্যাপ করুন → হুবহু PROMPT দেখায় (নীল)।",g_learn_prompt_head:"এই বোতামটি যে PROMPT পাঠাবে (আবার ট্যাপ = রান):",g_learn_next_run:"আরেকবার ট্যাপ করুন → রান (সবুজ) জেনারেট করে।",st_prompt_ready:"Prompt প্রস্তুত — চালাতে আবার ট্যাপ করুন (সবুজ) ✓",g_step_confirm:"এগোতে আবার ট্যাপ করুন: গাইড (হলুদ) → PROMPT (নীল) → রান (সবুজ জেনারেট করে)।",g_cat_generic:"প্রিসেট — আপনার ছবিতে এই পেশাদার সম্পাদনা প্রয়োগ করে।",g_gen:"জেনারেট — আপনার ডকুমেন্টে prompt বক্স (+ চেইন, কিপ, ক্যামেরা ব্লক) চালায়।",g_retouchbtn:"রিটাচ প্রয়োগ — আপনার সব স্লাইডার সেটিং এক পেশাদার রিটাচ পাস হিসেবে চালায়।",ro_faceRep:"ফেস রিপ্লেস",ro_faceSwap:"ফেস সোয়াপ",ro_bgRep:"BG রিপ্লেস",ro_bgSwap:"BG সোয়াপ",ro_fgRep:"FG রিপ্লেস",ro_subSwap:"সাবজেক্ট বদল",ro_lcRef:"L&C রেফারেন্স",ro_lcCopy:"L&C কপি-পেস্ট",ro_dressRef:"পোশাক রেফারেন্স",ro_dressRep:"পোশাক বদল",ro_mkCopy:"মেকআপ কপি",ro_matchBtn:"★ মাস্টার ম্যাচ",rt_none:"আগে অন্তত একটি রিটাচ স্লাইডার বা রং সেট করুন",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop এই prompt বক্সের সীমা:",btn_generate:"তৈরি করুন",st_ready:"প্রস্তুত",st_capture:"ডকুমেন্ট ক্যাপচার হচ্ছে",st_gen:"জেনারেট হচ্ছে…",st_place:"Photoshop-এ বসানো হচ্ছে…",st_placed_masked:"লেয়ার + মাস্ক গ্রুপ হিসেবে বসানো হয়েছে — মূল ছবি অক্ষত ✓",st_placed_plain:"সাধারণ লেয়ার হিসেবে বসানো হয়েছে (এই হোস্টে মাস্ক/গ্রুপ পাওয়া যায় না)",stage_queued:"সারিতে আছে",stage_uploading:"আপলোড হচ্ছে",stage_generating:"জেনারেট হচ্ছে",stage_downloading:"ডাউনলোড হচ্ছে",stage_placing:"বসানো হচ্ছে",st_done:"হয়ে গেছে ✓",st_err:"ত্রুটি",st_no_doc:"কোনো সক্রিয় ডকুমেন্ট নেই — আগে একটি ছবি খুলুন",st_no_prompt:"Prompt খালি",st_new_doc:"ফলাফল নতুন ডকুমেন্ট হিসেবে খোলা হয়েছে ✓",before:"আগে",after:"পরে",btn_place:"Photoshop-এ বসান",st_saved:"সেভ হয়েছে ✓",lib_choose_msg:"আপনার HNK রেফারেন্স ইমেজ লাইব্রেরি ফোল্ডারটি বেছে নিন।",lib_unsupported:"অসমর্থিত ছবির ধরন",lib_restore_fail:"রেফারেন্স পুনরুদ্ধার করা যায়নি",on:"চালু",off:"বন্ধ"},
+gu:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"બનાવો",st_ready:"તૈયાર",st_done:"થઈ ગયું ✓",st_need_key:"પહેલા RunningHub Enterprise key નાખો",btn_show:"બતાવો",btn_save:"સાચવો",btn_clear:"કાઢી નાખો",btn_cancel:"રદ કરો",btn_load:"લોડ"},
+hi:{btn_show:"दिखाएँ",btn_save:"सहेजें",st_need_key:"पहले RunningHub Enterprise key डालें",qual_auto:"ऑटो",btn_clear:"हटाएँ",btn_ref_layer:"+ लेयर",btn_ref_file:"फ़ाइल",btn_ref_web:"वेब",st_ref_layer_added:"लेयर संदर्भ के रूप में जुड़ गई ✓",st_ref_file_added:"फ़ाइल संदर्भ के रूप में जुड़ गई ✓",st_importing:"फ़ाइल इंपोर्ट हो रही है",url_ph:"https://… इमेज का पता या Pinterest पिन लिंक",btn_load:"लोड करें",btn_cancel:"रद्द करें",st_url_loading:"वेब इमेज डाउनलोड हो रही है",st_ref_web_added:"वेब इमेज संदर्भ के रूप में जुड़ गई ✓",st_url_bad:"इस URL से इमेज लोड नहीं हो सकी — इमेज का पता कॉपी करके फिर से आज़माएँ",no_layer:"कोई लेयर चयनित नहीं है",st_web_import:"Photoshop में लेयर के रूप में इंपोर्ट हो गया ✓",st_folder_ok:"एक्सपोर्ट फ़ोल्डर सेट हो गया ✓",st_exported:"एक्सपोर्ट हो गया ✓",st_export_fail:"एक्सपोर्ट विफल — फ़ोल्डर जाँचें",st_img_bad:"इमेज डेटा इंटीग्रिटी जाँच में विफल रहा — फोटो दोबारा जोड़ें",st_auto_comp:"ऑटो कंपोज़िट: IMAGE 1 सब्जेक्ट → रेफ़रेंस सीन",tab_create: "Create",create_ph:"जो इमेज बनाना चाहते हैं उसका वर्णन करें…",btn_create_ps:"⬇ Photoshop में भेजें",btn_to_ref:"↺ Ref 1 के रूप में इस्तेमाल करें",st_to_ref:"परिणाम Ref 1 में लोड हो गया ✓",cr_restyle:"♻ परिणाम को नया स्टाइल दें",cr_gal_empty:"अभी कोई परिणाम नहीं — Generate टैप करें।",cr_gal_have:"परिणाम · प्रीव्यू / कार्रवाई के लिए थंबनेल टैप करें",cr_save:"⬇ PNG सेव करें",cr_need_result:"पहले कोई इमेज जनरेट करें",guide_hint:"फिर टैप करें: पीला → नीला (prompt) → हरा (रन) ▶",g_learn_next_prompt:"फिर टैप करें → सटीक PROMPT दिखेगा (नीला)।",g_learn_prompt_head:"यह बटन जो PROMPT भेजेगा (फिर टैप = रन):",g_learn_next_run:"एक बार और टैप करें → रन (हरा) जनरेट करता है।",st_prompt_ready:"Prompt तैयार — चलाने के लिए फिर टैप करें (हरा) ✓",g_step_confirm:"आगे बढ़ने के लिए फिर टैप करें: गाइड (पीला) → PROMPT (नीला) → रन (हरा जनरेट करता है)।",g_cat_generic:"प्रीसेट — आपकी फोटो पर यह प्रोफ़ेशनल एडिट लागू करता है।",g_gen:"जनरेट — prompt बॉक्स (+ चेन, कीप्स, कैमरा ब्लॉक) आपके डॉक्यूमेंट पर चलाता है।",g_retouchbtn:"रीटच अप्लाई — आपकी सभी स्लाइडर सेटिंग्स को एक प्रोफ़ेशनल रीटच पास के रूप में चलाता है।",ro_faceRep:"फेस रिप्लेस",ro_faceSwap:"फेस स्वैप",ro_bgRep:"BG रिप्लेस",ro_bgSwap:"BG स्वैप",ro_fgRep:"FG रिप्लेस",ro_subSwap:"सब्जेक्ट स्वैप",ro_lcRef:"L&C रेफ़रेंस",ro_lcCopy:"L&C कॉपी-पेस्ट",ro_dressRef:"ड्रेस रेफ़रेंस",ro_dressRep:"ड्रेस रिप्लेस",ro_mkCopy:"मेकअप कॉपी",ro_matchBtn:"★ मास्टर मैच",rt_none:"पहले कम से कम एक रीटच स्लाइडर या रंग सेट करें",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop इस prompt बॉक्स की सीमा रखता है:",btn_generate:"बनाएँ",st_ready:"तैयार",st_capture:"दस्तावेज़ कैप्चर हो रहा है",st_gen:"जनरेट हो रहा है…",st_place:"Photoshop में रखा जा रहा है…",st_placed_masked:"लेयर + मास्क ग्रुप के रूप में रखा गया — मूल छवि ज्यों की त्यों ✓",st_placed_plain:"सादी लेयर के रूप में रखा गया (इस होस्ट पर मास्क/ग्रुप उपलब्ध नहीं)",stage_queued:"कतार में",stage_uploading:"अपलोड हो रहा है",stage_generating:"जनरेट हो रहा है",stage_downloading:"डाउनलोड हो रहा है",stage_placing:"रखा जा रहा है",st_done:"हो गया ✓",st_err:"त्रुटि",st_no_doc:"कोई सक्रिय दस्तावेज़ नहीं — पहले कोई फ़ोटो खोलें",st_no_prompt:"Prompt खाली है",st_new_doc:"परिणाम नए दस्तावेज़ के रूप में खुल गया ✓",before:"पहले",after:"बाद",btn_place:"Photoshop में रखें",st_saved:"सहेजा गया ✓",lib_choose_msg:"अपना HNK रेफ़रेंस इमेज लाइब्रेरी फ़ोल्डर चुनें।",lib_unsupported:"असमर्थित इमेज प्रकार",lib_restore_fail:"रेफ़रेंस पुनर्स्थापित नहीं हो सका",on:"चालू",off:"बंद"},
+ja:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"生成",st_ready:"準備完了",st_done:"完了 ✓",st_need_key:"先に RunningHub Enterprise key を入力してください",btn_show:"表示",btn_save:"保存",btn_clear:"クリア",btn_cancel:"キャンセル",btn_load:"読み込み"},
+km:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"បង្កើត",st_ready:"រួចរាល់",st_done:"រួចរាល់ហើយ ✓",st_need_key:"សូមបញ្ចូល RunningHub Enterprise key ជាមុន",btn_show:"បង្ហាញ",btn_save:"រក្សាទុក",btn_clear:"លុប",btn_cancel:"បោះបង់",btn_load:"ផ្ទុក"},
+kn:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"ರಚಿಸಿ",st_ready:"ಸಿದ್ಧ",st_done:"ಮುಗಿದಿದೆ ✓",st_need_key:"ಮೊದಲು RunningHub Enterprise key ಹಾಕಿ",btn_show:"ತೋರಿಸಿ",btn_save:"ಉಳಿಸಿ",btn_clear:"ಅಳಿಸಿ",btn_cancel:"ರದ್ದು",btn_load:"ಲೋಡ್"},
+ko:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"생성",st_ready:"준비 완료",st_done:"완료 ✓",st_need_key:"먼저 RunningHub Enterprise key를 입력하세요",btn_show:"보기",btn_save:"저장",btn_clear:"지우기",btn_cancel:"취소",btn_load:"불러오기"},
+lo:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"ສ້າງພາບ",st_ready:"ພ້ອມ",st_done:"ສຳເລັດ ✓",st_need_key:"ກະລຸນາໃສ່ RunningHub Enterprise key ກ່ອນ",btn_show:"ສະແດງ",btn_save:"ບັນທຶກ",btn_clear:"ລຶບ",btn_cancel:"ຍົກເລີກ",btn_load:"ໂຫຼດ"},
+ml:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"സൃഷ്ടിക്കുക",st_ready:"തയ്യാർ",st_done:"കഴിഞ്ഞു ✓",st_need_key:"ആദ്യം RunningHub Enterprise key ചേർക്കുക",btn_show:"കാണിക്കുക",btn_save:"സേവ്",btn_clear:"മായ്ക്കുക",btn_cancel:"റദ്ദാക്കുക",btn_load:"ലോഡ്"},
+mr:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"तयार करा",st_ready:"तयार",st_done:"झाले ✓",st_need_key:"आधी RunningHub Enterprise key टाका",btn_show:"दाखवा",btn_save:"जतन करा",btn_clear:"काढा",btn_cancel:"रद्द",btn_load:"लोड"},
+ne:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"बनाउनुहोस्",st_ready:"तयार",st_done:"भयो ✓",st_need_key:"पहिले RunningHub Enterprise key राख्नुहोस्",btn_show:"देखाउनुहोस्",btn_save:"सेभ",btn_clear:"हटाउनुहोस्",btn_cancel:"रद्द",btn_load:"लोड"},
+pa:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"ਬਣਾਓ",st_ready:"ਤਿਆਰ",st_done:"ਹੋ ਗਿਆ ✓",st_need_key:"ਪਹਿਲਾਂ RunningHub Enterprise key ਪਾਓ",btn_show:"ਦਿਖਾਓ",btn_save:"ਸੰਭਾਲੋ",btn_clear:"ਹਟਾਓ",btn_cancel:"ਰੱਦ ਕਰੋ",btn_load:"ਲੋਡ"},
+ta:{btn_show:"காட்டு",btn_save:"சேமி",st_need_key:"முதலில் RunningHub Enterprise key சேர்க்கவும்",qual_auto:"ஆட்டோ",btn_clear:"அழி",btn_ref_layer:"+ லேயர்",btn_ref_file:"கோப்பு",btn_ref_web:"வெப்",st_ref_layer_added:"லேயர் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_ref_file_added:"கோப்பு ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_importing:"கோப்பு இறக்குமதியாகிறது",url_ph:"https://… படத்தின் முகவரி அல்லது Pinterest pin இணைப்பு",btn_load:"ஏற்று",btn_cancel:"ரத்து",st_url_loading:"வெப் படம் பதிவிறக்கப்படுகிறது",st_ref_web_added:"வெப் படம் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_url_bad:"இந்த URL-இலிருந்து படத்தை ஏற்ற முடியவில்லை — படத்தின் முகவரியை நகலெடுத்து மீண்டும் முயற்சிக்கவும்",no_layer:"லேயர் எதுவும் தேர்ந்தெடுக்கப்படவில்லை",st_web_import:"Photoshop-இல் லேயராக இறக்குமதி செய்யப்பட்டது ✓",st_folder_ok:"ஏற்றுமதி கோப்புறை அமைக்கப்பட்டது ✓",st_exported:"ஏற்றுமதி செய்யப்பட்டது ✓",st_export_fail:"ஏற்றுமதி தோல்வி — கோப்புறையைச் சரிபார்க்கவும்",st_img_bad:"படத் தரவு ஒருமைப்பாடு சரிபார்ப்பில் தோல்வி — புகைப்படத்தை மீண்டும் சேர்க்கவும்",st_auto_comp:"தானியங்கு காம்போசிட்: IMAGE 1 சப்ஜெக்ட் → ரெஃபரன்ஸ் காட்சி",tab_create: "Create",create_ph:"உருவாக்க விரும்பும் படத்தை விவரிக்கவும்…",btn_create_ps:"⬇ Photoshop-க்கு அனுப்பு",btn_to_ref:"↺ Ref 1 ஆகப் பயன்படுத்து",st_to_ref:"முடிவு Ref 1-இல் ஏற்றப்பட்டது ✓",cr_restyle:"♻ முடிவை மறுஸ்டைல் செய்",cr_gal_empty:"இன்னும் முடிவுகள் இல்லை — Generate-ஐத் தட்டவும்.",cr_gal_have:"முடிவு(கள்) · முன்னோட்டம் காண / செயல்படுத்த ஒரு சிறுபடத்தைத் தட்டவும்",cr_save:"⬇ PNG சேமி",cr_need_result:"முதலில் ஒரு படத்தை உருவாக்கவும்",guide_hint:"மீண்டும் தட்டவும்: மஞ்சள் → நீலம் (prompt) → பச்சை (இயக்கு) ▶",g_learn_next_prompt:"மீண்டும் தட்டவும் → சரியான PROMPT-ஐக் காட்டும் (நீலம்).",g_learn_prompt_head:"இந்தப் பொத்தான் அனுப்பும் PROMPT (மீண்டும் தட்டினால் = இயக்கம்):",g_learn_next_run:"இன்னொரு முறை தட்டவும் → இயக்கு (பச்சை) உருவாக்கும்.",st_prompt_ready:"Prompt தயார் — இயக்க மீண்டும் தட்டவும் (பச்சை) ✓",g_step_confirm:"முன்னேற மீண்டும் தட்டவும்: வழிகாட்டி (மஞ்சள்) → PROMPT (நீலம்) → இயக்கு (பச்சை உருவாக்கும்).",g_cat_generic:"ப்ரீசெட் — இந்த ப்ரொஃபஷனல் எடிட்டை உங்கள் புகைப்படத்தில் பயன்படுத்தும்.",g_gen:"GENERATE — உங்கள் ஆவணத்தில் prompt பெட்டியை (+ செயின்கள், கீப்கள், கேமரா தொகுதி) இயக்கும்.",g_retouchbtn:"ரீடச் அப்ளை — உங்கள் எல்லா ஸ்லைடர் அமைப்புகளையும் ஒரே ப்ரொஃபஷனல் ரீடச் பாஸாக இயக்கும்.",ro_faceRep:"முக மாற்றீடு",ro_faceSwap:"முக ஸ்வாப்",ro_bgRep:"BG மாற்றீடு",ro_bgSwap:"BG ஸ்வாப்",ro_fgRep:"FG மாற்றீடு",ro_subSwap:"நபர் மாற்றம்",ro_lcRef:"L&C ரெஃபரன்ஸ்",ro_lcCopy:"L&C காப்பி-பேஸ்ட்",ro_dressRef:"உடை ரெஃபரன்ஸ்",ro_dressRep:"உடை மாற்றம்",ro_mkCopy:"மேக்கப் காப்பி",ro_matchBtn:"★ மாஸ்டர் மேட்ச்",rt_none:"முதலில் ஏதேனும் ஒரு ரீடச் ஸ்லைடரையோ நிறத்தையோ அமைக்கவும்",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"இந்த prompt பெட்டிக்கான Photoshop வரம்பு:",btn_generate:"உருவாக்கு",st_ready:"தயார்",st_capture:"ஆவணம் எடுக்கப்படுகிறது",st_gen:"உருவாக்கப்படுகிறது…",st_place:"Photoshop-இல் வைக்கப்படுகிறது…",st_placed_masked:"லேயர் + மாஸ்க் குழுவாக வைக்கப்பட்டது — அசல் அப்படியே உள்ளது ✓",st_placed_plain:"சாதாரண லேயராக வைக்கப்பட்டது (இந்த ஹோஸ்டில் மாஸ்க்/குழு கிடைக்கவில்லை)",stage_queued:"வரிசையில்",stage_uploading:"பதிவேற்றம்",stage_generating:"உருவாக்கம்",stage_downloading:"பதிவிறக்கம்",stage_placing:"வைத்தல்",st_done:"முடிந்தது ✓",st_err:"பிழை",st_no_doc:"செயலில் உள்ள ஆவணம் இல்லை — முதலில் ஒரு புகைப்படத்தைத் திறக்கவும்",st_no_prompt:"Prompt காலியாக உள்ளது",st_new_doc:"முடிவு புதிய ஆவணமாகத் திறக்கப்பட்டது ✓",before:"முன்",after:"பின்",btn_place:"Photoshop-இல் வை",st_saved:"சேமிக்கப்பட்டது ✓",lib_choose_msg:"உங்கள் HNK ரெஃபரன்ஸ் பட லைப்ரரி கோப்புறையைத் தேர்வுசெய்யவும்.",lib_unsupported:"ஆதரிக்கப்படாத பட வகை",lib_restore_fail:"ரெஃபரன்ஸை மீட்டெடுக்க முடியவில்லை",on:"ஆன்",off:"ஆஃப்"},
+te:{btn_show:"చూపించు",btn_save:"సేవ్",st_need_key:"ముందుగా RunningHub Enterprise key ఇవ్వండి",qual_auto:"ఆటో",btn_clear:"తొలగించు",btn_ref_layer:"+ లేయర్",btn_ref_file:"ఫైల్",btn_ref_web:"వెబ్",st_ref_layer_added:"లేయర్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_ref_file_added:"ఫైల్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_importing:"ఫైల్ దిగుమతి అవుతోంది",url_ph:"https://… చిత్ర చిరునామా లేదా Pinterest పిన్ లింక్",btn_load:"లోడ్",btn_cancel:"రద్దు",st_url_loading:"వెబ్ చిత్రం డౌన్‌లోడ్ అవుతోంది",st_ref_web_added:"వెబ్ చిత్రం రిఫరెన్స్‌గా జోడించబడింది ✓",st_url_bad:"ఈ URL నుండి చిత్రం లోడ్ కాలేదు — చిత్ర చిరునామాను కాపీ చేసి మళ్లీ ప్రయత్నించండి",no_layer:"ఏ లేయర్ ఎంపిక కాలేదు",st_web_import:"Photoshopలోకి లేయర్‌గా దిగుమతి అయింది ✓",st_folder_ok:"ఎక్స్‌పోర్ట్ ఫోల్డర్ సెట్ అయింది ✓",st_exported:"ఎక్స్‌పోర్ట్ అయింది ✓",st_export_fail:"ఎక్స్‌పోర్ట్ విఫలమైంది — ఫోల్డర్‌ను తనిఖీ చేయండి",st_img_bad:"చిత్ర డేటా సమగ్రత తనిఖీలో విఫలమైంది — ఫోటోను మళ్లీ జోడించండి",st_auto_comp:"ఆటో కాంపోజిట్: IMAGE 1 సబ్జెక్ట్ → రిఫరెన్స్ సీన్",tab_create: "Create",create_ph:"మీరు సృష్టించాలనుకునే చిత్రాన్ని వివరించండి…",btn_create_ps:"⬇ Photoshop కు పంపు",btn_to_ref:"↺ Ref 1 గా వాడు",st_to_ref:"ఫలితం Ref 1 లోకి లోడ్ అయింది ✓",cr_restyle:"♻ ఫలితాన్ని రీస్టైల్ చేయి",cr_gal_empty:"ఇంకా ఫలితాలు లేవు — Generate నొక్కండి.",cr_gal_have:"ఫలితం(లు) · ప్రివ్యూ / చర్య కోసం థంబ్‌నెయిల్ నొక్కండి",cr_save:"⬇ PNG సేవ్ చేయి",cr_need_result:"ముందుగా ఒక చిత్రాన్ని జనరేట్ చేయండి",guide_hint:"మళ్లీ నొక్కండి: పసుపు → నీలం (prompt) → ఆకుపచ్చ (రన్) ▶",g_learn_next_prompt:"మళ్లీ నొక్కండి → ఖచ్చితమైన PROMPT చూపుతుంది (నీలం).",g_learn_prompt_head:"ఈ బటన్ పంపే PROMPT (మళ్లీ నొక్కితే = రన్):",g_learn_next_run:"మరోసారి నొక్కండి → రన్ (ఆకుపచ్చ) జనరేట్ చేస్తుంది.",st_prompt_ready:"Prompt సిద్ధం — నడపడానికి మళ్లీ నొక్కండి (ఆకుపచ్చ) ✓",g_step_confirm:"ముందుకు వెళ్లడానికి మళ్లీ నొక్కండి: గైడ్ (పసుపు) → PROMPT (నీలం) → రన్ (ఆకుపచ్చ జనరేట్ చేస్తుంది).",g_cat_generic:"ప్రీసెట్ — ఈ ప్రొఫెషనల్ ఎడిట్‌ను మీ ఫోటోకు వర్తింపజేస్తుంది.",g_gen:"జనరేట్ — మీ డాక్యుమెంట్‌పై prompt బాక్స్‌ను (+ చైన్‌లు, కీప్‌లు, కెమెరా బ్లాక్) నడుపుతుంది.",g_retouchbtn:"రీటచ్ అప్లై — మీ అన్ని స్లయిడర్ సెట్టింగ్‌లను ఒకే ప్రొఫెషనల్ రీటచ్ పాస్‌గా నడుపుతుంది.",ro_faceRep:"ఫేస్ రీప్లేస్",ro_faceSwap:"ఫేస్ స్వాప్",ro_bgRep:"BG రీప్లేస్",ro_bgSwap:"BG స్వాప్",ro_fgRep:"FG రీప్లేస్",ro_subSwap:"సబ్జెక్ట్ స్వాప్",ro_lcRef:"L&C రిఫరెన్స్",ro_lcCopy:"L&C కాపీ-పేస్ట్",ro_dressRef:"డ్రెస్ రిఫరెన్స్",ro_dressRep:"డ్రెస్ రీప్లేస్",ro_mkCopy:"మేకప్ కాపీ",ro_matchBtn:"★ మాస్టర్ మ్యాచ్",rt_none:"ముందుగా కనీసం ఒక రీటచ్ స్లయిడర్ లేదా రంగు సెట్ చేయండి",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop ఈ prompt బాక్స్ పరిమితి:",btn_generate:"సృష్టించు",st_ready:"సిద్ధం",st_capture:"డాక్యుమెంట్ క్యాప్చర్ అవుతోంది",st_gen:"జనరేట్ అవుతోంది…",st_place:"Photoshopలో ప్లేస్ అవుతోంది…",st_placed_masked:"లేయర్ + మాస్క్ గ్రూప్‌గా ప్లేస్ అయింది — ఒరిజినల్‌కు ఎలాంటి మార్పు లేదు ✓",st_placed_plain:"సాధారణ లేయర్‌గా ప్లేస్ అయింది (ఈ హోస్ట్‌లో మాస్క్/గ్రూప్ అందుబాటులో లేదు)",stage_queued:"క్యూలో ఉంది",stage_uploading:"అప్‌లోడ్ అవుతోంది",stage_generating:"జనరేట్ అవుతోంది",stage_downloading:"డౌన్‌లోడ్ అవుతోంది",stage_placing:"ప్లేస్ అవుతోంది",st_done:"పూర్తయింది ✓",st_err:"లోపం",st_no_doc:"యాక్టివ్ డాక్యుమెంట్ లేదు — ముందుగా ఒక ఫోటో తెరవండి",st_no_prompt:"Prompt ఖాళీగా ఉంది",st_new_doc:"ఫలితం కొత్త డాక్యుమెంట్‌గా తెరుచుకుంది ✓",before:"ముందు",after:"తర్వాత",btn_place:"Photoshopలో ప్లేస్ చేయండి",st_saved:"సేవ్ అయింది ✓",lib_choose_msg:"మీ HNK రిఫరెన్స్ ఇమేజ్ లైబ్రరీ ఫోల్డర్‌ను ఎంచుకోండి.",lib_unsupported:"మద్దతు లేని ఇమేజ్ రకం",lib_restore_fail:"రిఫరెన్స్‌ను పునరుద్ధరించడం సాధ్యపడలేదు",on:"ఆన్",off:"ఆఫ్"},
+ur:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"بنائیں",st_ready:"تیار",st_done:"ہو گیا ✓",st_need_key:"پہلے RunningHub Enterprise key ڈالیں",btn_show:"دکھائیں",btn_save:"محفوظ کریں",btn_clear:"صاف کریں",btn_cancel:"منسوخ",btn_load:"لوڈ"}
 };
 
 function t(k) {
@@ -7909,6 +3926,13 @@ function applyI18n() {
   g.HNK.openTake = takesOpenP;   /* v6.87.0 — History ▸ Videos ▸ Open */
     /* v6.159.1 — the Smart Workflow wizard's runs reach COST & BALANCE: bootstrap hands the adapter's usage here */
     g.HNK.spendBook = function (usage, meta) { try { rhBookUsage(usage, meta); } catch (e) { } };
+  /* v6.161.0 — Learn Mode's switch. Its toggle (tglLearn) left with the old Freeform page in 6.51.0 and
+     was never rebuilt, so the three-tap cycle could not be turned off from the panel at all; the Setup
+     screen (settings-screen.js) now reads and writes it here. Turning it off disarms a pending tap. */
+  g.HNK.learnMode = {
+    get: function () { return !!state.learnMode; },
+    set: function (on) { state.learnMode = !!on; if (!state.learnMode) { try { disarm(); } catch (e) { } } try { saveSettings(); } catch (e2) { } return state.learnMode; }
+  };
     /* v6.83.0 — "Open in Edit" on the wizard's result card: IMAGE 1 becomes
        Freeform's Before and the result its After, entered into Freeform's own
        results history, so everything Freeform does with a result (compare,
@@ -8234,18 +4258,6 @@ function applyTheme() {
   const root = document.getElementById("app") || (document.body || null);
   if (root && root.setAttribute) root.setAttribute("data-theme", th);
   try { if (document.documentElement && document.documentElement.setAttribute) document.documentElement.setAttribute("data-theme", th); } catch (e) { }
-  const bt = $("btnTheme");
-  /* the two light-surface themes show the moon; every dark theme the sun.
-     v6.64.0 — AS SPRITES, NOT AS CHARACTERS. This wrote "☽" and "☀" straight
-     into textContent, and U+2600 is one of the characters Adobe's UI font has
-     no glyph for: the owner's photographs of 6.134.0 show black rounded boxes
-     where the panel asked for an emoji. The icon set already draws a sun, and
-     this wave adds the moon beside it, so the button carries a picture the
-     renderer is known to paint (SELF-TEST: "Pictures … 0 failed"). */
-  if (bt) {
-    bt.textContent = "";
-    bt.appendChild(ffIcon((th === "light" || th === "porcelain") ? "i-moon" : "i-sun", "cream"));
-  }
 }
 
 /* ============================================================
@@ -8628,7 +4640,7 @@ function rhSaveCfg(c) {
   state.rhCfg = c;
   if (c.activeModel && ffModelById(c.activeModel)) state.rhModel = c.activeModel;
   saveSettings();
-  try { ffPaintModelBtn(); ffFillRatio(); ffPaintAdvanced(); updateCreateEngineTag(); } catch (e) { }
+  try { ffPaintModelBtn(); ffFillRatio(); ffPaintAdvanced(); } catch (e) { }
 }
 function rhDefaultModels() {
   try {
@@ -9355,8 +5367,6 @@ function rhPaintQualityBtn() {
   const opt = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
   const label = opt ? String(opt.textContent || "").replace(/^quality:\s+/, "") : "";
   const v = $("rhQualityVal"); if (v) v.textContent = label;
-  const tile = $("rhQualityTile"); if (tile) tile.className = "hsl-tile t-gold";
-  const gl = $("rhQualityGlyph"); if (gl) gl.src = "icons/ui/brand-spark.png";
 }
 function rhFillModelSel() {
   const sel = $("rhModelSel");
@@ -12199,7 +8209,7 @@ async function vtRun() {
   const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
   const d = vtDef();
   if (VT.busy || !V || !d) return;
-  if (!state.rhKey) { setStatus(t("st_nokey") || "Save a RunningHub key first", "err"); return; }
+  if (!state.rhKey) { setStatus(t("job_needkey"), "err"); return; }
   if (!VT.video) { setStatus("Pick a video first", "err"); return; }
   if (!VT.out) { setStatus("Choose a save folder first", "err"); return; }
   const promptText = ($("vtPrompt") && $("vtPrompt").value || "").trim();
@@ -12359,7 +8369,7 @@ async function tkRun() {
   const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
   const d = tkDef();
   if (TK.busy || !V || !d) return;
-  if (!state.rhKey) { setStatus(t("st_nokey") || "Save a RunningHub key first", "err"); return; }
+  if (!state.rhKey) { setStatus(t("job_needkey"), "err"); return; }
   if (!TK.img) { setStatus(ff9(TK_L.needImg), "err"); return; }
   if (!TK.aud) { setStatus(ff9(TK_L.needAud), "err"); return; }
   if (!TK.out) { setStatus("Choose a save folder first", "err"); return; }
@@ -12916,7 +8926,7 @@ function vidPaintLabels() {
 async function vuRun() {
   const V = globalThis.HNK && globalThis.HNK.runninghubVideo;
   if (VU.busy || !V) return;
-  if (!state.rhKey) { setStatus(t("st_nokey") || "Save a RunningHub key first", "err"); return; }
+  if (!state.rhKey) { setStatus(t("job_needkey"), "err"); return; }
   if (!VU.video) { setStatus("Pick a video first", "err"); return; }
   if (!VU.out) { setStatus("Choose a save folder first", "err"); return; }
   VU.busy = true; VU.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderVu();
@@ -13515,7 +9525,6 @@ function refNativePath(folder) {
   try { if (fsp && fsp.getNativePath && folder) { const p = fsp.getNativePath(folder); if (p) return String(p); } } catch (e) { }
   return (folder && folder.nativePath) ? String(folder.nativePath) : "";
 }
-function refLibConfigured() { return !!state.libToken; }
 
 /* Read a chosen file entry into the pipeline's {b64,mime,label} — direct-decode
    jpg/png/webp, route tif/psd through Photoshop. Rejects unsupported types. */
@@ -13542,7 +9551,6 @@ async function refLibChooseFolder() {
   hlog("lib folder selected:", state.libFolderName);
   await refLibScan(folder);
   saveSettings();
-  renderRefLib();
   return folder;
 }
 
@@ -13562,33 +9570,6 @@ function refLibHandleExpired() {
   state.libToken = ""; state.libImgCount = 0;
   hwarn("lib folder access lost — reselect required");
   saveSettings();
-  renderRefLib();
-}
-
-async function refLibOpenFolder() {
-  const folder = await refLibGetFolder();
-  const np = (folder ? refNativePath(folder) : "") || state.libNativePath;
-  if (!np) { setStatus(t("lib_not_config"), "err"); return; }
-  if (shell && shell.openPath) {
-    try { await shell.openPath(np, "Open the HNK Reference Image Library folder."); hlog("lib folder opened"); return; }
-    catch (e) { hwarn("lib openPath failed:", e); }
-  }
-  /* fallback: no shell / denied — show + copy the path so the user can open it */
-  state.libNativePath = np; renderRefLib();
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(np);
-    else if (navigator.clipboard && navigator.clipboard.setContent) await navigator.clipboard.setContent({ "text/plain": np });
-    setStatus(t("lib_path_copied") + ": " + np, "ok"); hlog("lib path copied (no shell)");
-  } catch (e2) { setStatus(np, "ok"); }
-}
-
-function refLibReset() {
-  state.libToken = ""; state.libFolderName = ""; state.libNativePath = "";
-  state.libImgCount = 0; state.libLastScan = 0; state.refTokens = {};
-  hlog("lib reset");
-  saveSettings();
-  renderRefLib();
-  setStatus(t("lib_reset_done"), "ok");
 }
 
 /* Count supported images recursively, yielding often so a large library never
@@ -13616,15 +9597,6 @@ async function refLibScan(folder) {
   state.libLastScan = Date.now();
   hlog("lib scan finished:", acc.count, acc.capped ? "(capped)" : "");
   return acc;
-}
-async function refLibRescan() {
-  const folder = await refLibGetFolder();
-  if (!folder) { setStatus(t("lib_not_config"), "err"); return; }
-  setStatus(t("lib_scanning"));
-  await refLibScan(folder);
-  saveSettings();
-  renderRefLib();
-  setStatus(t("lib_scan_done") + " (" + state.libImgCount + ")", "ok");
 }
 
 /* THE universal Browse: first use asks for the library folder then continues
@@ -13729,40 +9701,7 @@ async function refLibRestoreSlots() {
   }
 }
 
-function refFmtTime(ms) {
-  try {
-    const d = new Date(ms); const p = function (n) { return (n < 10 ? "0" : "") + n; };
-    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
-  } catch (e) { return ""; }
-}
-function renderRefLib() {
-  const path = $("libPathTxt"); if (path) path.textContent = state.libNativePath || state.libFolderName || t("lib_none");
-  const cnt = $("libCountTxt"); if (cnt) cnt.textContent = String(state.libImgCount || 0);
-  const st = $("libStatusTxt");
-  if (st) st.textContent = state.libToken ? t("lib_connected") : (state.libNativePath ? t("lib_perm_lost") : t("lib_not_config"));
-  const ls = $("libScanTxt"); if (ls) ls.textContent = state.libLastScan ? refFmtTime(state.libLastScan) : "—";
-}
-function bindRefLib() {
-  const b1 = $("btnLibChoose"); if (b1) b1.addEventListener("click", function () { refLibChooseFolder().then(function (f) { if (f) setStatus(t("lib_connected"), "ok"); }); });
-  const b2 = $("btnLibOpen"); if (b2) b2.addEventListener("click", refLibOpenFolder);
-  const b3 = $("btnLibChange"); if (b3) b3.addEventListener("click", function () { refLibChooseFolder(); });
-  const b4 = $("btnLibReset"); if (b4) b4.addEventListener("click", refLibReset);
-  const b5 = $("btnLibRescan"); if (b5) b5.addEventListener("click", refLibRescan);
-  /* universal Browse on every reference slot — one controller, no per-slot copy-paste */
-  for (let i = 0; i < REF_SLOTS.length; i++) {
-    (function (slot) { const btn = $(slot.btn); if (btn) btn.addEventListener("click", function () { refLibBrowseInto(slot.id); }); })(REF_SLOTS[i]);
-  }
-  renderRefLib();
-  REFRESHERS.push(function () { try { renderRefLib(); } catch (e) { } });
-}
-
 /* ---------------- Select options (JS-built: UXP cannot localize <option> via data-i18n) ---------------- */
-const MODEL_OPTIONS = [
-  { v: "auto", k: "model_auto" },
-  { v: "flash", k: "model_flash" },
-  { v: "pro", k: "model_pro" }
-];
-const RATIO_OPTIONS = ["auto"].concat(RATIOS.map(function (r) { return r.id; }));
 
 /* v6.47.1 — ONE builder for every option, because o.textContent alone is not
    enough on this renderer. fillSelect has set BOTH o.text and o.textContent
@@ -13788,37 +9727,6 @@ function fillSelect(sel, items) {
     sel.appendChild(o);
   }
 }
-
-function populateSelects() {
-  const sl = $("selLang");
-  if (sl && !sl.firstChild) {
-    for (let i = 0; i < LANGS.length; i++) {
-      const o = document.createElement("option");
-      o.value = LANGS[i].code;
-      o.text = langOptionLabel(LANGS[i]);
-      o.textContent = langOptionLabel(LANGS[i]);
-      sl.appendChild(o);
-    }
-  }
-  if (sl) sl.value = state.lang;
-  try { langPaintHsl(); } catch (e) { }
-  const sm = $("selModel");
-  if (sm) {
-    fillSelect(sm, MODEL_OPTIONS.map(function (m) { return { v: m.v, label: t(m.k) }; }));
-    sm.value = state.model;
-  }
-  const sz = $("szRow");
-  if (sz) sz.style.display = "flex";
-  const sr = $("selRatio");
-  if (sr) {
-    fillSelect(sr, RATIO_OPTIONS.map(function (id) {
-      return { v: id, label: (id === "auto") ? t("ratio_auto") : id };
-    }));
-    sr.value = state.ratio;
-  }
-  try { updateCreateEngineTag(); } catch (e) { }
-}
-REFRESHERS.push(function () { try { populateSelects(); } catch (e) { hwarn("selects:", e); } });
 
 /* ---------------- Small helpers ---------------- */
 function $(id) { return document.getElementById(id); }
@@ -13854,13 +9762,6 @@ function imgDimsFromB64(b64, mime) {
     }
   } catch (e) { }
   return null;
-}
-
-function buildBatchLog(okC, failC, lines) {
-  return "HNK Batch Log - " + new Date().toISOString() + "\n" +
-    "OK: " + okC + "  FAIL: " + failC + "\n" +
-    "----------------------------------------\n" +
-    lines.join("\n") + "\n";
 }
 
 function bufToB64(buf) {
@@ -14142,30 +10043,20 @@ async function saveSettings() {
     const o = {
       rhKey: state.rhKey, lang: state.lang, theme: state.theme, model: state.model,
       size: state.size, ratio: state.ratio,
-      autoRun: state.autoRun, autoPlace: state.autoPlace, intensity: state.intensity,
-      rt: state.rt, rtStrength: state.rtStrength, sections: state.sections, page: state.page,
+      autoPlace: state.autoPlace,
+      rt: state.rt, rtStrength: state.rtStrength, page: state.page,
       /* the studio's own slider/chip values — the app's state.st, saved and
          restored through the app's own tolerant reader (state.stSaved) */
       st: (state.st ? { t1: state.st.t1, t2: state.st.t2, v: state.st.v, geo: state.st.geo, preset: state.st.preset, target: state.st.target } : null),
-      clean: state.clean,
-      keep: state.keep, rmix: state.rmix, i2p: state.i2p, lights: state.lights,
-      lightEquip: state.lightEquip, chains: state.chains, restMode: state.restMode,
+      keep: state.keep,
       cRatio: state.cRatio, cVariations: state.cVariations,
       t2iModel: state.t2iModel, t2iSize: state.t2iSize,
       /* v6.54.0 — the Path page's own settings (the app's state.pt): the look,
          the tier, the strength dial, the effects and the source it is pointed at */
       pt: state.pt || null,
-      recentPrompts: state.recentPrompts,
-      refTarget: state.refTarget, refMkOn: state.refMkOn, refHairOn: state.refHairOn,
-      bgKeepFrame: state.bgKeepFrame, bgKeepSubLight: state.bgKeepSubLight, match: state.match,
-      bdayAge: state.bdayAge, capOn: state.capOn, capText: state.capText, capPos: state.capPos, scarfDir: state.scarfDir, scarfLen: state.scarfLen,
-      wedTrail: state.wedTrail, wedVeil: state.wedVeil, wedGown: state.wedGown, wedPetal: state.wedPetal, wedExtra: state.wedExtra,
-      camOn: state.camOn, camBody: state.camBody, camMm: state.camMm, camF: state.camF,
-      camFilm: state.camFilm, camBokeh: state.camBokeh,
-      camIso: state.camIso, camIsoOn: state.camIsoOn, camK: state.camK, camKOn: state.camKOn,
-      learnMode: state.learnMode, autoSave: state.autoSave,
+      learnMode: state.learnMode,
       libToken: state.libToken, libFolderName: state.libFolderName, libNativePath: state.libNativePath,
-      libImgCount: state.libImgCount, libLastScan: state.libLastScan, refTokens: state.refTokens,
+      refTokens: state.refTokens,
       accRefresh: state.accRefresh, accUid: state.accUid, accEmail: state.accEmail,
       accProfile: state.accProfile, accSeenAt: state.accSeenAt, accDevId: state.accDevId,
       accSeenUid: state.accSeenUid, accSeenDev: state.accSeenDev,
@@ -14242,14 +10133,8 @@ async function loadSettings() {
       }
       if (o.rhBal && typeof o.rhBal === "object") state.rhBal = o.rhBal;
       if (typeof o.rhLastCur === "string") state.rhLastCur = o.rhLastCur.slice(0, 12);
-      if (typeof o.autoRun === "boolean") state.autoRun = o.autoRun;
       if (typeof o.autoPlace === "boolean") state.autoPlace = o.autoPlace;
-      if (typeof o.intensity === "number") state.intensity = Math.round(o.intensity);
-      if (o.sections && typeof o.sections === "object") state.sections = o.sections;
       if (typeof o.page === "string") state.page = o.page;
-      if (o.clean && typeof o.clean === "object") {
-        for (const ck in state.clean) { if (typeof o.clean[ck] === "boolean") state.clean[ck] = o.clean[ck]; }
-      }
       if (o.keep && typeof o.keep === "object") {
         for (const kk in state.keep) { if (typeof o.keep[kk] === "boolean") state.keep[kk] = o.keep[kk]; }
       } else {
@@ -14257,14 +10142,6 @@ async function loadSettings() {
         if (typeof o.faceLock === "boolean") { state.keep.face = o.faceLock; state.keep.pose = o.faceLock; }
         if (typeof o.frameLock === "boolean") state.keep.frame = o.frameLock;
       }
-      if (o.rmix && typeof o.rmix === "object") {
-        for (const rk in state.rmix) { if (typeof o.rmix[rk] === "boolean") state.rmix[rk] = o.rmix[rk]; }
-      }
-      if (o.i2p && typeof o.i2p === "object") {
-        for (const ik in state.i2p) { if (typeof o.i2p[ik] === "boolean") state.i2p[ik] = o.i2p[ik]; }
-      }
-      if (typeof o.lightEquip === "boolean") state.lightEquip = o.lightEquip;
-      if (Array.isArray(o.recentPrompts)) state.recentPrompts = o.recentPrompts.filter(function (r) { return r && typeof r.t === "string"; }).slice(0, 20);
       if (typeof o.cRatio === "string") state.cRatio = o.cRatio;
       if (o.rtStrength === 60 || o.rtStrength === 90 || o.rtStrength === 100) state.rtStrength = o.rtStrength;
       if (typeof o.t2iModel === "string") state.t2iModel = o.t2iModel;
@@ -14286,47 +10163,13 @@ async function loadSettings() {
         }
       }
       if (typeof o.cVariations === "number") state.cVariations = Math.max(1, Math.min(4, o.cVariations));
-      sanitizeCam(o);
-      if (o.refTarget === "solo" || o.refTarget === "couple" || o.refTarget === "family") state.refTarget = o.refTarget;
-      if (typeof o.refMkOn === "boolean") state.refMkOn = o.refMkOn;
-      if (typeof o.refHairOn === "boolean") state.refHairOn = o.refHairOn;
-      if (typeof o.bgKeepFrame === "boolean") state.bgKeepFrame = o.bgKeepFrame;
-      if (typeof o.bgKeepSubLight === "boolean") state.bgKeepSubLight = o.bgKeepSubLight;
-      if (typeof o.bdayAge === "number") state.bdayAge = Math.max(1, Math.min(45, Math.round(o.bdayAge)));
-      if (typeof o.capOn === "boolean") state.capOn = o.capOn;
-      if (typeof o.capText === "string") state.capText = o.capText.slice(0, 200);
-      if (o.capPos === "top" || o.capPos === "bottom") state.capPos = o.capPos;
-      if (o.scarfDir === "left" || o.scarfDir === "right" || o.scarfDir === "up") state.scarfDir = o.scarfDir;
-      if (o.scarfLen === "short" || o.scarfLen === "long") state.scarfLen = o.scarfLen;
-      if (o.match && typeof o.match === "object") {
-        for (const mk3 in state.match) { if (typeof o.match[mk3] === "boolean") state.match[mk3] = o.match[mk3]; }
-      }
       if (typeof o.learnMode === "boolean") state.learnMode = o.learnMode;
       if (typeof o.libToken === "string") state.libToken = o.libToken;
       if (typeof o.libFolderName === "string") state.libFolderName = o.libFolderName;
       if (typeof o.libNativePath === "string") state.libNativePath = o.libNativePath;
-      if (typeof o.libImgCount === "number" && o.libImgCount >= 0) state.libImgCount = o.libImgCount;
-      if (typeof o.libLastScan === "number" && o.libLastScan >= 0) state.libLastScan = o.libLastScan;
       if (o.refTokens && typeof o.refTokens === "object") {
         state.refTokens = {};
         for (const rk in o.refTokens) { if (typeof o.refTokens[rk] === "string") state.refTokens[rk] = o.refTokens[rk]; }
-      }
-      sanitizeWed(o);
-      if (typeof o.autoSave === "boolean") state.autoSave = o.autoSave;
-      if (typeof o.restMode === "string" && (o.restMode === "color" || o.restMode === "bw")) state.restMode = o.restMode;
-      if (o.chains && typeof o.chains === "object") {
-        for (const ck2 in state.chains) { if (typeof o.chains[ck2] === "boolean") state.chains[ck2] = o.chains[ck2]; }
-      }
-      if (Array.isArray(o.lights)) {
-        for (let li = 0; li < state.lights.length && li < o.lights.length; li++) {
-          const ol = o.lights[li];
-          if (!ol || typeof ol !== "object") continue;
-          if (typeof ol.on === "boolean") state.lights[li].on = ol.on;
-          if (typeof ol.type === "string" && LIGHT_TYPES.indexOf(ol.type) >= 0) state.lights[li].type = ol.type;
-          ["int", "angle", "height", "dist", "size"].forEach(function (nk) {
-            if (typeof ol[nk] === "number") state.lights[li][nk] = Math.round(ol[nk]);
-          });
-        }
       }
       /* handed to the studio module's own restore, which validates every
          key against its defaults before it touches a control */
@@ -14672,15 +10515,6 @@ async function loadUrlIntoAnySlot(rawUrl, cfg) {
   }
 }
 
-async function loadUrlIntoSlot(idx, rawUrl) {
-  return loadUrlIntoAnySlot(rawUrl, {
-    tmpPrefix: "hnk_web_",
-    assign: function (ref) { state.refs[idx] = ref; },
-    repaint: renderRefs,
-    close: closeUrlBar
-  });
-}
-
 async function readClipboardText() {
   try {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -14695,19 +10529,6 @@ async function readClipboardText() {
     }
   } catch (e) { hwarn("clipboard:", e); }
   return "";
-}
-
-function openUrlBar(idx) {
-  state.urlSlot = idx;
-  const bar = $("urlBar"); if (!bar) return; /* v6.51.0 — Freeform has no URL bar any more (app parity) */
-  bar.style.display = "block";
-  const tag = $("urlSlotTag"); if (tag) tag.textContent = "→ Slot " + (idx + 1);
-  const inp = $("urlInput"); if (inp) { inp.value = ""; try { inp.focus(); } catch (e) { } }
-}
-
-function closeUrlBar() {
-  state.urlSlot = -1;
-  const bar = $("urlBar"); if (bar) bar.style.display = "none";
 }
 
 /* ---------------- Reference slots ----------------
@@ -15112,50 +10933,9 @@ async function ffSlotFromPaste(slot) {
   } catch (e) { setStatus(friendlyErr(e), "err"); }
 }
 
-async function addLayerRef(idx) {
-  if (state.busy) return;
-  try {
-    const cap = await captureLayerB64(1536);
-    if (!imgMagicOk(cap.b64)) { setStatus(t("st_img_bad") + " (Ref)", "err"); return; }
-    state.refs[idx] = cap; /* check 1/3 */
-    renderRefs();
-    setStatus(t("st_ref_layer_added"), "ok");
-  } catch (e) {
-    /* AUDIT-FIX: was building a raw, untranslated status message directly
-       from e.message instead of routing through friendlyErr() like every
-       other catch block in the file — route it consistently so an
-       HNKERR-tagged failure shows its translated text, not the raw tag. */
-    const friendlyMsg = friendlyErr(e);
-    const lb = $("refLb" + idx); if (lb) lb.textContent = "! " + friendlyMsg.slice(0, 48);
-    setStatus(friendlyMsg, "err");
-  }
-}
-
-async function addFileRef(idx) {
-  if (state.busy) return;
-  try {
-    setStatus(t("st_importing"));
-    const cap = await pickReferenceFile();
-    if (!cap) { setStatus(t("st_ready")); return; }
-    if (!imgMagicOk(cap.b64)) { setStatus(t("st_img_bad") + " (Ref)", "err"); return; }
-    state.refs[idx] = cap; /* check 1/3 */
-    renderRefs();
-    setStatus(t("st_ref_file_added"), "ok");
-  } catch (e) {
-    const friendlyMsg = friendlyErr(e);
-    const lb = $("refLb" + idx); if (lb) lb.textContent = "! " + friendlyMsg.slice(0, 48);
-    setStatus(friendlyMsg, "err");
-  }
-}
-
 /* ---------------- Prompt box (native textarea, capacity self-tested) ---------------- */
 function getPromptText() {
   const el = $("promptBox");
-  return (el && typeof el.value === "string") ? el.value : "";
-}
-
-function getMyPromptText() {
-  const el = $("promptBoxMy");
   return (el && typeof el.value === "string") ? el.value : "";
 }
 
@@ -15165,25 +10945,6 @@ function getMyPromptText() {
 function promptCap() { return state.promptCap || MAX_PROMPT; }
 
 /* Force the textarea look via inline styles — immune to UXP selector gaps. */
-function stylePromptBox(el) {
-  try {
-    const st = el.style;
-    st.width = "100%";
-    st.height = "140px";
-    st.minHeight = "140px";
-    st.maxHeight = "260px";
-    st.backgroundColor = "#26262f";
-    st.border = "1px solid #3a3a46";
-    st.borderRadius = "8px";
-    st.color = "#e9e6df";
-    st.padding = "8px 9px";
-    st.fontSize = "12px";
-    st.lineHeight = "1.55";
-    st.fontFamily = '"Segoe UI","Noto Sans Myanmar","Myanmar Text",sans-serif';
-    st.overflowY = "auto";
-    st.resize = "none";
-  } catch (e) { hwarn("stylePromptBox:", e); }
-}
 
 /* Measure the REAL textarea capacity on this machine (guards any UXP cap). */
 function detectPromptCap(el) {
@@ -15199,126 +10960,10 @@ function detectPromptCap(el) {
   } catch (e) { state.promptCap = MAX_PROMPT; }
 }
 
-function setPromptText(txt) {
-  const el = $("promptBox");
-  if (el) el.value = (txt || "").slice(0, promptCap());
-  refreshPromptMeta();
-}
-
-function refreshPromptMeta() {
-  const txt = getPromptText();
-  const cap = promptCap();
-  const c = $("charCount");
-  if (c) {
-    c.textContent = txt.length + " / " + cap;
-    c.className = "cnt" + (txt.length >= cap ? " max" : (txt.length > cap - 2000 ? " warn" : ""));
-  }
-  const my = getMyPromptText();
-  const cm = $("charCountMy");
-  if (cm) cm.textContent = my.length + " / " + cap;
-}
-
 function onPromptInput() {
   const el = $("promptBox");
   const cap = promptCap();
   if (el && el.value.length > cap) el.value = el.value.slice(0, cap);
-  refreshPromptMeta();
-}
-
-function appendPrompt(txt) {
-  const cur = getPromptText();
-  /* idempotent: never stack the same block twice (tapping a preset repeatedly
-     must not duplicate its prompt) */
-  if (txt && cur.indexOf(txt.trim()) >= 0) return;
-  const merged = (cur ? cur + "\n" : "") + txt;
-  setPromptText(merged.slice(0, promptCap()));
-}
-
-/* ---------------- Presets ---------------- */
-/* ---------------- Style Chains (multi-on, combine with everything) ---------------- */
-const CHAINS = {
-  prewedding: ["Prewedding", "Prewedding editorial style: romantic airy mood, gentle warm backlight glow, creamy pastel grade, dreamy soft contrast."],
-  pageant: ["Miss Pageant", "Beauty-pageant glam: flawless stage makeup, sculpted contour, radiant highlighted skin, glossy lips, confident polished finish."],
-  model: ["Model Editorial", "High-fashion editorial: crisp defined features, sharp catchlights, refined neutral-cool grade, magazine cover polish."],
-  glass: ["Glass Skin", "Korean glass-skin: translucent ultra-clear hydrated skin, inner glow, minimal matte, luminous even tone."],
-  commercial: ["Commercial", "Commercial advertising look: bright clean high-key lighting feel, true-to-life colors, friendly approachable polish, crisp product-grade clarity."],
-  korea: ["Korea Makeup", "Korean makeup style: straight soft brows, aegyo-sal under-eye brightness, gradient lips, dewy nude base."],
-  vietnam: ["Vietnam Bridal", "Vietnamese bridal makeup: sharp defined brows, bold winged liner and lashes, matte airbrushed base, deep rose lips."],
-  chinese: ["Chinese Classic", "Chinese classical makeup: elegant porcelain base, refined arched brows, subtle red accents, graceful hanfu-portrait mood."]
-};
-
-function chainText() {
-  const L = [];
-  for (const k in CHAINS) { if (state.chains[k]) L.push("- " + CHAINS[k][0] + ": " + CHAINS[k][1]); }
-  if (!L.length) return "";
-  return "ACTIVE STYLE CHAINS (blend all of these styles together):\n" + L.join("\n");
-}
-
-function paintChains() {
-  for (const k in CHAINS) {
-    const b = $("chn_" + k);
-    if (b) b.className = "sw ltchip chn" + (state.chains[k] ? " on" : "");
-  }
-}
-
-function paintRoTarget() {
-  const map = [["roTgSolo", "solo"], ["roTgCouple", "couple"], ["roTgFamily", "family"]];
-  for (let i = 0; i < map.length; i++) {
-    const b = $(map[i][0]);
-    if (b) b.className = "segb" + (state.refTarget === map[i][1] ? " on" : "");
-  }
-}
-
-function bindRefOps() {
-  const map = [["roTgSolo", "solo"], ["roTgCouple", "couple"], ["roTgFamily", "family"]];
-  for (let i = 0; i < map.length; i++) {
-    (function (id, val) {
-      const b = $(id);
-      if (b) b.addEventListener("click", function () { state.refTarget = val; paintRoTarget(); saveSettings(); });
-    })(map[i][0], map[i][1]);
-  }
-  paintRoTarget();
-  bindChecks([["ckRefMk", "refMkOn"], ["ckRefHair", "refHairOn"]], state);
-  bindChecks([["ckBgFrame", "bgKeepFrame"], ["ckBgLight", "bgKeepSubLight"]], state);
-  bindChecks(MATCH_CK, state.match);
-  bindGroup("roFaceH", "roFaceB", false);
-  bindGroup("roBgH", "roBgB", false);
-  bindGroup("roSubH", "roSubB", false);
-  bindGroup("roLcH", "roLcB", false);
-  bindGroup("roDressH", "roDressB", false);
-  bindGroup("roMkH", "roMkB", false);
-  bindGroup("roMatchH", "roMatchB", false);
-  bindGroup("roDetailH", "roDetailB", false);
-  bindGroup("roCompH", "roCompB", false);
-}
-
-function bindChains() {
-  for (const k in CHAINS) {
-    (function (key) {
-      const b = $("chn_" + key);
-      if (b) {
-        b.textContent = CHAINS[key][0];
-        b.addEventListener("click", function () {
-          state.chains[key] = !state.chains[key];
-          paintChains();
-          saveSettings();
-        });
-      }
-    })(k);
-  }
-  paintChains();
-}
-
-function paintRest() {
-  const c = $("ckRestColor"), b = $("ckRestBw");
-  if (c) { c.className = "ckb" + (state.restMode === "color" ? " on" : ""); c.textContent = state.restMode === "color" ? "\u2713" : ""; }
-  if (b) { b.className = "ckb" + (state.restMode === "bw" ? " on" : ""); b.textContent = state.restMode === "bw" ? "\u2713" : ""; }
-}
-function bindRest() {
-  const c = $("ckRestColor"), b = $("ckRestBw");
-  if (c) c.addEventListener("click", function () { state.restMode = "color"; paintRest(); saveSettings(); });
-  if (b) b.addEventListener("click", function () { state.restMode = "bw"; paintRest(); saveSettings(); });
-  paintRest();
 }
 
 /* ---------------- KEEP ORIGINAL locks (user checkboxes, per-generation) ---------------- */
@@ -15336,7 +10981,6 @@ const KEEP_LOCKS = {
   subject: "Keep the ENTIRE IMAGE 1 subject untouched - face, body, pose, outfit and hair."
 };
 const KEEP_ORDER = ["subject", "face", "expr", "pose", "frame", "hair", "dress", "skin", "light", "color", "bg"];
-const KEEP_CK = KEEP_ORDER.map(function (k) { return ["kp" + k.charAt(0).toUpperCase() + k.slice(1), k]; });
 
 function keepText(suppress) {
   const sup = suppress || [];
@@ -15349,161 +10993,13 @@ function keepText(suppress) {
   return "KEEP ORIGINAL (locked by the user):\n" + L.join("\n");
 }
 
-function bindChecks(map, stateObj, extra) {
-  for (let i = 0; i < map.length; i++) {
-    (function (id, key) {
-      const b = $(id);
-      if (b) b.addEventListener("click", function () {
-        stateObj[key] = !stateObj[key];
-        paintChecks(map, stateObj);
-        saveSettings();
-        if (extra) extra();
-      });
-    })(map[i][0], map[i][1]);
-  }
-  paintChecks(map, stateObj);
-}
-
-function paintChecks(map, stateObj) {
-  for (let i = 0; i < map.length; i++) {
-    const b = $(map[i][0]);
-    if (b) {
-      const on = !!stateObj[map[i][1]];
-      b.className = "ckb" + (on ? " on" : "");
-      b.textContent = on ? "\u2713" : "";
-    }
-  }
-}
-
 /* ---------------- Cleanup checkboxes (combine with every Generate) ---------------- */
-const CLEANUPS = {
-  people: "Remove every unwanted background person and bystander from IMAGE 1 while keeping only the main subject(s). Rebuild the background naturally and seamlessly where people were removed, matching perspective, texture, grain and lighting. Do not change the main subject at all.",
-  hands: "Correct hand anatomy in IMAGE 1: remove any extra, duplicated, merged or deformed hands and fingers. Every visible hand must have exactly five natural, well-proportioned fingers with realistic skin texture. Keep pose, clothing and everything else unchanged.",
-  legs: "Correct leg and foot anatomy in IMAGE 1: remove any extra, duplicated or deformed legs and feet. Legs must look natural and correctly proportioned with the body pose. Rebuild the ground and background naturally where fixes are made. Keep everything else unchanged.",
-  full: "Full cleanup of IMAGE 1: remove all background people and bystanders, remove distracting objects and trash, fix any extra or deformed hands, fingers, legs and feet so all anatomy is natural, and rebuild the background seamlessly. Keep the main subject's identity, pose and clothing exactly the same."
-};
-
-function cleanupText() {
-  if (state.clean.full) return CLEANUPS.full;
-  const L = [];
-  if (state.clean.people) L.push(CLEANUPS.people);
-  if (state.clean.hands) L.push(CLEANUPS.hands);
-  if (state.clean.legs) L.push(CLEANUPS.legs);
-  return L.join("\n");
-}
-
-const CK_MAP = [["ckPeople", "people"], ["ckHands", "hands"], ["ckLegs", "legs"], ["ckFull", "full"]];
-
-function paintClean() {
-  for (let i = 0; i < CK_MAP.length; i++) {
-    const b = $(CK_MAP[i][0]);
-    if (b) {
-      const on = !!state.clean[CK_MAP[i][1]];
-      b.className = "ckb" + (on ? " on" : "");
-      b.textContent = on ? "\u2713" : "";
-    }
-  }
-}
-
-function bindClean() {
-  for (let i = 0; i < CK_MAP.length; i++) {
-    (function (id, key) {
-      const b = $(id);
-      if (b) b.addEventListener("click", function () {
-        state.clean[key] = !state.clean[key];
-        paintClean();
-        saveSettings();
-      });
-    })(CK_MAP[i][0], CK_MAP[i][1]);
-  }
-  paintClean();
-}
 
 /* NOTE (v4.19): the old "Reference AI Tools / Styling" grid duplicated the
    Reference Ops Pro card. The duplicate presets (refBG->roBgRep, scene->roBgSwap,
    skinMakeup/fullMakeup->roMkCopy, lightColor->roLcCopy, dress->roDressRep) were
    removed; the unique ones (fgProps, textLogo, style, fgbglc, hair, access, pose)
    were moved into Reference Ops Pro. Reference Ops Pro is now the one system. */
-const PRESETS = {
-  fgProps: {
-    btn: "pFgProps", needRef: 1, unkeep: [],
-    roles: { ref1: "FOREGROUND PROPS SOURCE (decorative elements to layer in front)", ref2: "additional props reference (optional)" },
-    prompt: "Copy the foreground decorative elements from IMAGE 2 - props, flowers, petals, leaves, frames, fabric or bokeh foreground - and layer them realistically IN FRONT of the IMAGE 1 subject with natural depth-of-field blur and matching light."
-  },
-  textLogo: {
-    btn: "pTextLogo", needRef: 1, unkeep: [], addsText: true,
-    roles: { ref1: "TEXT / LOGO DESIGN SOURCE (graphic to overlay)", ref2: "additional design reference (optional)" },
-    prompt: "Take the text, logo or graphic design element from IMAGE 2 and composite it onto IMAGE 1 as a clean professional overlay: reproduce its lettering, shapes, font style and colors accurately and keep it fully legible. Place it tastefully at a balanced size in a corner or title area that does not cover the subject's face."
-  },
-  style: {
-    btn: "pStyle", needRef: 1, unkeep: ["light", "color"],
-    roles: { ref1: "PHOTOGRAPHIC STYLE SOURCE (mood / film look only)", ref2: "additional style reference (optional)" },
-    prompt: "Transfer the overall photographic style of IMAGE 2 onto IMAGE 1: editorial or film mood, tonal curve, contrast character, grain, sharpness feel, color palette and finishing. Style only."
-  },
-  fgbglc: {
-    btn: "pFgBgLc", needRef: 1, unkeep: ["bg", "light", "color"],
-    roles: { ref1: "BACKGROUND SOURCE (environment only)", ref2: "LIGHTING + COLOR GRADE SOURCE" },
-    prompt: "Studio composite: the ONLY person in the final image is the subject (foreground) from IMAGE 1, the active Photoshop document. Use IMAGE 2 strictly as the new background environment. If IMAGE 3 is provided, copy only its lighting mood and color grading; otherwise take lighting and color from IMAGE 2."
-  },
-  hair: {
-    btn: "pHair", needRef: 1, guard: "style", unkeep: ["hair", "subject"],
-    roles: { ref1: "HAIRSTYLE SOURCE (cut, color and styling to copy)", ref2: "additional hair detail reference (optional)" },
-    prompt: "Give the IMAGE 1 subject the hairstyle from IMAGE 2: the same cut, length, volume, color, texture and styling, adapted naturally to the subject's own head shape, hairline and face."
-  },
-  access: {
-    btn: "pAccess", needRef: 1, guard: "style", unkeep: ["subject"],
-    roles: { ref1: "JEWELRY / ACCESSORIES SOURCE (items to wear)", ref2: "additional accessory reference (optional)" },
-    prompt: "Copy the jewelry and accessories from IMAGE 2 - earrings, necklace, crown or headpiece, hair pins, glasses, watch or bracelets - onto the IMAGE 1 subject with realistic scale, placement, materials, reflections and lighting."
-  },
-  pose: {
-    btn: "pPose", needRef: 1, guard: "style", unkeep: ["pose", "frame", "subject"],
-    roles: { ref1: "POSE SOURCE (body pose and gesture to match)", ref2: "additional pose reference (optional)" },
-    prompt: "Re-pose the IMAGE 1 subject to match the body pose, gesture and hand positions of the person in IMAGE 2, with anatomically correct and natural results - only the pose changes."
-  },
-  restore: {
-    btn: "pRestore", needRef: 0, needDoc: true, restore: true, unkeep: ["light", "color", "skin"],
-    prompt: "OLD PHOTO RESTORATION (archival museum quality): Fully restore IMAGE 1 - repair every tear, crease, fold, scratch, missing or torn corner, dust, mold, water stain and water damage, burn and scorch marks, fading, discoloration and red/yellow color shift. Reconstruct all damaged and missing areas seamlessly and invisibly. PRESERVE WITH ABSOLUTE FIDELITY: every original face exactly (each facial detail identical - never beautify, never change identity), expressions, poses, hairstyles, clothing colors, patterns and fabric details, objects, background and the entire scene, restoring natural skin texture and material detail everywhere. {MODE} Sharp, clean, high resolution, no artifacts, no invented content."
-  },
-  repSolo: {
-    btn: "pRepSolo", needRef: 1, guard: "canvas", unkeep: ["frame", "bg", "light", "color"],
-    roles: { ref1: "TARGET SCENE / CANVAS (its people get replaced by the IMAGE 1 subject)", ref2: "additional scene detail reference (optional)" },
-    prompt: "SUBJECT REPLACE (SOLO): Rebuild the IMAGE 2 scene with the single main subject from IMAGE 1 standing exactly where IMAGE 2's person was - same position and scale in the composition."
-  },
-  repCouple: {
-    btn: "pRepCouple", needRef: 1, guard: "canvas", unkeep: ["frame", "bg", "light", "color"],
-    roles: { ref1: "TARGET SCENE / CANVAS (its people get replaced by the IMAGE 1 couple)", ref2: "additional scene detail reference (optional)" },
-    prompt: "SUBJECT REPLACE (COUPLE): Rebuild the IMAGE 2 scene with the couple (both people) from IMAGE 1 placed naturally where IMAGE 2's people were, or side by side in the composition's focal area."
-  },
-  repFamily: {
-    btn: "pRepFamily", needRef: 1, guard: "canvas", unkeep: ["frame", "bg", "light", "color"],
-    roles: { ref1: "TARGET SCENE / CANVAS (its people get replaced by the IMAGE 1 family/group)", ref2: "additional scene detail reference (optional)" },
-    prompt: "SUBJECT REPLACE (FAMILY / GROUP): Rebuild the IMAGE 2 scene with ALL the people (the family or group) from IMAGE 1 arranged naturally in the composition's focal area where IMAGE 2's people were. Same number of people as IMAGE 1 - nobody added or removed."
-  },
-  evoto: {
-    btn: "pEvoto", needRef: 0, intensity: true, unkeep: ["skin", "subject"],
-    prompt: "Professional Retouch B-style AI skin retouch on IMAGE 1 at {INT}% strength: high-end frequency-separation quality smoothing, remove blemishes, acne, stray hairs and under-eye darkness, even out skin tone, gentle dodge and burn for dimension, subtle eye and teeth brightening."
-  },
-  meitu: {
-    btn: "pMeitu", needRef: 0, intensity: true, unkeep: ["skin", "subject"],
-    prompt: "Retouch A-style beauty retouch on IMAGE 1 at {INT}% strength: silky smooth luminous skin with a soft healthy glow, brightened even complexion, clean under-eye area, subtle skin brightening and glossy finish popular in Asian beauty apps. Keep results tasteful and photographic."
-  }
-};
-
-function roleMap(def) {
-  const L = ["ROLE MAP:"];
-  L.push("- IMAGE 1 = MAIN SUBJECT: the active Photoshop document layer. This person/subject is the hero of the final image. Apply all edits to this image and keep this subject.");
-  if (def.roles && def.roles.ref1) L.push("- IMAGE 2 = " + def.roles.ref1 + ". Use it ONLY for this purpose.");
-  if (def.roles && def.roles.ref2) L.push("- IMAGE 3 = " + def.roles.ref2 + " (only if provided). Use it ONLY for this purpose.");
-  return L.join("\n");
-}
-
-function paintPresetSel() {
-  for (const k in PRESETS) {
-    const d = PRESETS[k];
-    const b = $(d.btn);
-    if (b) b.className = "pbtn" + (state.lastPreset === k ? " sel" : "");
-  }
-}
 
 const REF_GUARD_CANVAS = "CANVAS RULE: IMAGE 2's scene becomes the stage - remove every person originally in it; the IMAGE 1 subject(s) stand in that scene, integrated with its perspective, scale, lighting and color. Never invent people.";
 
@@ -15516,61 +11012,6 @@ const REF_GUARD_SUBJECT = "SUBJECT SOURCE RULE: the reference supplies the PERSO
 const REF_GUARD = "STRICT REFERENCE RULE: references supply only what the TASK names. If a reference contains people, ignore and exclude them completely. The result contains exactly the IMAGE 1 subject(s) - same faces, same count - and is built on IMAGE 1; never return or recreate a reference image.";
 
 /* ---------------- CAMERA PRO & QUALITY ENGINE (v2.9) ---------------- */
-const CAM_BODIES = [["off", null], ["Flagship", "a flagship full-frame mirrorless camera"], ["Canon R5 II", "a Canon EOS R5 Mark II"], ["Nikon Z9", "a Nikon Z9"], ["Sony A1 II", "a Sony A1 II"], ["Fuji GFX100", "a Fujifilm GFX100 II medium format camera"], ["Hasselblad", "a Hasselblad X2D 100C medium format camera"]];
-const CAM_MM = [["off", null], ["8", 8], ["14", 14], ["24", 24], ["35", 35], ["50", 50], ["85", 85], ["105", 105], ["135", 135], ["200", 200]];
-const CAM_MM_TXT = { 8: "extreme ultra-wide, corrected fisheye perspective", 14: "dramatic ultra-wide perspective", 24: "environmental wide angle", 35: "natural documentary field of view", 50: "standard natural perspective", 85: "classic portrait compression", 105: "tight portrait compression", 135: "strong telephoto compression with dreamy separation", 200: "extreme telephoto compression, stacked background" };
-const CAM_F = [["off", null], ["F1.2", 1.2], ["F1.4", 1.4], ["F1.8", 1.8], ["F2.8", 2.8], ["F4", 4], ["F5.6", 5.6], ["F8", 8], ["F11", 11], ["F16", 16]];
-const CAM_FILMS = [["off", null], ["Portra 400", "graded like Kodak Portra 400 film - soft warm skin tones, gentle contrast"], ["Fuji 400H", "graded like Fujifilm Pro 400H - airy pastel greens and clean highlights"], ["Kodak Gold", "graded like Kodak Gold 200 - warm golden nostalgic tones"], ["Cinestill 800T", "graded like Cinestill 800T - cinematic tungsten teal shadows and halated highlights"], ["Ilford B&W", "rendered as Ilford HP5 black-and-white film - rich grain and deep tonal range"], ["Kodachrome", "graded like Kodachrome 64 - punchy saturated reds and timeless contrast"]];
-const CAM_BOKEHS = [["off", null], ["Creamy", "smooth creamy melted bokeh"], ["Swirly", "vintage swirly bokeh (Helios style)"], ["Bubble", "soap-bubble bokeh (Meyer Trioplan style)"], ["Anamorphic", "oval anamorphic bokeh with subtle horizontal flares"]];
-
-function camFTxt(f) {
-  if (f <= 1.4) return "razor-thin creamy depth of field, subject isolated";
-  if (f <= 2.8) return "shallow depth of field with soft background";
-  if (f <= 5.6) return "moderate depth of field, gently soft background";
-  if (f <= 8) return "balanced depth, most of the scene in focus";
-  return "deep sharp focus front to back";
-}
-function camIsoTxt(v) {
-  if (v <= 100) return "ultra clean, completely noise-free";
-  if (v <= 400) return "clean with imperceptible grain";
-  if (v <= 800) return "subtle fine film grain";
-  return "visible organic film grain character";
-}
-function camKTxt(v) {
-  if (v <= 4600) return "warm golden tungsten-leaning tone";
-  if (v <= 5300) return "gently warm tone";
-  if (v <= 5800) return "neutral daylight balance";
-  if (v <= 6800) return "cool overcast daylight tone";
-  return "cold blue-leaning tone";
-}
-
-function sanitizeCam(o) {
-  if (!o || typeof o !== "object") return;
-  if (typeof o.camOn === "boolean") state.camOn = o.camOn;
-  if (o.camBody === null || CAM_BODIES.some(function (x) { return x[1] === o.camBody; })) { if (o.camBody !== undefined) state.camBody = o.camBody; }
-  if (o.camMm === null || CAM_MM.some(function (x) { return x[1] === o.camMm; })) { if (o.camMm !== undefined) state.camMm = o.camMm; }
-  if (o.camF === null || CAM_F.some(function (x) { return x[1] === o.camF; })) { if (o.camF !== undefined) state.camF = o.camF; }
-  if (o.camFilm === null || CAM_FILMS.some(function (x) { return x[1] === o.camFilm; })) { if (o.camFilm !== undefined) state.camFilm = o.camFilm; }
-  if (o.camBokeh === null || CAM_BOKEHS.some(function (x) { return x[1] === o.camBokeh; })) { if (o.camBokeh !== undefined) state.camBokeh = o.camBokeh; }
-  if (typeof o.camIso === "number") state.camIso = Math.min(1000, Math.max(50, Math.round(o.camIso / 50) * 50));
-  if (typeof o.camIsoOn === "boolean") state.camIsoOn = o.camIsoOn;
-  if (typeof o.camK === "number") state.camK = Math.min(8000, Math.max(4000, Math.round(o.camK / 100) * 100));
-  if (typeof o.camKOn === "boolean") state.camKOn = o.camKOn;
-}
-
-function buildCameraPrompt() {
-  if (!state.camOn) return "";
-  const L = [];
-  if (state.camBody) L.push("shot on " + state.camBody);
-  if (state.camMm) L.push(state.camMm + "mm prime lens (" + CAM_MM_TXT[state.camMm] + ")");
-  if (state.camF) L.push("aperture f/" + state.camF + " (" + camFTxt(state.camF) + (state.camBokeh ? ", " + state.camBokeh : "") + ")");
-  else if (state.camBokeh) L.push(state.camBokeh);
-  if (state.camIsoOn) L.push("ISO " + state.camIso + " (" + camIsoTxt(state.camIso) + ")");
-  if (state.camKOn) L.push("white balance " + state.camK + "K (" + camKTxt(state.camK) + ")");
-  if (state.camFilm) L.push(state.camFilm);
-  if (!L.length) return "";
-  return "CAMERA & OPTICS: " + L.join(", ") + ". Render authentic optical behavior: correct perspective for the focal length, physically accurate depth of field and bokeh for the aperture.";
-}
 
 const HNK_CORE = "GUARD (HNK edit rule): change ONLY what the TASK asks - every other pixel of IMAGE 1 stays identical: same face identity, eyes, teeth, expression, pose, body shape, hair, clothing, framing, background content, lighting and color, unless the TASK explicitly changes them. Anything added or changed must integrate physically into the photo: correct light direction with grounded contact shadows, clean strand-level edges with no halo or cutout look, matched white balance and color, correct perspective, true real-world scale and depth of field, real skin pores and fabric texture with no plastic smoothing. Never produce extra or deformed fingers, limbs or faces, warped anatomy, crossed or dead eyes, melted hair or color banding. The final image must read as one untouched professional photograph in 8K ultra-realistic HD.";
 
@@ -15605,7 +11046,7 @@ function sanitizeExternal(p) {
   t = t.replace(/^\s*GUARD \(HNK edit rule\):?/gm, "");
   t = t.replace(/^TASK:\s*/gm, "");
   t = t.replace(/KEEP ORIGINAL \(locked by the user\):[^\n]*(?:\n- [^\n]*)*/g, "");
-  t = t.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n");
+  t = t.replace(/[ \t]+\n/g, "\n").replace(/\n{3}/g, "\n\n");
   return t.trim();
 }
 
@@ -15633,449 +11074,20 @@ function effRealDir(opDir) {
 }
 
 
-
-function buildObjChips(containerId, options, key, after) {
-  const c = $(containerId);
-  if (!c) return;
-  while (c.firstChild) c.removeChild(c.firstChild);
-  for (let i = 0; i < options.length; i++) {
-    (function (label, val) {
-      const b = mkBtn();
-      b.className = "sw ltchip" + ((state[key] === val) ? " on" : "");
-      b.textContent = label === "off" ? "\u2013" : label;
-      b.addEventListener("click", function () {
-        state[key] = val;
-        buildObjChips(containerId, options, key, after);
-        if (after) { try { after(); } catch (e) { } }
-        saveSettings();
-      });
-      c.appendChild(b);
-    })(options[i][0], options[i][1]);
-  }
-}
-
-function paintCamChips() {
-  buildObjChips("swCamBody", CAM_BODIES, "camBody");
-  buildObjChips("swCamMm", CAM_MM, "camMm");
-  buildObjChips("swCamF", CAM_F, "camF");
-  buildObjChips("swCamFilm", CAM_FILMS, "camFilm");
-  buildObjChips("swCamBokeh", CAM_BOKEHS, "camBokeh");
-}
-
-
-function bindCamPro() {
-  /* v4.5: direction UI removed - Auto smart routing always on */
-  bindToggle("tglCam", "camOn");
-  paintCamChips();
-  bindChecks([["ckIsoOn", "camIsoOn"], ["ckKOn", "camKOn"]], state);
-  const si = $("camIso");
-  if (si) {
-    si.value = String(state.camIso);
-    const vi = $("camIsoV"); if (vi) vi.textContent = String(state.camIso);
-    si.addEventListener("input", function () {
-      state.camIso = Math.round(Number(si.value) / 50) * 50;
-      if (vi) vi.textContent = String(state.camIso);
-    });
-    si.addEventListener("change", function () { saveSettings(); });
-  }
-  const sk = $("camK");
-  if (sk) {
-    sk.value = String(state.camK);
-    const vk = $("camKV"); if (vk) vk.textContent = String(state.camK);
-    sk.addEventListener("input", function () {
-      state.camK = Math.round(Number(sk.value) / 100) * 100;
-      if (vk) vk.textContent = String(state.camK);
-    });
-    sk.addEventListener("change", function () { saveSettings(); });
-  }
-  /* AUDIT-FIX #9: Camera Pro chips + ISO/K sliders + on-toggles paint from defaults at
-     bind time; repaint them from restored state after settings load (via REFRESHERS). */
-  REFRESHERS.push(function () {
-    try {
-      paintCamChips();
-      const si2 = $("camIso"), vi2 = $("camIsoV");
-      if (si2) si2.value = String(state.camIso);
-      if (vi2) vi2.textContent = String(state.camIso);
-      const sk2 = $("camK"), vk2 = $("camKV");
-      if (sk2) sk2.value = String(state.camK);
-      if (vk2) vk2.textContent = String(state.camK);
-      paintChecks([["ckIsoOn", "camIsoOn"], ["ckKOn", "camKOn"]], state);
-    } catch (e) { }
-  });
-}
-
-/* ---------------- WEDDING PRO SUITE (v2.6) ---------------- */
+/* ---------------- Prompt-hygiene strings the old Freeform cards left behind (sanitizeExternal strips them from a pasted prompt) ---------------- */
 const WED_LOCK = "WEDDING LOCK: while cleaning, extending or adding, the gown's DESIGN - cut, lace, patterns, details - stays exactly as shot.";
 
 const WED_QUALITY = "Luxury editorial wedding finish, 85mm lens look.";
 
-function wedTrailPrompt(flowerList, toneWord) {
-  return WED_LOCK +
-    " Only modify the grass, flowers and ground environment. Replace the existing ground with an ultra-luxury premium emerald green velvet grass landscape: perfectly even, freshly trimmed golf-course-quality grass with extremely fine blades, natural density, soft texture, realistic depth, subtle color variation, gentle highlights, realistic mowing lines, slight wind movement, natural shadows, soft volumetric depth and highly detailed botanical realism." +
-    " Create a luxurious flowing " + toneWord + " flower trail beginning naturally beneath the couple and extending elegantly toward the distant background in an organic winding S-shaped curve with natural irregular edges (never perfect symmetry). The path contains thousands of premium flowers scattered with realistic density variation: " + flowerList + "." +
-    " Foreground flowers are large, highly detailed, layered, overlapping and volumetric; middle distance medium density; far distance gradually smaller while keeping the continuous elegant pathway (realistic depth perspective). Blend flowers into the grass with realistic contact shadows, subtle indentation, ambient occlusion and soft sunlight interaction. No pattern repetition, no duplicated flowers, no floating flowers, no visible tiling, no unrealistic symmetry. The result must resemble a luxury outdoor wedding garden designed by a professional landscape artist. " + WED_QUALITY;
-}
-
-const WED_VEIL_LEN = [
-  "an elegant elbow-length sheer veil, softly lifted by the wind",
-  "a fingertip-length flowing veil, gracefully floating on the breeze",
-  "a chapel-length veil (about 2 meters), streaming beautifully in the wind behind her",
-  "a cathedral-length veil (3-4 meters), sweeping dramatically through the air",
-  "a royal cathedral veil (6-8 meters), billowing like silk high on the wind across the frame",
-  "an EXTREMELY, impossibly long infinity veil (15+ meters), flowing like an endless silk river through the air across the entire scene"
-];
-
-function wedVeilPrompt(len) {
-  return WED_LOCK + " Only add or extend the bride's wedding veil: give her " + len +
-    ". Ultra-fine translucent white tulle with a delicate lace edge, natural wind physics with soft folds and lift, gentle backlight glow through the fabric, never covering or shadowing the faces, attached naturally to her existing hairstyle. Photorealistic fabric transparency and motion. " + WED_QUALITY;
-}
-
-const WED_GOWN_LEN = [
-  "keep its current length, lying perfectly neat",
-  "a floor-length hem arranged cleanly around her feet",
-  "a sweep train spreading softly on the ground behind her",
-  "a chapel train (about 1.5 meters) fanned out elegantly on the ground",
-  "a cathedral train (3 meters) spread in a beautiful sweeping arc across the ground",
-  "an EXTREMELY long royal train (6+ meters) flowing like a white silk river across the entire foreground"
-];
-
-function wedGownPrompt(train) {
-  return WED_LOCK + " Only perfect the bride's EXISTING gown: remove every stain, dirt mark, dust, wrinkle and crease; make the fabric crisp, luminous bridal white, perfectly pressed, tailored and neatly arranged with clean elegant folds - the gown DESIGN stays exactly the same. Extend and arrange its train to " + train +
-    ", with realistic fabric weight, contact shadows on the ground and photorealistic silk / lace texture. " + WED_QUALITY;
-}
-
-function petalColorText() {
-  if (!state.rt.petalName) return "petals in colors that perfectly match and complement the existing scene palette";
-  return state.rt.petalName.toLowerCase() + " (" + state.rt.petalColor + ") toned petals";
-}
-
-const WED_PETAL_STYLES = {
-  petGentle: "a gentle sparse drift - a few petals floating slowly and dreamily",
-  petSwirl: "a romantic swirl - petals dancing in a soft circular breeze around the couple",
-  petCherry: "cherry-blossom rain - countless small petals falling softly like snow in spring",
-  petRose: "a rose petal storm - rich large petals streaming across the frame on a strong breeze",
-  petSnow: "a snowfall of tiny white petals drifting straight down, calm and magical",
-  petGold: "golden-hour sparkle petals - petals catching warm rim light as they float",
-  petSpiral: "a wind spiral - petals rising in an elegant upward spiral behind the couple",
-  petFg: "large soft-focus foreground petals with creamy bokeh and motion blur framing the couple",
-  petBg: "fine distant background petals, small and soft, adding gentle depth",
-  petStorm: "a FULL-SCENE petal storm - dense layered petals in foreground, midground and background"
-};
-
-function wedPetalPrompt(style) {
-  return WED_LOCK + " Only add flying flower petals to the air: {PETAL}, as " + style +
-    ". Include many sizes from large whole petals to tiny fragments and half-petals, in both foreground (larger, softly out of focus, slight motion blur) and background (smaller, subtle), with natural wind physics, correct scene lighting, soft shadows and believable depth. No pattern repetition, no duplicates, no fake floating look. " + WED_QUALITY;
-}
-
-const WED_EXTRA = {
-  horse1: "Only add ONE majestic white horse standing calmly beside the couple (not overlapping them), with a flowing mane and tail, groomed glossy white coat, matching the scene's lighting, perspective and ground with realistic contact shadows.",
-  horse2: "Only add a beautiful white horse in the soft-focus background behind the couple, naturally placed in the scene with matching light, scale and gentle bokeh.",
-  horse3: "Only add TWO elegant white horses in the background, standing gracefully together, matched to the scene's perspective, lighting and depth of field.",
-  water1: "Only transform all visible water in the scene into CRYSTAL CLEAR pristine water: perfect transparency, gentle natural reflections, realistic ripples, clean bright bed visible through the water.",
-  water2: "Only transform all visible water into crystal-clear tropical TURQUOISE water with luminous aqua tones, soft reflections and realistic clarity.",
-  water3: "Only transform all visible water into clear luxurious EMERALD-teal water with jewel-like depth, gentle reflections and realistic transparency.",
-  water4: "Only transform all visible water into clear soft SKY-BLUE water mirroring the sky, with delicate ripples and photoreal reflections.",
-  atmos1: "Only add soft volumetric GOD RAYS - warm sunbeams breaking through toward the couple, with gentle atmospheric haze and realistic light scattering.",
-  atmos2: "Only shift the scene lighting to rich GOLDEN HOUR warmth - low warm sun glow, soft long shadows, honey-toned highlights on skin and fabric.",
-  atmos3: "Only add a delicate soft MIST layer low in the background for dreamy depth, keeping the couple perfectly sharp and clear."
-};
-
-const WED_TRAIL_DEFS = {
-  trailBlush: ["soft blush and ivory", "soft blush roses, white garden roses, pink peonies, cherry blossom petals, hydrangea petals, ranunculus, English roses, baby's breath, white daisies, small wild flowers, luxury wedding petals, soft ivory blossoms, pale pink blossoms, fresh floral leaves and tiny scattered petals"],
-  trailWhite: ["pure white", "white garden roses, white peonies, calla lilies, gardenias, white hydrangea, white ranunculus, baby's breath, white daisies, jasmine, white orchid petals, ivory blossoms, fresh green leaves and tiny white petals"],
-  trailRed: ["romantic deep red", "deep red roses, burgundy peonies, red ranunculus, crimson dahlias, red camellias, scattered rose petals, dark cherry blossoms, red tulip petals, wine-toned wildflowers, fresh deep-green leaves and tiny red petals"],
-  trailLav: ["lavender purple", "lavender sprigs, purple hydrangea, lilac blossoms, wisteria petals, violet ranunculus, purple sweet peas, lavender roses, soft mauve peonies, baby's breath, fresh leaves and tiny lilac petals"],
-  trailPeach: ["peach champagne", "peach garden roses, champagne peonies, apricot ranunculus, cream dahlias, coral sweet peas, blush-peach carnations, warm ivory blossoms, baby's breath, golden-green leaves and tiny peach petals"],
-  trailBlue: ["dusty blue and white", "dusty blue hydrangea, delphinium, blue thistle, white garden roses, forget-me-nots, pale blue sweet peas, silver-blue eucalyptus, baby's breath, white daisies and tiny blue petals"],
-  trailSunset: ["sunset mixed", "orange garden roses, coral peonies, golden ranunculus, marigold blossoms, blush dahlias, warm pink cherry blossoms, amber wildflowers, cream blossoms, fresh leaves and tiny warm-toned petals"]
-};
-const WED_TRAIL_OPTS = [["Blush", "trailBlush"], ["White", "trailWhite"], ["Red", "trailRed"], ["Lavender", "trailLav"], ["Peach", "trailPeach"], ["Blue", "trailBlue"], ["Sunset", "trailSunset"]];
-const WED_VEIL_OPTS = [["Elbow", 0], ["Fingertip", 1], ["Chapel 2m", 2], ["Cathedral 4m", 3], ["Royal 8m", 4], ["Infinity 15m+", 5]];
-const WED_GOWN_OPTS = [["Current", 0], ["Floor", 1], ["Sweep", 2], ["Chapel 1.5m", 3], ["Cathedral 3m", 4], ["Royal 6m+", 5]];
-const WED_PET_OPTS = [["Gentle", "petGentle"], ["Swirl", "petSwirl"], ["Cherry Rain", "petCherry"], ["Rose Storm", "petRose"], ["Snowfall", "petSnow"], ["Golden", "petGold"], ["Spiral", "petSpiral"], ["FG Bokeh", "petFg"], ["BG Fine", "petBg"], ["Full Storm", "petStorm"]];
-const WED_EXTRA_OPTS = [["Horse Side", "horse1"], ["Horse BG", "horse2"], ["2 Horses", "horse3"], ["Crystal Water", "water1"], ["Turquoise", "water2"], ["Emerald", "water3"], ["Sky Blue", "water4"], ["God Rays", "atmos1"], ["Golden Hour", "atmos2"], ["Soft Mist", "atmos3"]];
-
-(function registerWeddingPresets() {
-  PRESETS.trail = {
-    btn: "wpTrailGo", needRef: 0, needDoc: true, unkeep: ["bg"],
-    promptFn: function () { const d = WED_TRAIL_DEFS[state.wedTrail] || WED_TRAIL_DEFS.trailBlush; return wedTrailPrompt(d[1], d[0]); }
-  };
-  PRESETS.veil = {
-    btn: "wpVeilGo", needRef: 0, needDoc: true, unkeep: ["dress"],
-    promptFn: function () { return wedVeilPrompt(WED_VEIL_LEN[state.wedVeil] || WED_VEIL_LEN[0]); }
-  };
-  PRESETS.gown = {
-    btn: "wpGownGo", needRef: 0, needDoc: true, unkeep: ["dress"],
-    promptFn: function () { return wedGownPrompt(WED_GOWN_LEN[state.wedGown] || WED_GOWN_LEN[0]); }
-  };
-  PRESETS.petal = {
-    btn: "wpPetalGo", needRef: 0, needDoc: true, unkeep: ["bg"], petal: true,
-    promptFn: function () { return wedPetalPrompt(WED_PETAL_STYLES[state.wedPetal] || WED_PETAL_STYLES.petGentle); }
-  };
-  PRESETS.wedExtra = {
-    btn: "wpExtraGo", needRef: 0, needDoc: true, unkeep: ["bg"],
-    unkeepFn: function () {
-      const k = state.wedExtra || "horse1";
-      return k.indexOf("atmos") === 0 ? ["light", "color"] : (k.indexOf("water") === 0 ? ["bg", "color"] : ["bg"]);
-    },
-    promptFn: function () {
-      const k = state.wedExtra || "horse1";
-      return WED_LOCK + " " + (WED_EXTRA[k] || WED_EXTRA.horse1) + " Everything else stays pixel-accurate. " + WED_QUALITY;
-    }
-  };
-})();
-
-function sanitizeWed(o) {
-  if (!o || typeof o !== "object") return;
-  if (typeof o.wedTrail === "string" && WED_TRAIL_DEFS[o.wedTrail]) state.wedTrail = o.wedTrail;
-  if (typeof o.wedVeil === "number" && o.wedVeil >= 0 && o.wedVeil <= 5) state.wedVeil = Math.round(o.wedVeil);
-  if (typeof o.wedGown === "number" && o.wedGown >= 0 && o.wedGown <= 5) state.wedGown = Math.round(o.wedGown);
-  if (typeof o.wedPetal === "string" && WED_PETAL_STYLES[o.wedPetal]) state.wedPetal = o.wedPetal;
-  if (typeof o.wedExtra === "string" && WED_EXTRA[o.wedExtra]) state.wedExtra = o.wedExtra;
-}
-
-function bindWedChips() {
-  buildObjChips("swWedTrail", WED_TRAIL_OPTS, "wedTrail");
-  buildObjChips("swWedVeil", WED_VEIL_OPTS, "wedVeil");
-  buildObjChips("swWedGown", WED_GOWN_OPTS, "wedGown");
-  buildObjChips("swWedPet", WED_PET_OPTS, "wedPetal");
-  buildObjChips("swWedExtra", WED_EXTRA_OPTS, "wedExtra");
-}
 
 /* v6.160.0 — the Pipeline Chain Builder (v3.0) lost its card when the panel's pages became the app's own
    (6.51.0); its code stayed behind and still called buildRetouchPrompt, deleted in that same wave. The
    static free-identifier scan (test/verify_no_undeclared_identifiers.js) found the call; the dead code is gone. */
 
 /* ---------------- REFERENCE OPS PRO (v2.10) ---------------- */
-function targetText() {
-  if (state.refTarget === "couple") return "TARGET = COUPLE. IMAGE 2 is the WOMAN reference - apply it ONLY to the woman in IMAGE 1. IMAGE 3 is the MAN reference - apply it ONLY to the man in IMAGE 1. Match strictly by gender. If only IMAGE 2 exists, change only its matching person and leave everyone else 100% untouched.";
-  if (state.refTarget === "family") return "TARGET = FAMILY / GROUP. Apply each reference image to the ONE most similar person in IMAGE 1 (match by gender and age). Every person without a matching reference stays 100% unchanged - identical face, body and clothing.";
-  return "TARGET = SOLO. Apply the reference to the single main person in IMAGE 1.";
-}
 
 /* Who is kept when only the SCENE changes (solo / couple / family). */
-function bgSubjectWho() {
-  if (state.refTarget === "couple") return "both people (the couple)";
-  if (state.refTarget === "family") return "every person (the whole group)";
-  return "the main subject";
-}
 
-/* Full professional BACKGROUND REPLACE workflow, driven by the two toggles
-   (keep frame & composition; preserve original subject light/colour) and the
-   solo/couple/family target. IMAGE 1 = active doc = subject; IMAGE 2 = Ref1 =
-   scene. */
-function bgReplacePrompt() {
-  const who = bgSubjectWho();
-  const keepFrame = state.bgKeepFrame;
-  const keepLight = state.bgKeepSubLight;
-  const L = [];
-  L.push("BACKGROUND REPLACE. IMAGE 1 (active document) = the SUBJECT. IMAGE 2 (Reference 1) = the SCENE / environment.");
-  L.push("Goal: keep " + who + " from IMAGE 1 exactly as-is and rebuild ONLY the environment around them using IMAGE 2 as the new background.");
-  L.push("Use ONLY the environment from IMAGE 2 - REMOVE every person, model or human figure that appears in it, and never invent new people. The final photo contains exactly " + who + " from IMAGE 1: same faces, same number of people.");
-  L.push("Keep 100% unchanged for " + who + ": face identity (eyes, nose, mouth, bone structure), facial expression and gaze, head pose, hair and hairstyle, body shape, pose, the dress/outfit and its exact design and colour, and true scale and proportions.");
-  if (keepFrame) L.push("Keep the ORIGINAL composition, framing and crop and the original camera angle: the subject stays at the SAME position and size - only what is behind and around them changes.");
-  else L.push("You MAY re-compose, re-frame and re-position the subject so they sit naturally in the new scene's perspective, while keeping their identity, pose, dress and scale believable.");
-  if (keepLight) L.push("PRESERVE the subject's ORIGINAL lighting and colour - do NOT relight or re-grade the person themselves; only blend their edges so they merge cleanly into the scene.");
-  else L.push("Relight and colour-match the subject to IMAGE 2's scene - match the ambient light direction and softness, colour temperature, white balance and overall grade so the person looks genuinely photographed there (without changing identity or dress design).");
-  L.push("Blend photorealistically: correct PERSPECTIVE match, believable GROUND CONTACT with natural cast SHADOWS, matched DEPTH of field and focus falloff, correct foreground/background depth layering, ambient light spill and colour bounce from the scene, and seamless edge and hair blending. Final result must read as ONE real photograph - fully photorealistic.");
-  return L.join("\n");
-}
-
-/* Target-aware SUBJECT-INTO-SCENE (BG Swap): the subject travels into the
-   reference's wider world instead of keeping the doc frame. */
-function bgSwapPrompt() {
-  const who = bgSubjectWho();
-  const keepLight = state.bgKeepSubLight;
-  const L = [];
-  L.push("BACKGROUND SWAP (place the subject INTO the reference world). IMAGE 1 = subject; IMAGE 2 = the full environment to place them in.");
-  L.push("Discard IMAGE 1's background entirely and place " + who + " from IMAGE 1 into IMAGE 2's wider scene, choosing a natural spot, scale and framing for them.");
-  L.push("Use ONLY the environment from IMAGE 2 - remove every person in it, never invent people; the final photo shows exactly " + who + " from IMAGE 1 with identical faces, hair, dress and body.");
-  L.push("Keep identity, expression, hairstyle, dress design/colour and body proportions unchanged.");
-  if (keepLight) L.push("Preserve the subject's original lighting and colour; only blend edges to seat them in the scene.");
-  else L.push("Relight and colour-grade the subject to match the scene's light direction, colour temperature and mood.");
-  L.push("Integrate photorealistically: perspective, ground contact, natural cast shadows, depth of field, ambient light spill and clean hair/edge blending. One real photograph, photorealistic.");
-  return L.join("\n");
-}
-
-function mkText() {
-  return state.refMkOn
-    ? "Also transfer the reference's makeup style (base, eyes, lips), naturally adapted to the scene lighting."
-    : "Do NOT copy the reference's makeup - keep the IMAGE 1 person's original makeup untouched.";
-}
-
-function hairText() {
-  return state.refHairOn
-    ? "Also take the reference's hairstyle, blended seamlessly and invisibly at the hairline."
-    : "Keep the IMAGE 1 person's ORIGINAL hairstyle completely unchanged.";
-}
-
-function matchListText() {
-  const L = [];
-  if (state.match.color) L.push("the exact color grade (tones, saturation, contrast curve, split-toning)");
-  if (state.match.light) L.push("the lighting character (direction, softness, contrast ratio, mood)");
-  if (state.match.makeup) L.push("the makeup style");
-  if (state.match.skin) L.push("the skin retouch style (texture level, smoothness, tone evenness)");
-  return L.length ? L.join("; ") : "the overall visual style";
-}
-
-const MATCH_CK = [["mColor", "color"], ["mLight", "light"], ["mMakeup", "makeup"], ["mSkin", "skin"]];
-
-/* smart harmonize routing: subject-enters-scene ops vs scene-adapts ops vs light-edit ops */
-function applyRealDirRouting() {
-  const map = {
-    repSolo: "subject", repCouple: "subject", repFamily: "subject",
-    roBgSwap: "subject", roSubSwap: "subject",
-    roBgRep: "scene", roFgRep: "scene",
-    trail: "scene", veil: "scene", gown: "scene", petal: "scene",
-    roDressRef: "scene", roDressRep: "scene",
-    roLcRef: "edit", roLcCopy: "edit", roMatch: "edit", roMkCopy: "edit"
-  };
-  for (const k in map) { if (PRESETS[k]) PRESETS[k].realDir = map[k]; }
-  if (PRESETS.wedExtra) {
-    PRESETS.wedExtra.realDirFn = function () {
-      const k = state.wedExtra || "horse1";
-      return k.indexOf("atmos") === 0 ? "edit" : "scene";
-    };
-  }
-}
-
-(function registerRefOps() {
-  const mk2 = function (key, guard, unkeep, prompt, faceOp) {
-    PRESETS[key] = {
-      btn: "ro" + key.charAt(2).toUpperCase() + key.slice(3),
-      needRef: 1, needDoc: true, refop: true, faceOp: !!faceOp,
-      guard: guard, unkeep: unkeep, prompt: prompt
-    };
-  };
-  /* FACE */
-  mk2("roFaceRep", "face", ["face"],
-    "{TARGET}\nFACE REPLACE (identity transplant): replace the target person's facial identity in IMAGE 1 with the reference person's face - same eyes, eyebrows, nose, lips, bone structure, skin tone and unique features - while PRESERVING the IMAGE 1 person's original head angle, gaze direction and EXPRESSION, and relighting the new face to match the IMAGE 1 scene perfectly. Seamless invisible blending at hairline, jaw and neck. {MK} {HAIR}", true);
-  mk2("roFaceSwap", "face", ["face"],
-    "{TARGET}\nFACE SWAP (full transplant): bring the reference person's face EXACTLY as it appears in the reference - identity AND expression - onto the target person, adapting only head angle, perspective, scale, lighting and color to IMAGE 1's scene. Seamless invisible blend. {MK} {HAIR}", true);
-  /* BG / FG */
-  mk2("roBgRep", null, ["bg"], "BG REPLACE: replace the IMAGE 1 background with the reference image's background/environment as faithfully as possible - matching perspective, horizon, scale, light direction and color so the subject sits naturally in it; clean edge blending including hair.");
-  mk2("roBgSwap", null, ["bg"], "BG SWAP: discard the IMAGE 1 background entirely and place the IMAGE 1 subject(s) INTO the reference's full environment (its wider scene), keeping the subject's exact pose, framing distance and face; integrate shadows and reflections realistically.");
-  mk2("roFgRep", null, ["bg"], "FG REPLACE: replace IMAGE 1's existing foreground elements with the reference's foreground elements, with matched depth of field and lighting, never covering any face.");
-  /* SUBJECT */
-  mk2("roSubSwap", "subject", ["subject", "face", "pose", "dress", "hair", "skin"],
-    "{TARGET}\nSUBJECT SWAP (bring the reference person IN): remove the matching IMAGE 1 person and place the reference person there instead - their real face, hair, outfit and natural body - fitted to the same spot with matched perspective, scale, contact shadows and scene lighting.");
-  /* LIGHT & COLOR */
-  mk2("roLcRef", "style", ["light", "color"], "LIGHT & COLOR REFERENCE: relight and regrade IMAGE 1 INSPIRED by the reference's lighting mood and color palette.");
-  mk2("roLcCopy", "style", ["light", "color"], "LIGHT & COLOR COPY-PASTE: measure the reference's complete lighting setup (key direction and height, softness, fill ratio, rim/back light, white balance) and its full color grade, then paste them onto IMAGE 1 precisely - as if both photos were lit and graded in the same session.");
-  /* DRESS */
-  mk2("roDressRef", "style", ["dress"], "{TARGET}\nDRESS REFERENCE: design a NEW outfit for the target person INSPIRED by the reference outfit's style, era and mood (not an exact copy), tailored naturally to their body and pose.");
-  mk2("roDressRep", "style", ["dress"], "{TARGET}\nDRESS REPLACE: put the reference's EXACT outfit onto the target person - same garment design, fabric, colors, patterns and details - refitted to their body and pose with natural folds.");
-  /* MAKEUP */
-  mk2("roMkCopy", "style", ["skin"], "{TARGET}\nMAKEUP COPY: copy the reference's EXACT makeup - base tone and finish, brow shape, eyeliner and lash style, eyeshadow palette, blush color and placement, lip color and finish - faithfully adapted to the target person's face shape.");
-  /* MASTER MATCH */
-  mk2("roMatch", "style", ["light", "color", "skin"],
-    "MASTER MATCH: analyze the reference image and transfer {MATCH} onto IMAGE 1, so both images look like ONE photographer's single consistent edit from the same session - only the transferred style layers change.");
-})();
-
-applyRealDirRouting();
-
-/* BG Replace / BG Swap are driven by the two toggles + solo/couple/family, so
-   they use dynamic prompt/unkeep/harmonize builders instead of a fixed string. */
-(function configureBgOps() {
-  if (PRESETS.roBgRep) {
-    PRESETS.roBgRep.promptFn = bgReplacePrompt;
-    PRESETS.roBgRep.unkeepFn = function () {
-      const u = ["bg"];
-      if (!state.bgKeepFrame) u.push("frame");
-      if (!state.bgKeepSubLight) { u.push("light"); u.push("color"); }
-      return u;
-    };
-    PRESETS.roBgRep.realDirFn = function () { return state.bgKeepSubLight ? "scene" : "subject"; };
-  }
-  if (PRESETS.roBgSwap) {
-    PRESETS.roBgSwap.promptFn = bgSwapPrompt;
-    PRESETS.roBgSwap.unkeepFn = function () {
-      const u = ["bg"];
-      if (!state.bgKeepSubLight) { u.push("light"); u.push("color"); }
-      return u;
-    };
-    PRESETS.roBgSwap.realDirFn = function () { return state.bgKeepSubLight ? "scene" : "subject"; };
-  }
-})();
-
-/* ---------------- Scenes Pro (v4.20): locked subject + full scene-match ----------------
-   The subject (active document) is hard-locked; the whole scene is generated and
-   automatically adapted TO the subject across every lighting / camera / grade
-   attribute so the result reads as one real photograph. */
-const SCENE_LOCK = "LOCK the IMAGE 1 subject(s) 100% and change NOTHING about them: exact face identity (eyes, nose, mouth, eyebrows, bone structure), facial expression and gaze, head pose, hairstyle and hair, body shape, body pose and hands, the dress / outfit design and its exact colours, and their true scale, framing, composition and crop.";
-const SCENE_MATCH = "Rebuild ONLY the environment around them and AUTOMATICALLY adapt the WHOLE scene TO the subject so it reads as one real photograph actually taken there. Match to the subject — lighting: key light, fill light, rim light, ambient light, shadow direction and softness, reflected light, contact shadows, global illumination, and skin / hair / clothing highlights; camera: perspective, camera angle, lens perspective, focal length, depth of field and bokeh; scene: a coherent background, foreground, props and objects, environment, architecture, landscape, sky, weather, reflections and atmosphere; grade: white balance, exposure, HDR, dynamic range, contrast, saturation, vibrance, colour grading, temperature, tint, black levels, highlight roll-off and cinematic tones. Never add or invent extra people. Ultra-realistic, true-to-life photograph — not a cut-out, no compositing seams.";
-function sceneGuardFull() { return SCENE_LOCK + "\n" + SCENE_MATCH; }
-function sceneTargetLine() {
-  if (state.refTarget === "couple") return "Keep BOTH people (the couple) from IMAGE 1.";
-  if (state.refTarget === "family") return "Keep EVERY person (the whole group) from IMAGE 1.";
-  return "Keep the main subject from IMAGE 1.";
-}
-
-/* Optional stylish caption overlay (for kid / Miss-Universe / birthday text looks). */
-function captionText() {
-  if (!state.capOn) return "";
-  const txt = (state.capText || "").trim();
-  if (!txt) return "";
-  const pos = state.capPos === "top" ? "top" : "bottom";
-  return "\nADD CAPTION TEXT: place a stylish, well-designed caption reading \"" + txt.slice(0, 120) + "\" cleanly in the " + pos + " area — tastefully sized, high-contrast, perfectly legible and matching the scene's mood; never cover the subject's face or body.";
-}
-
-function sceneBirthdayCore() {
-  const age = Math.max(1, Math.min(45, Math.round(state.bdayAge || 1)));
-  return "HAPPY BIRTHDAY BACKGROUND for age " + age + ": build a premium party set behind the subject with a large glowing hero number \"" + age + "\" as a light installation (marquee bulbs / neon / bokeh light-letters), a tasteful 'Happy Birthday' theme with balloons, flowers, cake, ribbons, gifts and warm party bokeh lights suited to age " + age + " (playful for a child, elegant for an adult). " + sceneTargetLine();
-}
-function sceneScarfCore() {
-  const dir = state.scarfDir === "left" ? "to the left" : state.scarfDir === "up" ? "upward" : "to the right";
-  const len = state.scarfLen === "short" ? "short" : "long flowing";
-  return "OUTDOOR / INDOOR FLYING SCARF: a scene where the subject's " + len + " scarf, veil or dress fabric billows dramatically " + dir + " in the wind, against a natural sky, landscape or seaside (or an elegant indoor set) with cinematic directional light. " + sceneTargetLine();
-}
-
-const SCENES = {
-  scnGrad: ["scnGrad", function () { return "GRADUATION INDOOR (international / luxury): an elegant foreign-style indoor graduation setting — grand university library, marble hall or lecture atrium with warm architectural light, tasteful foreground props (books, diploma, ribbon, flowers) and premium decorative accents in harmonious colours, editorial mood. " + sceneTargetLine(); }],
-  scnPrewed: ["scnPrewed", function () { return "PREWEDDING INDOOR (luxury): a grand indoor prewedding set — sweeping staircase, drapes, floral arch, chairs, tables and assorted premium bouquets in harmonious colours, soft window light, romantic warm palette. " + sceneTargetLine(); }],
-  scnVietnam: ["scnVietnam", function () { return "VIETNAM STUDIO INDOOR: a soft airy pastel Vietnamese prewedding set — delicate florals, gentle glow, dreamy tones and elegant props. " + sceneTargetLine(); }],
-  scnMyanmar: ["scnMyanmar", function () { return "MYANMAR TRADITIONAL INDOOR: an elegant Myanmar-themed set — traditional architecture, teak and gold accents, cultural decor and warm ceremonial mood. " + sceneTargetLine(); }],
-  scnChinese: ["scnChinese", function () { return "CHINESE CLASSIC INDOOR: a refined Chinese classical set — red and gold accents, lanterns, silk and an elegant classical-portrait mood. " + sceneTargetLine(); }],
-  scnShan: ["scnShan", function () { return "SHAN TRADITIONAL INDOOR: a Shan cultural set with traditional textiles, decor, lanterns and a warm ceremonial mood. " + sceneTargetLine(); }],
-  scnNewborn: ["scnNewborn", function () { return "NEWBORN / BABY SET: a soft, safe newborn studio setup — plush wraps, gentle baskets and props, pastel tones and very soft light, with clean space for an age / day caption. " + sceneTargetLine(); }],
-  scnBday: ["scnBday", sceneBirthdayCore],
-  scnScarf: ["scnScarf", sceneScarfCore]
-};
-
-(function registerScenes() {
-  for (const key in SCENES) {
-    (function (k, btn, core) {
-      PRESETS[k] = {
-        btn: btn, needDoc: true, needRef: 0, scene: true,
-        /* AUDIT-FIX #3: the birthday scene renders a giant hero age-number (text),
-           so it must bypass the no-text guard. */
-        addsText: (k === "scnBday"),
-        unkeep: ["bg", "light", "color"], realDir: "scene",
-        promptFn: function () { return core() + "\n" + sceneGuardFull() + captionText(); }
-      };
-    })(key, SCENES[key][0], SCENES[key][1]);
-  }
-})();
-
-function presetText(def) {
-  let txt = def.promptFn ? def.promptFn() : def.prompt;
-  if (def.intensity) txt = txt.split("{INT}").join(String(state.intensity));
-  if (def.petal) txt = txt.split("{PETAL}").join(petalColorText());
-  if (def.refop) {
-    txt = txt.split("{TARGET}").join(targetText());
-    txt = txt.split("{MK}").join(mkText());
-    txt = txt.split("{HAIR}").join(hairText());
-    txt = txt.split("{MATCH}").join(matchListText());
-  }
-  if (def.restore) txt = txt.split("{MODE}").join(state.restMode === "bw"
-    ? "Output as clean black-and-white with a rich, well-separated tonal range."
-    : "Output in full natural color with professional, faithful color grading.");
-  if (def.needRef) {
-    const g = (def.guard === "style") ? REF_GUARD_STYLE : (def.guard === "canvas" ? REF_GUARD_CANVAS : (def.guard === "face" ? REF_GUARD_FACE : (def.guard === "subject" ? REF_GUARD_SUBJECT : REF_GUARD)));
-    txt = roleMap(def) + "\n\n" + txt + "\n" + g;
-  }
-  return txt;
-}
 
 /* ---------------- LEARN MODE: two-tap + Student Guide (v3.1) ---------------- */
 function dualT(key) {
@@ -16093,59 +11105,14 @@ function dualT(key) {
 
 /* One accurate line of "what this button actually does", derived from its own
    prompt so the guide is always truthful (even after a prompt is edited). */
-function presetSummary(key) {
-  const def = PRESETS[key];
-  if (!def) return "";
-  let p = "";
-  try { p = def.promptFn ? def.promptFn() : (def.prompt || ""); } catch (e) { p = def.prompt || ""; }
-  p = String(p).replace(/\{[A-Z]+\}/g, " ").replace(/\s+/g, " ").trim();
-  if (!p) return "";
-  const dot = p.indexOf(". ");
-  let end = (dot > 24) ? dot : 170;
-  if (end > 200) end = 200;
-  return p.slice(0, end).trim();
-}
 
 function guideFor(key) {
-  const def = PRESETS[key];
-  const L = [];
-  let cat = "g_cat_generic";
-  if (key.indexOf("roFace") === 0) cat = "g_cat_face";
-  else if (key.indexOf("roSub") === 0) cat = "g_cat_sub";
-  else if (key.indexOf("roBg") === 0 || key.indexOf("roFg") === 0) cat = "g_cat_bgfg";
-  else if (key.indexOf("roLc") === 0) cat = "g_cat_lc";
-  else if (key.indexOf("roDress") === 0) cat = "g_cat_dress";
-  else if (key.indexOf("roMk") === 0) cat = "g_cat_mkop";
-  else if (key === "roMatch") cat = "g_cat_match";
-  else if (key.indexOf("trail") === 0) cat = "g_cat_trail";
-  else if (key.indexOf("veil") === 0) cat = "g_cat_veil";
-  else if (key.indexOf("gown") === 0) cat = "g_cat_gown";
-  else if (key.indexOf("pet") === 0) cat = "g_cat_petal";
-  else if (key === "wedExtra") cat = "g_cat_wedx";
-  else if (key.indexOf("rep") === 0) cat = "g_cat_canvas";
-  else if (key === "restore") cat = "g_cat_restore";
-  else if (key.indexOf("scn") === 0) cat = "g_cat_scene";
-  L.push(dualT(cat));
-  const sum = presetSummary(key);
-  if (sum) L.push("▸ " + sum);
-  let n = 1;
-  if (def && def.needDoc) { L.push(n + ". " + dualT("g_step_doc")); n++; }
-  if (def && def.needRef >= 1) {
-    L.push(n + ". " + dualT("g_step_ref1")); n++;
-    if (def.refop) { L.push(n + ". " + dualT("g_step_target")); n++; }
-  }
-  if (def && def.faceOp) { L.push(n + ". " + dualT("g_step_mkhair")); n++; }
-  if (def && def.petal) { L.push(n + ". " + dualT("g_step_petal")); n++; }
-  if (def && def.restore) { L.push(n + ". " + dualT("g_step_rest")); n++; }
-  if (def && def.intensity) { L.push(n + ". " + dualT("g_step_int")); n++; }
-  L.push(n + ". " + dualT("g_step_confirm"));
-  return L.join("\n\n");
+  /* v6.161.0 — the preset buttons this once described left with the old Freeform page; the two
+     remaining keys (__gen, __retouch) always read the generic category and the confirm step. */
+  return dualT("g_cat_generic") + "\n\n1. " + dualT("g_step_confirm");
 }
 
-const GEN_GUIDES = {
-  __gen: "g_gen", __retouch: "g_retouchbtn", __relight: "g_relightbtn",
-  __scene: "g_scene", __rmix: "g_rmix"
-};
+const GEN_GUIDES = { __gen: "g_gen", __retouch: "g_retouchbtn" };
 
 /* strip every learn-state class off a button so we can repaint one cleanly */
 function clearArmClass(el) {
@@ -16238,11 +11205,7 @@ function showPromptStage(key, titleTxt) {
   const bd = $("guideBody");
   const tt = $("guideTitle");
   let promptTxt = "";
-  try {
-    if (PRESETS[key]) promptTxt = presetText(PRESETS[key]);
-    else { const fpb = $("finalPromptBox"); promptTxt = (fpb && fpb.value) ? fpb.value : dualT(GEN_GUIDES[key] || "g_step_confirm"); }
-  } catch (e) { promptTxt = ""; }
-  if (PRESETS[key]) { try { appendPrompt(promptTxt); } catch (e) { } }
+  try { promptTxt = dualT(GEN_GUIDES[key] || "g_step_confirm"); } catch (e) { promptTxt = ""; }
   if (tt) tt.textContent = "\uD83D\uDCDD " + (titleTxt || key);
   if (bd) bd.textContent = dualT("g_learn_prompt_head") + "\n\n" + promptTxt + "\n\n" + dualT("g_learn_next_run");
   if (gb) guidePlace(state.armedEl);   /* v6.86.0 */
@@ -16267,7 +11230,7 @@ function armGate(key, el, fire) {
     const ae = state.armedEl;
     disarm();
     fire();
-    greenFlash(ae || el); /* after fire: paintPresetSel repaints classes, flash must land last */
+    greenFlash(ae || el); /* after fire, so the flash lands last */
     return false;
   }
   disarm();
@@ -16276,67 +11239,13 @@ function armGate(key, el, fire) {
   state.armStage = 1;
   setArmClass(el, "armed"); /* yellow */
   showGuide(key, el ? el.textContent : key);
-  /* teaching preview in the Final Prompt card */
-  try {
-    if (PRESETS[key]) {
-      const fpb = $("finalPromptBox");
-      if (fpb) fpb.value = "(PREVIEW - not sent yet)\n" + presetText(PRESETS[key]);
-    }
-  } catch (e) { }
   resetArmTimer();
   return true;
 }
 
-function onPreset(key) {
-  if (state.busy) return;
-  const el0 = $(PRESETS[key].btn);
-  if (state.learnMode) {
-    /* 3-tap cycle: guide -> prompt -> RUN. The green (3rd) tap always runs. */
-    armGate(key, el0, function () { onPresetRun(key); });
-    return;
-  }
-  /* Learn Mode OFF: one tap, honouring Auto-Run (run now, or insert prompt). */
-  onPresetFire(key);
-}
-
 /* Actually generate for this preset (guards + build + runGenerate). */
-function onPresetRun(key) {
-  if (state.busy) return;
-  state.lastPreset = key;
-  paintPresetSel();
-  setBusyBtn($(PRESETS[key].btn));
-  const def = PRESETS[key];
-  if (def.needDoc && !app.activeDocument) {
-    state.pendingBtn = null;
-    setStatus(t("st_need_doc"), "err");
-    return;
-  }
-  const refCount = (state.refs[0] ? 1 : 0) + (state.refs[1] ? 1 : 0);
-  if (def.needRef && refCount < def.needRef) {
-    state.pendingBtn = null;
-    setStatus(t("need_ref"), "err");
-    return;
-  }
-  const txt = presetText(def);
-  let unk = ((def.unkeepFn ? def.unkeepFn() : def.unkeep) || []).slice();
-  if (def.faceOp && state.refHairOn && unk.indexOf("hair") < 0) unk.push("hair");
-  const skipClean = def.guard === "style" || def.guard === "face" || def.guard === "subject";
-  runGenerate(txt, skipClean, unk, false, { action: key, realDir: def.realDirFn ? def.realDirFn() : (def.realDir || null), allowText: !!def.addsText });
-}
 
 /* Learn-OFF one-tap: Auto-Run ON -> run; OFF -> insert prompt into the box. */
-function onPresetFire(key) {
-  if (state.busy) return;
-  if (state.autoRun) { onPresetRun(key); return; }
-  const def = PRESETS[key];
-  state.lastPreset = key;
-  paintPresetSel();
-  if (def.needDoc && !app.activeDocument) { setStatus(t("st_need_doc"), "err"); return; }
-  const refCount = (state.refs[0] ? 1 : 0) + (state.refs[1] ? 1 : 0);
-  if (def.needRef && refCount < def.needRef) { setStatus(t("need_ref"), "err"); return; }
-  appendPrompt(presetText(def));
-  setStatus(t("st_ready"));
-}
 
 /* ---------------- Final prompt builder ---------------- */
 
@@ -16396,7 +11305,6 @@ function resolveRatio(base) {
    call through the SAME adapter stack the AI Tools tab already ships
    (HNK.runninghubAdapter → upload → submit → poll → download), so the two
    halves of the panel can never drift onto different engines. */
-const RH_TIER_MODEL = "nano-banana-2"; /* registry id — rhart-image-n-g31-flash/image-to-image */
 const RH_QUALITY_LINE = "QUALITY: ultra-detailed professional finish \u2014 crisp micro-detail in skin, hair and fabric, clean edges, accurate materials, no artifacts.";
 
 /* parts (the panel's internal prompt shape) -> joined prompt + image refs */
@@ -16530,205 +11438,13 @@ async function callImageAPI(model, parts, imageConfig, signal) {
 }
 
 /* ---------------- Studio Lighting AI (3D diagram + relight) ---------------- */
-const LIGHT_TYPES = ["softbox", "octa", "strip", "umbrella", "beauty", "hard"];
-const LIGHT_TYPE_TXT = {
-  softbox: "softbox", octa: "octabox", strip: "strip softbox",
-  umbrella: "umbrella", beauty: "beauty dish", hard: "bare hard light"
-};
-const LIGHT_DEFS = [
-  { key: "key", row: "lrKey", nameKey: "l_key", def: { on: false, type: "octa", int: 80, angle: -45, height: 15, dist: 45, size: 70 } },
-  { key: "fill", row: "lrFill", nameKey: "l_fill", def: { on: false, type: "softbox", int: 40, angle: 35, height: 0, dist: 55, size: 60 } },
-  { key: "butterfly", row: "lrButterfly", nameKey: "l_butterfly", def: { on: false, type: "beauty", int: 70, angle: 0, height: 40, dist: 40, size: 50 } },
-  { key: "side", row: "lrSide", nameKey: "l_side", def: { on: false, type: "strip", int: 60, angle: -90, height: 0, dist: 45, size: 45 } },
-  { key: "rim", row: "lrRim", nameKey: "l_rim", def: { on: false, type: "strip", int: 65, angle: 135, height: 15, dist: 50, size: 35 } },
-  { key: "back", row: "lrBack", nameKey: "l_back", def: { on: false, type: "hard", int: 55, angle: 180, height: 20, dist: 60, size: 30 } },
-  { key: "hair", row: "lrHair", nameKey: "l_hair", def: { on: false, type: "hard", int: 50, angle: 160, height: 45, dist: 50, size: 22 } },
-  { key: "bglight", row: "lrBglight", nameKey: "l_bglight", def: { on: false, type: "umbrella", int: 45, angle: -160, height: 0, dist: 75, size: 50 } }
-];
-state.lights = LIGHT_DEFS.map(function (d) { return JSON.parse(JSON.stringify(d.def)); });
 
-
-const LIGHT_SLIDERS = [
-  ["liInt", "int", 0, 100], ["liAngle", "angle", -180, 180],
-  ["liHeight", "height", -50, 50], ["liDist", "dist", 10, 100], ["liSize", "size", 10, 100]
-];
-
-function lightDirTxt(a) {
-  const abs = Math.abs(a);
-  const sidew = a < 0 ? "camera-left" : "camera-right";
-  if (abs <= 15) return "directly in front (on the camera axis)";
-  if (abs <= 60) return abs + "\u00B0 " + sidew + " (front-" + (a < 0 ? "left" : "right") + ")";
-  if (abs <= 115) return "at the " + (a < 0 ? "left" : "right") + " side (about 90\u00B0)";
-  if (abs <= 160) return "behind the subject, " + sidew + " (rim position)";
-  return "directly behind the subject";
-}
-function lightHeightTxt(h) {
-  if (h > 30) return "high above, angled down (top position)";
-  if (h > 8) return "slightly above eye level";
-  if (h >= -8) return "at eye level";
-  if (h >= -30) return "below eye level, angled up";
-  return "very low, strong up-angle";
-}
-function lightDistTxt(d) {
-  if (d <= 30) return "very close";
-  if (d <= 55) return "close-to-medium distance";
-  if (d <= 80) return "medium-to-far distance";
-  return "far away";
-}
-function lightSizeTxt(sz) {
-  if (sz <= 30) return "small";
-  if (sz <= 60) return "medium";
-  if (sz <= 85) return "large";
-  return "extra-large";
-}
-
-function buildLightingPrompt() {
-  const L = [];
-  for (let i = 0; i < LIGHT_DEFS.length; i++) {
-    const lg = state.lights[i];
-    if (!lg.on) continue;
-    const nm = t(LIGHT_DEFS[i].nameKey).toUpperCase();
-    L.push("- " + nm + ": " + lightSizeTxt(lg.size) + " " + LIGHT_TYPE_TXT[lg.type] +
-      ", positioned " + lightDirTxt(lg.angle) + ", " + lightHeightTxt(lg.height) +
-      ", " + lightDistTxt(lg.dist) + ", intensity " + lg.int + "%" +
-      (LIGHT_DEFS[i].key === "bglight" ? ", aimed at the background (not the subject)" : "") + ".");
-  }
-  if (!L.length) return "";
-  return "PROFESSIONAL STUDIO RELIGHT - rebuild the lighting of IMAGE 1 to match EXACTLY this studio setup (" + L.length + " light" + (L.length > 1 ? "s" : "") + "), like the photo was shot with it in a real studio:\n" +
-    L.join("\n") +
-    "\nRender physically accurate light falloff, soft or hard shadows per modifier, realistic catchlights in the eyes matching the key light, and natural skin response." +
-    (state.lightEquip
-      ? "\nYou MAY show the actual studio light equipment (softboxes, stands, umbrellas) naturally inside the frame."
-      : "\nDo NOT show any studio equipment in the image - no softboxes, light stands, umbrellas, reflectors or lamps visible anywhere, and no bright panel, white rectangle, glowing shape or light spill entering at any edge of the frame; only their light effect on the subject and scene.");
-}
 
 const RELIGHT_GUARD = "RELIGHT RULE: Change ONLY the lighting, shadows, highlights and the resulting color response - follow the light diagram exactly.";
 
-function lightingGenerate() {
-  if (state.busy) return;
-  const p = buildLightingPrompt();
-  if (!p) { setStatus(t("light_none"), "err"); return; }
-  state.lastPreset = null;
-  paintPresetSel();
-  runGenerate(p + "\n" + RELIGHT_GUARD, true, ["light", "color"], true, { action: "Relight", realDir: "edit" });
-}
-
 /* ---- 3D diagram (top view, div-based: UXP-safe) ---- */
-function renderLightStage() {
-  const st = $("lightStage");
-  if (!st) return;
-  const W = st.clientWidth || 300;
-  const H = 210;
-  const cx = W / 2, cy = H / 2 + 6;
-  for (let i = 0; i < LIGHT_DEFS.length; i++) {
-    const dot = $("ld" + i);
-    if (!dot) continue;
-    const lg = state.lights[i];
-    const R = 26 + (lg.dist * (Math.min(W, H) / 2 - 44)) / 100;
-    const rad = lg.angle * Math.PI / 180;
-    const x = cx + R * Math.sin(rad);
-    const y = cy + R * Math.cos(rad) * 0.82;
-    const dsz = Math.round(12 + lg.size * 0.16);
-    dot.style.display = lg.on ? "flex" : "none";
-    dot.style.left = Math.round(x - dsz / 2) + "px";
-    dot.style.top = Math.round(y - dsz / 2) + "px";
-    dot.style.width = dsz + "px";
-    dot.style.height = dsz + "px";
-    dot.style.opacity = String(0.45 + lg.int * 0.0055);
-    dot.className = "ldot" + (state.lightSel === i ? " sel" : "");
-    dot.textContent = lg.height > 8 ? "\u25B4" : (lg.height < -8 ? "\u25BE" : "\u00B7");
-  }
-}
-
-function lightSummary(i) {
-  const lg = state.lights[i];
-  return LIGHT_TYPE_TXT[lg.type] + " \u00B7 " + lg.int + "% \u00B7 " + lg.angle + "\u00B0";
-}
-
-function paintLightRows() {
-  for (let i = 0; i < LIGHT_DEFS.length; i++) {
-    const row = $(LIGHT_DEFS[i].row);
-    if (!row) continue;
-    row.className = "lrow" + (state.lightSel === i ? " sel" : "");
-    const ck = $(LIGHT_DEFS[i].row + "Ck");
-    if (ck) {
-      ck.className = "ckb" + (state.lights[i].on ? " on" : "");
-      ck.textContent = state.lights[i].on ? "\u2713" : "";
-    }
-    const sm = $(LIGHT_DEFS[i].row + "Sum");
-    if (sm) sm.textContent = lightSummary(i);
-  }
-}
-
-function paintLightCtl() {
-  const lg = state.lights[state.lightSel];
-  for (let i = 0; i < LIGHT_SLIDERS.length; i++) {
-    const el = $(LIGHT_SLIDERS[i][0]), vl = $(LIGHT_SLIDERS[i][0] + "V");
-    if (el) el.value = String(lg[LIGHT_SLIDERS[i][1]]);
-    if (vl) vl.textContent = String(lg[LIGHT_SLIDERS[i][1]]);
-  }
-  for (let j = 0; j < LIGHT_TYPES.length; j++) {
-    const b = $("lt" + LIGHT_TYPES[j]);
-    if (b) b.className = "sw ltchip" + (lg.type === LIGHT_TYPES[j] ? " on" : "");
-  }
-  const nm = $("lightSelName");
-  if (nm) nm.textContent = t(LIGHT_DEFS[state.lightSel].nameKey);
-}
-
-function bindLighting() {
-  for (let i = 0; i < LIGHT_DEFS.length; i++) {
-    (function (idx) {
-      const row = $(LIGHT_DEFS[idx].row);
-      const ck = $(LIGHT_DEFS[idx].row + "Ck");
-      if (ck) ck.addEventListener("click", function () {
-        state.lights[idx].on = !state.lights[idx].on;
-        state.lightSel = idx;
-        paintLightRows(); paintLightCtl(); renderLightStage(); saveSettings();
-      });
-      if (row) row.addEventListener("click", function () {
-        state.lightSel = idx;
-        paintLightRows(); paintLightCtl(); renderLightStage();
-      });
-    })(i);
-  }
-  for (let i = 0; i < LIGHT_SLIDERS.length; i++) {
-    (function (id, key) {
-      const el = $(id);
-      if (!el) return;
-      el.addEventListener("input", function () {
-        state.lights[state.lightSel][key] = Math.round(Number(el.value));
-        const vl = $(id + "V");
-        if (vl) vl.textContent = String(state.lights[state.lightSel][key]);
-        paintLightRows(); renderLightStage();
-      });
-      el.addEventListener("change", function () { saveSettings(); });
-    })(LIGHT_SLIDERS[i][0], LIGHT_SLIDERS[i][1]);
-  }
-  for (let j = 0; j < LIGHT_TYPES.length; j++) {
-    (function (tp) {
-      const b = $("lt" + tp);
-      if (b) b.addEventListener("click", function () {
-        state.lights[state.lightSel].type = tp;
-        paintLightCtl(); paintLightRows(); renderLightStage(); saveSettings();
-      });
-    })(LIGHT_TYPES[j]);
-  }
-  bindChecks([["lgEquip", "lightEquip"]], state);
-  const g = $("btnLightGen");
-  if (g) g.addEventListener("click", function () { armGate("__relight", g, function () { setBusyBtn(g); lightingGenerate(); }); });
-  paintLightRows(); paintLightCtl(); renderLightStage();
-}
 
 /* ---------------- Image -> Prompt (Scene Builder) ---------------- */
-const I2P_CK = [["i2pObjects", "objects"], ["i2pLight", "light"], ["i2pColor", "color"], ["i2pBg", "bg"], ["i2pFg", "fg"]];
-const I2P_OPT_CK = [["i2pFit", "fit"], ["i2pAdapt", "adapt"]];
-const I2P_SECTIONS = {
-  bg: "BACKGROUND: every element of the background - walls, sky, landscape, architecture, textures, depth layers and their exact appearance.",
-  fg: "FOREGROUND: any foreground elements - props, plants, fabrics, bokeh objects - their position, distance and blur.",
-  objects: "OBJECTS & PROPS: every visible object with its material, color, condition, position and relative scale.",
-  light: "LIGHTING: every light source, its direction, quality (hard/soft), intensity, shadows, highlights, time of day and atmosphere.",
-  color: "COLOR: the full color palette, grading style, saturation, contrast character and overall mood."
-};
 
 /* v6.26.0 — Scene EXTRACT (Gemini vision → text) left with its provider.
    Scene GENERATE below is an image job and runs on RunningHub as before. */
@@ -16739,57 +11455,6 @@ const SCENE_GUARD = "SCENE BUILD RULE: the final image contains only the IMAGE 1
 
 /* v6.26.0 — extractScenePrompt (Gemini vision → scene text) left with its
    provider; the sceneGenerate image job below is untouched. */
-function sceneGenerate() {
-  if (state.busy) return;
-  const boxTxt = getPromptText().trim();
-  if (!boxTxt) { setStatus(t("scene_no_prompt"), "err"); return; }
-  const L = [];
-  if (state.i2p.fit) L.push(SCENE_FIT);
-  L.push(state.i2p.adapt ? SCENE_ADAPT_ON : SCENE_ADAPT_OFF);
-  L.push(SCENE_GUARD);
-  let unkeep = ["bg", "frame"];
-  if (state.i2p.adapt) unkeep = unkeep.concat(["light", "color"]);
-  state.lastPreset = null;
-  paintPresetSel();
-  runGenerate(L.join("\n"), true, unkeep, true, { action: "Scene", realDir: "scene" });
-}
-
-/* ---------------- Replace Mix: tick which aspects to take from Ref1 ---------------- */
-const RMIX_CK = [["rmBg", "bg"], ["rmFg", "fg"], ["rmLight", "light"], ["rmColor", "color"], ["rmObject", "object"]];
-const RMIX_LINES = {
-  bg: "Replace the BACKGROUND of IMAGE 1 with the background environment from IMAGE 2 (people in it excluded), matching perspective and light.",
-  fg: "Bring the FOREGROUND elements/props of IMAGE 2 in front of the IMAGE 1 subject with realistic depth-of-field.",
-  light: "Apply the LIGHTING mood, direction and quality of IMAGE 2 onto IMAGE 1.",
-  color: "Apply the COLOR grade and palette of IMAGE 2 onto IMAGE 1.",
-  object: "Copy the key OBJECT(S)/props from IMAGE 2 into the IMAGE 1 scene naturally (never its people)."
-};
-const RMIX_UNKEEP = { bg: ["bg"], fg: [], light: ["light"], color: ["color"], object: [] };
-
-function mixText() {
-  const L = [];
-  for (const k in RMIX_LINES) { if (state.rmix[k]) L.push("- " + RMIX_LINES[k]); }
-  if (!L.length) return "";
-  return "SELECTIVE REPLACE from IMAGE 2 - apply ONLY these ticked aspects:\n" + L.join("\n") +
-    "\nEverything that is not ticked stays exactly as it is in IMAGE 1.";
-}
-
-function replaceMixRun() {
-  if (state.busy) return;
-  const refCount = (state.refs[0] ? 1 : 0) + (state.refs[1] ? 1 : 0);
-  if (refCount < 1) { setStatus(t("need_ref"), "err"); return; }
-  const body = mixText();
-  if (!body) { setStatus(t("rm_none"), "err"); return; }
-  const def = {
-    needRef: 1,
-    roles: { ref1: "SELECTIVE ASPECT SOURCE (only the ticked aspects: background / foreground / light / color / objects)" },
-    prompt: body
-  };
-  let unkeep = [];
-  for (const k in RMIX_UNKEEP) { if (state.rmix[k]) unkeep = unkeep.concat(RMIX_UNKEEP[k]); }
-  state.lastPreset = null;
-  paintPresetSel();
-  runGenerate(presetText(def), false, unkeep, false, { action: "ReplaceMix" });
-}
 
 /* ---------------- Reference auto-clean (remove people from Ref1) ---------------- */
 function imgMagicOk(b64) {
@@ -16882,33 +11547,10 @@ function pushHistory(entry) {
   while (state.history.length > HIST_MAX) state.history.pop();
   state.histSel = 0;
   renderHistory();
-  /* keep a lightweight, persisted list of recent prompt texts (survives restarts) */
-  try {
-    const txt = (entry && entry.userText ? String(entry.userText) : "").trim();
-    if (txt && txt.indexOf("Realistic Boost") < 0) {
-      state.recentPrompts = (state.recentPrompts || []).filter(function (r) { return r && r.t !== txt; });
-      state.recentPrompts.unshift({ t: txt, ts: entry.ts || 0 });
-      while (state.recentPrompts.length > 20) state.recentPrompts.pop();
-      paintRecentPrompts();
-      saveSettings();
-    }
-  } catch (e) { }
 }
 
 /* Recent Prompts dropdown (Studio prompt card): first option is the label,
    each entry restores its full prompt text into the box. */
-function paintRecentPrompts() {
-  const sel = $("selRecentPrompts");
-  if (!sel) return;
-  while (sel.firstChild) sel.removeChild(sel.firstChild);
-  sel.appendChild(mkOption("", t("recent_lbl")));
-  const list = state.recentPrompts || [];
-  for (let i = 0; i < list.length; i++) {
-    sel.appendChild(mkOption(list[i].t,
-      list[i].t.length > 58 ? list[i].t.slice(0, 58) + "…" : list[i].t));
-  }
-  sel.value = "";
-}
 
 /* v6.51.0 \u2014 the app's result-card history strip: one 64px thumbnail per
    take, the shown one gold-bordered (`.hist img.sel`), tap = show it. */
@@ -17073,199 +11715,12 @@ function selectHistory(idx) {
   renderHistory();
 }
 
-function histPromptToBox() {
-  const e = state.history[state.histSel];
-  if (!e) return;
-  setPromptText(e.userText || "");
-  const fpb = $("finalPromptBox");
-  if (fpb) fpb.value = e.finalPrompt || "";
-  switchPage("prompt");
-  openCard("final");
-}
-
-/* ---------------- Recipes: save / load / share (v2.4) ---------------- */
-function buildRecipe() {
-  return JSON.parse(JSON.stringify({
-    hnk_recipe: true, ver: "2.4.0", saved: new Date().toISOString(),
-    model: state.model, size: state.size, ratio: state.ratio, intensity: state.intensity,
-    chains: state.chains, clean: state.clean, keep: state.keep, rmix: state.rmix,
-    i2p: state.i2p, rt: state.rt, lights: state.lights, lightEquip: state.lightEquip,
-    restMode: state.restMode,
-    refTarget: state.refTarget, refMkOn: state.refMkOn, refHairOn: state.refHairOn, match: state.match,
-    wedTrail: state.wedTrail, wedVeil: state.wedVeil, wedGown: state.wedGown, wedPetal: state.wedPetal, wedExtra: state.wedExtra,
-    camOn: state.camOn, camBody: state.camBody, camMm: state.camMm, camF: state.camF,
-    camFilm: state.camFilm, camBokeh: state.camBokeh,
-    camIso: state.camIso, camIsoOn: state.camIsoOn, camK: state.camK, camKOn: state.camKOn,
-    promptEn: getPromptText(), promptMy: getMyPromptText()
-  }));
-}
-
-function applyRecipe(o) {
-  if (!o || typeof o !== "object" || !o.hnk_recipe) return false;
-  const boolMap = function (dst, src) {
-    for (const k in dst) { if (src && typeof src[k] === "boolean") dst[k] = src[k]; }
-  };
-  if (typeof o.model === "string") state.model = o.model;
-  if (typeof o.size === "string") state.size = o.size;
-  if (typeof o.ratio === "string") state.ratio = o.ratio;
-  if (typeof o.intensity === "number") state.intensity = Math.round(o.intensity);
-  boolMap(state.chains, o.chains);
-  boolMap(state.clean, o.clean);
-  boolMap(state.keep, o.keep);
-  boolMap(state.rmix, o.rmix);
-  boolMap(state.i2p, o.i2p);
-  if (o.rt && typeof o.rt === "object") {
-    for (const k in RT_DEFAULT) {
-      if (typeof RT_DEFAULT[k] === "number" && typeof o.rt[k] === "number") state.rt[k] = Math.round(o.rt[k]);
-      if (RT_DEFAULT[k] === null && (typeof o.rt[k] === "string" || o.rt[k] === null)) state.rt[k] = o.rt[k];
-    }
-  }
-  if (Array.isArray(o.lights)) {
-    for (let li = 0; li < state.lights.length && li < o.lights.length; li++) {
-      const ol = o.lights[li];
-      if (!ol || typeof ol !== "object") continue;
-      if (typeof ol.on === "boolean") state.lights[li].on = ol.on;
-      if (typeof ol.type === "string" && LIGHT_TYPES.indexOf(ol.type) >= 0) state.lights[li].type = ol.type;
-      ["int", "angle", "height", "dist", "size"].forEach(function (nk) {
-        if (typeof ol[nk] === "number") state.lights[li][nk] = Math.round(ol[nk]);
-      });
-    }
-  }
-  if (typeof o.lightEquip === "boolean") state.lightEquip = o.lightEquip;
-  if (typeof o.restMode === "string" && (o.restMode === "color" || o.restMode === "bw")) state.restMode = o.restMode;
-  if (o.refTarget === "solo" || o.refTarget === "couple" || o.refTarget === "family") state.refTarget = o.refTarget;
-  if (typeof o.refMkOn === "boolean") state.refMkOn = o.refMkOn;
-  if (typeof o.refHairOn === "boolean") state.refHairOn = o.refHairOn;
-  if (o.match && typeof o.match === "object") {
-    for (const mk4 in state.match) { if (typeof o.match[mk4] === "boolean") state.match[mk4] = o.match[mk4]; }
-  }
-  sanitizeWed(o);
-  sanitizeCam(o);
-  if (typeof o.promptEn === "string") setPromptText(o.promptEn);
-  if (typeof o.promptMy === "string") {
-    const pm = $("promptBoxMy");
-    if (pm) pm.value = o.promptMy.slice(0, promptCap());
-  }
-  return true;
-}
-
-function repaintFromState() {
-  try { const sm = $("selModel"); if (sm) sm.value = state.model; } catch (e) { }
-  try { const sr = $("selRatio"); if (sr) sr.value = state.ratio; } catch (e) { }
-  try { paintSizeSeg(); } catch (e) { }
-  try { const iv = $("intVal"), is2 = $("intSlider"); if (is2) is2.value = String(state.intensity); if (iv) iv.textContent = state.intensity + "%"; } catch (e) { }
-  try { paintChains(); paintRest(); paintClean(); } catch (e) { }
-  try {
-    paintChecks(KEEP_CK, state.keep); paintChecks(RMIX_CK, state.rmix);
-    paintChecks(I2P_CK, state.i2p); paintChecks(I2P_OPT_CK, state.i2p);
-    paintChecks([["lgEquip", "lightEquip"]], state);
-  } catch (e) { }
-  try { paintLightRows(); paintLightCtl(); renderLightStage(); } catch (e) { }
-  try { bindWedChips(); } catch (e) { }
-  try { paintRoTarget(); paintChecks([["ckRefMk", "refMkOn"], ["ckRefHair", "refHairOn"]], state); paintChecks(MATCH_CK, state.match); } catch (e) { }
-  try { paintCamChips(); const vi = $("camIsoV"); if (vi) vi.textContent = String(state.camIso); const vk = $("camKV"); if (vk) vk.textContent = String(state.camK); const si = $("camIso"); if (si) si.value = String(state.camIso); const sk = $("camK"); if (sk) sk.value = String(state.camK); paintChecks([["ckIsoOn", "camIsoOn"], ["ckKOn", "camKOn"]], state); } catch (e) { }
-  try { refreshPromptMeta(); } catch (e) { }
-}
-
-async function saveRecipe() {
-  try {
-    const file = await fsp.getFileForSaving("HNK_Recipe.json", { types: ["json"] });
-    if (!file) return;
-    await file.write(JSON.stringify(buildRecipe(), null, 2), { format: formats.utf8 });
-    setStatus(t("st_recipe_saved"), "ok");
-  } catch (e) {
-    setStatus(t("st_err") + ": " + (e && e.message ? e.message : e), "err");
-  }
-}
-
-async function loadRecipe() {
-  try {
-    const file = await fsp.getFileForOpening({ types: ["json"] });
-    if (!file) return;
-    const txt = await file.read({ format: formats.utf8 });
-    const o = JSON.parse(txt);
-    if (!applyRecipe(o)) { setStatus(t("st_recipe_bad"), "err"); return; }
-    repaintFromState();
-    saveSettings();
-    setStatus(t("st_recipe_loaded"), "ok");
-  } catch (e) {
-    setStatus(t("st_err") + ": " + (e && e.message ? e.message : e), "err");
-  }
-}
-
 /* ---------------- Batch Mode (v2.4) ---------------- */
 function extToMime(n) {
   n = (n || "").toLowerCase();
   if (n.endsWith(".png")) return "image/png";
   if (n.endsWith(".webp")) return "image/webp";
   return "image/jpeg";
-}
-
-async function batchRun() {
-  if (state.busy || state.batch) return;
-  let files = await fsp.getFileForOpening({ allowMultiple: true, types: ["jpg", "jpeg", "png", "webp"] });
-  if (!files) return;
-  if (!Array.isArray(files)) files = [files];
-  if (!files.length) return;
-  const outFolder = await fsp.getFolder();
-  if (!outFolder) return;
-  state.batch = true;
-  state.batchStop = false;
-  const bs = $("btnBatchStop");
-  btnOff(bs, false);
-  let okC = 0, failC = 0;
-  const logLines = [];
-  for (let i = 0; i < files.length; i++) {
-    if (state.batchStop) break;
-    setStatus(t("st_batch") + " " + (i + 1) + "/" + files.length + " \u00B7 " + files[i].name);
-    try {
-      const buf = await files[i].read({ format: formats.binary });
-      const b64 = bufToB64(buf);
-      await runGenerate(null, false, [], false, {
-        base: { b64: b64, mime: extToMime(files[i].name), label: files[i].name },
-        noPlace: true, action: "Batch"
-      });
-      if (state.resultB64) {
-        const ext = state.resultMime === "image/jpeg" ? "jpg" : "png";
-        const nm = files[i].name.replace(/\.[^.]+$/, "") + "_HNK." + ext;
-        const of = await outFolder.createFile(nm, { overwrite: true });
-        await of.write(b64ToBuf(state.resultB64), { format: formats.binary });
-        okC++;
-        logLines.push("OK    " + files[i].name + "  ->  " + nm);
-      } else {
-        failC++;
-        logLines.push("FAIL  " + files[i].name + "  (no result)");
-      }
-    } catch (be) {
-      failC++;
-      logLines.push("FAIL  " + files[i].name + "  (" + (be && be.message ? be.message : be) + ")");
-      hwarn("batch item failed:", be);
-    }
-  }
-  try {
-    const lf = await outFolder.createFile("_HNK_batch_log.txt", { overwrite: true });
-    await lf.write(buildBatchLog(okC, failC, logLines), { format: formats.utf8 });
-  } catch (le) { hwarn("batch log:", le); }
-  state.batch = false;
-  btnOff(bs, true);
-  setStatus(t("st_batch_done") + " \u2713 " + okC + (failC ? (" / \u2717 " + failC) : ""), failC ? "err" : "ok");
-}
-
-/* ---------------- Copy final prompt ---------------- */
-async function copyFinalPrompt() {
-  const fpb = $("finalPromptBox");
-  const txt = fpb ? fpb.value : (state.lastFinalPrompt || "");
-  if (!txt) return;
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(txt);
-    } else if (navigator.clipboard && navigator.clipboard.setContent) {
-      await navigator.clipboard.setContent({ "text/plain": txt });
-    }
-    setStatus(t("st_copied"), "ok");
-  } catch (e) {
-    setStatus(t("st_err") + ": " + (e && e.message ? e.message : e), "err");
-  }
 }
 
 /* ---------------- Generate pipeline ---------------- */
@@ -17426,25 +11881,14 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
       setStatus(t("st_auto_comp"));
     }
   }
-  const ct = cleanupText();
-  if (ct) userText = (userText ? userText + "\n" : "") + ct;
-  const ch = chainText();
-  if (ch) userText = (userText ? userText + "\n" : "") + ch;
-  const camx = buildCameraPrompt();
-  if (camx) userText = (userText ? userText + "\n" : "") + camx;
   /* AUDIT-FIX #3: allow requested text when the preset adds it (op.allowText) or a
      caption is turned on, so the no-text guard doesn't silently defeat the feature. */
-  const allowText = !!op.allowText || !!state.capOn;
+  const allowText = !!op.allowText;
   if (state.realOn) userText = (userText ? userText + "\n\n" : "") + buildGuard(effRealDir(op.realDir), allowText);
-  const myTxt = getMyPromptText().trim();
   const hasRef = !noRefs && !!(state.subj || state.refs[0] || state.refs[1] || ffExtraRefs().length);   /* v6.26.0 — IMG 4+ count too */
-  if (!userText && !myTxt && !hasRef) {
+  if (!userText && !hasRef) {
     if (op.ffCard) { stSet("stGen", ff9(FF_L.needAny), "err"); return; }
     setStatus(t("st_no_prompt"), "err"); return;
-  }
-  if (myTxt && !getPromptText().trim()) {
-    /* v6.26.0 — no translate hop: the Burmese text IS the prompt */
-    userText = (userText ? userText + "\n" : "") + myTxt;
   }
 
   const ffCount = op.ffCard ? ffReqCount() : 1;
@@ -17493,8 +11937,6 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
     const finalPrompt = buildFinalPrompt(userText, meta, unkeep || []);
     state.lastUserText = userText;
     state.lastFinalPrompt = finalPrompt;
-    const fpb = $("finalPromptBox");
-    if (fpb) fpb.value = finalPrompt;
     parts.push({ text: finalPrompt });
     let imgNo = 1;
     if (base) {
@@ -17552,9 +11994,8 @@ async function runGenerate(extraPresetText, skipRefClean, unkeep, noRefs, opts) 
     });
     refreshCompare();
 
-    if (state.autoSave && !state.batch) { saveResultToDisk().catch(function () { }); }
 
-    if (state.autoPlace && !op.noPlace && !state.batch) {
+    if (state.autoPlace && !op.noPlace) {
       stopDots();
       try { setStage("placing"); } catch (e0) { }
       setStatus(t("st_place"));
@@ -17590,38 +12031,10 @@ function tsStamp() {
 async function pickSaveFolder() {
   let f = null;
   try { f = await fsp.getFolder(); } catch (e) { setStatus(friendlyErr(e), "err"); }
-  if (!f) {
-    state.autoSave = false;
-    const tb = $("tglAutoSave");
-    if (tb) { tb.className = "tgl" + (state.autoSave ? " on" : ""); tb.textContent = t(state.autoSave ? "on" : "off"); }
-    saveSettings();
-    return false;
-  }
+  if (!f) return false;
   state.saveDirH = f;
   setStatus(t("st_folder_ok"), "ok");
   return true;
-}
-
-async function saveResultToDisk() {
-  if (!state.autoSave || !state.resultB64) return;
-  if (!state.saveDirH) {
-    const ok2 = await pickSaveFolder();
-    if (!ok2) return;
-  }
-  try {
-    const act = String(state.lastAction || "Result").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 32);
-    const ext = state.resultMime === "image/jpeg" ? "jpg" : "png";
-    const nm = "HNK_" + tsStamp() + "_" + act + "." + ext;
-    const f = await state.saveDirH.createFile(nm, { overwrite: true });
-    await f.write(b64ToBuf(state.resultB64), { format: formats.binary });
-    state.sessionLog += "==== " + tsStamp() + " | " + (state.lastAction || "Result") + " | " + provTag() + " | " + nm + " ====\n" +
-      (state.lastFinalPrompt || "") + "\n\n";
-    const lg = await state.saveDirH.createFile("_HNK_session_log.txt", { overwrite: true });
-    await lg.write(state.sessionLog, { format: formats.utf8 });
-    setStatus(t("st_exported") + " " + nm, "ok");
-  } catch (e) {
-    setStatus(t("st_export_fail"), "err");
-  }
 }
 
 /* ---------------- Place / Save result ---------------- */
@@ -17763,7 +12176,7 @@ function refreshCompare() {
   btnOff($("btnResultToRef"), !hasA);
   ffHandoffRow();
   renderHistory();
-  if (hasA) { try { if (!state.batch) switchPage("prompt"); } catch (e) { } }
+  if (hasA) { try { switchPage("prompt"); } catch (e) { } }
   fitCompareBox();
 }
 
@@ -17939,7 +12352,6 @@ function imagineHost() {
     exportOut: async function (out) {
       state.resultB64 = out.b64; state.resultMime = out.mime || "image/png"; state.lastAction = "Imagine";
       await placeResultToPS();
-      await saveResultToDisk();
     },
     toast: function (msg, kind) { setStatus(msg, kind === "ok" ? "ok" : kind === "err" ? "err" : ""); },
     scrollTop: function () { const pg = $("pages"); if (pg) pg.scrollTop = 0; }
@@ -18130,7 +12542,6 @@ function ffOnModelChange(id) {
   ffPaintModelBtn();
   ffFillRatio();
   ffPaintAdvanced();
-  try { updateCreateEngineTag(); } catch (e) { }
   try { rhRenderConfiguredList(); renderSetupStatus(); } catch (e) { }
   saveSettings();
   setStatus(ff9(FF_L.modelSet).replace("{m}", ffModelLabel(m)), "ok");
@@ -18427,34 +12838,9 @@ async function addCreateLayerRef(i) {
   }
 }
 
-function openCreateUrlBar(i) {
-  state.cUrlSlot = i;
-  const bar = $("cUrlBar"); if (bar) bar.style.display = "block";
-  const tag = $("cUrlSlotTag"); if (tag) tag.textContent = "\u2192 Ref " + (i + 1);
-  const inp = $("cUrlInput"); if (inp) { inp.value = ""; try { inp.focus(); } catch (e) { } }
-}
-
-function closeCreateUrlBar() {
-  state.cUrlSlot = -1;
-  const bar = $("cUrlBar"); if (bar) bar.style.display = "none";
-}
-
-async function loadCreateUrlIntoSlot(idx, rawUrl) {
-  return loadUrlIntoAnySlot(rawUrl, {
-    tmpPrefix: "hnk_cweb_",
-    assign: function (ref) { state.cRefs[idx] = ref; },
-    repaint: paintCreateRefs,
-    close: closeCreateUrlBar
-  });
-}
-
 /* v6.51.0 — the app's Text to Image names no engine above its GENERATE, so
    neither does the panel; the line is gone from the markup and this keeps
    its remaining callers null-safe. */
-function updateCreateEngineTag() {
-  const el = $("cEngineTag");
-  if (el) el.textContent = t("cr_engine") + " \u00b7 " + provTag();
-}
 
 function updateCCmpPos(v) {
   const box = $("cCmpBox");
@@ -18552,7 +12938,6 @@ async function createGenerate(restyle) {
     state.cSel = 0;
     refreshCreateCompare();
     paintCGallery();
-    updateCreateEngineTag();
     endBusy();
     setStatus(t("st_done") + " \u00D7" + n + " \u00B7 " + provTag(), "ok");
   } catch (e) {
@@ -18604,17 +12989,6 @@ async function saveCreateResult() {
   }
 }
 
-const PROMPT_LIB = [
-  ["Studio Portrait", "studio portrait of a person, soft key light with large octabox, subtle rim light, clean seamless grey backdrop, 85mm f1.8 look, natural skin texture"],
-  ["Golden Hour", "outdoor portrait at golden hour, warm backlight and gentle lens flare, creamy bokeh, soft rim light on hair, cinematic color"],
-  ["Vietnam Soft", "soft airy beauty portrait, pastel tones, gentle glow, delicate makeup, dreamy Vietnamese aesthetic, fine skin detail"],
-  ["Douyin Glam", "Douyin-style glam portrait, glossy skin, bright even light, sharp catchlights, high-fashion makeup, ultra clean retouch"],
-  ["Editorial B&W", "high-fashion black and white editorial portrait, dramatic Rembrandt lighting, deep contrast, fine film grain"],
-  ["Wedding Field", "bride in white gown standing in a green field at sunset, flowing veil in the wind, warm romantic light, luxury editorial wedding photograph"],
-  ["Product Clean", "product photograph on a clean seamless background, soft gradient light, crisp reflections, commercial studio quality"],
-  ["Cyberpunk Night", "cinematic cyberpunk street at night, neon signage, wet reflective ground, moody teal and magenta lighting, volumetric haze"]
-];
-
 /* v6.50.0 — the app's own eight, in the app's order (Auto first, then the
    seven ratios its .rchip strip offers). The panel offered five and no Auto,
    so a studio that wanted 2:3 or "let the model decide" could not ask. */
@@ -18624,27 +12998,6 @@ const PROMPT_LIB = [
 
 /* v6.26.0 — the Create tab's AI Improve/Describe (Gemini text) left with
    their provider. */
-function insertLibPrompt(idx) {
-  const el = $("cPromptBox");
-  const item = PROMPT_LIB[idx];
-  if (el && item) { el.value = (el.value ? el.value + "\n" : "") + item[1]; }
-  setStatus(t("st_lib_added"), "ok");
-}
-
-function bindLib() {
-  const g = $("libList");
-  if (!g) return;
-  g.innerHTML = "";
-  for (let i = 0; i < PROMPT_LIB.length; i++) {
-    (function (idx) {
-      const b = mkBtn();
-      b.className = "chip";
-      b.textContent = PROMPT_LIB[idx][0];
-      b.addEventListener("click", function () { insertLibPrompt(idx); });
-      g.appendChild(b);
-    })(i);
-  }
-}
 
 /* ============================================================
    TEXT TO IMAGE — the app's own model shelf (v6.53.0)
@@ -18770,7 +13123,6 @@ function bindCreate() {
   });
   t2iPaintOptions();
   REFRESHERS.push(function () { try { t2iPaintOptions(); } catch (e) { hwarn("t2i:", e); } });
-  bindLib();
   const vmap = [1, 2, 3, 4];
   const paintV = function () {
     for (let i = 0; i < vmap.length; i++) {
@@ -18804,24 +13156,10 @@ function bindCreate() {
       if (ly) ly.addEventListener("click", function () { addCreateLayerRef(idx); });
       const fl = $("cRefFile" + idx);
       if (fl) fl.addEventListener("click", function () { pickCreateRef(idx); });
-      const wb = $("cRefWeb" + idx);
-      if (wb) wb.addEventListener("click", function () { openCreateUrlBar(idx); });
       const x = $("cRefX" + idx);
       if (x) x.addEventListener("click", function () { state.cRefs[idx] = null; refLibForgetSlot("create-reference-" + (idx + 1)); paintCreateRefs(); });
     })(i);
   }
-  const uc = $("cBtnUrlCancel");
-  if (uc) uc.addEventListener("click", closeCreateUrlBar);
-  const up = $("cBtnUrlPaste");
-  if (up) up.addEventListener("click", function () {
-    readClipboardText().then(function (s) { const inp = $("cUrlInput"); if (s && inp) inp.value = s.trim(); });
-  });
-  const ul = $("cBtnUrlLoad");
-  if (ul) ul.addEventListener("click", function () {
-    if (state.busy || state.cUrlSlot < 0) return;
-    const inp = $("cUrlInput");
-    loadCreateUrlIntoSlot(state.cUrlSlot, inp ? inp.value : "");
-  });
   const sl = $("cCmpSlider");
   if (sl) sl.addEventListener("input", function () { updateCCmpPos(sl.value); });
   const ur = $("btnCreateToRef");
@@ -18839,55 +13177,9 @@ function bindCreate() {
   const sv = $("btnCreateSave");
   if (sv) sv.addEventListener("click", function () { saveCreateResult(); });
   paintCreateRefs();
-  updateCreateEngineTag();
 }
 
 /* v6.51.0 — the RunningHub key UI is Setup's (rhSaveKey / rhRemoveKey). */
-
-function bindScenes() {
-  const segPaints = []; /* AUDIT-FIX #9: collect seg paints for post-load restore */
-  const segRow = function (map, get, set) {
-    const paint = function () { for (let i = 0; i < map.length; i++) { const b = $(map[i][0]); if (b) b.className = "segb" + (get() === map[i][1] ? " on" : ""); } };
-    for (let i = 0; i < map.length; i++) { (function (id, v) { const b = $(id); if (b) b.addEventListener("click", function () { set(v); paint(); saveSettings(); }); })(map[i][0], map[i][1]); }
-    paint();
-    segPaints.push(paint);
-  };
-  /* target shares Reference-Ops-Pro's refTarget */
-  segRow([["scnTgSolo", "solo"], ["scnTgCouple", "couple"], ["scnTgFamily", "family"]],
-    function () { return state.refTarget; },
-    function (v) { state.refTarget = v; try { paintRoTarget(); } catch (e) { } });
-  /* birthday age */
-  const ag = $("scnAge"), agv = $("scnAgeV");
-  if (ag) {
-    ag.value = String(state.bdayAge); if (agv) agv.textContent = String(state.bdayAge);
-    ag.addEventListener("input", function () { state.bdayAge = Math.max(1, Math.min(45, Number(ag.value) || 1)); if (agv) agv.textContent = String(state.bdayAge); saveSettings(); });
-  }
-  /* caption */
-  bindChecks([["ckCap", "capOn"]], state);
-  const ct = $("capText"); if (ct) { ct.value = state.capText || ""; ct.addEventListener("input", function () { state.capText = ct.value; saveSettings(); }); }
-  segRow([["capTop", "top"], ["capBottom", "bottom"]], function () { return state.capPos; }, function (v) { state.capPos = v; });
-  /* scarf */
-  segRow([["scnDirL", "left"], ["scnDirR", "right"], ["scnDirU", "up"]], function () { return state.scarfDir; }, function (v) { state.scarfDir = v; });
-  segRow([["scnLenS", "short"], ["scnLenL", "long"]], function () { return state.scarfLen; }, function (v) { state.scarfLen = v; });
-  /* collapsible layout (scene BUTTONS auto-wire via the generic PRESETS loop) */
-  bindCard("cScnH", "cScnB", "scenes", false);
-  bindGroup("scnStyleH", "scnStyleB", true);
-  bindGroup("scnBdayH", "scnBdayB", false);
-  bindGroup("scnCapH", "scnCapB", false);
-  bindGroup("scnScarfH", "scnScarfB", false);
-  /* AUDIT-FIX #9: repaint scene controls AFTER settings load (bindScenes ran with
-     defaults). Registered in REFRESHERS => run by the apply block's applyI18n(). */
-  REFRESHERS.push(function () {
-    try {
-      const a = $("scnAge"), av = $("scnAgeV");
-      if (a) a.value = String(state.bdayAge);
-      if (av) av.textContent = String(state.bdayAge);
-      const c = $("capText"); if (c) c.value = state.capText || "";
-      paintChecks([["ckCap", "capOn"]], state);
-      for (let i = 0; i < segPaints.length; i++) segPaints[i]();
-    } catch (e) { }
-  });
-}
 
 function bindProvider() {
   /* v6.26.0 — one engine: the provider segment and the OpenAI key UI left
@@ -18902,21 +13194,6 @@ function bindProvider() {
 /* v6.26.0 — Improve Prompt (Gemini text) left with its provider. */
 
 /* ---------------- UI wiring ---------------- */
-function bindToggle(id, key) {
-  const b = $(id);
-  if (!b) return; /* null-guard: a missing toggle must never abort the wiring block */
-  const paint = function () {
-    b.className = "tgl" + (state[key] ? " on" : "");
-    b.textContent = t(state[key] ? "on" : "off");
-  };
-  b.addEventListener("click", function () {
-    state[key] = !state[key];
-    paint();
-    saveSettings();
-  });
-  REFRESHERS.push(paint);
-  paint();
-}
 
 /* v6.51.0 — the app's own accordion: .grp gains and loses `open`, and the
    caret is the icon file the app rotates, not a text glyph. bindGroup below
@@ -18930,19 +13207,6 @@ function bindAppGroup(grpId, headId) {
       ? clsOf(g).replace(/\s*\bopen\b/g, "")
       : (g.className + " open");
   });
-}
-
-function bindGroup(headId, bodyId, openDefault) {
-  const h = $(headId), bd = $(bodyId);
-  if (!h || !bd) return; /* null-guard: one missing group must never crash init and drop later handlers */
-  let open = !!openDefault;
-  const paint = function () {
-    bd.style.display = open ? "block" : "none";
-    const car = h.querySelector(".car");
-    if (car) car.textContent = open ? "\u25BE" : "\u25B8";
-  };
-  h.addEventListener("click", function () { open = !open; paint(); });
-  paint();
 }
 
 function paintSizeSeg() {
@@ -19062,6 +13326,25 @@ function shellPaintIcon(host, cls, name, tint) {
    first letter and the language's own native name beside it (glyph(label) in
    the app = the first code point of the label). The <select> beneath stays the
    real control; this is only its face. */
+/* v6.161.0 — the language rows. populateSelects() filled this select beside two
+   Freeform selects (model, ratio) whose markup left in 6.51.0; the language
+   half is the header picker's only source of rows, so it keeps its own function. */
+function populateLangSelect() {
+  const sl = $("selLang");
+  if (sl && !sl.firstChild) {
+    for (let i = 0; i < LANGS.length; i++) {
+      const o = document.createElement("option");
+      o.value = LANGS[i].code;
+      o.text = langOptionLabel(LANGS[i]);
+      o.textContent = langOptionLabel(LANGS[i]);
+      sl.appendChild(o);
+    }
+  }
+  if (sl) sl.value = state.lang;
+  try { langPaintHsl(); } catch (e) { }
+}
+REFRESHERS.push(function () { try { populateLangSelect(); } catch (e) { hwarn("lang select:", e); } });
+
 function langPaintHsl() {
   const gl = $("langGlyph"), val = $("langVal");
   if (!gl && !val) return;
@@ -19211,7 +13494,6 @@ function switchPage(key) {
       if (aiApp && aiApp.current && aiApp.current() !== want) aiApp.navigate(want);
     } catch (e) { }
   }
-  if (key === "prompt") { try { renderLightStage(); } catch (e) { } } /* v6.27.0 — the light stage lives on Edit now */
   if (key === "imagine") { try { imagineEnter(); } catch (e) { hwarn("imagine:", e); } }   /* 6.29.0 wave — paints the hub / tool view on entry */
   /* v6.75.0 — a page switch is a cheap moment to re-ask for pictures a dead line took (throttled inside) */
   try { const ra = globalThis.HNK && globalThis.HNK.remoteArt; if (ra && ra.retryFailed) ra.retryFailed(false); } catch (e) { }
@@ -19259,43 +13541,6 @@ function bindTabs() {
   if (gear) gear.addEventListener("click", function () { switchPage("setup"); saveSettings(); });
 }
 
-/* ---------------- Collapsible cards with persisted state ---------------- */
-const CARD_PAINT = {};
-/* AUDIT-FIX #13: bindCard paints each card's open/closed state from state.sections at
-   bind time \u2014 before loadSettings resolves \u2014 so the saved layout was never shown.
-   Repaint every card after settings load via REFRESHERS (run by the apply block's
-   applyI18n()). Iterates the live CARD_PAINT, which is fully populated by then. */
-REFRESHERS.push(function () { for (const k in CARD_PAINT) { try { CARD_PAINT[k](); } catch (e) { } } });
-
-function bindCard(headId, bodyId, key, defaultOpen) {
-  const h = $(headId), bd = $(bodyId);
-  if (!h || !bd) return;
-  if (!(key in state.sections)) state.sections[key] = !!defaultOpen;
-  const paint = function () {
-    /* re-seed a missing key so a repaint never collapses a default-open card
-       (loadSettings replaces state.sections wholesale, dropping keys from a newer
-       build that an older saved file didn't have). */
-    if (!(key in state.sections)) state.sections[key] = !!defaultOpen;
-    const open = !!state.sections[key];
-    bd.style.display = open ? "block" : "none";
-    const car = h.querySelector(".car");
-    if (car) car.textContent = open ? "\u25BE" : "\u25B8";
-  };
-  CARD_PAINT[key] = paint;
-  h.addEventListener("click", function () {
-    state.sections[key] = !state.sections[key];
-    paint();
-    saveSettings();
-  });
-  paint();
-}
-
-function openCard(key) {
-  if (!state.sections[key]) {
-    state.sections[key] = true;
-    if (CARD_PAINT[key]) CARD_PAINT[key]();
-  }
-}
 
 /* v6.107.1 — every wiring stage leaves a record: "ok", or the message and the
    line that stopped it. safe() has always swallowed a throw so that one page
@@ -19507,18 +13752,14 @@ function init() {
     safe("gate", function () { gateBoot(); });
     safe("apply-settings", function () {
       /* v6.51.0 — the key field and the legacy model/ratio selects are Setup's
-         and Freeform's own (rhKey / ffModelSel); only the intensity slider
-         and the size segment remain here. */
-      const isl = $("intSlider"); if (isl) isl.value = String(state.intensity);
-      const iv = $("intVal"); if (iv) iv.textContent = state.intensity + "%";
+         and Freeform's own (rhKey / ffModelSel); only the size segment remains here. */
       paintSizeSeg();
     });
-    safe("i18n", function () { applyTheme(); populateSelects(); applyI18n(); });
+    safe("i18n", function () { applyTheme(); populateLangSelect(); applyI18n(); });
     safe("version", function () { paintPanelVersion(); checkPanelUpdate(); });
-    safe("ck-paint", function () { paintClean(); paintChecks(RMIX_CK, state.rmix); paintChecks(I2P_CK, state.i2p); paintChecks(I2P_OPT_CK, state.i2p); paintChains(); paintRest(); paintChecks([["lgEquip", "lightEquip"]], state); paintRoTarget(); paintChecks([["ckRefMk", "refMkOn"], ["ckRefHair", "refHairOn"]], state); paintChecks(MATCH_CK, state.match); });
     safe("page-restore", function () { switchPage(state.page || "aitools"); });
     safe("takes-restore", function () { takesRestoreP(); });   /* v6.87.0 — the video strips come back */
-    safe("meta", function () { refreshPromptMeta(); renderRefs(); refreshCompare(); });
+    safe("meta", function () { renderRefs(); refreshCompare(); });
     safe("reflib-restore", function () { try { refLibRestoreSlots(); } catch (e) { hwarn("lib restore:", e); } });
     safe("ready", function () { setStatus(t("st_ready")); });
   });
@@ -19533,23 +13774,6 @@ function init() {
       saveSettings();
       setStatus(t("st_ready"));
     });
-    /* v6.49.1 — the theme is a Setup picker now, not a header wheel: one
-       tap that cycled nine palettes never said what the next stop was, and
-       the button it lived in was squeezing the language box. Same nine
-       palettes, named. */
-    const st = $("selTheme");
-    if (st) {
-      fillSelect(st, PANEL_THEMES.map(function (th) {
-        return { v: th, label: th.charAt(0).toUpperCase() + th.slice(1) };
-      }));
-      st.value = state.theme;
-      st.addEventListener("change", function () {
-        state.theme = (PANEL_THEMES.indexOf(st.value) >= 0) ? st.value : "dark";
-        applyTheme();
-        saveSettings();
-      });
-      REFRESHERS.push(function () { try { st.value = state.theme; } catch (e) { } });
-    }
   });
 
   /* size segment (the API key UI is Setup's; model + ratio are Freeform's) */
@@ -19565,58 +13789,8 @@ function init() {
       detectPromptCap(pb);
       pb.addEventListener("input", onPromptInput);
     }
-    const pm = $("promptBoxMy");
-    if (pm) {
-      stylePromptBox(pm);
-      pm.addEventListener("input", function () {
-        const cap = promptCap();
-        if (pm.value.length > cap) pm.value = pm.value.slice(0, cap);
-        refreshPromptMeta();
-      });
-    }
-    const fpb = $("finalPromptBox");
-    if (fpb) {
-      stylePromptBox(fpb);
-      fpb.style.height = "150px";
-      fpb.readOnly = true;
-      try { fpb.setAttribute("readonly", "readonly"); } catch (re) { }
-    }
-    const bc = $("btnCopyFinal");
-    if (bc) bc.addEventListener("click", copyFinalPrompt);
-    const pw = $("pwrap");
-    if (pw && pb) pw.addEventListener("click", function () { try { pb.focus(); } catch (e) { } });
-    const bcp = $("btnClearP");
-    if (bcp) bcp.addEventListener("click", function () { setPromptText(""); try { if (pb) pb.focus(); } catch (e) { } });
-    const rp = $("selRecentPrompts");
-    if (rp) {
-      rp.addEventListener("change", function () {
-        if (rp.value) { setPromptText(rp.value); rp.value = ""; }
-      });
-      paintRecentPrompts();
-      REFRESHERS.push(function () { try { paintRecentPrompts(); } catch (e) { } });
-    }
   });
 
-  /* reference slots — v6.51.0: the three Freeform slots are built by
-     renderRefs() itself (tap a slot → source sheet), so there are no fixed
-     per-slot buttons left to wire here. The optional URL bar stays guarded. */
-  safe("refs", function () {
-    const uc = $("btnUrlCancel");
-    if (uc) uc.addEventListener("click", closeUrlBar);
-    const up = $("btnUrlPaste");
-    if (up) up.addEventListener("click", function () {
-      readClipboardText().then(function (s) {
-        const ui = $("urlInput");
-        if (s && ui) ui.value = s.trim();
-      });
-    });
-    const ul = $("btnUrlLoad");
-    if (ul) ul.addEventListener("click", function () {
-      if (state.busy || state.urlSlot < 0) return;
-      const ui = $("urlInput");
-      loadUrlIntoSlot(state.urlSlot, ui ? ui.value : "");
-    });
-  });
   safe("freeform", bindFreeform);
 
   /* tab pages */
@@ -19625,30 +13799,6 @@ function init() {
     switchPage(state.page || "aitools");
   });
 
-  /* collapsible cards (persisted) */
-  safe("cards", function () {
-    bindCard("cApiH", "cApiB", "api", !state.rhKey);
-    bindCard("cModelH", "cModelB", "model", false);
-    bindCard("cPromptH", "cPromptB", "prompt", true);
-    bindCard("cRefH", "cRefB", "refs", true);
-    bindCard("cPresetH", "cPresetB", "presets", false);
-    bindCard("cPrevH", "cPrevB", "prev", false);
-    bindCard("cFinalH", "cFinalB", "final", false);
-    bindCard("cChRestH", "cChRestB", "chrest", true);
-    bindCard("cRoH", "cRoB", "refops", true);
-    bindCard("cWedH", "cWedB", "wed", true);
-    bindCard("cRecH", "cRecB", "recipes2", true);
-    bindCard("cCamH", "cCamB", "campro", false);
-    bindCard("cBatchH", "cBatchB", "batch", false);
-    bindCard("cCrefH", "cCrefB", "crefs", false);
-    bindCard("cLibH", "cLibB", "reflib", false);
-    bindCard("cLightH", "cLightB", "lightcard", false);
-    /* the lighting stage measures its own width — re-render when its card opens */
-    const lh = $("cLightH");
-    if (lh) lh.addEventListener("click", function () { try { renderLightStage(); } catch (e) { } });
-    bindCard("cDiagH", "cDiagB", "diag", false);
-    bindCard("cLogH", "cLogB", "log", false);
-  });
 
   /* v6.51.0 — RETOUCH PRO is the web app's pgRetouch now: the V2 hero, its
      Advanced accordion and the Manual One-Tap / Sliders panes are all built
@@ -19712,127 +13862,17 @@ function init() {
     }
   });
 
-  /* presets */
+  /* the Learn Mode guide box (its switch lives on the Setup screen since 6.161.0) */
   safe("presets", function () {
-    bindToggle("tglAutoRun", "autoRun");
-    bindClean();
-    bindChains();
-    bindRest();
-    bindRefOps();
-    bindWedChips();
-    /* AUDIT-FIX #9: wedding chips are built from defaults at bind time; rebuild them
-       from restored state after settings load. buildObjChips wipes + recreates its
-       children each call, so re-running bindWedChips never accumulates listeners. */
-    REFRESHERS.push(function () { try { bindWedChips(); } catch (e) { } });
-    bindToggle("tglLearn", "learnMode");
-    const tl = $("tglLearn");
-    if (tl) tl.addEventListener("click", function () { if (!state.learnMode) disarm(); });
     const gc = $("guideClose");
     if (gc) gc.addEventListener("click", disarm);
-    bindGroup("wpTrailH", "wpTrailB", false);
-    bindGroup("wpVeilH", "wpVeilB", false);
-    bindGroup("wpGownH", "wpGownB", false);
-    bindGroup("wpPetalH", "wpPetalB", false);
-    bindGroup("wpExtraH", "wpExtraB", false);
-    bindGroup("grpRecipesH", "grpRecipesB", false);
-    const rs = $("btnRecipeSave"); if (rs) rs.addEventListener("click", saveRecipe);
-    const rl = $("btnRecipeLoad"); if (rl) rl.addEventListener("click", loadRecipe);
-    bindGroup("grpCleanH", "grpCleanB", true);
-    bindGroup("grpRepH", "grpRepB", false);
-    bindGroup("grpMixH", "grpMixB", false);
-    /* v4.20 fix: these two collapsible sub-groups were never wired, so Style
-       Chains and Old Photo Restore could not open / showed no buttons. */
-    bindGroup("grpChainsH", "grpChainsB", true);
-    bindGroup("grpRestoreH", "grpRestoreB", true);
-    bindChecks(RMIX_CK, state.rmix);
-    const rmg = $("btnRmixGen");
-    if (rmg) rmg.addEventListener("click", function () { const g0 = $("btnRmixGen"); armGate("__rmix", g0, function () { setBusyBtn(g0); replaceMixRun(); }); });
-    bindGroup("grpI2pH", "grpI2pB", false);
-    bindChecks(I2P_CK, state.i2p);
-    bindChecks(I2P_OPT_CK, state.i2p);
-    /* v6.26.0 — btnI2pExtract left with the Gemini vision bridge */;
-    const scg = $("btnSceneGen");
-    if (scg) scg.addEventListener("click", function () { const g0 = $("btnSceneGen"); armGate("__scene", g0, function () { setBusyBtn(g0); sceneGenerate(); }); });
   });
 
-  /* studio lighting */
-  safe("lighting", function () {
-    bindLighting();
-  });
 
-  /* web ai browser */
   safe("create", bindCreate);
   safe("provider", bindProvider);
-  safe("scenes", bindScenes);
   safe("diag", bindDiag);
-  safe("reflib", bindRefLib);
-  safe("web", function () {
-    for (const k in PRESETS) {
-      (function (key) {
-        const b = $(PRESETS[key].btn);
-        if (b) b.addEventListener("click", function () { onPreset(key); });
-      })(k);
-    }
-    /* v6.51.0 — the intensity slider left with the old Retouch page (the
-       app's Retouch Pro carries its own strength chips); presets that quote
-       {INT} keep reading state.intensity, so this stays null-safe rather
-       than throwing and dropping the preset wiring above it. */
-    const isl2 = $("intSlider");
-    if (isl2) {
-      isl2.addEventListener("input", function () {
-        state.intensity = Math.round(Number(isl2.value));
-        const iv2 = $("intVal"); if (iv2) iv2.textContent = state.intensity + "%";
-      });
-      isl2.addEventListener("change", function () { saveSettings(); });
-    }
-    paintPresetSel();
-  });
 
-  /* options + generate */
-  safe("options", function () {
-    /* v4.5: keep-lock UI removed - HNK Guard protects everything by default.
-       v4.16: a dead bindGroup call for the removed grpKeep* elements used to sit
-       here; because those elements no longer exist, the unguarded call threw and
-       silently dropped every handler below it — Auto-Place, Auto-Save, Camera
-       Pro, History and Batch. bindGroup is now null-safe and the dead call is
-       gone, so all of the wiring below always runs. */
-    bindToggle("tglAutoPlace", "autoPlace");
-    bindToggle("tglAutoSave", "autoSave");
-    /* v6.49.0 — Direct Generate lives on Setup now. Its value belongs to the
-       AI Tools settings service (its own file), not to `state`, so it gets
-       its own two-line binder rather than bindToggle's state[key] path. */
-    (function bindDirectGenerate() {
-      const b = $("setDirect");
-      if (!b) return;
-      const svc = function () {
-        try { return (globalThis.HNK && globalThis.HNK.aiToolsSettings) || null; } catch (e) { return null; }
-      };
-      const on = function () { const sv = svc(); return !!(sv && sv.get && sv.get().directGenerate); };
-      const paint = function () {
-        b.className = "tgl" + (on() ? " on" : "");
-        b.textContent = t(on() ? "on" : "off");
-      };
-      b.addEventListener("click", function () {
-        const sv = svc();
-        if (sv && sv.set) sv.set({ directGenerate: !on() });
-        paint();
-      });
-      REFRESHERS.push(paint);
-      paint();
-    })();
-    const tas = $("tglAutoSave");
-    if (tas) tas.addEventListener("click", function () {
-      if (state.autoSave && !state.saveDirH) { pickSaveFolder(); }
-    });
-    bindCamPro();
-    const hp = $("btnHistPrompt"); if (hp) hp.addEventListener("click", histPromptToBox);
-    const br = $("btnBatchRun"); if (br) br.addEventListener("click", batchRun);
-    const bsp = $("btnBatchStop");
-    if (bsp) {
-      btnOff(bsp, true);
-      bsp.addEventListener("click", function () { if (btnIsOff(bsp)) return; state.batchStop = true; });
-    }
-  });
   safe("generate", function () {
     /* v6.51.0 — GENERATE, Stop and Retry feed back through the Freeform card
        exactly as the app's btnGen / btnGenStop / btnRetry do */

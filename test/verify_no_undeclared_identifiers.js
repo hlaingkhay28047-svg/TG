@@ -131,11 +131,11 @@ const brief = (r) => ({ n: r.findings.length, first: r.findings.slice(0, 20).map
 
   /* ---------------- C. the two fixes ---------------- */
   const CODE = MAIN.replace(/\/\*[\s\S]*?\*\//g, ""); /* the note that replaced the section names what it called */
-  report("C1) main.js — the Pipeline Chain Builder is gone with its state, its settings hooks, its guide entry, its card binding and its fifteen i18n keys in every dictionary; the note that replaces it names the scan; armGate and onPreset read state.busy alone",
+  report("C1) main.js — the Pipeline Chain Builder is gone with its state, its settings hooks, its guide entry, its card binding and its fifteen i18n keys in every dictionary; the note that replaces it names the scan; armGate reads state.busy alone (onPreset itself left with the preset buttons in 6.161.0)",
     !/PIPELINE CHAIN BUILDER|bindPipeline|runPipeline|buildMergedPipeline|sanitizePipeline|paintPipeline|addPipeStep|buildRetouchPrompt|state\.pipeline|pipeRunning|pipeMerge|PIPE_MAX|cPipeH/.test(CODE) &&
     !/\b(crd_pipe|pipe_[a-z_]+|st_pipe[a-z_]*|g_pipe)\b/.test(MAIN) &&
     /v6\.160\.0 — the Pipeline Chain Builder \(v3\.0\) lost its card/.test(MAIN) && /verify_no_undeclared_identifiers\.js\) found the call; the dead code is gone/.test(MAIN) &&
-    /__scene: "g_scene", __rmix: "g_rmix"\n\};/.test(MAIN) && /function armGate\(key, el, fire\) \{\n  if \(state\.busy\) return false;/.test(MAIN) && /function onPreset\(key\) \{\n  if \(state\.busy\) return;/.test(MAIN), null);
+    /const GEN_GUIDES = \{ __gen: "g_gen", __retouch: "g_retouchbtn" \};/.test(MAIN) && /function armGate\(key, el, fire\) \{\n  if \(state\.busy\) return false;/.test(MAIN), null);
 
   const LIFTER = read("tools/build_panel_studio_suites.js");
   const SUITES = read("panel/js/hnk_studio_suites.js");

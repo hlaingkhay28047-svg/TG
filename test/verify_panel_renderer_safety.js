@@ -501,7 +501,7 @@ const READ_CARD = () => {
       const b = window.HNK.i18n, keys = ["rh_err_network", "rh_err_timeout", "rh_err_rate_limited", "rh_err_invalid_key"];
       const missing = [];
       /* the nine tables that carry their own strings; the other codes in the picker fall back to one of these */
-      const tables = Object.keys(b.table).filter(function (l) { return b.table[l] && typeof b.table[l].err_net === "string"; });
+      const tables = Object.keys(b.table).filter(function (l) { return b.table[l] && typeof b.table[l].rh_err_network === "string"; });
       tables.forEach(function (l) { keys.forEach(function (k) { if (!b.table[l][k] || b.table[l][k].length < 20) missing.push(l + "." + k); }); });
       return { lang: b.lang(), tables: tables.length, missing: missing, my: b.t("rh_err_network"), en: b.table.en.rh_err_network };
     });
@@ -577,7 +577,7 @@ const READ_CARD = () => {
       photoSheet("IMG 1", { onLayer: function () { }, onFile: function () { } });
       const named = read();
       ffSheetClose();
-      const b = window.HNK.i18n, tables = Object.keys(b.table).filter(l => typeof b.table[l].err_net === "string");
+      const b = window.HNK.i18n, tables = Object.keys(b.table).filter(l => typeof b.table[l].rh_err_network === "string");
       const missing = tables.filter(l => !b.table[l].st_photo_layer_added || b.table[l].st_photo_layer_added === b.table[l].st_ref_layer_added);
       return { where: ff9(FF_L.where), bare, named, srcFileMy: FF_L.srcFile.my, missing, tables: tables.length, closed: !document.getElementById("ffSheet") };
     });

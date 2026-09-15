@@ -143,6 +143,20 @@ function render(root, deps) {
   });
   root.appendChild(layerBtn);
 
+  // Learn Mode — a GENERATE tap explains itself first (the panel's own teaching aid). Its switch
+  // left with the old Freeform page in 6.51.0 and was never rebuilt (6.161.0): main.js publishes
+  // the setting as HNK.learnMode { get, set }; turning it off disarms a half-tapped button.
+  var learn = (typeof globalThis !== "undefined" && globalThis.HNK && globalThis.HNK.learnMode) ? globalThis.HNK.learnMode : null;
+  if (learn) {
+    var LEARN_FALLBACK = "Learn Mode \u2014 a GENERATE tap explains itself first";
+    var learnBtn = dom.el(doc, "button", { class: "hnk-btn", id: "hnkSetLearn", text: dom.tOnOff("ai_learn_mode", LEARN_FALLBACK, learn.get()) });
+    dom.on(learnBtn, "click", function () {
+      var next = learn.set(!learn.get());
+      learnBtn.textContent = dom.tOnOff("ai_learn_mode", LEARN_FALLBACK, next);
+    });
+    root.appendChild(learnBtn);
+  }
+
   // ---- RunningHub setup (no-code, optional/advanced) ----
   if (deps.rh && deps.rh.setup) renderRunningHub(root, deps, s);
   return root;

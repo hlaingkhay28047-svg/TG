@@ -48,6 +48,7 @@ const apiServer = read("server/index.js");
 const productionDeploy = read(".github/workflows/deploy-digitalocean.yml");
 const stagingDeploy = read(".github/workflows/deploy-digitalocean-staging.yml");
 const panelVersion = JSON.parse(read("docs/download/panel-version.json")).v;
+const panelPolicyMinimum = JSON.parse(read("docs/download/panel-version.json")).minimum_supported_version;
 const panelRelease = JSON.parse(read("panel/release-manifest.json"));
 const panelSourceManifest = JSON.parse(read("panel/manifest.json"));
 const panelSourceMain = read("panel/main.js");
@@ -292,7 +293,7 @@ check("SEO discovery files use the production origin",
   "robots.txt or sitemap.xml uses the wrong origin");
 check("panel source, release metadata, and public version endpoint agree",
   panelSourceManifest.version === panelVersion && panelRelease.version === panelVersion &&
-  panelRelease.minimum_supported_version === panelVersion &&
+  panelRelease.minimum_supported_version === panelPolicyMinimum && /* v6.90.0 — the cluster policy in panel-version.json, never the release itself */
   panelRelease.artifact_file === `HNK_Ai_Panel_v${panelVersion}.ccx`,
   JSON.stringify({ source: panelSourceManifest.version, release: panelRelease.version,
     minimum: panelRelease.minimum_supported_version, endpoint: panelVersion,

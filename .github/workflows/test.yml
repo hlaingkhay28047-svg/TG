@@ -558,6 +558,8 @@ jobs:
         run: PORT=8931 node test/verify_panel_freeform_generate.js
       - name: Every identifier the studio reads is declared — an acorn scope scan over the 68 panel scripts as one page scope, the panel CJS entry, the web app inline scripts, the service worker, the landing page, the admin console and the server, plus the HD Finish store published to the finish engines and the dead Pipeline Chain Builder gone (6.89.0 / panel 6.160.0)
         run: PORT=8931 node test/verify_no_undeclared_identifiers.js
+      - name: Every control the studio looks up exists — a static id scan over the panel scripts and the web app, the dictionaries read in both directions, the Learn Mode switch on the Setup screen, job_needkey in nine languages, the dead Freeform cards gone, the version files honest (6.90.0 / panel 6.161.0)
+        run: PORT=8931 node test/verify_panel_dead_lookups.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
