@@ -31,7 +31,7 @@ const all9 = o => !!o && LANGS.every(l => typeof o[l] === "string" && o[l].trim(
 
 /* ---------------- A) source ---------------- */
 const mod = lifter.between(APP, lifter.M0, lifter.M1, "module");
-const DATA = (() => { const a = mod.indexOf("var IMAGINE_DATA = ") + "var IMAGINE_DATA = ".length, b = mod.indexOf(";\nvar IMAGINE = (function(){", a); return new Function("return " + mod.slice(a, b))(); })();   /* the data block, as the page sees it */
+const DATA = require("../tools/lib/app-data.js").readImagine();   /* v6.92.0 — the tables the page loads from data/imagine.js */   /* the data block, as the page sees it */
 const COUNTS = { lighting: 12, portrait: 15, surface: 15, weather: 12, describe: 12, architecture: 15, idphoto: 12, product: 12, productbg: 15, background: 15, outfit: 15, colortone: 28, restore: 12, upscale: 8, faceclear: 12, objremove: 10, objadd: 12, hairmakeup: 14, bodyshape: 10, sky: 12, textedit: 8, batch: 8 };   /* 6.33.0 — the roster is twenty-two (W4 joined: Hair & Makeup · Body Shape · Sky Replace · Text & Sign Edit · Batch Imagine); the W1 four stay first */
 report("A1) the page is registered after Freeform and the Edit roster carries it (6 pages)",
   /\["pgCreate","i-pen","Freeform"\],\n\s*\["pgImagine","i-wand","Imagine"\]/.test(APP) &&
@@ -83,7 +83,9 @@ report("A6b) the Imagine hero has its motion clip pair (mp4 + webm, 0.3–4 MB e
   ["mp4", "webm"].map(e => fs.existsSync(path.join(MOTION, "banner-imagine." + e)) ? fs.statSync(path.join(MOTION, "banner-imagine." + e)).size : "missing"));
 const dry = lifter.build({ dry: true });
 report("A7) the panel's module, CSS and art are exactly what the lift produces from the app today (run: node tools/build_panel_imagine.js)",
-  dry.changed.length === 0 && PANEL_JS.indexOf(mod) >= 0 && /globalThis\.HNK\.imagine = IMAGINE;/.test(PANEL_JS) &&
+  dry.changed.length === 0 && mod.split("var IMAGINE_DATA = window.HNK_IMAGINE;").length === 2 &&
+  PANEL_JS.indexOf(mod.replace("var IMAGINE_DATA = window.HNK_IMAGINE;", "var IMAGINE_DATA = " + require("../tools/lib/app-data.js").imagineText() + ";")) >= 0 &&
+  PANEL_JS.indexOf("= window.HNK_IMAGINE;") < 0 && /globalThis\.HNK\.imagine = IMAGINE;/.test(PANEL_JS) &&
   PANEL_CSS.indexOf(lifter.C0) >= 0 && PANEL_CSS.indexOf(lifter.C1) >= 0 && (() => { const b = lifter.between(PANEL_CSS, lifter.C0, lifter.C1, "panel css"); return b.indexOf("#pageImagine") >= 0 && b.indexOf("#pgImagine") < 0 && b.indexOf("var(--gold") < 0 && b.indexOf("var(--cream)") < 0 && b.indexOf("var(--accent)") >= 0; })(), dry.changed);
 report("A8) the panel registers the page (Edit · Imagine, after Freeform), boots the module on entry, paints its hero head, and repaints on a language change",
   /\{ key: "prompt",[^\n]*\n[^\n]*\n\s*\{ key: "imagine", page: "pageImagine", group: "edit",\s*sub: "Imagine",\s*ic: "i-wand" \}/.test(PANEL_MAIN) &&

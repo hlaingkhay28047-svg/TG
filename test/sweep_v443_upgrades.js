@@ -28,6 +28,7 @@ function report(name, ok, detail) {
   page.on("pageerror", e => report("no page error", false, e.message));
   await page.goto(BASE);
   await page.waitForTimeout(1000);
+  await require("./lib/trl-packs.js").loadAll(page);   /* v6.92.0 — all eighteen packs; the shell loads only the chosen one */
 
   /* ---- 1) 27-language picker in 3 groups (v5.56.0 real-things-only cut) ---- */
   const picker = await page.evaluate(() => {

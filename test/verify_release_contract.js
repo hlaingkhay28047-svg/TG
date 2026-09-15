@@ -119,7 +119,9 @@ const expectedPanelOverlayCodes = Object.keys(localeContext.SITE_L || {}).sort()
 
 const appLocaleStart = html.indexOf('var LANG = "my";');
 const appLocaleEnd = html.indexOf("function L9(o){", appLocaleStart);
-const appLocaleContext = { localStorage: { getItem() { return null; } } };
+/* v6.92.0 — the packs live in data/trl-<code>.js; the slice reads them off window (all eighteen here, as the tests load them) */
+const appData = require("../tools/lib/app-data.js");
+const appLocaleContext = { localStorage: { getItem() { return null; } }, window: { HNK_TRL: appData.readTrl(), HNK_TRL_TAGS: appData.trlTags() } };
 vm.runInNewContext(html.slice(appLocaleStart, appLocaleEnd), appLocaleContext);
 function effectiveAppLocaleValue(key, language) {
   const native = appLocaleContext.TR_L[language];

@@ -313,6 +313,9 @@ async function capture(slicesText) {
       });
     });
     await page.waitForTimeout(2500);
+    /* v6.92.0 — the shell loads only the chosen language's pack (data/trl-<code>.js); this table wants every
+       language, so all eighteen are put into the same object the app's t() reads before the walk below. */
+    await page.evaluate(function (packs) { Object.keys(packs).forEach(function (c) { window.HNK_TRL[c] = packs[c]; }); }, require("./lib/app-data.js").readTrl());
     const data = await page.evaluate(function (arg) {
       var out = {};
       out.langs = Object.keys(TR_L).concat(Object.keys(LANG_FB), ["my", "en"]).filter(function (c, i, a) { return a.indexOf(c) === i; }).sort();

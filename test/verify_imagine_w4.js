@@ -29,7 +29,7 @@ const CI = fs.readFileSync(path.join(ROOT, ".github/workflows/test.yml"), "utf8"
 const RUNNER = fs.readFileSync(path.join(ROOT, "tools/rh_art_gen.js"), "utf8");
 const lifter = require("../tools/build_panel_imagine.js");
 const mod = lifter.between(APP, lifter.M0, lifter.M1, "module");
-const DATA = (() => { const a = mod.indexOf("var IMAGINE_DATA = ") + "var IMAGINE_DATA = ".length, b = mod.indexOf(";\nvar IMAGINE = (function(){", a); return new Function("return " + mod.slice(a, b))(); })();
+const DATA = require("../tools/lib/app-data.js").readImagine();   /* v6.92.0 — the tables the page loads from data/imagine.js */
 const JOBS_A = JSON.parse(fs.readFileSync(path.join(ROOT, "tools/imagine_art_jobs_w4.json"), "utf8")).jobs;
 const JOBS_B = JSON.parse(fs.readFileSync(path.join(ROOT, "tools/imagine_art_jobs_w4b.json"), "utf8")).jobs;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];

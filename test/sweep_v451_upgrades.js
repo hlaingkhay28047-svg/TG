@@ -49,6 +49,7 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
   page.on("pageerror", e => pageErrors.push(String(e).slice(0, 200)));
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(900);
+  await require("./lib/trl-packs.js").loadAll(page);   /* v6.92.0 — all eighteen packs; the shell loads only the chosen one */
 
   const r = await page.evaluate(async (B64) => {
     const out = {};
