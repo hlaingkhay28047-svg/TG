@@ -148,7 +148,13 @@ input,textarea,select{font-family:inherit}
 /* v5.63.0 — owner, live phone: the first cut ran ~2x the other pages' bands.
    Same 126px floor as .page-hero, tighter type, no desktop growth — the
    card language matches AND the size does. */
-.hero-mini .kick{padding-top:10px;font-size:.68rem}
+.hero-mini .kick{padding:10px 6px 0 0;font-size:.68rem;letter-spacing:.12em;max-width:100%}
+/* 6.96.0 — THE KICKER THE OWNER PHOTOGRAPHED. .hero-strip caps every child at 76% (295px of the 388px
+   banner on a 420px phone) and the line wants 382px at .28em tracking, so "RUNNINGHUB AI" fell to a
+   second line on its own. Measured on the live page: 263px with no tracking, +1 char-width per .01em.
+   The kicker takes the whole banner and .12em (314px), and under 390px it steps down to 269px — one
+   line from a 320px Photoshop panel up to a monitor. */
+@media (max-width:389px){.hero-mini .kick{font-size:.6rem;letter-spacing:.10em}}
 .hero-mini h1{font-size:clamp(.98rem,3.7vw,1.2rem);line-height:1.35}
 .hero-mini .lede{display:none}
 /* ---- page-hero: compact per-page banner band — same visual language as .hero-art
@@ -183,8 +189,8 @@ input,textarea,select{font-family:inherit}
 video.ph-motion{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
 video.ph-motion.live{opacity:1}
 @media (prefers-reduced-motion: reduce){video.ph-motion,.dash-greet video.greet-motion{display:none}}
-.page-hero .ph-kick{position:relative;z-index:2;font-size:10px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 3px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.75)}
-.page-hero .ph-head{position:relative;z-index:2;font-size:clamp(15px,3.6vw,20px);font-weight:800;line-height:1.5;margin:0;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 14px rgba(0,0,0,.8)}
+.page-hero .ph-kick{position:relative;z-index:2;max-width:72%;font-size:10px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 3px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.75)}
+.page-hero .ph-head{position:relative;z-index:2;max-width:72%;font-size:clamp(15px,3.6vw,20px);font-weight:800;line-height:1.5;margin:0;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 14px rgba(0,0,0,.8)}
 @media (min-width:768px){.page-hero{min-height:172px;padding:16px 20px 14px}}
 .kick{font-size:10.5px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
 h1{font-size:var(--fs-xl);font-weight:800;line-height:1.3;margin:var(--sp-1) 0 var(--sp-1)}
@@ -725,7 +731,12 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
    is what Burmese has always wanted. 2.25 is 28.1px at 12.5 and 25.9px at 11.5,
    both above the ink. Cards are ~40px taller and every word in them is whole. */
 .wfmini .t{font-size:12.5px;font-weight:800;line-height:2.25;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.25em}
-.wfmini .s{font-size:11.5px;color:var(--muted);line-height:2.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.wfmini .s{position:relative;font-size:11.5px;color:var(--muted);line-height:2.25;max-height:6.75em;overflow:hidden;overflow-wrap:anywhere}
+/* 6.96.0 — THE CUT THE OWNER PHOTOGRAPHED. Measured over all 194 cards at 420px: the two-line ceiling
+   cut 138 of them, and the panel (UXP draws no -webkit-line-clamp) cut them with no ellipsis at all, so a
+   card simply stopped mid-sentence. The ceiling is three lines now — 136 of the 194 end on their own — and
+   what is still long ends in a marker BOTH surfaces draw the same way: one clamp, one mechanism, one look. */
+.wfmini .s .ell,.im-card-sum .ell{position:absolute;right:0;bottom:0;padding-left:12px;background:var(--panel-2);color:var(--muted);font-weight:700}
 .wfmini .go{margin-top:auto;font-size:10.5px;color:var(--gold-hi);font-weight:800;align-self:flex-end;display:inline-flex;align-items:center;padding:5px 11px 5px 8px;border:1px solid rgba(233,185,73,.38);border-radius:999px;background:rgba(233,185,73,.08);line-height:1.2}
 
 /* v3.0 UX */
@@ -2018,7 +2029,7 @@ body.wall #wallRetry.on{display:block}
 #pgImagine .im-intro{margin:0 0 12px;line-height:1.6}
 .im-grid{display:flex;flex-wrap:wrap;margin:0 -5px}
 /* 6.93.0 — two cards to a row on a phone (150px floor, was 240px: twenty-two cards in one 14,000px column), three at 700px, four at 1100px; a compact body */
-.im-card{flex:1 1 40%;min-width:150px;margin:5px;border:1px solid var(--line-soft);border-radius:14px;background:var(--panel-2);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;color:var(--cream);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.im-card{flex:1 1 40%;min-width:132px;margin:5px;border:1px solid var(--line-soft);border-radius:14px;background:var(--panel-2);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;color:var(--cream);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
 .im-card:hover,.im-card.lift,.im-card:focus-visible{border-color:var(--gold);outline:none;transform:translateY(-6px) scale(1.012);box-shadow:0 16px 34px rgba(0,0,0,.5)}
 .im-card.lift{border-color:var(--gold-hi)}
 /* the card picture: a 2:3 Before | After compare, the after as the whole picture, the before clipped on top */
@@ -2032,7 +2043,9 @@ body.wall #wallRetry.on{display:block}
 .im-card-body{padding:8px 10px 10px;display:flex;flex-direction:column;flex:1 1 auto}
 .im-card-name{font-weight:800;font-size:13px;line-height:1.3;display:flex;align-items:center;color:var(--cream)}
 .im-card-name .ic-s{margin-right:6px;flex:none}
-.im-card-sum{margin:4px 0 8px;font-size:11.5px;line-height:1.5;max-height:3em;overflow:hidden;flex:1 1 auto}
+/* 6.96.0 — measured over all 22 hub cards at 420px: 9 end inside four lines, 17 inside five, and the
+   fifth line costs 17px on a 448px card. Five it is; what is still long ends in the .ell marker. */
+.im-card-sum{position:relative;margin:4px 0 8px;font-size:11.5px;line-height:1.5;max-height:7.5em;overflow:hidden;flex:1 1 auto}
 .im-card-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:0 -3px}
 .im-card-foot .im-tplcount{font-size:10.5px;padding:3px 8px;min-height:0;white-space:nowrap;flex:1 1 auto;margin:3px;text-align:center;justify-content:center}
 .im-card-foot .im-open{min-height:32px;padding:5px 12px;margin:3px;flex:1 1 auto;font-size:11.5px}
@@ -4099,6 +4112,24 @@ window.HNK_TRL_TAGS={"bn":"f05deea41177","gu":"e631d64a6ab0","hi":"3fb14dbe0372"
 function icn(name, cls){
   return '<svg class="'+(cls||'ic-s')+'" aria-hidden="true" focusable="false"><use href="#'+name+'"/></svg>';
 }
+/* 6.96.0 — ONE CLAMP MARKER FOR BOTH SURFACES. UXP draws no -webkit-line-clamp, so the panel's cards
+   stopped mid-sentence with nothing to say they had been cut. Both surfaces now clamp with max-height and
+   append this marker where the ink really overflows its box — measured, never guessed, and silent when the
+   renderer reports nothing (a card then looks exactly as it did). */
+function ellMark(root, sel){
+  try{
+    (root||document).querySelectorAll(sel).forEach(function(n){
+      try{
+        var old=n.querySelector(".ell"); if(old) old.remove();
+        /* half a line, never a pixel: Burmese stacked diacritics draw ~4px past their line box, so a box
+           that holds its text exactly still reports scrollHeight 73 against clientHeight 69 (measured over
+           all 22 Imagine cards). A box is cut only when at least half a line of it is hidden. */
+        var lh=parseFloat(getComputedStyle(n).lineHeight)||16;
+        if(n.scrollHeight-n.clientHeight>lh/2){ var e=document.createElement("span"); e.className="ell"; e.textContent="\u2026"; n.appendChild(e); }
+      }catch(e){}
+    });
+  }catch(e){}
+}
 function escH(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 /* strips a LEADING legacy emoji/glyph (plus VS16/ZWJ) so 9-language dictionary
    values don't need editing; sentence-internal ✓/→ etc. are untouched. */
@@ -5453,6 +5484,9 @@ var TOPGROUPS=[
    tools/build_app_data.js moves the cut forward; the panel lifts this list
    (js/hnk_whats_new.js), so its boot parses these rows and no more. */
 var WHATS_NEW = [
+  { v:"6.96.0", kind:"page", ref:"pgWf",
+    t:{my:"Smart Workflow ရဲ့ banner နဲ့ card တွေ၊ Imagine page ရဲ့ card တွေ သပ်ရပ်သွားပြီ — card ရဲ့ ရှင်းလင်းချက် ၂ ကြောင်းက ၃ ကြောင်း (Imagine မှာ ၅ ကြောင်း) ဖြစ်သွားပြီ၊ စာ ရှည်ရင် အဆုံးမှာ … ပြမယ် (Photoshop Panel မှာလဲ အတူတူ)၊ banner ရဲ့ ခေါင်းစဉ်ငယ် တစ်ကြောင်းတည်း ဝင်သွားပြီ၊ ခေါင်းစဉ်ကြီးက ပုံထဲက လူပေါ် မကျော်တော့ဘူး",en:"The Smart Workflow banner and cards, and the Imagine cards, tidied — a card's description holds three lines instead of two (five on Imagine), anything longer ends in a “…” drawn the same way on the Photoshop Panel, the banner's kicker fits on one line, and a page headline no longer runs across the model",shn:"Smart Workflow banner လႄႈ card၊ Imagine card တင်းသဵင်ႈ မူတ်းသႂ်ယဝ်ႉ — ၶေႃႈလၢတ်ႈ card ၂ ထႅဝ် ပဵၼ် ၃ ထႅဝ် (Imagine ၅ ထႅဝ်)၊ ယၢဝ်းလိူဝ် တေမီး … ၊ ၶေႃႈႁူဝ်ၶေႃႈ banner ထႅဝ်လဵဝ်၊ ႁူဝ်ၶေႃႈယႂ်ႇ ဢမ်ႇပူၼ်ႉၼိူဝ်ႁၢင်ႈၵူၼ်း",kac:"Smart Workflow banner hte card ni, Imagine card ni mung san seng sai — card a tsun ai ga 2 ning kaw na 3 ning (Imagine hta 5 ning), galu yang hpang hta … madun na, banner a baw ga ning langai sha, baw ga kaba gaw sumla masha ntsa n lai sai",th:"แบนเนอร์และการ์ดของ Smart Workflow และการ์ดในหน้า Imagine เรียบร้อยขึ้น — คำอธิบายการ์ดแสดง 3 บรรทัดแทน 2 (5 บรรทัดใน Imagine) ข้อความที่ยาวกว่าลงท้ายด้วย “…” เหมือนกันบนแผง Photoshop หัวข้อย่อยของแบนเนอร์อยู่บรรทัดเดียว และหัวข้อใหญ่ไม่ทับตัวแบบอีกต่อไป",zh:"Smart Workflow 的横幅与卡片、Imagine 页的卡片都更整齐了 — 卡片说明由两行改为三行（Imagine 为五行），更长的文字以“…”结尾，Photoshop 面板的画法完全相同；横幅的小标题收进一行，大标题不再压在模特身上",vi:"Banner và thẻ của Smart Workflow, cùng thẻ trang Imagine, đã gọn gàng hơn — mô tả thẻ hiện ba dòng thay vì hai (năm dòng ở Imagine), phần dài hơn kết thúc bằng “…” vẽ giống hệt trên Photoshop Panel, dòng nhỏ của banner nằm gọn một dòng và tiêu đề lớn không còn đè lên người mẫu",id:"Banner dan kartu Smart Workflow serta kartu halaman Imagine kini lebih rapi — deskripsi kartu memuat tiga baris, bukan dua (lima di Imagine), teks yang lebih panjang diakhiri “…” yang digambar sama di Photoshop Panel, kicker banner muat satu baris, dan judul halaman tidak lagi melintasi model",ms:"Sepanduk dan kad Smart Workflow serta kad halaman Imagine kini lebih kemas — perihalan kad memuatkan tiga baris, bukan dua (lima pada Imagine), teks yang lebih panjang berakhir dengan “…” yang dilukis sama pada Photoshop Panel, kicker sepanduk muat satu baris, dan tajuk halaman tidak lagi melintasi model"},
+    s:{my:"**Smart Workflow card** — card ၁၉၄ ခုလုံးကို ၄၂၀px မှာ တိုင်းကြည့်တော့ ၂ ကြောင်း အမိုးက ၁၃၈ ခုကို ဖြတ်ပစ်နေတယ်; Photoshop Panel မှာဆို ဖြတ်ထားမှန်း ပြစရာတောင် မရှိဘဲ စာက ရုတ်တရက် ရပ်သွားတယ်။ အခု ၃ ကြောင်း — ၁၉၄ ခုထဲက ၁၃၆ ခု ကိုယ့်စကားလုံးနဲ့ ကိုယ် ဆုံးပြီ; ကျန်တာက အဆုံးမှာ **…** ပြမယ်။ အဲ့ … က မှန်းထားတာ မဟုတ်ဘူး — စာက တကယ် အမိုးထက် ကျော်မှ (တစ်ကြောင်းရဲ့ တစ်ဝက်ထက် ပိုကျော်မှ) ပေါ်တယ်; မြန်မာစာရဲ့ အထက်အောက် သင်္ကေတတွေက စာကြောင်းဘောင်ထက် နည်းနည်း ကျော်ထွက်လို့ ၁px နဲ့ တိုင်းရင် မဖြတ်ရသေးတဲ့ card တွေမှာပါ … တက်သွားတယ်။ အုပ်စု ပိတ်ထားရင် အထဲက card တွေ အတိုင်းအတာ မရှိလို့ — အုပ်စု ဖွင့်လိုက်တိုင်း၊ ရှာဖွေတိုင်း ပြန်တိုင်းတယ်။ **Banner** — “NO INSTALL · PANEL DATA · RUNNINGHUB AI” က banner ရဲ့ ၇၆% ထဲမှာ မဆန့်လို့ “RUNNINGHUB AI” တစ်ကြောင်းတည်း ကျနေတယ်; အခု banner အပြည့် သုံးပြီး စာလုံးကြား အကွာအဝေး ချိန်ထားတယ် — 320px Photoshop Panel ကနေ monitor ထိ တစ်ကြောင်းတည်း။ **Page banner** — ခေါင်းစဉ်တွေကို ၇၂% ကန့်လိုက်ပြီ (မကန့်ခင်က ၃၅၄px စာက ပုံထဲက လူရဲ့ မျက်နှာပေါ် ကျော်နေတယ်)။ **Imagine card** — အကျဉ်းချုပ် ၂ ကြောင်း → ၅ ကြောင်း (၂၂ ခုထဲက ၁၇ ခု အပြည့် ဝင်ပြီ)၊ card အကျယ် အနည်းဆုံး 150px → 132px မို့ Photoshop Panel ကျဉ်းကျဉ်းမှာလဲ ၂ တန်း ရမယ်၊ Panel မှာ အမိုးက စာကြောင်း အပြည့် ၅ ကြောင်း (၄ ကြောင်းခွဲ မဟုတ်တော့)၊ ခေါင်းစဉ်ရဲ့ အိုင်ကွန်က ပထမ စာကြောင်းမှာပဲ နေတယ်။",en:"**Smart Workflow cards** — measured over all 194 cards at 420px, the two-line ceiling cut 138 of them, and in Photoshop a card simply stopped mid-sentence with nothing to say it had been cut. Three lines now: 136 of the 194 end on their own word, and what is still long ends in **…**. That marker is measured, never guessed — a box counts as cut only when more than half a line of it is hidden, because Burmese stacked diacritics draw a few pixels past their line box and a one-pixel test put “…” on cards that were not cut at all. A closed group measures nothing, so the marker runs again every time a group opens and after every search. **The banner** — “NO INSTALL · PANEL DATA · RUNNINGHUB AI” wants 382px inside a 295px cap, so “RUNNINGHUB AI” fell to a line of its own; the kicker now takes the whole banner with measured tracking, one line from a 320px Photoshop panel to a monitor. **Page banners** — the kicker and headline are capped at 72% (354px of headline used to run straight across the model's face). **Imagine cards** — the summary holds five lines instead of two (17 of the 22 now end on their own word), the card floor drops 150px → 132px so a narrow Photoshop panel still gets two columns, the panel states the ceiling against its own line so it is five WHOLE lines there, and the hub heading's icon stays on line one.",shn:"Card 194 ဢၼ် ၄၂၀px တိုင်းတူၺ်း — ၂ ထႅဝ် တတ်ပႅတ် ၁၃၈ ဢၼ်။ ယၢမ်းလဵဝ် ၃ ထႅဝ်၊ ယၢဝ်းလိူဝ်တေမီး … ။ Banner ၶေႃႈႁူဝ်ၶေႃႈ ထႅဝ်လဵဝ်၊ ႁူဝ်ၶေႃႈ ၇၂%။ Imagine ၅ ထႅဝ်၊ card 132px၊ Panel ၼႂ်း ၅ ထႅဝ်တဵမ်။",kac:"Card 194 hpe 420px hta hkyen yu ai — 2 ning gaw 138 hpe kahtam kau ai. Ya 3 ning, galu yang … madun na. Banner baw ga ning langai, baw ga kaba 72%. Imagine 5 ning, card 132px, Panel hta 5 ning hkum.",th:"วัดครบ 194 การ์ดที่ 420px — เพดานสองบรรทัดตัดไป 138 ใบ ตอนนี้สามบรรทัด ที่ยาวกว่าลงท้าย “…” หัวข้อย่อยแบนเนอร์อยู่บรรทัดเดียว หัวข้อจำกัด 72% การ์ด Imagine ห้าบรรทัด พื้น 132px และในแผงเป็นห้าบรรทัดเต็ม",zh:"在 420px 下测量全部 194 张卡片：两行上限截断了 138 张。现在是三行，更长的以“…”结尾。横幅小标题收进一行，标题限宽 72%。Imagine 卡片五行，最小宽度 132px，面板里是完整的五行。",vi:"Đo trên cả 194 thẻ ở 420px: trần hai dòng cắt mất 138 thẻ. Nay là ba dòng, phần dài hơn kết thúc bằng “…”. Kicker banner một dòng, tiêu đề giới hạn 72%. Thẻ Imagine năm dòng, sàn 132px, và trong Panel là năm dòng trọn vẹn.",id:"Diukur pada seluruh 194 kartu di 420px: batas dua baris memotong 138 kartu. Kini tiga baris, sisanya diakhiri “…”. Kicker banner satu baris, judul dibatasi 72%. Kartu Imagine lima baris, lantai 132px, dan di Panel lima baris penuh.",ms:"Diukur pada kesemua 194 kad pada 420px: siling dua baris memotong 138 kad. Kini tiga baris, selebihnya berakhir “…”. Kicker sepanduk satu baris, tajuk dihadkan 72%. Kad Imagine lima baris, lantai 132px, dan dalam Panel lima baris penuh."} },
   { v:"6.95.0", kind:"page", ref:"pgGallery",
     t:{my:"အသုံးပြုရ အဆင်ပြေအောင် ၆ ချက် — Gallery မှာ ရှာ · filter · စီ လို့ရပြီ၊ ဗီဒီယို ပြီးရင် (app နောက်ကွယ်ရောက်နေရင်လည်း) notification ရမယ်၊ Home မှာ နောက်ဆုံး ရလဒ် ၆ ခု၊ clip ထဲက ပုံ တစ်ပုံ → Talking Photo / IMAGE 1၊ Photoshop Panel မှာ ဖိုင် ဆွဲထည့် (drag & drop) လို့ရပြီ၊ Setup မှာ စာလုံး အရွယ် သေး · ပုံမှန် · ကြီး",en:"Six conveniences — search · filter · sort in the Gallery, a notification when a video finishes while the app is in the background, the last six results on Home, one frame of any clip into Talking Photo / IMAGE 1, drag & drop onto every Photoshop Panel slot, and a text-size setting (Small · Normal · Large) in Setup",shn:"ၸႂ်ႉငၢႆႈလိူဝ် ၆ ဢၼ် — Gallery ၼႂ်း သွၵ်ႈႁႃ · filter · ၸႅၵ်ႇ၊ ဝီးတီးဢူဝ်ႊယဝ်ႉ (app ယူႇတၢင်းလင်ၵေႃႈ) လႆႈ notification၊ Home ၼႂ်း ၽွၼ်းလႆႈလိုၼ်းသုတ်း ၆ ဢၼ်၊ ႁၢင်ႈၼိုင်ႈၶႅပ်း ၼႂ်း clip → Talking Photo / IMAGE 1၊ Photoshop Panel ၼႂ်း drag & drop ၾၢႆႇ၊ Setup ၼႂ်း တူဝ်လိၵ်ႈ လဵၵ်ႉ · ပၵ်းၵဝ်ႇ · ယႂ်ႇ",kac:"Ahkyak 6 — Gallery hta tam · filter · sort lu sai, video ngut yang (app hpang de nga tim) notification lu na, Home hta hpang jahtum lachyum 6, clip kaw na sumla langai → Talking Photo / IMAGE 1, Photoshop Panel hta file drag & drop lu sai, Setup hta laika kaba Kaji · Pyaw · Kaba",th:"6 ความสะดวก — ค้นหา · กรอง · เรียงในแกลเลอรี, แจ้งเตือนเมื่อวิดีโอเสร็จแม้แอปอยู่เบื้องหลัง, 6 ผลลัพธ์ล่าสุดบนหน้า Home, ดึงหนึ่งเฟรมจากคลิปไป Talking Photo / IMAGE 1, ลากวางไฟล์ลงทุกช่องของ Photoshop Panel, และตั้งขนาดตัวอักษร (เล็ก · ปกติ · ใหญ่) ใน Setup",zh:"六项便利 — 图库支持搜索·筛选·排序，视频在后台完成时发送通知，Home 显示最近 6 个结果，任意片段截一帧送入 Talking Photo / IMAGE 1，Photoshop 面板每个槽位支持拖放文件，Setup 中可设置文字大小（小·标准·大）",vi:"Sáu tiện ích — tìm · lọc · sắp xếp trong Gallery, thông báo khi video xong lúc app ở nền, 6 kết quả gần nhất trên Home, một khung hình của clip vào Talking Photo / IMAGE 1, kéo thả tệp vào mọi ô của Photoshop Panel, và cỡ chữ (Nhỏ · Thường · Lớn) trong Setup",id:"Enam kemudahan — cari · filter · urut di Galeri, notifikasi saat video selesai ketika aplikasi di latar belakang, 6 hasil terakhir di Home, satu frame dari klip ke Talking Photo / IMAGE 1, seret & lepas berkas ke setiap slot Photoshop Panel, dan ukuran teks (Kecil · Normal · Besar) di Setup",ms:"Enam kemudahan — cari · tapis · susun dalam Galeri, notifikasi bila video siap ketika aplikasi di latar belakang, 6 hasil terkini di Home, satu bingkai daripada klip ke Talking Photo / IMAGE 1, seret & lepas fail ke setiap slot Photoshop Panel, dan saiz teks (Kecil · Biasa · Besar) dalam Setup"},
     s:{my:"**Gallery** — အပေါ်မှာ ရှာဖွေစာ (prompt · workflow · ရက်စွဲ)၊ အမျိုးအစား (အားလုံး · ပုံများ · ဗီဒီယိုများ · ★ သိမ်းထား) နဲ့ စီပုံ (အသစ်ဆုံး · အဟောင်းဆုံး · ဖိုင် အကြီးဆုံး) — “N / M ပြထား” လို့ မှန်မှန် ပြတယ်။ Photoshop Panel ရဲ့ Gallery မှာလဲ အတူတူ။ **Notification** — Video · Video Upscale · Video Tools · Talking Photo ပထမဆုံး အကြိမ် ထုတ်တဲ့အခါ browser က ခွင့်တောင်းမယ်; app ကို နောက်ကွယ်ထားပြီး ပြီးသွားရင် notification လာမယ်၊ နှိပ်ရင် အဲ့စာမျက်နှာ ပွင့်မယ်။ Setup ▸ ပြင်ဆင်ချက် မှာ ပိတ်/ဖွင့် လို့ရတယ် (Panel မှာ မရှိ — Photoshop ထဲ notification မရှိလို့)။ **Home** — Continue card အောက်မှာ နောက်ဆုံး ရလဒ် ၆ ခု၊ နှိပ်ရင် Gallery မှာ အဲ့ပုံ ရွေးပြီးသား။ **ပုံ ယူ** — Video ရလဒ်ဘောက်စ်တိုင်း + Video wizard ရဲ့ Result မှာ “ပုံ ယူ → Talking Photo” နဲ့ “ပုံ ယူ → IMAGE 1” — clip ရဲ့ ပထမ တစ်စက္ကန့်ခွဲ ပုံ (JPEG) က Talking Photo ရဲ့ မျက်နှာ ဒါမှမဟုတ် Freeform ရဲ့ IMAGE 1 ဖြစ်သွားမယ်။ Panel မှာ video ဖွင့်လို့ရမှသာ ပေါ်မယ်။ **Drag & drop (Panel)** — Talking Photo ပုံ/အသံ · Video Tools clip/ပုံ · Upscale clip · Retouch A/B PHOTO card · Freeform slot — ကွန်ပျူတာက ဖိုင်ကို ဆွဲထည့်ရင် ရွေးလိုက်တဲ့အတိုင်း ဝင်မယ်; SELF-TEST မှာ “Drag & drop” row (Photoshop ထဲ တကယ် စစ်ရန် ကျန်)။ **စာလုံး အရွယ်** — Setup ▸ ပြင်ဆင်ချက် ▸ သေး · ပုံမှန် · ကြီး — app နဲ့ Panel နှစ်ခုလုံး၊ မှတ်ထားမယ်။",en:"**Gallery** — a search box (prompt · workflow · date), a kind filter (All · Photos · Videos · ★ Starred) and a sort (Newest · Oldest · Largest) above the grid, with an honest “N of M shown” count; the Photoshop Panel's Gallery has the same three. **Notifications** — the first Video · Video Upscale · Video Tools · Talking Photo job asks the browser once; when a job finishes while the app is in the background you get a notification, and tapping it opens that page. Switch it in Setup ▸ SETTINGS (not in the Panel — Photoshop has no notifications). **Home** — the last six results under the Continue card; a tap opens the Gallery on that one. **Frame** — every video result box and the video wizard's Result carry “Frame → Talking Photo” and “Frame → IMAGE 1”: the clip's half-second frame (JPEG) becomes the Talking Photo face or Freeform's IMAGE 1. In the Panel only where video decodes. **Drag & drop (Panel)** — Talking Photo photo/voice · Video Tools clip/photo · Upscale clip · the Retouch A/B PHOTO card · the Freeform slots: drop a file from the computer and it lands as if picked; SELF-TEST gets a “Drag & drop” row (real-Photoshop check still pending). **Text size** — Setup ▸ SETTINGS ▸ Small · Normal · Large, on the app and the Panel, remembered.",shn:"Gallery ၼႂ်း သွၵ်ႈႁႃ · filter · ၸႅၵ်ႇ၊ ဝီးတီးဢူဝ်ႊယဝ်ႉ လႆႈ notification၊ Home ၼႂ်း ၽွၼ်းလႆႈလိုၼ်းသုတ်း ၆၊ clip → Talking Photo / IMAGE 1၊ Panel drag & drop၊ တူဝ်လိၵ်ႈ လဵၵ်ႉ · ပၵ်းၵဝ်ႇ · ယႂ်ႇ။",kac:"Gallery hta tam · filter · sort, video ngut yang notification, Home hta lachyum 6, clip → Talking Photo / IMAGE 1, Panel drag & drop, laika kaba Kaji · Pyaw · Kaba.",th:"ค้นหา · กรอง · เรียงในแกลเลอรี, แจ้งเตือนเมื่อวิดีโอเสร็จ, 6 ผลลัพธ์ล่าสุดบน Home, เฟรมจากคลิป → Talking Photo / IMAGE 1, ลากวางใน Panel, ขนาดตัวอักษร เล็ก · ปกติ · ใหญ่",zh:"图库搜索·筛选·排序，视频完成通知，Home 最近 6 个结果，片段截帧 → Talking Photo / IMAGE 1，面板拖放，文字大小 小·标准·大。",vi:"Tìm · lọc · sắp xếp trong Gallery, thông báo khi video xong, 6 kết quả gần nhất trên Home, khung hình → Talking Photo / IMAGE 1, kéo thả trong Panel, cỡ chữ Nhỏ · Thường · Lớn.",id:"Cari · filter · urut di Galeri, notifikasi saat video selesai, 6 hasil terakhir di Home, frame → Talking Photo / IMAGE 1, seret & lepas di Panel, ukuran teks Kecil · Normal · Besar.",ms:"Cari · tapis · susun dalam Galeri, notifikasi bila video siap, 6 hasil terkini di Home, bingkai → Talking Photo / IMAGE 1, seret & lepas dalam Panel, saiz teks Kecil · Biasa · Besar."} },
@@ -12602,6 +12636,18 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     g.b.appendChild(gd);
     wfHost.appendChild(g.g);
   });
+  /* 6.96.0 — the ceiling says where the text stops; this says that it did. Run after the grid is in the
+     document, because a node measures nothing before it is — and again whenever a group opens, because a
+     closed .grp-b is display:none and every card inside it measures 0. grp() is lifted into the panel's
+     studio suites and may not call a page-level helper, so the host takes the tap on the way up. */
+  ellMark(wfHost, ".wfmini .s");
+  if(!wfHost.__ellBound){
+    wfHost.__ellBound=1;
+    wfHost.addEventListener("click", function(ev){
+      var t = ev.target; while(t && t !== wfHost && !(t.className && String(t.className).indexOf("grp-h")>=0)) t = t.parentNode;
+      if(t && t !== wfHost) ellMark(wfHost, ".wfmini .s");
+    });
+  }
   renderFavRecent();
   /* v4.41: category quick-jump rail — 116 cards across 9 groups need a map.
      Tap = open that group and bring it to the top of the view. */
@@ -12631,6 +12677,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
             }
           }
         });
+        ellMark(wfHost, ".wfmini .s");
         if(first) first.scrollIntoView({behavior:"smooth", block:"center"});
       };
       rail.appendChild(b);
@@ -12638,7 +12685,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     wfJumpTargets.forEach(function(tg){
       var b=el("button","chip", tg.t+" "+tg.n);
       b.onclick=function(){
-        if(tg.g.className.indexOf("open")<0) tg.g.className="grp open";
+        if(tg.g.className.indexOf("open")<0){ tg.g.className="grp open"; ellMark(tg.g, ".wfmini .s"); }
         tg.g.scrollIntoView({behavior:"smooth", block:"start"});
       };
       rail.appendChild(b);
@@ -12722,6 +12769,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       }
     }
     if(!q) _wfOpenSnap=null;
+    ellMark(wfHost, ".wfmini .s");   /* 6.96.0 — the filter opens and closes groups; the marker follows */
     wfEmpty.classList.toggle("on", !!(q && !anyMatch));
   }
   $("wfSearch").oninput=function(){
@@ -29627,7 +29675,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.95.0";
+var APP_VER="6.96.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -30417,6 +30465,8 @@ var IMAGINE = (function(){
     var grid = el("div","im-grid"); card.appendChild(grid);
     for(var i=0;i<D.tools.length;i++) grid.appendChild(hubCard(D.tools[i]));
     card.appendChild(el("p","mut im-next", t("hub_next")));
+    /* 6.96.0 — the same marker the workflow cards use, through the host so the panel runs its own copy */
+    try{ if(H.ellMark) H.ellMark(root, ".im-card-sum"); }catch(e){}
   }
   /* 6.29.1 wave — the card's picture IS a Before | After compare: the tool's result (after) as the whole 2:3 picture,
      the untouched base photograph (before) on top, clipped at the split; a drag on the picture moves the line, a plain
@@ -30941,6 +30991,7 @@ var IMAGINE = (function(){
   }
   var host = {
     t9: function(m){ return L9(m); },
+    ellMark: function(root, sel){ ellMark(root, sel); },   /* 6.96.0 — the clamp marker, the panel has its own */
     icon: function(name){ var s=document.createElement("span"); s.innerHTML=icn(name); return s.firstChild; },
     button: function(cls){ var b=document.createElement("button"); b.type="button"; b.className=cls||""; return b; },
     asset: function(kind, file){ return libArt((kind==="thumb" ? "lib/wf/imagine/th/" : "lib/wf/imagine/") + file); },   /* 6.29.2 — replaced art rides its LIB_ART_REV token */

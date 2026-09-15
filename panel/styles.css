@@ -349,12 +349,14 @@ body {
    text-shadow is one of the properties this renderer does draw (seven other
    rules in this file rely on it). */
 .ph-kick {
+  max-width: 72%;
   position: relative;
   font-size: 10px; font-weight: 800; letter-spacing: .26em;
   text-transform: uppercase; color: var(--accent-h);
   text-shadow: 0 1px 4px rgba(0, 0, 0, .9), 0 2px 14px rgba(0, 0, 0, .75);
 }
 .ph-head {
+  max-width: 72%;
   position: relative;
   margin: 2px 0 0;
   font-size: 15px; font-weight: 800; line-height: 1.5;
@@ -2012,8 +2014,12 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    now measures the ink against the box instead of counting line-heights. */
 .wfmini .t { display: block; margin-top: 4px; min-height: 2.25em; max-height: 4.5em;
   font-size: 12.5px; font-weight: 800; line-height: 2.25; overflow: hidden; }
-.wfmini .s { display: block; margin-top: 4px; margin-bottom: 4px; max-height: 4.5em;
+/* 6.167.0 — three lines, and a marker where the words really run on (the app's own 6.96.0 rule: 138 of
+   194 cards were cut at two lines, and this renderer cut them with no ellipsis at all). */
+.wfmini .s { position: relative; display: block; margin-top: 4px; margin-bottom: 4px; max-height: 6.75em;
   font-size: 11.5px; color: var(--muted); line-height: 2.25; overflow: hidden; }
+.wfmini .s .ell, .im-card-sum .ell { position: absolute; right: 0; bottom: 0; padding-left: 12px;
+  background-color: var(--panel-2); color: var(--muted); font-weight: 700; }
 .wfmini .go { display: flex; flex-direction: row; align-items: center; margin-top: auto; align-self: flex-end;
   padding: 5px 11px 5px 8px; border: 1px solid rgba(233, 185, 73, .38); border-radius: 999px; background-color: rgba(233, 185, 73, .08);
   font-size: 10.5px; font-weight: 800; color: var(--accent-h); line-height: 1.2; }
@@ -2038,9 +2044,12 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 /* app .kick (.68rem/800, .28em tracking) and h1 (18/800, lh 1.35) at 76% width;
    the app's 1px column gap is the kick's bottom margin (margins never collapse
    here, so kick 1 + h1 2 = the app's 3) */
-#pageAiTools .hero-mini .kick { position: relative; max-width: 76%; margin: 0 0 1px; padding: 10px 0 0;
-  font-size: 10.88px; font-weight: 800; letter-spacing: .28em; text-transform: uppercase; color: var(--accent); line-height: 1.7;
+/* 6.96.0 — the app's own measured kicker: the whole banner width and .12em, stepping down under 390px
+   so a 320px Photoshop panel still draws it on one line (docs/app/index.html .hero-mini .kick) */
+#pageAiTools .hero-mini .kick { position: relative; max-width: 100%; margin: 0 0 1px; padding: 10px 6px 0 0;
+  font-size: 10.88px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); line-height: 1.7;
   text-shadow: 0 1px 4px rgba(0, 0, 0, .9), 0 2px 14px rgba(0, 0, 0, .75); }
+@media (max-width:389px){ #pageAiTools .hero-mini .kick { font-size: 9.6px; letter-spacing: .10em; } }
 #pageAiTools .hero-mini .h1 { position: relative; max-width: 76%; margin: 2px 0; font-size: 18px; font-weight: 800; line-height: 1.35;
   color: var(--text); text-shadow: 0 1px 4px rgba(0, 0, 0, .9), 0 2px 14px rgba(0, 0, 0, .75); }
 #pageAiTools .hero-mini .h1 .em { font-style: normal; color: var(--accent-h); }
@@ -3283,6 +3292,17 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .vwiz-sheet .wiz-nav-acts { margin-top: 12px; }
 .vwiz-sheet .wiz-nav-acts .btn { font-size: 12.5px; padding: 11px 8px; }
 
+/* 6.167.0 — the hub heading's icon stays on line one. UXP wrapped the h2's flex row, so the wand sat
+   alone above the title in the owner's Photoshop; the row is told not to wrap and the icon not to grow. */
+#pageImagine .im-hub h2 { flex-wrap: nowrap; align-items: flex-start; }
+#pageImagine .im-hub h2 .ic-s { flex: 0 0 auto; margin-top: 2px; }
+
+/* 6.167.0 — THE CEILING MUST BE A WHOLE NUMBER OF LINES. The lifted .im-card-sum asks for 11.5px/1.5 and
+   7.5em (five lines on the web app), but the card's own .mut wins here and draws 12px/1.7, so 7.5em came
+   to 90px against a 20.4px line — four lines and a sliver of a fifth. The panel keeps its own larger,
+   Burmese-safe line and states the ceiling against it: 5 x 1.7 = 8.5em, whatever the text size. */
+#pageImagine .im-card-sum { line-height: 1.7; max-height: 8.5em; }
+
 /* ---- IMAGINE_CSS ---- */
 /* Imagine (6.29.0 wave) — the hub and the tool view. Flex and margins only: the same rules are
    lifted into the Photoshop panel (tools/build_panel_imagine.js), and UXP draws no CSS grid, no
@@ -3290,7 +3310,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 #pageImagine .im-intro{margin:0 0 12px;line-height:1.6}
 .im-grid{display:flex;flex-wrap:wrap;margin:0 -5px}
 /* 6.93.0 — two cards to a row on a phone (150px floor, was 240px: twenty-two cards in one 14,000px column), three at 700px, four at 1100px; a compact body */
-.im-card{flex:1 1 40%;min-width:150px;margin:5px;border:1px solid var(--line-soft);border-radius:14px;background:var(--panel-2);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;color:var(--text);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.im-card{flex:1 1 40%;min-width:132px;margin:5px;border:1px solid var(--line-soft);border-radius:14px;background:var(--panel-2);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;color:var(--text);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
 .im-card:hover,.im-card.lift,.im-card:focus-visible{border-color:var(--accent);outline:none;transform:translateY(-6px) scale(1.012);box-shadow:0 16px 34px rgba(0,0,0,.5)}
 .im-card.lift{border-color:var(--accent-h)}
 /* the card picture: a 2:3 Before | After compare, the after as the whole picture, the before clipped on top */
@@ -3304,7 +3324,9 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .im-card-body{padding:8px 10px 10px;display:flex;flex-direction:column;flex:1 1 auto}
 .im-card-name{font-weight:800;font-size:13px;line-height:1.3;display:flex;align-items:center;color:var(--text)}
 .im-card-name .ic-s{margin-right:6px;flex:none}
-.im-card-sum{margin:4px 0 8px;font-size:11.5px;line-height:1.5;max-height:3em;overflow:hidden;flex:1 1 auto}
+/* 6.96.0 — measured over all 22 hub cards at 420px: 9 end inside four lines, 17 inside five, and the
+   fifth line costs 17px on a 448px card. Five it is; what is still long ends in the .ell marker. */
+.im-card-sum{position:relative;margin:4px 0 8px;font-size:11.5px;line-height:1.5;max-height:7.5em;overflow:hidden;flex:1 1 auto}
 .im-card-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:0 -3px}
 .im-card-foot .im-tplcount{font-size:10.5px;padding:3px 8px;min-height:0;white-space:nowrap;flex:1 1 auto;margin:3px;text-align:center;justify-content:center}
 .im-card-foot .im-open{min-height:32px;padding:5px 12px;margin:3px;flex:1 1 auto;font-size:11.5px}

@@ -87,6 +87,12 @@ const COLLECT = `(function(sel){
        explicit and greppable rather than a growing list of literal strings
        whose values change with the machine. */
     if (e.getAttribute && e.getAttribute("data-panel-only")) return;
+    /* 6.96.0 — the clamp marker is not a string, it is a measurement. Both surfaces append span.ell
+       ("…") to a card description that really overflows its ceiling (ellMark, identical code on each),
+       but WHICH cards overflow depends on how wide the harness opened the surface — the app walk runs
+       at one width, the panel walk at another. Comparing it would report a difference no student can
+       act on, and the marker's own contract is pinned, on both surfaces, by verify_ui_tidy_696. */
+    if (e.className && String(e.className).split(/\\s+/).indexOf("ell") >= 0) return;
     /* A button label that wraps is ONE label. The app lets inline flow wrap it
        and the text stays a single node; UXP centres a flex row, so main.js
        (fitBtnIn) splits the label into .icn-l1 + .icn-rest to put the icon on

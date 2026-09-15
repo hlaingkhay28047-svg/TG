@@ -337,6 +337,30 @@ function clearSrc(el) {
    Every className read goes through here now, so the next element that ships
    without a class cannot repeat it. */
 function clsOf(el) { return (el && el.className != null) ? String(el.className) : ""; }
+/* 6.167.0 — ONE CLAMP MARKER FOR BOTH SURFACES (the app's ellMark, 6.96.0). A card's description is cut
+   at a line ceiling; UXP draws no -webkit-line-clamp, so until now it was cut with nothing to show for it.
+   The marker is appended only where the ink really overflows its box — measured through scrollHeight, the
+   reading the SELF-TEST's own scrollTop row proves this renderer answers — and silently skipped when the
+   host reports nothing, so a renderer that cannot measure simply looks as it did before. */
+function ellMark(root, sel) {
+  try {
+    const list = (root || document).querySelectorAll(sel);
+    Array.prototype.forEach.call(list, function (n) {
+      try {
+        const old = n.querySelector(".ell");
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+        /* half a line, never a pixel: Burmese stacked diacritics draw past their line box, so a box that
+           holds its text exactly still reports a few pixels of overflow (the app measured 73 against 69) */
+        const lh = parseFloat(getComputedStyle(n).lineHeight) || 16;
+        if (n.scrollHeight - n.clientHeight > lh / 2) {
+          const e = document.createElement("span");
+          e.className = "ell"; e.textContent = "\u2026";
+          n.appendChild(e);
+        }
+      } catch (e) { }
+    });
+  } catch (e) { }
+}
 function setIcnText(el, name, tint, text, cls) {
   if (!el) return;
   el.textContent = "";
@@ -2597,7 +2621,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.166.0";
+const PANEL_VERSION = "6.167.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -3937,6 +3961,7 @@ function applyI18n() {
   };
   g.HNK.homeRecent = { list: homeRecentListP, open: homeRecentOpen, title: function () { return ff9(GAL_L.recent); } };
   g.HNK.dropTarget = dropTargetBridge();
+  g.HNK.ellMark = ellMark;   /* 6.167.0 — the screens' clamp marker */
   g.HNK.learnMode = {
     get: function () { return !!state.learnMode; },
     set: function (on) { state.learnMode = !!on; if (!state.learnMode) { try { disarm(); } catch (e) { } } try { saveSettings(); } catch (e2) { } return state.learnMode; }
@@ -12595,6 +12620,7 @@ let imagineReady = false;
 function imagineHost() {
   return {
     t9: function (m) { return ff9(m); },
+    ellMark: function (root, sel) { ellMark(root, sel); },   /* 6.167.0 — the app's clamp marker, drawn here too */
     icon: function (name) { return ffIcon(name, "cream"); },
     button: function (cls) { return mkBtn(cls); },
     asset: function (kind, file) { return (kind === "thumb" ? "icons/imagine/th/" : "icons/imagine/") + file; },
