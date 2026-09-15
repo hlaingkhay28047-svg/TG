@@ -99,10 +99,12 @@ L.forEach(l => {
 });
 report("E) the panel's lifted catalog opens each of the twelve relight prompts with the app's text and guard, and carries the same AVOID list",
   drift.length === 0, drift.slice(0, 6));
-const designer = (PANEL_MAIN.match(/: "\\nDo NOT show any studio equipment in the image - ([^"]*)"\);/) || [])[1] || "";
-report("E2) the panel's Lighting designer uses the strengthened clause and ships with equipment OFF",
-  designer.indexOf(EDGE) >= 0 && /bright panel, white rectangle, glowing shape or light spill/.test(designer) &&
-  /lightEquip: false,/.test(PANEL_MAIN), { designer: designer.slice(0, 160) });
+/* v6.161.0 — the panel's own Lighting designer was the old Freeform relight card, whose stage
+   never existed in the panel's markup after 6.51.0 (the pages are the app's own); it left
+   main.js with the dead-controls wave. The lifted catalog above is the panel's only relight
+   text, so neither the equipment clause nor the lightEquip flag may survive as an orphan. */
+report("E2) the panel's own Lighting designer is gone with the old Freeform page — main.js carries no studio-equipment clause and no lightEquip state of its own; the lifted catalog is the panel's relight text",
+  !/Do NOT show any studio equipment/.test(PANEL_MAIN) && !/lightEquip/.test(PANEL_MAIN) && drift.length === 0, null);
 
 /* ---- F) What's New says so, and opens a relight card ---- */
 /* the relight row shipped with 6.16.0; later releases stack above it, so it is found by what it says */
