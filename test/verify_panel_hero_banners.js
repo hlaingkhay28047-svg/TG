@@ -182,17 +182,32 @@ function deadClassScan() {
 }
 
 /* ================= D) the release ================= */
+/* 6.96.2 — these pins read the tree instead of naming the version this test was
+   written for. A pin that hardcodes its own wave turns the very next lockstep
+   bump into a false alarm (this test did exactly that on 6.96.2, and
+   verify_ui_tidy_696 had done it one wave earlier). What is pinned is the
+   AGREEMENT between the seven places, and the presence of THIS subject's own
+   What's New row — 6.96.1, the wave that fixed the two banners — which stays in
+   the table as later rows are added above it. */
 function releasePins() {
-  report("D1) the fix ships in lockstep: web 6.96.1, panel 6.167.1, the test in the CI sweep and the landing count at 233",
-    /var APP_VER *= *"6\.96\.1"/.test(APP) && MANIFEST.version === "6.167.1" &&
-    JSON.parse(read("docs/download/panel-version.json")).v === "6.167.1" &&
-    /PANEL_VERSION = "6\.167\.1"/.test(PMAIN) &&
-    JSON.parse(read("docs/app/version.json")).v === "6.96.1" &&
-    CI.indexOf("node test/verify_panel_hero_banners.js") > 0 && /233/.test(LANDING),
-    { app: (APP.match(/var APP_VER *= *"([^"]+)"/) || [])[1], panel: MANIFEST.version });
-  const between = (s, a, b) => { const i = s.indexOf(a), j = s.indexOf(b, i); return (i < 0 || j < 0) ? "" : s.slice(i, j); };
-  const row = between(APP, 'var WHATS_NEW = [\n  { v:"6.96.1"', 'v:"6.96.0"');
-  report("D2) the What's New row names the two banners in all nine languages",
+  const appVer = JSON.parse(read("docs/app/version.json")).v;
+  const panVer = MANIFEST.version;
+  const pv = JSON.parse(read("docs/download/panel-version.json"));
+  const count = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
+  report("D1) the wave ships in lockstep — web " + appVer + ", panel " + panVer + " across the manifest, panel-version.json and PANEL_VERSION, with this test in the CI sweep and the landing count at 233 or more",
+    /^6\.9[6-9]\.\d+$|^6\.\d{3}\.\d+$|^[7-9]\./.test(appVer) &&
+    /^6\.16[7-9]\.\d+$|^6\.1[7-9]\d\.\d+$|^6\.[2-9]\d\d\.\d+$/.test(panVer) &&
+    new RegExp('var APP_VER *= *"' + appVer.replace(/\./g, "\\.") + '"').test(APP) &&
+    pv.v === panVer && pv.latest_version === panVer &&
+    new RegExp('PANEL_VERSION = "' + panVer.replace(/\./g, "\\.") + '"').test(PMAIN) &&
+    CI.indexOf("node test/verify_panel_hero_banners.js") > 0 && count >= 233,
+    { appVer, panVer, pv: pv.v, count });
+
+  /* the row this test's own wave added, wherever it now sits in the table */
+  const head = '{ v:"6.96.1"';
+  const i = APP.indexOf(head);
+  const row = i < 0 ? "" : APP.slice(i, APP.indexOf('{ v:"', i + head.length));
+  report("D2) the 6.96.1 What's New row still names the two banners in all nine languages",
     row.length > 100 && LANGS.every(l => new RegExp('\\b' + l + ':"').test(row)), { len: row.length });
 }
 
