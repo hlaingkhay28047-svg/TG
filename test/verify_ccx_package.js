@@ -65,11 +65,22 @@ if (fs.existsSync(METADATA)) {
   const sourceManifestPath = path.join(SOURCE, "manifest.json");
   const sourceManifest = fs.existsSync(sourceManifestPath)
     ? JSON.parse(fs.readFileSync(sourceManifestPath, "utf8")) : {};
-  check("panel version is coordinated across release metadata and source",
+  /* v6.161.0 — minimum_supported_version is the cluster policy (docs/download/panel-version.json,
+     the value the publish lane writes), never the release itself: a manifest that repeated its own
+     version said nothing. It must also not exceed the release, or the policy write would lock
+     every installed panel out. */
+  const policyPath = path.join(ROOT, "docs", "download", "panel-version.json");
+  const policyMinimum = fs.existsSync(policyPath)
+    ? (JSON.parse(fs.readFileSync(policyPath, "utf8")).minimum_supported_version || "") : "";
+  const semver = (v) => /^\d+\.\d+\.\d+$/.test(v || "") ? v.split(".").map(Number) : null;
+  const notAbove = (a, b) => { const x = semver(a), y = semver(b); if (!x || !y) return false;
+    for (let i = 0; i < 3; i++) { if (x[i] !== y[i]) return x[i] < y[i]; } return true; };
+  check("panel version is coordinated across release metadata and source, and the minimum is the cluster policy",
     /^\d+\.\d+\.\d+$/.test(metadata.version || "") &&
-    metadata.minimum_supported_version === metadata.version &&
+    metadata.minimum_supported_version === policyMinimum &&
+    notAbove(metadata.minimum_supported_version, metadata.version) &&
     sourceManifest.version === metadata.version,
-    JSON.stringify({ metadata: metadata.version, minimum: metadata.minimum_supported_version,
+    JSON.stringify({ metadata: metadata.version, minimum: metadata.minimum_supported_version, policy: policyMinimum,
       manifest: sourceManifest.version }));
   check("release metadata names the versioned private artifact",
     metadata.artifact_file === `HNK_Ai_Panel_v${metadata.version}.ccx`,
