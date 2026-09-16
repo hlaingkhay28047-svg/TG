@@ -80,9 +80,14 @@ function sourcePins() {
     /\.wfv \.bdg\{[^}]*border-radius:999px;width:22px;height:22px/.test(APP) && /\.wfv \.wf-need\{top:auto;bottom:6px;left:6px;height:22px;line-height:20px/.test(APP) &&
     /\.wfmini \.go\{[^}]*align-self:flex-end;display:inline-flex[^}]*border-radius:999px/.test(APP) && APP.indexOf(".wfmini.wf-span2 .wfv{aspect-ratio:2/1}") > 0 && APP.indexOf(".wfmini.wf-span2 .wfv{aspect-ratio:3/2}") > 0 &&
     /\.wf-need,\.wfv \.wf-need\{font-size:11px\}/.test(APP), { len: cardCss.length });
-  report("A2) the panel card carries the same rules in styles.css — 26px discs, the batch disc at right:34px, the 22px pill, the Wizard pill, a 50% padding-top (2:1) on the row-spanning art; no flex gap, no grid, no aspect-ratio (UXP draws none of them)",
+  /* 6.168.2 — the row-spanning art is 3:2 here now, not 2:1. 6.93.0 copied the app's
+     wide-layout box, and the app can afford it because it CROPS (object-fit: cover);
+     this renderer has no object-fit, so it stretched a 3:2 picture into a 2:1 hole and
+     the owner photographed the result. The app's own narrow-width rule is 3:2 and a
+     panel is always narrow — verify_wf_page_6972 owns the rule and measures it. */
+  report("A2) the panel card carries the same rules in styles.css — 26px discs, the batch disc at right:34px, the 22px pill, the Wizard pill, a 3:2 padding-top on the row-spanning art (6.168.2: this renderer stretches, it cannot crop); no flex gap, no grid, no aspect-ratio (UXP draws none of them)",
     /#pageAiTools \.wfmini \.wfbatch \{ left: auto; right: 34px; justify-content: flex-end; \}/.test(PCSS) && /#pageAiTools \.wfmini \.fav > span, #pageAiTools \.wfmini \.wfbatch > span \{[^}]*width: 26px; height: 26px/.test(PCSS) &&
-    /\.wfmini \.wf-need \{ position: absolute; left: 6px; bottom: 6px; height: 22px/.test(PCSS) && PCSS.indexOf(".wfmini.wf-span2 .wfv { padding-top: 50%; }") > 0 &&
+    /\.wfmini \.wf-need \{ position: absolute; left: 6px; bottom: 6px; height: 22px/.test(PCSS) && PCSS.indexOf(".wfmini.wf-span2 .wfv { padding-top: 66.6667%; }") > 0 &&
     !/wf-span2 \.wfv \{[^}]*aspect-ratio/.test(PCSS), null);
   const mod = between(APP, "/* ---- IMAGINE_MODULE ---- */", "/* ---- /IMAGINE_MODULE ---- */");
   const css = between(APP, "/* ---- IMAGINE_CSS ---- */", "/* ---- /IMAGINE_CSS ---- */");
@@ -287,8 +292,8 @@ async function panelWalk(browser) {
       const R = (el) => el.getBoundingClientRect(); const fav = R(c.querySelector(".fav > span")), bat = R(c.querySelector(".wfbatch > span")), art = R(c.querySelector(".wfv")), need = R(c.querySelector(".wf-need")), bdg = c.querySelector(".bdg") && R(c.querySelector(".bdg"));
       const span = cards.find(x => /\bwf-span2\b/.test(String(x.className || ""))); const sv = span && R(span.querySelector(".wfv"));
       return { n: cards.length, fav: [Math.round(fav.width), Math.round(fav.height)], bat: [Math.round(bat.width), Math.round(bat.height)], batIn: Math.round(art.right - bat.right), sameTop: Math.abs(fav.top - bat.top) < 2, needH: Math.round(need.height), bdg: bdg && [Math.round(bdg.width), Math.round(bdg.height)], spanRatio: sv && Math.round(sv.width / sv.height * 100) / 100 }; });
-    report("C3) the panel's Smart Workflow card wears the same tidy: twin 26px discs on one row at the top-right (batch 30–40px in from the art's edge), a 22px count pill, a 22px route disc, a 2:1 art on the row-spanning card",
-      c3.n > 100 && c3.fav[0] === 26 && c3.fav[1] === 26 && c3.bat[0] === 26 && c3.bat[1] === 26 && c3.batIn >= 30 && c3.batIn <= 40 && c3.sameTop && c3.needH === 22 && c3.bdg && c3.bdg[0] === 22 && c3.spanRatio && Math.abs(c3.spanRatio - 2) < 0.06, c3);
+    report("C3) the panel's Smart Workflow card wears the same tidy: twin 26px discs on one row at the top-right (batch 30–40px in from the art's edge), a 22px count pill, a 22px route disc, a 3:2 art on the row-spanning card (6.168.2)",
+      c3.n > 100 && c3.fav[0] === 26 && c3.fav[1] === 26 && c3.bat[0] === 26 && c3.bat[1] === 26 && c3.batIn >= 30 && c3.batIn <= 40 && c3.sameTop && c3.needH === 22 && c3.bdg && c3.bdg[0] === 22 && c3.spanRatio && Math.abs(c3.spanRatio - 1.5) < 0.06, c3);
     /* Selection Edit in the panel */
     const c4 = await page.evaluate(async () => {
       HNK.aiToolsApp.workflowScreen().select("region-edit"); await new Promise(r => setTimeout(r, 700));
