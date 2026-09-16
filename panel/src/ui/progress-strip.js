@@ -85,17 +85,37 @@ function create(deps) {
     el.appendChild(msgEl);
   }
 
+  /* 6.168.2 — WHERE THE STRIP LIVES. It was appended to the mount root, which put
+     it at the very bottom of the page: on a Smart Workflow the student pressed
+     GENERATE near the top and then had to scroll past the Results card and the
+     History link to find out whether anything was happening at all. The owner
+     photographed exactly that and asked for it beside the button.
+
+     So a screen that wants the strip in a particular place renders an empty anchor
+     with id hnkRunHere, and the strip moves itself into it — appendChild moves a
+     node that is already in the document, so it follows the anchor across every
+     repaint. A screen with no anchor keeps the old behaviour, appended to the root,
+     so every other page is untouched. */
+  function anchor() {
+    if (!doc || !rootEl) return null;
+    try {
+      if (typeof rootEl.querySelector === "function") return rootEl.querySelector("#hnkRunHere");
+    } catch (e) { }
+    return null;
+  }
+
   /* The app controller clears the root on every navigation; re-attach. */
   function ensure() {
     if (!doc || !rootEl) return false;
     if (!el) build();
+    var host = anchor() || rootEl;
     var attached = false;
     try {
-      var k = rootEl._kids || (rootEl.children ? Array.prototype.slice.call(rootEl.children) : null);
+      var k = host._kids || (host.children ? Array.prototype.slice.call(host.children) : null);
       if (k) attached = k.indexOf(el) !== -1;
-      else attached = !!(el.parentNode && el.parentNode === rootEl);
+      else attached = !!(el.parentNode && el.parentNode === host);
     } catch (e) { attached = false; }
-    if (!attached) { try { rootEl.appendChild(el); } catch (e2) { return false; } }
+    if (!attached) { try { host.appendChild(el); } catch (e2) { return false; } }
     return true;
   }
 
