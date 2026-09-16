@@ -337,6 +337,29 @@ function clearSrc(el) {
    Every className read goes through here now, so the next element that ships
    without a class cannot repeat it. */
 function clsOf(el) { return (el && el.className != null) ? String(el.className) : ""; }
+/* 6.168.0 — AN ACCORDION BODY IS SHOWN BY AN INLINE DISPLAY, NEVER BY THE CASCADE ALONE.
+   Every .grp app-grp on this panel put its body's visibility on one stylesheet override
+   (`.apg .app-grp.open .grp-b { display: block }` beating `.grp-b { display: none }`), and in
+   Photoshop that override did not win: the Workflows page opened its first category, wrote the
+   class, and still drew no card — all 194 Smart Workflow cards invisible in the panel while the
+   web app drew them (the owner's photographs of 6.167.2). The class stays for the caret and the
+   frame; what actually shows the body is this. */
+function grpShow(g, on) {
+  try {
+    if (!g || !g.querySelector) return;
+    const b = g.querySelector(".grp-b");
+    if (b && b.style) b.style.display = on ? "block" : "none";
+  } catch (e) { }
+}
+/* every group the panel has on screen, whoever built it (the static markup, a screen module, a
+   re-render): its body's inline display is made to agree with its own class. Cheap — a handful of
+   elements per page — and it is what makes a group built anywhere obey the same rule. */
+function grpSyncAll(root) {
+  try {
+    const list = (root || document).querySelectorAll(".grp.app-grp");
+    for (let i = 0; i < list.length; i++) grpShow(list[i], clsOf(list[i]).indexOf(" open") >= 0);
+  } catch (e) { }
+}
 /* 6.167.0 — ONE CLAMP MARKER FOR BOTH SURFACES (the app's ellMark, 6.96.0). A card's description is cut
    at a line ceiling; UXP draws no -webkit-line-clamp, so until now it was cut with nothing to show for it.
    The marker is appended only where the ink really overflows its box — measured through scrollHeight, the
@@ -2621,7 +2644,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.167.2";
+const PANEL_VERSION = "6.167.3";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5079,6 +5102,7 @@ function accCollapseGrp(id) {
   if (!g) return;
   const hide = g.classList.contains("hide");
   g.className = "grp app-grp" + (hide ? " hide" : "");
+  grpShow(g, false);
   const h = $(id + "H");
   if (h) h.setAttribute("aria-expanded", "false");
 }
@@ -5089,6 +5113,7 @@ function accOpenGrp(id) {
   g.className = "grp app-grp open";
   const h = $(id + "H");
   if (h) h.setAttribute("aria-expanded", "true");
+  grpShow(g, true);
   accOnGrpOpen(id);
 }
 function accOnGrpOpen(id) {
@@ -5180,6 +5205,7 @@ function accRender() {
   if (plan) {
     const wasOpen = plan.classList.contains("open");
     plan.className = "grp app-grp" + (inn ? "" : " hide") + (inn && wasOpen ? " open" : "");
+    grpShow(plan, inn && wasOpen);
     const h = $("accGrpPlanH"); if (h) h.setAttribute("aria-expanded", inn && wasOpen ? "true" : "false");
   }
   const pg = $("accGrpPanel");
@@ -5187,6 +5213,7 @@ function accRender() {
     const showPanel = inn && unifiedCanDownload();
     const wasOpen = pg.classList.contains("open");
     pg.className = "grp app-grp" + (showPanel ? "" : " hide") + (showPanel && wasOpen ? " open" : "");
+    grpShow(pg, showPanel && wasOpen);
     const h = $("accGrpPanelH"); if (h) h.setAttribute("aria-expanded", showPanel && wasOpen ? "true" : "false");
   }
   if (inn) {
@@ -5326,11 +5353,13 @@ function accBoot() {
   const auth = $("accGrpAuth");
   if (sess) accCollapseGrp("accGrpAuth");
   else if (auth) { auth.className = "grp app-grp open"; const h = $("accGrpAuthH"); if (h) h.setAttribute("aria-expanded", "true"); }
+  if (!sess && auth) grpShow(auth, true);
   accRender();
   accRenderDevices();
   if (sess) {
     const plan = $("accGrpPlan");
     if (plan) { plan.className = "grp app-grp open"; const h = $("accGrpPlanH"); if (h) h.setAttribute("aria-expanded", "true"); }
+    if (plan) grpShow(plan, true);
   }
 }
 function accAfterAuth() {
@@ -6158,6 +6187,7 @@ function wireStaticGrp(grpId, hdrId) {
     const open = g.classList.contains("open");
     g.className = "grp app-grp" + (open ? "" : " open");
     h.setAttribute("aria-expanded", open ? "false" : "true");
+    grpShow(g, !open);
   });
 }
 /* everything a language switch or a settings reload must repaint */
@@ -12927,6 +12957,7 @@ function bindFreeform() {
   const adv = $("genAdvH"), grp = $("genGrpAdvanced");
   if (adv && grp) adv.addEventListener("click", function () {
     grp.className = clsOf(grp).indexOf(" open") >= 0 ? "grp app-grp" : "grp app-grp open";
+    grpShow(grp, clsOf(grp).indexOf(" open") >= 0);
   });
   const eng = $("genEngine");
   if (eng) eng.addEventListener("click", function () { switchPage("setup"); saveSettings(); });
@@ -13822,6 +13853,8 @@ function switchPage(key) {
   try { fabTopPaint(); } catch (e) { }
   /* wrapped button labels can only be measured once the page is on screen */
   if (active) { const ape = $(active.page); if (ape) fitBtnInAllLater(ape); }
+  /* and a group body is shown by its own inline display, never by the cascade alone (6.168.0) */
+  if (active) { const ape3 = $(active.page); if (ape3) grpSyncAll(ape3); }
   if (key === "prompt") { try { fitCompareBox(); } catch (e) { } }
   if (key === "presets") { try { if (globalThis.HNK && globalThis.HNK.lib) globalThis.HNK.lib.layout(); } catch (e) { } }
   if (key === "create") { try { refreshCreateCompare(); } catch (e) { } }

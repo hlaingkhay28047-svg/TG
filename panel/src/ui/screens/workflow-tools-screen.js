@@ -345,9 +345,21 @@ function create(deps) {
     sact.appendChild(sa);
     var head = dom.el(doc, "button", { class: "grp-h" }, [car, lbl, cnt, sact]);
     var body = dom.el(doc, "div", { class: "grp-b" });
-    function isOpen() { return g.className.indexOf(" open") >= 0; }
+    /* 6.167.3 — THE CARDS THE OWNER PHOTOGRAPHED AS MISSING. This file's own UXP note at the top says
+       it: "the group body is shown/hidden by style.display". It was not — the body's visibility had come
+       to rest on `.apg .app-grp.open .grp-b { display: block }` alone, a cascade override of the plain
+       `.grp-b { display: none }`, and in Photoshop that override never won: every group on the Workflows
+       page stayed shut, the catalog's own open category included, so all 194 Smart Workflow cards were
+       invisible in the panel while the web app drew them. The class still goes on for the caret and the
+       border, but what shows the body is an inline display, which no renderer can decline.
+       openNow is the truth, never a className read (6.122.0: className is null in UXP). */
+    var openNow = !!open;
+    body.style.display = openNow ? "block" : "none";
+    function isOpen() { return openNow; }
     function setOpen(on) {
+      openNow = !!on;
       g.className = on ? "grp app-grp open" : "grp app-grp";
+      body.style.display = on ? "block" : "none";
       /* 6.167.0 — a closed .grp-b is display:none and every card in it measures 0, so the clamp marker
          cannot see what was cut until the group opens. Both the header tap and the search filter come
          through here. */
