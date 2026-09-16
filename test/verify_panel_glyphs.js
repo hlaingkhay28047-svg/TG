@@ -554,16 +554,23 @@ report("J2) and when imaging refuses, Photoshop writes the file itself",
   /createSessionToken\(file\)/.test(HOST) &&
   /via: "saved-copy"/.test(HOST), null);
 
-/* a region has bounds a flattened save would ignore — answering with the
-   whole page would be worse than refusing */
-report("J3) the saved copy is offered for the whole document, never for a region",
+/* a region has bounds a flattened save would ignore — answering with the whole page
+   would be worse than refusing. 6.168.1 gives the region a tail of its own instead:
+   the duplicate is CROPPED to the rectangle first, so the page that is saved IS the
+   region. The whole-document route is still never offered for one. */
+report("J3) the whole document's saved copy is offered for a layer capture and never for a region — a region's tail crops a duplicate to its own rectangle first",
   /_captureRoutes\(ps, uxp, reqs, w, h, true\)/.test(HOST) &&
-  /_captureRoutes\(ps, uxp, reqs, bounds\.width, bounds\.height, false\)/.test(HOST), null);
+  /_captureRoutes\(ps, uxp, reqs, bounds\.width, bounds\.height, function \(\) \{/.test(HOST) &&
+  /return _viaCroppedCopy\(ps, uxp, bounds\);/.test(HOST) &&
+  !/_captureRoutes\(ps, uxp, reqs, bounds\.width, bounds\.height, true\)/.test(HOST), null);
 
-report("J4) every route that fails keeps its own reason, so no refusal is silent again",
-  /why\.push\("getPixels " \+ \(i \+ 1\)/.test(HOST) &&
-  /why\.push\("saved copy: "/.test(HOST) &&
-  /throw new Error\(why\.join\(" \| "\)/.test(HOST), null);
+/* 6.168.1 — kept by SENTENCE now, not by route: four routes refusing for one reason
+   spent the whole 140 characters _emsg keeps saying it four times. The reason still
+   cannot be lost — verify_capture_depth owns the new shape. */
+report("J4) every route that fails keeps its reason, so no refusal is silent again",
+  /keep\("getPixels " \+ \(i \+ 1\)/.test(HOST) &&
+  /keep\("saved copy", _emsg\(e2\)\);/.test(HOST) &&
+  /throw new Error\(lines\.join\(" \| "\)/.test(HOST), null);
 
 /* 6.138.0 printed the sentence with nothing after it: the detail existed and
    was dropped rebuilding the slot */

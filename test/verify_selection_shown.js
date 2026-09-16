@@ -1,4 +1,4 @@
-/* verify_selection_shown.js — 6.97.0 / panel 6.168.0
+/* verify_selection_shown.js — 6.97.0 / panel 6.168.0, corrected in 6.97.1
    SELECTION EDIT: THE REFUSAL NAMES ITSELF, THE MARKED AREA IS SHOWN, THE PAGE IS SHORTER.
 
    THE OWNER'S MESSAGE, in one line: "Selection မှာ တစ်ခါတစ်လေရပြီးတစ်ခါတစ်လေမရဘူး နောက်ပြီး
@@ -8,22 +8,18 @@
    1208×1208 with "Could not read the selected pixels — try again.", and going through minutes
    later at 3040×3040.
 
-   THE CAUSE OF "SOMETIMES", by arithmetic. _capSize returns a size only when the region is
-   ABOVE the 2048 cap, so captureRegion's route list was:
+   THE DEPTH IS THE CAUSE — and 6.168.0 guessed the wrong half of it. This file shipped with
+   the claim that a targetSize makes Photoshop resample and that a resample is 8 bits, so the
+   rectangles under the 2048 cap were the ones with no way through. The owner's photograph of
+   6.168.0's own refusal disproved it: a 4036×4036 rectangle — ABOVE the cap, so route 1 did
+   carry targetSize 2048×2048 — failed with "Only 8 bit image data can be encoded as jpeg",
+   the same sentence as the plain route behind it.
 
-       under the cap : { sourceBounds }                        ← one route, no targetSize
-       over the cap  : { sourceBounds, targetSize }, { sourceBounds }
-
-   A 16-bit document hands getPixels 16-bit pixels, and the JPEG encoder has no 16-bit form —
-   so the plain route cannot finish. A targetSize makes Photoshop RESAMPLE, and a resample is
-   8 bits: the only rectangle with a resample route ahead of it was the big one. 1191 and 1208
-   are under 2048. 3040 is over it. That is the whole of "sometimes".
-
-   THE FIX: a resample route is always offered, at the region's own size when it is under the
-   cap — the plain route stays, last, for hosts where it is the one that answers. B is the
-   proof: the same fake Photoshop (16-bit unless resampled, encoder refuses 16-bit) is driven
-   through 6.167.4's list and through this one. The old list reproduces the photograph exactly;
-   the new one reads all three.
+   So targetSize bounds the pixel COUNT and nothing else. A 16-bit document hands back 16-bit
+   pixels at every size, and the imaging API's own depth parameter is componentSize (8/16/32).
+   6.97.1 asks for 8-bit components first on every route and verify_capture_depth owns that
+   rule; B here keeps the two facts this file's own subject rests on — 6.168.0's list cannot
+   read the owner's document at any size, and the shipped list can.
 
    AND WHEN IT STILL FAILS, IT SAYS WHY. captureRegion now answers { error, bounds, mode }, the
    routes say which of them answered, and capFail puts the reason, the rectangle and the
@@ -67,7 +63,7 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
 
 /* ================= A) the rule, in the source ================= */
 function sourcePins() {
-  report("A1) a resample route is ALWAYS offered — captureRegion and captureActiveLayer fall back to the region's own size when _capSize declines, and the plain route stays behind it",
+  report("A1) a bounded route is ALWAYS offered — captureRegion and captureActiveLayer fall back to the region's own size when _capSize declines, and the unbounded route stays behind it",
     /var fit = cap \|\| \{ width: Math\.max\(1, Math\.round\(bounds\.width\)\), height: Math\.max\(1, Math\.round\(bounds\.height\)\) \};/.test(HOST) &&
     /reqs\.push\(\{ sourceBounds: sb, targetSize: fit \}\);\s*\n\s*reqs\.push\(\{ sourceBounds: sb \}\);/.test(HOST) &&
     /var fit = cap \|\| \{ width: Math\.max\(1, Math\.round\(Number\(w\) \|\| 0\)\), height: Math\.max\(1, Math\.round\(Number\(h\) \|\| 0\)\) \};/.test(HOST) &&
@@ -75,7 +71,9 @@ function sourcePins() {
 
   report("A2) a refusal carries its facts — the routes say which one answered, and captureRegion's catch returns the reason, the rectangle and the document's own mode (read outside the modal, so a throw cannot lose it)",
     /if \(got\) got\.via = "getPixels " \+ \(i \+ 1\) \+ "\/" \+ reqs\.length;/.test(HOST) &&
-    /why\.push\("getPixels " \+ \(i \+ 1\) \+ "\/" \+ reqs\.length \+ ": " \+ _emsg\(e\)\);/.test(HOST) &&
+    /* 6.97.1 — the reasons are collected by SENTENCE now (six routes refusing for the same
+       reason filled the student's 140 characters six times); verify_capture_depth owns that. */
+    /keep\("getPixels " \+ \(i \+ 1\) \+ "\/" \+ reqs\.length, _emsg\(e\)\);/.test(HOST) &&
     /return \{ error: _emsg\(e\), bounds: \{ width: bounds\.width, height: bounds\.height \}, mode: mode \|\| "\?" \};/.test(HOST) &&
     HOST.indexOf('var mode = "";\n  try { mode = String((ps.app.activeDocument && ps.app.activeDocument.mode) || ""); }') > 0, null);
 
@@ -115,24 +113,24 @@ function sourcePins() {
     !/\.hnk-sel-(card|page|rect|body|map|side)[^}]*\bgap:/.test(PCSS), null);
 }
 
-/* ================= B) the host, run — the owner's three rectangles ================= */
-/* A fake Photoshop that behaves the way a 16-bit RAW behaves: getPixels hands back
-   16-bit data unless a targetSize made it resample, and the JPEG encoder refuses
-   16-bit data. Nothing else about it is special. */
+/* ================= B) the host, run — the owner's document ================= */
+/* A fake Photoshop that behaves the way the owner's 16-bit RAW behaves: getPixels hands
+   back the DOCUMENT's own depth unless the ask names componentSize, and the JPEG encoder
+   refuses anything that is not 8-bit. A targetSize changes how many pixels come back and
+   nothing else — which is exactly what the photograph of 6.168.0's refusal proved. */
 function fakePhotoshop(rec) {
   return {
-    app: { documents: [{}], activeDocument: { mode: "RGB16", width: 6240, height: 4160 } },
+    app: { documents: [{}], activeDocument: { id: 7, mode: "RGBColorMode", width: 4160, height: 6240 } },
     core: { executeAsModal: async function (fn) { return await fn(); } },
     action: { batchPlay: async function () { return []; } },
     constants: {},
     imaging: {
       getPixels: async function (req) {
-        rec.asked.push(req.targetSize ? "resample" : "plain");
-        /* a resample is 8-bit; a straight read is the document's own depth */
-        return { imageData: { width: 10, height: 10, depth: req.targetSize ? 8 : 16, dispose: function () { } } };
+        rec.asked.push((req.componentSize === 8 ? "8bit" : "asis") + (req.targetSize ? "+fit" : ""));
+        return { imageData: { width: 10, height: 10, depth: req.componentSize || 16, dispose: function () { } } };
       },
       encodeImageData: async function (o) {
-        if (o.imageData.depth === 16) throw new Error("Cannot encode 16-bit data as JPEG");
+        if (o.imageData.depth !== 8) throw new Error("Only 8 bit image data can be encoded as jpeg");
         return "QUJD";
       }
     }
@@ -155,14 +153,14 @@ function loadHost(ps) {
   vm.runInContext(HOST, sandbox, { filename: "photoshop-host.js" });
   return sandbox.module.exports;
 }
-/* 6.167.4's list, verbatim: _capSize only answers above the cap, so a region under it
-   had exactly one route and it carried no targetSize. */
+/* 6.168.0's list, verbatim — a bounded ask and a plain one, neither of them naming a depth.
+   This is the list the owner photographed refusing 4036×4036. */
 async function oldRoutes(ps, bounds) {
   const CAP = 2048, m = Math.max(bounds.width, bounds.height);
   const cap = m > CAP ? { width: Math.round(bounds.width * CAP / m), height: Math.round(bounds.height * CAP / m) } : null;
   const sb = { left: bounds.x, top: bounds.y, right: bounds.x + bounds.width, bottom: bounds.y + bounds.height };
-  const reqs = [];
-  if (cap) reqs.push({ sourceBounds: sb, targetSize: cap });
+  const fit = cap || { width: Math.round(bounds.width), height: Math.round(bounds.height) };
+  const reqs = [{ sourceBounds: sb, targetSize: fit }];
   reqs.push({ sourceBounds: sb });
   for (const r of reqs) {
     try {
@@ -176,7 +174,7 @@ async function hostRun() {
   const RECTS = [
     { name: "1191×1191", b: { x: 1200, y: 900, width: 1191, height: 1191 } },
     { name: "1208×1208", b: { x: 1000, y: 700, width: 1208, height: 1208 } },
-    { name: "3040×3040", b: { x: 400, y: 200, width: 3040, height: 3040 } }
+    { name: "4036×4036", b: { x: 174, y: 685, width: 4036, height: 4036 } }
   ];
   const old = {}, now = {};
   for (const r of RECTS) {
@@ -189,7 +187,7 @@ async function hostRun() {
     const api = loadHost(fakePhotoshop(rec));
     const got = await api.captureRegion(r.b);
     now[r.name] = { ok: !!(got && got.ref), asked: rec.asked.join(","), via: (got && got.via) || "" };
-    if (r.name === "3040×3040") via = now[r.name].via;
+    if (r.name === "4036×4036") via = now[r.name].via;
   }
   /* and a Photoshop that refuses every route: the answer must still carry the facts */
   const dead = loadHost({
@@ -201,11 +199,11 @@ async function hostRun() {
   const ref = await dead.captureRegion({ x: 0, y: 0, width: 640, height: 480 });
   err = (ref && ref.error) || ""; mode = (ref && ref.mode) || ""; bnds = ref && ref.bounds;
 
-  report("B1) THE PHOTOGRAPH, REPRODUCED: with 6.167.4's route list the same 16-bit document refuses 1191×1191 and 1208×1208 and reads 3040×3040 — exactly what the owner saw",
-    old["1191×1191"] === false && old["1208×1208"] === false && old["3040×3040"] === true, old);
-  report("B2) and with this one all three are read, because a resample route is offered first every time",
-    now["1191×1191"].ok && now["1208×1208"].ok && now["3040×3040"].ok &&
-    now["1191×1191"].asked.indexOf("resample") === 0 && now["1208×1208"].asked.indexOf("resample") === 0, now);
+  report("B1) THE PHOTOGRAPH, REPRODUCED: 6.168.0's route list cannot read this document at ANY size — 4036×4036 carried a targetSize and refused with the encoder's own sentence, which is what the owner photographed",
+    old["1191×1191"] === false && old["1208×1208"] === false && old["4036×4036"] === false, old);
+  report("B2) and with this one every rectangle is read, because the depth is asked for before anything else",
+    now["1191×1191"].ok && now["1208×1208"].ok && now["4036×4036"].ok &&
+    now["1191×1191"].asked.indexOf("8bit") === 0 && now["4036×4036"].asked.indexOf("8bit") === 0, now);
   report("B3) a success says which route answered, so a refusal and a success are read against the same list",
     /^getPixels \d+\/\d+$/.test(via), { via });
   report("B4) a host that refuses every route answers with the reason, the rectangle and the document's mode — never with nothing",
@@ -328,16 +326,19 @@ async function panelWalk(browser) {
 
 /* ================= D) the release ================= */
 function releasePins() {
-  report("D1) the wave ships in lockstep and the suite carries this file",
-    MANIFEST.version === "6.168.0" &&
-    /var APP_VER="6\.97\.0";/.test(read("docs/app/index.html")) &&
-    /"v":"6\.97\.0"/.test(read("docs/app/version.json")) &&
-    /PANEL_VERSION *= *"6\.168\.0"/.test(read("panel/main.js")) &&
-    /"version": *"6\.168\.0"/.test(read("panel/manifest.json")) &&
-    /node test\/verify_selection_shown\.js/.test(CI) &&
-    /"badge\.tests": \{"my": "237 tests green"/.test(LANDING), {
-      manifest: MANIFEST.version, ci: /verify_selection_shown/.test(CI),
-      landing: (LANDING.match(/"badge\.tests": \{"my": "(\d+) tests/) || [])[1] });
+  /* 6.97.1 — the pin is the AGREEMENT, not the number: a frozen literal here only ever
+     means the next wave edits this file to say a different frozen literal. */
+  const app = (read("docs/app/index.html").match(/var APP_VER="([\d.]+)";/) || [])[1];
+  const pan = (read("panel/main.js").match(/PANEL_VERSION *= *"([\d.]+)"/) || [])[1];
+  const esc = (v) => String(v).replace(/\./g, "\\.");
+  const badge = (LANDING.match(/"badge\.tests": \{"my": "(\d+) tests green/) || [])[1];
+  const steps = new Set(CI.match(/node test\/[A-Za-z0-9_]+\.js/g) || []);
+  report("D1) the wave ships in lockstep — the app, its version.json, the panel, the panel manifest and the release manifest all name the same two versions — and the suite carries this file, counted on the landing page",
+    !!app && !!pan && MANIFEST.version === pan &&
+    new RegExp('"version": *"' + esc(pan) + '"').test(read("panel/manifest.json")) &&
+    new RegExp('"v":"' + esc(app) + '"').test(read("docs/app/version.json")) &&
+    steps.has("node test/verify_selection_shown.js") &&
+    String(steps.size) === badge, { app, pan, manifest: MANIFEST.version, steps: steps.size, badge });
 }
 
 (async () => {

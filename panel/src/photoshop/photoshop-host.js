@@ -231,6 +231,30 @@ async function readClipboardImage() {
 
    Every route that fails appends its own reason, so a refusal can never again
    arrive without saying which step produced it. ---- */
+/* ---- 6.168.1: componentSize IS THE BIT DEPTH — 6.168.0's own diagnostic said so.
+
+   6.168.0 gave the refusal its reason, and the owner's photograph of it disproved
+   the guess that shipped with it. The line reads:
+
+       getPixels 1/2: encode Only 8 bit image data can be encoded as jpeg |
+       getPixels 2/2: encode Only 8 bit … · 4036x4036 px · RGBColorMode
+
+   4036 is ABOVE the 2048 cap, so route 1 carried targetSize 2048x2048 and failed
+   with the same sentence as the plain route. targetSize changes the pixel COUNT
+   and nothing else; it does not resample the depth, and a 16-bit document hands
+   back 16-bit pixels at every size. The imaging API's own depth parameter is
+   componentSize (8 / 16 / 32), and that is what the encoder needs.
+
+   So every getPixels route asks for 8-bit components FIRST. The depth-silent
+   routes stay behind them, for a host that rejects the parameter, and each list
+   still ends in a route that never touches ps.imaging: the whole document's
+   flattened save for a layer capture, and — new here — the region's own, where
+   Photoshop duplicates the document MERGED, crops the duplicate to the marked
+   rectangle and writes the JPEG itself. The open file is never the crop target:
+   the duplicate has to become the active document first or the route refuses.
+
+   And the reasons are collected by SENTENCE now, not by route. Six routes saying
+   the same thing said it six times, and the student reads 140 characters. ---- */
 
 var CAP_MAX = 2048;
 
@@ -309,10 +333,18 @@ async function _viaSavedCopy(ps, uxp) {
 }
 
 /* walk the routes in order and keep every reason. `reqs` is the getPixels
-   request list; the saved copy is appended for the whole-document captures
-   only, because a region has bounds a flattened save would ignore. */
-async function _captureRoutes(ps, uxp, reqs, w, h, allowSavedCopy) {
+   request list; `tail` is the route that runs when imaging has refused them all
+   — true for the whole document's flattened save, or a function of its own
+   (captureRegion's cropped copy, which a flattened save could not answer). */
+async function _captureRoutes(ps, uxp, reqs, w, h, tail) {
   var why = [];
+  /* 6.168.1 — one entry per DISTINCT sentence, carrying the routes that gave it.
+     Six routes refusing for the same reason filled the student's 140 characters
+     with the same reason six times. */
+  var keep = function (label, msg) {
+    for (var j = 0; j < why.length; j++) if (why[j].msg === msg) { why[j].at.push(label); return; }
+    why.push({ msg: msg, at: [label] });
+  };
   for (var i = 0; i < reqs.length; i++) {
     try {
       var got = await _viaGetPixels(ps, reqs[i], w, h);
@@ -321,13 +353,68 @@ async function _captureRoutes(ps, uxp, reqs, w, h, allowSavedCopy) {
       if (got) got.via = "getPixels " + (i + 1) + "/" + reqs.length;
       return got;
     }
-    catch (e) { why.push("getPixels " + (i + 1) + "/" + reqs.length + ": " + _emsg(e)); }
+    catch (e) { keep("getPixels " + (i + 1) + "/" + reqs.length, _emsg(e)); }
   }
-  if (allowSavedCopy && uxp) {
-    try { return await _viaSavedCopy(ps, uxp); }
-    catch (e2) { why.push("saved copy: " + _emsg(e2)); }
+  var last = tail === true ? function () { return _viaSavedCopy(ps, uxp); }
+    : (typeof tail === "function" ? tail : null);
+  if (last && uxp) {
+    try { return await last(); }
+    catch (e2) { keep("saved copy", _emsg(e2)); }
   }
-  throw new Error(why.join(" | ") || "every route failed without saying why");
+  var lines = [];
+  for (var k = 0; k < why.length; k++) lines.push(why[k].at.join(" + ") + ": " + why[k].msg);
+  throw new Error(lines.join(" | ") || "every route failed without saying why");
+}
+
+/* 6.168.1 — THE REGION'S OWN SAVED COPY. _viaSavedCopy answers with the whole
+   page, which a region edit must never accept; this route makes the page BE the
+   region first. Photoshop duplicates the document merged, the duplicate is cropped
+   to the marked rectangle, Photoshop writes the JPEG, the panel reads the bytes and
+   the duplicate is closed without saving.
+
+   The open document is never the crop target. `duplicate` has to have made a NEW
+   document active or the route refuses before it crops anything, and the close in
+   the finally names that duplicate by id. */
+async function _viaCroppedCopy(ps, uxp, bounds) {
+  var orig = ps.app.activeDocument;
+  var origId = orig && orig.id;
+  await ps.action.batchPlay([{
+    _obj: "duplicate",
+    _target: [{ _ref: "document", _enum: "ordinal", _value: "targetEnum" }],
+    name: "hnk-region",
+    merged: true,
+    _options: { dialogOptions: "dontDisplay" }
+  }], { synchronousExecution: false });
+  var dup = ps.app.activeDocument;
+  if (!dup || dup.id == null || dup.id === origId) throw new Error("the duplicate never became the active document — nothing was cropped");
+  try {
+    var px = function (n) { return { _unit: "pixelsUnit", _value: Math.round(Number(n) || 0) }; };
+    await ps.action.batchPlay([{
+      _obj: "crop",
+      to: {
+        _obj: "rectangle",
+        top: px(bounds.y), left: px(bounds.x),
+        bottom: px(bounds.y + bounds.height), right: px(bounds.x + bounds.width)
+      },
+      angle: { _unit: "angleUnit", _value: 0 },
+      "delete": true,
+      _options: { dialogOptions: "dontDisplay" }
+    }], { synchronousExecution: false });
+    var got = await _viaSavedCopy(ps, uxp);
+    got.via = "cropped-copy";
+    got.width = Math.max(1, Math.round(bounds.width));
+    got.height = Math.max(1, Math.round(bounds.height));
+    return got;
+  } finally {
+    try {
+      await ps.action.batchPlay([{
+        _obj: "close",
+        saving: { _enum: "yesNo", _value: "no" },
+        _target: [{ _ref: "document", _id: dup.id }],
+        _options: { dialogOptions: "dontDisplay" }
+      }], { synchronousExecution: false });
+    } catch (eC) { }
+  }
 }
 
 async function captureActiveLayer() {
@@ -341,9 +428,8 @@ async function captureActiveLayer() {
     var id = layer && layer.id;
     var w = doc && doc.width, h = doc && doc.height;
     var cap = _capSize(w, h);
-    /* 6.168.0 — a resample route is always offered, for the reason written out in
-       captureRegion: a targetSize is what makes Photoshop hand back 8-bit pixels,
-       and JPEG has no other kind. A small document reached none of these before. */
+    /* 6.168.0 — a bounded ask is always offered: this document may be 32 megapixels
+       and the panel wants a reference photograph, not the master. */
     var fit = cap || { width: Math.max(1, Math.round(Number(w) || 0)), height: Math.max(1, Math.round(Number(h) || 0)) };
     var reqs = [];
     /* v6.84.0 — a CMYK / Lab / Grayscale document: ask imaging for RGB pixels
@@ -353,12 +439,21 @@ async function captureActiveLayer() {
     var mode = "";
     try { mode = String((doc && doc.mode) || ""); } catch (eM) { mode = ""; }
     var nonRgb = !!mode && !/rgb/i.test(mode);
+    /* 6.168.1 — 8-bit components first, on every shape of the ask. This is the
+       depth the JPEG encoder demands, and the owner's 16-bit RAW is why the
+       plain routes below could not finish. */
+    if (nonRgb) {
+      if (id != null) reqs.push({ layerID: id, targetSize: fit, componentSize: 8, colorSpace: "RGB" });
+      reqs.push({ targetSize: fit, componentSize: 8, colorSpace: "RGB" });
+    }
+    if (id != null) reqs.push({ layerID: id, targetSize: fit, componentSize: 8 });
+    reqs.push({ targetSize: fit, componentSize: 8 });
+    /* then the same asks with the depth left unsaid, for a host that rejects
+       componentSize outright */
     if (nonRgb) {
       if (id != null) reqs.push({ layerID: id, targetSize: fit, colorSpace: "RGB" });
       reqs.push({ targetSize: fit, colorSpace: "RGB" });
     }
-    /* smallest ask first: this document is 32 megapixels and the panel wants
-       a reference photograph, not the master */
     if (id != null) reqs.push({ layerID: id, targetSize: fit });
     reqs.push({ targetSize: fit });
     if (id != null) reqs.push({ layerID: id });
@@ -416,31 +511,33 @@ async function captureRegion(bounds) {
   var run = async function () {
     var sb = { left: bounds.x, top: bounds.y, right: bounds.x + bounds.width, bottom: bounds.y + bounds.height };
     var cap = _capSize(bounds.width, bounds.height);
-    /* 6.168.0 — THE SELECTION THAT WORKED SOMETIMES. The owner's 16-bit RAW refused
-       1191×1191 and 1208×1208 and went through at 3040×3040. The arithmetic says why:
-       _capSize only returns a size ABOVE the 2048 cap, so the two small regions had
-       exactly one route — plain getPixels, no targetSize — and the big one had a
-       resample route ahead of it. JPEG is an 8-bit format; getPixels without a
-       targetSize hands back the document's own 16-bit data and the encoder refuses it,
-       while a targetSize makes Photoshop resample, and a resample is 8 bits.
-
-       So a resample route is now ALWAYS offered, at the region's own size when it is
-       under the cap — it costs nothing where the plain route already worked, because
-       the plain route is still there, last, for the hosts where it is the one that
-       answers. */
+    /* 6.168.1 — THE SELECTION THAT WORKED SOMETIMES, and the reason 6.168.0 named.
+       The owner's 16-bit RAW refused 1191×1191 and 1208×1208, went through at
+       3040×3040, and then refused 4036×4036 with the encoder's own sentence:
+       "Only 8 bit image data can be encoded as jpeg". 4036 is above the cap, so that
+       rectangle DID carry a targetSize — which settles it. targetSize bounds the pixel
+       count; componentSize is the depth, and a 16-bit document stays 16-bit until it
+       is asked for 8. Both are offered now, depth first. */
     var fit = cap || { width: Math.max(1, Math.round(bounds.width)), height: Math.max(1, Math.round(bounds.height)) };
     var reqs = [];
+    var nonRgb = !!mode && !/rgb/i.test(mode);
     /* v6.84.0 — the same RGB ask first on a non-RGB document (see captureActiveLayer) */
-    if (mode && !/rgb/i.test(mode)) {
+    if (nonRgb) reqs.push({ sourceBounds: sb, targetSize: fit, componentSize: 8, colorSpace: "RGB" });
+    reqs.push({ sourceBounds: sb, targetSize: fit, componentSize: 8 });
+    reqs.push({ sourceBounds: sb, componentSize: 8 });
+    /* then the same asks with the depth left unsaid */
+    if (nonRgb) {
       reqs.push({ sourceBounds: sb, targetSize: fit, colorSpace: "RGB" });
       reqs.push({ sourceBounds: sb, colorSpace: "RGB" });
     }
     reqs.push({ sourceBounds: sb, targetSize: fit });
     reqs.push({ sourceBounds: sb });
-    /* no saved copy here: a flattened save would ignore the bounds, and a
-       region edit that quietly returned the whole page would be worse than
-       an honest refusal */
-    return await _captureRoutes(ps, uxp, reqs, bounds.width, bounds.height, false);
+    /* still no whole-page saved copy — a region edit that quietly returned the
+       whole document would be worse than an honest refusal. The tail is the
+       region's OWN saved copy: the duplicate is cropped to the rectangle first. */
+    return await _captureRoutes(ps, uxp, reqs, bounds.width, bounds.height, function () {
+      return _viaCroppedCopy(ps, uxp, bounds);
+    });
   };
   try {
     if (ps.core && typeof ps.core.executeAsModal === "function") {
