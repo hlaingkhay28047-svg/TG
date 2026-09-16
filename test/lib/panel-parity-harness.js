@@ -73,7 +73,15 @@ const UXP_STUB = `(function(){
 const COLLECT = `(function(sel){
   var root = document.querySelector(sel);
   if (!root) return ["NO ROOT " + sel];
-  root.querySelectorAll(".grp").forEach(function (g) { if (g.className.indexOf("open") < 0) g.className += " open"; });
+  /* 6.167.3 — opening a group is now two things, exactly as a student's tap does them: the class
+     (the caret, the frame) and the body's own inline display. The panel stopped leaving its group
+     bodies to the stylesheet override alone, because Photoshop's renderer never let that override win:
+     every group stayed shut there and all 194 Smart Workflow cards were invisible. A walker that only
+     added the class would now read a page with its groups closed. */
+  root.querySelectorAll(".grp").forEach(function (g) {
+    if (g.className.indexOf("open") < 0) g.className += " open";
+    var b = g.querySelector(".grp-b"); if (b && b.style) b.style.display = "block";
+  });
   var out = [];
   (function walk(e) {
     var cs = getComputedStyle(e);
@@ -144,7 +152,15 @@ const COLLECT = `(function(sel){
 const COLLECT_STATE = `(function(sel){
   var root = document.querySelector(sel);
   if (!root) return { ph: ["NO ROOT " + sel], sel: [] };
-  root.querySelectorAll(".grp").forEach(function (g) { if (g.className.indexOf("open") < 0) g.className += " open"; });
+  /* 6.167.3 — opening a group is now two things, exactly as a student's tap does them: the class
+     (the caret, the frame) and the body's own inline display. The panel stopped leaving its group
+     bodies to the stylesheet override alone, because Photoshop's renderer never let that override win:
+     every group stayed shut there and all 194 Smart Workflow cards were invisible. A walker that only
+     added the class would now read a page with its groups closed. */
+  root.querySelectorAll(".grp").forEach(function (g) {
+    if (g.className.indexOf("open") < 0) g.className += " open";
+    var b = g.querySelector(".grp-b"); if (b && b.style) b.style.display = "block";
+  });
   function vis(e){
     var cs = getComputedStyle(e);
     if (cs.display === "none" || cs.visibility === "hidden") return false;
