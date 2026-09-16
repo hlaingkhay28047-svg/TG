@@ -93,7 +93,10 @@ function sourcePins() {
     /id: "hnkWfCmpTagBefore", text: "\\u2190 Before \(" \+ \(sel\.inputSource === "selection" \|\| sel\.regionBounds \? l9\(L_SELECTION\) : "IMAGE 1"\) \+ "\)"/.test(SCREEN) &&
     /rb \? \(l9\(L_SELECTION\) \+ " " \+ rb\.width \+ "\\u00d7" \+ rb\.height\) : ""/.test(SCREEN), { sel: !!sel });
   report("A4) the Active layer: the host asks imaging for RGB pixels first on a non-RGB document (captureActiveLayer and captureRegion) and returns the layer's name; the import service keeps the name; the wizard stores width/height/name on the slot and the tick names the layer and its size; main.js captureLayerB64 falls back to the host's routes",
-    /var nonRgb = !!mode && !\/rgb\/i\.test\(mode\);/.test(HOST) && /reqs\.push\(\{ layerID: id, targetSize: cap, colorSpace: "RGB" \}\)/.test(HOST) && /reqs\.push\(\{ sourceBounds: sb, targetSize: cap, colorSpace: "RGB" \}\)/.test(HOST) &&
+    /* 6.168.0 — the resample size is `fit`, not `cap`: _capSize answers only above the
+       2048 cap, and a region under it needs a resample route too (that gap is the whole
+       of "Selection Edit works sometimes"). verify_selection_shown owns that rule. */
+    /var nonRgb = !!mode && !\/rgb\/i\.test\(mode\);/.test(HOST) && /reqs\.push\(\{ layerID: id, targetSize: fit, colorSpace: "RGB" \}\)/.test(HOST) && /reqs\.push\(\{ sourceBounds: sb, targetSize: fit, colorSpace: "RGB" \}\)/.test(HOST) &&
     /got\.name = String\(layer\.name \|\| ""\); got\.mode = mode;/.test(HOST) && /name: res\.name \? String\(res\.name\) : ""/.test(IMPORT) &&
     /width: slot\.width \|\| 0, height: slot\.height \|\| 0, name: slot\.name \|\| ""/.test(SCREEN) && /if \(okk && im0\.source === "active-layer"\)/.test(SCREEN) &&
     /async function captureLayerB64\(maxSide\) \{\s*try \{ return await captureLayerB64Direct\(maxSide\); \}/.test(MAIN) && /async function captureLayerB64Direct\(maxSide\)/.test(MAIN) &&

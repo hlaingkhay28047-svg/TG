@@ -66,7 +66,7 @@ function create(deps) {
      the Before | After compare is open and where its divider sits, whether the
      Advanced prompt box is open, and the earlier runs read back from the
      gallery folder on request. Session state, reset when a workflow is chosen. */
-  var unsubResults = null, resSel = null, cmpOpen = false, cmpPos = 50, advOpen = false, earlier = [], earlierLoaded = false;
+  var unsubResults = null, resSel = null, cmpOpen = false, cmpPos = 50, advOpen = false, optsOpen = false, earlier = [], earlierLoaded = false;
 
   function directMode() { return !!(deps.directGenerate && deps.directGenerate()); }
 
@@ -106,6 +106,13 @@ function create(deps) {
   var L_SEL_OK = { my: "Selection ရှိပြီ ✓ {w} × {h} px — ဒီနေရာပဲ ပြောင်းမယ်", en: "Selection ready ✓ {w} × {h} px — only this area changes", shn: "Selection မီးယဝ်ႉ ✓ {w} × {h} px — လႅၵ်ႈတီႈၼႆႉၵူၺ်း", kac: "Selection nga sai ✓ {w} × {h} px — ndai shara sha galai na", th: "มีการเลือกแล้ว ✓ {w} × {h} px — เปลี่ยนแค่บริเวณนี้", zh: "已有选区 ✓ {w} × {h} px — 只改这一块", vi: "Đã có vùng chọn ✓ {w} × {h} px — chỉ vùng này đổi", id: "Seleksi siap ✓ {w} × {h} px — hanya area ini berubah", ms: "Pilihan sedia ✓ {w} × {h} px — hanya kawasan ini berubah" };
   var L_SEL_NONE = { my: "Selection မရှိသေးပါ — Photoshop မှာ Rectangle tool နဲ့ ဆွဲရွေးပြီး ထပ်စစ်ပါ", en: "No selection yet — drag a Rectangle-tool selection in Photoshop, then check again", shn: "ပႆႇမီး selection — ၸႂ်ႉ Rectangle tool ၼႂ်း Photoshop သေ ၵူတ်ႇထတ်းထႅင်ႈ", kac: "Selection n nga shi ai — Photoshop kaw Rectangle tool hte lata nna bai jep u", th: "ยังไม่มีการเลือก — ลากเลือกด้วย Rectangle tool ใน Photoshop แล้วตรวจอีกครั้ง", zh: "还没有选区 — 在 Photoshop 用矩形选框工具框选后再检查", vi: "Chưa có vùng chọn — kéo chọn bằng Rectangle tool trong Photoshop rồi kiểm tra lại", id: "Belum ada seleksi — seleksi dengan Rectangle tool di Photoshop lalu periksa lagi", ms: "Belum ada pilihan — pilih dengan Rectangle tool dalam Photoshop, kemudian semak semula" };
   var L_SEL_NOHOST = { my: "Photoshop နဲ့ မချိတ်ရသေးပါ — GENERATE နှိပ်တဲ့အချိန် selection ကို ဖတ်မယ်", en: "Photoshop is not connected — the selection is read when you press GENERATE", shn: "ပႆႇတိတ်းၸပ်း Photoshop — တေလူ selection မိူဝ်ႈၼဵၵ်း GENERATE", kac: "Photoshop hte n matut shi ai — GENERATE dip yang selection hpe hti na", th: "ยังไม่ได้เชื่อม Photoshop — จะอ่านการเลือกตอนกด GENERATE", zh: "未连接 Photoshop — 按 GENERATE 时再读取选区", vi: "Chưa kết nối Photoshop — vùng chọn được đọc khi bấm GENERATE", id: "Photoshop belum terhubung — seleksi dibaca saat menekan GENERATE", ms: "Photoshop belum disambung — pilihan dibaca apabila menekan GENERATE" };
+  /* 6.168.0 — the Selection card's own lines: where the rectangle sits, the read
+     of its pixels, and the two words that open and close a long description. */
+  var L_SEL_POS = { my: "x {x} \u00b7 y {y} \u00b7 \u1015\u102f\u1036 {W}\u00d7{H}", en: "x {x} \u00b7 y {y} \u00b7 photo {W}\u00d7{H}", shn: "x {x} \u00b7 y {y} \u00b7 \u1075\u1075\u1088\u1017 {W}\u00d7{H}", kac: "x {x} \u00b7 y {y} \u00b7 sumla {W}\u00d7{H}", th: "x {x} \u00b7 y {y} \u00b7 \u0e20\u0e32\u0e1e {W}\u00d7{H}", zh: "x {x} \u00b7 y {y} \u00b7 \u56fe\u50cf {W}\u00d7{H}", vi: "x {x} \u00b7 y {y} \u00b7 \u1ea3nh {W}\u00d7{H}", id: "x {x} \u00b7 y {y} \u00b7 foto {W}\u00d7{H}", ms: "x {x} \u00b7 y {y} \u00b7 foto {W}\u00d7{H}" };
+  var L_SEL_READ = { my: "\u101b\u103d\u1031\u1038\u1011\u102c\u1038\u1010\u1032\u1037 pixel \u1010\u103d\u1031 \u1016\u1010\u103a\u1014\u1031\u101e\u100a\u103a...", en: "Reading the selected pixels...", shn: "\u1075\u1076\u1030 pixel \u1011\u102d\u1010\u103a\u1015\u103c\u1031\u102c\u1037...", kac: "Lata da ai pixel ni hpe hti nga ai...", th: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2d\u0e48\u0e32\u0e19\u0e1e\u0e34\u0e01\u0e40\u0e0b\u0e25\u0e17\u0e35\u0e48\u0e40\u0e25\u0e37\u0e2d\u0e01...", zh: "\u6b63\u5728\u8bfb\u53d6\u9009\u533a\u50cf\u7d20...", vi: "\u0110ang \u0111\u1ecdc pixel v\u00f9ng ch\u1ecdn...", id: "Membaca piksel yang dipilih...", ms: "Membaca piksel yang dipilih..." };
+  var L_SEL_PIX = { my: "\u1012\u102b\u1000 \u1015\u102d\u102f\u1037\u1019\u101a\u1037\u103a pixel \u1010\u103d\u1031", en: "These are the pixels that will be sent", shn: "\u1076\u1031\u1038\u1015\u1031\u102c\u1037 pixel \u1011\u1031\u1038\u1014\u1080", kac: "Ndai ni gaw sa na pixel ni re", th: "\u0e19\u0e35\u0e48\u0e04\u0e37\u0e2d\u0e1e\u0e34\u0e01\u0e40\u0e0b\u0e25\u0e17\u0e35\u0e48\u0e08\u0e30\u0e2a\u0e48\u0e07", zh: "\u8fd9\u5c31\u662f\u5c06\u8981\u53d1\u9001\u7684\u50cf\u7d20", vi: "\u0110\u00e2y l\u00e0 c\u00e1c pixel s\u1ebd \u0111\u01b0\u1ee3c g\u1eedi", id: "Inilah piksel yang akan dikirim", ms: "Inilah piksel yang akan dihantar" };
+  var L_MORE = { my: "\u1015\u102d\u102f\u1016\u1010\u103a\u101b\u1014\u103a", en: "More", shn: "\u101c\u1030\u1011\u1032\u1037", kac: "Grau hti u", th: "\u0e2d\u0e48\u0e32\u0e19\u0e15\u0e48\u0e2d", zh: "\u5c55\u5f00", vi: "Xem th\u00eam", id: "Selengkapnya", ms: "Lagi" };
+  var L_LESS = { my: "\u1001\u103b\u102f\u1036\u1037\u101b\u1014\u103a", en: "Less", shn: "\u101b\u1088\u1015", kac: "Hkum u", th: "\u0e22\u0e48\u0e2d", zh: "\u6536\u8d77", vi: "Thu g\u1ecdn", id: "Ringkas", ms: "Ringkas" };
   var L_FAV_HINT = { my: "ကတ်ပေါ်က ★ ကို နှိပ်ပြီး အကြိုက်ဆုံး workflow တွေ ဒီမှာ စုထားနိုင်တယ်", en: "Tap ★ on a card to pin your favorite workflows here", shn: "ၼဵၵ်း ★ ၼိူဝ်ၵၢတ်ႈသေ သိမ်း workflow ဢၼ်လႆႈၸႂ်တီႈၼႆႈ", kac: "Card ntsa na ★ hpe dip nna ra ai workflow ni ndai kaw da u", th: "แตะ ★ บนการ์ดเพื่อปักหมุดเวิร์กโฟลว์โปรดไว้ที่นี่", zh: "点按卡片上的 ★ 把常用工作流固定在这里", vi: "Chạm ★ trên thẻ để ghim workflow yêu thích tại đây", id: "Ketuk ★ pada kartu untuk menyematkan workflow favorit di sini", ms: "Ketik ★ pada kad untuk semat aliran kerja kegemaran di sini" };
   var L_FAVS = { my: "အကြိုက်ဆုံးများ", en: "Favorites", shn: "ဢၼ်လႆႈၸႂ်", kac: "Ra dik ai ni", th: "รายการโปรด", zh: "收藏", vi: "Yêu thích", id: "Favorit", ms: "Kegemaran" };
   var L_RECENT = { my: "မကြာခင်သုံးခဲ့", en: "Recent", shn: "ဢၼ်ၸႂ်ႉလိုၼ်းသုတ်း", kac: "Ya sha lang ai", th: "ล่าสุด", zh: "最近", vi: "Gần đây", id: "Terbaru", ms: "Terkini" };
@@ -651,7 +658,7 @@ function create(deps) {
 
   function select(workflowId) {
     recentPush(workflowId);
-    resSel = null; cmpOpen = false; advOpen = false; earlier = []; earlierLoaded = false;   /* v6.83.0 */
+    resSel = null; cmpOpen = false; advOpen = false; optsOpen = false; earlier = []; earlierLoaded = false;   /* v6.83.0 */
     wstate.selectWorkflow(state, workflowId);       // Click 1
     if (directMode()) wstate.prepare(state);        // Direct: skip staging
     renderSelected();
@@ -789,6 +796,144 @@ function create(deps) {
     return ev;
   }
 
+  /* 6.168.0 — the marker, reached the way every other call site reaches it. */
+  function ellFit(root, sel, lines) {
+    try { var f = globalThis.HNK && globalThis.HNK.ellMark; if (f) f(root, sel, lines); } catch (e) { }
+  }
+
+  /* 6.168.0 — A REFUSAL THAT NAMES ITSELF. The owner photographed Selection Edit
+     refusing 1191×1191 and 1208×1208 on a 16-bit RAW and accepting 3040×3040
+     minutes later, with one sentence for all three: "Could not read the selected
+     pixels — try again." captureRegion now answers { error, bounds, mode } instead
+     of nothing, so the sentence carries the reason, the rectangle and the
+     document's own mode — the three facts the next photograph would otherwise
+     have had to guess at. */
+  function capFail(cap, b) {
+    var msg = dom.t("ai_wf_capture_fail", "Could not read the selected pixels \u2014 try again.");
+    var bits = [];
+    try {
+      if (cap && cap.error) bits.push(String(cap.error).slice(0, 140));
+      var w = (cap && cap.bounds && cap.bounds.width) || (b && b.width) || 0;
+      var h = (cap && cap.bounds && cap.bounds.height) || (b && b.height) || 0;
+      if (w > 0 && h > 0) bits.push(Math.round(w) + "\u00d7" + Math.round(h) + " px");
+      if (cap && cap.mode) bits.push(String(cap.mode));
+    } catch (e) { }
+    return bits.length ? msg + " \u2014 " + bits.join(" \u00b7 ") : msg;
+  }
+
+  /* ---- 6.168.0 — THE SELECTION, SHOWN. ------------------------------------
+     The owner asked three things of Selection Edit in one message: it works
+     sometimes and not others, the page is too long, and "selection ဘယ်နားမှတ်
+     ထားလဲ ပြလို့ရလား" — can you show me where the selection is.
+
+     This card answers the first and the third, and shortens the page by being
+     one block where there were four (the heading, the tick row, the instruction
+     paragraph and the Selection row all said one thing). It draws a map of the
+     document with the marked rectangle on it — explicit pixels, because a UXP
+     box may decline to resolve a percentage — says where that rectangle sits,
+     and gives Check a second job: read the pixels there and show them. A
+     capture that is going to fail now fails HERE, before the money, naming its
+     reason; one that works shows the student exactly what will be sent. */
+  function selectionCard(inp) {
+    /* it wears hnk-req-block as well as its own class: this card IS the region
+       workflow's required-image block, and every walk that counts those blocks
+       has to keep finding it. */
+    var card = dom.el(doc, "div", { class: "hnk-req-block hnk-sel-card", id: "hnkWfSelCard" });
+    var mark = dom.el(doc, "span", { class: "hnk-req-mark ok", text: "\u2713" });
+    nodes["req_" + inp.key] = mark;
+    card.appendChild(dom.el(doc, "div", { class: "hnk-req-row" }, [
+      dom.el(doc, "span", { class: "hnk-req-label", text: slotLabel(inp) }), mark
+    ]));
+
+    var body = dom.el(doc, "div", { class: "hnk-sel-body" });
+    var map = dom.el(doc, "div", { class: "hnk-sel-map", id: "hnkWfSelMap" });
+    var page = dom.el(doc, "div", { class: "hnk-sel-page", id: "hnkWfSelPage" });
+    var rect = dom.el(doc, "div", { class: "hnk-sel-rect", id: "hnkWfSelRect" });
+    page.appendChild(rect); map.appendChild(page);
+    map.style.display = "none";
+    var side = dom.el(doc, "div", { class: "hnk-sel-side" });
+    var selTxt = dom.el(doc, "span", { class: "hnk-sel-txt", id: "hnkWfSelState", text: l9(L_SEL_CHECKING) });
+    var selNum = dom.el(doc, "span", { class: "hnk-sel-num", id: "hnkWfSelNum" });
+    side.appendChild(selTxt); side.appendChild(selNum);
+    body.appendChild(map); body.appendChild(side);
+    card.appendChild(body);
+
+    var shot = dom.el(doc, "div", { class: "hnk-sel-shot", id: "hnkWfSelShot" });
+    var shotIm = doc.createElement("img"); shotIm.className = "hnk-sel-thumb"; shotIm.alt = "";
+    var shotCap = dom.el(doc, "div", { class: "hnk-sel-cap", id: "hnkWfSelShotCap" });
+    shot.appendChild(shotIm); shot.appendChild(shotCap);
+    shot.style.display = "none";
+    card.appendChild(shot);
+
+    var selBtn = dom.el(doc, "button", { class: "hnk-btn hnk-sel-check", id: "hnkWfSelCheck", text: l9(L_SEL_CHECK) });
+    card.appendChild(selBtn);
+
+    nodes.selRow = card; nodes.selTxt = selTxt;
+    /* doGenerate's own capture paints this card too — the pixels it read are the
+       pixels that went, so the card shows those rather than a second guess */
+    nodes.selShow = function (ref, via) {
+      try {
+        if (!/^data:image\//.test(String(ref || ""))) return;
+        shotIm.src = ref; shot.style.display = "";
+        shotCap.textContent = l9(L_SEL_PIX) + (via ? " \u00b7 " + via : "");
+      } catch (e) { }
+    };
+
+    function paintMap(b) {
+      var cs = null;
+      try { cs = (deps.host && deps.host.canvasSize) ? deps.host.canvasSize() : null; } catch (e) { cs = null; }
+      var W = (cs && cs.width > 0) ? cs.width : 0, H = (cs && cs.height > 0) ? cs.height : 0;
+      if (!b || !(W > 0 && H > 0)) { map.style.display = "none"; selNum.textContent = ""; return; }
+      map.style.display = "";
+      var k = Math.min(104 / W, 78 / H);
+      var pw = Math.max(16, Math.round(W * k)), ph = Math.max(16, Math.round(H * k));
+      page.style.width = pw + "px"; page.style.height = ph + "px";
+      var rw = Math.max(3, Math.min(pw, Math.round(b.width * k))), rh = Math.max(3, Math.min(ph, Math.round(b.height * k)));
+      rect.style.width = rw + "px"; rect.style.height = rh + "px";
+      rect.style.left = Math.max(0, Math.min(pw - rw, Math.round(b.x * k))) + "px";
+      rect.style.top = Math.max(0, Math.min(ph - rh, Math.round(b.y * k))) + "px";
+      selNum.textContent = l9(L_SEL_POS).replace("{x}", String(b.x)).replace("{y}", String(b.y))
+        .replace("{W}", String(W)).replace("{H}", String(H));
+    }
+    function sayOk(b) {
+      card.className = "hnk-req-block hnk-sel-card ok";
+      selTxt.textContent = l9(L_SEL_OK).replace("{w}", String(b.width)).replace("{h}", String(b.height));
+    }
+    var selCheck = function (readPixels) {
+      if (!(deps.host && deps.host.getSelectionBounds)) {
+        card.className = "hnk-req-block hnk-sel-card"; selTxt.textContent = l9(L_SEL_NOHOST);
+        selNum.textContent = ""; map.style.display = "none"; return;
+      }
+      card.className = "hnk-req-block hnk-sel-card"; selTxt.textContent = l9(L_SEL_CHECKING); selNum.textContent = "";
+      var done = function (b) {
+        if (!(b && b.width > 0 && b.height > 0)) {
+          card.className = "hnk-req-block hnk-sel-card none"; selTxt.textContent = l9(L_SEL_NONE);
+          selNum.textContent = ""; map.style.display = "none"; shot.style.display = "none";
+          return;
+        }
+        sayOk(b); paintMap(b);
+        if (!readPixels || !deps.host.captureRegion) return;
+        selTxt.textContent = l9(L_SEL_READ);
+        var bad = function (cap) {
+          shot.style.display = "none";
+          card.className = "hnk-req-block hnk-sel-card none";
+          selTxt.textContent = capFail(cap, b);
+        };
+        try {
+          Promise.resolve(deps.host.captureRegion(b)).then(function (cap) {
+            if (cap && cap.ref) { sayOk(b); nodes.selShow(cap.ref, cap.via || ""); }
+            else bad(cap);
+          }, function (e) { bad({ error: (e && e.message) || String(e) }); });
+        } catch (e2) { bad({ error: (e2 && e2.message) || String(e2) }); }
+      };
+      try { Promise.resolve(deps.host.getSelectionBounds()).then(done, function () { done(null); }); }
+      catch (e) { done(null); }
+    };
+    dom.on(selBtn, "click", function () { selCheck(true); });
+    selCheck(false);
+    return card;
+  }
+
   function doGenerate() {
     if (!state.prepared) wstate.prepare(state); // Direct mode assembles now
     var wf = registry.get(state.workflowId);
@@ -811,18 +956,24 @@ function create(deps) {
        bounds with a layer mask cut from the same rectangle, so pixels
        outside the selection are untouched by construction. */
     if (wf && wf.region && deps.host && deps.host.getSelectionBounds) {
+      var rb = null;
       Promise.resolve(deps.host.getSelectionBounds()).then(function (b) {
+        rb = b;
         if (!b) { hint(dom.t("ai_wf_select_first", "Make a rectangular selection in Photoshop first, then press GENERATE.")); return; }
         return Promise.resolve(deps.host.captureRegion(b)).then(function (cap) {
-          if (!cap || !cap.ref) { hint(dom.t("ai_wf_capture_fail", "Could not read the selected pixels — try again.")); return; }
+          /* 6.168.0 — the refusal carries captureRegion's own reason, the rectangle
+             it was asked for and the document's mode (capFail), in place of one
+             sentence that fitted every failure equally badly. */
+          if (!cap || !cap.ref) { hint(capFail(cap, b)); return; }
           if (state.requiredInputs[0]) state.requiredInputs[0].image = { source: "selection", role: state.requiredInputs[0].role, ref: cap.ref, valid: true,
             width: cap.width || b.width, height: cap.height || b.height };
           state.regionBounds = { x: b.x, y: b.y, width: b.width, height: b.height };
           /* v6.84.0 — the slot shows the pixels that were just read, before the run */
           try { refresh(); } catch (eR) { }
+          try { if (nodes.selShow) nodes.selShow(cap.ref, cap.via || ""); } catch (eS) { }
           fire();
         });
-      }).catch(function () { hint(dom.t("ai_wf_capture_fail", "Could not read the selected pixels — try again.")); });
+      }).catch(function (e) { hint(capFail({ error: (e && e.message) || String(e) }, rb)); });
       return;
     }
     fire();
@@ -873,9 +1024,29 @@ function create(deps) {
       dom.el(doc, "span", { class: "hnk-wf-chip", text: (modelRegistry.getModel(wf.route.modelId) || { displayName: wf.route.modelId }).displayName })
     ]);
     root.appendChild(chips);
-    // Click 1 — explanation + expected result
-    root.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc",
-      text: dom.t(registry.explanationKey(wf.id), wf.explanation) }));
+    /* Click 1 — explanation + expected result.
+       6.168.0 — THREE LINES AND A "MORE". The owner photographed Selection Edit
+       and said the page was too long to hold ("ui ux \u1000 \u101b\u103e\u100a\u103a\u101c\u103d\u1014\u103a\u1038\u1010\u101a\u103a"). This
+       paragraph is the tallest block above the fold and is read once; it now
+       opens to three lines with the rest one tap away. The cut is the marker's
+       own word-cut (6.167.4), so it is a real cut in Photoshop too, and the
+       whole sentence is kept here so "More" can put it back. */
+    var descTxt = dom.t(registry.explanationKey(wf.id), wf.explanation);
+    var desc = dom.el(doc, "div", { class: "hnk-wf-desc hnk-wf-about is-clamp", id: "hnkWfDesc", text: descTxt });
+    root.appendChild(desc);
+    var descMore = dom.el(doc, "button", { class: "hnk-btn hnk-wf-more", id: "hnkWfDescMore", text: l9(L_MORE) });
+    root.appendChild(descMore);
+    var descOpen = false;
+    var paintDesc = function () {
+      desc.textContent = descTxt;
+      desc.className = "hnk-wf-desc hnk-wf-about" + (descOpen ? "" : " is-clamp");
+      if (!descOpen) ellFit(root, ".hnk-wf-about", 3);
+      /* a paragraph that fitted was never cut, so it gets no "More" to press */
+      descMore.style.display = (descOpen || desc.querySelector(".ell")) ? "" : "none";
+      descMore.textContent = l9(descOpen ? L_LESS : L_MORE);
+    };
+    dom.on(descMore, "click", function () { descOpen = !descOpen; paintDesc(); });
+    paintDesc();
 
     // v6.35.0 — the workflow's own design controls: poster text, backdrop
     // colour swatches + hex, and one ON/OFF switch per enhancement. The
@@ -928,50 +1099,18 @@ function create(deps) {
       root.appendChild(fwrap);
     }
 
-    root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_req_images", "Required Images") }));
+    /* 6.168.0 — a region workflow has ONE required image and it IS the selection,
+       so the "Required Images" heading, the tick row under it, the instruction
+       paragraph and the Selection row all said one thing four times. One card
+       says it once, with a picture (selectionCard). */
+    if (!wf.region) root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_req_images", "Required Images") }));
     var reqWrap = dom.el(doc, "div", { class: "hnk-wf-reqs" });
     state.requiredInputs.forEach(function (inp) {
       /* v6.36.0 — a region workflow's photo comes from the live rectangular
          selection at Generate time: no source buttons, just the slot. */
-      if (wf.region && inp.image && inp.image.source === "selection") {
-        var mark = dom.el(doc, "span", { class: "hnk-req-mark ok", text: "✓" });
-        nodes["req_" + inp.key] = mark;
-        reqWrap.appendChild(dom.el(doc, "div", { class: "hnk-req-block" }, [
-          dom.el(doc, "div", { class: "hnk-req-row" }, [
-            dom.el(doc, "span", { class: "hnk-req-label", text: slotLabel(inp) }), mark
-          ])
-        ]));
-      } else {
-        reqWrap.appendChild(inputRow(inp));
-      }
+      if (wf.region && inp.image && inp.image.source === "selection") reqWrap.appendChild(selectionCard(inp));
+      else reqWrap.appendChild(inputRow(inp));
     });
-    if (wf.region) {
-      reqWrap.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc",
-        text: dom.t("ai_region_hint", "Drag a Rectangle-tool selection over the area to change, type your request above, then press GENERATE. Only the selected area changes — every pixel outside it stays identical.") }));
-      /* 6.164.0 — THE SELECTION, CHECKED BEFORE THE MONEY. Until now the student learned that no rectangle was
-         selected only after pressing GENERATE. This row asks Photoshop for the live selection when the workflow
-         opens and on every tap of Check, and says what it found: the rectangle's size in pixels, or that there
-         is none yet. doGenerate still reads the selection itself at fire time — this row informs, it never
-         replaces that read. Without a Photoshop host (a browser walk) the row says so. */
-      var selRow = dom.el(doc, "div", { class: "hnk-sel-row", id: "hnkWfSelRow" });
-      var selTxt = dom.el(doc, "span", { class: "hnk-sel-txt", id: "hnkWfSelState", text: l9(L_SEL_CHECKING) });
-      var selBtn = dom.el(doc, "button", { class: "hnk-btn hnk-sel-check", id: "hnkWfSelCheck", text: l9(L_SEL_CHECK) });
-      selRow.appendChild(selTxt); selRow.appendChild(selBtn);
-      reqWrap.appendChild(selRow);
-      nodes.selRow = selRow; nodes.selTxt = selTxt;
-      var selCheck = function () {
-        if (!(deps.host && deps.host.getSelectionBounds)) { selRow.className = "hnk-sel-row"; selTxt.textContent = l9(L_SEL_NOHOST); return; }
-        selRow.className = "hnk-sel-row"; selTxt.textContent = l9(L_SEL_CHECKING);
-        var done = function (b) {
-          if (b && b.width > 0 && b.height > 0) { selRow.className = "hnk-sel-row ok"; selTxt.textContent = l9(L_SEL_OK).replace("{w}", String(b.width)).replace("{h}", String(b.height)); }
-          else { selRow.className = "hnk-sel-row none"; selTxt.textContent = l9(L_SEL_NONE); }
-        };
-        try { Promise.resolve(deps.host.getSelectionBounds()).then(done, function () { done(null); }); }
-        catch (e) { done(null); }
-      };
-      dom.on(selBtn, "click", selCheck);
-      selCheck();
-    }
     root.appendChild(reqWrap);
     if (state.optionalInputs.length) {
       root.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_opt_images", "Optional Images") }));
@@ -1312,8 +1451,14 @@ function create(deps) {
     var route = state.resolvedRoute || wf.route || {};
     var chosen = (route && route.auto === false && route.modelId) ? route.modelId : "";
     var modelId = chosen || cur.model;
-    var box = dom.el(doc, "div", { class: "hnk-wf-opts", id: "hnkWfOpts" });
-    box.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("wf_opts", "Model \u00b7 Ratio \u00b7 Count \u00b7 Size") }));
+    /* 6.168.0 — THE FOUR PICKERS FOLD. Model, Ratio, Count and Size are four full
+       rows — the tallest block on a page the owner photographed as too long — and
+       on most runs a student changes none of them. The header now carries what
+       they are SET TO, so nothing is hidden from the eye, only from the scroll,
+       and one tap opens the rows exactly as they were. */
+    var optsHead = dom.el(doc, "button", { class: "hnk-btn hnk-wf-opts-h", id: "hnkWfOptsH" });
+    var box = dom.el(doc, "div", { class: "hnk-wf-opts" + (optsOpen ? " on" : ""), id: "hnkWfOpts" });
+    root.appendChild(optsHead);
 
     /* Model — "Auto" is the workflow's own route; a name is a pick that also becomes Freeform's model */
     var mp = hslPicker("wfModel", "Model", "brand-banana");
@@ -1359,6 +1504,7 @@ function create(deps) {
       out = state.output || {};
       var line = doc.getElementById("hnkWfRouteLine");
       if (line) line.textContent = routeLine(wf);
+      paintOptsHead();
     }
     function onModel() {
       var v = mp.sel.value;
@@ -1374,8 +1520,34 @@ function create(deps) {
     dom.on(sp.sel, "change", function () { paintVal(sp); apply(); });
     box.appendChild(rp.wrap); box.appendChild(rail); box.appendChild(row2);
     root.appendChild(box);
+    function optsSummary() {
+      var parts = [];
+      try {
+        /* the picker's own row reads "Auto — the workflow's choice"; a header is
+           not the place for the whole sentence */
+        parts.push(mp.sel.value ? String((mp.sel.options[mp.sel.selectedIndex] || {}).text || "")
+          : dom.t("qual_auto", "Auto"));
+        if (rp.sel.value) parts.push(String(rp.sel.value));
+        if (sp.sel.value) parts.push(String(sp.sel.value).toUpperCase());
+        var n = parseInt(cp.sel.value, 10) || 1;
+        if (n > 1) parts.push("\u00d7" + n);
+      } catch (e) { }
+      return parts.join(" \u00b7 ");
+    }
+    function paintOptsHead() {
+      var sum = optsSummary();
+      optsHead.textContent = dom.t("wf_opts", "Model \u00b7 Ratio \u00b7 Count \u00b7 Size") + (sum ? " \u2014 " + sum : "");
+    }
+    nodes.optsHead = paintOptsHead;
+    dom.on(optsHead, "click", function () {
+      optsOpen = !optsOpen;
+      box.className = "hnk-wf-opts" + (optsOpen ? " on" : "");
+      /* the rail measures what it paints, and a closed box measures nothing */
+      if (optsOpen) { try { paintRail(); } catch (e) { } }
+    });
     /* the rail paints by id, so the box is in the document first */
     fillForModel(modelId);
+    paintOptsHead();
     /* the prefs the wizard shows are the prefs it will send */
     wstate.setOutput(state, { ratio: rp.sel.value || "auto", size: sp.sel.value ? sp.sel.value.toLowerCase() : (out.size || "2k"), variants: parseInt(cp.sel.value, 10) || 1 });
   }

@@ -314,7 +314,13 @@ async function _viaSavedCopy(ps, uxp) {
 async function _captureRoutes(ps, uxp, reqs, w, h, allowSavedCopy) {
   var why = [];
   for (var i = 0; i < reqs.length; i++) {
-    try { return await _viaGetPixels(ps, reqs[i], w, h); }
+    try {
+      var got = await _viaGetPixels(ps, reqs[i], w, h);
+      /* 6.168.0 — say WHICH route answered, so a refusal and a success are
+         read against the same list */
+      if (got) got.via = "getPixels " + (i + 1) + "/" + reqs.length;
+      return got;
+    }
     catch (e) { why.push("getPixels " + (i + 1) + "/" + reqs.length + ": " + _emsg(e)); }
   }
   if (allowSavedCopy && uxp) {
@@ -335,6 +341,10 @@ async function captureActiveLayer() {
     var id = layer && layer.id;
     var w = doc && doc.width, h = doc && doc.height;
     var cap = _capSize(w, h);
+    /* 6.168.0 — a resample route is always offered, for the reason written out in
+       captureRegion: a targetSize is what makes Photoshop hand back 8-bit pixels,
+       and JPEG has no other kind. A small document reached none of these before. */
+    var fit = cap || { width: Math.max(1, Math.round(Number(w) || 0)), height: Math.max(1, Math.round(Number(h) || 0)) };
     var reqs = [];
     /* v6.84.0 — a CMYK / Lab / Grayscale document: ask imaging for RGB pixels
        first (the JPEG encoder takes RGB; the plain routes below would each
@@ -344,13 +354,13 @@ async function captureActiveLayer() {
     try { mode = String((doc && doc.mode) || ""); } catch (eM) { mode = ""; }
     var nonRgb = !!mode && !/rgb/i.test(mode);
     if (nonRgb) {
-      if (cap && id != null) reqs.push({ layerID: id, targetSize: cap, colorSpace: "RGB" });
-      if (cap) reqs.push({ targetSize: cap, colorSpace: "RGB" });
+      if (id != null) reqs.push({ layerID: id, targetSize: fit, colorSpace: "RGB" });
+      reqs.push({ targetSize: fit, colorSpace: "RGB" });
     }
     /* smallest ask first: this document is 32 megapixels and the panel wants
        a reference photograph, not the master */
-    if (cap && id != null) reqs.push({ layerID: id, targetSize: cap });
-    if (cap) reqs.push({ targetSize: cap });
+    if (id != null) reqs.push({ layerID: id, targetSize: fit });
+    reqs.push({ targetSize: fit });
     if (id != null) reqs.push({ layerID: id });
     reqs.push({});
     var got = await _captureRoutes(ps, uxp, reqs, w, h, true);
@@ -400,18 +410,32 @@ async function captureRegion(bounds) {
   /* v6.65.0 — inside a modal, for the same reason captureActiveLayer is: this
      is the identical getPixels call on the identical document. */
   var uxp = _uxp();
+  /* 6.168.0 — read the mode out here so a refusal can name it */
+  var mode = "";
+  try { mode = String((ps.app.activeDocument && ps.app.activeDocument.mode) || ""); } catch (eM) { mode = ""; }
   var run = async function () {
     var sb = { left: bounds.x, top: bounds.y, right: bounds.x + bounds.width, bottom: bounds.y + bounds.height };
     var cap = _capSize(bounds.width, bounds.height);
+    /* 6.168.0 — THE SELECTION THAT WORKED SOMETIMES. The owner's 16-bit RAW refused
+       1191×1191 and 1208×1208 and went through at 3040×3040. The arithmetic says why:
+       _capSize only returns a size ABOVE the 2048 cap, so the two small regions had
+       exactly one route — plain getPixels, no targetSize — and the big one had a
+       resample route ahead of it. JPEG is an 8-bit format; getPixels without a
+       targetSize hands back the document's own 16-bit data and the encoder refuses it,
+       while a targetSize makes Photoshop resample, and a resample is 8 bits.
+
+       So a resample route is now ALWAYS offered, at the region's own size when it is
+       under the cap — it costs nothing where the plain route already worked, because
+       the plain route is still there, last, for the hosts where it is the one that
+       answers. */
+    var fit = cap || { width: Math.max(1, Math.round(bounds.width)), height: Math.max(1, Math.round(bounds.height)) };
     var reqs = [];
     /* v6.84.0 — the same RGB ask first on a non-RGB document (see captureActiveLayer) */
-    var mode = "";
-    try { mode = String((ps.app.activeDocument && ps.app.activeDocument.mode) || ""); } catch (eM) { mode = ""; }
     if (mode && !/rgb/i.test(mode)) {
-      if (cap) reqs.push({ sourceBounds: sb, targetSize: cap, colorSpace: "RGB" });
+      reqs.push({ sourceBounds: sb, targetSize: fit, colorSpace: "RGB" });
       reqs.push({ sourceBounds: sb, colorSpace: "RGB" });
     }
-    if (cap) reqs.push({ sourceBounds: sb, targetSize: cap });
+    reqs.push({ sourceBounds: sb, targetSize: fit });
     reqs.push({ sourceBounds: sb });
     /* no saved copy here: a flattened save would ignore the bounds, and a
        region edit that quietly returned the whole page would be worse than
@@ -425,7 +449,9 @@ async function captureRegion(bounds) {
     return await run();
   } catch (e) {
     _herr("captureRegion failed", e);
-    return { error: _emsg(e) };
+    /* 6.168.0 — every fact the next photograph will need: what every route said,
+       the rectangle that was asked for, and the document's own mode */
+    return { error: _emsg(e), bounds: { width: bounds.width, height: bounds.height }, mode: mode || "?" };
   }
 }
 

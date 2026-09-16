@@ -114,12 +114,17 @@ function sourcePins() {
     /if\(rgnFull\)\{ state\.refs\[0\]=rgnFull; try\{ renderRefs\(\); \}catch\(eRR\)\{\} \}/.test(wiz) && /rgComp=await wizRegionPaste\(rgnFull, rgOut, rgn\)/.test(wiz) && /if\(rgOut\._id\) galleryDel\(rgOut\._id, function\(\)\{\}\);/.test(wiz) &&
     /function wizRegionPicker\(ref\)\{/.test(APP) && /async function wizRegionCrop\(ref, r\)\{/.test(APP) && /async function wizRegionPaste\(full, out, r\)\{/.test(APP) && /\.wiz-region-rect\{position:absolute;border:2px dashed var\(--gold\)/.test(APP) &&
     /\.wiz-field-req\{flex-direction:column;align-items:stretch/.test(APP) && LANGS.every(l => new RegExp('title:\\{[^}]*\\b' + l + ':"').test(between(APP, "function wizRegionL(k){", "return L9(L[k]);"))), null);
-  const selRow = between(SCREEN, "6.164.0 — THE SELECTION, CHECKED BEFORE THE MONEY", "dom.on(selBtn, \"click\", selCheck);");
-  report("A6) Selection Edit in the panel: a text field is a column (.is-text) with the app's maxlength, .hnk-input finally has a rule, and a region workflow draws the Selection row (#hnkWfSelRow · #hnkWfSelState · #hnkWfSelCheck) that reads host.getSelectionBounds on open and on Check — ok / none / no-host in nine languages",
+  /* 6.168.0 — the row this wave introduced became the Selection CARD: it now carries the
+     region workflow's whole required-image block (tick · map · numbers · the pixels Check
+     read), so the ids and the class moved with it. The reading it pins is the same one:
+     a region workflow asks Photoshop for the live rectangle when it opens and on Check,
+     and says ok / none / no-host in nine languages. verify_selection_shown pins the rest. */
+  const selRow = between(SCREEN, "6.168.0 — THE SELECTION, SHOWN", "dom.on(selBtn, \"click\", function () { selCheck(true); });");
+  report("A6) Selection Edit in the panel: a text field is a column (.is-text) with the app's maxlength, .hnk-input finally has a rule, and a region workflow draws the Selection card (#hnkWfSelCard · #hnkWfSelState · #hnkWfSelCheck) that reads host.getSelectionBounds on open and on Check — ok / none / no-host in nine languages",
     /class: "hnk-wf-field" \+ \(f\.type === "text" \? " is-text" : ""\)/.test(SCREEN) && /if \(f\.max\) ti\.setAttribute\("maxlength", String\(f\.max\)\);/.test(SCREEN) &&
-    /id: "hnkWfSelRow"/.test(selRow) && /id: "hnkWfSelState"/.test(selRow) && /id: "hnkWfSelCheck"/.test(selRow) && /deps\.host\.getSelectionBounds\(\)/.test(selRow) && /selRow\.className = "hnk-sel-row ok"/.test(selRow) && /selRow\.className = "hnk-sel-row none"/.test(selRow) &&
+    /id: "hnkWfSelCard"/.test(selRow) && /id: "hnkWfSelState"/.test(selRow) && /id: "hnkWfSelCheck"/.test(selRow) && /deps\.host\.getSelectionBounds\(\)/.test(selRow) && /card\.className = "hnk-req-block hnk-sel-card ok"/.test(selRow) && /card\.className = "hnk-req-block hnk-sel-card none"/.test(selRow) &&
     ["L_SEL_CHECK", "L_SEL_CHECKING", "L_SEL_OK", "L_SEL_NONE", "L_SEL_NOHOST"].every(k => { const line = (SCREEN.match(new RegExp("var " + k + " = \\{[^\\n]*")) || [""])[0]; return LANGS.every(l => new RegExp("\\b" + l + ': "').test(line)); }) &&
-    /L_SEL_OK = \{[^\n]*\{w\} × \{h\} px/.test(SCREEN) && /\.hnk-input \{ min-height: 42px;/.test(PCSS) && /\.hnk-wf-field\.is-text \{ flex-direction: column; align-items: stretch; \}/.test(PCSS) && /\.hnk-sel-row \{ display: flex; flex-direction: row;/.test(PCSS) && !/\.hnk-sel-row \{[^}]*\bgap:/.test(PCSS), null);
+    /L_SEL_OK = \{[^\n]*\{w\} × \{h\} px/.test(SCREEN) && /\.hnk-input \{ min-height: 42px;/.test(PCSS) && /\.hnk-wf-field\.is-text \{ flex-direction: column; align-items: stretch; \}/.test(PCSS) && /\.hnk-sel-card \{ display: block;/.test(PCSS) && !/\.hnk-sel-card \{[^}]*\bgap:/.test(PCSS), null);
 }
 
 /* ================= B) the web app ================= */
@@ -288,22 +293,26 @@ async function panelWalk(browser) {
     const c4 = await page.evaluate(async () => {
       HNK.aiToolsApp.workflowScreen().select("region-edit"); await new Promise(r => setTimeout(r, 700));
       const f = document.querySelector("#hnkAiToolsRoot .hnk-wf-text"); const fr = f.getBoundingClientRect(), box = document.querySelector("#hnkAiToolsRoot .hnk-wf-fields").getBoundingClientRect();
-      const out = { isText: !!f.closest(".hnk-wf-field.is-text"), fieldFull: fr.width >= box.width * 0.95, maxlen: f.getAttribute("maxlength"), styled: getComputedStyle(f).borderRadius, row: !!document.getElementById("hnkWfSelRow"), check: !!document.getElementById("hnkWfSelCheck") };
-      const host = HNK.photoshopHost, orig = host.getSelectionBounds;
+      const out = { isText: !!f.closest(".hnk-wf-field.is-text"), fieldFull: fr.width >= box.width * 0.95, maxlen: f.getAttribute("maxlength"), styled: getComputedStyle(f).borderRadius, row: !!document.getElementById("hnkWfSelCard"), check: !!document.getElementById("hnkWfSelCheck") };
+      const host = HNK.photoshopHost, orig = host.getSelectionBounds, origCap = host.captureRegion;
+      /* 6.168.0 — Check reads the pixels too now (verify_selection_shown owns that leg);
+         here the read is stubbed so this test keeps asking what it has always asked:
+         what the three BOUNDS answers do to the card. */
+      host.captureRegion = async () => ({ ref: "data:image/jpeg;base64,QUJD", width: 640, height: 420, via: "getPixels 1/2" });
       host.getSelectionBounds = async () => null; document.getElementById("hnkWfSelCheck").click(); await new Promise(r => setTimeout(r, 200));
-      out.none = { cls: document.getElementById("hnkWfSelRow").className, txt: document.getElementById("hnkWfSelState").textContent };
+      out.none = { cls: document.getElementById("hnkWfSelCard").className, txt: document.getElementById("hnkWfSelState").textContent };
       host.getSelectionBounds = async () => ({ x: 120, y: 80, width: 640, height: 420 }); document.getElementById("hnkWfSelCheck").click(); await new Promise(r => setTimeout(r, 200));
-      out.ok = { cls: document.getElementById("hnkWfSelRow").className, txt: document.getElementById("hnkWfSelState").textContent };
+      out.ok = { cls: document.getElementById("hnkWfSelCard").className, txt: document.getElementById("hnkWfSelState").textContent };
       host.getSelectionBounds = async () => { throw new Error("no document"); }; document.getElementById("hnkWfSelCheck").click(); await new Promise(r => setTimeout(r, 200));
-      out.thrown = { cls: document.getElementById("hnkWfSelRow").className };
-      host.getSelectionBounds = orig;
+      out.thrown = { cls: document.getElementById("hnkWfSelCard").className };
+      host.getSelectionBounds = orig; host.captureRegion = origCap;
       /* the row is drawn again, fresh, when the workflow is reopened; a plain workflow draws none */
       document.getElementById("hnkWfBack").click(); await new Promise(r => setTimeout(r, 300));
-      HNK.aiToolsApp.workflowScreen().select("upscale"); await new Promise(r => setTimeout(r, 400)); out.plainRow = !!document.getElementById("hnkWfSelRow");
+      HNK.aiToolsApp.workflowScreen().select("upscale"); await new Promise(r => setTimeout(r, 400)); out.plainRow = !!document.getElementById("hnkWfSelCard");
       document.getElementById("hnkWfBack").click(); await new Promise(r => setTimeout(r, 200));
       return out; });
-    report("C4) the panel's Selection Edit: the request line is a full-width framed field (column layout, radius, maxlength 200) and the Selection row reads Photoshop on Check — none yet (an amber row), 640 × 420 px ✓ (a green row), a throwing host counts as none; a workflow without a region draws no row",
-      c4.isText && c4.fieldFull && c4.maxlen === "200" && /9px/.test(c4.styled) && c4.row && c4.check && c4.none.cls === "hnk-sel-row none" && /Selection/.test(c4.none.txt) && c4.ok.cls === "hnk-sel-row ok" && /640 × 420 px/.test(c4.ok.txt) && c4.thrown.cls === "hnk-sel-row none" && !c4.plainRow, c4);
+    report("C4) the panel's Selection Edit: the request line is a full-width framed field (column layout, radius, maxlength 200) and the Selection card reads Photoshop on Check — none yet (an amber card), 640 × 420 px ✓ (a green card), a throwing host counts as none; a workflow without a region draws no card",
+      c4.isText && c4.fieldFull && c4.maxlen === "200" && /9px/.test(c4.styled) && c4.row && c4.check && c4.none.cls === "hnk-req-block hnk-sel-card none" && /Selection/.test(c4.none.txt) && c4.ok.cls === "hnk-req-block hnk-sel-card ok" && /640 × 420 px/.test(c4.ok.txt) && c4.thrown.cls === "hnk-req-block hnk-sel-card none" && !c4.plainRow, c4);
     report("C5) nothing threw in the panel while all of that ran", errs.length === 0, errs);
   } finally {
     await page.close(); server.close();

@@ -580,6 +580,8 @@ jobs:
         run: PORT=8931 node test/verify_panel_grp_body.js
       - name: A card never paints outside itself — where the renderer hides no overflow, the words themselves are cut to fit and marked, so no description leaves its card and no Open pill is pushed out (6.96.4)
         run: PORT=8931 node test/verify_card_text_fit.js
+      - name: Selection Edit — a resample route is always offered (a 16-bit region under the 2048 cap had none, which is the whole of "sometimes it works"), a refusal names its reason, rectangle and document mode, and the Selection card draws where the marked area is (6.97.0)
+        run: PORT=8931 node test/verify_selection_shown.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
