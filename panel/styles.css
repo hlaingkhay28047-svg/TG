@@ -1091,7 +1091,8 @@ input[type="range"] { min-width: 0; }
 .hnk-estimate, .hnk-status, .hnk-wf-route, .hnk-wf-desc { font-size:11px; color:var(--muted); }
 /* v6.79.0 — the wizard's model · ratio · count · size pickers (the app clones
    its Create selects here); the Freeform card's own picker and rail rules apply */
-.hnk-wf-opts { display: block; margin: 8px 0 10px; }
+.hnk-wf-opts { display: none; margin: 8px 0 10px; }
+.hnk-wf-opts.on { display: block; }
 .hnk-wf-opts .arow { display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start; margin-top: 6px; }
 .hnk-wf-opts .arow .hsl { flex: 0 0 auto; width: 49%; width: calc(50% - 4px); margin-right: 8px; margin-bottom: 8px; }
 .hnk-wf-opts .arow .hsl:last-child { margin-right: 0; }
@@ -1692,16 +1693,36 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .hnk-wf-field.is-text { flex-direction: column; align-items: stretch; }
 .hnk-wf-field.is-text .hnk-wf-field-l { flex: 0 0 auto; margin-bottom: 5px; font-weight: 700; color: var(--text); }
 .hnk-wf-field.is-text .hnk-wf-text { flex: 0 0 auto; width: 100%; min-width: 0; }
-/* 6.164.0 — the selection, checked before the money: a framed row under the Required Images that names the
-   live rectangle (W × H px) or says there is none yet, with a Check button that reads Photoshop again */
-.hnk-sel-row { display: flex; flex-direction: row; align-items: center; margin: 6px 0 4px; padding: 8px 10px;
+/* 6.164.0 — the selection, checked before the money: a framed block under the Required Images that names the
+   live rectangle (W × H px) or says there is none yet, with a Check button that reads Photoshop again.
+   6.168.0 — the row became the card: it is now the region workflow's whole required-image block (tick, a map
+   of the document with the marked rectangle drawn on it, the rectangle's own numbers, the pixels Check read,
+   and the instruction only while there is no rectangle to instruct about). Every number in the map is set as
+   an explicit pixel by the screen, so no percentage and no calc() has to resolve for it to be right. */
+.hnk-sel-card { display: block; margin: 6px 0 4px; padding: 8px 10px;
   border: 1px solid var(--line); border-radius: 9px; background-color: var(--panel-2); }
-.hnk-sel-row.ok { border-color: rgba(126, 201, 126, 0.55); }
-.hnk-sel-row.none { border-color: rgba(233, 185, 73, 0.5); }
-.hnk-sel-txt { flex: 1 1 auto; min-width: 0; font-size: 11.5px; line-height: 1.45; color: var(--text); margin-right: 8px; }
-.hnk-sel-row.ok .hnk-sel-txt { color: var(--ok); font-weight: 700; }
-.hnk-sel-row.none .hnk-sel-txt { color: var(--accent-h); }
-.hnk-sel-check { flex: 0 0 auto; min-height: 34px; padding: 6px 10px; font-size: 11px; white-space: nowrap; }
+.hnk-sel-card.ok { border-color: rgba(126, 201, 126, 0.55); }
+.hnk-sel-card.none { border-color: rgba(233, 185, 73, 0.5); }
+.hnk-sel-body { display: flex; flex-direction: row; align-items: flex-start; margin-top: 4px; }
+.hnk-sel-map { flex: 0 0 auto; width: 104px; margin-right: 10px; }
+.hnk-sel-page { position: relative; width: 104px; height: 78px; box-sizing: border-box;
+  border: 1px solid var(--line); border-radius: 4px; background-color: rgba(127, 127, 127, 0.12); }
+.hnk-sel-rect { position: absolute; left: 0; top: 0; width: 8px; height: 8px; box-sizing: border-box;
+  border: 2px solid var(--accent); border-radius: 2px; background-color: rgba(217, 164, 65, 0.22); }
+.hnk-sel-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.hnk-sel-txt { flex: 0 0 auto; min-width: 0; font-size: 11.5px; line-height: 1.45; color: var(--text); }
+.hnk-sel-num { flex: 0 0 auto; font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+.hnk-sel-card.ok .hnk-sel-txt { color: var(--ok); font-weight: 700; }
+.hnk-sel-card.none .hnk-sel-txt { color: var(--accent-h); }
+.hnk-sel-shot { display: block; margin-top: 8px; }
+.hnk-sel-thumb { display: block; width: 104px; border-radius: 4px; }
+.hnk-sel-cap { font-size: 10px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+.hnk-sel-check { flex: 0 0 auto; min-height: 34px; padding: 6px 10px; font-size: 11px; white-space: nowrap; margin-top: 8px; }
+/* 6.168.0 — the workflow's own paragraph opens at three lines with a More beside it,
+   and the four output pickers fold behind a header that says what they are set to. */
+.hnk-wf-about.is-clamp { max-height: 4.6em; overflow: hidden; }
+.hnk-wf-more { min-height: 26px; padding: 3px 10px; font-size: 10.5px; margin-bottom: 6px; }
+.hnk-wf-opts-h { margin-top: 6px; text-align: left; }
 .hnk-wf-sw { flex: 0 0 auto; min-width: 52px; margin-left: 8px; }
 .hnk-wf-sw.on { background: var(--hnk-gold, #e9b949); color: #17130a; font-weight: 700; }
 .hnk-wf-swatches { display: flex; align-items: center; flex-wrap: wrap; }
