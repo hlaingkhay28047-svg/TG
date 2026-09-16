@@ -1152,6 +1152,15 @@ function create(deps) {
     dom.on(nodes.generate, "click", doGenerate);
     root.appendChild(nodes.generate);
 
+    /* 6.168.2 — the run strip (queued -> uploading -> generating -> downloading ->
+       placing, then the green "it is in the group as a Layer + Mask" sentence) lands
+       HERE, right under the button that starts it. It used to be appended to the
+       mount root, which is the bottom of the page, below the Results card and the
+       History link — the owner: "put it next to the Generate button, it is pointless
+       down there, I have to scroll all the way down to look at it". The strip is
+       display:none until a run starts, so an idle page is not a pixel taller. */
+    root.appendChild(dom.el(doc, "div", { class: "hnk-run-here", id: "hnkRunHere" }));
+
     /* v6.83.0 — Results · Before | After · History, under GENERATE where the
        result lands (the owner's photographs: "Done." and nothing to look at) */
     nodes.results = dom.el(doc, "div", { class: "hnk-wf-results", id: "hnkWfResults" });
