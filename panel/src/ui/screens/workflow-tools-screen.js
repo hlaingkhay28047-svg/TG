@@ -389,25 +389,24 @@ function create(deps) {
     return { g: g, b: body, cnt: cnt, isOpen: isOpen, setOpen: setOpen };
   }
 
-  /* the app's grid is CSS grid with an 8px gap; the panel's flex-wrap twin
-     carries the gap as margins, so after any card is hidden or shown the
-     first row loses its top margin and every right-hand card its right
-     margin. A full-width card sits alone on its row. */
+  /* 6.169.0 — the grid no longer counts columns, and neither does this.
+     Every card is a flex item with a percentage basis (styles.css: one column,
+     then 44% / 30% / 22% / 17% as the panel widens), so how many share a row is
+     the media query's answer and the 8px gaps are each card's own margins —
+     nothing here has to be re-marked when a filter hides a card. What is left is
+     the app's rule that an odd group's last card fills the rest of its row; after
+     a filter the odd card is a different one, so it is recomputed from the cards
+     still on screen. (className can be null in UXP, hence the guard.) */
   function layoutGrid(gd) {
-    var col = 0, row = 0;
-    for (var n = gd.firstChild; n; n = n.nextSibling) {
+    var vis = [], n, i;
+    for (n = gd.firstChild; n; n = n.nextSibling) {
       if (!n.className || n.style.display === "none") continue;
-      var span2 = n.className.indexOf("wf-span2") >= 0;
-      var cls = n.className.replace(/ wf-top| wf-r/g, "");
-      if (span2) { if (col) { row++; col = 0; } if (row === 0) cls += " wf-top"; row++; col = 0; }
-      else {
-        if (row === 0) cls += " wf-top";
-        if (col === 1) cls += " wf-r";
-        col++;
-        if (col === 2) { col = 0; row++; }
-      }
-      n.className = cls;
+      var keep = [], parts = String(n.className).split(" ");
+      for (i = 0; i < parts.length; i++) if (parts[i] && parts[i] !== "wf-span2") keep.push(parts[i]);
+      n.className = keep.join(" ");
+      vis.push(n);
     }
+    if (vis.length % 2 === 1) vis[vis.length - 1].className += " wf-span2";
   }
 
   /* the app's renderFavRecent(): a chip row per non-empty list, or the
@@ -537,9 +536,8 @@ function create(deps) {
           });
           g.b.appendChild(chips);
         }
-        /* the app widens the last card of an odd group to fill the row */
-        if (made % 2 === 1 && gd.lastChild && gd.lastChild.className)
-          gd.lastChild.className = gd.lastChild.className + " wf-span2";
+        /* the app widens the last card of an odd group to fill the row —
+           layoutGrid owns that rule now, so it survives the search filter too */
         layoutGrid(gd);
         g.b.appendChild(gd);
         host.appendChild(g.g);

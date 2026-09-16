@@ -2001,14 +2001,55 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    bottom). Flex-wrap stands in for the grid: the 8px column gap is the odd
    card's right margin, the 8px row gap the top margin of every card past
    the first pair, and the 3:2 art box is a percentage padding. ---- */
-.wfgrid { display: flex; flex-direction: row; flex-wrap: wrap; align-items: stretch; margin-top: 6px; }
-.wfmini { position: relative; display: flex; flex-direction: column; width: 49%; width: calc(50% - 4px);
-  margin: 8px 8px 0 0; padding: 10px; box-sizing: border-box;
+/* 6.169.0 — THE GRID FOLLOWS THE PANEL. Until now every one of these grids was two
+   columns at every width, because the column count lived in two places at once: a
+   `width: calc(50% - 4px)` here and a `col === 2` counter in the screen script. The
+   owner photographed both ends of that. In a 300px panel the content box is 204px, so
+   a card was 98px wide: a 76px picture carrying two 26px corner discs and a 22px badge
+   (79% of it), a title broken over two lines, a summary cut at three. Undocked to
+   1400px the same rule drew 648px cards with 626x417 pictures and a one-line title —
+   and the odd card that fills its row became a 1304x967 slab.
+
+   The fix is to stop writing a column count anywhere. Each card is a flex item with a
+   percentage BASIS and flex-grow 1, so the basis decides how many fit and the growth
+   makes them fill the row exactly: 100% is one column, 44% is two (2x44+16px of margin
+   fits any container over 133px, 3x44 never does), 30% three, 22% four, 17% five. No
+   calc() is needed — the arithmetic is the flex algorithm's, which UXP does run — and
+   nothing has to be recomputed when a filter hides a card. The 8px gaps are margins as
+   before, 4px on each side against a -4px container, with the row gap on the bottom
+   edge and the container's -8px taking the last row's back.
+
+   The ladder is measured, not guessed (see the numbers in test/verify_wf_responsive.js):
+   two columns start at 460px, where a card is 178px and its picture 156px — the width at
+   which the summary stops being cut at three lines and the corner controls stop covering
+   half the art. Below that one column, which is the same card the owner already approved
+   in 6.168.2. The 700/1100 steps are the Imagine cards' own breakpoints in this file, and
+   1500 adds the fifth column the web app has had since 6.9.0. The ladder is bounded by
+   the panel itself: manifest.json allows 300px to 2000px, preferring 340 docked and 360
+   floating — so the one-column card is what a docked panel actually shows, and five
+   columns is the widest case that exists. */
+.wfgrid { display: flex; flex-direction: row; flex-wrap: wrap; align-items: stretch; margin: 6px -4px -8px; }
+.wfmini { position: relative; display: flex; flex-direction: column; flex: 1 1 100%; min-width: 0;
+  margin: 0 4px 8px; padding: 10px; box-sizing: border-box;
   border: 1px solid var(--line-soft); border-radius: 11px; background-color: var(--panel-2);
   color: var(--text); text-align: left; cursor: pointer; }
-.wfmini:nth-child(-n+2) { margin-top: 0; }
-.wfmini:nth-child(2n) { margin-right: 0; }
-.wfmini.wf-span2 { width: 100%; margin-right: 0; }
+/* the odd card of a group fills what is left of its row — which is the whole row while
+   the grid is one or two columns, and simply the next cell once it is three or more
+   (the web app's own rule: .wfgrid .wf-span2{grid-column:auto} from 1024px up) */
+.wfmini.wf-span2 { flex: 1 1 100%; }
+@media (min-width:460px){ .wfmini { flex: 1 1 44%; } .wfmini.wf-span2 { flex: 1 1 100%; } }
+/* THE LAST ROW MUST NOT STRETCH. flex-grow fills a row exactly, which is what makes the
+   basis arithmetic work without calc — but a group whose count is not a multiple of the
+   column count ends on a SHORT row, and grow would blow those two or three cards up to
+   full width. (At one and two columns there is no short row: one column is always full,
+   and at two the odd card is the spanning one.) So from three columns up the card also
+   carries a ceiling: calc() for the browser, exact to the pixel, and a plain percentage
+   in front of it for UXP, which resolves no calc() and takes the fallback. The
+   percentages are the exact fraction at the low end of each step (33.333% - 8px over a
+   604px box is 32.0%), so the widest a UXP row can come up short is about 15px. */
+@media (min-width:700px){ .wfmini, .wfmini.wf-span2 { flex: 1 1 30%; max-width: 32%; max-width: calc(33.3333% - 8px); } }
+@media (min-width:1100px){ .wfmini, .wfmini.wf-span2 { flex: 1 1 22%; max-width: 24.2%; max-width: calc(25% - 8px); } }
+@media (min-width:1500px){ .wfmini, .wfmini.wf-span2 { flex: 1 1 17%; max-width: 19.4%; max-width: calc(20% - 8px); } }
 /* 6.168.2 — THE LONE CARD'S SQUASHED PICTURE. The odd card of a group fills the row,
    and it used to fill it with a 2:1 box (padding-top 50%) copied from the app's wide
    layout. The app can do that because it CROPS — object-fit: cover plus an
@@ -2095,6 +2136,21 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   border: 1px solid var(--line-soft); border-radius: 14px; overflow: hidden; background-color: var(--panel); }
 #pageAiTools .hero-art { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 14px; overflow: hidden; }
 #pageAiTools .hero-art img { display: block; width: 100%; height: 100%; border-radius: 14px; }
+/* 6.169.0 — THE BANNER KEEPS ITS SHAPE. hero-wf.jpg is 772x248, which is 3.11:1, and
+   this renderer draws no object-fit, so an <img> at width/height 100% is STRETCHED to
+   whatever box it is handed — the card-picture lesson of 6.168.2, one element up. A flat
+   126px floor is about right for a docked panel (a 368px-wide box is 2.9:1), but an
+   undocked one was drawing the same 126px under 1,368px of width: 10.9:1, the model
+   smeared to three and a half times her width, and 15:1 at 1,900px. The floor now steps
+   with the panel, each step set so the box starts at the plate's own 3.11:1 and never
+   passes about 4.3:1 before the next one takes over. (The web app has object-fit and
+   crops instead, and grows this banner from 1440px — its own 6.9.0 rule.) */
+@media (min-width:520px){ #pageAiTools .hero-mini { min-height: 160px; } }
+@media (min-width:700px){ #pageAiTools .hero-mini { min-height: 215px; } }
+@media (min-width:950px){ #pageAiTools .hero-mini { min-height: 295px; } }
+@media (min-width:1200px){ #pageAiTools .hero-mini { min-height: 375px; } }
+@media (min-width:1500px){ #pageAiTools .hero-mini { min-height: 470px; } }
+@media (min-width:1900px){ #pageAiTools .hero-mini { min-height: 600px; } }
 /* app .kick (.68rem/800, .28em tracking) and h1 (18/800, lh 1.35) at 76% width;
    the app's 1px column gap is the kick's bottom margin (margins never collapse
    here, so kick 1 + h1 2 = the app's 3) */
@@ -2104,6 +2160,12 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   font-size: 10.88px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); line-height: 1.7;
   text-shadow: 0 1px 4px rgba(0, 0, 0, .9), 0 2px 14px rgba(0, 0, 0, .75); }
 @media (max-width:389px){ #pageAiTools .hero-mini .kick { font-size: 9.6px; letter-spacing: .10em; } }
+/* and one step further down: at 300px — the narrowest this panel can be made, from
+   manifest.json's own minimumSize — 9.6px still broke "No Install - Panel Data -
+   RunningHub AI" over THREE lines, which pushed the banner from its 126px floor to
+   138px and squeezed the plate to 1.9:1. 8.6px with tighter tracking puts it back on
+   two (measured at 300 / 319 / 320 / 340; 320 and up are untouched). */
+@media (max-width:319px){ #pageAiTools .hero-mini .kick { font-size: 8.6px; letter-spacing: .06em; } }
 #pageAiTools .hero-mini .h1 { position: relative; max-width: 76%; margin: 2px 0; font-size: 18px; font-weight: 800; line-height: 1.35;
   color: var(--text); text-shadow: 0 1px 4px rgba(0, 0, 0, .9), 0 2px 14px rgba(0, 0, 0, .75); }
 #pageAiTools .hero-mini .h1 .em { font-style: normal; color: var(--accent-h); }
@@ -2126,13 +2188,10 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   border-radius: 8px; color: var(--muted); }
 #pageAiTools .sa img { flex: none; display: block; width: 14px; height: 14px; margin: 0; }
 #pageAiTools .grp-b p.mut { margin: 0; }
-/* the grid: 8px gaps as margins; the script marks the first row (.wf-top) and
-   the right column (.wf-r) of the *visible* cards, so a filtered grid keeps
-   its gaps where :nth-child would count the hidden ones */
-#pageAiTools .wfmini { margin: 8px 8px 0 0; }
-#pageAiTools .wfmini.wf-top { margin-top: 0; }
-#pageAiTools .wfmini.wf-r { margin-right: 0; }
-#pageAiTools .wfmini.wf-span2 { width: 100%; margin-right: 0; }
+/* 6.169.0 — the gaps are the shared .wfmini margins now, and the column count is the
+   media query's. The four overrides that used to live here (.wf-top / .wf-r and a
+   hard 100% span) each restated "two columns" and are gone with it; a filtered grid
+   needs no relayout because no card's margin depends on where it sits. */
 /* app .bdg: 28.3×23.9 pill at the art's bottom-right holding a 1.1em sprite */
 /* 6.164.0 — THE CARD, TIDIED (the app's 6.93.0 rules, in flex-and-margins): the route badge is a 22px
    disc at the art's bottom-right, the two corner controls twin 26px discs side by side at the top-right

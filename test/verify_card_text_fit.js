@@ -131,7 +131,15 @@ async function panelWalk(browser) {
   const out = {};
   try {
     for (const mode of ["shipped", "old-marker"]) {
-      const ctx = await browser.newContext({ viewport: { width: 400, height: 1100 } });
+      /* 6.169.0 — this walk used to run at 400px, where the grid was two columns at
+         every width and a 148px card cut most of its summaries. The responsive ladder
+         makes 400px ONE column: a 304px card, and none of the nine summaries reaches
+         its three-line ceiling, so there is nothing for the clamp to do and nothing to
+         measure. 460px is the first two-column step (178px cards, 3 of the 9 cut), which
+         is the shape this file exists for — a card narrow enough that its words do not
+         fit. The card, the clamp and the marker are all unchanged; only the width at
+         which they are exercised moved. */
+      const ctx = await browser.newContext({ viewport: { width: 460, height: 1100 } });
       const page = await ctx.newPage();
       const errs = []; page.on("pageerror", e => errs.push(String(e).slice(0, 200)));
       await page.route("**/*", r => r.request().url().indexOf("127.0.0.1") >= 0 ? r.continue()
@@ -185,8 +193,16 @@ async function panelWalk(browser) {
   report("B1) with a renderer that clips, nothing changed: the cards hold their text, the pill is on every one of them, and the cut ones say so",
     s.clean.cards > 4 && s.clean.sPastCard === 0 && s.clean.pillOutside === 0 &&
     s.clean.pillMissing === 0 && s.clean.marked > 0, s.clean);
-  report("B2) THE PHOTOSHOP CASE: the frame pinned and the clipping withdrawn — 6.167.3's marker lets the words out of the card, this one does not",
-    o.hurt.sPastCard > 0 && o.hurt.pillOutside > 0 && o.hurt.marked === 0 &&
+  /* 6.169.0 — what leaves the card first depends on how far the sentence overruns. On the
+     148px card this walk used to measure (two columns at 400px, before the responsive
+     ladder) the summary was two lines over and the SENTENCE itself painted below the
+     border. On the 178px card of the first two-column step it is one line over, which is
+     less than the pill's own height plus its margin, so the sentence stays inside and the
+     PILL is the thing pushed out. Both are the same defect — content painting outside its
+     frame — so the check asks for either, and still demands that the shipped path shows
+     neither, on the same nine cards, in the same run. */
+  report("B2) THE PHOTOSHOP CASE: the frame pinned and the clipping withdrawn — 6.167.3's marker lets the card's content out of its frame (the sentence, or the pill it pushes), this one does not",
+    (o.hurt.sPastCard > 0 || o.hurt.pillOutside > 0) && o.hurt.marked === 0 &&
     s.hurt.sPastCard === 0 && s.hurt.pillOutside === 0 && s.hurt.pillMissing === 0,
     { oldMarker: o.hurt, shipped: s.hurt });
   report("B3) and the cut is honest — the cards it shortened are the cards it marked, and it marked nothing it left whole",
