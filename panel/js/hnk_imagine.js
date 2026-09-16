@@ -189,7 +189,7 @@ var IMAGINE = (function(){
     for(var i=0;i<D.tools.length;i++) grid.appendChild(hubCard(D.tools[i]));
     card.appendChild(el("p","mut im-next", t("hub_next")));
     /* 6.96.0 — the same marker the workflow cards use, through the host so the panel runs its own copy */
-    try{ if(H.ellMark) H.ellMark(root, ".im-card-sum"); }catch(e){}
+    try{ if(H.ellMark) H.ellMark(root, ".im-card-sum", 5); }catch(e){}
   }
   /* 6.29.1 wave — the card's picture IS a Before | After compare: the tool's result (after) as the whole 2:3 picture,
      the untouched base photograph (before) on top, clipped at the split; a drag on the picture moves the line, a plain

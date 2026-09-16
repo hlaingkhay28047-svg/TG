@@ -363,7 +363,7 @@ function create(deps) {
       /* 6.167.0 — a closed .grp-b is display:none and every card in it measures 0, so the clamp marker
          cannot see what was cut until the group opens. Both the header tap and the search filter come
          through here. */
-      if (on) { try { var em = globalThis.HNK && globalThis.HNK.ellMark; if (em) em(g, ".wfmini .s"); } catch (e) { } }
+      if (on) { try { var em = globalThis.HNK && globalThis.HNK.ellMark; if (em) em(g, ".wfmini .s", 3); } catch (e) { } }
     }
     dom.on(head, "click", function () { setOpen(!isOpen()); });
     /* app stResetSection(): put every chip row in this body back on its
@@ -938,7 +938,7 @@ function create(deps) {
         nodes["req_" + inp.key] = mark;
         reqWrap.appendChild(dom.el(doc, "div", { class: "hnk-req-block" }, [
           dom.el(doc, "div", { class: "hnk-req-row" }, [
-            dom.el(doc, "span", { class: "hnk-req-label", text: dom.t(registry.inputLabelKey(inp.label) || "", inp.label) }), mark
+            dom.el(doc, "span", { class: "hnk-req-label", text: slotLabel(inp) }), mark
           ])
         ]));
       } else {
@@ -1498,10 +1498,32 @@ function create(deps) {
     ]);
   }
 
+  /* 6.167.4 — THE NUMBER THE PROMPTS SPEAK. The web app names every wizard slot
+     "IMAGE 1 \u2014 Your Photo (Subject)", "IMAGE 2 \u2014 New Background"; the panel
+     named them by their words alone. Every prompt in the catalog refers to its inputs
+     BY NUMBER \u2014 "IMAGE 2 \u1000 \u1019\u103b\u1000\u103a\u1014\u103e\u102c" \u2014 so a student reading the card had no way to tell
+     which box a sentence meant, and the owner read the second slot as missing.
+     The order is the app's own: required first, then optional. */
+  function slotNo(inp) {
+    try {
+      var all = (state.requiredInputs || []).concat(state.optionalInputs || []);
+      for (var i = 0; i < all.length; i++) if (all[i] === inp || (all[i] && inp && all[i].key === inp.key)) return i + 1;
+    } catch (e) { }
+    return 0;
+  }
+  function slotLabel(inp) {
+    var lbl = dom.t(registry.inputLabelKey(inp.label) || "", inp.label);
+    var n = slotNo(inp);
+    if (!n) return lbl;
+    /* a few catalog labels already carry their own "(IMAGE 1)" — say the number once */
+    lbl = lbl.replace(/\s*\(IMAGE\s*\d+\)\s*$/i, "");
+    return "IMAGE " + n + " \u2014 " + lbl;
+  }
+
   function inputRow(inp) {
     var mark = dom.el(doc, "span", { class: "hnk-req-mark miss", text: dom.t("ai_missing", "Missing") });
     nodes["req_" + inp.key] = mark;
-    var lbl = dom.t(registry.inputLabelKey(inp.label) || "", inp.label);
+    var lbl = slotLabel(inp);
     /* All four sources, matching the classic tabs' reference slots. The
        Layer button keeps the historic hnkWfAdd_ id (audit + muscle memory). */
     var add = dom.el(doc, "button", { class: "hnk-btn hnk-req-add", id: "hnkWfAdd_" + inp.key, text: dom.t("btn_ref_layer", "+ Layer") });
@@ -1587,7 +1609,7 @@ function create(deps) {
        the page, because nothing measures before it is mounted. */
     try {
       var em = globalThis.HNK && globalThis.HNK.ellMark;
-      if (em) em(root, ".wfmini .s");
+      if (em) em(root, ".wfmini .s", 3);
     } catch (e) { }
     return root;
   }

@@ -103,25 +103,29 @@ function sourcePins() {
     !/\.wfmini \.s\{[^}]*-webkit-line-clamp/.test(APP) &&
     /\.wfmini \.s \.ell,\.im-card-sum \.ell\{position:absolute;right:0;bottom:0;padding-left:12px;background:var\(--panel-2\);color:var\(--muted\);font-weight:700\}/.test(APP), null);
 
-  const helper = between(APP, "function ellMark(root, sel){", "\nfunction escH(");
-  report("A2) ellMark: it removes any earlier marker, reads the element's own line-height and calls a box cut only when more than half a line is hidden — never a single pixel (Burmese ink overhangs its line box), and every step is inside a try that leaves the card untouched when the renderer measures nothing",
+  const helper = between(APP, "function ellMark(root, sel, lines){", "\nfunction escH(");
+  /* 6.96.4 — the marker gained a second answer: where the renderer hides nothing it cuts the words
+     themselves. The first answer is unchanged, and so is the half-line tolerance this pin was cut for. */
+  report("A2) ellMark: it removes any earlier marker, reads the element's own line-height and calls a box cut only when more than half a line is hidden — never a single pixel (Burmese ink overhangs its line box) — and where the renderer hid nothing it shortens the sentence instead, every step inside a try that leaves the card untouched when nothing measures",
     helper.indexOf('var old=n.querySelector(".ell"); if(old) old.remove();') > 0 &&
-    /var lh=parseFloat\(getComputedStyle\(n\)\.lineHeight\)\|\|16;/.test(helper) &&
-    /if\(n\.scrollHeight-n\.clientHeight>lh\/2\)\{ var e=document\.createElement\("span"\); e\.className="ell"; e\.textContent="\\u2026"; n\.appendChild\(e\); \}/.test(helper) &&
+    /var cs=getComputedStyle\(n\), lh=parseFloat\(cs\.lineHeight\)\|\|16, mh=parseFloat\(cs\.maxHeight\);/.test(APP) &&
+    /if\(n\.scrollHeight-n\.clientHeight>m\.lh\/2\)\{ cut=true; \}/.test(helper) &&
+    /else if\(m\.ceil>0 && n\.clientHeight>m\.ceil\+m\.lh\/2\)\{/.test(helper) &&
+    /if\(cut\)\{ var e=document\.createElement\("span"\); e\.className="ell"; e\.textContent="\\u2026"; n\.appendChild\(e\); \}/.test(helper) &&
     !/clientHeight\+1/.test(helper) && (helper.match(/catch\(e\)\{\}/g) || []).length >= 2, { len: helper.length });
 
   report("A3) the app runs the marker where the cards can be measured: once the grid is in the document, once per .grp-h tap on the way up through the host (bound a single time), after every search pass, and from both quick-jump chips",
-    APP.indexOf('  ellMark(wfHost, ".wfmini .s");\n  if(!wfHost.__ellBound){') > 0 &&
+    APP.indexOf('  ellMark(wfHost, ".wfmini .s", 3);\n  if(!wfHost.__ellBound){') > 0 &&
     /wfHost\.__ellBound=1;/.test(APP) && /String\(t\.className\)\.indexOf\("grp-h"\)>=0/.test(APP) &&
-    APP.indexOf('    ellMark(wfHost, ".wfmini .s");   /* 6.96.0 — the filter opens and closes groups; the marker follows */') > 0 &&
-    APP.indexOf('if(tg.g.className.indexOf("open")<0){ tg.g.className="grp open"; ellMark(tg.g, ".wfmini .s"); }') > 0 &&
-    APP.indexOf('        ellMark(wfHost, ".wfmini .s");\n        if(first) first.scrollIntoView({behavior:"smooth", block:"center"});') > 0, null);
+    APP.indexOf('    ellMark(wfHost, ".wfmini .s", 3);   /* 6.96.0 — the filter opens and closes groups; the marker follows */') > 0 &&
+    APP.indexOf('if(tg.g.className.indexOf("open")<0){ tg.g.className="grp open"; ellMark(tg.g, ".wfmini .s", 3); }') > 0 &&
+    APP.indexOf('        ellMark(wfHost, ".wfmini .s", 3);\n        if(first) first.scrollIntoView({behavior:"smooth", block:"center"});') > 0, null);
 
   const mod = between(APP, "/* ---- IMAGINE_MODULE ---- */", "/* ---- /IMAGINE_MODULE ---- */");
   report("A4) the Imagine hub marks its own summaries through the host (so the panel runs its own copy), and the host publishes ellMark",
-    /try\{ if\(H\.ellMark\) H\.ellMark\(root, "\.im-card-sum"\); \}catch\(e\)\{\}/.test(mod) &&
-    /ellMark: function\(root, sel\)\{ ellMark\(root, sel\); \},/.test(APP) &&
-    PIMAGINE.indexOf('if(H.ellMark) H.ellMark(root, ".im-card-sum");') > 0, null);
+    /try\{ if\(H\.ellMark\) H\.ellMark\(root, "\.im-card-sum", 5\); \}catch\(e\)\{\}/.test(mod) &&
+    /ellMark: function\(root, sel, lines\)\{ ellMark\(root, sel, lines\); \},/.test(APP) &&
+    PIMAGINE.indexOf('if(H.ellMark) H.ellMark(root, ".im-card-sum", 5);') > 0, null);
 
   report("A5) the app hero kicker takes the whole banner at .12em and steps down under 390px; .ph-kick and .ph-head are capped at 72% so a headline never runs across the model",
     /\.hero-mini \.kick\{padding:10px 6px 0 0;font-size:\.68rem;letter-spacing:\.12em;max-width:100%\}/.test(APP) &&
@@ -148,17 +152,18 @@ function sourcePins() {
     PCSS.indexOf(".im-card-sum{position:relative;margin:4px 0 8px;font-size:11.5px;line-height:1.5;max-height:7.5em;") > 0 &&
     PCSS.indexOf("#pageImagine .im-card-sum { line-height: 1.7; max-height: 8.5em; }") < PCSS.indexOf("/* ---- IMAGINE_CSS ---- */"), null);
 
-  const pHelper = between(PMAIN, "function ellMark(root, sel) {", "\nfunction setIcnText(");
+  const pHelper = between(PMAIN, "function ellMark(root, sel, lines) {", "\nfunction setIcnText(");
   report("A8) the panel's own ellMark is the app's rule in this renderer's dialect (Array.prototype.forEach over the NodeList, removeChild, the same half-line tolerance), published as HNK.ellMark and offered to the Imagine module through imagineHost",
     /Array\.prototype\.forEach\.call\(list, function \(n\) \{/.test(pHelper) &&
-    /const lh = parseFloat\(getComputedStyle\(n\)\.lineHeight\) \|\| 16;/.test(pHelper) &&
-    /if \(n\.scrollHeight - n\.clientHeight > lh \/ 2\) \{/.test(pHelper) && !/clientHeight \+ 1/.test(pHelper) &&
-    /g\.HNK\.ellMark = ellMark;/.test(PMAIN) && /ellMark: function \(root, sel\) \{ ellMark\(root, sel\); \},/.test(PMAIN), { len: pHelper.length });
+    /const lh = parseFloat\(cs\.lineHeight\) \|\| 16;/.test(PMAIN) &&
+    /if \(n\.scrollHeight - n\.clientHeight > m\.lh \/ 2\) \{/.test(pHelper) && !/clientHeight \+ 1/.test(pHelper) &&
+    /\} else if \(m\.ceil > 0 && n\.clientHeight > m\.ceil \+ m\.lh \/ 2\) \{/.test(pHelper) &&
+    /g\.HNK\.ellMark = ellMark;/.test(PMAIN) && /ellMark: function \(root, sel, lines\) \{ ellMark\(root, sel, lines\); \},/.test(PMAIN), { len: pHelper.length });
 
   report("A9) the panel's Workflows screen marks after it renders and again whenever a group opens — setOpen is the single door the header tap and the search filter both come through, and since 6.167.3 it writes the body's own display there too",
-    /var em = globalThis\.HNK && globalThis\.HNK\.ellMark;\n      if \(em\) em\(root, "\.wfmini \.s"\);/.test(SCREEN) &&
+    /var em = globalThis\.HNK && globalThis\.HNK\.ellMark;\n      if \(em\) em\(root, "\.wfmini \.s", 3\);/.test(SCREEN) &&
     /function setOpen\(on\) \{\n      openNow = !!on;\n      g\.className = on \? "grp app-grp open" : "grp app-grp";\n      body\.style\.display = on \? "block" : "none";/.test(SCREEN) &&
-    /if \(on\) \{ try \{ var em = globalThis\.HNK && globalThis\.HNK\.ellMark; if \(em\) em\(g, "\.wfmini \.s"\); \} catch \(e\) \{ \} \}/.test(SCREEN), null);
+    /if \(on\) \{ try \{ var em = globalThis\.HNK && globalThis\.HNK\.ellMark; if \(em\) em\(g, "\.wfmini \.s", 3\); \} catch \(e\) \{ \} \}/.test(SCREEN), null);
 }
 
 /* ================= B) the web app ================= */
