@@ -835,7 +835,10 @@ function create(deps) {
      capture that is going to fail now fails HERE, before the money, naming its
      reason; one that works shows the student exactly what will be sent. */
   function selectionCard(inp) {
-    var card = dom.el(doc, "div", { class: "hnk-sel-card", id: "hnkWfSelCard" });
+    /* it wears hnk-req-block as well as its own class: this card IS the region
+       workflow's required-image block, and every walk that counts those blocks
+       has to keep finding it. */
+    var card = dom.el(doc, "div", { class: "hnk-req-block hnk-sel-card", id: "hnkWfSelCard" });
     var mark = dom.el(doc, "span", { class: "hnk-req-mark ok", text: "\u2713" });
     nodes["req_" + inp.key] = mark;
     card.appendChild(dom.el(doc, "div", { class: "hnk-req-row" }, [
@@ -893,18 +896,18 @@ function create(deps) {
         .replace("{W}", String(W)).replace("{H}", String(H));
     }
     function sayOk(b) {
-      card.className = "hnk-sel-card ok";
+      card.className = "hnk-req-block hnk-sel-card ok";
       selTxt.textContent = l9(L_SEL_OK).replace("{w}", String(b.width)).replace("{h}", String(b.height));
     }
     var selCheck = function (readPixels) {
       if (!(deps.host && deps.host.getSelectionBounds)) {
-        card.className = "hnk-sel-card"; selTxt.textContent = l9(L_SEL_NOHOST);
+        card.className = "hnk-req-block hnk-sel-card"; selTxt.textContent = l9(L_SEL_NOHOST);
         selNum.textContent = ""; map.style.display = "none"; return;
       }
-      card.className = "hnk-sel-card"; selTxt.textContent = l9(L_SEL_CHECKING); selNum.textContent = "";
+      card.className = "hnk-req-block hnk-sel-card"; selTxt.textContent = l9(L_SEL_CHECKING); selNum.textContent = "";
       var done = function (b) {
         if (!(b && b.width > 0 && b.height > 0)) {
-          card.className = "hnk-sel-card none"; selTxt.textContent = l9(L_SEL_NONE);
+          card.className = "hnk-req-block hnk-sel-card none"; selTxt.textContent = l9(L_SEL_NONE);
           selNum.textContent = ""; map.style.display = "none"; shot.style.display = "none";
           return;
         }
@@ -913,7 +916,7 @@ function create(deps) {
         selTxt.textContent = l9(L_SEL_READ);
         var bad = function (cap) {
           shot.style.display = "none";
-          card.className = "hnk-sel-card none";
+          card.className = "hnk-req-block hnk-sel-card none";
           selTxt.textContent = capFail(cap, b);
         };
         try {

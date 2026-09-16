@@ -91,6 +91,7 @@ function sourcePins() {
     /function selectionCard\(inp\) \{/.test(SCREEN) &&
     ['hnkWfSelCard', 'hnkWfSelMap', 'hnkWfSelPage', 'hnkWfSelRect', 'hnkWfSelNum', 'hnkWfSelShot', 'hnkWfSelCheck', 'hnkWfSelState']
       .every((id) => SCREEN.indexOf('id: "' + id + '"') >= 0) &&
+    /class: "hnk-req-block hnk-sel-card", id: "hnkWfSelCard"/.test(SCREEN) &&
     /var k = Math\.min\(104 \/ W, 78 \/ H\);/.test(SCREEN) &&
     /rect\.style\.left = Math\.max\(0, Math\.min\(pw - rw, Math\.round\(b\.x \* k\)\)\) \+ "px";/.test(SCREEN) &&
     /Promise\.resolve\(deps\.host\.captureRegion\(b\)\)\.then\(function \(cap\) \{/.test(SCREEN) &&
@@ -329,13 +330,14 @@ async function panelWalk(browser) {
 function releasePins() {
   report("D1) the wave ships in lockstep and the suite carries this file",
     MANIFEST.version === "6.168.0" &&
-    /const APP_VER *= *"6\.97\.0"/.test(read("docs/app/index.html")) &&
-    /"version": *"6\.97\.0"/.test(read("docs/app/version.json")) &&
+    /var APP_VER="6\.97\.0";/.test(read("docs/app/index.html")) &&
+    /"v":"6\.97\.0"/.test(read("docs/app/version.json")) &&
     /PANEL_VERSION *= *"6\.168\.0"/.test(read("panel/main.js")) &&
     /"version": *"6\.168\.0"/.test(read("panel/manifest.json")) &&
     /node test\/verify_selection_shown\.js/.test(CI) &&
-    /236|237/.test((LANDING.match(/(\d{3}) automated/) || [])[1] || ""), {
-      manifest: MANIFEST.version, ci: /verify_selection_shown/.test(CI) });
+    /"badge\.tests": \{"my": "237 tests green"/.test(LANDING), {
+      manifest: MANIFEST.version, ci: /verify_selection_shown/.test(CI),
+      landing: (LANDING.match(/"badge\.tests": \{"my": "(\d+) tests/) || [])[1] });
 }
 
 (async () => {
