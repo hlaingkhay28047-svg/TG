@@ -537,9 +537,15 @@ report("I4) HNK.herr / hwarn / hlog exist, so the host's log calls reach the car
    asked for all of it. It is bounded now, with three more routes behind it,
    the last of which never touches ps.imaging at all. ---- */
 
+/* 6.168.0 — the bounded ask is now UNCONDITIONAL. _capSize still answers only above
+   the 2048 cap, so this route used to exist for a 32-megapixel document and for nothing
+   smaller; `fit` is the cap when there is one and the region's own size otherwise. That
+   gap was the whole of "Selection Edit works sometimes" — a 16-bit document under the
+   cap had no resample route, and JPEG has no 16-bit form. verify_selection_shown owns
+   the rule; this row keeps asking what it always asked: the ask is bounded, first. */
 report("J1) the capture asks for a bounded picture first, not all 32 megapixels",
   /var CAP_MAX = 2048;/.test(HOST) && /function _capSize\(w, h\)/.test(HOST) &&
-  /if \(cap && id != null\) reqs\.push\(\{ layerID: id, targetSize: cap \}\)/.test(HOST) &&
+  /if \(id != null\) reqs\.push\(\{ layerID: id, targetSize: fit \}\)/.test(HOST) &&
   /_capSize\(bounds\.width, bounds\.height\)/.test(HOST), null);
 
 report("J2) and when imaging refuses, Photoshop writes the file itself",
