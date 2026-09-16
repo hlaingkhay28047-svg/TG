@@ -155,9 +155,9 @@ function sourcePins() {
     /if \(n\.scrollHeight - n\.clientHeight > lh \/ 2\) \{/.test(pHelper) && !/clientHeight \+ 1/.test(pHelper) &&
     /g\.HNK\.ellMark = ellMark;/.test(PMAIN) && /ellMark: function \(root, sel\) \{ ellMark\(root, sel\); \},/.test(PMAIN), { len: pHelper.length });
 
-  report("A9) the panel's Workflows screen marks after it renders and again whenever a group opens — setOpen is the single door the header tap and the search filter both come through",
+  report("A9) the panel's Workflows screen marks after it renders and again whenever a group opens — setOpen is the single door the header tap and the search filter both come through, and since 6.167.3 it writes the body's own display there too",
     /var em = globalThis\.HNK && globalThis\.HNK\.ellMark;\n      if \(em\) em\(root, "\.wfmini \.s"\);/.test(SCREEN) &&
-    /function setOpen\(on\) \{\n      g\.className = on \? "grp app-grp open" : "grp app-grp";/.test(SCREEN) &&
+    /function setOpen\(on\) \{\n      openNow = !!on;\n      g\.className = on \? "grp app-grp open" : "grp app-grp";\n      body\.style\.display = on \? "block" : "none";/.test(SCREEN) &&
     /if \(on\) \{ try \{ var em = globalThis\.HNK && globalThis\.HNK\.ellMark; if \(em\) em\(g, "\.wfmini \.s"\); \} catch \(e\) \{ \} \}/.test(SCREEN), null);
 }
 
