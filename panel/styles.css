@@ -421,9 +421,16 @@ select.inp { padding: 9px 10px; }
 /* ---------- Buttons ---------- */
 .btn {
   display: flex; align-items: center; justify-content: center;
-  white-space: nowrap;
+  /* 6.96.2 — A BUTTON LABEL IS NEVER CUT. This said white-space:nowrap, which
+     the web app's .btn has never said: there a long label simply takes a second
+     line. Here it meant the label was ellipsised the moment the button was a
+     few pixels short — and how short depends on the host's fonts, so the same
+     button fits on one machine and reads "Before/After ၂ ကွက်…" on another.
+     It wraps now. overflow:hidden stays as the backstop: a wrapped label can
+     grow downwards, never sideways past its button. */
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   background-color: var(--btn);
   border: 1px solid var(--line-3);
   border-radius: 7px;
@@ -433,6 +440,15 @@ select.inp { padding: 9px 10px; }
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .btn + .btn { margin-left: 6px; }
+/* 6.96.2 — A ROW'S MAIN ACTION MAY WRAP. .btn carries white-space:nowrap with
+   overflow:hidden and text-overflow:ellipsis so a row of small fixed buttons
+   never ragged-wraps; but .grow marks the one button that takes whatever the
+   row has left, and at a 320px Photoshop panel that can be 85px. Measured on
+   the Retouch page: "V2 RETOUCH — စပြင်မယ်" wants 171px and drew as "V2 R…" —
+   the page's main action, unreadable. The web app's .btn sets no white-space
+   at all, so there the same label simply takes a second line. The panel does
+   the same for .grow only; the small buttons beside it keep their one line. */
+.btn.grow { white-space: normal; text-overflow: clip; line-height: 1.25; min-width: auto; overflow: visible; }
 .btn-sm { padding: 5px 8px; font-size: 11px; }
 .btn-xs { padding: 4px 5px; font-size: 10px; border-radius: 6px; }
 .btn-gold { background-color: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
@@ -2318,8 +2334,13 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .apg .addons { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 18px; }
 .apg .btn, #genDock .btn { display: flex; flex-direction: row; align-items: center; justify-content: center; background-color: var(--panel-2);
   border: 1px solid var(--line-soft); border-radius: 9px; color: var(--text); padding: 8px 16px; font-size: 13px; font-weight: 700;
-  min-height: 44px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  min-height: 44px; box-sizing: border-box; white-space: normal; overflow: hidden; text-overflow: clip; }
 .apg .btn + .btn { margin-left: 0; }
+/* …and the app-page copy of .btn re-states white-space:nowrap at the same
+   specificity as .btn.grow but later in the file, so the row's main action
+   needs the rule again, scoped. (This is where the Retouch page's own
+   "V2 RETOUCH — စပြင်မယ်" is drawn.) */
+.apg .btn.grow, #genDock .btn.grow { white-space: normal; text-overflow: clip; line-height: 1.25; min-width: auto; overflow: visible; }
 /* the app's .btn is inline flow: its sprite rides the label's first line even
    when the label wraps (vertical-align -.18em = 2.34px at 13px). The flex twin
    centres one inner row (.btn-in, built by setIcnText) as a whole; inside it
@@ -2745,6 +2766,18 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    in that visual order and these rules only carry the 9px gap and the
    caret's flex:1 fill that the app's own CSS gives it. */
 .stpg #stMuCard .grp-h > span, .stpg #stEvCard .grp-h > span { flex: 0 0 auto; }
+/* 6.96.2 — …except the title, which must be allowed to give way. Every child
+   being flex:0 0 auto meant a long section name kept its full intrinsic width
+   and pushed the badge, the reset and the count past the panel's right edge,
+   where the host clips them: measured at a 320px panel, "လက်ညှိုးပြင် (Heal &
+   Brush)" made 314px of content in a 252px header and its "7 ခု" count landed
+   at x=348 with the page ending at 304 — the student could not see it at all.
+   The app gives its title flex:1;min-width:0 through
+   `#stMuCard .grp-h>span:nth-of-type(1)`; UXP has no :nth-of-type and this
+   stylesheet is class-and-id only, so the title carries .grp-t and takes the
+   same rule by name. With min-width:0 it wraps to a second line instead of
+   pushing, and every box after it stays on the panel. */
+.stpg #stMuCard .grp-h .grp-t, .stpg #stEvCard .grp-h .grp-t { flex: 0 1 auto; min-width: 0; }
 .stpg #stMuCard .grp-h .car, .stpg #stEvCard .grp-h .car { flex: 1 1 auto; min-width: 0; margin: 0 0 0 11px; }
 .stpg .grp-h .dot {
   display: none; margin-left: 6px; min-width: 18px; height: 18px; line-height: 18px;
@@ -2878,6 +2911,12 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
   display: block; font-size: 10px; line-height: 12.5px; text-align: center; padding: 3px 2px;
   color: var(--muted); min-height: 25px;
 }
+/* 6.96.2 — that caption rule was written for the .pcard's word row, but the
+   look tile is a <span> inside the same .pcard, so it took the 2px side
+   padding too: a 76px thumbnail in a 76px box with 4px of padding has a 72px
+   content column, and the picture lost 4px off its right edge on all eight
+   tiles. The tile is a picture frame, not a caption. */
+.stpg .pcard .st-tile { padding: 0; min-height: 0; }
 .stpg .pcard .x, .stpg .pcard .pin {
   position: absolute; top: 4px; width: 24px; height: 24px; border-radius: 8px;
   border: 1px solid var(--line-soft); background-color: rgba(11, 13, 20, 0.8);
