@@ -578,6 +578,8 @@ jobs:
         run: PORT=8931 node test/verify_panel_narrow_fit.js
       - name: Every Smart Workflow card is on screen in Photoshop — the accordion body is shown by an inline display, not by a cascade override the host declines (6.96.3)
         run: PORT=8931 node test/verify_panel_grp_body.js
+      - name: A card never paints outside itself — where the renderer hides no overflow, the words themselves are cut to fit and marked, so no description leaves its card and no Open pill is pushed out (6.96.4)
+        run: PORT=8931 node test/verify_card_text_fit.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

@@ -4116,16 +4116,39 @@ function icn(name, cls){
    stopped mid-sentence with nothing to say they had been cut. Both surfaces now clamp with max-height and
    append this marker where the ink really overflows its box — measured, never guessed, and silent when the
    renderer reports nothing (a card then looks exactly as it did). */
-function ellMark(root, sel){
+/* 6.96.4 — marking a cut is not the same as making one. The panel's renderer laid these boxes out at
+   their ceiling and painted the rest of the sentence anyway: nothing was hidden, so nothing was marked,
+   and the words ran out past the card. The app keeps the identical rule so both surfaces read the same —
+   the renderer hid the rest (mark it), or it hid nothing and the box is over its ceiling (cut the words
+   at a space until it fits, then mark). ELL_FULL keeps the whole sentence so a second pass starts over. */
+var ELL_FULL=new WeakMap();
+function ellCeil(n, lines){
+  var cs=getComputedStyle(n), lh=parseFloat(cs.lineHeight)||16, mh=parseFloat(cs.maxHeight);
+  return { lh:lh, ceil:(mh>0&&isFinite(mh))?mh:(lines>0?lines*lh:0) };
+}
+function ellMark(root, sel, lines){
   try{
     (root||document).querySelectorAll(sel).forEach(function(n){
       try{
         var old=n.querySelector(".ell"); if(old) old.remove();
+        var full=ELL_FULL.has(n)?ELL_FULL.get(n):(n.textContent||"");
+        ELL_FULL.set(n, full);
+        if(n.textContent!==full) n.textContent=full;
         /* half a line, never a pixel: Burmese stacked diacritics draw ~4px past their line box, so a box
            that holds its text exactly still reports scrollHeight 73 against clientHeight 69 (measured over
            all 22 Imagine cards). A box is cut only when at least half a line of it is hidden. */
-        var lh=parseFloat(getComputedStyle(n).lineHeight)||16;
-        if(n.scrollHeight-n.clientHeight>lh/2){ var e=document.createElement("span"); e.className="ell"; e.textContent="\u2026"; n.appendChild(e); }
+        var m=ellCeil(n, lines), cut=false;
+        if(n.scrollHeight-n.clientHeight>m.lh/2){ cut=true; }
+        else if(m.ceil>0 && n.clientHeight>m.ceil+m.lh/2){
+          var lo=0, hi=full.length;
+          while(lo<hi){ var mid=(lo+hi+1)>>1; n.textContent=full.slice(0,mid);
+            if(n.clientHeight<=m.ceil+m.lh/2) lo=mid; else hi=mid-1; }
+          var t=full.slice(0,lo), sp=t.lastIndexOf(" ");
+          if(sp>12) t=t.slice(0,sp);   /* end on a whole word when there is one to end on */
+          n.textContent=t.replace(/[\s\u2026,.;:\u2014-]+$/,"");
+          cut=n.textContent.length<full.length;
+        }
+        if(cut){ var e=document.createElement("span"); e.className="ell"; e.textContent="\u2026"; n.appendChild(e); }
       }catch(e){}
     });
   }catch(e){}
@@ -5484,6 +5507,9 @@ var TOPGROUPS=[
    tools/build_app_data.js moves the cut forward; the panel lifts this list
    (js/hnk_whats_new.js), so its boot parses these rows and no more. */
 var WHATS_NEW = [
+  { v:"6.96.4", kind:"page", ref:"pgWf",
+    t:{my:"Smart Workflow card ရဲ့ စာသား အောက်ပိုင်း card ဘောင် ကျော်ထွက်ပြီး ပြတ်နေတာ ပြင်ပြီးပါပြီ — အခု စာသားကိုယ်တိုင် တိုအောင် ဖြတ်ပြီး … ပြပါတယ်",en:"A card's description ran out past the card's own border with no ellipsis and no Open pill — the words themselves are now shortened to fit, and marked with …",shn:"တူဝ်လိၵ်ႈ Smart Workflow card ဢွၵ်ႇပူၼ်ႉ ႁွပ်ႈ card သေ ၶၢတ်ႇဝႆႉ — မႄးယဝ်ႉ၊ ယၢမ်းလဵဝ် တတ်းႁႂ်ႈပေႃးၶဝ်ႈသေ ပၼ် … ဝႆႉ",kac:"Smart Workflow card a laika gaw card a hkrang kaw na pru mat nna daw daw re — ya gaw laika hpe kadun nna … hte madun sai",th:"คำอธิบายในการ์ด Smart Workflow ล้นออกนอกกรอบการ์ดและถูกตัดกลางบรรทัด — แก้แล้ว ตอนนี้ตัดข้อความให้พอดีและใส่ … กำกับ",zh:"Smart Workflow 卡片的说明文字溢出卡片边框并被截断 —— 已修复，现在直接把文字截短到刚好放得下，并加上 …",vi:"Mô tả trên thẻ Smart Workflow tràn ra ngoài viền thẻ và bị cắt ngang — đã sửa, nay chữ được rút ngắn cho vừa và đánh dấu bằng …",id:"Deskripsi pada kartu Smart Workflow meluber keluar bingkai kartu dan terpotong — sudah diperbaiki, kini teksnya dipendekkan agar muat dan ditandai …",ms:"Penerangan pada kad Smart Workflow terkeluar daripada bingkai kad dan terpotong — sudah dibaiki, kini teksnya dipendekkan supaya muat dan ditanda …"},
+    s:{my:"**ဘာဖြစ်နေတာလဲ** — Photoshop Panel မှာ card တွေ ပြန်ပေါ်လာပြီးနောက် စာသား အောက်ဆုံး တစ်ကြောင်းက card ရဲ့ ဘောင်ကို ကျော်ထွက်ပြီး အောက်က card နဲ့ ထပ်ကာ ဖြတ်ခံနေတယ်။ \"…\" အမှတ်အသားလည်း မပါ၊ \"ဖွင့်မယ်\" ခလုတ်လည်း ပျောက်နေတယ်။ **အကြောင်းရင်း** — စာပိုတာကို ဖုံးဖို့ CSS (max-height + overflow) ကို မှီပြီး၊ ဖုံးလိုက်တာကိုပဲ \"…\" နဲ့ မှတ်ပေးတဲ့ စနစ်။ Photoshop ရဲ့ renderer က ဘာမှ မဖုံးဘူး — box ကို အတိုင်းအတာအတိုင်း ချထားပြီး စာသား အပြည့် ဆက်ရေးတယ်။ ဒါကြောင့် \"ဖုံးထားတာ ဘာမှ မရှိ\" ဆိုပြီး အမှတ်အသား မထည့်တာ မှန်တယ်၊ ဒါပေမဲ့ စာသားက card ထဲက ထွက်သွားပြီး သူ့နောက်က ခလုတ်ကိုပါ တွန်းထုတ်လိုက်တာ။ **ပြင်ပုံ** — တိုင်းတာမှုက အခု အဖြေ နှစ်မျိုး ရှိတယ် — renderer က ဖုံးထားရင် အရင်အတိုင်း မှတ်တယ်၊ မဖုံးဘဲ box က သတ်မှတ်ချက် ကျော်နေရင် **စာသားကိုယ်တိုင်ကို** စကားလုံး တစ်လုံးချင်း ဖြတ်ပြီး အံဝင်အောင် လုပ်ကာ \"…\" တပ်တယ်။ ဖုံးပေးဖို့ တောင်းဆိုတာကို renderer က ငြင်းနိုင်ပေမဲ့ တိုပြီးသား စာသားကို ငြင်းလို့ မရဘူး။ **နောက်ထပ် မဖြစ်အောင်** — test အသစ်က card ရဲ့ အမြင့်ကို သော့ခတ်ပြီး ဖုံးတာကို ပိတ်လိုက်တယ် — အဟောင်းနဲ့ဆို စာသား ထွက်တယ်၊ ခလုတ် ထွက်တယ်၊ \"…\" မရှိဘူး။ အသစ်နဲ့ဆို သုံးခုလုံး သုညပဲ။",en:"**What was happening** — with the cards back in the Photoshop panel, the last line of a description ran past the card's own border and was sliced by the row beneath. No \"…\" anywhere, and no \"Open\" pill on those cards. **The cause** — the clamp was two rules that only work together: CSS hides the overflow (max-height + overflow) and the marker says what was hidden. Photoshop's renderer hid nothing — it laid the box out at its ceiling and painted the whole sentence anyway — so the marker correctly stayed away, the words left the card, and everything after that box, the pill included, was pushed outside it. **The fix** — the measurement now has two answers: the renderer hid the rest (mark it, as before), or it hid nothing and the box is over its ceiling, and then the **words themselves** are cut at a space until they fit, with the marker on that. A box we ask to hide its overflow may decline; a string that is already short enough cannot. **So it cannot return** — the new check pins each card's height and withdraws the clipping: with the old marker the text leaves the card, the pill leaves the card and no ellipsis appears; with this one all three are zero.",shn:"Card မႃးၶိုၼ်းယဝ်ႉသေတႃႉ တူဝ်လိၵ်ႈ ဢွၵ်ႇပူၼ်ႉ ႁွပ်ႈ card ဝႆႉ။ CSS ႁႂ်ႈမူၵ်းပၼ်ၼၼ်ႉ Photoshop ဢမ်ႇႁဵတ်းပၼ်။ ယၢမ်းလဵဝ် တတ်းတူဝ်လိၵ်ႈႁင်းၵူၺ်းသေ ပၼ် … ဝႆႉ။ Test မႂ်ႇ ႁႄႉဝႆႉယဝ်ႉ။",kac:"Card ni bai pru wa tim laika a hpang jahtum lam gaw card hkrang kaw na pru mat ai. CSS hte makoi shangun ai hpe Photoshop n galaw ya ai. Ya gaw laika hpe tinang kadun nna … jahpan sai. Test nnan hte makawp da sai.",th:"การ์ดกลับมาแล้วแต่บรรทัดสุดท้ายของคำอธิบายล้นออกนอกกรอบ เพราะตัวเรนเดอร์ของ Photoshop ไม่ซ่อนส่วนเกินให้ ตอนนี้ตัดข้อความเองให้พอดีแล้วใส่ … และมีการตรวจชุดใหม่ป้องกันไว้",zh:"卡片回来了，但说明的最后一行溢出卡片边框：Photoshop 的渲染器并不隐藏溢出部分。现在直接把文字截短到刚好放得下并加上 …，并新增检查防止再次发生。",vi:"Thẻ đã trở lại nhưng dòng cuối của mô tả tràn ra ngoài viền: bộ dựng của Photoshop không ẩn phần thừa. Nay chữ được cắt cho vừa rồi đánh dấu …, và có kiểm tra mới ngăn tái diễn.",id:"Kartu sudah kembali, tetapi baris terakhir deskripsi meluber keluar bingkai: perender Photoshop tidak menyembunyikan kelebihannya. Kini teks dipotong agar muat lalu ditandai …, dengan pemeriksaan baru yang mencegahnya kembali.",ms:"Kad sudah kembali, tetapi baris akhir penerangan terkeluar daripada bingkai: perender Photoshop tidak menyembunyikan lebihannya. Kini teks dipotong supaya muat lalu ditanda …, dengan pemeriksaan baharu yang menghalangnya berulang."} },
   { v:"6.96.3", kind:"page", ref:"pgWf",
     t:{my:"Photoshop Panel ရဲ့ Workflows စာမျက်နှာမှာ Smart Workflow card ၁၉၄ ခုလုံး ပျောက်နေတာ ပြင်ပြီးပါပြီ — အခု group ကို နှိပ်ရင် card တွေ ပေါ်ပါပြီ",en:"All 194 Smart Workflow cards were missing from the Photoshop Panel's Workflows page — the groups open and the cards are on screen again",shn:"ၼႃႈလိၵ်ႈ Workflows ၼႂ်း Photoshop Panel — card 194 ဢၼ် ႁၢႆဝႆႉ၊ မႄးယဝ်ႉ။ ၼဵၵ်း group သေ card ဢွၵ်ႇမႃးယဝ်ႉ",kac:"Photoshop Panel na Workflows laika shara hta Smart Workflow card 194 mat mat ai hpe galaw sai — group hpe dip yang card ni pru wa sai",th:"การ์ด Smart Workflow ทั้ง 194 ใบหายไปจากหน้า Workflows ของแผง Photoshop — แก้แล้ว กลุ่มเปิดได้และการ์ดแสดงอีกครั้ง",zh:"Photoshop 面板的 Workflows 页面上 194 张 Smart Workflow 卡片全部消失 —— 已修复，分组能展开，卡片重新显示",vi:"Toàn bộ 194 thẻ Smart Workflow bị mất trên trang Workflows của Photoshop Panel — đã sửa, nhóm mở ra và thẻ hiện lại",id:"Seluruh 194 kartu Smart Workflow hilang dari halaman Workflows di Photoshop Panel — sudah diperbaiki, grup terbuka dan kartu tampil lagi",ms:"Kesemua 194 kad Smart Workflow hilang daripada halaman Workflows dalam Photoshop Panel — sudah dibaiki, kumpulan terbuka dan kad muncul semula"},
     s:{my:"**ဘာဖြစ်နေတာလဲ** — Panel ရဲ့ Workflows စာမျက်နှာက အုပ်စု ခေါင်းစဉ် ၁၃ ခုကိုပဲ ပြပြီး card တစ်ခုမှ မပြဘူး။ Catalog က \"Face & Portrait\" ကို အလိုအလျောက် ဖွင့်ပေးထားတာတောင် အထဲက card တွေ မပေါ်ဘူး။ **အကြောင်းရင်း** — အုပ်စုတစ်ခုရဲ့ အထဲပိုင်း (.grp-b) ကို ပြဖို့/ဖုံးဖို့ CSS rule တစ်ကြောင်းတည်းကို မှီနေတာ — `.grp-b { display: none }` ကို `.apg .app-grp.open .grp-b { display: block }` က နိုင်ရမယ့် အခြေအနေ။ Browser မှာ နိုင်ပေမဲ့ Photoshop ရဲ့ renderer မှာ မနိုင်ဘူး၊ ဒါကြောင့် class က \"open\" လို့ ရေးထားပေမဲ့ အထဲက ဘာမှ မပေါ်တာ။ ဒီ file ရဲ့ ကိုယ်ပိုင် မှတ်ချက်မှာတောင် \"the group body is shown/hidden by style.display\" လို့ ရေးထားပြီးသား — ဒါပေမဲ့ တကယ် မလုပ်ထားခဲ့ဘူး။ **ပြင်ပုံ** — အခု အုပ်စု ဖွင့်/ပိတ်တိုင်း inline `style.display` ကို တိုက်ရိုက် ချထားတယ် (class ကတော့ caret နဲ့ ဘောင်အတွက် ကျန်နေတယ်)၊ Account စာမျက်နှာ၊ Freeform Advanced အပါအဝင် အုပ်စု ၈ နေရာလုံး၊ ပြီးတော့ စာမျက်နှာ ပြောင်းတိုင်း အုပ်စု အားလုံးကို သူ့ class နဲ့ ကိုက်အောင် ပြန်ချိန်ပေးတယ်။ **နောက်ထပ် မဖြစ်အောင်** — test အသစ်က အဲ့ CSS rule ကို တမင် ဖယ်လိုက်ပြီး (Photoshop မှာ ဖြစ်သလို) card တွေ ပေါ်မပေါ် စစ်တယ် — 6.167.2 မှာ 0၊ အခု အပြည့်။",en:"**What was happening** — the panel's Workflows page drew its thirteen category headers and not one card. The catalog opens \"Face & Portrait\" by default and the panel wrote that class, yet the body stayed empty. **The cause** — a group body's visibility rested on one cascade override: `.grp-b { display: none }` had to be beaten by `.apg .app-grp.open .grp-b { display: block }`. A browser lets it win; the Photoshop renderer did not, so the class said open and nothing showed. The screen file's own note has said it all along: \"the group body is shown/hidden by style.display\" — it was not. **The fix** — the body now carries an inline display, set when it is built and on every toggle (the class stays for the caret and the frame), at all eight places the panel writes a group class (Account, the static groups, Freeform's Advanced), and every group is brought into line on each page switch. **So it cannot return** — the new check withdraws that CSS rule exactly as Photoshop withdrew it and asserts the cards are still drawn: 0 on 6.167.2, all of them now.",shn:"Workflows ၼႃႈလိၵ်ႈ ပေႃးမီးၵႃႈ ႁူဝ်ၶေႃႈ၊ card ဢမ်ႇမီး။ CSS rule လဵဝ်ၵူၺ်း ၸႂ်ႉဝႆႉသေ Photoshop ဢမ်ႇႁပ်ႉ။ ယၢမ်းလဵဝ် style.display ၸႂ်ႉတိုဝ်းသေ မႄးယဝ်ႉ။ Test မႂ်ႇ ႁႄႉဝႆႉ။",kac:"Workflows laika shara gaw baw ga sha madun nna card langai mung n madun ai. CSS rule langai sha hpe kam da ai majaw Photoshop n hkap la ai. Ya gaw style.display hte galaw sai. Test nnan hte makawp da sai.",th:"หน้า Workflows แสดงเฉพาะหัวข้อกลุ่ม ไม่มีการ์ดเลย เพราะพึ่งกฎ CSS เพียงข้อเดียวที่ตัวเรนเดอร์ของ Photoshop ไม่ยอมรับ ตอนนี้ใช้ style.display โดยตรง และมีการตรวจชุดใหม่ป้องกันไว้",zh:"Workflows 页面只显示分组标题，一张卡片也没有：它依赖的那条 CSS 规则在 Photoshop 的渲染器中不生效。现在改为直接设置 style.display，并新增检查防止再次发生。",vi:"Trang Workflows chỉ hiện tiêu đề nhóm, không có thẻ nào: nó dựa vào một quy tắc CSS mà bộ dựng của Photoshop không áp dụng. Nay đặt style.display trực tiếp, và có kiểm tra mới ngăn tái diễn.",id:"Halaman Workflows hanya menampilkan judul grup, tanpa satu kartu pun: ia bergantung pada satu aturan CSS yang tidak diterapkan perender Photoshop. Kini style.display diatur langsung, dengan pemeriksaan baru yang mencegahnya kembali.",ms:"Halaman Workflows hanya menunjukkan tajuk kumpulan, tiada satu kad pun: ia bergantung pada satu peraturan CSS yang tidak diguna pakai oleh perender Photoshop. Kini style.display ditetapkan terus, dengan pemeriksaan baharu yang menghalangnya berulang."} },
@@ -12654,12 +12680,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
      document, because a node measures nothing before it is — and again whenever a group opens, because a
      closed .grp-b is display:none and every card inside it measures 0. grp() is lifted into the panel's
      studio suites and may not call a page-level helper, so the host takes the tap on the way up. */
-  ellMark(wfHost, ".wfmini .s");
+  ellMark(wfHost, ".wfmini .s", 3);
   if(!wfHost.__ellBound){
     wfHost.__ellBound=1;
     wfHost.addEventListener("click", function(ev){
       var t = ev.target; while(t && t !== wfHost && !(t.className && String(t.className).indexOf("grp-h")>=0)) t = t.parentNode;
-      if(t && t !== wfHost) ellMark(wfHost, ".wfmini .s");
+      if(t && t !== wfHost) ellMark(wfHost, ".wfmini .s", 3);
     });
   }
   renderFavRecent();
@@ -12691,7 +12717,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
             }
           }
         });
-        ellMark(wfHost, ".wfmini .s");
+        ellMark(wfHost, ".wfmini .s", 3);
         if(first) first.scrollIntoView({behavior:"smooth", block:"center"});
       };
       rail.appendChild(b);
@@ -12699,7 +12725,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     wfJumpTargets.forEach(function(tg){
       var b=el("button","chip", tg.t+" "+tg.n);
       b.onclick=function(){
-        if(tg.g.className.indexOf("open")<0){ tg.g.className="grp open"; ellMark(tg.g, ".wfmini .s"); }
+        if(tg.g.className.indexOf("open")<0){ tg.g.className="grp open"; ellMark(tg.g, ".wfmini .s", 3); }
         tg.g.scrollIntoView({behavior:"smooth", block:"start"});
       };
       rail.appendChild(b);
@@ -12783,7 +12809,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       }
     }
     if(!q) _wfOpenSnap=null;
-    ellMark(wfHost, ".wfmini .s");   /* 6.96.0 — the filter opens and closes groups; the marker follows */
+    ellMark(wfHost, ".wfmini .s", 3);   /* 6.96.0 — the filter opens and closes groups; the marker follows */
     wfEmpty.classList.toggle("on", !!(q && !anyMatch));
   }
   $("wfSearch").oninput=function(){
@@ -29689,7 +29715,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.96.3";
+var APP_VER="6.96.4";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -30480,7 +30506,7 @@ var IMAGINE = (function(){
     for(var i=0;i<D.tools.length;i++) grid.appendChild(hubCard(D.tools[i]));
     card.appendChild(el("p","mut im-next", t("hub_next")));
     /* 6.96.0 — the same marker the workflow cards use, through the host so the panel runs its own copy */
-    try{ if(H.ellMark) H.ellMark(root, ".im-card-sum"); }catch(e){}
+    try{ if(H.ellMark) H.ellMark(root, ".im-card-sum", 5); }catch(e){}
   }
   /* 6.29.1 wave — the card's picture IS a Before | After compare: the tool's result (after) as the whole 2:3 picture,
      the untouched base photograph (before) on top, clipped at the split; a drag on the picture moves the line, a plain
@@ -31005,7 +31031,7 @@ var IMAGINE = (function(){
   }
   var host = {
     t9: function(m){ return L9(m); },
-    ellMark: function(root, sel){ ellMark(root, sel); },   /* 6.96.0 — the clamp marker, the panel has its own */
+    ellMark: function(root, sel, lines){ ellMark(root, sel, lines); },   /* 6.96.0 — the clamp marker, the panel has its own; 6.96.4 carries the line budget */
     icon: function(name){ var s=document.createElement("span"); s.innerHTML=icn(name); return s.firstChild; },
     button: function(cls){ var b=document.createElement("button"); b.type="button"; b.className=cls||""; return b; },
     asset: function(kind, file){ return libArt((kind==="thumb" ? "lib/wf/imagine/th/" : "lib/wf/imagine/") + file); },   /* 6.29.2 — replaced art rides its LIB_ART_REV token */

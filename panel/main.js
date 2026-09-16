@@ -365,17 +365,58 @@ function grpSyncAll(root) {
    The marker is appended only where the ink really overflows its box — measured through scrollHeight, the
    reading the SELF-TEST's own scrollTop row proves this renderer answers — and silently skipped when the
    host reports nothing, so a renderer that cannot measure simply looks as it did before. */
-function ellMark(root, sel) {
+/* 6.167.4 — THE OWNER'S SECOND PHOTOGRAPH OF THE CARDS. They were back, and their descriptions ran
+   straight out of them: a line of words below the card's own border, no ellipsis anywhere, and no
+   "Open" pill at all. Marking a cut is not the same as making one. This renderer laid the box out at
+   its ceiling and painted the rest of the sentence anyway, so scrollHeight equalled clientHeight, the
+   marker correctly stayed away — there was nothing hidden to mark — and everything the flow put after
+   that box, the pill included, was pushed outside the card.
+
+   A box we ask to hide its overflow may decline. A string that is already short enough cannot. So the
+   measurement now has two answers, not one: the renderer hid the rest (mark it, as before), or the
+   renderer hid nothing and the box is taller than its own ceiling — and then the WORDS are cut, at a
+   space, until the box fits, and the marker goes on that. Every pass starts from the whole sentence
+   again (ELL_FULL), so a second pass can never cut a cut string twice. */
+const ELL_FULL = new WeakMap();
+function ellCeil(n, lines) {
+  const cs = getComputedStyle(n);
+  const lh = parseFloat(cs.lineHeight) || 16;
+  const mh = parseFloat(cs.maxHeight);
+  /* the declared ceiling when this renderer reports one, else the caller's line budget */
+  const ceil = (mh > 0 && isFinite(mh)) ? mh : (lines > 0 ? lines * lh : 0);
+  return { lh: lh, ceil: ceil };
+}
+function ellMark(root, sel, lines) {
   try {
     const list = (root || document).querySelectorAll(sel);
     Array.prototype.forEach.call(list, function (n) {
       try {
         const old = n.querySelector(".ell");
         if (old && old.parentNode) old.parentNode.removeChild(old);
+        const full = ELL_FULL.has(n) ? ELL_FULL.get(n) : (n.textContent || "");
+        ELL_FULL.set(n, full);
+        if (n.textContent !== full) n.textContent = full;
         /* half a line, never a pixel: Burmese stacked diacritics draw past their line box, so a box that
            holds its text exactly still reports a few pixels of overflow (the app measured 73 against 69) */
-        const lh = parseFloat(getComputedStyle(n).lineHeight) || 16;
-        if (n.scrollHeight - n.clientHeight > lh / 2) {
+        const m = ellCeil(n, lines);
+        let cut = false;
+        if (n.scrollHeight - n.clientHeight > m.lh / 2) {
+          cut = true;
+        } else if (m.ceil > 0 && n.clientHeight > m.ceil + m.lh / 2) {
+          /* the renderer clipped nothing — take the sentence down to what fits, longest first */
+          let lo = 0, hi = full.length;
+          while (lo < hi) {
+            const mid = (lo + hi + 1) >> 1;
+            n.textContent = full.slice(0, mid);
+            if (n.clientHeight <= m.ceil + m.lh / 2) lo = mid; else hi = mid - 1;
+          }
+          let s = full.slice(0, lo);
+          const sp = s.lastIndexOf(" ");
+          if (sp > 12) s = s.slice(0, sp);   /* end on a whole word when there is one to end on */
+          n.textContent = s.replace(/[\s\u2026,.;:\u2014-]+$/, "");
+          cut = n.textContent.length < full.length;
+        }
+        if (cut) {
           const e = document.createElement("span");
           e.className = "ell"; e.textContent = "\u2026";
           n.appendChild(e);
@@ -2644,7 +2685,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.167.3";
+const PANEL_VERSION = "6.167.4";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -12650,7 +12691,7 @@ let imagineReady = false;
 function imagineHost() {
   return {
     t9: function (m) { return ff9(m); },
-    ellMark: function (root, sel) { ellMark(root, sel); },   /* 6.167.0 — the app's clamp marker, drawn here too */
+    ellMark: function (root, sel, lines) { ellMark(root, sel, lines); },   /* 6.167.0 — the app's clamp marker, drawn here too; 6.167.4 carries the line budget */
     icon: function (name) { return ffIcon(name, "cream"); },
     button: function (cls) { return mkBtn(cls); },
     asset: function (kind, file) { return (kind === "thumb" ? "icons/imagine/th/" : "icons/imagine/") + file; },
