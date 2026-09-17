@@ -203,10 +203,28 @@ const NEW = Object.keys(SCRIPTS);
      a Tai Le sentence, or pasting the Shan text into their own packs, is the
      invention this registry exists to refuse. */
   const V6350_KEYS = ["dev_admin_only"];
+  /* 6.102.0 wave A — the ALBUM page's thirty-two strings (its hero line plus
+     the page's own alb_* set) join on exactly the same terms as ph_imagine and
+     dev_admin_only before them. The fifteen packs with readers were translated
+     in the same commit that added the page; the three Tai packs have no reader
+     here, and the two options without one are the same two this registry has
+     always refused — inventing Tai Le sentences, or pasting the Shan text into
+     a Tai Le pack so the count passes while a Tai Le reader looks at Shan.
+     LANG_FB routes tdd, khb and kht to Shan, TR carries the real Shan for all
+     thirty-two, and A2 below measures that the fallback actually lands. */
+  const V61020_KEYS = ["ph_album",
+    "alb_size_h", "alb_pages_h", "alb_stage_h", "alb_photos_h", "alb_layout_h",
+    "alb_text_h", "alb_export_h", "alb_auto", "alb_guides", "alb_guides_note",
+    "alb_bleed", "alb_gutter", "alb_width", "alb_height",
+    "alb_page_add", "alb_page_dup", "alb_page_del", "alb_page_gone",
+    "alb_photo_add", "alb_photo_full", "alb_photo_some", "alb_layout_none",
+    "alb_text_note", "alb_export_note", "alb_export_jpg", "alb_export_gal",
+    "alb_export_all", "alb_export_busy", "alb_export_done", "alb_export_saved",
+    "alb_export_fail"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {
