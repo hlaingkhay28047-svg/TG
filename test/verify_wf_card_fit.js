@@ -35,6 +35,12 @@
      F  the clamp ran on grids still detached from the document, where every
         measurement is 0 and the no-op is silent
 
+   AND ONE MORE, from the same session's photograph of the Gallery: a CSS rule
+   written for the pick box's one thumbnail was a DESCENDANT selector, so it
+   also sized every button's icon at 96 × 120 (section G). It is the same
+   mistake in a different place — a rule meant for a picture catching something
+   that is not one — so it is measured here, across all sixteen panel pages.
+
    Usage: node test/verify_wf_card_fit.js      (the app server must be on 8931)
    ============================================================================ */
 "use strict";
@@ -287,6 +293,77 @@ async function faultInjection(browser) {
   } finally { server.close(); }
 }
 
+/* ------------------------------------------- G. no icon is sized by a picture rule */
+/* The owner photographed the Gallery pick box: every button's icon drawn at
+   96 × 120 ("အရမ်းကြီးနေတယ်"). The cause was `#pageGallery .lib-pick img` — a
+   rule for the box's one thumbnail, written as a descendant selector, so it
+   also caught the <img class="ic-s"> inside each of the six buttons.
+   A panel icon sits on a line of text or inside a button and is never larger
+   than about 26px; ic-xl is the one deliberate exception at 32px. So: walk
+   every page and refuse any other reading. */
+const ICON_CEILING = 26;
+const ICON_ROUTES = ["setup", "aitools", "wf", "prompt", "imagine", "meitu", "evoto", "retouch",
+  "path", "create", "video", "vidup", "v2v", "talk", "presets", "gallery"];
+const ICON_PROBE = `(function(){
+  function R(e){var r=e.getBoundingClientRect();return {w:Math.round(r.width*10)/10,h:Math.round(r.height*10)/10};}
+  var out=[];
+  document.querySelectorAll('img').forEach(function(im){
+    var c=String(im.className||"");
+    if(c.indexOf("ic-")<0) return;
+    if(c.indexOf("ic-xl")>=0) return;            /* the one deliberate 32px icon */
+    var r=R(im); if(!(r.w>0&&r.h>0)) return;
+    if(r.w<=${ICON_CEILING} && r.h<=${ICON_CEILING}) return;
+    var p=im.parentNode, chain=[];
+    for(var i=0;i<5 && p && p.nodeType===1;i++){ chain.push("."+String(p.className||p.tagName).split(" ")[0]); p=p.parentNode; }
+    out.push({ cls:c, r:r, chain:chain.join(" < ") });
+  });
+  return out;
+})()`;
+
+async function iconWalk(browser) {
+  console.log("\n--- G. no icon anywhere is sized by a rule meant for a picture ---");
+  const server = http.createServer((req, res) => {
+    const rel = decodeURIComponent(req.url.split("?")[0]).replace(/^\/+/, "") || "index.html";
+    const abs = path.resolve(PANEL, rel);
+    if (!abs.startsWith(PANEL + path.sep) || !fs.existsSync(abs) || fs.statSync(abs).isDirectory()) { res.writeHead(404); res.end(); return; }
+    res.writeHead(200, { "Content-Type": MIME[path.extname(abs).toLowerCase()] || "application/octet-stream", "Cache-Control": "no-store" });
+    res.end(fs.readFileSync(abs));
+  });
+  await new Promise(r => server.listen(0, "127.0.0.1", r));
+  const port = server.address().port;
+  try {
+    const page = await browser.newPage({ viewport: { width: 360, height: 900 } });
+    await page.route("**/*", route => {
+      const u = route.request().url();
+      if (u.indexOf("127.0.0.1") >= 0) return route.continue();
+      if (route.request().resourceType() === "image") return route.fulfill({ status: 200, contentType: "image/gif", body: PIXEL });
+      return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    });
+    await page.addInitScript(UXP_STUB);
+    await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: "load" });
+    await page.waitForFunction(() => { try { const d = window.HNK && window.HNK.panelNav && window.HNK.panelNav.dash(); return !!(d && d.name === "Student Name"); } catch (e) { return false; } }, null, { timeout: 25000 });
+    const found = [];
+    for (const route of ICON_ROUTES) {
+      await page.evaluate(r => { try { switchPage(r); } catch (e) { } }, route);
+      await page.waitForTimeout(600);
+      /* show what hides behind a flag, so its icons are laid out and measurable */
+      await page.evaluate(() => {
+        ["galPick", "libPick"].forEach(function (id) { var x = document.getElementById(id); if (x) x.style.display = "flex"; });
+        document.querySelectorAll(".grp").forEach(function (g) { try { var b = g.querySelector(".grp-b"); if (b) b.style.display = "block"; } catch (e) { } });
+      });
+      await page.waitForTimeout(400);
+      const bad = await page.evaluate(ICON_PROBE);
+      bad.forEach(x => found.push(route + ": " + x.r.w + "×" + x.r.h + " " + x.cls + " in " + x.chain));
+    }
+    report(`G1) every icon on all ${ICON_ROUTES.length} panel pages is ${ICON_CEILING}px or smaller (the Gallery pick box drew them at 96×120)`,
+      found.length === 0, found.slice(0, 6));
+    /* and the rule that caused it is a child combinator now, not a descendant */
+    report("G2) the Gallery pick box sizes only its own direct-child thumbnail",
+      /#pageGallery \.lib-pick > img \{/.test(CSS_C) && !/#pageGallery \.lib-pick img \{/.test(CSS_C));
+    await page.close();
+  } finally { server.close(); }
+}
+
 /* -------------------------------------------------------------- E. release */
 function releasePins() {
   console.log("\n--- E. release ---");
@@ -301,10 +378,11 @@ function releasePins() {
     await panelWalk(browser);
     await appWalk(browser);
     await faultInjection(browser);
+    await iconWalk(browser);
   } finally { await browser.close(); }
   releasePins();
   console.log(failures
     ? `\n${failures} FAILED`
-    : "\nALL PASS — the words fit the box on both surfaces, measured with every clamp removed, so the page is tidy in any renderer.");
+    : "\nALL PASS — the words fit the box on both surfaces and no icon is sized by a rule meant for a picture; measured, not adjusted.");
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error("FAIL —", (e && e.stack) || e); process.exit(1); });

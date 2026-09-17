@@ -35,6 +35,15 @@ var _CJS = (typeof module !== "undefined" && module.exports);
 var fit = _CJS ? require("./canvas-fit-service") : globalThis.HNK.canvasFitService;
 var resultGroup = _CJS ? require("./result-group-service") : globalThis.HNK.resultGroupService;
 
+/* v6.171.0 — one readable line out of whatever Photoshop threw (Error,
+   {message}, or a bare string), so a refusal can carry its reason. */
+function _line(e) {
+  try {
+    var m = (e && (e.message || e.description)) || String(e || "");
+    return String(m).replace(/\s+/g, " ").trim().slice(0, 140);
+  } catch (e2) { return ""; }
+}
+
 /* "HNK — Free Generate", "HNK — BG Replace", "HNK — Prompt" … */
 function groupNameFor(feature) {
   var f = String(feature || "Result").trim() || "Result";
@@ -92,6 +101,10 @@ function capabilities(host) {
    -> "masked-group" | "group-only" | "plain-layer" | "failed" */
 function outcomeOf(placeResult) {
   if (!placeResult || !placeResult.ok) return "failed";
+  /* v6.171.0 — no document was open, so the result became its own document.
+     That is a placement, and saying "group/mask unavailable on this host"
+     about it would be a lie. */
+  if (placeResult.newDoc) return "new-document";
   if (placeResult.grouped && placeResult.masked) return "masked-group";
   if (placeResult.grouped) return "group-only";
   return "plain-layer";
@@ -118,7 +131,7 @@ async function placeResults(deps) {
   }
 
   var layers = [];
-  var anyOk = false, allMasked = true;
+  var anyOk = false, allMasked = true, anyNewDoc = false;
   for (var i = 0; i < results.length; i++) {
     var r = results[i] || {};
     // Only trust bounds computed from REAL dimensions; a 0×0 result would
@@ -142,14 +155,23 @@ async function placeResults(deps) {
     var name = results.length > 1
       ? ("Variant " + (i + 1))
       : resultGroup.layerName(deps.modelId, deps.timeLabel, "HNK " + String(deps.feature || "Result"));
-    var placed = null;
+    var placed = null, why = "";
     try {
       placed = await host.placeAsLayer({ ref: r.ref, name: name, bounds: bounds, group: group, mask: caps.canMask, maskSelection: !!deps.regionBounds });
-    } catch (e) { placed = null; }
-    var okOne = !!placed;
+    } catch (e) { placed = null; why = _line(e); }
+    /* v6.171.0 — A REFUSAL THAT NAMES ITSELF. The host answers { ok:false,
+       reason } when it cannot place; anything else truthy is a placed layer
+       (older hosts and the tests' fakes answer the layer alone). Until now a
+       refusal was flattened to a bare null here and the reason was gone by the
+       time the student read the strip — the owner photographed the result:
+       "Generated, but could not place into Photoshop · place-failed", which
+       names nothing. */
+    var okOne = !!(placed && placed.ok !== false);
+    if (!okOne && placed && placed.reason) why = String(placed.reason);
     anyOk = anyOk || okOne;
+    if (okOne && placed.newDoc) anyNewDoc = true;
     if (!okOne || !placed.masked) allMasked = false;
-    layers.push({ ok: okOne, layer: placed, name: name, bounds: bounds });
+    layers.push({ ok: okOne, layer: okOne ? placed : null, name: name, bounds: bounds, reason: okOne ? "" : (why || "place-failed") });
   }
 
   var res = {
@@ -158,8 +180,19 @@ async function placeResults(deps) {
     groupName: group ? gName : null,
     layers: layers,
     grouped: !!group,
-    masked: anyOk && allMasked && caps.canMask
+    masked: anyOk && allMasked && caps.canMask,
+    newDoc: anyNewDoc
   };
+  /* v6.171.0 — when nothing was placed, say what stopped it: the callers print
+     `placed.reason` and this object used to carry no reason field at all. */
+  if (!anyOk) {
+    var seen = [];
+    for (var k = 0; k < layers.length; k++) {
+      var w = layers[k] && layers[k].reason;
+      if (w && seen.indexOf(w) < 0) seen.push(w);
+    }
+    res.reason = seen.join(" \u00b7 ").slice(0, 200) || "place-failed";
+  }
   res.outcome = outcomeOf(res);
   return res;
 }

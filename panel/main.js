@@ -429,6 +429,14 @@ function ellMark(root, sel, lines) {
         const full = ELL_FULL.has(n) ? ELL_FULL.get(n) : (n.textContent || "");
         ELL_FULL.set(n, full);
         if (n.textContent !== full) n.textContent = full;
+        /* 6.171.0 — AND THE WHOLE SENTENCE STAYS READABLE FROM THE ELEMENT.
+           The cut is width-dependent: the app walk and the panel walk open their
+           surfaces at different widths, so the same sentence legitimately cuts at
+           a different character on each. The parity walk already declared the "…"
+           marker out of scope for exactly that reason; the cut text needs the same
+           treatment, so the original is kept here for it to read. It is also what
+           a screen reader and a tooltip should have. */
+        try { n.setAttribute("data-full", full); } catch (e) { }
         const m = ellCeil(n, lines);
         if (!(m.ceil > 0)) return;
         /* unclamp: height, max-height, overflow AND the -webkit-line-clamp the
@@ -5872,6 +5880,8 @@ function selfTestRowsInner() {
     rows.push(hnkLayerProbeRow());
     /* 6.165.0 — the folder every finished take is written to: found, written, read back (see hnkSaveProbeStart) */
     rows.push(hnkSaveProbeRow());
+    /* 6.171.0 — the place every result ends in, run for real on a 2×2 picture and undone (see hnkPlaceProbeStart) */
+    rows.push(hnkPlaceProbeRow());
     /* 6.166.0 — drag & drop: bound targets, the last file that arrived, or the refusal */
     rows.push(hnkDropRow());
     /* v6.86.0 — whether <video> decodes here at all. Photoshop's does not,
@@ -6245,7 +6255,7 @@ function bindSetup() {
     const cpy = $("btnCopyLink"); if (cpy) cpy.addEventListener("click", function () { shareCopy(); });
     const cu = $("btnCheckUpdate"); if (cu) cu.addEventListener("click", function () { aboutCheckUpdate(); });
     const hr = $("btnHardRefresh"); if (hr) hr.addEventListener("click", function () { aboutHardRefresh(); });
-    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { try { hnkNetProbeStart(true); } catch (eN) { } try { hnkSaveProbeStart(true); } catch (eSv) { } try { hnkLayerProbeStart(true); } catch (eL) { } renderSelfTest(); });
+    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { try { hnkNetProbeStart(true); } catch (eN) { } try { hnkSaveProbeStart(true); } catch (eSv) { } try { hnkLayerProbeStart(true); } catch (eL) { } try { hnkPlaceProbeStart(true); } catch (eP) { } renderSelfTest(); });
     const stc = $("btnSelfTestCopy"); if (stc) stc.addEventListener("click", function () { selfTestCopy(); });
     const about = $("cardAbout");
     if (about) {
@@ -13723,7 +13733,7 @@ function switchPage(key) {
      opened (and on Run again), never on the boot path: renderSelfTest also
      runs from setupApplyStatics at boot, and a probe there would reach out
      to RunningHub on every panel start. The row re-paints when they answer. */
-  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); hnkLayerProbeStart(false); hnkSaveProbeStart(false); renderSelfTest(); } catch (e) { } }
+  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); hnkLayerProbeStart(false); hnkSaveProbeStart(false); hnkPlaceProbeStart(false); renderSelfTest(); } catch (e) { } }
   /* the sticky GENERATE follows the page that owns it */
   try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
 }
@@ -13961,6 +13971,61 @@ function hnkSaveProbeStart(force) {
     return { level: "ok", detail: path + " \u00b7 writable \u00b7 " + takes + " saved take" + (takes === 1 ? "" : "s") + " \u00b7 " + (Date.now() - t0) + "ms" };
   })().then(function (res) { saveProbe = { state: "done", at: Date.now(), res: res }; try { renderSelfTest(); } catch (e) { } },
     function (e) { saveProbe = { state: "done", at: Date.now(), res: { level: "err", detail: "REFUSED \u2014 " + String((e && e.message) || e).slice(0, 140) } }; try { renderSelfTest(); } catch (e2) { } });
+}
+/* 6.171.0 — SELF-TEST "Place into Photoshop". The owner photographed a Smart
+   Workflow run that finished and then refused: "Generated, but could not place
+   into Photoshop · place-failed", with a document open in the Layers panel,
+   after earlier runs in the same session had placed fine. Until 6.171.0 that
+   sentence was the whole of what the panel knew — the place path returned a
+   bare null from six different branches and the strip printed its own fallback
+   word. It now carries a reason, and this row proves the whole path WITHOUT a
+   paid run: it writes a 2×2 picture through the same photoshop-host.placeAsLayer
+   every result goes through, into the open document, and then deletes the layer
+   it just made. What it prints is the outcome and the time, or the exact
+   refusal — the one line a photograph of this card can carry back.
+   Throttled like the other host rows; "Run again" forces it; never at boot, and
+   never when no document is open (there would be nothing to place into and
+   opening one is not this row's business). */
+let placeProbe = { state: "idle", at: 0, res: null };
+/* a 2×2 opaque PNG — the smallest honest picture to hand Photoshop */
+const PLACE_PROBE_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGO4st78ynpzBggFADLaBuk2gZvtAAAAAElFTkSuQmCC";
+function hnkPlaceProbeStart(force) {
+  const now = Date.now();
+  if (placeProbe.state === "running") return;
+  if (!force && placeProbe.state === "done" && now - placeProbe.at < 60000) return;
+  if (!hostIsPhotoshop()) { placeProbe = { state: "done", at: now, res: { level: "host", detail: "not Photoshop — nothing to place into" } }; return; }
+  const H = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK : {};
+  const host = H.photoshopHost;
+  if (!host || typeof host.placeAsLayer !== "function") { placeProbe = { state: "done", at: now, res: { level: "err", detail: "the place path is not loaded" } }; return; }
+  placeProbe = { state: "running", at: now, res: null };
+  const t0 = Date.now();
+  (async function () {
+    let ps = null;
+    try { ps = require("photoshop"); } catch (e) { ps = null; }
+    let docs = 0;
+    try { docs = (ps && ps.app && ps.app.documents && ps.app.documents.length) || 0; } catch (e) { docs = 0; }
+    if (!docs) return { level: "warn", detail: "no document open — open one and run again" };
+    const out = await host.placeAsLayer({ ref: PLACE_PROBE_PNG, name: "HNK · self-test", bounds: null, group: null, mask: false });
+    if (!out || out.ok === false) return { level: "err", detail: "REFUSED — " + (((out && out.reason) || "no reason given")) };
+    /* put the document back the way it was found */
+    let undone = "layer left — delete it yourself";
+    try {
+      await ps.core.executeAsModal(async function () {
+        const d = ps.app.activeDocument;
+        const ls = d.activeLayers;
+        const l = ls && ls.length ? ls[0] : null;
+        if (l && typeof l.delete === "function") { await l.delete(); }
+      }, { commandName: "HNK: remove self-test layer" });
+      undone = "removed again";
+    } catch (eU) { undone = "left behind — " + String((eU && eU.message) || eU).slice(0, 60); }
+    return { level: "ok", detail: "placed · " + undone + " · " + (Date.now() - t0) + "ms" };
+  })().then(function (res) { placeProbe = { state: "done", at: Date.now(), res: res }; try { renderSelfTest(); } catch (e) { } },
+    function (e) { placeProbe = { state: "done", at: Date.now(), res: { level: "err", detail: "THREW — " + String((e && e.message) || e).slice(0, 140) } }; try { renderSelfTest(); } catch (e2) { } });
+}
+function hnkPlaceProbeRow() {
+  if (placeProbe.state === "idle") return { label: "Place into Photoshop", detail: "—", level: "pend" };
+  if (placeProbe.state === "running") return { label: "Place into Photoshop", detail: "placing a test picture…", level: "pend" };
+  return { label: "Place into Photoshop", detail: (placeProbe.res && placeProbe.res.detail) || "—", level: (placeProbe.res && placeProbe.res.level) || "pend" };
 }
 function hnkSaveProbeRow() {
   if (saveProbe.state === "idle") return { label: "Save folder", detail: "\u2014", level: "pend" };

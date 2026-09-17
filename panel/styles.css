@@ -3222,7 +3222,19 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 
 #pageGallery .lib-pick { margin-top: 12px; border: 1px solid var(--line); border-radius: 12px;
   background-color: var(--panel-2); padding: 10px; display: flex; flex-direction: row; align-items: flex-start; flex-wrap: wrap; }
-#pageGallery .lib-pick img { flex: none; width: 96px; height: 120px; object-fit: cover; border-radius: 9px; margin-right: 12px; }
+/* 6.171.0 — THE THUMBNAIL ONLY, NEVER THE BUTTONS' ICONS.
+   This was written for the one picture at the head of the pick box, but it was
+   a DESCENDANT selector, and the box also holds six buttons — each of which
+   carries an <img class="ic-s"> icon. So every icon in the row was sized
+   96×120: measured, the Save / IMAGE 1 / IMAGE 2 / delete icons all came out at
+   exactly that, which drove their buttons to 96×205, 216×177 and 104×149 and is
+   precisely what the owner photographed ("အရမ်းကြီးနေတယ်").
+
+   A child combinator is the whole fix: the thumbnail is a direct child of
+   .lib-pick, the icons are three levels down inside a .btn. An audit of all
+   sixteen panel pages found this one place and no other (every remaining
+   oversized icon is an intentional 32px ic-xl in an empty state). */
+#pageGallery .lib-pick > img { flex: none; width: 96px; height: 120px; object-fit: cover; border-radius: 9px; margin-right: 12px; }
 #pageGallery .lib-pick .sub { font-size: 11.5px; color: var(--muted); }
 #pageGallery .lib-pick .row .btn { margin-top: 8px; margin-right: 8px; }
 #pageGallery .lib-pick .row .btn:last-child { margin-right: 0; }

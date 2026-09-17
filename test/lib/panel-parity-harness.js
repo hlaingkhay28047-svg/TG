@@ -101,6 +101,17 @@ const COLLECT = `(function(sel){
        at one width, the panel walk at another. Comparing it would report a difference no student can
        act on, and the marker's own contract is pinned, on both surfaces, by verify_ui_tidy_696. */
     if (e.className && String(e.className).split(/\\s+/).indexOf("ell") >= 0) return;
+    /* 6.171.0 — and for the same reason, a clamped line is compared BY ITS WHOLE
+       SENTENCE. Until 6.171.0 the clamp only hid the overflow, so both DOMs held
+       the identical full string and this walker never had to think about it — but
+       hiding is what Adobe UXP declined to do, which is why 101 of 194 Smart
+       Workflow cards painted past their own box in Photoshop. ellMark now really
+       cuts the words, and it cuts to fit the box, so the SAME sentence ends at a
+       different character on a 230px panel than on a 1440px browser. Comparing the
+       cut would report a difference that is only the width the harness chose.
+       ellMark records the original on the element; that is the content contract. */
+    if (e.getAttribute) { var full = e.getAttribute("data-full");
+      if (full) { var w = String(full).replace(/\\s+/g, " ").trim(); if (w) out.push(w); return; } }
     /* A button label that wraps is ONE label. The app lets inline flow wrap it
        and the text stays a single node; UXP centres a flex row, so main.js
        (fitBtnIn) splits the label into .icn-l1 + .icn-rest to put the icon on

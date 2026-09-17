@@ -597,30 +597,77 @@ function createGroup(name) {
 /* ---- v6.9.0 REAL: place an image ref as a new layer (spec §14) ----
    opts: { ref (data URL), name, bounds|null, group|null, mask:boolean }
    Sequence (port of main.js placeResultToPS, generalized):
-     1. decode data URL -> write a fixed temp file in the plugin data folder
+     1. decode data URL -> write a file of this place's own in the data folder
      2. createSessionToken + batchPlay "placeEvent" (never a dialog)
-     3. rename; scale/translate to opts.bounds — or self-fit (contain) into the
+     3. rename; scale/translate to opts.bounds — or self-fit (cover) into the
         document when bounds are unknown (0×0 results must never collapse)
      4. move into opts.group when given (PLACEINSIDE)
      5. white reveal-all layer mask when opts.mask (shared descriptor)
-   Returns { id, name, placed:true, grouped, masked, bounds } or null. */
-async function placeAsLayer(opts) {
-  var ps = _ps();
-  var uxp = _uxp();
-  if (!ps || !uxp || !opts || !opts.ref) return null;
+
+   v6.171.0 — THE OWNER PHOTOGRAPHED A RUN THAT FINISHED AND THEN REFUSED.
+   "Generated, but could not place into Photoshop · place-failed", with a
+   document plainly open in the Layers panel and with earlier runs in the same
+   session having placed fine: "အစပိုင်းရတယ် နောက်ပိုင်း ဒီလိုပေါ်လာတယ်" —
+   it worked at first, later this appeared. Three faults, and each one is a
+   difference between THIS path and Freeform's place (main.js
+   placeResultToPS), which has never failed this way:
+
+     1. IT KEPT NO REASON. Six branches returned a bare null, the service
+        turned that into { ok:false } with no reason field at all, and the
+        strip fell back to printing the word "place-failed". So the
+        photograph says only that something failed — the one thing a student
+        cannot act on. Every exit below now carries one line of why.
+     2. IT WROTE INTO A DIFFERENT FOLDER. This path asked for
+        getTemporaryFolder() first; the path that works uses getDataFolder().
+        The temporary folder is the host's to clear, and a session token is
+        only as good as the file it was minted for.
+     3. IT REUSED ONE FILENAME FOR EVERY RUN. hnk_aitools_place.png was
+        overwritten on each place while Photoshop may still hold the previous
+        one — a fault shaped exactly like this report, sparing the first run
+        and taking a later one. Each place now writes its own file and sweeps
+        the older ones, so the folder still cannot grow without bound.
+
+   A refusal is also retried once on a freshly written file before the student
+   is told no, and a document that is not open is opened rather than refused.
+
+   Returns { id, name, placed:true, grouped, masked, bounds } on success, or
+   { ok:false, reason:"<one line>" } — never a bare null. */
+var PLACE_TMP = "hnk_place_";
+
+/* One file per place, older ones swept. Best-effort: a folder that will not
+   list its entries is no reason to refuse a placement. */
+async function _placeFile(folder, ext, bytes, formats) {
   try {
-    var decoded = _dataUrlToBytes(opts.ref);
-    if (!decoded) return null;
-    var lfs = uxp.storage.localFileSystem;
-    var formats = uxp.storage.formats;
-    var folder = null;
-    try { folder = await lfs.getTemporaryFolder(); } catch (e0) {}
-    if (!folder) folder = await lfs.getDataFolder();
-    var ext = /jpe?g/.test(decoded.mime) ? "jpg" : "png";
-    // one fixed filename (overwrite) so the data folder never grows unbounded
-    var file = await folder.createFile("hnk_aitools_place." + ext, { overwrite: true });
-    await file.write(decoded.bytes.buffer, { format: formats.binary });
-    var token = lfs.createSessionToken(file);
+    var entries = (typeof folder.getEntries === "function") ? (await folder.getEntries()) : [];
+    var mine = [];
+    for (var i = 0; i < entries.length; i++) {
+      var n = String((entries[i] && entries[i].name) || "");
+      if (n.indexOf(PLACE_TMP) === 0) mine.push(entries[i]);
+    }
+    mine.sort(function (a, b) { return String(a.name) < String(b.name) ? -1 : 1; });
+    for (var j = 0; j < mine.length - 2; j++) {
+      try { if (typeof mine[j].delete === "function") await mine[j].delete(); } catch (eD) { }
+    }
+  } catch (eL) { }
+  var name = PLACE_TMP + Date.now() + "_" + Math.floor(Math.random() * 1000000) + "." + ext;
+  var file = await folder.createFile(name, { overwrite: true });
+  await file.write(bytes.buffer, { format: formats.binary });
+  return file;
+}
+
+/* One attempt: open a document if there is none, else place into the open one.
+   Never throws — it answers { placed:true, … } or { ok:false, reason }. */
+async function _placeOnce(ps, opts, token, file) {
+  try {
+    /* v6.171.0 — NO DOCUMENT IS NOT A DEAD END. Freeform's place opens the
+       result as its own document instead of refusing; this path told the
+       student to open one and dropped the picture it had just paid for. */
+    var hasDoc = false;
+    try { hasDoc = !!(ps.app && ps.app.documents && ps.app.documents.length > 0); } catch (eH) { hasDoc = false; }
+    if (!hasDoc) {
+      await ps.core.executeAsModal(async function () { await ps.app.open(file); }, { commandName: "HNK: open result" });
+      return { id: null, name: opts.name || "HNK Result", placed: true, grouped: false, masked: false, bounds: null, newDoc: true };
+    }
 
     var out = await ps.core.executeAsModal(async function () {
       var batchPlay = ps.action.batchPlay;
@@ -634,7 +681,8 @@ async function placeAsLayer(opts) {
       var doc = ps.app.activeDocument;
       var ls = doc.activeLayers;
       var lyr = ls && ls.length ? ls[0] : null;
-      if (!lyr) return null;
+      /* v6.171.0 — name it: the place ran and Photoshop reported no layer. */
+      if (!lyr) return { reason: "Photoshop placed the file but reported no active layer" };
       try { lyr.name = opts.name || "HNK Result"; } catch (eN) {}
 
       var grouped = false, masked = false;
@@ -703,11 +751,48 @@ async function placeAsLayer(opts) {
       }
       return { id: lyr.id, name: opts.name, placed: true, grouped: grouped, masked: masked, bounds: opts.bounds || null };
     }, { commandName: "HNK: add result layer" });
-    return out || null;
+    if (out && out.placed) return out;
+    return { ok: false, reason: (out && out.reason) || "Photoshop placed no layer" };
   } catch (e) {
     _herr("placeAsLayer failed", e);
-    return null;
+    return { ok: false, reason: _emsg(e) };
   }
+}
+
+async function placeAsLayer(opts) {
+  var ps = _ps();
+  var uxp = _uxp();
+  if (!ps) return { ok: false, reason: "the photoshop module is not available here" };
+  if (!uxp) return { ok: false, reason: "the uxp module is not available here" };
+  if (!opts || !opts.ref) return { ok: false, reason: "there was no picture to place" };
+  var decoded = _dataUrlToBytes(opts.ref);
+  if (!decoded) return { ok: false, reason: "the result is not a picture this panel can decode" };
+
+  var lfs, formats;
+  try { lfs = uxp.storage.localFileSystem; formats = uxp.storage.formats; }
+  catch (eS) { return { ok: false, reason: "no file system on this host — " + _emsg(eS) }; }
+
+  /* v6.171.0 — the DATA folder first: the folder Freeform's place has used
+     since 6.9.0. The temporary folder stays as the fallback. */
+  var folder = null, folderWhy = "";
+  try { folder = await lfs.getDataFolder(); } catch (e0) { folderWhy = _emsg(e0); }
+  if (!folder) { try { folder = await lfs.getTemporaryFolder(); } catch (e1) { folderWhy = folderWhy || _emsg(e1); } }
+  if (!folder) return { ok: false, reason: "no folder to write the picture into" + (folderWhy ? " — " + folderWhy : "") };
+
+  var ext = /jpe?g/.test(decoded.mime) ? "jpg" : "png";
+  var last = "";
+  for (var attempt = 0; attempt < 2; attempt++) {
+    var file = null;
+    try { file = await _placeFile(folder, ext, decoded.bytes, formats); }
+    catch (eW) { last = "could not write the picture to disk — " + _emsg(eW); continue; }
+    var token = null;
+    try { token = lfs.createSessionToken(file); }
+    catch (eT) { last = "Photoshop refused a token for the file — " + _emsg(eT); continue; }
+    var r = await _placeOnce(ps, opts, token, file);
+    if (r && r.placed) return r;
+    last = (r && r.reason) || "Photoshop placed nothing";
+  }
+  return { ok: false, reason: last || "place-failed" };
 }
 
 var API = {
