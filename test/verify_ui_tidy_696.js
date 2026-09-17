@@ -168,7 +168,13 @@ function sourcePins() {
      for a pixel. */
   report("A2) ellMark: it removes any earlier marker, keeps the whole sentence, unclamps the box to read the ink it truly needs, cuts to the line budget at a space - never for a single pixel - and restores every property it borrowed, each step inside a try that leaves the card untouched when nothing measures",
     helper.indexOf('var old=n.querySelector(".ell"); if(old) old.remove();') > 0 &&
-    /var cs=getComputedStyle\(n\), lh=parseFloat\(cs\.lineHeight\)\|\|16, ceil=lines>0\?lines\*lh:0;/.test(APP) &&
+    /* 6.103.0 — the ceiling is now resolved through ellLenPx before it is trusted: this
+       renderer can answer with the AUTHORED value (`2.25`, not "25.875px"), and reading
+       that as pixels made the ceiling 6.75px and cut every summary away. The rest of the
+       marker — unclamp, measure, cut at a space, restore — is untouched and still pinned
+       line for line below. */
+    /var cs=getComputedStyle\(n\), fs=parseFloat\(cs\.fontSize\);/.test(APP) &&
+    /var lh=ellLenPx\(cs\.lineHeight, fs\);/.test(APP) && /function ellLenPx\(v, fs\)\{/.test(APP) &&
     /var sv=\{h:n\.style\.height,mh:n\.style\.maxHeight,ov:n\.style\.overflow,dp:n\.style\.display,lc:n\.style\.webkitLineClamp\};/.test(helper) &&
     /n\.style\.height="auto"; n\.style\.maxHeight="none"; n\.style\.overflow="visible";/.test(helper) &&
     /n\.style\.height=sv\.h; n\.style\.maxHeight=sv\.mh; n\.style\.overflow=sv\.ov; n\.style\.display=sv\.dp;/.test(helper) &&
@@ -222,7 +228,7 @@ function sourcePins() {
   const pHelper = between(PMAIN, "function ellMark(root, sel, lines) {", "\nfunction setIcnText(");
   report("A8) the panel's own ellMark is the app's rule in this renderer's dialect (Array.prototype.forEach over the NodeList, removeChild, the same unclamp-measure-cut-restore, the same half-line tolerance), published as HNK.ellMark and offered to the Imagine module through imagineHost",
     /Array\.prototype\.forEach\.call\(list, function \(n\) \{/.test(pHelper) &&
-    /const lh = parseFloat\(cs\.lineHeight\) \|\| 16;/.test(PMAIN) &&
+    /let lh = ellLenPx\(cs\.lineHeight, fs\);/.test(PMAIN) && /function ellLenPx\(v, fs\) \{/.test(PMAIN) &&
     /n\.style\.height = "auto"; n\.style\.maxHeight = "none"; n\.style\.overflow = "visible";/.test(pHelper) &&
     /n\.style\.height = sv\.h; n\.style\.maxHeight = sv\.mh; n\.style\.overflow = sv\.ov; n\.style\.display = sv\.dp;/.test(pHelper) &&
     /if \(n\.scrollHeight > m\.ceil \+ m\.lh \/ 2\) \{/.test(pHelper) && !/m\.ceil \+ 1\b/.test(pHelper) &&

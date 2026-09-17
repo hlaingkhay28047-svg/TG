@@ -408,8 +408,20 @@ async function browserWalk() {
 /* ===================== D) the release ===================== */
 function releasePins() {
   const app = (/var APP_VER="([\d.]+)"/.exec(APP) || [])[1];
-  report("D1) the wave is in lockstep — web app 6.102.0, panel 6.173.0 in the release manifest, and CI runs this file",
-    app === "6.102.0" && MANIFEST.version === "6.173.0" &&
+  /* 6.103.0 — THE FLOOR IS THE WAVE THAT SHIPPED THE PAGE, not a single version.
+     This read `app === "6.102.0"`, which is true of exactly one release: the very next
+     wave turned it red for no reason of its own (it did, one hour later). What this file
+     is entitled to insist on is that the page it tests is present and that the two
+     surfaces move together — so the floor is 6.102.0 / panel 6.173.0, the versions that
+     shipped Album Pages, and either may be that or later. Everything else about the page
+     is measured above, not assumed from a version string. */
+  const ge = (v, floor) => {
+    const a = String(v).split(".").map(Number), b = floor.split(".").map(Number);
+    for (let i = 0; i < 3; i++) { if ((a[i] || 0) !== b[i]) return (a[i] || 0) > b[i]; }
+    return true;
+  };
+  report("D1) the wave is in lockstep — the web app at 6.102.0 or later, the panel at 6.173.0 or later in the release manifest, and CI runs this file",
+    ge(app, "6.102.0") && ge(MANIFEST.version, "6.173.0") &&
     /node test\/verify_album_pages\.js/.test(CI), { app, panel: MANIFEST.version, ci: /verify_album_pages/.test(CI) });
 
   /* the same derivation verify_wf_page_697 uses: every distinct test file CI names */
