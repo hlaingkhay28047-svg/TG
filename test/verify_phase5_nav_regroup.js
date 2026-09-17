@@ -2,7 +2,7 @@
    v4.19.0's Phase 5 (10 flat tabs -> 4 top-level groups); updated for
    v4.27.0's Home + IA re-architecture, which reshapes the groups to
    HOME[pgDash] / WORKFLOWS[pgWf] / EDIT[pgCreate,pgStudio,pgRetouch,pgPath] /
-   MEDIA LAB[pgText2Img,pgVideo,pgVideoUp,pgV2V,pgTalk] / LIBRARY[pgLib,pgGallery] and
+   MEDIA LAB[pgText2Img,pgVideo,pgVideoUp,pgV2V,pgTalk] / LIBRARY[pgLib,pgGallery,pgAlbum] and
    demotes Setup (pgHome) from the bar to the header gear button. The Edit
    group gained a 4th page in the v4.28.x wave (pgPath — Path Retouch, the
    batch-look sibling of Retouch), and a 5th in v4.96 when the one Studio
@@ -43,8 +43,13 @@ const ALL_PAGES = [
   ["pgVideoUp", "Media Lab", 5],
   ["pgV2V", "Media Lab", 5],
   ["pgTalk", "Media Lab", 5],
-  ["pgLib", "Library", 2],
-  ["pgGallery", "Library", 2],
+  /* 6.102.0 — Library gained a third page: Album Pages (pgAlbum), the album
+     layout screen that sits beside the look Library and the Gallery. The count
+     is the point of this test, so it moves with the group rather than being
+     loosened, and the new page is swept for reachability like every other. */
+  ["pgLib", "Library", 3],
+  ["pgGallery", "Library", 3],
+  ["pgAlbum", "Library", 3],
   ["pgHome", null, null]
 ];
 // the two halves of the old pgStudio — the legacy id must still land on one
