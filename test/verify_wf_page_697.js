@@ -142,17 +142,18 @@ function sourcePins() {
     { langs: iSum, sums: sizes[0], cats: cats[0], total: CATALOG.total });
 
   /* A5 — the box, on both surfaces */
-  report("A5) the instruction box is a textarea with three lines of room in a framed, accented block with a hint under it — the panel draws it with an explicit 74px height (this renderer honours a height, not a min-height) and the app's wizard with the same frame",
+  report("A5) the instruction box is a textarea with three lines of room in a framed, accented block with a hint under it — the panel draws it with an explicit 74px height (this renderer honours a height, not a min-height) and the app's wizard with the same frame, the marker ADDED to the row's own classes so 6.93.0's required-line rule survives",
     /var ti = dom\.el\(doc, "textarea", \{ class: "hnk-input hnk-wf-text", id: "hnkWfText_" \+ f\.key \}\);/.test(SCREEN) &&
     /ti\.setAttribute\("rows", "3"\);/.test(SCREEN) &&
     /class: "hnk-wf-field-hint", id: "hnkWfTextHint_" \+ f\.key, text: l9\(L_TEXT_HINT\)/.test(SCREEN) &&
     /\.hnk-wf-field\.is-text \{ flex-direction: column; align-items: stretch;/.test(PCSS) &&
     /\.hnk-wf-field\.is-text \.hnk-wf-text \{[^}]*height: 74px;/.test(PCSS) &&
     /\.hnk-wf-field-hint \{ font-size: 10\.5px;/.test(PCSS) &&
-    /frow\.className="wiz-f is-text";/.test(APP) &&
+    /frow\.className \+= " is-text";/.test(APP) &&
     /var ti=document\.createElement\("textarea"\); ti\.className="inp wiz-text"; ti\.rows=3;/.test(APP) &&
     /frow\.appendChild\(el\("div","wiz-text-hint", L9\(WIZ_TEXT_HINT\)\)\);/.test(APP) &&
-    /\.wiz-f\.is-text\{flex-direction:column/.test(APP) && /\.wiz-text-hint\{font-size:11px/.test(APP), null);
+    /\.wiz-field\.is-text\{flex-direction:column/.test(APP) && /\.wiz-text-hint\{font-size:11px/.test(APP) &&
+    /var frow=el\("label","wiz-field wiz-field-"\+f\.type\+\(f\.required\?" wiz-field-req":""\)\);/.test(APP), null);
 
   /* A6 — the rows, and the three buttons on them */
   report("A6) the page opens with three history rows, each with a ✕ that forgets that run alone, this workflow's rows clear in one press, and Re-run restores THAT row's instruction, size and ratio before it starts",
