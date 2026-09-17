@@ -221,10 +221,19 @@ const NEW = Object.keys(SCRIPTS);
     "alb_text_note", "alb_export_note", "alb_export_jpg", "alb_export_gal",
     "alb_export_all", "alb_export_busy", "alb_export_done", "alb_export_saved",
     "alb_export_fail"];
+  /* 6.104.0 wave B — the ALBUM page's type: the pairing, the per-line face, the ink
+     and the three lines that explain them. Same terms again, and for the same one
+     reason: this repository has no Tai Le, Tai Lue or Khamti reader, so the only two
+     ways to make the count pass are to invent sentences in a script nobody here reads,
+     or to paste the Shan into a Tai Le pack and let a Tai Le reader look at Shan. Both
+     are refused. LANG_FB routes tdd, khb and kht to Shan, TR carries real Shan for all
+     nine, and A2 below measures that the fallback lands rather than assuming it. */
+  const V61040_KEYS = ["alb_pair", "alb_pair_note", "alb_font", "alb_font_auto",
+    "alb_font_count", "alb_ink", "alb_font_my", "alb_font_busy", "alb_font_fail"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {
