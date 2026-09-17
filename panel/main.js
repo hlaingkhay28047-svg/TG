@@ -5880,10 +5880,13 @@ function selfTestRowsInner() {
     rows.push(hnkLayerProbeRow());
     /* 6.165.0 — the folder every finished take is written to: found, written, read back (see hnkSaveProbeStart) */
     rows.push(hnkSaveProbeRow());
-    /* 6.171.0 — the place every result ends in, run for real on a 2×2 picture and undone (see hnkPlaceProbeStart) */
-    rows.push(hnkPlaceProbeRow());
     /* 6.166.0 — drag & drop: bound targets, the last file that arrived, or the refusal */
     rows.push(hnkDropRow());
+    /* 6.171.0 — the place every result ends in, run for real on a 2×2 picture and undone
+       (see hnkPlaceProbeStart). It sits AFTER Drag & drop, not between it and Save folder:
+       verify_convenience_695 A7 pins those two as neighbours, and that ordering is the
+       contract, not an accident. */
+    rows.push(hnkPlaceProbeRow());
     /* v6.86.0 — whether <video> decodes here at all. Photoshop's does not,
        which is why every video page shows numbered tiles and Download /
        Open Direct Link / Open the folder instead of a player (6.77.0). */
