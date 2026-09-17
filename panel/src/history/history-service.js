@@ -45,6 +45,15 @@ function _preview(text, n) {
   return t.length > n ? t.slice(0, n - 1) + "…" : t;
 }
 
+/* 6.101.0 — a workflow row used to preview its own id ("region-edit"), which told a
+   student nothing and made eight rows of one workflow identical. The typed instruction
+   is already in the compiled prompt, on its own USER REQUEST line, so the row previews
+   THAT when there is one. Nothing new is stored: it is the same text, read back. */
+function _userLine(prompt) {
+  var m = /\nUSER REQUEST: ([^\n]+)/.exec(String(prompt == null ? "" : prompt));
+  return m ? m[1] : "";
+}
+
 var _seq = 0;
 function _id(now) { _seq += 1; return "h_" + (now || 0) + "_" + _seq; }
 
@@ -72,7 +81,7 @@ function entryFromRequest(request, idParams) {
     negativePrompt: request.negativePrompt || "",
     quality: out.quality || "",
     variants: out.variants || 1,
-    promptPreview: _preview(isWorkflow ? (request.workflowId || "") : fullPrompt),
+    promptPreview: _preview(isWorkflow ? (String(request.typedText || "") || _userLine(request.compiledPrompt) || request.workflowId || "") : fullPrompt),
     timeLabel: idParams.timeLabel || "",
     // a persistable reference only — never binary, never a token
     resultRef: request.resultRef || null
@@ -98,8 +107,31 @@ function create(store) {
   function list() { return _read(); }
   function get(id) { var l = _read(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
   function clear() { _write([]); }
+  /* 6.101.0 — A RUN CAN BE FORGOTTEN. The owner: "pannel က history ဖျက်လို့ရတာအပြင်
+     တစ်ခြားလိုအပ်တာတေွလဲ ဖြည့်ပေးပါ". The web app has had a cross on every row since
+     6.18.0; the panel could only ever wipe the whole record. remove() drops one entry
+     by id, clearWhere() drops the ones a page owns (its own workflow's runs) and
+     answers how many went, so the button can say so. */
+  function remove(id) {
+    var l = _read(), out = [], gone = 0;
+    for (var i = 0; i < l.length; i++) { if (l[i] && l[i].id === id) { gone++; } else { out.push(l[i]); } }
+    if (gone) _write(out);
+    return gone;
+  }
+  function clearWhere(pred) {
+    if (typeof pred !== "function") { var n = _read().length; _write([]); return n; }
+    var l = _read(), out = [], gone = 0;
+    for (var i = 0; i < l.length; i++) {
+      var keep = true;
+      try { keep = !pred(l[i]); } catch (e) { keep = true; }
+      if (keep) out.push(l[i]); else gone++;
+    }
+    if (gone) _write(out);
+    return gone;
+  }
 
-  return { add: add, addFromRequest: addFromRequest, list: list, get: get, clear: clear };
+  return { add: add, addFromRequest: addFromRequest, list: list, get: get, clear: clear,
+    remove: remove, clearWhere: clearWhere };
 }
 
 var API = { create: create, entryFromRequest: entryFromRequest, CAP: CAP, KEY: KEY };

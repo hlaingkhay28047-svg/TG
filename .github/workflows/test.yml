@@ -594,6 +594,8 @@ jobs:
         run: PORT=8931 node test/verify_wf_card_fit.js
       - name: A result that cannot be placed says why, and a place that can happens (6.171.0)
         run: node test/verify_panel_place_result.js
+      - name: "The Smart Workflow page in the student's own language — the first paragraph carries no ceiling this renderer declines and its cut re-runs after mount (it ran on a detached box before, and zero is under every ceiling), the catalog is lifted once per language so no card line is Burmese for a Thai student, the instruction box is a three-line framed textarea with a hint, history opens with three deletable rows that say what was asked and re-run themselves, and the white balance is measured against the photograph instead of asked for in a prompt (6.101.0)"
+        run: PORT=8931 node test/verify_wf_page_697.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

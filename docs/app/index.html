@@ -640,6 +640,11 @@ textarea.wiz-prompt{min-height:220px}
 .wiz-field-toggle input:checked+.wiz-sw{background:var(--gold,#e9b949)}
 .wiz-field-toggle input:checked+.wiz-sw::after{left:20px}
 .wiz-swatches{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+/* 6.101.0 — the typed instruction is the whole point of these cards, so it looks like it */
+.wiz-f.is-text{flex-direction:column;align-items:stretch;gap:6px;margin:8px 0 6px;padding:10px 12px 11px;border:1px solid var(--line,#2a3146);border-left:3px solid var(--gold,#e9b949);border-radius:10px;background:rgba(255,255,255,.03)}
+.wiz-f.is-text .wfl{font-weight:700;font-size:13px;color:var(--text,#eef1f7)}
+.wiz-f.is-text .wiz-text{width:100%;min-height:76px;line-height:1.5;resize:vertical}
+.wiz-text-hint{font-size:11px;line-height:1.45;color:var(--muted,#96a0b5)}
 .wiz-swatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.35);padding:0;cursor:pointer}
 .wiz-color{width:34px;height:28px;padding:0;border:none;background:none;cursor:pointer}
 .wiz-board{margin-top:14px}
@@ -5587,6 +5592,25 @@ var TOPGROUPS=[
    tools/build_app_data.js moves the cut forward; the panel lifts this list
    (js/hnk_whats_new.js), so its boot parses these rows and no more. */
 var WHATS_NEW = [
+  { v:"6.101.0", kind:"page", ref:"pgWf",
+    t:{my:"Smart Workflow စာမျက်နှာ — ကိုယ့်ဘာသာစကားနဲ့၊ ကျစ်လစ်၊ WB ကိုက်ညီအောင်",
+       en:"The workflow page — in your language, tidier, with the white balance matched",
+       shn:"ၼႃႈလိၵ်ႈ Workflow — ၽႃႇသႃႇၸဝ်ႈ၊ ၶႅမ်ႉ၊ WB မိူၼ်ၵၼ်",
+       kac:"Workflow laika shara — na a ga hte, hkrak, WB bung ai",
+       th:"หน้า Workflow — ภาษาของคุณ กระชับขึ้น และไวต์บาลานซ์ตรงกัน",
+       zh:"工作流页面 — 你的语言、更紧凑、白平衡对齐",
+       vi:"Trang workflow — bằng ngôn ngữ của bạn, gọn hơn, cân bằng trắng khớp",
+       id:"Halaman workflow — dalam bahasa Anda, lebih ringkas, white balance sama",
+       ms:"Halaman workflow — dalam bahasa anda, lebih ringkas, white balance sama"},
+    s:{my:"**ပိုင်ရှင်ရဲ့ ဓာတ်ပုံ ၉ ပုံကနေ ပြင်ထားတာတွေ။** Selection Edit မှာ အင်္ဂလိပ်စာပိုဒ်က အောက်က အကွက်ပေါ် ထပ်ပြီး ရေးထားတာ — ဒီ renderer က `max-height` ကို နေရာယူဖို့ပဲ လက်ခံပြီး အပြင်ကို ဆက်ဆွဲတဲ့အတွက်ပါ။ အခု စာလုံးကိုပဲ ဖြတ်လိုက်ပြီ (ဖွင့်ပြီးမှ ပြန်တိုင်း) — ဘာမှ ထပ်မနေတော့ပါ။ ပထမစာကြောင်းက **ကိုယ့်ဘာသာစကား** နဲ့ (catalog က ဘာသာစကား ၉ မျိုးလုံး သယ်လာပြီ — card စာကြောင်း ၁၉၄ ခုလုံး ပါ)၊ အင်္ဂလိပ် အသေးစိတ်က “More” နောက်မှာ။ **ရေးရမယ့်အကွက်** ကို ၃ ကြောင်းစာ မြင်သာတဲ့ ဘောင်နဲ့ အကြံပြုချက်တစ်ကြောင်း ထည့်ပေး (နှစ်ဖက်စလုံး)။ **မှတ်တမ်း** ကို ၈ ကြောင်းက ၃ ကြောင်း၊ တစ်ကြောင်းချင်း ✕ နဲ့ ဖျက်လို့ရ၊ workflow တစ်ခုလုံး Clear၊ “ပြန်လုပ်” က အဲဒီ run ရဲ့ စာနဲ့ အတိုင်းအတာအတိုင်း ပြန်လုပ်ပေးပြီ။ **WB** — ရလဒ်ကို မူရင်းပုံနဲ့ တိုင်းယှဉ်ပြီး တကယ်ကွာမှ ပြင် (mid-tone၊ ±12% ထိ၊ အလင်းမထိ) — ဘယ်လောက်ကွာလဲ ပြောပြပါတယ်။",
+       en:"**From the owner's nine photographs.** On Selection Edit the English paragraph painted straight through the box below it — this renderer honours `max-height` for layout and paints past it anyway. The words themselves are cut now (re-measured after the page is mounted), so nothing overlaps. The first line is in **your own language** (the catalog carries all nine — all 194 card lines with it), with the English detail behind “More”. The **typed instruction** is a framed three-line box with a hint, on both surfaces. **History** opens at three rows, each can be forgotten with ✕, one press clears this workflow's, and “Re-run” now re-runs THAT run. **White balance** is measured against the picture that went out and corrected only when it really drifted (mid-tones, ±12% ceiling, colour not brightness) — and the run says how far it was.",
+       shn:"**ၽၢင်ႁၢင်ႈ ၉ ဢၼ်ၶွင်ၸဝ်ႈႁိူၼ်း။** Selection Edit ၼႂ်း ႁူဝ်ၶေႃႈဢင်းၵိတ်ႉ လူၺ်ႈသႂ်ႇပႃးၼိူဝ်ႁွင်ႈတႅမ်ႈ — ယၢမ်းလဵဝ် တႅမ်ႈၵၢတ်ႈပၼ်ယဝ်ႉ။ ထႅဝ်ႁႅၵ်ႈ ပဵၼ်ၽႃႇသႃႇၸဝ်ႈ၊ ႁွင်ႈတႅမ်ႈ ယႂ်ႇလိူဝ်၊ မၢႆတွင်း ၃ ထႅဝ်လႄႈ ဢဝ်ဢွၵ်ႇလႆႈ၊ WB မိူၼ်ၵၼ် ၸိုင်ႈတႅမ်ႈဝႆႉ။",
+       kac:"**Madu a sumla jahku.** Selection Edit hta English laika hpe npu na hkang de bang kau ai — ya gaw ga ni hpe daw kau sai, kadai mung n shang wa. Shawng na ga gaw na a ga, ka na shara gaw kaba nna matsing 3 sha, ✕ hte kabai lu, WB mung bung hkra jahkrak da sai.",
+       th:"**จากภาพเก้าภาพของเจ้าของ** ใน Selection Edit ย่อหน้าภาษาอังกฤษพิมพ์ทับกล่องด้านล่าง — ตอนนี้ตัดข้อความแทน บรรทัดแรกเป็นภาษาของคุณ กล่องพิมพ์ใหญ่ขึ้นสามบรรทัด ประวัติเหลือสามแถวและลบได้ และไวต์บาลานซ์ถูกวัดและปรับให้ตรง",
+       zh:"**来自主人的九张照片。** Selection Edit 的英文段落直接压在下面的输入框上 — 现在改为裁剪文字本身。第一行用你的语言，输入框是三行带边框的，记录只留三条且可删除，白平衡也已实测对齐。",
+       vi:"**Từ chín bức ảnh của chủ sở hữu.** Ở Selection Edit, đoạn tiếng Anh vẽ đè lên ô bên dưới — nay cắt chữ thay vì che. Dòng đầu bằng ngôn ngữ của bạn, ô nhập ba dòng có khung, lịch sử còn ba dòng và xoá được, cân bằng trắng được đo và khớp.",
+       id:"**Dari sembilan foto pemilik.** Di Selection Edit paragraf Inggris menimpa kotak di bawahnya — kini teksnya yang dipotong. Baris pertama dalam bahasa Anda, kotak ketik tiga baris berbingkai, riwayat tiga baris dan bisa dihapus, white balance diukur dan disamakan.",
+       ms:"**Dari sembilan foto pemilik.** Di Selection Edit perenggan Inggeris menindih kotak di bawahnya — kini teksnya yang dipotong. Baris pertama dalam bahasa anda, kotak taip tiga baris berbingkai, sejarah tiga baris dan boleh dipadam, white balance diukur dan diselaraskan."} },
   { v:"6.100.0", kind:"page", ref:"pgAccount",
     t:{my:"Photoshop ထဲ ထည့်မရရင် ဘာကြောင့်လဲ ပြောပြီ — Document မဖွင့်ထားရင်လည်း အလိုအလျောက် ဖွင့်ပေးမယ်",en:"A result that cannot go into Photoshop now says exactly why — and with no document open, it opens one",shn:"ဢမ်ႇသႂ်ႇလႆႈၼႂ်း Photoshop ၸိုင် လၢတ်ႈဝႃႈ ယွၼ်ႉသင်",kac:"Photoshop kaw n lu bang yang, hpa majaw re ai hpe tsun dan sai",th:"ถ้าวางลง Photoshop ไม่ได้ จะบอกเหตุผลจริง ๆ แล้ว",zh:"无法置入 Photoshop 时，现在会说明确切原因",vi:"Khi không đặt được vào Photoshop, giờ sẽ nói rõ vì sao",id:"Bila hasil tidak bisa masuk ke Photoshop, sekarang disebutkan alasannya",ms:"Jika hasil tidak boleh masuk ke Photoshop, kini sebabnya dinyatakan"},
     s:{my:"**“place-failed” ဆိုတဲ့ စကားလုံးက ဘာမှ မပြောဘူး။** ပိုင်ရှင်ရဲ့ ဓာတ်ပုံမှာ Document ဖွင့်ထားပြီးသား၊ အရင် run တွေလည်း ရခဲ့တယ် — ဒါပေမယ့် နောက်ပိုင်း ပုံက Photoshop ထဲ မဝင်တော့ဘဲ အကြောင်းရင်း မပါတဲ့ စာကြောင်း ပေါ်လာတယ်။ အခု (၁) **ငြင်းတိုင်း Photoshop ပြောတဲ့ စာကြောင်းအတိအကျ ပါလာမယ်** — ခြောက်နေရာလုံး `null` ပဲ ပြန်ပေးခဲ့တာကို ပြင်ပြီ၊ (၂) **run တိုင်း ဖိုင်အသစ် တစ်ခုစီ ရေးတယ်** — အရင်က နာမည်တစ်ခုတည်းကို ထပ်ရေးနေတာ (ပထမတစ်ခါ ရပြီး နောက်ပိုင်း မရတဲ့ ပုံစံ အတိအကျ)၊ (၃) Freeform သုံးတဲ့ **data folder** ကို ပြောင်းသုံးပြီ၊ (၄) မရရင် **ဖိုင်အသစ်နဲ့ တစ်ကြိမ် ထပ်ကြိုးစား**တယ်၊ (၅) Document မဖွင့်ထားရင် **ပုံကို document အသစ်အဖြစ် ဖွင့်ပေး**တယ် — မပစ်တော့ဘူး။ Setup ▸ SELF-TEST မှာ **“Place into Photoshop”** အတန်းအသစ်နဲ့ ပိုက်ဆံမကုန်ဘဲ ကိုယ်တိုင် စစ်လို့ရပြီ။",en:"**The word “place-failed” says nothing.** In the owner's photograph a document was open and earlier runs in the same session had placed fine — then a finished, paid-for picture was refused with a sentence that named no cause. Now: (1) **every refusal carries Photoshop's own sentence** — six branches used to return a bare `null`; (2) **every run writes its own file** — one fixed filename was overwritten while Photoshop may still hold the last one, a fault shaped exactly like “it worked at first”; (3) it writes into the **data folder** Freeform's place has always used, not the temporary one; (4) a refusal is **retried once on a fresh file**; (5) with **no document open the result is opened as its own document** instead of being thrown away. Setup ▸ SELF-TEST gains a **“Place into Photoshop”** row that proves the whole path on a 2×2 picture — and removes the layer again — without a paid run.",shn:"ငြင်းၵူႈပွၵ်ႈ လၢတ်ႈဝႃႈယွၼ်ႉသင်၊ ၵူႈပွၵ်ႈ ၽၢႆႇလ်ႇမႂ်ႇ၊ Document ဢမ်ႇမီးၸိုင် ပိုတ်ႇပၼ်မႂ်ႇ။",kac:"Shala ai lam shagu gaw Photoshop tsun ai ga hpe lang sai; run shagu file nnan langai; document n nga yang document nnan hpaw ya ai.",th:"ทุกการปฏิเสธจะมีข้อความจริงจาก Photoshop, ทุกครั้งเขียนไฟล์ใหม่ของตัวเอง, ลองซ้ำอีกครั้ง และถ้าไม่มีเอกสารเปิดอยู่จะเปิดให้ใหม่ พร้อมแถว SELF-TEST “Place into Photoshop”",zh:"每次拒绝都带上 Photoshop 的原话；每次运行写自己的临时文件；失败会用新文件重试一次；没有打开文档时直接把结果开成新文档。SELF-TEST 新增“Place into Photoshop”一行。",vi:"Mỗi lần từ chối đều kèm câu của chính Photoshop; mỗi lần chạy ghi tệp riêng; thất bại sẽ thử lại một lần với tệp mới; không có tài liệu nào mở thì mở kết quả thành tài liệu mới. SELF-TEST có thêm dòng “Place into Photoshop”.",id:"Setiap penolakan membawa kalimat Photoshop sendiri; setiap proses menulis berkasnya sendiri; kegagalan dicoba sekali lagi dengan berkas baru; tanpa dokumen terbuka, hasil dibuka sebagai dokumen baru. SELF-TEST mendapat baris “Place into Photoshop”.",ms:"Setiap penolakan membawa ayat Photoshop sendiri; setiap larian menulis failnya sendiri; kegagalan dicuba sekali lagi dengan fail baharu; tanpa dokumen dibuka, hasil dibuka sebagai dokumen baharu. SELF-TEST mendapat baris “Place into Photoshop”."} },
@@ -11435,6 +11459,19 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       }
     };
   })();
+  /* 6.101.0 — what a good typed instruction looks like, printed under the box on
+     both surfaces (the panel carries the same nine strings as L_TEXT_HINT). */
+  var WIZ_TEXT_HINT={
+    my:"\u1018\u102c\u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1001\u103b\u1004\u103a\u101c\u1032 \u1010\u1005\u103a\u1000\u103c\u1031\u102c\u1004\u103a\u1038\u1010\u100a\u103a \u101b\u1031\u1038\u1015\u102b \u2014 \u1025\u1015\u1019\u102c \u201c\u1015\u1014\u103a\u1038\u1021\u1016\u103c\u1030\u1000\u102d\u102f \u1021\u1014\u102e\u101b\u1031\u102c\u1004\u103a \u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1015\u1031\u1038\u1015\u102b\u201d\u104b \u101b\u103d\u1031\u1038\u1011\u102c\u1038\u1010\u1032\u1037\u1014\u1031\u101b\u102c\u1015\u1032 \u1015\u103c\u1031\u102c\u1004\u103a\u1038\u1015\u102b\u1019\u101a\u103a\u104b",
+    en:"Write in one line what should change \u2014 for example \u201cmake the white flowers red\u201d. Only the selected area changes.",
+    shn:"\u1010\u1085\u1019\u103a\u1000\u103a \u1116\u102d\u102f\u1004\u103a\u1136\u1011\u1085\u101d\u103a \u101d\u1083\u1038\u101c\u1085\u1000\u103a\u1136\u101e\u1004\u103a \u2014 \u201c\u1019\u103d\u1000\u103a\u1112\u1004\u103a\u1136\u1015\u1083\u1014\u103a\u101c\u1085\u1004\u103a\u201d",
+    kac:"Hpa galai na ai lam langai mi ka u \u2014 \u201cnampan ahpraw ni hpe ahkyeng galai u\u201d zawn. Lata da ai shara sha galai na.",
+    th:"\u0e40\u0e02\u0e35\u0e22\u0e19\u0e1a\u0e23\u0e23\u0e17\u0e31\u0e14\u0e40\u0e14\u0e35\u0e22\u0e27\u0e27\u0e48\u0e32\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e2d\u0e30\u0e44\u0e23 \u2014 \u0e40\u0e0a\u0e48\u0e19 \u201c\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e14\u0e2d\u0e01\u0e44\u0e21\u0e49\u0e2a\u0e35\u0e02\u0e32\u0e27\u0e40\u0e1b\u0e47\u0e19\u0e2a\u0e35\u0e41\u0e14\u0e07\u201d",
+    zh:"\u7528\u4e00\u53e5\u8bdd\u5199\u51fa\u8981\u6539\u4ec0\u4e48 \u2014 \u4f8b\u5982\u201c\u628a\u767d\u82b1\u53d8\u6210\u7ea2\u8272\u201d\u3002\u53ea\u6709\u9009\u533a\u4f1a\u6539\u53d8\u3002",
+    vi:"Vi\u1ebft m\u1ed9t d\u00f2ng cho bi\u1ebft c\u1ea7n \u0111\u1ed5i g\u00ec \u2014 v\u00ed d\u1ee5 \u201c\u0111\u1ed5i hoa tr\u1eafng th\u00e0nh \u0111\u1ecf\u201d. Ch\u1ec9 v\u00f9ng \u0111\u00e3 ch\u1ecdn thay \u0111\u1ed5i.",
+    id:"Tulis satu baris apa yang harus berubah \u2014 misalnya \u201cjadikan bunga putih merah\u201d. Hanya area terpilih yang berubah.",
+    ms:"Tulis satu baris apa yang perlu berubah \u2014 contohnya \u201cjadikan bunga putih merah\u201d. Hanya kawasan dipilih berubah."
+  };
   function renderWiz(){
     var w=wiz.w, host=$("wizIn"); host.innerHTML="";
     var top=el("div","wiz-top");
@@ -11579,11 +11616,19 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
             frow.appendChild(tg); frow.appendChild(el("span","wiz-sw"));
             frow.appendChild(flab);
           }else if(f.type==="text"){
+            /* 6.101.0 — THE TYPED INSTRUCTION IS THE WHOLE POINT, SO IT LOOKS LIKE IT.
+               The owner photographed the Photoshop panel's version of this control —
+               one thin line under a paragraph that painted over it — and asked for it
+               bigger and unmistakable. Both surfaces now draw a framed block with
+               three lines of room and a hint; the panel's .hnk-wf-field.is-text is
+               the same shape. */
+            frow.className="wiz-f is-text";
             frow.appendChild(flab);
-            var ti=document.createElement("input"); ti.type="text"; ti.className="inp"; ti.maxLength=f.max||80;
+            var ti=document.createElement("textarea"); ti.className="inp wiz-text"; ti.rows=3; ti.maxLength=f.max||80;
             ti.placeholder=f.ph||""; ti.value=wiz.fieldVals[f.key]||"";
             ti.oninput=function(){ wiz.fieldVals[f.key]=ti.value; if(wiz._genReqSync) wiz._genReqSync(); };
             frow.appendChild(ti);
+            frow.appendChild(el("div","wiz-text-hint", L9(WIZ_TEXT_HINT)));
           }else if(f.type==="color"){
             frow.appendChild(flab);
             var cwrap=el("div","wiz-swatches");
@@ -29819,7 +29864,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.100.0";
+var APP_VER="6.101.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
