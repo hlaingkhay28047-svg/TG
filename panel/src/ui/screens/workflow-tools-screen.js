@@ -383,8 +383,11 @@ function create(deps) {
       body.style.display = on ? "block" : "none";
       /* 6.167.0 — a closed .grp-b is display:none and every card in it measures 0, so the clamp marker
          cannot see what was cut until the group opens. Both the header tap and the search filter come
-         through here. */
-      if (on) { try { var em = globalThis.HNK && globalThis.HNK.ellMark; if (em) em(g, ".wfmini .s", 3); } catch (e) { } }
+         through here.
+         6.171.0 — and the TITLE is clamped here too. It never was, so a two-line ceiling that this
+         renderer does not honour left three-line titles in Photoshop; measured, 12 of 194 at a 230px
+         panel, the worst 57px past its box. */
+      if (on) { wfClamp(g); }
     }
     dom.on(head, "click", function () { setOpen(!isOpen()); });
     /* app stResetSection(): put every chip row in this body back on its
@@ -411,6 +414,37 @@ function create(deps) {
      the app's rule that an odd group's last card fills the rest of its row; after
      a filter the odd card is a different one, so it is recomputed from the cards
      still on screen. (className can be null in UXP, hence the guard.) */
+  /* 6.171.0 — AND THE TEXT IS CUT HERE, WHERE THE GRID CHANGES.
+
+     The stylesheet asked for a ceiling on a card's title and summary with
+     max-height + overflow:hidden. Adobe UXP honours neither, so in Photoshop
+     every long sentence painted in full and pushed its card taller than its
+     neighbours. Measured over the real 194 cards at a 230px panel: 101 cards
+     ran past their own box, the worst by 181px, and the page's card heights
+     spread 235px where the browser showed 54. The web app calls ellMark on
+     these same cards in five places; this screen — which is the ONLY thing
+     that draws them in the panel — called it in none. That, not the CSS, is
+     why six rounds of stylesheet edits never made the page tidy.
+
+     layoutGrid already runs at every point the grid changes (a group is built,
+     the wedding-group chips filter it, the flat list, the search box), so one
+     call here covers all four and survives every repaint. */
+  function wfClamp(gd) {
+    try {
+      var em = globalThis.HNK && globalThis.HNK.ellMark;
+      if (!em || !gd) return;
+      /* A DETACHED OR HIDDEN BOX MEASURES ZERO, and zero is under every ceiling,
+         so clamping one is not merely wasted work — it is a silent no-op that
+         then never runs again. renderList builds each grid, calls layoutGrid on
+         it, and only afterwards appends it to a body that may itself be closed;
+         that order is why the first version of this fix changed nothing on the
+         real page. Refuse the measurement rather than pretend to take it. */
+      if (!gd.ownerDocument || !gd.ownerDocument.body || !gd.ownerDocument.body.contains(gd)) return;
+      if (!(gd.getBoundingClientRect().height > 0)) return;
+      em(gd, ".wfmini .t", 2);
+      em(gd, ".wfmini .s", 3);
+    } catch (e) { }
+  }
   function layoutGrid(gd) {
     var vis = [], n, i;
     for (n = gd.firstChild; n; n = n.nextSibling) {
@@ -421,6 +455,9 @@ function create(deps) {
       vis.push(n);
     }
     if (vis.length % 2 === 1) vis[vis.length - 1].className += " wf-span2";
+    /* the span2 card is twice as wide, so its own text must be re-fitted to
+       the width it actually ended up with — after the class, never before */
+    wfClamp(gd);
   }
 
   /* the app's renderFavRecent(): a chip row per non-empty list, or the
@@ -666,6 +703,12 @@ function create(deps) {
     });
 
     root.appendChild(card);
+    /* 6.171.0 — AND NOW THAT IT IS ALL IN THE DOCUMENT, fit the text.
+       Every grid above was built, laid out and appended in that order, so at
+       layoutGrid time not one of them had a box to measure. This is the first
+       moment the page is real: clamp whichever groups are open (a closed one is
+       clamped by its own setOpen when it opens, and re-clamped after a filter). */
+    try { groups.forEach(function (g) { if (g.isOpen()) wfClamp(g.b.querySelector(".wfgrid")); }); } catch (e) { }
   }
 
   function select(workflowId) {

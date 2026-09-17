@@ -751,13 +751,21 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
    fence); the line box is instead made big enough to hold its own ink, which
    is what Burmese has always wanted. 2.25 is 28.1px at 12.5 and 25.9px at 11.5,
    both above the ink. Cards are ~40px taller and every word in them is whole. */
-.wfmini .t{font-size:12.5px;font-weight:800;line-height:2.25;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.25em}
-.wfmini .s{position:relative;font-size:11.5px;color:var(--muted);line-height:2.25;max-height:6.75em;overflow:hidden;overflow-wrap:anywhere}
+/* 6.171.0 — a STATED height, not a floor and a ceiling. The panel's renderer
+   declines max-height, so the same declaration made a tidy grid here and a
+   ragged one in Photoshop (235px of card-height spread against 54). Two lines
+   tall whatever the text does, on both surfaces, and the words are cut to fit
+   by ellMark rather than hidden by the box. */
+.wfmini .t{position:relative;font-size:12.5px;font-weight:800;line-height:2.25;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;height:4.5em}
+.wfmini .s{position:relative;font-size:11.5px;color:var(--muted);line-height:2.25;height:6.75em;overflow:hidden;overflow-wrap:anywhere}
 /* 6.96.0 — THE CUT THE OWNER PHOTOGRAPHED. Measured over all 194 cards at 420px: the two-line ceiling
    cut 138 of them, and the panel (UXP draws no -webkit-line-clamp) cut them with no ellipsis at all, so a
    card simply stopped mid-sentence. The ceiling is three lines now — 136 of the 194 end on their own — and
    what is still long ends in a marker BOTH surfaces draw the same way: one clamp, one mechanism, one look. */
-.wfmini .s .ell,.im-card-sum .ell{position:absolute;right:0;bottom:0;padding-left:12px;background:var(--panel-2);color:var(--muted);font-weight:700}
+/* 6.171.0 — the TITLE's marker was missing here, so it sat in the flow and
+   added the very line it was there to prevent (measured: 84px of ink in a 56px
+   box, the last two cards still spilling once everything else was fixed). */
+.wfmini .t .ell,.wfmini .s .ell,.im-card-sum .ell{position:absolute;right:0;bottom:0;padding-left:12px;background:var(--panel-2);color:var(--muted);font-weight:700}
 .wfmini .go{margin-top:auto;font-size:10.5px;color:var(--gold-hi);font-weight:800;align-self:flex-end;display:inline-flex;align-items:center;padding:5px 11px 5px 8px;border:1px solid rgba(233,185,73,.38);border-radius:999px;background:rgba(233,185,73,.08);line-height:1.2}
 
 /* v3.0 UX */
@@ -4142,10 +4150,43 @@ function icn(name, cls){
    and the words ran out past the card. The app keeps the identical rule so both surfaces read the same —
    the renderer hid the rest (mark it), or it hid nothing and the box is over its ceiling (cut the words
    at a space until it fits, then mark). ELL_FULL keeps the whole sentence so a second pass starts over. */
+/* 6.171.0 — THE CLAMP IS MEASURED WITH THE CLAMP OFF, AND BOTH SURFACES CUT THE SAME WORDS.
+
+   The owner photographed the Photoshop panel's Workflows page six versions
+   running and said it was still not tidy. It was measured this time instead of
+   adjusted, and the reading pointed here, to a rule the web app shares.
+
+   This function used to have two branches and, in a browser, only the first
+   could ever run. `scrollHeight - clientHeight` is the overflow a renderer HID:
+   Chromium honours max-height + overflow:hidden (and -webkit-line-clamp),
+   reports the hidden part, gets its marker, and leaves the whole sentence in
+   the DOM. The branch that actually CUTS the words was guarded by
+   `clientHeight > ceil` — never true here, because Chromium had already clamped
+   clientHeight to the ceiling. So this app never cut a sentence; it only hid
+   one. Adobe UXP honours none of those three declarations, so the panel
+   inherited the uncut string and painted every word of it: measured over the
+   real 194 cards at a 230px panel, 101 ran past their own box, the worst by
+   181px, and the card heights spread 235px where this app showed 54.
+
+   Two engines holding different text is the one thing the parity walk exists to
+   catch, and it could not: both DOMs carried the same full sentence and only
+   the pixels differed.
+
+   So the question changed from "what did the renderer hide?" to "what does the
+   text need?". The box is unclamped for the measurement, scrollHeight then
+   reports the sentence's true height in BOTH engines, the words are cut to the
+   line budget the caller names, and the clamp goes back. The app and the panel
+   now cut at the same character; the marker is honest on both; and what a
+   screen reader reads is what the page shows. */
 var ELL_FULL=new WeakMap();
 function ellCeil(n, lines){
-  var cs=getComputedStyle(n), lh=parseFloat(cs.lineHeight)||16, mh=parseFloat(cs.maxHeight);
-  return { lh:lh, ceil:(mh>0&&isFinite(mh))?mh:(lines>0?lines*lh:0) };
+  var cs=getComputedStyle(n), lh=parseFloat(cs.lineHeight)||16, ceil=lines>0?lines*lh:0;
+  if(!(ceil>0)){
+    var mh=parseFloat(cs.maxHeight);
+    if(mh>0&&isFinite(mh)) ceil=mh;
+    else { var h=parseFloat(cs.height); if(h>0&&isFinite(h)) ceil=h; }
+  }
+  return { lh:lh, ceil:ceil };
 }
 function ellMark(root, sel, lines){
   try{
@@ -4155,21 +4196,31 @@ function ellMark(root, sel, lines){
         var full=ELL_FULL.has(n)?ELL_FULL.get(n):(n.textContent||"");
         ELL_FULL.set(n, full);
         if(n.textContent!==full) n.textContent=full;
+        var m=ellCeil(n, lines); if(!(m.ceil>0)) return;
+        /* unclamp for the measurement: height, max-height, overflow and
+           -webkit-line-clamp each hide the very overflow we need to read.
+           All four are restored below. */
+        var sv={h:n.style.height,mh:n.style.maxHeight,ov:n.style.overflow,dp:n.style.display,lc:n.style.webkitLineClamp};
+        n.style.height="auto"; n.style.maxHeight="none"; n.style.overflow="visible";
+        var dpNow=sv.dp; try{ dpNow=dpNow||getComputedStyle(n).display; }catch(e){}
+        if(String(dpNow||"").indexOf("box")>=0) n.style.display="block";
+        try{ n.style.webkitLineClamp="unset"; }catch(e){}
+        var cut=false;
         /* half a line, never a pixel: Burmese stacked diacritics draw ~4px past their line box, so a box
            that holds its text exactly still reports scrollHeight 73 against clientHeight 69 (measured over
-           all 22 Imagine cards). A box is cut only when at least half a line of it is hidden. */
-        var m=ellCeil(n, lines), cut=false;
-        if(n.scrollHeight-n.clientHeight>m.lh/2){ cut=true; }
-        else if(m.ceil>0 && n.clientHeight>m.ceil+m.lh/2){
+           all 22 Imagine cards). A box is cut only when at least half a line of it would be hidden. */
+        if(n.scrollHeight>m.ceil+m.lh/2){
           var lo=0, hi=full.length;
           while(lo<hi){ var mid=(lo+hi+1)>>1; n.textContent=full.slice(0,mid);
-            if(n.clientHeight<=m.ceil+m.lh/2) lo=mid; else hi=mid-1; }
+            if(n.scrollHeight<=m.ceil+m.lh/2) lo=mid; else hi=mid-1; }
           var t=full.slice(0,lo), sp=t.lastIndexOf(" ");
           if(sp>12) t=t.slice(0,sp);   /* end on a whole word when there is one to end on */
-          n.textContent=t.replace(/[\s\u2026,.;:\u2014-]+$/,"");
+          n.textContent=t.replace(/[\s…,.;:—-]+$/,"");
           cut=n.textContent.length<full.length;
         }
-        if(cut){ var e=document.createElement("span"); e.className="ell"; e.textContent="\u2026"; n.appendChild(e); }
+        n.style.height=sv.h; n.style.maxHeight=sv.mh; n.style.overflow=sv.ov; n.style.display=sv.dp;
+        try{ n.style.webkitLineClamp=sv.lc; }catch(e){}
+        if(cut){ var e=document.createElement("span"); e.className="ell"; e.textContent="…"; n.appendChild(e); }
       }catch(e){}
     });
   }catch(e){}
@@ -5528,6 +5579,9 @@ var TOPGROUPS=[
    tools/build_app_data.js moves the cut forward; the panel lifts this list
    (js/hnk_whats_new.js), so its boot parses these rows and no more. */
 var WHATS_NEW = [
+  { v:"6.100.0", kind:"page", ref:"pgWf",
+    t:{my:"Photoshop panel — Smart Workflow card တွေ သပ်ရပ်သွားပြီ: စာသား ဘောင်ထဲ မှန်မှန် ဝင်၊ ကတ်အမြင့် အားလုံး ညီ",en:"Photoshop panel — the Smart Workflow cards are tidy: the words fit their box and every card in a row is the same height",shn:"Photoshop panel — ၵၢတ်ႇ Smart Workflow ႁၢင်ႈလီ",kac:"Photoshop panel — Smart Workflow card ni hkrak sai",th:"Photoshop panel — การ์ด Smart Workflow เป็นระเบียบแล้ว",zh:"Photoshop 面板 — Smart Workflow 卡片整齐了",vi:"Bảng Photoshop — thẻ Smart Workflow đã gọn gàng",id:"Panel Photoshop — kartu Smart Workflow jadi rapi",ms:"Panel Photoshop — kad Smart Workflow jadi kemas"},
+    s:{my:"**ဒီတစ်ခါ တိုင်းပြီးမှ ပြင်တာ။** အရင် ၆ ခါ CSS ပဲ ညှိခဲ့တာ မရခဲ့ဘူး — ဘာလို့လဲဆိုတော့ အမှားက CSS မှာ မဟုတ်လို့။ Photoshop က `max-height` ကို နာမခံဘူး၊ ဒါပေမယ့် browser က နာခံတယ်၊ ဒါကြောင့် test တိုင်းက \"ကောင်းတယ်\" လို့ ပြောခဲ့တာ။ Panel ၂၃၀px မှာ ကတ် ၁၉၄ ခုကို တိုင်းကြည့်တော့ **၁၀၁ ခုက ဘောင်ကျော်နေတယ်၊ အဆိုးဆုံး ၁၈၁px**၊ ကတ်အမြင့်ကွာဟမှု ၂၃၅px။ အခု စာသားကို **ဘောင်ဖြုတ်ပြီး တိုင်း**ပြီးမှ ဖြတ်တယ် — ခေါင်းစဉ် ၂ ကြောင်း၊ ရှင်းလင်းချက် ၃ ကြောင်း — ဒါကြောင့် browser ရော Photoshop ရော **အတူတူ** ဖြတ်တယ်။ ကွာဟမှု ၂၃၅px → **၀px**။ ခေါင်းစဉ်တန်းက အရေအတွက် (\"27 ခု\") လည်း ၂ ကြောင်း မကွဲတော့ဘူး။",en:"**Measured this time, not adjusted.** Six earlier waves tuned the stylesheet and none of them worked — because the fault was not in the stylesheet. Photoshop declines `max-height`; a browser honours it; so every test we owned agreed the page was fine. Measuring the real 194 cards at a 230px panel found **101 of them running past their own box, the worst by 181px**, and 235px of card-height spread. The words are now measured **with the clamp removed** and cut to fit — title two lines, summary three — so the browser and Photoshop cut at the same character. Spread 235px → **0px**, and the group count (\"27 ခု\") no longer stacks onto two lines.",shn:"ႁဝ်းတႅပ်းလိၵ်ႈဝႆႉတႃႇသွင်ထႅဝ်လႄႈသၢမ်ထႅဝ်၊ ၵၢတ်ႇၵူႈဢၼ်သုင်မိူၼ်ၵၼ်။",kac:"Laika hpe lahkawng ding hte masum ding hta di kau ai majaw, card ni yawng bung sai.",th:"วัดจริงแล้วตัดข้อความให้พอดี — หัวเรื่อง 2 บรรทัด คำอธิบาย 3 บรรทัด การ์ดทุกใบสูงเท่ากัน",zh:"这次是量出来的：标题两行、说明三行，浏览器和 Photoshop 在同一个字处截断，卡片高度差 235px → 0px。",vi:"Lần này là đo chứ không chỉnh mò: tiêu đề 2 dòng, mô tả 3 dòng, trình duyệt và Photoshop cắt ở cùng một ký tự; chênh lệch chiều cao 235px → 0px.",id:"Kali ini diukur: judul 2 baris, ringkasan 3 baris, peramban dan Photoshop memotong di karakter yang sama; selisih tinggi 235px → 0px.",ms:"Kali ini diukur: tajuk 2 baris, ringkasan 3 baris, pelayar dan Photoshop memotong pada aksara yang sama; beza tinggi 235px → 0px."} },
   { v:"6.99.0", kind:"page", ref:"pgCreate",
     t:{my:"Photoshop panel — GENERATE ကို တစ်ချက်နှိပ်ရုံ၊ ပုံမထည့်ရသေးတဲ့ IMAGE slot လည်း ပျောက်မသွားတော့ဘူး၊ ရလဒ်က document အပြည့် ကျတယ်",en:"Photoshop panel — GENERATE runs on the first tap, an empty IMAGE slot keeps its frame, and a result lands on the document's own frame",shn:"Photoshop panel — ဢိုတ်ႇ GENERATE ပွၵ်ႈလဵဝ်ၵေႃႈ ႁဵတ်းယဝ်ႉ၊ IMAGE slot ပဝ်ႇၵေႃႈ ဢမ်ႇႁၢႆ၊ ၽွၼ်းလႆႈၵေႃႈ တဵမ်ၼႃႈလိၵ်ႈ",th:"แผง Photoshop — กด GENERATE ครั้งเดียวก็ทำงาน ช่อง IMAGE ที่ยังว่างยังคงกรอบไว้ และผลลัพธ์วางเต็มเอกสาร",kac:"Photoshop panel — GENERATE hpe kalang mi dip yang galaw sai, IMAGE slot n hpring ai mung hkaw hpe rawng nga ai, lachyum mung document hpe hpring hkra bang ai",zh:"Photoshop 面板 —— GENERATE 一点即运行，空的 IMAGE 槽也保留边框，结果铺满整个文档",vi:"Bảng Photoshop — GENERATE chạy ngay lần chạm đầu, ô IMAGE trống vẫn giữ khung, và kết quả phủ kín tài liệu",id:"Panel Photoshop — GENERATE jalan pada ketukan pertama, slot IMAGE kosong tetap punya bingkai, dan hasilnya memenuhi dokumen",ms:"Panel Photoshop — GENERATE jalan pada ketikan pertama, slot IMAGE kosong kekal bingkainya, dan hasilnya memenuhi dokumen"},
     s:{my:"**၁။ ၁-၂-၃ ဖျက်လိုက်ပြီ** — ယခင်က GENERATE ကို နှိပ်ရင် ချက်ချင်း မ run ဘူး: ပထမနှိပ် = အဝါ (ရှင်းပြချက်)၊ ဒုတိယ = အပြာ (prompt)၊ တတိယ အစိမ်း မှ run တာ။ ပိုင်ရှင် ပြောတဲ့အတိုင်း **အလုပ်ရှုပ်တယ်** — ဒါကြောင့် Learn Mode စနစ်တစ်ခုလုံး ဖျက်လိုက်ပါပြီ။ GENERATE (Freeform)၊ Retouch A၊ Retouch B၊ Studio — လေးခုလုံး **တစ်ချက်နှိပ်ရုံ**။ Web app မှာ ဒီစနစ် ဘယ်တုန်းကမှ မရှိခဲ့လို့ panel နဲ့ web app ပြန်တူသွားပါပြီ။\n\n**၂။ IMAGE slot မပျောက်တော့ဘူး** — ပုံမထည့်ရသေးတဲ့ slot က ဘောင်နဲ့ + ပြရမှာ၊ ဒါပေမဲ့ Photoshop မှာ **တစ်ခုလုံး ပျောက်နေတယ်**။ အကြောင်းရင်း: slot ရဲ့ ပုံပြကွက်ကို **src မရှိဘဲ** ဆောက်ထားတယ်၊ UXP က src မရှိတဲ့ ပုံကို **error** လို့ မှတ်တယ်၊ ပြီးတော့ အဲဒီ error handler က ဘောင်တစ်ခုလုံးကို ဖျောက်ပစ်တယ်။ အခု ပုံပြကွက်မှာ placeholder ထည့်ပြီ၊ တကယ် error ဖြစ်ရင်လည်း ပုံပဲ ဖျောက်၊ ဘောင်က ကျန်နေတယ်။ panel စာမျက်နှာ ၁၈ ခုလုံး စစ်ပြီးပြီ — src မရှိတဲ့ ပုံ **သုည**။\n\n**၃။ ရလဒ်ပုံ အသေးလေး မကျတော့ဘူး** — ရလဒ်ကို document ထဲ ထည့်တဲ့အခါ “မူရင်းအရွယ်ထက် မချဲ့ရ” ဆိုတဲ့ စည်းမျဉ်း ပါနေလို့၊ RAW document ကြီးထဲမှာ 2K ရလဒ်က အလယ်မှာ အသေးလေး ကျနေတာ။ Freeform မှာတော့ ဒီစည်းမျဉ်း မရှိဘူး (document အပြည့် ဖုံးတယ်)။ အခု wizard ကလည်း **Freeform လိုပဲ document အပြည့်**။ Selection Edit ကတော့ သူ့ marquee နေရာအတိအကျ ပဲ ကျပါမယ်။",en:"**1. The 1-2-3 is gone.** A tap on GENERATE used not to generate: the first armed the button yellow and opened a guide, the second turned it blue and printed the prompt, and only the third — green — ran. The owner, of the Freeform page: this should not be there, it makes work complicated. So the whole Learn cycle is removed — GENERATE (Freeform), Retouch A, Retouch B and the Studio run all fire on the **first tap**, behind the same guard that already refused a second run mid-flight. The gate was panel-only; the web app's GENERATE has always run on one tap, so this closes the last parity break on those four buttons, and takes the guide box, the Settings switch and ten strings with it.\n\n**2. An empty IMAGE slot keeps its frame.** Since 6.109.0 an unfilled slot draws a dashed frame with a + so a workflow wanting two photographs does not open as a label and a row of buttons. In Photoshop the whole tile was missing. Why: the tile's picture element was created with **no src**, UXP counts a src-less picture as a load **failure**, and that failure handler hid the tile — picture, ✕ and waiting frame together. The picture now carries a one-pixel placeholder, so nothing fails while the slot waits; and a picture that genuinely will not decode hides only itself and hands the frame back. All eighteen panel pages and the wizard were walked: **zero** pictures without a src remain.\n\n**3. A result lands on the document's own frame.** Placing a result kept a rule that refused to enlarge past 1:1 — so on a RAW document much larger than the returned 2K picture, the result sat at its own pixel size in the middle of the canvas, over the face. The bytes that were sent were a downscale of that same document, so the result belongs on that document's frame. Freeform's own place has covered the document since 6.9.0; the Smart Workflow wizard's place now matches it. A Selection Edit result still lands in its own marquee rectangle, masked to it.",shn:"GENERATE ဢိုတ်ႇပွၵ်ႈလဵဝ် ႁဵတ်းယဝ်ႉ — ၶၵ်ႉ 1-2-3 ထွၼ်ဢွၵ်ႇယဝ်ႉ။ IMAGE slot ပဝ်ႇၵေႃႈ ၶွပ်ႇမၼ်းဢမ်ႇႁၢႆ (UXP ဝႃႈ ႁၢင်ႈဢမ်ႇမီး src ပဵၼ်တၢင်းၽိတ်း)။ ၽွၼ်းလႆႈၵေႃႈ တဵမ်ၼႃႈလိၵ်ႈ ဢမ်ႇပဵၼ်ဢွၼ်ႇလဵၵ်ႉၵၢင်ၼႃႈလိၵ်ႈ။",kac:"GENERATE gaw kalang mi dip yang galaw sai — 1-2-3 lam gaw n nga sai. IMAGE slot n hpring ai mung hkaw hpe rawng nga ai (UXP gaw src n nga ai sumla hpe shut ai hku hkam la ai). Lachyum mung document hpe hpring hkra bang ai, kaji sha ka-ang kaw n nga sai.",th:"GENERATE ทำงานตั้งแต่กดครั้งแรก — ขั้นตอน 1-2-3 ถูกเอาออกแล้ว ช่อง IMAGE ที่ว่างยังคงกรอบไว้ (UXP ถือว่ารูปที่ไม่มี src คือความผิดพลาด) และผลลัพธ์วางเต็มเอกสารแทนที่จะเป็นรูปเล็กกลางหน้า",zh:"GENERATE 第一次点击就运行 —— 1-2-3 的步骤已移除。空的 IMAGE 槽保留边框（UXP 把没有 src 的图片当成加载失败）。结果铺满整个文档，而不是缩在中间的一小块。",vi:"GENERATE chạy ngay lần chạm đầu — các bước 1-2-3 đã bị bỏ. Ô IMAGE trống vẫn giữ khung (UXP coi ảnh không có src là lỗi tải). Kết quả phủ kín tài liệu thay vì nằm nhỏ ở giữa.",id:"GENERATE jalan pada ketukan pertama — langkah 1-2-3 dihapus. Slot IMAGE kosong tetap punya bingkai (UXP menganggap gambar tanpa src sebagai gagal muat). Hasilnya memenuhi dokumen, bukan kotak kecil di tengah.",ms:"GENERATE jalan pada ketikan pertama — langkah 1-2-3 dibuang. Slot IMAGE kosong kekal bingkainya (UXP menganggap imej tanpa src sebagai gagal dimuatkan). Hasilnya memenuhi dokumen, bukan kotak kecil di tengah."} },
@@ -12719,12 +12773,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
      document, because a node measures nothing before it is — and again whenever a group opens, because a
      closed .grp-b is display:none and every card inside it measures 0. grp() is lifted into the panel's
      studio suites and may not call a page-level helper, so the host takes the tap on the way up. */
-  ellMark(wfHost, ".wfmini .s", 3);
+  ellMark(wfHost, ".wfmini .t", 2); ellMark(wfHost, ".wfmini .s", 3);
   if(!wfHost.__ellBound){
     wfHost.__ellBound=1;
     wfHost.addEventListener("click", function(ev){
       var t = ev.target; while(t && t !== wfHost && !(t.className && String(t.className).indexOf("grp-h")>=0)) t = t.parentNode;
-      if(t && t !== wfHost) ellMark(wfHost, ".wfmini .s", 3);
+      if(t && t !== wfHost) ellMark(wfHost, ".wfmini .t", 2); ellMark(wfHost, ".wfmini .s", 3);
     });
   }
   renderFavRecent();
@@ -12756,7 +12810,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
             }
           }
         });
-        ellMark(wfHost, ".wfmini .s", 3);
+        ellMark(wfHost, ".wfmini .t", 2); ellMark(wfHost, ".wfmini .s", 3);
         if(first) first.scrollIntoView({behavior:"smooth", block:"center"});
       };
       rail.appendChild(b);
@@ -12764,7 +12818,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     wfJumpTargets.forEach(function(tg){
       var b=el("button","chip", tg.t+" "+tg.n);
       b.onclick=function(){
-        if(tg.g.className.indexOf("open")<0){ tg.g.className="grp open"; ellMark(tg.g, ".wfmini .s", 3); }
+        if(tg.g.className.indexOf("open")<0){ tg.g.className="grp open"; ellMark(tg.g, ".wfmini .t", 2); ellMark(tg.g, ".wfmini .s", 3); }
         tg.g.scrollIntoView({behavior:"smooth", block:"start"});
       };
       rail.appendChild(b);
@@ -12848,7 +12902,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       }
     }
     if(!q) _wfOpenSnap=null;
-    ellMark(wfHost, ".wfmini .s", 3);   /* 6.96.0 — the filter opens and closes groups; the marker follows */
+    ellMark(wfHost, ".wfmini .t", 2); ellMark(wfHost, ".wfmini .s", 3);   /* 6.96.0 — the filter opens and closes groups; the marker follows */
     wfEmpty.classList.toggle("on", !!(q && !anyMatch));
   }
   $("wfSearch").oninput=function(){
@@ -29754,7 +29808,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.99.0";
+var APP_VER="6.100.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

@@ -377,13 +377,46 @@ function grpSyncAll(root) {
    renderer hid nothing and the box is taller than its own ceiling — and then the WORDS are cut, at a
    space, until the box fits, and the marker goes on that. Every pass starts from the whole sentence
    again (ELL_FULL), so a second pass can never cut a cut string twice. */
+/* 6.171.0 — THE CLAMP IS MEASURED WITH THE CLAMP OFF.
+
+   The owner photographed the Workflows page six versions running and said it
+   was still not tidy. This time it was measured rather than adjusted, and the
+   numbers named two mistakes, both of them in here.
+
+   ONE. This function had two branches and, in a browser, only the first could
+   ever run. `scrollHeight - clientHeight` is the overflow a renderer HID: a
+   renderer that honours max-height + overflow:hidden reports it, the marker
+   goes on, and the sentence itself stays whole in the DOM. The second branch —
+   the one that actually CUTS the words — was guarded by `clientHeight > ceil`,
+   which in Chromium is never true, because Chromium had already clamped
+   clientHeight to the ceiling. So the web app never cut a sentence; it only hid
+   one. Adobe UXP honours neither half of that pair, so the panel inherited the
+   uncut string and painted every word of it. Measured over the real 194 cards
+   at a 230px panel: 101 of them ran past their own box, the worst by 181px, and
+   the page's card heights spread 235px where the browser showed 54.
+
+   TWO. The two engines therefore held DIFFERENT text — the one thing the parity
+   walk exists to catch — and it could not see it: both DOMs carried the same
+   full sentence and only the pixels differed.
+
+   The fix is to stop asking the renderer what it hid and start asking what the
+   text NEEDS. The box is unclamped for the measurement, scrollHeight then
+   reports the sentence's true height in BOTH engines, the words are cut to the
+   line budget the caller names, and the clamp goes back. Chromium and UXP now
+   cut at the same character, so the marker tells the truth on both surfaces and
+   the parity is a fact instead of a coincidence. */
 const ELL_FULL = new WeakMap();
 function ellCeil(n, lines) {
   const cs = getComputedStyle(n);
   const lh = parseFloat(cs.lineHeight) || 16;
-  const mh = parseFloat(cs.maxHeight);
-  /* the declared ceiling when this renderer reports one, else the caller's line budget */
-  const ceil = (mh > 0 && isFinite(mh)) ? mh : (lines > 0 ? lines * lh : 0);
+  /* the caller's line budget is the contract; a declared ceiling is only the
+     fallback for an older call site that passes no line count */
+  let ceil = lines > 0 ? lines * lh : 0;
+  if (!(ceil > 0)) {
+    const mh = parseFloat(cs.maxHeight);
+    if (mh > 0 && isFinite(mh)) ceil = mh;
+    else { const h = parseFloat(cs.height); if (h > 0 && isFinite(h)) ceil = h; }
+  }
   return { lh: lh, ceil: ceil };
 }
 function ellMark(root, sel, lines) {
@@ -396,35 +429,47 @@ function ellMark(root, sel, lines) {
         const full = ELL_FULL.has(n) ? ELL_FULL.get(n) : (n.textContent || "");
         ELL_FULL.set(n, full);
         if (n.textContent !== full) n.textContent = full;
+        const m = ellCeil(n, lines);
+        if (!(m.ceil > 0)) return;
+        /* unclamp: height, max-height, overflow AND the -webkit-line-clamp the
+           web app's copy of this rule uses. Each of them hides the very overflow
+           this measurement needs to read. All of it is put back below. */
+        const sv = { h: n.style.height, mh: n.style.maxHeight, ov: n.style.overflow, dp: n.style.display, lc: n.style.webkitLineClamp };
+        n.style.height = "auto"; n.style.maxHeight = "none"; n.style.overflow = "visible";
+        let dpNow = sv.dp; try { dpNow = dpNow || getComputedStyle(n).display; } catch (e) { }
+        if (String(dpNow || "").indexOf("box") >= 0) n.style.display = "block";
+        try { n.style.webkitLineClamp = "unset"; } catch (e) { }
+        let cut = false;
         /* half a line, never a pixel: Burmese stacked diacritics draw past their line box, so a box that
            holds its text exactly still reports a few pixels of overflow (the app measured 73 against 69) */
-        const m = ellCeil(n, lines);
-        let cut = false;
-        if (n.scrollHeight - n.clientHeight > m.lh / 2) {
-          cut = true;
-        } else if (m.ceil > 0 && n.clientHeight > m.ceil + m.lh / 2) {
-          /* the renderer clipped nothing — take the sentence down to what fits, longest first */
+        if (n.scrollHeight > m.ceil + m.lh / 2) {
           let lo = 0, hi = full.length;
           while (lo < hi) {
             const mid = (lo + hi + 1) >> 1;
             n.textContent = full.slice(0, mid);
-            if (n.clientHeight <= m.ceil + m.lh / 2) lo = mid; else hi = mid - 1;
+            if (n.scrollHeight <= m.ceil + m.lh / 2) lo = mid; else hi = mid - 1;
           }
           let s = full.slice(0, lo);
           const sp = s.lastIndexOf(" ");
           if (sp > 12) s = s.slice(0, sp);   /* end on a whole word when there is one to end on */
-          n.textContent = s.replace(/[\s\u2026,.;:\u2014-]+$/, "");
+          n.textContent = s.replace(/[\s…,.;:—-]+$/, "");
           cut = n.textContent.length < full.length;
         }
+        n.style.height = sv.h; n.style.maxHeight = sv.mh; n.style.overflow = sv.ov; n.style.display = sv.dp;
+        try { n.style.webkitLineClamp = sv.lc; } catch (e) { }
         if (cut) {
           const e = document.createElement("span");
-          e.className = "ell"; e.textContent = "\u2026";
+          e.className = "ell"; e.textContent = "…";
           n.appendChild(e);
         }
       } catch (e) { }
     });
   } catch (e) { }
 }
+/* the Workflows screen is its own module and had no way to reach this — which
+   is exactly why it never clamped a single card (6.171.0) */
+globalThis.HNK = globalThis.HNK || {};
+globalThis.HNK.ellMark = ellMark;
 function setIcnText(el, name, tint, text, cls) {
   if (!el) return;
   el.textContent = "";
@@ -2595,7 +2640,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.170.0";
+const PANEL_VERSION = "6.171.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);

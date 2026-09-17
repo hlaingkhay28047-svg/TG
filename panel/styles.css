@@ -2104,13 +2104,24 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    app carries the identical change — -webkit-line-clamp slices exactly the
    same way, proved side by side in the harness — and verify_panel_whats_new C2
    now measures the ink against the box instead of counting line-heights. */
-.wfmini .t { display: block; margin-top: 4px; min-height: 2.25em; max-height: 4.5em;
+/* 6.171.0 — AN EXPLICIT HEIGHT, NOT A CEILING.
+   max-height + overflow:hidden is a request this renderer declines, so the
+   box grew with the words and every card in a row ended a different height
+   (measured: 235px of spread at a 230px panel, 54px in the browser). A stated
+   height is not a request — the box is two lines tall whatever the text does,
+   in both engines, so a row of cards lines up. The words themselves are cut
+   to fit by ellMark, called from the Workflows screen's layoutGrid. */
+.wfmini .t { position: relative; display: block; margin-top: 4px; height: 4.5em;
   font-size: 12.5px; font-weight: 800; line-height: 2.25; overflow: hidden; }
 /* 6.167.0 — three lines, and a marker where the words really run on (the app's own 6.96.0 rule: 138 of
    194 cards were cut at two lines, and this renderer cut them with no ellipsis at all). */
-.wfmini .s { position: relative; display: block; margin-top: 4px; margin-bottom: 4px; max-height: 6.75em;
+.wfmini .s { position: relative; display: block; margin-top: 4px; margin-bottom: 4px; height: 6.75em;
   font-size: 11.5px; color: var(--muted); line-height: 2.25; overflow: hidden; }
-.wfmini .s .ell, .im-card-sum .ell { position: absolute; right: 0; bottom: 0; padding-left: 12px;
+/* 6.171.0 — the TITLE's marker was missing from this rule, so it sat in the
+   flow and added the third line it was there to prevent: measured 84px of ink
+   in a 56px box on "Window Light \u00b7 Window Blinds" and "True Color / White
+   Balance", the last two cards still spilling after everything else was fixed. */
+.wfmini .t .ell, .wfmini .s .ell, .im-card-sum .ell { position: absolute; right: 0; bottom: 0; padding-left: 12px;
   background-color: var(--panel-2); color: var(--muted); font-weight: 700; }
 .wfmini .go { display: flex; flex-direction: row; align-items: center; margin-top: auto; align-self: flex-end;
   padding: 5px 11px 5px 8px; border: 1px solid rgba(233, 185, 73, .38); border-radius: 999px; background-color: rgba(233, 185, 73, .08);
@@ -2178,7 +2189,16 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 #pageAiTools .chip-th img { display: block; width: 33px; height: 22px; margin-left: -5.5px; border-radius: 5px; }
 /* accordions: the app's 12px block margins collapse to 12 between groups */
 #pageAiTools .grp.app-grp { margin: 12px 0 0; }
-#pageAiTools .grp-h .cnt { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--muted); line-height: normal; }
+/* 6.171.0 — the count stacked. At a 230px panel "27 \u1001\u102f" had 9.8px of width
+   and stood 48px tall, two glyphs above one another, and drove the whole header
+   from its 44px min-height to 112px (the owner's second photograph). It is two
+   or three characters: it never wraps and it never shrinks. */
+#pageAiTools .grp-h .cnt { flex: 0 0 auto; white-space: nowrap; margin-left: auto; font-size: 11px; font-weight: 700; color: var(--muted); line-height: normal; }
+/* and the Workflows page alone gives the label back the room the chrome took:
+   measured 84px \u2192 48px of header at 340px and wider. Scoped to this page because
+   that is where it was measured; the Setup and Account accordions are untouched. */
+#pageAiTools .app-grp .grp-h { padding: 10px; }
+#pageAiTools .app-grp .car { margin-right: 5px; }
 /* app .st-sact (order:4 → last in DOM here) with its 28px .sa reset button */
 #pageAiTools .st-sact { flex: 0 0 auto; display: flex; flex-direction: row; margin-left: 8px; }
 #pageAiTools .sa { display: flex; flex-direction: row; align-items: center; justify-content: center; width: 28px; height: 28px;
