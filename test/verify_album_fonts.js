@@ -107,8 +107,8 @@ function faces() {
   /* clause 2 of the licence, not a link to the licence */
   const oflTxt = fs.existsSync(FONTS.OFL_TXT) ? fs.readFileSync(FONTS.OFL_TXT, "utf8") : "";
   report("A5) the OFL 1.1 text itself travels with the fonts — clause 2 asks for the licence, and a URL in a markdown file is attribution rather than the licence",
-    oflTxt.indexOf(FONTS.OFL_HEAD) === 0 && /PERMISSION AND CONDITIONS/.test(oflTxt) &&
-    /TERMINATION/.test(oflTxt) && oflTxt.length > 3000 && /OFL-1\.1\.txt/.test(OFL),
+    oflTxt.indexOf(FONTS.OFL_HEAD) === 0 && /PERMISSION & CONDITIONS/.test(oflTxt) &&
+    /TERMINATION/.test(oflTxt) && oflTxt.length > 3500 && /OFL-1\.1\.txt/.test(OFL),
     { bytes: oflTxt.length });
 
   /* the pipeline must refuse a face nobody checked the licence of */
