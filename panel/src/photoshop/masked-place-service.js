@@ -125,10 +125,19 @@ async function placeResults(deps) {
     // otherwise "fit" to a 1px box. The host self-fits when bounds are null.
     /* v6.36.0 — a region edit places at the SELECTION's exact bounds and
        masks to it; everything else keeps the fit behaviour. */
+    /* v6.170.0 — A WHOLE-FRAME RESULT FILLS THE DOCUMENT. computeFit's "fit" mode
+       refuses to enlarge past 1:1, so on any document bigger than the returned
+       picture the result landed at its own pixel size in the middle of the canvas:
+       the owner photographed a 2K Reference Transfer result sitting as a small
+       rectangle over a RAW document, covering the face. The capture that was sent
+       was itself a downscale of that document, so the result HAS to be scaled back
+       up to the frame it was cut from — Freeform's own place has covered the
+       document (Math.max, no clamp) since 6.9.0, and this is the same photograph
+       going back to the same place. Region edits keep their exact rectangle. */
     var bounds = deps.regionBounds
       ? deps.regionBounds
       : (r.width > 0 && r.height > 0)
-        ? fit.computeFit(r, deps.canvas || { width: 1024, height: 1024 }, deps.fitMode || "fit")
+        ? fit.computeFit(r, deps.canvas || { width: 1024, height: 1024 }, deps.fitMode || "cover", { allowUpscale: true })
         : null;
     var name = results.length > 1
       ? ("Variant " + (i + 1))

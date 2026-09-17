@@ -762,31 +762,10 @@ input[type="range"] { min-width: 0; }
   margin: 8px 0; background-color: var(--sunk);
 }
 
-/* ---------- v3.1: Learn Mode ---------- */
-.pbtn.armed, .btn.armed, .gen.armed {
-  background-color: var(--arm-y); border-color: var(--accent); color: var(--accent-ink); font-weight: 700;
-}
-.pbtn.armp, .btn.armp, .gen.armp {
-  background-color: var(--arm-b); border-color: var(--arm-b-brd); color: var(--arm-b-ink); font-weight: 700;
-}
-.pbtn.go, .btn.go, .gen.go {
-  background-color: var(--go); border-color: var(--go-brd); color: var(--go-ink); font-weight: 700;
-}
-/* v6.86.0 — the Learn-Mode guide box sits IN the page, right above the tapped
-   button's card (guidePlace), not fixed over it: this was the panel's last
-   position:fixed element, and Photoshop lays a fixed box out as an ordinary
-   block at the end of the document. .on shows it; disarm() takes it off. */
-.gbox {
-  display: none;
-  background-color: var(--field-2); border: 1px solid var(--accent); border-radius: 12px;
-  padding: 10px 12px; margin: 0 0 10px;
-  box-shadow: 0 6px 22px var(--shadow);
-}
-.gbox.on { display: block; }
-.gbox-h { display: flex; flex-direction: row; align-items: center; margin-bottom: 6px; }
-.gbox-t { flex: 1; font-size: 11px; font-weight: 700; color: var(--arm-y); }
-.gbox-b { font-size: 10px; color: var(--text); white-space: pre-line; line-height: 1.55; }
-.gbox-f { margin-top: 8px; font-size: 9px; color: var(--accent); font-weight: 700; }
+/* v6.170.0 — the Learn-Mode guide box (.gbox) and the three arm states it painted
+   (.armed yellow, .armp blue, .go green) left with the three-tap cycle: GENERATE
+   runs on the first tap now, so there is no stage to colour and nothing to explain
+   before the run. --arm-y stays: the eye-toggle disc still borders with it. */
 
 /* v4.3 locks consolidation */
 .keepcols { display: flex; flex-wrap: wrap; }

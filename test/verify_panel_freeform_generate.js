@@ -84,14 +84,12 @@ function undeclaredScreaming(src) {
     !/MODEL_PRO_IMG/.test(stripCode(MAIN)) /* the name survives only in the comment that explains its removal */ && /const model = null; \/\* v6\.26\.0 — the tier \(state\.model\) shapes the call inside callImageAPI \*\//.test(MAIN) &&
     /if \(ratio\) imageConfig\.aspectRatio = ratio;\n\s*\/\* v6\.159\.1/.test(MAIN) && und.length === 0, { undeclared: und });
 
-  const gp = (MAIN.match(/function guidePlace\(el\) \{[\s\S]*?\n\}/) || [""])[0];
-  report("A2) guidePlace re-finds a repainted button by id, follows a sticky GENERATE lifted into #genDock back to its card through its placeholder (stickyGenNatural), leaves a box that is already before its card alone (the host refuses the no-op move), detaches the box before any move — and still inserts before the card, else at the page top",
-    /let live = el;/.test(gp) && /if \(live && live\.id && !elInDoc\(live\)\) live = \$\(live\.id\) \|\| live;/.test(gp) &&
-    /if \(live && typeof stickyGenNatural === "function"\) spot = stickyGenNatural\(live\) \|\| live;/.test(gp) && /const card = spot \? hslClosest\(spot, "card"\) : null;/.test(gp) &&
-    /if \(gb\.parentNode === card\.parentNode && \(gb\.nextSibling === card \|\| gb\.nextElementSibling === card\)\) done = true;/.test(gp) &&
-    /else \{ if \(gb\.parentNode\) gb\.parentNode\.removeChild\(gb\); card\.parentNode\.insertBefore\(gb, card\); done = true; \}/.test(gp) &&
-    /if \(pg\.firstChild === gb\) done = true; else \{ if \(gb\.parentNode\) gb\.parentNode\.removeChild\(gb\); pg\.insertBefore\(gb, pg\.firstChild\); done = true; \}/.test(gp) &&
-    /gb\.className = "gbox on";/.test(gp) && /function elInDoc\(e\) \{/.test(MAIN) && (MAIN.match(/guidePlace\(state\.armedEl\);/g) || []).length === 2, { gp: gp.slice(0, 200) });
+  const FCODE = MAIN.replace(/\/\*[\s\S]*?\*\//g, "");   /* the 6.170.0 note names what it removed — read the code, not the comment */
+  report("A2) v6.170.0 — the Learn-Mode guide box left with the three-tap cycle: no guidePlace / elInDoc / showGuide / showPromptStage / armGate / GEN_GUIDES / dualT in main.js, no #guideBox in the markup, and the four run buttons call their run directly behind state.busy",
+    !/function guidePlace|function elInDoc|function showGuide|function showPromptStage|function armGate|function dualT|GEN_GUIDES/.test(FCODE) &&
+    read("panel/index.html").indexOf("guideBox") < 0 &&
+    /if \(state\.busy\) return;   \/\* never start a second run on top of one \*\/\n  \/\* the label stays put while the run feeds back through the card \(no busy dots\) \*\/\n  setBusyBtn\(null\);\n  runGenerate\(null, false, \[\], false, \{ action: "Prompt", ffCard: true \}\);/.test(MAIN) &&
+    (MAIN.match(/if \(state\.busy\) return;\n        studioRun\(/g) || []).length === 2, null);
 
   report("A3) the Smart Workflow wizard's runs reach the ledger: bootstrap hands the adapter's usage to HNK.spendBook with the feature's name (never blocking the run), main.js wires spendBook to rhBookUsage, and the adapter still returns usage:[{taskId, final}]",
     /var sb = \(typeof globalThis !== "undefined" && globalThis\.HNK\) \? globalThis\.HNK\.spendBook : null;/.test(BOOT) &&
@@ -145,8 +143,7 @@ function undeclaredScreaming(src) {
       const PXU = "data:image/png;base64," + arg.px;
       state.rhKey = state.rhKey || "TEST_RH_KEY";
 
-      /* -- B1. Freeform GENERATE, Learn Mode off, the real runGenerate over a stubbed provider call -- */
-      state.learnMode = false; disarm();
+      /* -- B1. Freeform GENERATE, one tap, the real runGenerate over a stubbed provider call -- */
       switchPage("prompt"); await settle();
       state.subj = { b64: arg.px, mime: "image/png" };   /* IMAGE 1 — the photograph */
       $$("promptBox").value = "meitu skin";
@@ -160,24 +157,15 @@ function undeclaredScreaming(src) {
       out.ff = { calls: window.__calls, model: window.__model, parts: window.__parts, cfg: window.__cfg, result: state.resultB64 === arg.px, hist: state.history.length - h0,
         st: ($$("stGen") || {}).textContent, stCls: ($$("stGen") || {}).className, want: ff9(FF_L.done), status: ($$("status") || {}).textContent, placed: window.__placed };
 
-      /* -- B2. Learn Mode's three taps, with the host's refusal of a no-op move simulated -- */
-      state.learnMode = true; disarm(); await settle();
-      const ib = Node.prototype.insertBefore; window.__ibThrows = 0;
-      Node.prototype.insertBefore = function (n, ref) {
-        if (n && ref && n.parentNode === this && n.nextSibling === ref) { window.__ibThrows++; throw new Error("host: the node is already there"); }
-        return ib.call(this, n, ref);
-      };
-      const btn = $$("btnGenerate"); const card = $$("ffGenCard"); const gb = $$("guideBox");
-      const where = () => ({ on: /\bon\b/.test(gb.className), beforeCard: gb.nextElementSibling === card, atTop: !!gb.parentNode && gb.parentNode.firstElementChild === gb, stage: state.armStage, ib: window.__ibThrows,
-        docked: !!(btn.parentNode && btn.parentNode.id === "genDock") });
-      btn.click(); await settle(); out.t1 = where(); out.t1.title = ($$("guideTitle") || {}).textContent;
-      btn.click(); await settle(); out.t2 = where(); out.t2.body = (($$("guideBody") || {}).textContent || "").slice(0, 60);
+      /* -- B2. v6.170.0: one tap runs. No gate, no guide box, and a tap while busy starts nothing -- */
+      out.gate = { box: !!$$("guideBox"), armGate: typeof armGate, learnMode: typeof state.learnMode };
       window.__calls = 0;
-      btn.click(); await settle();
+      const btn2 = $$("btnGenerate");
+      btn2.click(); await settle();
       await until(() => !state.busy && window.__calls > 0); await settle();
-      out.t3 = { calls: window.__calls, hidden: gb.className === "gbox", stage: state.armStage, armed: state.armedEl };
-      Node.prototype.insertBefore = ib;
-      state.learnMode = false; disarm();
+      out.gate.firstTap = window.__calls;
+      state.busy = true; btn2.click(); await settle(); state.busy = false;
+      out.gate.whileBusy = window.__calls;
 
       /* -- B3. a Smart Workflow run through the real runViaProvider books its usage -- */
       switchPage("aitools"); await settle();
@@ -203,14 +191,13 @@ function undeclaredScreaming(src) {
   const F = pan.ff;
   report("B1) panel · Freeform GENERATE with a prompt and IMAGE 1 runs through the real runGenerate: the provider call is made once (null model · the prompt part + the picture), the result lands, the history strip grows by one, the card says Done — and nothing is \"not defined\"",
     F.calls === 1 && F.model === null && F.parts >= 2 && F.result && F.hist === 1 && F.st.indexOf(F.want) === 0 /* "Done ✓ (1/1)" */ && /\bok\b/.test(F.stCls) && !/not defined/i.test(F.st + " " + F.status) && F.placed === 1, F);
-  report("B2) panel · Learn Mode on a GENERATE button lifted into the sticky dock: tap 1 puts the guide above the button's home card (#ffGenCard), tap 2 keeps it there (the prompt stage, the host's no-op-move refusal simulated — never the page top), tap 3 runs and hides the box",
-    pan.t1.docked && pan.t1.on && pan.t1.beforeCard && !pan.t1.atTop && pan.t1.stage === 1 &&
-    pan.t2.on && pan.t2.beforeCard && !pan.t2.atTop && pan.t2.stage === 2 && pan.t2.body.length > 0 &&
-    pan.t3.calls === 1 && pan.t3.hidden && pan.t3.stage === 0 && pan.t3.armed === null, { t1: pan.t1, t2: pan.t2, t3: pan.t3 });
+  report("B2) panel · GENERATE runs on the FIRST tap — there is no guide box in the document, no armGate and no state.learnMode, one tap makes exactly one provider call, and a tap while a run is in flight starts nothing",
+    pan.gate.box === false && pan.gate.armGate === "undefined" && pan.gate.learnMode === "undefined" &&
+    pan.gate.firstTap === 1 && pan.gate.whileBusy === 1, pan.gate);
   report("B3) panel · a Smart Workflow run through the real runViaProvider (adapter answering with RunningHub's usage) books one row in COST & BALANCE — image · rh · the workflow's name · 0.05 USD · 5 RH",
     pan.spend.ok && pan.spend.n === 1 && pan.spend.row && pan.spend.row.k === "image" && pan.spend.row.p === "rh" && pan.spend.row.m.length > 0 && pan.spend.row.money === 0.05 && pan.spend.row.coins === 5 && pan.spend.row.has === 1, pan.spend);
   report("B4) panel · no page error", pan.errs.length === 0, pan.errs.slice(0, 3));
 
-  console.log(failures ? "\n" + failures + " check(s) failed." : "\nALL PASS — Freeform generates again, the guide box stays by its card, and every wizard run is counted.");
+  console.log(failures ? "\n" + failures + " check(s) failed." : "\nALL PASS — Freeform generates on the first tap, the three-tap gate is gone, and every wizard run is counted.");
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error("FATAL", e); process.exit(1); });

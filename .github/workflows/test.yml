@@ -588,6 +588,8 @@ jobs:
         run: PORT=8931 node test/verify_wf_page_6972.js
       - name: The Smart Workflow pages are responsive — the card grid follows the panel's own width (one column below 460px, then two, three, four and five) instead of being two at every width, a short last row cannot stretch, the odd card is recomputed from what a search leaves on screen, and the banner keeps its plate's 3.11:1 shape (6.98.0)
         run: PORT=8931 node test/verify_wf_responsive.js
+      - name: One tap runs, an empty slot keeps its frame, and a result lands on the document's own frame — the three-tap Learn cycle removed from GENERATE / Retouch A / Retouch B / Studio (it was panel-only), the wizard slot's src-less picture given a placeholder so UXP stops calling it a failure and hiding the whole tile, and the wizard's place set to cover the document the way Freeform's has since 6.9.0 (6.99.0)
+        run: PORT=8931 node test/verify_panel_one_tap_place.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

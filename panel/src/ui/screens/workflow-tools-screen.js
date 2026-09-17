@@ -34,6 +34,20 @@ function setArt(im, url, onFail) {
   if (ra) ra.paint(im, url, onFail);
   else { im.onerror = onFail || null; im.src = url; }
 }
+/* 6.170.0 — AN <img> IN THE DOCUMENT ALWAYS CARRIES A SRC. UXP reports an image
+   with no src at all as a load failure (6.128.0 / 6.129.0, and remoteArt.paint has
+   given every remote picture this same one-pixel placeholder since then). A picture
+   element that is created empty and filled later — a slot's preview, the Selection
+   card's capture — gets the placeholder at birth, so the host never counts it as a
+   broken picture and no onerror written for a real failure fires on an empty box. */
+var BLANK_PX = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+function blankArt(im) {
+  try {
+    var ra = artLoader();
+    im.src = (ra && ra.BLANK) || BLANK_PX;
+  } catch (e) { try { im.src = BLANK_PX; } catch (e2) { } }
+  return im;
+}
 function hnkArtCard(doc, visual) {
   if (!visual) return null;
   var art = doc.createElement("div");
@@ -857,7 +871,7 @@ function create(deps) {
     card.appendChild(body);
 
     var shot = dom.el(doc, "div", { class: "hnk-sel-shot", id: "hnkWfSelShot" });
-    var shotIm = doc.createElement("img"); shotIm.className = "hnk-sel-thumb"; shotIm.alt = "";
+    var shotIm = doc.createElement("img"); shotIm.className = "hnk-sel-thumb"; shotIm.alt = ""; blankArt(shotIm);
     var shotCap = dom.el(doc, "div", { class: "hnk-sel-cap", id: "hnkWfSelShotCap" });
     shot.appendChild(shotIm); shot.appendChild(shotCap);
     shot.style.display = "none";
@@ -1740,7 +1754,27 @@ function create(deps) {
        take out as it was to put in. */
     var thumbImg = doc.createElement("img");
     thumbImg.alt = "";
-    thumbImg.onerror = function () { try { thumb.style.display = "none"; } catch (e) { } };
+    blankArt(thumbImg);
+    /* 6.170.0 — THE WAITING SLOT LOST ITS WHOLE TILE IN PHOTOSHOP. This handler hid
+       `thumb` — the picture, the ✕ and the empty frame together — on any image error,
+       and in UXP a src-less <img> IS an error. So a slot nobody had filled yet errored
+       on sight and took its own frame down with it: the owner's photograph of Reference
+       Scenes showed IMAGE 1 with its photo and IMAGE 2 with nothing at all under the
+       five buttons, which reads exactly as "the IMAGE 2 slot is missing". The <img> now
+       carries the one-pixel placeholder, so nothing errors while the slot waits; and a
+       picture that genuinely will not decode hides ONLY itself and hands the frame back,
+       because a slot you can still press is worth more than a tidy empty row. */
+    thumbImg.onerror = function () {
+      try {
+        var cur = (thumbImg.getAttribute && thumbImg.getAttribute("src")) || "";
+        if (!cur || cur === BLANK_PX) return;
+        thumbImg.style.display = "none";
+        var backEmpty = nodes["empty_" + inp.key];
+        if (backEmpty) backEmpty.style.display = "";
+        var backClear = doc.getElementById("hnkWfClear_" + inp.key);
+        if (backClear) backClear.style.display = "none";
+      } catch (e) { }
+    };
     var clear = dom.el(doc, "button", { class: "hnk-btn hnk-req-clear", id: "hnkWfClear_" + inp.key, text: "✕" });
     dom.on(clear, "click", function () {
       wstate.setInput(state, inp.key, { source: "", role: inp.role, ref: null, valid: false });
