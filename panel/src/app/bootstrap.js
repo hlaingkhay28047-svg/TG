@@ -256,7 +256,12 @@ function create(opts) {
               message: dom.t("ai_place_failed_fix", "Open a document, then re-run from History."), bullets: [placed.reason || "place-failed"] });
             return res;
           }
-          var msg = placed.outcome === "masked-group"
+          /* v6.171.0 — a run with no document open used to be refused outright;
+             it now opens the result as its own document, and says so with the
+             sentence the Freeform place has always used. */
+          var msg = placed.outcome === "new-document"
+            ? dom.t("st_new_doc", "Result opened as a new document \u2713")
+            : placed.outcome === "masked-group"
             ? dom.tf("ai_placed_masked",
                 "Placed into the \u201C{name}\u201D group as Layer + Mask \u2014 your original is untouched.", { name: placed.groupName })
             : placed.outcome === "group-only"
@@ -315,7 +320,9 @@ function create(opts) {
           message: dom.t("ai_place_failed_fix", "Open a document, then re-run from History."), bullets: [placed.reason || "place-failed"] });
         return placed;
       }
-      var msg2 = placed.outcome === "masked-group"
+      var msg2 = placed.outcome === "new-document"
+        ? dom.t("st_new_doc", "Result opened as a new document \u2713")
+        : placed.outcome === "masked-group"
         ? dom.tf("ai_placed_masked", "Placed into the \u201C{name}\u201D group as Layer + Mask \u2014 your original is untouched.", { name: placed.groupName })
         : placed.outcome === "group-only"
           ? dom.tf("ai_placed_group", "Placed into the \u201C{name}\u201D group as a new layer (mask unavailable on this host).", { name: placed.groupName })

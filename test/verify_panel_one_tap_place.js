@@ -66,6 +66,18 @@ const LANDING = read("docs/index.html");
 const APP = read("docs/app/index.html");
 const WHATS = read("panel/js/hnk_whats_new.js");
 const MANIFEST = JSON.parse(read("panel/release-manifest.json"));
+/* 6.171.0 — the panel release is read, never spelled. This pin used to carry the
+   literal "6.170.0" and went stale on the very next bump, which says nothing about
+   this wave and hides what the pin is really for: the three places that name the
+   panel version must agree, and must not go backwards from the release this test
+   was written for. */
+const PVER = JSON.parse(read("docs/download/panel-version.json"));
+const PMAIN_VER = (read("panel/main.js").match(/PANEL_VERSION = "([0-9.]+)"/) || [])[1] || "";
+function atLeast(a, b) {
+  const x = String(a).split(".").map(Number), y = String(b).split(".").map(Number);
+  for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); }
+  return true;
+}
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 
 let failures = 0;
@@ -285,11 +297,12 @@ function releasePins() {
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
   const wn = (APP.match(/\{ v:"6\.99\.0", kind:"page", ref:"pgCreate",[\s\S]*?\} \},\n/) || [""])[0];
   const wnP = (WHATS.match(/\{ v:"6\.99\.0", kind:"page", ref:"pgCreate",[\s\S]*?\} \},\n/) || [""])[0];
-  report("D1) CI runs this test right after verify_wf_responsive; the landing counts at least 241 tests; What's New carries the 6.99.0 row in nine languages on the app and the panel; the panel release is 6.170.0",
+  report("D1) CI runs this test right after verify_wf_responsive; the landing counts at least 241 tests; What's New carries the 6.99.0 row in nine languages on the app and the panel; the panel release is 6.170.0 or later and the manifest, panel-version.json and PANEL_VERSION all say the same thing",
     CI.indexOf("node test/verify_panel_one_tap_place.js") > CI.indexOf("node test/verify_wf_responsive.js") &&
-    CI.indexOf("node test/verify_wf_responsive.js") > 0 && tests >= 241 && MANIFEST.version === "6.170.0" &&
+    CI.indexOf("node test/verify_wf_responsive.js") > 0 && tests >= 241 &&
+    atLeast(MANIFEST.version, "6.170.0") && PVER.v === MANIFEST.version && PVER.latest_version === MANIFEST.version && PMAIN_VER === MANIFEST.version &&
     !!wn && LANGS.every((l) => (wn.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2) && !!wnP && wnP === wn,
-    { tests, version: MANIFEST.version, wn: wn.slice(0, 60), panelRow: !!wnP });
+    { tests, version: MANIFEST.version, pver: PVER.v, latest: PVER.latest_version, panelVersion: PMAIN_VER, wn: wn.slice(0, 60), panelRow: !!wnP });
 }
 
 (async () => {

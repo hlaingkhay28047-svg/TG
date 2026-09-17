@@ -377,13 +377,46 @@ function grpSyncAll(root) {
    renderer hid nothing and the box is taller than its own ceiling — and then the WORDS are cut, at a
    space, until the box fits, and the marker goes on that. Every pass starts from the whole sentence
    again (ELL_FULL), so a second pass can never cut a cut string twice. */
+/* 6.171.0 — THE CLAMP IS MEASURED WITH THE CLAMP OFF.
+
+   The owner photographed the Workflows page six versions running and said it
+   was still not tidy. This time it was measured rather than adjusted, and the
+   numbers named two mistakes, both of them in here.
+
+   ONE. This function had two branches and, in a browser, only the first could
+   ever run. `scrollHeight - clientHeight` is the overflow a renderer HID: a
+   renderer that honours max-height + overflow:hidden reports it, the marker
+   goes on, and the sentence itself stays whole in the DOM. The second branch —
+   the one that actually CUTS the words — was guarded by `clientHeight > ceil`,
+   which in Chromium is never true, because Chromium had already clamped
+   clientHeight to the ceiling. So the web app never cut a sentence; it only hid
+   one. Adobe UXP honours neither half of that pair, so the panel inherited the
+   uncut string and painted every word of it. Measured over the real 194 cards
+   at a 230px panel: 101 of them ran past their own box, the worst by 181px, and
+   the page's card heights spread 235px where the browser showed 54.
+
+   TWO. The two engines therefore held DIFFERENT text — the one thing the parity
+   walk exists to catch — and it could not see it: both DOMs carried the same
+   full sentence and only the pixels differed.
+
+   The fix is to stop asking the renderer what it hid and start asking what the
+   text NEEDS. The box is unclamped for the measurement, scrollHeight then
+   reports the sentence's true height in BOTH engines, the words are cut to the
+   line budget the caller names, and the clamp goes back. Chromium and UXP now
+   cut at the same character, so the marker tells the truth on both surfaces and
+   the parity is a fact instead of a coincidence. */
 const ELL_FULL = new WeakMap();
 function ellCeil(n, lines) {
   const cs = getComputedStyle(n);
   const lh = parseFloat(cs.lineHeight) || 16;
-  const mh = parseFloat(cs.maxHeight);
-  /* the declared ceiling when this renderer reports one, else the caller's line budget */
-  const ceil = (mh > 0 && isFinite(mh)) ? mh : (lines > 0 ? lines * lh : 0);
+  /* the caller's line budget is the contract; a declared ceiling is only the
+     fallback for an older call site that passes no line count */
+  let ceil = lines > 0 ? lines * lh : 0;
+  if (!(ceil > 0)) {
+    const mh = parseFloat(cs.maxHeight);
+    if (mh > 0 && isFinite(mh)) ceil = mh;
+    else { const h = parseFloat(cs.height); if (h > 0 && isFinite(h)) ceil = h; }
+  }
   return { lh: lh, ceil: ceil };
 }
 function ellMark(root, sel, lines) {
@@ -396,35 +429,55 @@ function ellMark(root, sel, lines) {
         const full = ELL_FULL.has(n) ? ELL_FULL.get(n) : (n.textContent || "");
         ELL_FULL.set(n, full);
         if (n.textContent !== full) n.textContent = full;
+        /* 6.171.0 — AND THE WHOLE SENTENCE STAYS READABLE FROM THE ELEMENT.
+           The cut is width-dependent: the app walk and the panel walk open their
+           surfaces at different widths, so the same sentence legitimately cuts at
+           a different character on each. The parity walk already declared the "…"
+           marker out of scope for exactly that reason; the cut text needs the same
+           treatment, so the original is kept here for it to read. It is also what
+           a screen reader and a tooltip should have. */
+        try { n.setAttribute("data-full", full); } catch (e) { }
+        const m = ellCeil(n, lines);
+        if (!(m.ceil > 0)) return;
+        /* unclamp: height, max-height, overflow AND the -webkit-line-clamp the
+           web app's copy of this rule uses. Each of them hides the very overflow
+           this measurement needs to read. All of it is put back below. */
+        const sv = { h: n.style.height, mh: n.style.maxHeight, ov: n.style.overflow, dp: n.style.display, lc: n.style.webkitLineClamp };
+        n.style.height = "auto"; n.style.maxHeight = "none"; n.style.overflow = "visible";
+        let dpNow = sv.dp; try { dpNow = dpNow || getComputedStyle(n).display; } catch (e) { }
+        if (String(dpNow || "").indexOf("box") >= 0) n.style.display = "block";
+        try { n.style.webkitLineClamp = "unset"; } catch (e) { }
+        let cut = false;
         /* half a line, never a pixel: Burmese stacked diacritics draw past their line box, so a box that
            holds its text exactly still reports a few pixels of overflow (the app measured 73 against 69) */
-        const m = ellCeil(n, lines);
-        let cut = false;
-        if (n.scrollHeight - n.clientHeight > m.lh / 2) {
-          cut = true;
-        } else if (m.ceil > 0 && n.clientHeight > m.ceil + m.lh / 2) {
-          /* the renderer clipped nothing — take the sentence down to what fits, longest first */
+        if (n.scrollHeight > m.ceil + m.lh / 2) {
           let lo = 0, hi = full.length;
           while (lo < hi) {
             const mid = (lo + hi + 1) >> 1;
             n.textContent = full.slice(0, mid);
-            if (n.clientHeight <= m.ceil + m.lh / 2) lo = mid; else hi = mid - 1;
+            if (n.scrollHeight <= m.ceil + m.lh / 2) lo = mid; else hi = mid - 1;
           }
           let s = full.slice(0, lo);
           const sp = s.lastIndexOf(" ");
           if (sp > 12) s = s.slice(0, sp);   /* end on a whole word when there is one to end on */
-          n.textContent = s.replace(/[\s\u2026,.;:\u2014-]+$/, "");
+          n.textContent = s.replace(/[\s…,.;:—-]+$/, "");
           cut = n.textContent.length < full.length;
         }
+        n.style.height = sv.h; n.style.maxHeight = sv.mh; n.style.overflow = sv.ov; n.style.display = sv.dp;
+        try { n.style.webkitLineClamp = sv.lc; } catch (e) { }
         if (cut) {
           const e = document.createElement("span");
-          e.className = "ell"; e.textContent = "\u2026";
+          e.className = "ell"; e.textContent = "…";
           n.appendChild(e);
         }
       } catch (e) { }
     });
   } catch (e) { }
 }
+/* the Workflows screen is its own module and had no way to reach this — which
+   is exactly why it never clamped a single card (6.171.0) */
+globalThis.HNK = globalThis.HNK || {};
+globalThis.HNK.ellMark = ellMark;
 function setIcnText(el, name, tint, text, cls) {
   if (!el) return;
   el.textContent = "";
@@ -2595,7 +2648,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.170.0";
+const PANEL_VERSION = "6.171.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5829,6 +5882,11 @@ function selfTestRowsInner() {
     rows.push(hnkSaveProbeRow());
     /* 6.166.0 — drag & drop: bound targets, the last file that arrived, or the refusal */
     rows.push(hnkDropRow());
+    /* 6.171.0 — the place every result ends in, run for real on a 2×2 picture and undone
+       (see hnkPlaceProbeStart). It sits AFTER Drag & drop, not between it and Save folder:
+       verify_convenience_695 A7 pins those two as neighbours, and that ordering is the
+       contract, not an accident. */
+    rows.push(hnkPlaceProbeRow());
     /* v6.86.0 — whether <video> decodes here at all. Photoshop's does not,
        which is why every video page shows numbered tiles and Download /
        Open Direct Link / Open the folder instead of a player (6.77.0). */
@@ -6200,7 +6258,7 @@ function bindSetup() {
     const cpy = $("btnCopyLink"); if (cpy) cpy.addEventListener("click", function () { shareCopy(); });
     const cu = $("btnCheckUpdate"); if (cu) cu.addEventListener("click", function () { aboutCheckUpdate(); });
     const hr = $("btnHardRefresh"); if (hr) hr.addEventListener("click", function () { aboutHardRefresh(); });
-    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { try { hnkNetProbeStart(true); } catch (eN) { } try { hnkSaveProbeStart(true); } catch (eSv) { } try { hnkLayerProbeStart(true); } catch (eL) { } renderSelfTest(); });
+    const stb = $("btnSelfTest"); if (stb) stb.addEventListener("click", function () { try { hnkNetProbeStart(true); } catch (eN) { } try { hnkSaveProbeStart(true); } catch (eSv) { } try { hnkLayerProbeStart(true); } catch (eL) { } try { hnkPlaceProbeStart(true); } catch (eP) { } renderSelfTest(); });
     const stc = $("btnSelfTestCopy"); if (stc) stc.addEventListener("click", function () { selfTestCopy(); });
     const about = $("cardAbout");
     if (about) {
@@ -13678,7 +13736,7 @@ function switchPage(key) {
      opened (and on Run again), never on the boot path: renderSelfTest also
      runs from setupApplyStatics at boot, and a probe there would reach out
      to RunningHub on every panel start. The row re-paints when they answer. */
-  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); hnkLayerProbeStart(false); hnkSaveProbeStart(false); renderSelfTest(); } catch (e) { } }
+  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); hnkLayerProbeStart(false); hnkSaveProbeStart(false); hnkPlaceProbeStart(false); renderSelfTest(); } catch (e) { } }
   /* the sticky GENERATE follows the page that owns it */
   try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
 }
@@ -13916,6 +13974,61 @@ function hnkSaveProbeStart(force) {
     return { level: "ok", detail: path + " \u00b7 writable \u00b7 " + takes + " saved take" + (takes === 1 ? "" : "s") + " \u00b7 " + (Date.now() - t0) + "ms" };
   })().then(function (res) { saveProbe = { state: "done", at: Date.now(), res: res }; try { renderSelfTest(); } catch (e) { } },
     function (e) { saveProbe = { state: "done", at: Date.now(), res: { level: "err", detail: "REFUSED \u2014 " + String((e && e.message) || e).slice(0, 140) } }; try { renderSelfTest(); } catch (e2) { } });
+}
+/* 6.171.0 — SELF-TEST "Place into Photoshop". The owner photographed a Smart
+   Workflow run that finished and then refused: "Generated, but could not place
+   into Photoshop · place-failed", with a document open in the Layers panel,
+   after earlier runs in the same session had placed fine. Until 6.171.0 that
+   sentence was the whole of what the panel knew — the place path returned a
+   bare null from six different branches and the strip printed its own fallback
+   word. It now carries a reason, and this row proves the whole path WITHOUT a
+   paid run: it writes a 2×2 picture through the same photoshop-host.placeAsLayer
+   every result goes through, into the open document, and then deletes the layer
+   it just made. What it prints is the outcome and the time, or the exact
+   refusal — the one line a photograph of this card can carry back.
+   Throttled like the other host rows; "Run again" forces it; never at boot, and
+   never when no document is open (there would be nothing to place into and
+   opening one is not this row's business). */
+let placeProbe = { state: "idle", at: 0, res: null };
+/* a 2×2 opaque PNG — the smallest honest picture to hand Photoshop */
+const PLACE_PROBE_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEklEQVR4nGO4st78ynpzBggFADLaBuk2gZvtAAAAAElFTkSuQmCC";
+function hnkPlaceProbeStart(force) {
+  const now = Date.now();
+  if (placeProbe.state === "running") return;
+  if (!force && placeProbe.state === "done" && now - placeProbe.at < 60000) return;
+  if (!hostIsPhotoshop()) { placeProbe = { state: "done", at: now, res: { level: "host", detail: "not Photoshop — nothing to place into" } }; return; }
+  const H = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK : {};
+  const host = H.photoshopHost;
+  if (!host || typeof host.placeAsLayer !== "function") { placeProbe = { state: "done", at: now, res: { level: "err", detail: "the place path is not loaded" } }; return; }
+  placeProbe = { state: "running", at: now, res: null };
+  const t0 = Date.now();
+  (async function () {
+    let ps = null;
+    try { ps = require("photoshop"); } catch (e) { ps = null; }
+    let docs = 0;
+    try { docs = (ps && ps.app && ps.app.documents && ps.app.documents.length) || 0; } catch (e) { docs = 0; }
+    if (!docs) return { level: "warn", detail: "no document open — open one and run again" };
+    const out = await host.placeAsLayer({ ref: PLACE_PROBE_PNG, name: "HNK · self-test", bounds: null, group: null, mask: false });
+    if (!out || out.ok === false) return { level: "err", detail: "REFUSED — " + (((out && out.reason) || "no reason given")) };
+    /* put the document back the way it was found */
+    let undone = "layer left — delete it yourself";
+    try {
+      await ps.core.executeAsModal(async function () {
+        const d = ps.app.activeDocument;
+        const ls = d.activeLayers;
+        const l = ls && ls.length ? ls[0] : null;
+        if (l && typeof l.delete === "function") { await l.delete(); }
+      }, { commandName: "HNK: remove self-test layer" });
+      undone = "removed again";
+    } catch (eU) { undone = "left behind — " + String((eU && eU.message) || eU).slice(0, 60); }
+    return { level: "ok", detail: "placed · " + undone + " · " + (Date.now() - t0) + "ms" };
+  })().then(function (res) { placeProbe = { state: "done", at: Date.now(), res: res }; try { renderSelfTest(); } catch (e) { } },
+    function (e) { placeProbe = { state: "done", at: Date.now(), res: { level: "err", detail: "THREW — " + String((e && e.message) || e).slice(0, 140) } }; try { renderSelfTest(); } catch (e2) { } });
+}
+function hnkPlaceProbeRow() {
+  if (placeProbe.state === "idle") return { label: "Place into Photoshop", detail: "—", level: "pend" };
+  if (placeProbe.state === "running") return { label: "Place into Photoshop", detail: "placing a test picture…", level: "pend" };
+  return { label: "Place into Photoshop", detail: (placeProbe.res && placeProbe.res.detail) || "—", level: (placeProbe.res && placeProbe.res.level) || "pend" };
 }
 function hnkSaveProbeRow() {
   if (saveProbe.state === "idle") return { label: "Save folder", detail: "\u2014", level: "pend" };

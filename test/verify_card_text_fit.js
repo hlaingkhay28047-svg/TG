@@ -56,7 +56,13 @@ const MANIFEST = JSON.parse(read("panel/release-manifest.json"));
 /* Photoshop's renderer, as the photograph describes it: the box keeps its place in the
    flow and paints its whole sentence anyway. No !important on the ceiling — the point is
    that nothing here is hidden, not that a rule was overridden. */
-const NO_CLIP = ".wfmini .s { overflow: visible !important; max-height: none !important; }";
+/* 6.171.0 — `height: auto` joins the withdrawal. When this harness was written the
+   ceiling was `max-height`, so releasing that plus `overflow` let the box grow and the
+   6.167.3 marker's failure show. 6.100.0 measured Photoshop and found that max-height is
+   a request UXP declines, and states the ceiling as an explicit `height` instead — which
+   this line did not release, so BOTH legs reported a tidy page and the contrast the proof
+   rests on quietly disappeared. Release the frame the stylesheet actually uses. */
+const NO_CLIP = ".wfmini .s { overflow: visible !important; max-height: none !important; height: auto !important; }";
 
 /* 6.167.3's marker, verbatim: it marks what the renderer hid, and does nothing else. */
 const OLD_MARK = function () {
@@ -86,35 +92,66 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
 
 /* ================= A) the rule, in the source ================= */
 function sourcePins() {
-  report("A1) the panel's marker cuts the words when the renderer hid nothing — the ceiling, the whole sentence kept, the cut at a space",
+  /* 6.171.0 — THE CUT IS NO LONGER THE SECOND ANSWER, IT IS THE ONLY ONE.
+     6.96.4 cut the words only where the renderer had hidden nothing, and asked
+     `clientHeight` — the height the renderer chose. Measuring the owner's real panel at
+     230px showed why that was not enough: 101 of 194 cards still painted past their box,
+     because a clamping renderer reports a tidy clientHeight whether or not it clipped, so
+     the second branch was unreachable exactly where it was needed. The marker now removes
+     every clamp, reads the ink the words truly need (scrollHeight with height / max-height
+     / overflow / -webkit-line-clamp all released), cuts to the budget and restores what it
+     borrowed. The line budget also wins over max-height in the ceiling, because UXP reports
+     no max-height at all and the budget is the one number both renderers agree on.
+     verify_wf_card_fit measures the result on both surfaces at nine widths. */
+  report("A1) the panel's marker measures the ink with every clamp withdrawn and cuts the words to the budget — the whole sentence kept, the cut at a space",
     /const ELL_FULL = new WeakMap\(\);/.test(MAIN) &&
     /function ellCeil\(n, lines\) \{/.test(MAIN) &&
-    /const ceil = \(mh > 0 && isFinite\(mh\)\) \? mh : \(lines > 0 \? lines \* lh : 0\);/.test(MAIN) &&
-    /\} else if \(m\.ceil > 0 && n\.clientHeight > m\.ceil \+ m\.lh \/ 2\) \{/.test(MAIN) &&
+    /let ceil = lines > 0 \? lines \* lh : 0;/.test(MAIN) &&
+    /const mh = parseFloat\(cs\.maxHeight\);/.test(MAIN) &&
+    /n\.style\.height = "auto"; n\.style\.maxHeight = "none"; n\.style\.overflow = "visible";/.test(MAIN) &&
+    /if \(n\.scrollHeight > m\.ceil \+ m\.lh \/ 2\) \{/.test(MAIN) &&
     /if \(sp > 12\) s = s\.slice\(0, sp\);/.test(MAIN),
     { weakmap: /ELL_FULL = new WeakMap/.test(MAIN), ceil: /function ellCeil/.test(MAIN) });
 
-  report("A2) and it still marks, first, whatever the renderer really did hide — half a line, never a pixel",
-    /if \(n\.scrollHeight - n\.clientHeight > m\.lh \/ 2\) \{\s*\n\s*cut = true;/.test(MAIN) &&
+  /* The half-line tolerance is the part of 6.96.4 that was always right and is kept
+     verbatim: Burmese ink overhangs its line box, so a box over its ceiling by a pixel is
+     not a box with a word missing. Nothing is cut for a pixel, on either surface. And the
+     whole sentence is still kept on the element, so a second pass never cuts a cut string
+     twice and the original can always be read back. */
+  report("A2) it cuts only past half a line — never a pixel — and the whole sentence is kept and readable from the element",
+    /if \(n\.scrollHeight > m\.ceil \+ m\.lh \/ 2\) \{/.test(MAIN) && !/m\.ceil \+ 1\b/.test(MAIN) &&
     /const full = ELL_FULL\.has\(n\) \? ELL_FULL\.get\(n\) : \(n\.textContent \|\| ""\);/.test(MAIN) &&
-    /ELL_FULL\.set\(n, full\);/.test(MAIN), null);
+    /ELL_FULL\.set\(n, full\);/.test(MAIN) &&
+    /n\.setAttribute\("data-full", full\);/.test(MAIN) && /n\.setAttribute\("data-full", full\);/.test(APP), null);
 
-  report("A3) the web app carries the identical rule, so both surfaces cut the same sentence at the same word",
+  report("A3) the web app carries the identical rule, so both surfaces cut the same sentence at the same word for the same box",
     /var ELL_FULL=new WeakMap\(\);/.test(APP) &&
     /function ellCeil\(n, lines\)\{/.test(APP) &&
-    /else if\(m\.ceil>0 && n\.clientHeight>m\.ceil\+m\.lh\/2\)\{/.test(APP) &&
+    /var cs=getComputedStyle\(n\), lh=parseFloat\(cs\.lineHeight\)\|\|16, ceil=lines>0\?lines\*lh:0;/.test(APP) &&
+    /n\.style\.height="auto"; n\.style\.maxHeight="none"; n\.style\.overflow="visible";/.test(APP) &&
+    /if\(n\.scrollHeight>m\.ceil\+m\.lh\/2\)\{/.test(APP) &&
     /if\(sp>12\) t=t\.slice\(0,sp\);/.test(APP), null);
 
   const appBudget = (APP.match(/ellMark\((?:wfHost|tg\.g), "\.wfmini \.s", 3\)/g) || []).length;
-  report("A4) every call site names its line budget, so the ceiling is known even where this renderer reports no max-height",
-    appBudget >= 5 && /H\.ellMark\(root, "\.im-card-sum", 5\)/.test(APP) &&
+  const appTitle = (APP.match(/ellMark\((?:wfHost|tg\.g), "\.wfmini \.t", 2\)/g) || []).length;
+  /* 6.171.0 — the TITLE has a budget too. It was never marked at all before this wave, and
+     an unmarked two-line title is one of the six reasons a card ran past its box. Every
+     summary call site now has a title call site beside it, on both surfaces. */
+  report("A4) every call site names its line budget — summary 3, title 2, Imagine 5 — so the ceiling is known even where this renderer reports no max-height",
+    appBudget >= 5 && appTitle === appBudget && /H\.ellMark\(root, "\.im-card-sum", 5\)/.test(APP) &&
     /ellMark: function\(root, sel, lines\)\{ ellMark\(root, sel, lines\); \}/.test(APP) &&
     /ellMark: function \(root, sel, lines\) \{ ellMark\(root, sel, lines\); \}/.test(MAIN) &&
-    (SCREEN.match(/em\((?:g|root), "\.wfmini \.s", 3\)/g) || []).length === 2,
-    { appBudget, screen: (SCREEN.match(/em\((?:g|root), "\.wfmini \.s", 3\)/g) || []).length });
+    /em\(gd, "\.wfmini \.t", 2\);/.test(SCREEN) && /em\(gd, "\.wfmini \.s", 3\);/.test(SCREEN),
+    { appBudget, appTitle, screenT: /em\(gd, "\.wfmini \.t", 2\);/.test(SCREEN) });
 
-  report("A5) the stylesheet still states the ceiling it always stated — the cut is a second answer, not a replacement",
-    /\.wfmini \.s \{ position: relative; display: block; margin-top: 4px; margin-bottom: 4px; max-height: 6\.75em;/.test(read("panel/styles.css")),
+  /* 6.171.0 — THE CEILING IS STATED AS A HEIGHT, NOT A MAX-HEIGHT. That is the change this
+     wave measured its way to: `max-height` + `overflow:hidden` does not clip in Adobe UXP,
+     so the stylesheet asked for a ceiling the renderer never applied. An explicit `height`
+     is honoured, and with the words cut to the same budget the box is full, not clipped. */
+  report("A5) the stylesheet states the ceiling as an explicit height — max-height is a request this renderer declines",
+    /\.wfmini \.s \{ position: relative; display: block; margin-top: 4px; margin-bottom: 4px; height: 6\.75em;/.test(read("panel/styles.css")) &&
+    /\.wfmini \.t \{ position: relative; display: block; margin-top: 4px; height: 4\.5em;/.test(read("panel/styles.css")) &&
+    /\.wfmini \.s\{[^}]*height:6\.75em/.test(APP) && /\.wfmini \.t\{[^}]*height:4\.5em/.test(APP),
     null);
 }
 
@@ -155,17 +192,23 @@ async function panelWalk(browser) {
         const pg = document.getElementById("pageAiTools");
         const cards = [].slice.call(pg.querySelectorAll(".wfmini")).filter(c => c.getBoundingClientRect().height > 0);
         let sPastCard = 0, worstPx = 0, pillOutside = 0, pillMissing = 0, marked = 0;
+        /* 6.171.0 — and the words themselves, against the budget they were given. With the
+           clipping withdrawn a box is exactly as tall as its ink, so this reads the ink. */
+        let sOverBudget = 0, worstLines = 0;
         for (const c of cards) {
           const cr = c.getBoundingClientRect(), s = c.querySelector(".s"), go = c.querySelector(".go");
           if (s) {
             const past = Math.round(s.getBoundingClientRect().bottom - cr.bottom);
             if (past > 0.6) { sPastCard++; if (past > worstPx) worstPx = past; }
             if (s.querySelector(".ell")) marked++;
+            const lh = parseFloat(getComputedStyle(s).lineHeight) || 16;
+            const lines = s.getBoundingClientRect().height / lh;
+            if (lines > 3.5) { sOverBudget++; if (lines > worstLines) worstLines = Math.round(lines * 10) / 10; }
           }
           if (!go) pillMissing++;
           else if (go.getBoundingClientRect().bottom > cr.bottom + 0.6) pillOutside++;
         }
-        return { cards: cards.length, sPastCard, worstPx, pillOutside, pillMissing, marked };
+        return { cards: cards.length, sPastCard, worstPx, pillOutside, pillMissing, marked, sOverBudget, worstLines };
       });
       out[mode] = { clean: await measure() };
 
@@ -176,7 +219,24 @@ async function panelWalk(browser) {
           const h = c.getBoundingClientRect().height; if (h > 0) c.style.height = Math.round(h) + "px";
         });
       });
-      if (mode === "old-marker") await page.evaluate(OLD_MARK);
+      if (mode === "old-marker") {
+        /* 6.171.0 — GIVE THE OLD MARKER THE SENTENCE IT WAS WRITTEN FOR.
+           In 6.96.4 the shipped marker only ever ADDED a "…" in this renderer, so the words
+           were still whole when this leg started and withdrawing the clipping let them out.
+           6.100.0's marker really cuts, so by now the overrun has already been removed and
+           the old marker would be handed a sentence that cannot overflow anything — both
+           legs would report a tidy page and the proof would quietly prove nothing. The whole
+           sentence is on the element (data-full, the same record the parity walk reads), so
+           put it back first: a full sentence, a pinned frame, a renderer that does not clip,
+           and 6.167.3's marker — the owner's photograph, reconstructed exactly. */
+        await page.evaluate(() => {
+          [].slice.call(document.querySelectorAll("#pageAiTools .wfmini .s")).forEach((n) => {
+            const full = n.getAttribute("data-full");
+            if (full) n.textContent = full;
+          });
+        });
+        await page.evaluate(OLD_MARK);
+      }
       await page.addStyleTag({ content: NO_CLIP });
       await page.evaluate(() => {
         const em = window.HNK && window.HNK.ellMark;
@@ -198,11 +258,19 @@ async function panelWalk(browser) {
      ladder) the summary was two lines over and the SENTENCE itself painted below the
      border. On the 178px card of the first two-column step it is one line over, which is
      less than the pill's own height plus its margin, so the sentence stays inside and the
-     PILL is the thing pushed out. Both are the same defect — content painting outside its
-     frame — so the check asks for either, and still demands that the shipped path shows
-     neither, on the same nine cards, in the same run. */
-  report("B2) THE PHOTOSHOP CASE: the frame pinned and the clipping withdrawn — 6.167.3's marker lets the card's content out of its frame (the sentence, or the pill it pushes), this one does not",
-    (o.hurt.sPastCard > 0 || o.hurt.pillOutside > 0) && o.hurt.marked === 0 &&
+     PILL is the thing pushed out.
+
+     6.171.0 — AND IT IS MEASURED ON THE WORDS NOW, NOT ONLY ON THE FRAME. Since every card
+     in a row became the same height (6.100.0), the shortest card in a row carries slack:
+     its summary can run a line over and still not reach the card's own border, so "past the
+     frame" stopped being able to see the defect here even when it is present. The defect was
+     never really about the border — it is a sentence painting more lines than it was given —
+     so that is what this now asks, against the budget the call site named (3 lines, half a
+     line of tolerance for Burmese ink). The frame checks stay exactly as they were: the
+     shipped path must still show nothing outside any card, and no pill missing. */
+  report("B2) THE PHOTOSHOP CASE: the frame pinned and the clipping withdrawn — 6.167.3's marker leaves sentences over their line budget (and lets a card's content out of its frame where the row has no slack), this one does neither",
+    o.hurt.sOverBudget > 0 && o.hurt.marked === 0 &&
+    s.hurt.sOverBudget === 0 &&
     s.hurt.sPastCard === 0 && s.hurt.pillOutside === 0 && s.hurt.pillMissing === 0,
     { oldMarker: o.hurt, shipped: s.hurt });
   report("B3) and the cut is honest — the cards it shortened are the cards it marked, and it marked nothing it left whole",

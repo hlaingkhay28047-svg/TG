@@ -83,43 +83,109 @@ const between = (s, a, b) => { const i = s.indexOf(a), j = s.indexOf(b, i); retu
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
 
-/* the walk's own reading of "cut": the same half-line rule the shipped helper uses */
+/* the walk's own reading of "cut".
+   6.171.0 - IT ASKS THE ELEMENT, NOT THE RENDERER. Until this wave the marker only ever
+   marked what a renderer had hidden, so "was it cut?" could be read back as
+   scrollHeight - clientHeight. That question is exactly the one Photoshop answers wrongly:
+   it reports a tidy clientHeight whether or not it clipped, which is how 101 of 194 cards
+   came to paint past their box with every test we owned agreeing the page was fine. The
+   marker now shortens the words themselves and keeps the original on the element
+   (data-full), so the honest question is whether the words on screen are still the whole
+   sentence. A renderer cannot lie about that. Elements the marker never reached (no
+   data-full) fall back to the old overflow reading, so a page it skipped still counts. */
 const TALLY = `(sel) => {
   const list = Array.prototype.slice.call(document.querySelectorAll(sel)).filter(n => n.clientHeight > 0);
   let cut = 0, marked = 0, mismatch = 0;
   list.forEach(n => {
-    const lh = parseFloat(getComputedStyle(n).lineHeight) || 16;
-    const isCut = n.scrollHeight - n.clientHeight > lh / 2;
     const has = !!n.querySelector(".ell");
+    const full = n.getAttribute("data-full");
+    let isCut;
+    if (full) {
+      const shown = (n.textContent || "").replace(/\u2026\s*$/, "");
+      isCut = shown.replace(/\s+$/, "") !== full.replace(/\s+$/, "");
+    } else {
+      const lh = parseFloat(getComputedStyle(n).lineHeight) || 16;
+      isCut = n.scrollHeight - n.clientHeight > lh / 2;
+    }
     if (isCut) cut++; if (has) marked++; if (isCut !== has) mismatch++;
   });
   return { n: list.length, cut, marked, mismatch };
 }`;
 
+/* 6.100.0 - AND THE COUNTS ARE MEASURED ON THE PAGE, NOT REMEMBERED FROM ONE MACHINE.
+   "136 of the 194 end on their own word" and "at most 8 of the 22 Imagine summaries are
+   cut" were true of the fonts on the machine this test was written on. CI draws the same
+   page with a different fallback and cuts NINE of the 22 - the ceiling is right, the
+   marker is exact (mismatch 0 on both), and the run still went red on a number that was
+   never the contract. What IS the contract is the comparison: the taller ceiling must
+   rescue sentences the old one cut, and a clear majority must end on their own word.
+   Both are measured below on whatever fonts the machine has, the way ellMark measures -
+   unclamped, against lines x line-height plus half a line - and the element is put back
+   exactly as it was found. */
+const NATURAL = `(sel, lines, was) => {
+  const list = Array.prototype.slice.call(document.querySelectorAll(sel)).filter(n => n.clientHeight > 0);
+  let over = 0, overWas = 0;
+  list.forEach(n => {
+    const html = n.innerHTML;
+    const sv = { h: n.style.height, mh: n.style.maxHeight, ov: n.style.overflow, lc: n.style.webkitLineClamp };
+    const lh = parseFloat(getComputedStyle(n).lineHeight) || 16;
+    const full = n.getAttribute("data-full");
+    if (full != null) n.textContent = full;
+    else { const e = n.querySelector(".ell"); if (e) e.remove(); }
+    n.style.height = "auto"; n.style.maxHeight = "none"; n.style.overflow = "visible";
+    try { n.style.webkitLineClamp = "unset"; } catch (e) { }
+    const nat = n.scrollHeight;
+    n.style.height = sv.h; n.style.maxHeight = sv.mh; n.style.overflow = sv.ov;
+    try { n.style.webkitLineClamp = sv.lc; } catch (e) { }
+    n.innerHTML = html;
+    if (nat > lines * lh + lh / 2) over++;
+    if (nat > was * lh + lh / 2) overWas++;
+  });
+  return { n: list.length, over, overWas };
+}`;
+
 /* ================= A) the source ================= */
 function sourcePins() {
-  report("A1) the web app clamps .wfmini .s at three lines with max-height (6.75em at line-height 2.25) and no -webkit-line-clamp, and .ell is an absolutely-placed marker on the card's own background, shared with .im-card-sum",
-    /\.wfmini \.s\{position:relative;font-size:11\.5px;color:var\(--muted\);line-height:2\.25;max-height:6\.75em;overflow:hidden;overflow-wrap:anywhere\}/.test(APP) &&
-    !/\.wfmini \.s\{[^}]*-webkit-line-clamp/.test(APP) &&
-    /\.wfmini \.s \.ell,\.im-card-sum \.ell\{position:absolute;right:0;bottom:0;padding-left:12px;background:var\(--panel-2\);color:var\(--muted\);font-weight:700\}/.test(APP), null);
+  /* 6.171.0 - THE CEILING IS A HEIGHT NOW, AND THE TITLE HAS ONE TOO.
+     `max-height` + `overflow:hidden` is a request Adobe UXP declines: measuring the owner's
+     real panel at 230px found 101 of 194 cards painting past a box the stylesheet had
+     asked to clip. An explicit `height` is honoured, and the words are cut to the same
+     budget so the box is full rather than clipped. The title was never clamped at all and
+     is now 2 lines / 4.5em, which was one of the six reasons a card overran. The marker
+     sits on both. */
+  report("A1) the web app states .wfmini .s as a three-line height (6.75em at 2.25) and .wfmini .t as a two-line one, and .ell is an absolutely-placed marker on the card's own background, shared by title, summary and .im-card-sum",
+    /\.wfmini \.s\{position:relative;font-size:11\.5px;color:var\(--muted\);line-height:2\.25;height:6\.75em;overflow:hidden;overflow-wrap:anywhere\}/.test(APP) &&
+    /\.wfmini \.t\{[^}]*line-height:2\.25;[^}]*height:4\.5em\}/.test(APP) &&
+    !/\.wfmini \.s\{[^}]*max-height/.test(APP) &&
+    /\.wfmini \.t \.ell,\.wfmini \.s \.ell,\.im-card-sum \.ell\{position:absolute;right:0;bottom:0;padding-left:12px;background:var\(--panel-2\);color:var\(--muted\);font-weight:700\}/.test(APP), null);
 
   const helper = between(APP, "function ellMark(root, sel, lines){", "\nfunction escH(");
-  /* 6.96.4 — the marker gained a second answer: where the renderer hides nothing it cuts the words
-     themselves. The first answer is unchanged, and so is the half-line tolerance this pin was cut for. */
-  report("A2) ellMark: it removes any earlier marker, reads the element's own line-height and calls a box cut only when more than half a line is hidden — never a single pixel (Burmese ink overhangs its line box) — and where the renderer hid nothing it shortens the sentence instead, every step inside a try that leaves the card untouched when nothing measures",
+  /* 6.96.4 gave the marker a second answer; 6.100.0 made that the only answer, because the
+     first one asked the renderer a question Photoshop answers wrongly. It now removes every
+     clamp, reads the ink the words really need, cuts to the budget, restores what it
+     borrowed and keeps the original on the element. The half-line tolerance - the part that
+     was always right - is untouched: Burmese ink overhangs its line box, so nothing is cut
+     for a pixel. */
+  report("A2) ellMark: it removes any earlier marker, keeps the whole sentence, unclamps the box to read the ink it truly needs, cuts to the line budget at a space - never for a single pixel - and restores every property it borrowed, each step inside a try that leaves the card untouched when nothing measures",
     helper.indexOf('var old=n.querySelector(".ell"); if(old) old.remove();') > 0 &&
-    /var cs=getComputedStyle\(n\), lh=parseFloat\(cs\.lineHeight\)\|\|16, mh=parseFloat\(cs\.maxHeight\);/.test(APP) &&
-    /if\(n\.scrollHeight-n\.clientHeight>m\.lh\/2\)\{ cut=true; \}/.test(helper) &&
-    /else if\(m\.ceil>0 && n\.clientHeight>m\.ceil\+m\.lh\/2\)\{/.test(helper) &&
-    /if\(cut\)\{ var e=document\.createElement\("span"\); e\.className="ell"; e\.textContent="\\u2026"; n\.appendChild\(e\); \}/.test(helper) &&
-    !/clientHeight\+1/.test(helper) && (helper.match(/catch\(e\)\{\}/g) || []).length >= 2, { len: helper.length });
+    /var cs=getComputedStyle\(n\), lh=parseFloat\(cs\.lineHeight\)\|\|16, ceil=lines>0\?lines\*lh:0;/.test(APP) &&
+    /var sv=\{h:n\.style\.height,mh:n\.style\.maxHeight,ov:n\.style\.overflow,dp:n\.style\.display,lc:n\.style\.webkitLineClamp\};/.test(helper) &&
+    /n\.style\.height="auto"; n\.style\.maxHeight="none"; n\.style\.overflow="visible";/.test(helper) &&
+    /n\.style\.height=sv\.h; n\.style\.maxHeight=sv\.mh; n\.style\.overflow=sv\.ov; n\.style\.display=sv\.dp;/.test(helper) &&
+    /if\(n\.scrollHeight>m\.ceil\+m\.lh\/2\)\{/.test(helper) &&
+    /if\(cut\)\{ var e=document\.createElement\("span"\); e\.className="ell"; e\.textContent="…"; n\.appendChild\(e\); \}/.test(helper) &&
+    !/m\.ceil\+1\b/.test(helper) && (helper.match(/catch\(e\)\{\}/g) || []).length >= 2, { len: helper.length });
 
-  report("A3) the app runs the marker where the cards can be measured: once the grid is in the document, once per .grp-h tap on the way up through the host (bound a single time), after every search pass, and from both quick-jump chips",
-    APP.indexOf('  ellMark(wfHost, ".wfmini .s", 3);\n  if(!wfHost.__ellBound){') > 0 &&
+  /* 6.171.0 - and the TITLE is marked wherever the summary is. Every call site carries the
+     pair now, on both surfaces: an unmarked two-line title was one of the six reasons a
+     card ran past its own box. */
+  report("A3) the app runs the marker - title and summary - where the cards can be measured: once the grid is in the document, once per .grp-h tap on the way up through the host (bound a single time), after every search pass, and from both quick-jump chips",
+    (APP.match(/ellMark\(wfHost, "\.wfmini \.t", 2\); ellMark\(wfHost, "\.wfmini \.s", 3\);/g) || []).length >= 4 &&
+    /ellMark\(tg\.g, "\.wfmini \.t", 2\); ellMark\(tg\.g, "\.wfmini \.s", 3\);/.test(APP) &&
     /wfHost\.__ellBound=1;/.test(APP) && /String\(t\.className\)\.indexOf\("grp-h"\)>=0/.test(APP) &&
-    APP.indexOf('    ellMark(wfHost, ".wfmini .s", 3);   /* 6.96.0 — the filter opens and closes groups; the marker follows */') > 0 &&
-    APP.indexOf('if(tg.g.className.indexOf("open")<0){ tg.g.className="grp open"; ellMark(tg.g, ".wfmini .s", 3); }') > 0 &&
-    APP.indexOf('        ellMark(wfHost, ".wfmini .s", 3);\n        if(first) first.scrollIntoView({behavior:"smooth", block:"center"});') > 0, null);
+    (APP.match(/ellMark\((?:wfHost|tg\.g), "\.wfmini \.t", 2\)/g) || []).length ===
+    (APP.match(/ellMark\((?:wfHost|tg\.g), "\.wfmini \.s", 3\)/g) || []).length,
+    { pairs: (APP.match(/ellMark\(wfHost, "\.wfmini \.t", 2\); ellMark\(wfHost, "\.wfmini \.s", 3\);/g) || []).length });
 
   const mod = between(APP, "/* ---- IMAGINE_MODULE ---- */", "/* ---- /IMAGINE_MODULE ---- */");
   report("A4) the Imagine hub marks its own summaries through the host (so the panel runs its own copy), and the host publishes ellMark",
@@ -138,9 +204,10 @@ function sourcePins() {
     /\.im-card\{flex:1 1 40%;min-width:132px;margin:5px;/.test(css) &&
     /\.im-card-sum\{position:relative;margin:4px 0 8px;font-size:11\.5px;line-height:1\.5;max-height:7\.5em;overflow:hidden;flex:1 1 auto\}/.test(css), null);
 
-  report("A7) the panel stylesheet carries the same clamps and the same kicker, plus the two rules only this renderer needs: the hub heading's row never wraps, and the summary ceiling is stated against the panel's own 1.7 line (5 × 1.7 = 8.5em) because .mut wins the cascade here",
-    /\.wfmini \.s \{ position: relative; display: block; margin-top: 4px; margin-bottom: 4px; max-height: 6\.75em;/.test(PCSS) &&
-    /\.wfmini \.s \.ell, \.im-card-sum \.ell \{ position: absolute; right: 0; bottom: 0; padding-left: 12px;/.test(PCSS) &&
+  report("A7) the panel stylesheet carries the same ceilings - stated as heights, and on the title too - and the same kicker, plus the two rules only this renderer needs: the hub heading's row never wraps, and the summary ceiling is stated against the panel's own 1.7 line (5 × 1.7 = 8.5em) because .mut wins the cascade here",
+    /\.wfmini \.s \{ position: relative; display: block; margin-top: 4px; margin-bottom: 4px; height: 6\.75em;/.test(PCSS) &&
+    /\.wfmini \.t \{ position: relative; display: block; margin-top: 4px; height: 4\.5em;/.test(PCSS) &&
+    /\.wfmini \.t \.ell, \.wfmini \.s \.ell, \.im-card-sum \.ell \{ position: absolute; right: 0; bottom: 0; padding-left: 12px;/.test(PCSS) &&
     /#pageAiTools \.hero-mini \.kick \{ position: relative; max-width: 100%; margin: 0 0 1px; padding: 10px 6px 0 0;/.test(PCSS) &&
     /letter-spacing: \.12em; text-transform: uppercase; color: var\(--accent\); line-height: 1\.7;/.test(PCSS) &&
     /@media \(max-width:389px\)\{ #pageAiTools \.hero-mini \.kick \{ font-size: 9\.6px; letter-spacing: \.10em; \} \}/.test(PCSS) &&
@@ -153,17 +220,26 @@ function sourcePins() {
     PCSS.indexOf("#pageImagine .im-card-sum { line-height: 1.7; max-height: 8.5em; }") < PCSS.indexOf("/* ---- IMAGINE_CSS ---- */"), null);
 
   const pHelper = between(PMAIN, "function ellMark(root, sel, lines) {", "\nfunction setIcnText(");
-  report("A8) the panel's own ellMark is the app's rule in this renderer's dialect (Array.prototype.forEach over the NodeList, removeChild, the same half-line tolerance), published as HNK.ellMark and offered to the Imagine module through imagineHost",
+  report("A8) the panel's own ellMark is the app's rule in this renderer's dialect (Array.prototype.forEach over the NodeList, removeChild, the same unclamp-measure-cut-restore, the same half-line tolerance), published as HNK.ellMark and offered to the Imagine module through imagineHost",
     /Array\.prototype\.forEach\.call\(list, function \(n\) \{/.test(pHelper) &&
     /const lh = parseFloat\(cs\.lineHeight\) \|\| 16;/.test(PMAIN) &&
-    /if \(n\.scrollHeight - n\.clientHeight > m\.lh \/ 2\) \{/.test(pHelper) && !/clientHeight \+ 1/.test(pHelper) &&
-    /\} else if \(m\.ceil > 0 && n\.clientHeight > m\.ceil \+ m\.lh \/ 2\) \{/.test(pHelper) &&
+    /n\.style\.height = "auto"; n\.style\.maxHeight = "none"; n\.style\.overflow = "visible";/.test(pHelper) &&
+    /n\.style\.height = sv\.h; n\.style\.maxHeight = sv\.mh; n\.style\.overflow = sv\.ov; n\.style\.display = sv\.dp;/.test(pHelper) &&
+    /if \(n\.scrollHeight > m\.ceil \+ m\.lh \/ 2\) \{/.test(pHelper) && !/m\.ceil \+ 1\b/.test(pHelper) &&
     /g\.HNK\.ellMark = ellMark;/.test(PMAIN) && /ellMark: function \(root, sel, lines\) \{ ellMark\(root, sel, lines\); \},/.test(PMAIN), { len: pHelper.length });
 
-  report("A9) the panel's Workflows screen marks after it renders and again whenever a group opens — setOpen is the single door the header tap and the search filter both come through, and since 6.167.3 it writes the body's own display there too",
-    /var em = globalThis\.HNK && globalThis\.HNK\.ellMark;\n      if \(em\) em\(root, "\.wfmini \.s", 3\);/.test(SCREEN) &&
+  /* 6.171.0 - one door, wfClamp, and it refuses to measure a box that cannot be measured.
+     A grid that is still detached, or inside a closed group, reports 0 for everything, and
+     0 is under every ceiling - so clamping one is not wasted work, it is a silent no-op
+     that never runs again. That is why the first version of this fix changed nothing on
+     the real page: renderList builds each grid, lays it out, and only then appends it. */
+  report("A9) the panel's Workflows screen clamps through one door (wfClamp: title 2, summary 3) - after the grid is laid out, after every card is appended, and whenever a group opens - and refuses to measure a detached or zero-height grid",
+    /function wfClamp\(gd\) \{/.test(SCREEN) &&
+    /em\(gd, "\.wfmini \.t", 2\);/.test(SCREEN) && /em\(gd, "\.wfmini \.s", 3\);/.test(SCREEN) &&
+    /if \(!gd\.ownerDocument \|\| !gd\.ownerDocument\.body \|\| !gd\.ownerDocument\.body\.contains\(gd\)\) return;/.test(SCREEN) &&
+    /if \(!\(gd\.getBoundingClientRect\(\)\.height > 0\)\) return;/.test(SCREEN) &&
     /function setOpen\(on\) \{\n      openNow = !!on;\n      g\.className = on \? "grp app-grp open" : "grp app-grp";\n      body\.style\.display = on \? "block" : "none";/.test(SCREEN) &&
-    /if \(on\) \{ try \{ var em = globalThis\.HNK && globalThis\.HNK\.ellMark; if \(em\) em\(g, "\.wfmini \.s", 3\); \} catch \(e\) \{ \} \}/.test(SCREEN), null);
+    /if \(on\) \{ wfClamp\(g\); \}/.test(SCREEN), null);
 }
 
 /* ================= B) the web app ================= */
@@ -176,8 +252,9 @@ async function appWalk(browser) {
     await page.addInitScript(() => { try { localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1"); } catch (e) { } });
     await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2200);
-    out[W] = await page.evaluate(async (tallySrc) => {
-      const tally = eval("(" + tallySrc + ")");
+    out[W] = await page.evaluate(async (src) => {
+      const tally = eval("(" + src.t + ")");
+      const natural = eval("(" + src.o + ")");
       const r = {};
       try { document.body.classList.remove("wall"); } catch (e) { }
       switchPage("pgWf"); await new Promise(x => setTimeout(x, 1300));
@@ -192,7 +269,13 @@ async function appWalk(browser) {
       heads.forEach(h => h.click());
       await new Promise(x => setTimeout(x, 700));
       r.allOpen = tally("#pgWf .wfmini .s");
-      r.ceiling = (function () { const s = document.querySelector("#pgWf .wfmini .s"); const cs = getComputedStyle(s); return Math.round(parseFloat(cs.maxHeight) / parseFloat(cs.lineHeight) * 100) / 100; })();
+      /* what a two-line ceiling would have cut here, and what three cuts - same page, same fonts */
+      r.natWf = natural("#pgWf .wfmini .s", 3, 2);
+      /* 6.171.0 - the ceiling is stated as `height` now (max-height is a request UXP
+         declines), so read whichever of the two the stylesheet actually sets. */
+      r.ceiling = (function () { const s = document.querySelector("#pgWf .wfmini .s"); const cs = getComputedStyle(s);
+        const px = parseFloat(cs.maxHeight) > 0 && isFinite(parseFloat(cs.maxHeight)) ? parseFloat(cs.maxHeight) : parseFloat(cs.height);
+        return Math.round(px / parseFloat(cs.lineHeight) * 100) / 100; })();
       /* and through the search filter, which opens and closes groups of its own accord */
       const inp = document.getElementById("wfSearch"); inp.value = "a"; inp.oninput();
       await new Promise(x => setTimeout(x, 400));
@@ -203,8 +286,11 @@ async function appWalk(browser) {
       switchPage("pgImagine"); try { IMAGINE.goHub(); } catch (e) { }
       await new Promise(x => setTimeout(x, 1500));
       r.imSum = tally("#pgImagine .im-card-sum");
+      r.natIm = natural("#pgImagine .im-card-sum", 5, 2);
       const sum = document.querySelector("#pgImagine .im-card-sum");
-      r.imCeiling = Math.round(parseFloat(getComputedStyle(sum).maxHeight) / parseFloat(getComputedStyle(sum).lineHeight) * 100) / 100;
+      r.imCeiling = (function () { const cs = getComputedStyle(sum);
+        const px = parseFloat(cs.maxHeight) > 0 && isFinite(parseFloat(cs.maxHeight)) ? parseFloat(cs.maxHeight) : parseFloat(cs.height);
+        return Math.round(px / parseFloat(cs.lineHeight) * 100) / 100; })();
       const cards = Array.prototype.slice.call(document.querySelectorAll("#pgImagine .im-card"));
       const rows = {}; cards.forEach(c => { const y = Math.round(c.getBoundingClientRect().top); rows[y] = (rows[y] || 0) + 1; });
       r.imCards = { n: cards.length, perRow: Object.keys(rows).map(k => rows[k])[0], w: Math.round(cards[0].getBoundingClientRect().width) };
@@ -213,7 +299,7 @@ async function appWalk(browser) {
       const h2 = document.querySelector("#pgImagine .im-hub h2"), icn = h2.querySelector(".ic-s");
       r.h2Icon = Math.round(icn.getBoundingClientRect().top - h2.getBoundingClientRect().top);
       return r;
-    }, TALLY);
+    }, { t: TALLY, o: NATURAL });
     out[W].errs = errs;
     await ctx.close();
   }
@@ -224,12 +310,15 @@ async function appWalk(browser) {
     a.atRender.mismatch === 0 && a.allOpen.mismatch === 0 && a.filtered.mismatch === 0 && a.cleared.mismatch === 0 &&
     b.allOpen.mismatch === 0 && b.filtered.mismatch === 0 &&
     a.tapped >= 8 && a.allOpen.n > 150 && a.allOpen.marked > 20, { a, b: { tapped: b.tapped, allOpen: b.allOpen } });
-  report("B3) the ceiling is three whole lines, and at 420px 136 of the 194 descriptions now end on their own word (the two-line ceiling cut 138 of them)",
-    Math.abs(a.ceiling - 3) < 0.05 && a.allOpen.n === 194 && a.allOpen.cut <= 70 && a.allOpen.n - a.allOpen.cut >= 130, { ceiling: a.ceiling, cut: a.allOpen.cut });
-  report("B4) the Imagine summary is a five-line ceiling with the same honest marker, the cards keep two to a row at 420px and the page-hero headline stays inside 72% of the banner, with the hub heading's icon on line one",
+  report("B3) the ceiling is three whole lines, it rescues descriptions a two-line ceiling would cut, and a clear majority of the 194 end on their own word",
+    Math.abs(a.ceiling - 3) < 0.05 && a.allOpen.n === 194 && a.natWf.n === 194 &&
+    a.natWf.over < a.natWf.overWas && a.allOpen.n - a.allOpen.cut > a.allOpen.cut,
+    { ceiling: a.ceiling, cut: a.allOpen.cut, nat: a.natWf });
+  report("B4) the Imagine summary is a five-line ceiling with the same honest marker - it rescues summaries the two-line ceiling cut and most of the 22 end on their own word - the cards keep two to a row at 420px and the page-hero headline stays inside 72% of the banner, with the hub heading's icon on line one",
     Math.abs(a.imCeiling - 5) < 0.05 && a.imSum.n === 22 && a.imSum.mismatch === 0 && b.imSum.mismatch === 0 &&
-    a.imSum.cut <= 8 && a.imCards.perRow === 2 && a.phHead.w <= a.phHead.hero * 0.74 && b.phHead.w <= b.phHead.hero * 0.74 &&
-    a.h2Icon < 8 && b.h2Icon < 8, { a: { imCeiling: a.imCeiling, imSum: a.imSum, cards: a.imCards, ph: a.phHead, h2: a.h2Icon }, b: { imSum: b.imSum, ph: b.phHead } });
+    a.natIm.n === 22 && a.natIm.over < a.natIm.overWas && a.imSum.n - a.imSum.cut > a.imSum.cut &&
+    a.imCards.perRow === 2 && a.phHead.w <= a.phHead.hero * 0.74 && b.phHead.w <= b.phHead.hero * 0.74 &&
+    a.h2Icon < 8 && b.h2Icon < 8, { a: { imCeiling: a.imCeiling, imSum: a.imSum, nat: a.natIm, cards: a.imCards, ph: a.phHead, h2: a.h2Icon }, b: { imSum: b.imSum, ph: b.phHead } });
   report("B5) no page error on either width", a.errs.length === 0 && b.errs.length === 0, { a: a.errs, b: b.errs });
 }
 
@@ -269,11 +358,16 @@ async function panelWalk(browser) {
       await new Promise(x => setTimeout(x, 800));
       r.allOpen = tally("#pageAiTools .wfmini .s");
       const s = document.querySelector("#pageAiTools .wfmini .s");
-      r.ceiling = Math.round(parseFloat(getComputedStyle(s).maxHeight) / parseFloat(getComputedStyle(s).lineHeight) * 100) / 100;
+      /* 6.171.0 - the ceiling is a `height` now, here too (see the app walk above). */
+      r.ceiling = (function () { const cs = getComputedStyle(s);
+        const px = parseFloat(cs.maxHeight) > 0 && isFinite(parseFloat(cs.maxHeight)) ? parseFloat(cs.maxHeight) : parseFloat(cs.height);
+        return Math.round(px / parseFloat(cs.lineHeight) * 100) / 100; })();
       switchPage("imagine"); await new Promise(x => setTimeout(x, 2000));
       r.imSum = tally("#pageImagine .im-card-sum");
       const sum = document.querySelector("#pageImagine .im-card-sum");
-      r.imCeiling = Math.round(parseFloat(getComputedStyle(sum).maxHeight) / parseFloat(getComputedStyle(sum).lineHeight) * 100) / 100;
+      r.imCeiling = (function () { const cs = getComputedStyle(sum);
+        const px = parseFloat(cs.maxHeight) > 0 && isFinite(parseFloat(cs.maxHeight)) ? parseFloat(cs.maxHeight) : parseFloat(cs.height);
+        return Math.round(px / parseFloat(cs.lineHeight) * 100) / 100; })();
       const cards = Array.prototype.slice.call(document.querySelectorAll("#pageImagine .im-card"));
       const rows = {}; cards.forEach(c => { const y = Math.round(c.getBoundingClientRect().top); rows[y] = (rows[y] || 0) + 1; });
       r.imCards = { n: cards.length, perRow: Object.keys(rows).map(k => rows[k])[0], w: Math.round(cards[0].getBoundingClientRect().width) };
