@@ -107,7 +107,7 @@ function sourcePins() {
     /const ELL_FULL = new WeakMap\(\);/.test(MAIN) &&
     /function ellCeil\(n, lines\) \{/.test(MAIN) &&
     /let ceil = lines > 0 \? lines \* lh : 0;/.test(MAIN) &&
-    /const mh = parseFloat\(cs\.maxHeight\);/.test(MAIN) &&
+    /ceil = ellLenPx\(cs\.maxHeight, fs\) \|\| ellLenPx\(cs\.height, fs\);/.test(MAIN) &&
     /n\.style\.height = "auto"; n\.style\.maxHeight = "none"; n\.style\.overflow = "visible";/.test(MAIN) &&
     /if \(n\.scrollHeight > m\.ceil \+ m\.lh \/ 2\) \{/.test(MAIN) &&
     /if \(sp > 12\) s = s\.slice\(0, sp\);/.test(MAIN),
@@ -127,7 +127,8 @@ function sourcePins() {
   report("A3) the web app carries the identical rule, so both surfaces cut the same sentence at the same word for the same box",
     /var ELL_FULL=new WeakMap\(\);/.test(APP) &&
     /function ellCeil\(n, lines\)\{/.test(APP) &&
-    /var cs=getComputedStyle\(n\), lh=parseFloat\(cs\.lineHeight\)\|\|16, ceil=lines>0\?lines\*lh:0;/.test(APP) &&
+    /var cs=getComputedStyle\(n\), fs=parseFloat\(cs\.fontSize\);/.test(APP) &&
+    /var lh=ellLenPx\(cs\.lineHeight, fs\);/.test(APP) &&
     /n\.style\.height="auto"; n\.style\.maxHeight="none"; n\.style\.overflow="visible";/.test(APP) &&
     /if\(n\.scrollHeight>m\.ceil\+m\.lh\/2\)\{/.test(APP) &&
     /if\(sp>12\) t=t\.slice\(0,sp\);/.test(APP), null);
@@ -153,6 +154,27 @@ function sourcePins() {
     /\.wfmini \.t \{ position: relative; display: block; margin-top: 4px; height: 4\.5em;/.test(read("panel/styles.css")) &&
     /\.wfmini \.s\{[^}]*height:6\.75em/.test(APP) && /\.wfmini \.t\{[^}]*height:4\.5em/.test(APP),
     null);
+
+  /* 6.103.0 — AND THE CEILING IS COUNTED IN PIXELS, whatever the renderer answers with.
+     ellCeil read getComputedStyle().lineHeight straight through parseFloat and treated the
+     number as pixels. The card summary is authored `line-height: 2.25`, with no unit.
+     Chromium resolves that before it answers — an 11.5px summary comes back "25.875px" —
+     so three lines is 77.6px and the cut lands where the box ends. A renderer that answers
+     with the AUTHORED value hands back "2.25"; parseFloat reads 2.25, the ceiling becomes
+     6.75px, and the cut takes the whole sentence. E1 below runs exactly that renderer. */
+  report("A6) both surfaces resolve a length before they trust it — px, a bare multiplier, em/rem and normal, against the element's own font size",
+    /function ellLenPx\(v, fs\) \{/.test(MAIN) && /function ellLenPx\(v, fs\)\{/.test(APP) &&
+    /if \(\/px\$\/\.test\(s\)\) return n;/.test(MAIN) && /if\(\/px\$\/\.test\(s\)\) return n;/.test(APP) &&
+    /if \(\/r\?em\$\/\.test\(s\)\) return n \* fs;/.test(MAIN) && /if\(\/r\?em\$\/\.test\(s\)\) return n\*fs;/.test(APP) &&
+    /return n \* fs;   \/\* line-height: 2\.25 \*\//.test(MAIN) &&
+    /if \(!\(lh > 0\)\) lh = fs \* 1\.2;/.test(MAIN) && /if\(!\(lh>0\)\) lh=fs\*1\.2;/.test(APP) &&
+    /s === "normal"/.test(MAIN) && /s==="normal"/.test(APP),
+    { panel: /function ellLenPx/.test(MAIN), app: /function ellLenPx/.test(APP) });
+
+  /* And the floor under the cut: a card that somehow still holds one line too many loses
+     that line at its own border instead of painting it between two cards. */
+  report("A7) the card clips its own content — whatever the cut does, nothing paints outside the frame",
+    /\.wfmini \{[^}]*overflow: hidden;/.test(read("panel/styles.css")), null);
 }
 
 /* ================= B) the panel, walked ================= */
@@ -382,10 +404,82 @@ function releasePins() {
     { appVer, panVer, pv: pv.v, count, ci: CI.indexOf("node test/verify_card_text_fit.js") > 0 });
 }
 
+/* ================= E) the renderer that answers with the authored value =================
+
+   THE DEFECT the owner photographed on 6.173.0: most Smart Workflow cards showed an empty
+   description area where three lines had been reserved, and on the narrow panel one card's
+   sentence was painted between two cards, sliced. Two symptoms, one cause — the cut was
+   being made against a ceiling of 6.75 pixels.
+
+   This leg installs that renderer. getComputedStyle is replaced, for the measured element
+   only, with one that answers the AUTHORED values — `line-height: 2.25`, `height: 6.75em`
+   — the way a renderer that does not resolve before it answers would. The page's own
+   ellMark then runs. With this wave's ellCeil the cut lands on three real lines; with the
+   old one it would have landed on 6.75px, which E2 states as the number it is. */
+async function authoredUnits(browser) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const errs = []; page.on("pageerror", e => errs.push(String(e).slice(0, 200)));
+  await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(1200);
+  const r = await page.evaluate(() => {
+    const LONG = "Retouch B-style professional beauty retouch that keeps the identity of the face "
+      + "exactly as it was and cleans only the skin, the light and the colour of the whole frame, "
+      + "which is a sentence long enough to need more than three lines in a card this narrow.";
+    const host = document.createElement("div");
+    host.className = "wfgrid"; host.style.width = "330px";
+    const card = document.createElement("div"); card.className = "wfmini";
+    const s = document.createElement("span"); s.className = "s"; s.textContent = LONG;
+    card.appendChild(s); host.appendChild(card); document.body.appendChild(host);
+
+    const real = window.getComputedStyle.bind(window);
+    const realLh = parseFloat(real(s).lineHeight);          /* what Chromium resolves it to */
+    const realFs = parseFloat(real(s).fontSize);
+    /* the renderer under test: the authored strings, unresolved */
+    const AUTHORED = { lineHeight: "2.25", fontSize: "11.5px", height: "6.75em", maxHeight: "none" };
+    window.getComputedStyle = function (el, pe) {
+      const cs = real(el, pe);
+      if (el !== s) return cs;
+      return { lineHeight: AUTHORED.lineHeight, fontSize: AUTHORED.fontSize,
+               height: AUTHORED.height, maxHeight: AUTHORED.maxHeight,
+               display: cs.display, webkitLineClamp: cs.webkitLineClamp };
+    };
+    let cut = "", threw = "";
+    try { ellMark(host, ".wfmini .s", 3); cut = (s.textContent || "").replace(/\u2026$/, ""); }
+    catch (e) { threw = String(e).slice(0, 160); }
+    finally { window.getComputedStyle = real; }
+
+    /* how many real lines the kept words actually need, measured with the clamp withdrawn */
+    const sv = { h: s.style.height, ov: s.style.overflow };
+    s.style.height = "auto"; s.style.overflow = "visible";
+    const inkH = s.scrollHeight;
+    s.style.height = sv.h; s.style.overflow = sv.ov;
+
+    const marked = !!card.querySelector(".ell");
+    const cardB = card.getBoundingClientRect(), sB = s.getBoundingClientRect();
+    host.parentNode.removeChild(host);
+    return { cut: cut.length, full: LONG.length, marked, threw, inkH, realLh, realFs,
+             linesUsed: realLh > 0 ? Math.round(inkH / realLh) : -1,
+             oldCeil: 3 * (parseFloat(AUTHORED.lineHeight) || 16),
+             newCeil: 3 * (parseFloat(AUTHORED.lineHeight) * realFs),
+             outside: Math.round(sB.bottom - cardB.bottom) };
+  });
+  report("E1) a renderer that answers with the authored value still gets a cut on three real lines — words kept, marked, and inside the card",
+    !r.threw && r.cut > 40 && r.cut < r.full && r.marked === true &&
+    r.linesUsed > 0 && r.linesUsed <= 3 && r.outside <= 1, r);
+  /* the control, stated rather than assumed: the old reading of the same answer is a
+     ceiling of 6.75px — smaller than ONE line of this text — so it could only ever cut
+     the sentence away entirely. That is the empty description area in the photographs. */
+  report("E2) and the old reading of that same answer is a ceiling under a single line — which is why it emptied the box",
+    r.oldCeil < r.realLh && Math.abs(r.newCeil - 3 * r.realLh) < 1.5,
+    { oldCeil: r.oldCeil, oneRealLine: r.realLh, newCeil: r.newCeil });
+  report("E3) and the page threw nothing while the renderer was swapped", errs.length === 0, errs.slice(0, 3));
+  await page.close();
+}
+
 (async () => {
   sourcePins();
   const browser = await chromium.launch();
-  try { await panelWalk(browser); await appWalk(browser); await slotNumbers(browser); } finally { await browser.close(); }
+  try { await panelWalk(browser); await appWalk(browser); await slotNumbers(browser); await authoredUnits(browser); } finally { await browser.close(); }
   releasePins();
   console.log(failures ? "\nFAIL — " + failures + " check(s)" : "\nDONE — every check passed");
   process.exit(failures ? 1 : 0);

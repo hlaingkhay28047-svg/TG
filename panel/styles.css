@@ -2038,8 +2038,13 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    column from the script. It no longer needs to: a stray right margin only makes a row
    8px narrower, never wider, so a filtered grid stays inside its card either way. */
 .wfgrid { display: flex; flex-direction: row; flex-wrap: wrap; align-items: stretch; margin: 6px 0 -8px; }
+/* 6.103.0 — and the card clips its own content, whatever the cut does.
+   The words are cut to fit by ellMark (see ellCeil), which is the fix; this is
+   the floor under it. A card that somehow still holds one line too many now
+   loses that line at its own border instead of painting it onto the page
+   between two cards, which is what the owner photographed on 6.173.0. */
 .wfmini { position: relative; display: flex; flex-direction: column; width: 100%; min-width: 0;
-  margin: 0 0 8px; padding: 10px; box-sizing: border-box;
+  margin: 0 0 8px; padding: 10px; box-sizing: border-box; overflow: hidden;
   border: 1px solid var(--line-soft); border-radius: 11px; background-color: var(--panel-2);
   color: var(--text); text-align: left; cursor: pointer; }
 @media (min-width:460px){

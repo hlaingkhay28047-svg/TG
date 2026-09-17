@@ -406,17 +406,46 @@ function grpSyncAll(root) {
    cut at the same character, so the marker tells the truth on both surfaces and
    the parity is a fact instead of a coincidence. */
 const ELL_FULL = new WeakMap();
+/* 6.103.0 — A COMPUTED VALUE IS NOT ALWAYS A PIXEL LENGTH, and this is where
+   that assumption was hiding.
+
+   ellCeil read getComputedStyle().lineHeight straight through parseFloat and
+   treated the number as pixels. The Smart Workflow card's summary is authored
+   `line-height: 2.25` with no unit. Chromium resolves that before it answers —
+   measured here, an 11.5px summary comes back "25.875px" — so three lines is
+   77.6px and the cut lands where the box ends. A renderer that answers with the
+   AUTHORED value instead hands back "2.25"; parseFloat reads 2.25, the ceiling
+   becomes 6.75px, and every summary is cut to nothing. Where the clamp has not
+   run on a grid yet, the whole sentence paints past a card that reserved
+   exactly three lines for it. Both are in the owner's 6.173.0 photographs: an
+   empty description area on most cards, and a sentence sliced between two cards
+   on the narrow panel.
+
+   6.167.4 already taught the cut to run where the renderer declines
+   overflow:hidden. What it never questioned is HOW MUCH to cut. So resolve the
+   four forms a length arrives in — px, a bare multiplier, em/rem, and `normal`
+   — against the element's own font size. Nothing changes in Chromium, where
+   every one of them already arrives as px. */
+function ellLenPx(v, fs) {
+  const s = String(v == null ? "" : v).trim();
+  if (!s || s === "none" || s === "auto" || s === "normal") return 0;
+  const n = parseFloat(s);
+  if (!isFinite(n) || n <= 0) return 0;
+  if (/px$/.test(s)) return n;
+  if (/r?em$/.test(s)) return n * fs;
+  if (/^[0-9]*\.?[0-9]+$/.test(s)) return n * fs;   /* line-height: 2.25 */
+  return 0;   /* %, vh, ch — not ours to guess from here */
+}
 function ellCeil(n, lines) {
   const cs = getComputedStyle(n);
-  const lh = parseFloat(cs.lineHeight) || 16;
+  let fs = parseFloat(cs.fontSize);
+  if (!(fs > 0) || !isFinite(fs)) fs = 12;
+  let lh = ellLenPx(cs.lineHeight, fs);
+  if (!(lh > 0)) lh = fs * 1.2;   /* `normal`, or a unit this reader declines */
   /* the caller's line budget is the contract; a declared ceiling is only the
      fallback for an older call site that passes no line count */
   let ceil = lines > 0 ? lines * lh : 0;
-  if (!(ceil > 0)) {
-    const mh = parseFloat(cs.maxHeight);
-    if (mh > 0 && isFinite(mh)) ceil = mh;
-    else { const h = parseFloat(cs.height); if (h > 0 && isFinite(h)) ceil = h; }
-  }
+  if (!(ceil > 0)) ceil = ellLenPx(cs.maxHeight, fs) || ellLenPx(cs.height, fs);
   return { lh: lh, ceil: ceil };
 }
 function ellMark(root, sel, lines) {
@@ -2675,7 +2704,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.173.0";
+const PANEL_VERSION = "6.174.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
