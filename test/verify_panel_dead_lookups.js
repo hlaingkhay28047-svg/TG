@@ -124,10 +124,11 @@ const stripCode = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "");
 
   /* ---------------- D. the fixes, pinned in source ---------------- */
   const CODE = stripCode(MAIN);
-  report("D1) Learn Mode's switch — main.js publishes HNK.learnMode { get, set } (set(false) disarms a pending tap and saves), the AI Tools Settings screen draws #hnkSetLearn through dom.tOnOff(\"ai_learn_mode\"), the key exists in nine languages, and nothing binds the toggle that never existed",
-    /g\.HNK\.learnMode = \{\n\s*get: function \(\) \{ return !!state\.learnMode; \},\n\s*set: function \(on\) \{ state\.learnMode = !!on; if \(!state\.learnMode\) \{ try \{ disarm\(\); \} catch \(e\) \{ \} \} try \{ saveSettings\(\); \} catch \(e2\) \{ \} return state\.learnMode; \}\n\s*\};/.test(MAIN) &&
-    /id: "hnkSetLearn", text: dom\.tOnOff\("ai_learn_mode", LEARN_FALLBACK, learn\.get\(\)\)/.test(SETTINGS) && /var next = learn\.set\(!learn\.get\(\)\);/.test(SETTINGS) &&
-    (MAIN.match(/^    ai_learn_mode: "/gm) || []).length === 9 && !/tglLearn|bindToggle\(/.test(CODE), null);
+  report("D1) v6.170.0 — the Learn Mode switch is gone with the three-tap cycle it governed: main.js publishes no HNK.learnMode and keeps no state.learnMode, the AI Tools Settings screen draws no #hnkSetLearn, the ai_learn_mode string is gone from every dictionary, and the note in settings-screen.js says why",
+    !/HNK\.learnMode|state\.learnMode/.test(CODE) && !/hnkSetLearn|ai_learn_mode|LEARN_FALLBACK/.test(stripCode(SETTINGS)) &&
+    MAIN.indexOf("ai_learn_mode") < 0 &&
+    /v6\.170\.0 — the Learn Mode switch is gone with the three-tap cycle it governed\./.test(SETTINGS) &&
+    !/tglLearn|bindToggle\(/.test(CODE), null);
   const needkey = (MAIN.match(/if \(!state\.rhKey\) \{ setStatus\(t\("job_needkey"\), "err"\); return; \}/g) || []).length;
   report("D2) the missing-key refusal — Video Upscale, Talking Photo and V→V read job_needkey (the app's wording, nine languages); st_nokey is gone",
     needkey === 3 && (MAIN.match(/^    job_needkey: "/gm) || []).length === 9 && !/st_nokey/.test(MAIN) &&
@@ -135,10 +136,10 @@ const stripCode = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "");
   const gone = ["PRESETS", "bindCard(", "bindGroup(", "bindToggle(", "buildObjChips(", "paintChecks(", "renderLightStage", "buildCameraPrompt", "applyRecipe", "batchRun", "saveResultToDisk", "populateSelects", "openUrlBar", "bindScenes", "replaceMixRun", "sceneGenerate", "refreshPromptMeta", "registerWeddingPresets", "applyRealDirRouting", "CARD_PAINT", "wpTrailGo", "finalPromptBox", "promptBoxMy", "selRecentPrompts"];
   const stateLit = (MAIN.match(/const state = \{[\s\S]*?\n\};/) || [""])[0];
   const fieldsGone = ["autoRun", "intensity", "sections", "clean", "rmix", "i2p", "lights", "lightEquip", "chains", "restMode", "recentPrompts", "refTarget", "match", "bdayAge", "capText", "wedTrail", "camOn", "camIso", "autoSave", "sessionLog", "batch", "urlSlot", "cUrlSlot", "lastPreset"];
-  report("D3) the old Freeform page's code is gone from main.js (" + gone.length + " names) and its fields from the state literal (" + fieldsGone.length + "); the settings file no longer carries them; Learn Mode, autoPlace and the Library token stay",
+  report("D3) the old Freeform page's code is gone from main.js (" + gone.length + " names) and its fields from the state literal (" + fieldsGone.length + "); the settings file no longer carries them; autoPlace and the Library token stay, and (6.170.0) Learn Mode's own five fields left with the cycle",
     gone.every(n => CODE.indexOf(n) < 0) && fieldsGone.every(f => !(new RegExp("(?<![\\w$])" + f + "\\s*:")).test(stateLit)) &&
-    /learnMode: true/.test(stateLit) && /autoPlace: true/.test(stateLit) && /libToken: ""/.test(stateLit) &&
-    !/autoSave: state\.autoSave|camOn: state\.camOn|wedTrail: state\.wedTrail|sections: state\.sections|recentPrompts: state\.recentPrompts/.test(MAIN) && /learnMode: state\.learnMode,/.test(MAIN),
+    !/learnMode|armedKey|armedEl|armTimer|armStage/.test(stateLit) && /autoPlace: true/.test(stateLit) && /libToken: ""/.test(stateLit) &&
+    !/autoSave: state\.autoSave|camOn: state\.camOn|wedTrail: state\.wedTrail|sections: state\.sections|recentPrompts: state\.recentPrompts/.test(MAIN) && !/learnMode: state\.learnMode,/.test(MAIN),
     { gone: gone.filter(n => CODE.indexOf(n) >= 0), fields: fieldsGone.filter(f => (new RegExp("(?<![\\w$])" + f + "\\s*:")).test(stateLit)) });
   report("D4) the web app — accHideDeviceLimit is called wherever a registration comes back without a limit (three sites) and after a slot is released; devLimitAct, an element that never existed, is looked up nowhere",
     (APP.match(/if \(d && d\.limit\) accShowDeviceLimit\(\); else accHideDeviceLimit\(\);/g) || []).length === 3 &&
@@ -182,21 +183,20 @@ const stripCode = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "");
       const out = {};
       const settle = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       const $$ = id => document.getElementById(id);
-      /* -- the switch -- */
-      out.defaultOn = HNK.learnMode.get() === true && state.learnMode === true;
+      /* -- v6.170.0: the switch and the cycle it governed are gone; GENERATE runs on the first tap -- */
       HNK.aiToolsApp.navigate("settings"); await settle();
-      const b = $$("hnkSetLearn");
-      out.btn = !!b; out.text0 = b ? b.textContent : "";
-      out.wantOn = t("ai_learn_mode") + ": " + t("on"); out.wantOff = t("ai_learn_mode") + ": " + t("off");
-      /* Learn on: a tap arms instead of firing */
-      let fired = 0; const el = document.createElement("div");
-      out.armed = armGate("__gen", el, function () { fired++; }) === true && fired === 0 && state.armedKey === "__gen";
-      if (b) b.click(); await settle();
-      out.afterOff = { get: HNK.learnMode.get(), state: state.learnMode, text: b ? b.textContent : "", disarmed: state.armedKey === null && state.armStage === 0 };
-      /* Learn off: a tap fires at once */
-      out.firesNow = armGate("__gen", el, function () { fired++; }) === false && fired === 1;
-      if (b) b.click(); await settle();
-      out.afterOn = { get: HNK.learnMode.get(), state: state.learnMode, text: b ? b.textContent : "" };
+      out.gone = { bridge: !(window.HNK && window.HNK.learnMode), field: typeof state.learnMode === "undefined",
+        gate: typeof armGate === "undefined", box: !document.getElementById("guideBox"), btn: !$$("hnkSetLearn") };
+      switchPage("prompt"); await settle();
+      let ran = 0; const keepRun = runGenerate;
+      runGenerate = function () { ran++; return Promise.resolve(); };
+      const g = $$("btnGenerate");
+      out.genBtn = !!g;
+      if (g) { g.click(); await settle(); }
+      out.firstTap = ran;
+      state.busy = true; if (g) { g.click(); await settle(); } state.busy = false;
+      out.whileBusy = ran;
+      runGenerate = keepRun;
       /* -- the three refusals without a key -- */
       const keep = state.rhKey; state.rhKey = "";
       const seen = []; const origStatus = setStatus; setStatus = function (m, k) { seen.push({ m: String(m), k: k }); };
@@ -209,11 +209,10 @@ const stripCode = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "");
     });
     pan.errs = errs;
   } finally { await pb.close(); server.close(); }
-  report("E1) panel · Learn Mode is on by default; the AI Tools ▸ Settings screen shows the switch reading ON in the panel's own language; while on, a GENERATE tap arms instead of running",
-    pan.defaultOn && pan.btn && pan.text0 === pan.wantOn && pan.armed, { defaultOn: pan.defaultOn, btn: pan.btn, text0: pan.text0, wantOn: pan.wantOn, armed: pan.armed });
-  report("E2) panel · one tap turns it OFF (HNK.learnMode and state agree, the half-armed button is disarmed, the row reads OFF), a GENERATE tap then runs at once, and a second tap turns it back ON",
-    pan.afterOff && pan.afterOff.get === false && pan.afterOff.state === false && pan.afterOff.text === pan.wantOff && pan.afterOff.disarmed && pan.firesNow &&
-    pan.afterOn && pan.afterOn.get === true && pan.afterOn.state === true && pan.afterOn.text === pan.wantOn, { afterOff: pan.afterOff, firesNow: pan.firesNow, afterOn: pan.afterOn });
+  report("E1) panel · nothing of Learn Mode is left to look up — no HNK.learnMode bridge, no state.learnMode, no armGate, no #guideBox in the document, and no switch on the AI Tools ▸ Settings screen",
+    pan.gone && pan.gone.bridge && pan.gone.field && pan.gone.gate && pan.gone.box && pan.gone.btn, pan.gone);
+  report("E2) panel · Freeform's GENERATE runs on the FIRST tap (one tap, one run) and a tap while a run is in flight starts nothing",
+    pan.genBtn && pan.firstTap === 1 && pan.whileBusy === 1, { genBtn: pan.genBtn, firstTap: pan.firstTap, whileBusy: pan.whileBusy });
   report("E3) panel · with no RunningHub key, Video Upscale, Talking Photo and V→V each refuse with the job_needkey line (an error status, never the raw key)",
     pan.refusals && pan.refusals.length === 3 && pan.refusals.every(r => r.m === pan.wantKey && r.k === "err") && !/st_nokey/.test(pan.wantKey), { refusals: pan.refusals, want: pan.wantKey });
   report("E4) panel · no page error", pan.errs.length === 0, pan.errs.slice(0, 3));
@@ -226,6 +225,6 @@ const stripCode = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "");
     CI.indexOf("node test/verify_panel_dead_lookups.js") > CI.indexOf("node test/verify_no_undeclared_identifiers.js") && CI.indexOf("node test/verify_no_undeclared_identifiers.js") > 0 && tests >= 226 &&
     !!wn && LANGS.every(l => (wn.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2) && !!wnP && wnP === wn, { tests, wn: wn.slice(0, 60), panelRow: !!wnP });
 
-  console.log(failures ? "\n" + failures + " check(s) failed." : "\nALL PASS — every control the studio looks up exists, every dictionary key is read, the Learn Mode switch is back, and the refusals speak.");
+  console.log(failures ? "\n" + failures + " check(s) failed." : "\nALL PASS — every control the studio looks up exists, every dictionary key is read, the three-tap gate is gone, and the refusals speak.");
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error("FATAL", e); process.exit(1); });

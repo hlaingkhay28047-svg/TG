@@ -645,9 +645,15 @@ async function placeAsLayer(opts) {
         var lh = Number(b.bottom) - Number(b.top);
         var tgt = opts.bounds;
         if (!(tgt && tgt.width > 8 && tgt.height > 8)) {
-          // self-fit (contain, never upscale) into the document
+          /* v6.170.0 — self-fit COVERS the document, and may enlarge. It used to
+             contain and clamp at 1:1 (Math.min(…, 1)), which on a document larger
+             than the returned picture left the result as a small rectangle in the
+             middle of the canvas — the owner's photograph. The bytes that were sent
+             were a downscale of this same document, so the result belongs on this
+             document's frame; Freeform's place (main.js) has used Math.max with no
+             clamp since 6.9.0 and this brings the wizard's place in line with it. */
           var dw = Number(doc.width), dh = Number(doc.height);
-          var s0 = (lw > 0 && lh > 0) ? Math.min(dw / lw, dh / lh, 1) : 1;
+          var s0 = (lw > 0 && lh > 0) ? Math.max(dw / lw, dh / lh) : 1;
           tgt = {
             x: Math.round((dw - lw * s0) / 2), y: Math.round((dh - lh * s0) / 2),
             width: Math.round(lw * s0), height: Math.round(lh * s0)

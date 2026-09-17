@@ -132,7 +132,7 @@ const state = {
   cRefs: [null, null, null, null], cResultB64: null, cMime: "image/png", cBeforeB64: null,
   genCount: 0, lastUserText: "", lastFinalPrompt: "",
   realOn: true, realDir: "auto", banText: true,
-  saveDirH: null, learnMode: true, armedKey: null, armedEl: null, armTimer: null, armStage: 0,
+  saveDirH: null,
   /* Reference Image Library (user-selected folder + persistent token) */
   libToken: "", libFolderName: "", libNativePath: "", libImgCount: 0, libLastScan: 0,
   refTokens: {}, /* stable-slot-id -> persistent file token */
@@ -742,7 +742,6 @@ const I18N = {
     wf_exp_object_edit: "Removes, replaces or adds objects using a controlled local edit. Everything you don't touch stays the same.",
     wf_exp_water_edit: "Adds or edits water, reflections and wet surfaces so they look physically natural, keeping your subject intact.",
     wf_exp_text_logo: "Adds or edits clean, legible text or a logo on the image while keeping the composition.",
-    ai_learn_mode: "Learn Mode — a GENERATE tap explains itself first",
     job_needkey: "Add your RunningHub key in Setup first",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
@@ -844,15 +843,6 @@ const I18N = {
     wf_press_prepare: "Press Prepare to load this workflow and check your images.",
     wf_opts: "Model \u00b7 Ratio \u00b7 Count \u00b7 Size",
     wf_model_auto: "Auto \u2014 the workflow's choice",
-    guide_hint: "Tap again: yellow \u2192 blue (prompt) \u2192 green (run) \u25b6",
-    g_learn_next_prompt: "Tap again \u2192 shows the exact PROMPT (blue).",
-    g_learn_prompt_head: "PROMPT this button will send (tap again = RUN):",
-    g_learn_next_run: "Tap once more \u2192 RUN (green) generates.",
-    st_prompt_ready: "Prompt ready \u2014 tap again (green) to run \u2713",
-    g_step_confirm: "Tap again to advance: GUIDE (yellow) \u2192 PROMPT (blue) \u2192 RUN (GREEN generates).",
-    g_cat_generic: "PRESET \u2014 applies this professional edit to your photo.",
-    g_gen: "GENERATE \u2014 runs the prompt box (+ chains, keeps, camera block) on your document.",
-    g_retouchbtn: "RETOUCH APPLY \u2014 runs all your slider settings as one professional retouch pass.",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
@@ -965,7 +955,6 @@ const I18N = {
     wf_exp_object_edit: "\u1011\u102d\u1014\u103a\u1038\u1001\u103b\u102f\u1015\u103a\u1011\u102c\u1038\u1010\u1032\u1037 \u1014\u1031\u101b\u102c\u101c\u102d\u102f\u1000\u103a \u1015\u103c\u1004\u103a\u1006\u1004\u103a\u1019\u103e\u102f\u1014\u1032\u1037 \u1021\u101b\u102c\u101d\u1010\u1039\u1011\u102f\u1010\u103d\u1031\u1000\u102d\u102f \u1016\u101a\u103a\u104a \u101c\u1032 (\u101e\u102d\u102f\u1037) \u1011\u100a\u1037\u103a\u1015\u1031\u1038\u1010\u101a\u103a\u104b \u1019\u1011\u102d\u1010\u1032\u1037 \u1021\u101b\u102c\u1021\u102c\u1038\u101c\u102f\u1036\u1038 \u1021\u1010\u102d\u102f\u1004\u103a\u1038\u101b\u103e\u102d\u1014\u1031\u1019\u101a\u103a\u104b",
     wf_exp_water_edit: "\u101b\u1031\u104a \u101b\u1031\u102c\u1004\u103a\u1015\u103c\u1014\u103a\u101f\u1015\u103a\u1019\u103e\u102f\u1014\u1032\u1037 \u1005\u102d\u102f\u1005\u103d\u1010\u103a\u1010\u1032\u1037 \u1019\u103b\u1000\u103a\u1014\u103e\u102c\u1015\u103c\u1004\u103a\u1010\u103d\u1031\u1000\u102d\u102f \u101b\u1030\u1015\u1017\u1031\u1012\u1021\u101b \u101e\u1018\u102c\u101d\u1000\u103b\u1021\u1031\u102c\u1004\u103a \u1011\u100a\u1037\u103a/\u1015\u103c\u1004\u103a\u1015\u1031\u1038\u1015\u103c\u102e\u1038 \u101e\u1004\u1037\u103a\u101c\u1030\u1000\u102d\u102f \u1019\u1011\u102d\u1001\u102d\u102f\u1000\u103a\u1005\u1031\u1015\u102b\u104b",
     wf_exp_text_logo: "\u1015\u102f\u1036\u1015\u1031\u102b\u103a\u1019\u103e\u102c \u101e\u1014\u1037\u103a\u101b\u103e\u1004\u103a\u1038\u1015\u103c\u102e\u1038 \u1016\u1010\u103a\u101b\u101c\u103d\u101a\u103a\u1010\u1032\u1037 \u1005\u102c\u101e\u102c\u1038 (\u101e\u102d\u102f\u1037) logo \u1000\u102d\u102f \u1011\u100a\u1037\u103a/\u1015\u103c\u1004\u103a\u1015\u1031\u1038\u1015\u103c\u102e\u1038 \u1016\u103d\u1032\u1037\u1005\u100a\u103a\u1038\u1015\u102f\u1036\u1000\u102d\u102f \u1011\u102d\u1014\u103a\u1038\u1011\u102c\u1038\u1015\u102b\u1010\u101a\u103a\u104b",
-    ai_learn_mode: "Learn Mode — GENERATE ကို နှိပ်ရင် အရင် ရှင်းပြမယ်",
     job_needkey: "RunningHub key ကို Setup မှာ အရင်ထည့်ပါ",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
@@ -1060,15 +1049,6 @@ const I18N = {
     wf_press_prepare: "ဒီ workflow ကို ဖွင့်ပြီး ပုံတွေ စစ်ဖို့ ပြင်ဆင် ခလုတ် နှိပ်ပါ။",
     wf_opts: "Model \u00b7 Ratio \u00b7 \u1021\u101b\u1031\u1021\u1010\u103d\u1000\u103a \u00b7 Size",
     wf_model_auto: "Auto \u2014 workflow \u101b\u1032\u1037 \u101b\u103d\u1031\u1038\u1001\u103b\u101a\u103a\u1019\u103e\u102f",
-    guide_hint: "\u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a: \u1021\u101d\u102b \u2192 \u1021\u1015\u103c\u102c (prompt) \u2192 \u1021\u1005\u102d\u1019\u103a\u1038 (run) \u25b6",
-    g_learn_next_prompt: "\u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a \u2192 PROMPT \u1021\u1010\u102d\u1021\u1000\u103b \u1015\u103c\u1019\u101a\u103a (\u1021\u1015\u103c\u102c)\u104b",
-    g_learn_prompt_head: "\u1012\u102e\u1001\u101c\u102f\u1010\u103a \u1015\u102d\u102f\u1037\u1019\u101a\u1037\u103a PROMPT (\u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a = RUN):",
-    g_learn_next_run: "\u1014\u1031\u102c\u1000\u103a\u1010\u1005\u103a\u1001\u103b\u1000\u103a \u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a \u2192 RUN (\u1021\u1005\u102d\u1019\u103a\u1038) generate \u101c\u102f\u1015\u103a\u1019\u101a\u103a\u104b",
-    st_prompt_ready: "Prompt \u1021\u1006\u1004\u103a\u101e\u1004\u1037\u103a \u2014 \u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a (\u1021\u1005\u102d\u1019\u103a\u1038) run \u2713",
-    g_step_confirm: "\u1011\u1015\u103a\u1014\u103e\u102d\u1015\u103a\u1015\u102b: GUIDE (\u1021\u101d\u102b) \u2192 PROMPT (\u1021\u1015\u103c\u102c) \u2192 RUN (\u1021\u1005\u102d\u1019\u103a\u1038\u1000 generate \u101c\u102f\u1015\u103a\u101e\u100a\u103a)\u104b",
-    g_cat_generic: "PRESET \u2014 \u1012\u102e professional edit \u1000\u102d\u102f \u1019\u1004\u103a\u1038\u1015\u102f\u1036\u1015\u1031\u102b\u103a \u1021\u101c\u102f\u1015\u103a\u101c\u102f\u1015\u103a\u1019\u101a\u103a\u104b",
-    g_gen: "GENERATE \u2014 prompt box (+ chains/keeps/camera) \u1000\u102d\u102f \u1019\u1004\u103a\u1038 document \u1015\u1031\u102b\u103a run\u104b",
-    g_retouchbtn: "RETOUCH APPLY \u2014 slider \u1021\u102c\u1038\u101c\u102f\u1036\u1038\u1000\u102d\u102f \u1010\u1005\u103a\u1000\u103c\u102d\u1019\u103a\u1010\u100a\u103a\u1038 retouch\u104b",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
@@ -1183,7 +1163,6 @@ const I18N = {
     wf_exp_text_logo: "\u101e\u1082\u103a\u1087 \u1022\u1019\u103a\u1087\u107c\u107c\u103a \u1019\u1084\u1038\u101c\u102d\u1075\u103a\u1088 \u1022\u1019\u103a\u1087\u107c\u107c\u103a logo \u1022\u107c\u103a\u1019\u1030\u1010\u103a\u1038\u101e\u1082\u103a\u101c\u1030\u101c\u1086\u1088\u1004\u1062\u1086\u1088 \u107c\u102d\u1030\u101d\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088, \u101c\u103d\u1004\u103a\u1088\u1078\u1010\u103a\u1038\u101d\u1086\u1089\u1075\u101d\u103a\u1087\u104b",
     ai_key_lives_in_setup: "RunningHub Enterprise key ၸတ်းၵၢၼ်တီႈ Setup tab — သိမ်းၼိုင်ႈပွၵ်ႈ၊ ၸႂ်ႉလႆႈၵူႈတီႈ။",
     ai_settings_defaults: "AI Tools — ၵႃႈတင်ႈဝႆႉ",
-    ai_learn_mode: "Learn Mode — ၼဵၵ်း GENERATE ၼႆ ဢွၼ်တၢင်းသပ်းလႅင်းပၼ်",
     job_needkey: "သႂ်ႇ RunningHub key တီႈ Setup ဢွၼ်တၢင်း",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
@@ -1278,15 +1257,6 @@ const I18N = {
     wf_press_prepare: "ၼဵၵ်း ႁၢင်ႈႁႅၼ်း သေ ပိုတ်ႇ workflow ၼႆႉလႄႈ ၵူတ်ႇထတ်းႁၢင်ႈ။",
     wf_opts: "Model \u00b7 Ratio \u00b7 \u1010\u1031\u1080\u1015\u1030\u1076\u1010\u102d\u1060 \u00b7 Size",
     wf_model_auto: "Auto \u2014 workflow \u101c\u102d\u1030\u1075\u1076\u1088\u1096",
-    guide_hint: "\u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088: \u101c\u102d\u1030\u1004\u103a \u2192 \u1076\u1035\u101d\u103a\u107e\u1083\u1089 (prompt) \u2192 \u1076\u1035\u101d\u103a (\u1081\u1035\u1010\u103a\u1038) \u25b6",
-    g_learn_next_prompt: "\u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088 \u2192 \u107c\u1084 PROMPT \u1010\u1084\u1089 (\u1076\u1035\u101d\u103a\u107e\u1083\u1089)\u104b",
-    g_learn_prompt_head: "PROMPT \u1022\u107c\u103a\u1015\u102f\u1019\u103a\u1087\u107c\u1086\u1089\u1010\u1031\u101e\u1030\u1004\u103a\u1087 (\u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088 = \u1081\u1035\u1010\u103a\u1038):",
-    g_learn_next_run: "\u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088\u1015\u103d\u1075\u103a\u1088\u107c\u102d\u102f\u1004\u103a\u1088 \u2192 RUN (\u1076\u1035\u101d\u103a) \u1010\u1031\u101e\u1062\u1004\u103a\u1088\u104b",
-    st_prompt_ready: "Prompt \u1081\u1062\u1004\u103a\u1088\u1081\u1085\u107c\u103a\u1038\u101a\u101d\u103a\u1089 \u2014 \u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088 (\u1076\u1035\u101d\u103a) \u101e\u1031\u1081\u1035\u1010\u103a\u1038 \u2713",
-    g_step_confirm: "\u107c\u1035\u1075\u103a\u1038\u1011\u1085\u1004\u103a\u1088\u101e\u1031\u1075\u1082\u1083\u1087\u107c\u1083\u1088: GUIDE (\u101c\u102d\u1030\u1004\u103a) \u2192 PROMPT (\u1076\u1035\u101d\u103a\u107e\u1083\u1089) \u2192 RUN (\u1076\u1035\u101d\u103a \u1010\u1031\u101e\u1062\u1004\u103a\u1088\u1010\u1084\u1089)\u104b",
-    g_cat_generic: "PRESET \u2014 \u1078\u1082\u103a\u1089\u101c\u103d\u1004\u103a\u1088\u1019\u1084\u1038\u1078\u107c\u103a\u1089\u1076\u102d\u102f\u1075\u103a\u1089\u107c\u1086\u1089 \u107c\u102d\u1030\u101d\u103a\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u104b",
-    g_gen: "GENERATE \u2014 \u1081\u1035\u1010\u103a\u1038\u1081\u103d\u1004\u103a\u1088 prompt (+ chains, \u101c\u103d\u1075\u103a\u1089 Keep, camera block) \u107c\u102d\u1030\u101d\u103a document \u1078\u101d\u103a\u1088\u1075\u101d\u103a\u1087\u104b",
-    g_retouchbtn: "RETOUCH APPLY \u2014 \u1081\u1035\u1010\u103a\u1038 setting slider \u1010\u1004\u103a\u1038\u101e\u1035\u1004\u103a\u1088 \u1015\u1035\u107c\u103a retouch \u1078\u107c\u103a\u1089\u1076\u102d\u102f\u1075\u103a\u1089\u1015\u103d\u1075\u103a\u1088\u101c\u1035\u101d\u103a\u104b",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
@@ -1399,7 +1369,6 @@ const I18N = {
     wf_exp_text_logo: "Sumla ntsa kaw san seng nna hti mai ai laika shing nrai logo hpe bang shing nrai jaw ya nna, hkum gaw jang da ai.",
     ai_key_lives_in_setup: "RunningHub Enterprise key hpe Setup tab kaw hkrang ai — kalang mi mahkai, shara shagu jailang.",
     ai_settings_defaults: "AI Tools — Default ni",
-    ai_learn_mode: "Learn Mode — GENERATE dip yang shawng tsun dan ya",
     job_needkey: "RunningHub key hpe Setup kaw shawng bang u",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
@@ -1494,15 +1463,6 @@ const I18N = {
     wf_press_prepare: "Ndai workflow hpaw nna sumla ni jep na matu Prepare dip u.",
     wf_opts: "Model \u00b7 Ratio \u00b7 Hkum \u00b7 Size",
     wf_model_auto: "Auto \u2014 workflow a lata ai",
-    guide_hint: "Bai dip u: ahkyeng tsit \u2192 mut (prompt) \u2192 tsit (galaw) \u25b6",
-    g_learn_next_prompt: "Bai dip u \u2192 shagun na PROMPT teng hpe madun na (mut).",
-    g_learn_prompt_head: "Ndai button shagun na PROMPT (bai dip yang = GALAW):",
-    g_learn_next_run: "Kalang bai dip u \u2192 RUN (tsit) galaw hpang na.",
-    st_prompt_ready: "Prompt hkyen sai \u2014 galaw na matu bai dip u (tsit) \u2713",
-    g_step_confirm: "Matut na matu bai dip u: GUIDE (ahkyeng tsit) \u2192 PROMPT (mut) \u2192 RUN (TSIT gaw galaw hpang sai).",
-    g_cat_generic: "PRESET \u2014 ndai atsawm jaw da ai lam hpe na a sumla kaw jailang ai.",
-    g_gen: "GENERATE \u2014 prompt kahtawng (+ chains, Keep lock, camera block) hpe na a document kaw galaw ai.",
-    g_retouchbtn: "RETOUCH APPLY \u2014 na a slider setting yawng hpe atsawm retouch kalang hku galaw ai.",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
@@ -1615,7 +1575,6 @@ const I18N = {
     wf_exp_text_logo: "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e2b\u0e23\u0e37\u0e2d\u0e41\u0e01\u0e49\u0e44\u0e02\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e2b\u0e23\u0e37\u0e2d\u0e42\u0e25\u0e42\u0e01\u0e49\u0e17\u0e35\u0e48\u0e2a\u0e30\u0e2d\u0e32\u0e14\u0e41\u0e25\u0e30\u0e2d\u0e48\u0e32\u0e19\u0e07\u0e48\u0e32\u0e22\u0e1a\u0e19\u0e20\u0e32\u0e1e \u0e42\u0e14\u0e22\u0e22\u0e31\u0e07\u0e04\u0e07\u0e2d\u0e07\u0e04\u0e4c\u0e1b\u0e23\u0e30\u0e01\u0e2d\u0e1a\u0e40\u0e14\u0e34\u0e21",
     ai_key_lives_in_setup: "คีย์ RunningHub Enterprise จัดการที่แท็บ Setup — บันทึกครั้งเดียว ใช้ได้ทุกที่",
     ai_settings_defaults: "AI Tools — ค่าเริ่มต้น",
-    ai_learn_mode: "Learn Mode — แตะ GENERATE แล้วอธิบายก่อน",
     job_needkey: "เพิ่มคีย์ RunningHub ใน Setup ก่อน",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
@@ -1710,15 +1669,6 @@ const I18N = {
     wf_press_prepare: "กด Prepare เพื่อโหลด workflow นี้และตรวจรูปของคุณ",
     wf_opts: "Model \u00b7 Ratio \u00b7 \u0e08\u0e33\u0e19\u0e27\u0e19 \u00b7 Size",
     wf_model_auto: "Auto \u2014 \u0e15\u0e32\u0e21\u0e17\u0e35\u0e48 workflow \u0e40\u0e25\u0e37\u0e2d\u0e01",
-    guide_hint: "\u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07: \u0e40\u0e2b\u0e25\u0e37\u0e2d\u0e07 \u2192 \u0e19\u0e49\u0e33\u0e40\u0e07\u0e34\u0e19 (\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c) \u2192 \u0e40\u0e02\u0e35\u0e22\u0e27 (\u0e23\u0e31\u0e19) \u25b6",
-    g_learn_next_prompt: "\u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07 \u2192 \u0e41\u0e2a\u0e14\u0e07\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e17\u0e35\u0e48\u0e41\u0e19\u0e48\u0e19\u0e2d\u0e19 (\u0e19\u0e49\u0e33\u0e40\u0e07\u0e34\u0e19)",
-    g_learn_prompt_head: "\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e17\u0e35\u0e48\u0e1b\u0e38\u0e48\u0e21\u0e19\u0e35\u0e49\u0e08\u0e30\u0e2a\u0e48\u0e07 (\u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07 = \u0e23\u0e31\u0e19):",
-    g_learn_next_run: "\u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07 \u2192 \u0e23\u0e31\u0e19 (\u0e40\u0e02\u0e35\u0e22\u0e27) \u0e2a\u0e23\u0e49\u0e32\u0e07",
-    st_prompt_ready: "\u0e1e\u0e23\u0e2d\u0e21\u0e15\u0e4c\u0e1e\u0e23\u0e49\u0e2d\u0e21 \u2014 \u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07 (\u0e40\u0e02\u0e35\u0e22\u0e27) \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e23\u0e31\u0e19 \u2713",
-    g_step_confirm: "\u0e41\u0e15\u0e30\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e44\u0e1b\u0e02\u0e31\u0e49\u0e19\u0e16\u0e31\u0e14\u0e44\u0e1b: GUIDE (\u0e40\u0e2b\u0e25\u0e37\u0e2d\u0e07) \u2192 PROMPT (\u0e19\u0e49\u0e33\u0e40\u0e07\u0e34\u0e19) \u2192 RUN (\u0e40\u0e02\u0e35\u0e22\u0e27 = \u0e2a\u0e23\u0e49\u0e32\u0e07\u0e08\u0e23\u0e34\u0e07)",
-    g_cat_generic: "\u0e1e\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15 \u2014 \u0e43\u0e0a\u0e49\u0e01\u0e32\u0e23\u0e41\u0e15\u0e48\u0e07\u0e21\u0e37\u0e2d\u0e2d\u0e32\u0e0a\u0e35\u0e1e\u0e19\u0e35\u0e49\u0e01\u0e31\u0e1a\u0e20\u0e32\u0e1e\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
-    g_gen: "GENERATE \u2014 \u0e23\u0e31\u0e19\u0e0a\u0e48\u0e2d\u0e07 prompt (+ chains, \u0e25\u0e47\u0e2d\u0e01 Keep, \u0e1a\u0e25\u0e47\u0e2d\u0e01\u0e01\u0e25\u0e49\u0e2d\u0e07) \u0e01\u0e31\u0e1a\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13",
-    g_retouchbtn: "RETOUCH APPLY \u2014 \u0e23\u0e31\u0e19\u0e04\u0e48\u0e32\u0e2a\u0e44\u0e25\u0e40\u0e14\u0e2d\u0e23\u0e4c\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e40\u0e1b\u0e47\u0e19\u0e01\u0e32\u0e23\u0e23\u0e35\u0e17\u0e31\u0e0a\u0e23\u0e30\u0e14\u0e31\u0e1a\u0e21\u0e37\u0e2d\u0e2d\u0e32\u0e0a\u0e35\u0e1e\u0e04\u0e23\u0e31\u0e49\u0e07\u0e40\u0e14\u0e35\u0e22\u0e27",
     ro_faceRep: "\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32",
     ro_faceSwap: "\u0e2a\u0e25\u0e31\u0e1a\u0e43\u0e1a\u0e2b\u0e19\u0e49\u0e32",
     ro_bgRep: "\u0e40\u0e1b\u0e25\u0e35\u0e48\u0e22\u0e19\u0e1e\u0e37\u0e49\u0e19\u0e2b\u0e25\u0e31\u0e07",
@@ -1831,7 +1781,6 @@ const I18N = {
     wf_exp_text_logo: "\u5728\u56fe\u4e0a\u6dfb\u52a0\u6216\u4fee\u6539\u5e72\u51c0\u6613\u8bfb\u7684\u6587\u5b57\u6216 logo\uff0c\u540c\u65f6\u4fdd\u6301\u539f\u6709\u6784\u56fe\u3002",
     ai_key_lives_in_setup: "RunningHub Enterprise key 在 Setup 标签页管理 — 保存一次，处处可用。",
     ai_settings_defaults: "AI Tools — 默认值",
-    ai_learn_mode: "Learn Mode — 点按 GENERATE 会先说明",
     job_needkey: "请先在 Setup 中添加 RunningHub key",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
@@ -1926,15 +1875,6 @@ const I18N = {
     wf_press_prepare: "点 Prepare 载入此工作流并检查图片。",
     wf_opts: "\u6a21\u578b \u00b7 \u6bd4\u4f8b \u00b7 \u6570\u91cf \u00b7 \u5c3a\u5bf8",
     wf_model_auto: "\u81ea\u52a8 \u2014 \u7531 workflow \u9009\u62e9",
-    guide_hint: "\u518d\u6b21\u70b9\u6309\uff1a\u9ec4 \u2192 \u84dd\uff08\u63d0\u793a\u8bcd\uff09\u2192 \u7eff\uff08\u8fd0\u884c\uff09\u25b6",
-    g_learn_next_prompt: "\u518d\u6b21\u70b9\u6309 \u2192 \u663e\u793a\u786e\u5207\u63d0\u793a\u8bcd\uff08\u84dd\uff09",
-    g_learn_prompt_head: "\u6b64\u6309\u94ae\u5c06\u53d1\u9001\u7684\u63d0\u793a\u8bcd\uff08\u518d\u6b21\u70b9\u6309 = \u8fd0\u884c\uff09\uff1a",
-    g_learn_next_run: "\u518d\u70b9\u4e00\u6b21 \u2192 \u8fd0\u884c\uff08\u7eff\uff09\u751f\u6210",
-    st_prompt_ready: "\u63d0\u793a\u8bcd\u5c31\u7eea \u2014 \u518d\u6b21\u70b9\u6309\uff08\u7eff\uff09\u8fd0\u884c \u2713",
-    g_step_confirm: "\u518d\u6b21\u70b9\u6309\u4ee5\u63a8\u8fdb\uff1aGUIDE\uff08\u9ec4\uff09\u2192 PROMPT\uff08\u84dd\uff09\u2192 RUN\uff08\u7eff\u8272\u5373\u5f00\u59cb\u751f\u6210\uff09\u3002",
-    g_cat_generic: "\u9884\u8bbe \u2014 \u5bf9\u4f60\u7684\u7167\u7247\u5e94\u7528\u8fd9\u9879\u4e13\u4e1a\u4fee\u9970",
-    g_gen: "GENERATE \u2014 \u5c06 prompt \u6846\uff08+ chains\u3001Keep \u9501\u3001\u76f8\u673a\u533a\u5757\uff09\u4f5c\u7528\u4e8e\u4f60\u7684\u6587\u6863\u3002",
-    g_retouchbtn: "RETOUCH APPLY \u2014 \u628a\u4f60\u6240\u6709\u6ed1\u6746\u8bbe\u7f6e\u4f5c\u4e3a\u4e00\u6b21\u4e13\u4e1a\u7cbe\u4fee\u6267\u884c\u3002",
     ro_faceRep: "\u66ff\u6362\u9762\u90e8",
     ro_faceSwap: "\u6362\u8138",
     ro_bgRep: "\u66ff\u6362\u80cc\u666f",
@@ -2047,7 +1987,6 @@ const I18N = {
     wf_exp_text_logo: "Th\u00eam ho\u1eb7c s\u1eeda ch\u1eef hay logo s\u1ea1ch, d\u1ec5 \u0111\u1ecdc tr\u00ean \u1ea3nh m\u00e0 v\u1eabn gi\u1eef nguy\u00ean b\u1ed1 c\u1ee5c.",
     ai_key_lives_in_setup: "Key RunningHub Enterprise được quản lý ở tab Setup — lưu một lần, dùng mọi nơi.",
     ai_settings_defaults: "AI Tools — Mặc định",
-    ai_learn_mode: "Learn Mode — chạm GENERATE sẽ giải thích trước",
     job_needkey: "Thêm key RunningHub trong Setup trước",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
@@ -2142,15 +2081,6 @@ const I18N = {
     wf_press_prepare: "Bấm Prepare để nạp workflow này và kiểm tra ảnh.",
     wf_opts: "Model \u00b7 Ratio \u00b7 S\u1ed1 l\u01b0\u1ee3ng \u00b7 Size",
     wf_model_auto: "Auto \u2014 workflow t\u1ef1 ch\u1ecdn",
-    guide_hint: "Ch\u1ea1m l\u1ea7n n\u1eefa: v\u00e0ng \u2192 xanh d\u01b0\u01a1ng (prompt) \u2192 xanh l\u00e1 (ch\u1ea1y) \u25b6",
-    g_learn_next_prompt: "Ch\u1ea1m l\u1ea7n n\u1eefa \u2192 hi\u1ec7n \u0111\u00fang PROMPT s\u1ebd g\u1eedi (xanh d\u01b0\u01a1ng).",
-    g_learn_prompt_head: "PROMPT n\u00fat n\u00e0y s\u1ebd g\u1eedi (ch\u1ea1m l\u1ea7n n\u1eefa = CH\u1ea0Y):",
-    g_learn_next_run: "Ch\u1ea1m th\u00eam m\u1ed9t l\u1ea7n \u2192 RUN (xanh l\u00e1) b\u1eaft \u0111\u1ea7u t\u1ea1o.",
-    st_prompt_ready: "Prompt \u0111\u00e3 s\u1eb5n s\u00e0ng \u2014 ch\u1ea1m l\u1ea7n n\u1eefa (xanh l\u00e1) \u0111\u1ec3 ch\u1ea1y \u2713",
-    g_step_confirm: "Ch\u1ea1m l\u1ea7n n\u1eefa \u0111\u1ec3 \u0111i ti\u1ebfp: GUIDE (v\u00e0ng) \u2192 PROMPT (xanh d\u01b0\u01a1ng) \u2192 RUN (XANH L\u00c1 l\u00e0 ch\u1ea1y th\u1eadt).",
-    g_cat_generic: "PRESET \u2014 \u00e1p d\u1ee5ng b\u1ea3n ch\u1ec9nh chuy\u00ean nghi\u1ec7p n\u00e0y l\u00ean \u1ea3nh c\u1ee7a b\u1ea1n.",
-    g_gen: "GENERATE \u2014 ch\u1ea1y \u00f4 prompt (+ chains, kh\u00f3a Keep, kh\u1ed1i camera) tr\u00ean t\u00e0i li\u1ec7u c\u1ee7a b\u1ea1n.",
-    g_retouchbtn: "RETOUCH APPLY \u2014 ch\u1ea1y to\u00e0n b\u1ed9 thi\u1ebft l\u1eadp sliders th\u00e0nh m\u1ed9t l\u01b0\u1ee3t retouch chuy\u00ean nghi\u1ec7p.",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
@@ -2263,7 +2193,6 @@ const I18N = {
     wf_exp_text_logo: "Menambah atau mengedit teks atau logo yang bersih dan mudah dibaca pada gambar, dengan komposisi tetap terjaga.",
     ai_key_lives_in_setup: "Key RunningHub Enterprise dikelola di tab Setup — simpan sekali, dipakai di mana saja.",
     ai_settings_defaults: "AI Tools — Bawaan",
-    ai_learn_mode: "Learn Mode — ketuk GENERATE dijelaskan dulu",
     job_needkey: "Tambahkan key RunningHub di Setup dulu",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
@@ -2358,15 +2287,6 @@ const I18N = {
     wf_press_prepare: "Tekan Prepare untuk memuat workflow ini dan memeriksa gambar.",
     wf_opts: "Model \u00b7 Ratio \u00b7 Jumlah \u00b7 Size",
     wf_model_auto: "Auto \u2014 pilihan workflow",
-    guide_hint: "Ketuk lagi: kuning \u2192 biru (prompt) \u2192 hijau (jalankan) \u25b6",
-    g_learn_next_prompt: "Ketuk lagi \u2192 menampilkan PROMPT persisnya (biru).",
-    g_learn_prompt_head: "PROMPT yang akan dikirim tombol ini (ketuk lagi = JALANKAN):",
-    g_learn_next_run: "Ketuk sekali lagi \u2192 RUN (hijau) mulai membuat.",
-    st_prompt_ready: "Prompt siap \u2014 ketuk lagi (hijau) untuk menjalankan \u2713",
-    g_step_confirm: "Ketuk lagi untuk lanjut: GUIDE (kuning) \u2192 PROMPT (biru) \u2192 RUN (HIJAU mulai membuat).",
-    g_cat_generic: "PRESET \u2014 menerapkan hasil edit profesional ini ke foto Anda.",
-    g_gen: "GENERATE \u2014 menjalankan kotak prompt (+ chains, kunci Keep, blok kamera) pada dokumen Anda.",
-    g_retouchbtn: "RETOUCH APPLY \u2014 menjalankan seluruh setelan slider Anda sebagai satu proses retouch profesional.",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
@@ -2479,7 +2399,6 @@ const I18N = {
     wf_exp_text_logo: "Menambah atau menyunting teks atau logo yang bersih dan mudah dibaca pada imej, sambil mengekalkan komposisi.",
     ai_key_lives_in_setup: "Kunci RunningHub Enterprise diurus di tab Setup — simpan sekali, digunakan di mana-mana.",
     ai_settings_defaults: "AI Tools — Lalai",
-    ai_learn_mode: "Learn Mode — ketik GENERATE dijelaskan dahulu",
     job_needkey: "Tambah kunci RunningHub di Setup dahulu",
     /* v6.46.0 — Setup follows the web app's own cards; these are the
        app's own strings, lifted verbatim so both surfaces read alike. */
@@ -2574,15 +2493,6 @@ const I18N = {
     wf_press_prepare: "Tekan Prepare untuk memuatkan workflow ini dan menyemak gambar.",
     wf_opts: "Model \u00b7 Ratio \u00b7 Bilangan \u00b7 Size",
     wf_model_auto: "Auto \u2014 pilihan workflow",
-    guide_hint: "Ketik lagi: kuning \u2192 biru (prompt) \u2192 hijau (jalan) \u25b6",
-    g_learn_next_prompt: "Ketik lagi \u2192 memaparkan PROMPT sebenar (biru).",
-    g_learn_prompt_head: "PROMPT yang akan dihantar butang ini (ketik lagi = JALAN):",
-    g_learn_next_run: "Ketik sekali lagi \u2192 RUN (hijau) mula menjana.",
-    st_prompt_ready: "Prompt sedia \u2014 ketik lagi (hijau) untuk jalankan \u2713",
-    g_step_confirm: "Ketik lagi untuk maju: GUIDE (kuning) \u2192 PROMPT (biru) \u2192 RUN (HIJAU mula menjana).",
-    g_cat_generic: "PRESET \u2014 menggunakan suntingan profesional ini pada foto anda.",
-    g_gen: "GENERATE \u2014 menjalankan kotak prompt (+ chains, kunci Keep, blok kamera) pada dokumen anda.",
-    g_retouchbtn: "RETOUCH APPLY \u2014 menjalankan semua tetapan slider anda sebagai satu pusingan retouch profesional.",
     ro_faceRep: "Face Replace",
     ro_faceSwap: "Face Swap",
     ro_bgRep: "BG Replace",
@@ -2685,7 +2595,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.169.1";
+const PANEL_VERSION = "6.170.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -3922,9 +3832,9 @@ const LANG_FB = { kyu: "my", ksw: "my", cnh: "my", mnw: "my", rki: "my", ahk: "m
    Long-form text falls through LANG_FB. Same honest posture as the web app:
    Myanmar ethnic languages ship no guessed text. */
 const I18N_L = {
-bn:{btn_show:"দেখান",btn_save:"সংরক্ষণ",st_need_key:"আগে RunningHub Enterprise key দিন",qual_auto:"অটো",btn_clear:"মুছুন",btn_ref_layer:"+ লেয়ার",btn_ref_file:"ফাইল",btn_ref_web:"ওয়েব",st_ref_layer_added:"লেয়ার রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_ref_file_added:"ফাইল রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_importing:"ফাইল ইমপোর্ট হচ্ছে",url_ph:"https://… ছবির ঠিকানা বা Pinterest পিন লিংক",btn_load:"লোড",btn_cancel:"বাতিল",st_url_loading:"ওয়েব ছবি ডাউনলোড হচ্ছে",st_ref_web_added:"ওয়েব ছবি রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_url_bad:"এই URL থেকে ছবি লোড করা যায়নি — ছবির ঠিকানা কপি করে আবার চেষ্টা করুন",no_layer:"কোনো লেয়ার নির্বাচিত নেই",st_web_import:"লেয়ার হিসেবে Photoshop-এ ইমপোর্ট হয়েছে ✓",st_folder_ok:"এক্সপোর্ট ফোল্ডার সেট হয়েছে ✓",st_exported:"এক্সপোর্ট হয়েছে ✓",st_export_fail:"এক্সপোর্ট ব্যর্থ — ফোল্ডারটি পরীক্ষা করুন",st_img_bad:"ছবির ডেটা ইন্টিগ্রিটি চেক-এ ব্যর্থ — ছবিটি আবার যোগ করুন",st_auto_comp:"অটো কম্পোজিট: IMAGE 1 সাবজেক্ট → রেফারেন্স দৃশ্য",tab_create: "Create",create_ph:"যে ছবিটি তৈরি করতে চান তা বর্ণনা করুন…",btn_create_ps:"⬇ Photoshop-এ পাঠান",btn_to_ref:"↺ Ref 1 হিসেবে ব্যবহার করুন",st_to_ref:"ফলাফল Ref 1-এ লোড হয়েছে ✓",cr_restyle:"♻ ফলাফল রিস্টাইল করুন",cr_gal_empty:"এখনও কোনো ফলাফল নেই — Generate ট্যাপ করুন।",cr_gal_have:"টি ফলাফল · প্রিভিউ / কাজ করতে থাম্বনেইলে ট্যাপ করুন",cr_save:"⬇ PNG সংরক্ষণ করুন",cr_need_result:"প্রথমে একটি ছবি জেনারেট করুন",guide_hint:"আবার ট্যাপ করুন: হলুদ → নীল (prompt) → সবুজ (রান) ▶",g_learn_next_prompt:"আবার ট্যাপ করুন → হুবহু PROMPT দেখায় (নীল)।",g_learn_prompt_head:"এই বোতামটি যে PROMPT পাঠাবে (আবার ট্যাপ = রান):",g_learn_next_run:"আরেকবার ট্যাপ করুন → রান (সবুজ) জেনারেট করে।",st_prompt_ready:"Prompt প্রস্তুত — চালাতে আবার ট্যাপ করুন (সবুজ) ✓",g_step_confirm:"এগোতে আবার ট্যাপ করুন: গাইড (হলুদ) → PROMPT (নীল) → রান (সবুজ জেনারেট করে)।",g_cat_generic:"প্রিসেট — আপনার ছবিতে এই পেশাদার সম্পাদনা প্রয়োগ করে।",g_gen:"জেনারেট — আপনার ডকুমেন্টে prompt বক্স (+ চেইন, কিপ, ক্যামেরা ব্লক) চালায়।",g_retouchbtn:"রিটাচ প্রয়োগ — আপনার সব স্লাইডার সেটিং এক পেশাদার রিটাচ পাস হিসেবে চালায়।",ro_faceRep:"ফেস রিপ্লেস",ro_faceSwap:"ফেস সোয়াপ",ro_bgRep:"BG রিপ্লেস",ro_bgSwap:"BG সোয়াপ",ro_fgRep:"FG রিপ্লেস",ro_subSwap:"সাবজেক্ট বদল",ro_lcRef:"L&C রেফারেন্স",ro_lcCopy:"L&C কপি-পেস্ট",ro_dressRef:"পোশাক রেফারেন্স",ro_dressRep:"পোশাক বদল",ro_mkCopy:"মেকআপ কপি",ro_matchBtn:"★ মাস্টার ম্যাচ",rt_none:"আগে অন্তত একটি রিটাচ স্লাইডার বা রং সেট করুন",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop এই prompt বক্সের সীমা:",btn_generate:"তৈরি করুন",st_ready:"প্রস্তুত",st_capture:"ডকুমেন্ট ক্যাপচার হচ্ছে",st_gen:"জেনারেট হচ্ছে…",st_place:"Photoshop-এ বসানো হচ্ছে…",st_placed_masked:"লেয়ার + মাস্ক গ্রুপ হিসেবে বসানো হয়েছে — মূল ছবি অক্ষত ✓",st_placed_plain:"সাধারণ লেয়ার হিসেবে বসানো হয়েছে (এই হোস্টে মাস্ক/গ্রুপ পাওয়া যায় না)",stage_queued:"সারিতে আছে",stage_uploading:"আপলোড হচ্ছে",stage_generating:"জেনারেট হচ্ছে",stage_downloading:"ডাউনলোড হচ্ছে",stage_placing:"বসানো হচ্ছে",st_done:"হয়ে গেছে ✓",st_err:"ত্রুটি",st_no_doc:"কোনো সক্রিয় ডকুমেন্ট নেই — আগে একটি ছবি খুলুন",st_no_prompt:"Prompt খালি",st_new_doc:"ফলাফল নতুন ডকুমেন্ট হিসেবে খোলা হয়েছে ✓",before:"আগে",after:"পরে",btn_place:"Photoshop-এ বসান",st_saved:"সেভ হয়েছে ✓",lib_choose_msg:"আপনার HNK রেফারেন্স ইমেজ লাইব্রেরি ফোল্ডারটি বেছে নিন।",lib_unsupported:"অসমর্থিত ছবির ধরন",lib_restore_fail:"রেফারেন্স পুনরুদ্ধার করা যায়নি",on:"চালু",off:"বন্ধ"},
+bn:{btn_show:"দেখান",btn_save:"সংরক্ষণ",st_need_key:"আগে RunningHub Enterprise key দিন",qual_auto:"অটো",btn_clear:"মুছুন",btn_ref_layer:"+ লেয়ার",btn_ref_file:"ফাইল",btn_ref_web:"ওয়েব",st_ref_layer_added:"লেয়ার রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_ref_file_added:"ফাইল রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_importing:"ফাইল ইমপোর্ট হচ্ছে",url_ph:"https://… ছবির ঠিকানা বা Pinterest পিন লিংক",btn_load:"লোড",btn_cancel:"বাতিল",st_url_loading:"ওয়েব ছবি ডাউনলোড হচ্ছে",st_ref_web_added:"ওয়েব ছবি রেফারেন্স হিসেবে যোগ হয়েছে ✓",st_url_bad:"এই URL থেকে ছবি লোড করা যায়নি — ছবির ঠিকানা কপি করে আবার চেষ্টা করুন",no_layer:"কোনো লেয়ার নির্বাচিত নেই",st_web_import:"লেয়ার হিসেবে Photoshop-এ ইমপোর্ট হয়েছে ✓",st_folder_ok:"এক্সপোর্ট ফোল্ডার সেট হয়েছে ✓",st_exported:"এক্সপোর্ট হয়েছে ✓",st_export_fail:"এক্সপোর্ট ব্যর্থ — ফোল্ডারটি পরীক্ষা করুন",st_img_bad:"ছবির ডেটা ইন্টিগ্রিটি চেক-এ ব্যর্থ — ছবিটি আবার যোগ করুন",st_auto_comp:"অটো কম্পোজিট: IMAGE 1 সাবজেক্ট → রেফারেন্স দৃশ্য",tab_create: "Create",create_ph:"যে ছবিটি তৈরি করতে চান তা বর্ণনা করুন…",btn_create_ps:"⬇ Photoshop-এ পাঠান",btn_to_ref:"↺ Ref 1 হিসেবে ব্যবহার করুন",st_to_ref:"ফলাফল Ref 1-এ লোড হয়েছে ✓",cr_restyle:"♻ ফলাফল রিস্টাইল করুন",cr_gal_empty:"এখনও কোনো ফলাফল নেই — Generate ট্যাপ করুন।",cr_gal_have:"টি ফলাফল · প্রিভিউ / কাজ করতে থাম্বনেইলে ট্যাপ করুন",cr_save:"⬇ PNG সংরক্ষণ করুন",cr_need_result:"প্রথমে একটি ছবি জেনারেট করুন",ro_faceRep:"ফেস রিপ্লেস",ro_faceSwap:"ফেস সোয়াপ",ro_bgRep:"BG রিপ্লেস",ro_bgSwap:"BG সোয়াপ",ro_fgRep:"FG রিপ্লেস",ro_subSwap:"সাবজেক্ট বদল",ro_lcRef:"L&C রেফারেন্স",ro_lcCopy:"L&C কপি-পেস্ট",ro_dressRef:"পোশাক রেফারেন্স",ro_dressRep:"পোশাক বদল",ro_mkCopy:"মেকআপ কপি",ro_matchBtn:"★ মাস্টার ম্যাচ",rt_none:"আগে অন্তত একটি রিটাচ স্লাইডার বা রং সেট করুন",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop এই prompt বক্সের সীমা:",btn_generate:"তৈরি করুন",st_ready:"প্রস্তুত",st_capture:"ডকুমেন্ট ক্যাপচার হচ্ছে",st_gen:"জেনারেট হচ্ছে…",st_place:"Photoshop-এ বসানো হচ্ছে…",st_placed_masked:"লেয়ার + মাস্ক গ্রুপ হিসেবে বসানো হয়েছে — মূল ছবি অক্ষত ✓",st_placed_plain:"সাধারণ লেয়ার হিসেবে বসানো হয়েছে (এই হোস্টে মাস্ক/গ্রুপ পাওয়া যায় না)",stage_queued:"সারিতে আছে",stage_uploading:"আপলোড হচ্ছে",stage_generating:"জেনারেট হচ্ছে",stage_downloading:"ডাউনলোড হচ্ছে",stage_placing:"বসানো হচ্ছে",st_done:"হয়ে গেছে ✓",st_err:"ত্রুটি",st_no_doc:"কোনো সক্রিয় ডকুমেন্ট নেই — আগে একটি ছবি খুলুন",st_no_prompt:"Prompt খালি",st_new_doc:"ফলাফল নতুন ডকুমেন্ট হিসেবে খোলা হয়েছে ✓",before:"আগে",after:"পরে",btn_place:"Photoshop-এ বসান",st_saved:"সেভ হয়েছে ✓",lib_choose_msg:"আপনার HNK রেফারেন্স ইমেজ লাইব্রেরি ফোল্ডারটি বেছে নিন।",lib_unsupported:"অসমর্থিত ছবির ধরন",lib_restore_fail:"রেফারেন্স পুনরুদ্ধার করা যায়নি",on:"চালু",off:"বন্ধ"},
 gu:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"બનાવો",st_ready:"તૈયાર",st_done:"થઈ ગયું ✓",st_need_key:"પહેલા RunningHub Enterprise key નાખો",btn_show:"બતાવો",btn_save:"સાચવો",btn_clear:"કાઢી નાખો",btn_cancel:"રદ કરો",btn_load:"લોડ"},
-hi:{btn_show:"दिखाएँ",btn_save:"सहेजें",st_need_key:"पहले RunningHub Enterprise key डालें",qual_auto:"ऑटो",btn_clear:"हटाएँ",btn_ref_layer:"+ लेयर",btn_ref_file:"फ़ाइल",btn_ref_web:"वेब",st_ref_layer_added:"लेयर संदर्भ के रूप में जुड़ गई ✓",st_ref_file_added:"फ़ाइल संदर्भ के रूप में जुड़ गई ✓",st_importing:"फ़ाइल इंपोर्ट हो रही है",url_ph:"https://… इमेज का पता या Pinterest पिन लिंक",btn_load:"लोड करें",btn_cancel:"रद्द करें",st_url_loading:"वेब इमेज डाउनलोड हो रही है",st_ref_web_added:"वेब इमेज संदर्भ के रूप में जुड़ गई ✓",st_url_bad:"इस URL से इमेज लोड नहीं हो सकी — इमेज का पता कॉपी करके फिर से आज़माएँ",no_layer:"कोई लेयर चयनित नहीं है",st_web_import:"Photoshop में लेयर के रूप में इंपोर्ट हो गया ✓",st_folder_ok:"एक्सपोर्ट फ़ोल्डर सेट हो गया ✓",st_exported:"एक्सपोर्ट हो गया ✓",st_export_fail:"एक्सपोर्ट विफल — फ़ोल्डर जाँचें",st_img_bad:"इमेज डेटा इंटीग्रिटी जाँच में विफल रहा — फोटो दोबारा जोड़ें",st_auto_comp:"ऑटो कंपोज़िट: IMAGE 1 सब्जेक्ट → रेफ़रेंस सीन",tab_create: "Create",create_ph:"जो इमेज बनाना चाहते हैं उसका वर्णन करें…",btn_create_ps:"⬇ Photoshop में भेजें",btn_to_ref:"↺ Ref 1 के रूप में इस्तेमाल करें",st_to_ref:"परिणाम Ref 1 में लोड हो गया ✓",cr_restyle:"♻ परिणाम को नया स्टाइल दें",cr_gal_empty:"अभी कोई परिणाम नहीं — Generate टैप करें।",cr_gal_have:"परिणाम · प्रीव्यू / कार्रवाई के लिए थंबनेल टैप करें",cr_save:"⬇ PNG सेव करें",cr_need_result:"पहले कोई इमेज जनरेट करें",guide_hint:"फिर टैप करें: पीला → नीला (prompt) → हरा (रन) ▶",g_learn_next_prompt:"फिर टैप करें → सटीक PROMPT दिखेगा (नीला)।",g_learn_prompt_head:"यह बटन जो PROMPT भेजेगा (फिर टैप = रन):",g_learn_next_run:"एक बार और टैप करें → रन (हरा) जनरेट करता है।",st_prompt_ready:"Prompt तैयार — चलाने के लिए फिर टैप करें (हरा) ✓",g_step_confirm:"आगे बढ़ने के लिए फिर टैप करें: गाइड (पीला) → PROMPT (नीला) → रन (हरा जनरेट करता है)।",g_cat_generic:"प्रीसेट — आपकी फोटो पर यह प्रोफ़ेशनल एडिट लागू करता है।",g_gen:"जनरेट — prompt बॉक्स (+ चेन, कीप्स, कैमरा ब्लॉक) आपके डॉक्यूमेंट पर चलाता है।",g_retouchbtn:"रीटच अप्लाई — आपकी सभी स्लाइडर सेटिंग्स को एक प्रोफ़ेशनल रीटच पास के रूप में चलाता है।",ro_faceRep:"फेस रिप्लेस",ro_faceSwap:"फेस स्वैप",ro_bgRep:"BG रिप्लेस",ro_bgSwap:"BG स्वैप",ro_fgRep:"FG रिप्लेस",ro_subSwap:"सब्जेक्ट स्वैप",ro_lcRef:"L&C रेफ़रेंस",ro_lcCopy:"L&C कॉपी-पेस्ट",ro_dressRef:"ड्रेस रेफ़रेंस",ro_dressRep:"ड्रेस रिप्लेस",ro_mkCopy:"मेकअप कॉपी",ro_matchBtn:"★ मास्टर मैच",rt_none:"पहले कम से कम एक रीटच स्लाइडर या रंग सेट करें",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop इस prompt बॉक्स की सीमा रखता है:",btn_generate:"बनाएँ",st_ready:"तैयार",st_capture:"दस्तावेज़ कैप्चर हो रहा है",st_gen:"जनरेट हो रहा है…",st_place:"Photoshop में रखा जा रहा है…",st_placed_masked:"लेयर + मास्क ग्रुप के रूप में रखा गया — मूल छवि ज्यों की त्यों ✓",st_placed_plain:"सादी लेयर के रूप में रखा गया (इस होस्ट पर मास्क/ग्रुप उपलब्ध नहीं)",stage_queued:"कतार में",stage_uploading:"अपलोड हो रहा है",stage_generating:"जनरेट हो रहा है",stage_downloading:"डाउनलोड हो रहा है",stage_placing:"रखा जा रहा है",st_done:"हो गया ✓",st_err:"त्रुटि",st_no_doc:"कोई सक्रिय दस्तावेज़ नहीं — पहले कोई फ़ोटो खोलें",st_no_prompt:"Prompt खाली है",st_new_doc:"परिणाम नए दस्तावेज़ के रूप में खुल गया ✓",before:"पहले",after:"बाद",btn_place:"Photoshop में रखें",st_saved:"सहेजा गया ✓",lib_choose_msg:"अपना HNK रेफ़रेंस इमेज लाइब्रेरी फ़ोल्डर चुनें।",lib_unsupported:"असमर्थित इमेज प्रकार",lib_restore_fail:"रेफ़रेंस पुनर्स्थापित नहीं हो सका",on:"चालू",off:"बंद"},
+hi:{btn_show:"दिखाएँ",btn_save:"सहेजें",st_need_key:"पहले RunningHub Enterprise key डालें",qual_auto:"ऑटो",btn_clear:"हटाएँ",btn_ref_layer:"+ लेयर",btn_ref_file:"फ़ाइल",btn_ref_web:"वेब",st_ref_layer_added:"लेयर संदर्भ के रूप में जुड़ गई ✓",st_ref_file_added:"फ़ाइल संदर्भ के रूप में जुड़ गई ✓",st_importing:"फ़ाइल इंपोर्ट हो रही है",url_ph:"https://… इमेज का पता या Pinterest पिन लिंक",btn_load:"लोड करें",btn_cancel:"रद्द करें",st_url_loading:"वेब इमेज डाउनलोड हो रही है",st_ref_web_added:"वेब इमेज संदर्भ के रूप में जुड़ गई ✓",st_url_bad:"इस URL से इमेज लोड नहीं हो सकी — इमेज का पता कॉपी करके फिर से आज़माएँ",no_layer:"कोई लेयर चयनित नहीं है",st_web_import:"Photoshop में लेयर के रूप में इंपोर्ट हो गया ✓",st_folder_ok:"एक्सपोर्ट फ़ोल्डर सेट हो गया ✓",st_exported:"एक्सपोर्ट हो गया ✓",st_export_fail:"एक्सपोर्ट विफल — फ़ोल्डर जाँचें",st_img_bad:"इमेज डेटा इंटीग्रिटी जाँच में विफल रहा — फोटो दोबारा जोड़ें",st_auto_comp:"ऑटो कंपोज़िट: IMAGE 1 सब्जेक्ट → रेफ़रेंस सीन",tab_create: "Create",create_ph:"जो इमेज बनाना चाहते हैं उसका वर्णन करें…",btn_create_ps:"⬇ Photoshop में भेजें",btn_to_ref:"↺ Ref 1 के रूप में इस्तेमाल करें",st_to_ref:"परिणाम Ref 1 में लोड हो गया ✓",cr_restyle:"♻ परिणाम को नया स्टाइल दें",cr_gal_empty:"अभी कोई परिणाम नहीं — Generate टैप करें।",cr_gal_have:"परिणाम · प्रीव्यू / कार्रवाई के लिए थंबनेल टैप करें",cr_save:"⬇ PNG सेव करें",cr_need_result:"पहले कोई इमेज जनरेट करें",ro_faceRep:"फेस रिप्लेस",ro_faceSwap:"फेस स्वैप",ro_bgRep:"BG रिप्लेस",ro_bgSwap:"BG स्वैप",ro_fgRep:"FG रिप्लेस",ro_subSwap:"सब्जेक्ट स्वैप",ro_lcRef:"L&C रेफ़रेंस",ro_lcCopy:"L&C कॉपी-पेस्ट",ro_dressRef:"ड्रेस रेफ़रेंस",ro_dressRep:"ड्रेस रिप्लेस",ro_mkCopy:"मेकअप कॉपी",ro_matchBtn:"★ मास्टर मैच",rt_none:"पहले कम से कम एक रीटच स्लाइडर या रंग सेट करें",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop इस prompt बॉक्स की सीमा रखता है:",btn_generate:"बनाएँ",st_ready:"तैयार",st_capture:"दस्तावेज़ कैप्चर हो रहा है",st_gen:"जनरेट हो रहा है…",st_place:"Photoshop में रखा जा रहा है…",st_placed_masked:"लेयर + मास्क ग्रुप के रूप में रखा गया — मूल छवि ज्यों की त्यों ✓",st_placed_plain:"सादी लेयर के रूप में रखा गया (इस होस्ट पर मास्क/ग्रुप उपलब्ध नहीं)",stage_queued:"कतार में",stage_uploading:"अपलोड हो रहा है",stage_generating:"जनरेट हो रहा है",stage_downloading:"डाउनलोड हो रहा है",stage_placing:"रखा जा रहा है",st_done:"हो गया ✓",st_err:"त्रुटि",st_no_doc:"कोई सक्रिय दस्तावेज़ नहीं — पहले कोई फ़ोटो खोलें",st_no_prompt:"Prompt खाली है",st_new_doc:"परिणाम नए दस्तावेज़ के रूप में खुल गया ✓",before:"पहले",after:"बाद",btn_place:"Photoshop में रखें",st_saved:"सहेजा गया ✓",lib_choose_msg:"अपना HNK रेफ़रेंस इमेज लाइब्रेरी फ़ोल्डर चुनें।",lib_unsupported:"असमर्थित इमेज प्रकार",lib_restore_fail:"रेफ़रेंस पुनर्स्थापित नहीं हो सका",on:"चालू",off:"बंद"},
 ja:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"生成",st_ready:"準備完了",st_done:"完了 ✓",st_need_key:"先に RunningHub Enterprise key を入力してください",btn_show:"表示",btn_save:"保存",btn_clear:"クリア",btn_cancel:"キャンセル",btn_load:"読み込み"},
 km:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"បង្កើត",st_ready:"រួចរាល់",st_done:"រួចរាល់ហើយ ✓",st_need_key:"សូមបញ្ចូល RunningHub Enterprise key ជាមុន",btn_show:"បង្ហាញ",btn_save:"រក្សាទុក",btn_clear:"លុប",btn_cancel:"បោះបង់",btn_load:"ផ្ទុក"},
 kn:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"ರಚಿಸಿ",st_ready:"ಸಿದ್ಧ",st_done:"ಮುಗಿದಿದೆ ✓",st_need_key:"ಮೊದಲು RunningHub Enterprise key ಹಾಕಿ",btn_show:"ತೋರಿಸಿ",btn_save:"ಉಳಿಸಿ",btn_clear:"ಅಳಿಸಿ",btn_cancel:"ರದ್ದು",btn_load:"ಲೋಡ್"},
@@ -3934,8 +3844,8 @@ ml:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "R
 mr:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"तयार करा",st_ready:"तयार",st_done:"झाले ✓",st_need_key:"आधी RunningHub Enterprise key टाका",btn_show:"दाखवा",btn_save:"जतन करा",btn_clear:"काढा",btn_cancel:"रद्द",btn_load:"लोड"},
 ne:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"बनाउनुहोस्",st_ready:"तयार",st_done:"भयो ✓",st_need_key:"पहिले RunningHub Enterprise key राख्नुहोस्",btn_show:"देखाउनुहोस्",btn_save:"सेभ",btn_clear:"हटाउनुहोस्",btn_cancel:"रद्द",btn_load:"लोड"},
 pa:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"ਬਣਾਓ",st_ready:"ਤਿਆਰ",st_done:"ਹੋ ਗਿਆ ✓",st_need_key:"ਪਹਿਲਾਂ RunningHub Enterprise key ਪਾਓ",btn_show:"ਦਿਖਾਓ",btn_save:"ਸੰਭਾਲੋ",btn_clear:"ਹਟਾਓ",btn_cancel:"ਰੱਦ ਕਰੋ",btn_load:"ਲੋਡ"},
-ta:{btn_show:"காட்டு",btn_save:"சேமி",st_need_key:"முதலில் RunningHub Enterprise key சேர்க்கவும்",qual_auto:"ஆட்டோ",btn_clear:"அழி",btn_ref_layer:"+ லேயர்",btn_ref_file:"கோப்பு",btn_ref_web:"வெப்",st_ref_layer_added:"லேயர் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_ref_file_added:"கோப்பு ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_importing:"கோப்பு இறக்குமதியாகிறது",url_ph:"https://… படத்தின் முகவரி அல்லது Pinterest pin இணைப்பு",btn_load:"ஏற்று",btn_cancel:"ரத்து",st_url_loading:"வெப் படம் பதிவிறக்கப்படுகிறது",st_ref_web_added:"வெப் படம் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_url_bad:"இந்த URL-இலிருந்து படத்தை ஏற்ற முடியவில்லை — படத்தின் முகவரியை நகலெடுத்து மீண்டும் முயற்சிக்கவும்",no_layer:"லேயர் எதுவும் தேர்ந்தெடுக்கப்படவில்லை",st_web_import:"Photoshop-இல் லேயராக இறக்குமதி செய்யப்பட்டது ✓",st_folder_ok:"ஏற்றுமதி கோப்புறை அமைக்கப்பட்டது ✓",st_exported:"ஏற்றுமதி செய்யப்பட்டது ✓",st_export_fail:"ஏற்றுமதி தோல்வி — கோப்புறையைச் சரிபார்க்கவும்",st_img_bad:"படத் தரவு ஒருமைப்பாடு சரிபார்ப்பில் தோல்வி — புகைப்படத்தை மீண்டும் சேர்க்கவும்",st_auto_comp:"தானியங்கு காம்போசிட்: IMAGE 1 சப்ஜெக்ட் → ரெஃபரன்ஸ் காட்சி",tab_create: "Create",create_ph:"உருவாக்க விரும்பும் படத்தை விவரிக்கவும்…",btn_create_ps:"⬇ Photoshop-க்கு அனுப்பு",btn_to_ref:"↺ Ref 1 ஆகப் பயன்படுத்து",st_to_ref:"முடிவு Ref 1-இல் ஏற்றப்பட்டது ✓",cr_restyle:"♻ முடிவை மறுஸ்டைல் செய்",cr_gal_empty:"இன்னும் முடிவுகள் இல்லை — Generate-ஐத் தட்டவும்.",cr_gal_have:"முடிவு(கள்) · முன்னோட்டம் காண / செயல்படுத்த ஒரு சிறுபடத்தைத் தட்டவும்",cr_save:"⬇ PNG சேமி",cr_need_result:"முதலில் ஒரு படத்தை உருவாக்கவும்",guide_hint:"மீண்டும் தட்டவும்: மஞ்சள் → நீலம் (prompt) → பச்சை (இயக்கு) ▶",g_learn_next_prompt:"மீண்டும் தட்டவும் → சரியான PROMPT-ஐக் காட்டும் (நீலம்).",g_learn_prompt_head:"இந்தப் பொத்தான் அனுப்பும் PROMPT (மீண்டும் தட்டினால் = இயக்கம்):",g_learn_next_run:"இன்னொரு முறை தட்டவும் → இயக்கு (பச்சை) உருவாக்கும்.",st_prompt_ready:"Prompt தயார் — இயக்க மீண்டும் தட்டவும் (பச்சை) ✓",g_step_confirm:"முன்னேற மீண்டும் தட்டவும்: வழிகாட்டி (மஞ்சள்) → PROMPT (நீலம்) → இயக்கு (பச்சை உருவாக்கும்).",g_cat_generic:"ப்ரீசெட் — இந்த ப்ரொஃபஷனல் எடிட்டை உங்கள் புகைப்படத்தில் பயன்படுத்தும்.",g_gen:"GENERATE — உங்கள் ஆவணத்தில் prompt பெட்டியை (+ செயின்கள், கீப்கள், கேமரா தொகுதி) இயக்கும்.",g_retouchbtn:"ரீடச் அப்ளை — உங்கள் எல்லா ஸ்லைடர் அமைப்புகளையும் ஒரே ப்ரொஃபஷனல் ரீடச் பாஸாக இயக்கும்.",ro_faceRep:"முக மாற்றீடு",ro_faceSwap:"முக ஸ்வாப்",ro_bgRep:"BG மாற்றீடு",ro_bgSwap:"BG ஸ்வாப்",ro_fgRep:"FG மாற்றீடு",ro_subSwap:"நபர் மாற்றம்",ro_lcRef:"L&C ரெஃபரன்ஸ்",ro_lcCopy:"L&C காப்பி-பேஸ்ட்",ro_dressRef:"உடை ரெஃபரன்ஸ்",ro_dressRep:"உடை மாற்றம்",ro_mkCopy:"மேக்கப் காப்பி",ro_matchBtn:"★ மாஸ்டர் மேட்ச்",rt_none:"முதலில் ஏதேனும் ஒரு ரீடச் ஸ்லைடரையோ நிறத்தையோ அமைக்கவும்",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"இந்த prompt பெட்டிக்கான Photoshop வரம்பு:",btn_generate:"உருவாக்கு",st_ready:"தயார்",st_capture:"ஆவணம் எடுக்கப்படுகிறது",st_gen:"உருவாக்கப்படுகிறது…",st_place:"Photoshop-இல் வைக்கப்படுகிறது…",st_placed_masked:"லேயர் + மாஸ்க் குழுவாக வைக்கப்பட்டது — அசல் அப்படியே உள்ளது ✓",st_placed_plain:"சாதாரண லேயராக வைக்கப்பட்டது (இந்த ஹோஸ்டில் மாஸ்க்/குழு கிடைக்கவில்லை)",stage_queued:"வரிசையில்",stage_uploading:"பதிவேற்றம்",stage_generating:"உருவாக்கம்",stage_downloading:"பதிவிறக்கம்",stage_placing:"வைத்தல்",st_done:"முடிந்தது ✓",st_err:"பிழை",st_no_doc:"செயலில் உள்ள ஆவணம் இல்லை — முதலில் ஒரு புகைப்படத்தைத் திறக்கவும்",st_no_prompt:"Prompt காலியாக உள்ளது",st_new_doc:"முடிவு புதிய ஆவணமாகத் திறக்கப்பட்டது ✓",before:"முன்",after:"பின்",btn_place:"Photoshop-இல் வை",st_saved:"சேமிக்கப்பட்டது ✓",lib_choose_msg:"உங்கள் HNK ரெஃபரன்ஸ் பட லைப்ரரி கோப்புறையைத் தேர்வுசெய்யவும்.",lib_unsupported:"ஆதரிக்கப்படாத பட வகை",lib_restore_fail:"ரெஃபரன்ஸை மீட்டெடுக்க முடியவில்லை",on:"ஆன்",off:"ஆஃப்"},
-te:{btn_show:"చూపించు",btn_save:"సేవ్",st_need_key:"ముందుగా RunningHub Enterprise key ఇవ్వండి",qual_auto:"ఆటో",btn_clear:"తొలగించు",btn_ref_layer:"+ లేయర్",btn_ref_file:"ఫైల్",btn_ref_web:"వెబ్",st_ref_layer_added:"లేయర్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_ref_file_added:"ఫైల్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_importing:"ఫైల్ దిగుమతి అవుతోంది",url_ph:"https://… చిత్ర చిరునామా లేదా Pinterest పిన్ లింక్",btn_load:"లోడ్",btn_cancel:"రద్దు",st_url_loading:"వెబ్ చిత్రం డౌన్‌లోడ్ అవుతోంది",st_ref_web_added:"వెబ్ చిత్రం రిఫరెన్స్‌గా జోడించబడింది ✓",st_url_bad:"ఈ URL నుండి చిత్రం లోడ్ కాలేదు — చిత్ర చిరునామాను కాపీ చేసి మళ్లీ ప్రయత్నించండి",no_layer:"ఏ లేయర్ ఎంపిక కాలేదు",st_web_import:"Photoshopలోకి లేయర్‌గా దిగుమతి అయింది ✓",st_folder_ok:"ఎక్స్‌పోర్ట్ ఫోల్డర్ సెట్ అయింది ✓",st_exported:"ఎక్స్‌పోర్ట్ అయింది ✓",st_export_fail:"ఎక్స్‌పోర్ట్ విఫలమైంది — ఫోల్డర్‌ను తనిఖీ చేయండి",st_img_bad:"చిత్ర డేటా సమగ్రత తనిఖీలో విఫలమైంది — ఫోటోను మళ్లీ జోడించండి",st_auto_comp:"ఆటో కాంపోజిట్: IMAGE 1 సబ్జెక్ట్ → రిఫరెన్స్ సీన్",tab_create: "Create",create_ph:"మీరు సృష్టించాలనుకునే చిత్రాన్ని వివరించండి…",btn_create_ps:"⬇ Photoshop కు పంపు",btn_to_ref:"↺ Ref 1 గా వాడు",st_to_ref:"ఫలితం Ref 1 లోకి లోడ్ అయింది ✓",cr_restyle:"♻ ఫలితాన్ని రీస్టైల్ చేయి",cr_gal_empty:"ఇంకా ఫలితాలు లేవు — Generate నొక్కండి.",cr_gal_have:"ఫలితం(లు) · ప్రివ్యూ / చర్య కోసం థంబ్‌నెయిల్ నొక్కండి",cr_save:"⬇ PNG సేవ్ చేయి",cr_need_result:"ముందుగా ఒక చిత్రాన్ని జనరేట్ చేయండి",guide_hint:"మళ్లీ నొక్కండి: పసుపు → నీలం (prompt) → ఆకుపచ్చ (రన్) ▶",g_learn_next_prompt:"మళ్లీ నొక్కండి → ఖచ్చితమైన PROMPT చూపుతుంది (నీలం).",g_learn_prompt_head:"ఈ బటన్ పంపే PROMPT (మళ్లీ నొక్కితే = రన్):",g_learn_next_run:"మరోసారి నొక్కండి → రన్ (ఆకుపచ్చ) జనరేట్ చేస్తుంది.",st_prompt_ready:"Prompt సిద్ధం — నడపడానికి మళ్లీ నొక్కండి (ఆకుపచ్చ) ✓",g_step_confirm:"ముందుకు వెళ్లడానికి మళ్లీ నొక్కండి: గైడ్ (పసుపు) → PROMPT (నీలం) → రన్ (ఆకుపచ్చ జనరేట్ చేస్తుంది).",g_cat_generic:"ప్రీసెట్ — ఈ ప్రొఫెషనల్ ఎడిట్‌ను మీ ఫోటోకు వర్తింపజేస్తుంది.",g_gen:"జనరేట్ — మీ డాక్యుమెంట్‌పై prompt బాక్స్‌ను (+ చైన్‌లు, కీప్‌లు, కెమెరా బ్లాక్) నడుపుతుంది.",g_retouchbtn:"రీటచ్ అప్లై — మీ అన్ని స్లయిడర్ సెట్టింగ్‌లను ఒకే ప్రొఫెషనల్ రీటచ్ పాస్‌గా నడుపుతుంది.",ro_faceRep:"ఫేస్ రీప్లేస్",ro_faceSwap:"ఫేస్ స్వాప్",ro_bgRep:"BG రీప్లేస్",ro_bgSwap:"BG స్వాప్",ro_fgRep:"FG రీప్లేస్",ro_subSwap:"సబ్జెక్ట్ స్వాప్",ro_lcRef:"L&C రిఫరెన్స్",ro_lcCopy:"L&C కాపీ-పేస్ట్",ro_dressRef:"డ్రెస్ రిఫరెన్స్",ro_dressRep:"డ్రెస్ రీప్లేస్",ro_mkCopy:"మేకప్ కాపీ",ro_matchBtn:"★ మాస్టర్ మ్యాచ్",rt_none:"ముందుగా కనీసం ఒక రీటచ్ స్లయిడర్ లేదా రంగు సెట్ చేయండి",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop ఈ prompt బాక్స్ పరిమితి:",btn_generate:"సృష్టించు",st_ready:"సిద్ధం",st_capture:"డాక్యుమెంట్ క్యాప్చర్ అవుతోంది",st_gen:"జనరేట్ అవుతోంది…",st_place:"Photoshopలో ప్లేస్ అవుతోంది…",st_placed_masked:"లేయర్ + మాస్క్ గ్రూప్‌గా ప్లేస్ అయింది — ఒరిజినల్‌కు ఎలాంటి మార్పు లేదు ✓",st_placed_plain:"సాధారణ లేయర్‌గా ప్లేస్ అయింది (ఈ హోస్ట్‌లో మాస్క్/గ్రూప్ అందుబాటులో లేదు)",stage_queued:"క్యూలో ఉంది",stage_uploading:"అప్‌లోడ్ అవుతోంది",stage_generating:"జనరేట్ అవుతోంది",stage_downloading:"డౌన్‌లోడ్ అవుతోంది",stage_placing:"ప్లేస్ అవుతోంది",st_done:"పూర్తయింది ✓",st_err:"లోపం",st_no_doc:"యాక్టివ్ డాక్యుమెంట్ లేదు — ముందుగా ఒక ఫోటో తెరవండి",st_no_prompt:"Prompt ఖాళీగా ఉంది",st_new_doc:"ఫలితం కొత్త డాక్యుమెంట్‌గా తెరుచుకుంది ✓",before:"ముందు",after:"తర్వాత",btn_place:"Photoshopలో ప్లేస్ చేయండి",st_saved:"సేవ్ అయింది ✓",lib_choose_msg:"మీ HNK రిఫరెన్స్ ఇమేజ్ లైబ్రరీ ఫోల్డర్‌ను ఎంచుకోండి.",lib_unsupported:"మద్దతు లేని ఇమేజ్ రకం",lib_restore_fail:"రిఫరెన్స్‌ను పునరుద్ధరించడం సాధ్యపడలేదు",on:"ఆన్",off:"ఆఫ్"},
+ta:{btn_show:"காட்டு",btn_save:"சேமி",st_need_key:"முதலில் RunningHub Enterprise key சேர்க்கவும்",qual_auto:"ஆட்டோ",btn_clear:"அழி",btn_ref_layer:"+ லேயர்",btn_ref_file:"கோப்பு",btn_ref_web:"வெப்",st_ref_layer_added:"லேயர் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_ref_file_added:"கோப்பு ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_importing:"கோப்பு இறக்குமதியாகிறது",url_ph:"https://… படத்தின் முகவரி அல்லது Pinterest pin இணைப்பு",btn_load:"ஏற்று",btn_cancel:"ரத்து",st_url_loading:"வெப் படம் பதிவிறக்கப்படுகிறது",st_ref_web_added:"வெப் படம் ரெஃபரன்ஸாகச் சேர்க்கப்பட்டது ✓",st_url_bad:"இந்த URL-இலிருந்து படத்தை ஏற்ற முடியவில்லை — படத்தின் முகவரியை நகலெடுத்து மீண்டும் முயற்சிக்கவும்",no_layer:"லேயர் எதுவும் தேர்ந்தெடுக்கப்படவில்லை",st_web_import:"Photoshop-இல் லேயராக இறக்குமதி செய்யப்பட்டது ✓",st_folder_ok:"ஏற்றுமதி கோப்புறை அமைக்கப்பட்டது ✓",st_exported:"ஏற்றுமதி செய்யப்பட்டது ✓",st_export_fail:"ஏற்றுமதி தோல்வி — கோப்புறையைச் சரிபார்க்கவும்",st_img_bad:"படத் தரவு ஒருமைப்பாடு சரிபார்ப்பில் தோல்வி — புகைப்படத்தை மீண்டும் சேர்க்கவும்",st_auto_comp:"தானியங்கு காம்போசிட்: IMAGE 1 சப்ஜெக்ட் → ரெஃபரன்ஸ் காட்சி",tab_create: "Create",create_ph:"உருவாக்க விரும்பும் படத்தை விவரிக்கவும்…",btn_create_ps:"⬇ Photoshop-க்கு அனுப்பு",btn_to_ref:"↺ Ref 1 ஆகப் பயன்படுத்து",st_to_ref:"முடிவு Ref 1-இல் ஏற்றப்பட்டது ✓",cr_restyle:"♻ முடிவை மறுஸ்டைல் செய்",cr_gal_empty:"இன்னும் முடிவுகள் இல்லை — Generate-ஐத் தட்டவும்.",cr_gal_have:"முடிவு(கள்) · முன்னோட்டம் காண / செயல்படுத்த ஒரு சிறுபடத்தைத் தட்டவும்",cr_save:"⬇ PNG சேமி",cr_need_result:"முதலில் ஒரு படத்தை உருவாக்கவும்",ro_faceRep:"முக மாற்றீடு",ro_faceSwap:"முக ஸ்வாப்",ro_bgRep:"BG மாற்றீடு",ro_bgSwap:"BG ஸ்வாப்",ro_fgRep:"FG மாற்றீடு",ro_subSwap:"நபர் மாற்றம்",ro_lcRef:"L&C ரெஃபரன்ஸ்",ro_lcCopy:"L&C காப்பி-பேஸ்ட்",ro_dressRef:"உடை ரெஃபரன்ஸ்",ro_dressRep:"உடை மாற்றம்",ro_mkCopy:"மேக்கப் காப்பி",ro_matchBtn:"★ மாஸ்டர் மேட்ச்",rt_none:"முதலில் ஏதேனும் ஒரு ரீடச் ஸ்லைடரையோ நிறத்தையோ அமைக்கவும்",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"இந்த prompt பெட்டிக்கான Photoshop வரம்பு:",btn_generate:"உருவாக்கு",st_ready:"தயார்",st_capture:"ஆவணம் எடுக்கப்படுகிறது",st_gen:"உருவாக்கப்படுகிறது…",st_place:"Photoshop-இல் வைக்கப்படுகிறது…",st_placed_masked:"லேயர் + மாஸ்க் குழுவாக வைக்கப்பட்டது — அசல் அப்படியே உள்ளது ✓",st_placed_plain:"சாதாரண லேயராக வைக்கப்பட்டது (இந்த ஹோஸ்டில் மாஸ்க்/குழு கிடைக்கவில்லை)",stage_queued:"வரிசையில்",stage_uploading:"பதிவேற்றம்",stage_generating:"உருவாக்கம்",stage_downloading:"பதிவிறக்கம்",stage_placing:"வைத்தல்",st_done:"முடிந்தது ✓",st_err:"பிழை",st_no_doc:"செயலில் உள்ள ஆவணம் இல்லை — முதலில் ஒரு புகைப்படத்தைத் திறக்கவும்",st_no_prompt:"Prompt காலியாக உள்ளது",st_new_doc:"முடிவு புதிய ஆவணமாகத் திறக்கப்பட்டது ✓",before:"முன்",after:"பின்",btn_place:"Photoshop-இல் வை",st_saved:"சேமிக்கப்பட்டது ✓",lib_choose_msg:"உங்கள் HNK ரெஃபரன்ஸ் பட லைப்ரரி கோப்புறையைத் தேர்வுசெய்யவும்.",lib_unsupported:"ஆதரிக்கப்படாத பட வகை",lib_restore_fail:"ரெஃபரன்ஸை மீட்டெடுக்க முடியவில்லை",on:"ஆன்",off:"ஆஃப்"},
+te:{btn_show:"చూపించు",btn_save:"సేవ్",st_need_key:"ముందుగా RunningHub Enterprise key ఇవ్వండి",qual_auto:"ఆటో",btn_clear:"తొలగించు",btn_ref_layer:"+ లేయర్",btn_ref_file:"ఫైల్",btn_ref_web:"వెబ్",st_ref_layer_added:"లేయర్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_ref_file_added:"ఫైల్ రిఫరెన్స్‌గా జోడించబడింది ✓",st_importing:"ఫైల్ దిగుమతి అవుతోంది",url_ph:"https://… చిత్ర చిరునామా లేదా Pinterest పిన్ లింక్",btn_load:"లోడ్",btn_cancel:"రద్దు",st_url_loading:"వెబ్ చిత్రం డౌన్‌లోడ్ అవుతోంది",st_ref_web_added:"వెబ్ చిత్రం రిఫరెన్స్‌గా జోడించబడింది ✓",st_url_bad:"ఈ URL నుండి చిత్రం లోడ్ కాలేదు — చిత్ర చిరునామాను కాపీ చేసి మళ్లీ ప్రయత్నించండి",no_layer:"ఏ లేయర్ ఎంపిక కాలేదు",st_web_import:"Photoshopలోకి లేయర్‌గా దిగుమతి అయింది ✓",st_folder_ok:"ఎక్స్‌పోర్ట్ ఫోల్డర్ సెట్ అయింది ✓",st_exported:"ఎక్స్‌పోర్ట్ అయింది ✓",st_export_fail:"ఎక్స్‌పోర్ట్ విఫలమైంది — ఫోల్డర్‌ను తనిఖీ చేయండి",st_img_bad:"చిత్ర డేటా సమగ్రత తనిఖీలో విఫలమైంది — ఫోటోను మళ్లీ జోడించండి",st_auto_comp:"ఆటో కాంపోజిట్: IMAGE 1 సబ్జెక్ట్ → రిఫరెన్స్ సీన్",tab_create: "Create",create_ph:"మీరు సృష్టించాలనుకునే చిత్రాన్ని వివరించండి…",btn_create_ps:"⬇ Photoshop కు పంపు",btn_to_ref:"↺ Ref 1 గా వాడు",st_to_ref:"ఫలితం Ref 1 లోకి లోడ్ అయింది ✓",cr_restyle:"♻ ఫలితాన్ని రీస్టైల్ చేయి",cr_gal_empty:"ఇంకా ఫలితాలు లేవు — Generate నొక్కండి.",cr_gal_have:"ఫలితం(లు) · ప్రివ్యూ / చర్య కోసం థంబ్‌నెయిల్ నొక్కండి",cr_save:"⬇ PNG సేవ్ చేయి",cr_need_result:"ముందుగా ఒక చిత్రాన్ని జనరేట్ చేయండి",ro_faceRep:"ఫేస్ రీప్లేస్",ro_faceSwap:"ఫేస్ స్వాప్",ro_bgRep:"BG రీప్లేస్",ro_bgSwap:"BG స్వాప్",ro_fgRep:"FG రీప్లేస్",ro_subSwap:"సబ్జెక్ట్ స్వాప్",ro_lcRef:"L&C రిఫరెన్స్",ro_lcCopy:"L&C కాపీ-పేస్ట్",ro_dressRef:"డ్రెస్ రిఫరెన్స్",ro_dressRep:"డ్రెస్ రీప్లేస్",ro_mkCopy:"మేకప్ కాపీ",ro_matchBtn:"★ మాస్టర్ మ్యాచ్",rt_none:"ముందుగా కనీసం ఒక రీటచ్ స్లయిడర్ లేదా రంగు సెట్ చేయండి",tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",cap_warn:"Photoshop ఈ prompt బాక్స్ పరిమితి:",btn_generate:"సృష్టించు",st_ready:"సిద్ధం",st_capture:"డాక్యుమెంట్ క్యాప్చర్ అవుతోంది",st_gen:"జనరేట్ అవుతోంది…",st_place:"Photoshopలో ప్లేస్ అవుతోంది…",st_placed_masked:"లేయర్ + మాస్క్ గ్రూప్‌గా ప్లేస్ అయింది — ఒరిజినల్‌కు ఎలాంటి మార్పు లేదు ✓",st_placed_plain:"సాధారణ లేయర్‌గా ప్లేస్ అయింది (ఈ హోస్ట్‌లో మాస్క్/గ్రూప్ అందుబాటులో లేదు)",stage_queued:"క్యూలో ఉంది",stage_uploading:"అప్‌లోడ్ అవుతోంది",stage_generating:"జనరేట్ అవుతోంది",stage_downloading:"డౌన్‌లోడ్ అవుతోంది",stage_placing:"ప్లేస్ అవుతోంది",st_done:"పూర్తయింది ✓",st_err:"లోపం",st_no_doc:"యాక్టివ్ డాక్యుమెంట్ లేదు — ముందుగా ఒక ఫోటో తెరవండి",st_no_prompt:"Prompt ఖాళీగా ఉంది",st_new_doc:"ఫలితం కొత్త డాక్యుమెంట్‌గా తెరుచుకుంది ✓",before:"ముందు",after:"తర్వాత",btn_place:"Photoshopలో ప్లేస్ చేయండి",st_saved:"సేవ్ అయింది ✓",lib_choose_msg:"మీ HNK రిఫరెన్స్ ఇమేజ్ లైబ్రరీ ఫోల్డర్‌ను ఎంచుకోండి.",lib_unsupported:"మద్దతు లేని ఇమేజ్ రకం",lib_restore_fail:"రిఫరెన్స్‌ను పునరుద్ధరించడం సాధ్యపడలేదు",on:"ఆన్",off:"ఆఫ్"},
 ur:{tab_setup: "Setup",tab_prompt: "Edit",tab_presets: "Library",tab_retouch: "Retouch",tab_aitools: "Home",tab_create: "Create",btn_generate:"بنائیں",st_ready:"تیار",st_done:"ہو گیا ✓",st_need_key:"پہلے RunningHub Enterprise key ڈالیں",btn_show:"دکھائیں",btn_save:"محفوظ کریں",btn_clear:"صاف کریں",btn_cancel:"منسوخ",btn_load:"لوڈ"}
 };
 
@@ -4014,9 +3924,6 @@ function applyI18n() {
   g.HNK.openTake = takesOpenP;   /* v6.87.0 — History ▸ Videos ▸ Open */
     /* v6.159.1 — the Smart Workflow wizard's runs reach COST & BALANCE: bootstrap hands the adapter's usage here */
     g.HNK.spendBook = function (usage, meta) { try { rhBookUsage(usage, meta); } catch (e) { } };
-  /* v6.161.0 — Learn Mode's switch. Its toggle (tglLearn) left with the old Freeform page in 6.51.0 and
-     was never rebuilt, so the three-tap cycle could not be turned off from the panel at all; the Setup
-     screen (settings-screen.js) now reads and writes it here. Turning it off disarms a pending tap. */
   /* 6.166.0 — text size (AI Tools ▸ Settings): S · M · L as a body class the stylesheet reads; remembered in the
      settings file. The Home screen's recent strip and the Gallery tools are published beside it. */
   g.HNK.textSize = {
@@ -4026,10 +3933,6 @@ function applyI18n() {
   g.HNK.homeRecent = { list: homeRecentListP, open: homeRecentOpen, title: function () { return ff9(GAL_L.recent); } };
   g.HNK.dropTarget = dropTargetBridge();
   g.HNK.ellMark = ellMark;   /* 6.167.0 — the screens' clamp marker */
-  g.HNK.learnMode = {
-    get: function () { return !!state.learnMode; },
-    set: function (on) { state.learnMode = !!on; if (!state.learnMode) { try { disarm(); } catch (e) { } } try { saveSettings(); } catch (e2) { } return state.learnMode; }
-  };
     /* v6.83.0 — "Open in Edit" on the wizard's result card: IMAGE 1 becomes
        Freeform's Before and the result its After, entered into Freeform's own
        results history, so everything Freeform does with a result (compare,
@@ -10458,7 +10361,6 @@ async function saveSettings() {
       /* v6.54.0 — the Path page's own settings (the app's state.pt): the look,
          the tier, the strength dial, the effects and the source it is pointed at */
       pt: state.pt || null,
-      learnMode: state.learnMode,
       libToken: state.libToken, libFolderName: state.libFolderName, libNativePath: state.libNativePath,
       refTokens: state.refTokens,
       accRefresh: state.accRefresh, accUid: state.accUid, accEmail: state.accEmail,
@@ -10568,7 +10470,6 @@ async function loadSettings() {
         }
       }
       if (typeof o.cVariations === "number") state.cVariations = Math.max(1, Math.min(4, o.cVariations));
-      if (typeof o.learnMode === "boolean") state.learnMode = o.learnMode;
       if (typeof o.libToken === "string") state.libToken = o.libToken;
       if (typeof o.libFolderName === "string") state.libFolderName = o.libFolderName;
       if (typeof o.libNativePath === "string") state.libNativePath = o.libNativePath;
@@ -11502,163 +11403,20 @@ const WED_QUALITY = "Luxury editorial wedding finish, 85mm lens look.";
 /* Who is kept when only the SCENE changes (solo / couple / family). */
 
 
-/* ---------------- LEARN MODE: two-tap + Student Guide (v3.1) ---------------- */
-function dualT(key) {
-  const e = (I18N.en[key] || key);
-  /* Bilingual guide = English + the active language; when English is active,
-     fall back to Burmese (the plugin's second home language) so the guide
-     stays two-up rather than English-only. */
-  const other = (state.lang !== "en") ? state.lang : "my";
-  /* v6.11: extended codes have no full table — the guide's second column
-     shows their fallback language (kyu -> Burmese, lo -> Thai, hi -> none) */
-  const L = I18N[other] || I18N[LANG_FB[other]] || {};
-  const loc = L[key] || "";
-  return e + (loc && loc !== e ? "\n" + loc : "");
-}
-
-/* One accurate line of "what this button actually does", derived from its own
-   prompt so the guide is always truthful (even after a prompt is edited). */
-
-function guideFor(key) {
-  /* v6.161.0 — the preset buttons this once described left with the old Freeform page; the two
-     remaining keys (__gen, __retouch) always read the generic category and the confirm step. */
-  return dualT("g_cat_generic") + "\n\n1. " + dualT("g_step_confirm");
-}
-
-const GEN_GUIDES = { __gen: "g_gen", __retouch: "g_retouchbtn" };
-
-/* strip every learn-state class off a button so we can repaint one cleanly */
-function clearArmClass(el) {
-  if (!el) return;
-  el.className = clsOf(el).replace(" armed", "").replace(" armp", "").replace(" go", "");
-}
-function setArmClass(el, cls) {
-  if (!el) return;
-  clearArmClass(el);
-  if (cls) el.className = el.className + " " + cls;
-}
-function resetArmTimer() {
-  if (state.armTimer) { try { clearTimeout(state.armTimer); } catch (e) { } }
-  state.armTimer = setTimeout(function () { disarm(); }, 8000);
-}
-
-function disarm() {
-  if (state.armTimer) { try { clearTimeout(state.armTimer); } catch (e) { } state.armTimer = null; }
-  if (state.armedEl) clearArmClass(state.armedEl);
-  state.armedKey = null;
-  state.armedEl = null;
-  state.armStage = 0;
-  const gb = $("guideBox");
-  if (gb) gb.className = "gbox";
-}
-
-/* v6.86.0 — THE GUIDE BOX SITS IN THE PAGE, NEXT TO THE CARD THAT WAS TAPPED.
-   It was the panel's last position:fixed element (bottom: 62px), and
-   Photoshop lays a fixed box out as an ordinary block at the end of the
-   document — so in the real host Learn Mode's yellow guide appeared, if at
-   all, a screen below the button. A dialog is the wrong shape here: the
-   three-tap cycle needs the same button tappable again while the guide is
-   up. So the box is moved into the flow right above the tapped button's own
-   card (or the top of the active page) and shown there; disarm() hides it. */
-function guidePlace(el) {
-  const gb = $("guideBox"); if (!gb) return;
-  /* v6.159.1 — the owner's photographs: tap 1 put the box above the GENERATE card, tap 2 put it at the TOP of the page.
-     The only road to the page top is the fallback below, so the move failed: on the second tap the box is already the
-     card's previous sibling and the host refuses that no-op move. A box already in place is left alone; any move
-     detaches it first; a button repainted since the first tap is found again by its id. */
-  let live = el;
-  try { if (live && live.id && !elInDoc(live)) live = $(live.id) || live; } catch (e) { }
-  /* the sticky GENERATE (STICKY_GENS) is lifted into #genDock while its card is below the fold — the owner's second tap
-     came from the dock, where no card is above it; its natural spot (the placeholder) is still in the card */
-  let spot = live;
-  try { if (live && typeof stickyGenNatural === "function") spot = stickyGenNatural(live) || live; } catch (e) { }
-  const card = spot ? hslClosest(spot, "card") : null;
-  let done = false;
-  try {
-    if (card && card.parentNode) {
-      if (gb.parentNode === card.parentNode && (gb.nextSibling === card || gb.nextElementSibling === card)) done = true;
-      else { if (gb.parentNode) gb.parentNode.removeChild(gb); card.parentNode.insertBefore(gb, card); done = true; }
-    }
-  } catch (e) { }
-  if (!done) {
-    try {
-      const pe = pageEntry(state.page); const pg = pe && $(pe.page);
-      if (pg) { if (pg.firstChild === gb) done = true; else { if (gb.parentNode) gb.parentNode.removeChild(gb); pg.insertBefore(gb, pg.firstChild); done = true; } }
-    } catch (e) { }
-  }
-  gb.className = "gbox on";
-}
-/* is the element still in the document? (isConnected where the host has it, contains elsewhere; "yes" when neither can be asked) */
-function elInDoc(e) {
-  try { if (typeof e.isConnected === "boolean") return e.isConnected; return !!(document.body && document.body.contains(e)); } catch (x) { return true; }
-}
-
-function greenFlash(el) {
-  if (!el) return;
-  setArmClass(el, "go");
-  setTimeout(function () { try { el.className = clsOf(el).replace(" go", ""); } catch (e) { } }, 700);
-}
-
-/* Stage 1 = the teaching guide (what it does + what it needs). */
-function showGuide(key, titleTxt) {
-  const gb = $("guideBox");
-  if (!gb) return;
-  const tt = $("guideTitle");
-  const bd = $("guideBody");
-  const isGen = !!GEN_GUIDES[key];
-  if (tt) tt.textContent = "\uD83C\uDF93 " + (titleTxt || key);
-  if (bd) bd.textContent = (isGen ? dualT(GEN_GUIDES[key]) : guideFor(key)) + "\n\n" + dualT("g_learn_next_prompt");
-  guidePlace(state.armedEl);   /* v6.86.0 — in the flow, beside the button's card */
-}
-
-/* Stage 2 = show the EXACT prompt this button will send (blue), and (for a real
-   preset) drop it into the prompt box so it can be read/edited before running. */
-function showPromptStage(key, titleTxt) {
-  const gb = $("guideBox");
-  const bd = $("guideBody");
-  const tt = $("guideTitle");
-  let promptTxt = "";
-  try { promptTxt = dualT(GEN_GUIDES[key] || "g_step_confirm"); } catch (e) { promptTxt = ""; }
-  if (tt) tt.textContent = "\uD83D\uDCDD " + (titleTxt || key);
-  if (bd) bd.textContent = dualT("g_learn_prompt_head") + "\n\n" + promptTxt + "\n\n" + dualT("g_learn_next_run");
-  if (gb) guidePlace(state.armedEl);   /* v6.86.0 */
-  setStatus(t("st_prompt_ready"), "ok");
-}
-
-/* Three-tap Learn cycle: 1st = guide (yellow), 2nd = prompt (blue), 3rd = RUN
-   (green). Learn Mode OFF = single tap runs. Returns true when the tap was
-   consumed by the cycle (i.e. did not run). */
-function armGate(key, el, fire) {
-  if (state.busy) return false; /* never arm or fire mid-run */
-  if (!state.learnMode) { fire(); return false; }
-  if (state.armedKey === key) {
-    if (state.armStage === 1) {
-      state.armStage = 2;
-      setArmClass(el || state.armedEl, "armp"); /* blue */
-      showPromptStage(key, el ? el.textContent : key);
-      resetArmTimer();
-      return true;
-    }
-    /* stage 2 -> RUN */
-    const ae = state.armedEl;
-    disarm();
-    fire();
-    greenFlash(ae || el); /* after fire, so the flash lands last */
-    return false;
-  }
-  disarm();
-  state.armedKey = key;
-  state.armedEl = el || null;
-  state.armStage = 1;
-  setArmClass(el, "armed"); /* yellow */
-  showGuide(key, el ? el.textContent : key);
-  resetArmTimer();
-  return true;
-}
-
-/* Actually generate for this preset (guards + build + runGenerate). */
-
-/* Learn-OFF one-tap: Auto-Run ON -> run; OFF -> insert prompt into the box. */
+/* v6.170.0 — THE THREE-TAP LEARN CYCLE IS GONE; GENERATE RUNS ON THE FIRST TAP.
+   From v3.1 to 6.169.1 a tap on GENERATE (Freeform), APPLY (Retouch A / B) or
+   the Studio run did not run: the first tap armed the button yellow and opened
+   a guide box, the second turned it blue and printed the prompt, and only the
+   third — green — generated. The owner photographed it in Photoshop and asked
+   for it to go ("Freeform မှာ ဒီလို ၁၂၃ ပြီးမှ Generate လုပ်တဲ့ဟာက မထည့်သင့်ပါဘူး
+   အလုပ်ရှုပ်ပါတယ်"). It was panel-only — the web app's GENERATE has always run on
+   one tap — so the gate was also the last parity break on those four buttons.
+   Removed with it: state.learnMode / armedKey / armedEl / armTimer / armStage,
+   HNK.learnMode and its saved setting, the Settings switch (#hnkSetLearn), the
+   guide box (#guideBox) with guidePlace / showGuide / showPromptStage / dualT /
+   guideFor / GEN_GUIDES / arm classes / disarm, and the ten strings that only
+   described the cycle. Each of the four buttons now calls its run directly,
+   behind the same state.busy guard armGate opened with. */
 
 /* ---------------- Final prompt builder ---------------- */
 
@@ -12253,8 +12011,10 @@ function ffRunErr(msg) {
 function ffGeneratePress() {
   const g0 = $("btnGenerate");
   if (!g0) return;
+  if (state.busy) return;   /* never start a second run on top of one */
   /* the label stays put while the run feeds back through the card (no busy dots) */
-  armGate("__gen", g0, function () { setBusyBtn(null); runGenerate(null, false, [], false, { action: "Prompt", ffCard: true }); });
+  setBusyBtn(null);
+  runGenerate(null, false, [], false, { action: "Prompt", ffCard: true });
 }
 function bindFreeformRun() {
   ffSpinEnsure();
@@ -13837,7 +13597,6 @@ const scrollMem = {};
 const PAGE_SCOPE_STPG = { pageMeitu: 1, pageEvoto: 1, pageRetouch: 1, stDock: 1 };
 function pageScope(pageId) { return " apg" + (PAGE_SCOPE_STPG[pageId] ? " stpg" : ""); }
 function switchPage(key) {
-  try { disarm(); } catch (e) { }
   if (key !== "presets" && key !== "wf") state.wfLibTarget = null;   /* v6.82.0 */
   let found = false;
   for (let i = 0; i < PAGES.length; i++) { if (PAGES[i].key === key) found = true; }
@@ -14269,13 +14028,15 @@ function init() {
     const start = $("btnV2Start");
     if (start) {
       start.addEventListener("click", function () {
-        armGate("__retouch", start, function () { studioRun(start, "v2"); });
+        if (state.busy) return;
+        studioRun(start, "v2");
       });
     }
     const rsGen = $("btnRsGen");
     if (rsGen) {
       rsGen.addEventListener("click", function () {
-        armGate("__retouch", rsGen, function () { studioRun(rsGen, "rs"); });
+        if (state.busy) return;
+        studioRun(rsGen, "rs");
       });
     }
   });
@@ -14297,16 +14058,15 @@ function init() {
     const gen = $("btnStGen");
     if (gen) {
       gen.addEventListener("click", function () {
-        armGate("__studio", gen, function () {
-          const sc = globalThis.HNK && globalThis.HNK.studioScreen;
-          const api = sc && sc.api && sc.api();
-          if (!api) { setStatus(t("st_err"), "err"); return; }
-          if (!state.refs[0]) { setStatus(api.RS_NEED_PHOTO, "err"); return; }
-          const prompt = String(sc.prompt() || "").trim();
-          if (!prompt) { setStatus(api.RS_NEED_PHOTO, "err"); return; }
-          setBusyBtn(gen);
-          runGenerate(prompt, true, ["skin", "subject"], false, { action: "Retouch", realDir: "edit" });
-        });
+        if (state.busy) return;
+        const sc = globalThis.HNK && globalThis.HNK.studioScreen;
+        const api = sc && sc.api && sc.api();
+        if (!api) { setStatus(t("st_err"), "err"); return; }
+        if (!state.refs[0]) { setStatus(api.RS_NEED_PHOTO, "err"); return; }
+        const prompt = String(sc.prompt() || "").trim();
+        if (!prompt) { setStatus(api.RS_NEED_PHOTO, "err"); return; }
+        setBusyBtn(gen);
+        runGenerate(prompt, true, ["skin", "subject"], false, { action: "Retouch", realDir: "edit" });
       });
     }
     /* the app saves the current look as a recipe from this button */
@@ -14319,13 +14079,6 @@ function init() {
       });
     }
   });
-
-  /* the Learn Mode guide box (its switch lives on the Setup screen since 6.161.0) */
-  safe("presets", function () {
-    const gc = $("guideClose");
-    if (gc) gc.addEventListener("click", disarm);
-  });
-
 
   safe("create", bindCreate);
   safe("provider", bindProvider);

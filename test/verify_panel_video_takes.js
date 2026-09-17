@@ -83,14 +83,11 @@ const nineLangs = (line) => !!line && LANGS.every(l => new RegExp("[{,]" + l + '
     /en:"Recently upscaled videos \(this session only\)"/.test(dictLine(MAIN, "VU_L", "histH")) && /en:"Open direct link"/.test(dictLine(MAIN, "VU_L", "openLink")) &&
     APP.indexOf('en:"Earlier takes"') > 0 && APP.indexOf('en:"Recently upscaled videos (this session only)"') > 0, null);
 
-  const gbox = (CSS.match(/\.gbox \{[\s\S]*?\n\}/) || [""])[0];
   const CSS_RULES = CSS.replace(/\/\*[\s\S]*?\*\//g, "");   /* the rules only — the comments explain what was removed */
-  report("A3) the guide box is the panel's last fixed element no more: no position:fixed rule anywhere in styles.css, .gbox shown by .on, guidePlace puts it above the tapped button's card (or the page's top) from showGuide and showPromptStage, and disarm takes it off",
-    !/position:\s*fixed/.test(CSS_RULES) && !!gbox && !/fixed|bottom:|z-index/.test(gbox) && /\.gbox\.on \{ display: block; \}/.test(CSS) &&
-    /function guidePlace\(el\)/.test(MAIN) && /const card = spot \? hslClosest\(spot, "card"\) : null;/.test(MAIN) /* 6.159.1 — spot: the button, or a docked button's placeholder */ &&
-    /card\.parentNode\.insertBefore\(gb, card\); done = true;/.test(MAIN) && /pg\.insertBefore\(gb, pg\.firstChild\); done = true;/.test(MAIN) &&
-    (MAIN.match(/guidePlace\(state\.armedEl\);/g) || []).length === 2 && /if \(gb\) gb\.className = "gbox";\n\}/.test(MAIN) &&
-    !/gb\.style\.display = "block"/.test(MAIN) && !/gb\.style\.display = "none"/.test(MAIN), { gbox });
+  report("A3) no position:fixed rule survives anywhere in styles.css — and (6.170.0) the Learn-Mode guide box that was the last one is gone with the three-tap cycle: no .gbox rule, no #guideBox in the markup, and no guidePlace / showGuide / showPromptStage / disarm / armGate in main.js",
+    !/position:\s*fixed/.test(CSS_RULES) && !/\.gbox/.test(CSS_RULES) && read("panel/index.html").indexOf("guideBox") < 0 &&
+    !/function guidePlace|function showGuide|function showPromptStage|function disarm|function armGate/.test(MAIN) &&
+    /v6\.170\.0 — the Learn-Mode guide box \(\.gbox\)/.test(CSS), { gbox: (CSS.match(/\.gbox[^\n]*/) || [""])[0] });
 
   report("A4) SELF-TEST carries a \"Video player\" row — ok where <video> decodes, the host level where it does not, naming Download / Open Direct Link / Open the folder as what plays the clip",
     /rows\.push\(\{ label: "Video player",\n\s*detail: VIDEO_OK \? "plays MP4 inline" : "no inline player \\u2014 Download \/ Open Direct Link \/ Open the folder play the clip",\n\s*level: VIDEO_OK \? "ok" : "host" \}\);/.test(MAIN), null);
@@ -193,19 +190,15 @@ const nineLangs = (line) => !!line && LANGS.every(l => new RegExp("[{,]" + l + '
       window.__folder = null; document.getElementById("btnVuFolder").click(); await settle();
       out.vu.folderOpened = window.__folder;
 
-      /* -- the guide box, in the flow beside the tapped card -- */
+      /* -- v6.170.0: no guide box, and a run button is not gated -- */
       switchPage("prompt"); await settle();
-      state.learnMode = true;
-      const btn = document.querySelector("#pagePrompt .card .btn");
-      const card = hslClosest(btn, "card");
-      const armed = armGate("verify_takes_probe", btn, function () { window.__fired = true; });
-      await settle();
-      const gb = document.getElementById("guideBox");
-      const cs = getComputedStyle(gb);
-      out.guide = { armed, fired: !!window.__fired, cls: gb.className, position: cs.position, display: cs.display, beforeCard: gb.nextElementSibling === card,
-        sameParent: gb.parentNode === card.parentNode, inPage: !!hslClosest(gb, "page"), title: (document.getElementById("guideTitle") || {}).textContent };
-      disarm(); await settle();
-      out.guide.after = { cls: gb.className, display: getComputedStyle(gb).display };
+      out.guide = { box: !!document.getElementById("guideBox"), armGate: typeof armGate, learnMode: typeof state.learnMode };
+      const g0 = document.getElementById("btnGenerate");
+      let ranFF = 0; const keepRG = runGenerate;
+      runGenerate = function () { ranFF++; return Promise.resolve(); };
+      if (g0) { g0.click(); await settle(); }
+      runGenerate = keepRG;
+      out.guide.ranOnFirstTap = ranFF;
 
       /* -- SELF-TEST: the Video player row -- */
       switchPage("setup"); await settle();
@@ -231,13 +224,12 @@ const nineLangs = (line) => !!line && LANGS.every(l => new RegExp("[{,]" + l + '
     VUR.boxOn && VUR.tiles.join() === "MP4 1" && /Renders\/hnk-upscaled-\d+\.mp4/.test(VUR.saved) && VUR.noteShown && VUR.openBtn && VUR.openWord === "Direct Link ဖွင့်" && VUR.folderBtn &&
     VUR.h2 === "ရလဒ် (ဗီဒီယို)" && VUR.histH.length > 5 && VUR.row === "saved" && VUR.entry && /\?up$/.test(VUR.entry.url) && VUR.entry.tool === "Video Upscale" && /^hnk-upscaled-/.test(VUR.entry.name) &&
     /\?up$/.test(String(VUR.opened)) && VUR.folderOpened === "/tmp/Renders", VUR);
-  report("B4) panel · Learn Mode's guide box renders in the flow right above the tapped button's card (not fixed, display block, inside the page), the tap was consumed (nothing fired), and disarm hides it",
-    G.armed === true && !G.fired && /\bon\b/.test(G.cls) && G.position !== "fixed" && G.display === "block" && G.beforeCard && G.sameParent && G.inPage && G.title.length > 1 &&
-    G.after.cls === "gbox" && G.after.display === "none", G);
+  report("B4) panel · the three-tap gate is gone: no #guideBox in the document, no armGate and no state.learnMode, and Freeform's GENERATE runs on the FIRST tap",
+    G.box === false && G.armGate === "undefined" && G.learnMode === "undefined" && G.ranOnFirstTap === 1, G);
   report("B5) panel · SELF-TEST shows the \"Video player\" row at the host level here (no player), naming Download / Open Direct Link / Open the folder",
     pan.selftest.present && /\bhost\b/.test(pan.selftest.level) && /no inline player/.test(pan.selftest.detail) && /Open the folder/.test(pan.selftest.detail), pan.selftest);
   report("B6) panel · no page error", pan.errs.length === 0, pan.errs.slice(0, 3));
 
-  console.log(failures ? "\n" + failures + " check(s) failed." : "\nALL PASS — every page that writes a clip now shows it, the guide box sits where the tap was, and SELF-TEST says whether video plays.");
+  console.log(failures ? "\n" + failures + " check(s) failed." : "\nALL PASS — every page that writes a clip now shows it, the three-tap gate is gone, and SELF-TEST says whether video plays.");
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error("FATAL", e); process.exit(1); });
