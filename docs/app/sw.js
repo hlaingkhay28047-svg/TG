@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-103-0";
+var CACHE = "hnk-web-studio-v6-104-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -25,6 +25,15 @@ var LIB_CACHE = "hnk-lib-v1";
    the entry COUNT, not bytes; the browser's own origin quota is the real size
    ceiling and it evicts the whole cache rather than trimming, which is why an
    explicit cap exists at all. */
+/* 6.104.0 wave B — COUNTED AGAIN, and the cap still clears it: /lib/ now holds 5,423
+   files after the Album page's forty-two woff2 faces joined under /lib/fonts/. They
+   belong on this branch deliberately. A typeface is the one asset a student must never
+   wait for twice — a page laid out in Playfair Display that re-fetches it on the next
+   visit repaints the album in Georgia while it downloads — and cache-first, never
+   revalidated, is exactly the right answer for a file whose bytes are fixed by its
+   name (tools/album-fonts.json records the SHA-256 of every one). They are NEW names
+   no device has ever been served, so they need no LIB_PURGES entry; replacing one in
+   place later would, like any other file here. */
 var LIB_MAX_ENTRIES = 6000;
 /* v6.91.0 — THE DATA FILES. data/libwf.js (the Library catalog, 1.18 MB) and
    data/hnkdata.js (the studio tables) used to ride inside index.html, so a

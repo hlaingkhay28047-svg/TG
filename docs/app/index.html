@@ -2203,8 +2203,17 @@ body.wall #wallRetry.on{display:block}
 .alb-tpls .chip{margin:3px}
 .alb-tpl{padding:4px 6px}
 .alb-sketch{display:block;width:44px;height:26px;border-radius:3px;border:1px solid var(--line-soft)}
-.alb-textrow{align-items:center;margin-bottom:6px}
+.alb-textrow{align-items:center;flex-wrap:wrap;margin-bottom:6px}
 .alb-rolelab{flex:0 0 auto;width:92px;margin-right:6px}
+/* 6.104.0 wave B — the type. The pairing chips wrap like the size chips; the per-role
+   font picker and the ink swatches sit on the same row as the field and drop under it
+   on a narrow phone, which is what flex-wrap on .alb-textrow is for. */
+.alb-type{flex-wrap:wrap;align-items:center;margin:0 -3px 6px}
+.alb-type .chip{margin:3px}
+.alb-fontsel{flex:0 0 auto;width:136px;padding:6px 8px;margin:4px 0 0 6px}
+.alb-inks{flex:0 0 auto;display:flex;flex-wrap:nowrap;align-items:center;margin:4px 0 0 6px}
+.alb-ink{width:22px;height:22px;padding:0;margin-left:4px;border-radius:50%;border:1px solid var(--line-soft);cursor:pointer}
+.alb-ink.on{box-shadow:0 0 0 2px var(--gold)}
 @media (min-width:900px){
   .alb-thumb{width:128px;max-width:128px}
   .alb-tile{width:96px;height:96px}
@@ -4168,7 +4177,7 @@ html.splashing #splash{display:flex}
 <script src="data/hnkdata.js?v=3b68aeb2725b"></script>
 <script src="data/libwf.js?v=880c3f0f1cf1"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
-<script src="data/album.js?v=0c529dc22d0c"></script>
+<script src="data/album.js?v=f6f0197e2309"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -4179,7 +4188,7 @@ html.splashing #splash{display:flex}
    synchronous way to add a script while the document is still being parsed;
    the address is built from this fixed list and a two-or-three-letter code,
    never from the link's text. tools/build_app_data.js writes the tags. */
-window.HNK_TRL_TAGS={"bn":"67e4ca7799ce","gu":"d966f8822fe1","hi":"590ae7483483","ja":"05ca35a6dc5e","km":"eb52275a26e3","kn":"2eba7982b796","ko":"4818130cde6a","lo":"260aaeb79c47","ml":"710d88c1555b","mr":"b63b2371267a","ne":"30375bd73552","pa":"7e6fae11d2e3","ta":"bf059ad21655","te":"ac19eaca57d3","ur":"d6f460943f20","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
+window.HNK_TRL_TAGS={"bn":"df18417b7687","gu":"20c6615638fe","hi":"094bdc3cd20a","ja":"cccd58457b23","km":"016c2b9441ee","kn":"7cd8823692b9","ko":"558abe671367","lo":"e8cdd4de7679","ml":"6285c39ababd","mr":"10b4104525f4","ne":"20bff37602df","pa":"f842fb7a9412","ta":"498155e6b51d","te":"35d2b2778689","ur":"47acd89798f2","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
 (function(){
   var T=window.HNK_TRL_TAGS, has=function(k){ return Object.prototype.hasOwnProperty.call(T,k); };
   var BASE=/^(my|en|shn|kac|th|zh|vi|id|ms)$/, u="", code="";
@@ -4730,6 +4739,16 @@ var TR_PH={
   alb_export_done:{my:"ထုတ်ပြီးပါပြီ",en:"Exported"},
   alb_export_saved:{my:"Gallery ထဲ သိမ်းပြီးပါပြီ",en:"Saved to your Gallery"},
   alb_export_fail:{my:"မထုတ်နိုင်ပါ — ဓာတ်ပုံ အရမ်းကြီးနေလား စစ်ပါ",en:"The file could not be made — check whether the photos are very large"},
+  /* 6.104.0 wave B — the ALBUM page's type */
+  alb_pair:{my:"စာလုံးပုံစံ တွဲ",en:"Font pairing"},
+  alb_pair_note:{my:"ခေါင်းစဉ် နဲ့ စာကိုယ် စာလုံး နှစ်မျိုးကို တစ်ချက်နှိပ်ရုံနဲ့ ရွေးပါ",en:"One tap sets the display face and the reading face together"},
+  alb_font:{my:"စာလုံး",en:"Font"},
+  alb_font_auto:{my:"အလိုအလျောက်",en:"Auto"},
+  alb_font_count:{my:"စာလုံး {N} မျိုး · တွဲ {P} မျိုး",en:"{N} fonts · {P} pairings"},
+  alb_ink:{my:"မင်အရောင်",en:"Ink"},
+  alb_font_my:{my:"မြန်မာစာကို မြန်မာ စာလုံးက အမြဲထုတ်ပေးပါတယ်",en:"Burmese letters always come from a Burmese font"},
+  alb_font_busy:{my:"စာလုံး ဖွင့်နေသည်…",en:"Loading the font…"},
+  alb_font_fail:{my:"စာလုံး မဖွင့်နိုင်ပါ — အရံစာလုံးနဲ့ ဆွဲပါမည်",en:"That font did not load — the page is drawn with the fallback"},
   ph_home:{my:'တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်',en:'Set up once — <em>ready whenever you are</em>'},
   ph_path:{my:'ဓာတ်ပုံအားလုံးကို Look တစ်ခုတည်းနဲ့ <em>တစ်ပြိုင်နက်</em> ပြင်မယ်',en:'One look, applied to your whole album — <em>all at once</em>'},
   ph_imagine:{my:'ပုံထည့် · template ရွေး · <em>တစ်ချက်နှိပ်</em> — prompt မလို',en:'Add a photo · pick a template · <em>one tap</em> — no prompt'}
@@ -4790,6 +4809,16 @@ var TR_L14={
   alb_export_done:{shn:"ဢွၵ်ႇယဝ်ႉ",kac:"Shapraw sai",th:"ส่งออกแล้ว",zh:"已导出",vi:"Đã xuất",id:"Diekspor",ms:"Dieksport"},
   alb_export_saved:{shn:"သိမ်းသႂ်ႇယဝ်ႉ",kac:"Gallery de makoi sai",th:"บันทึกลงแกลเลอรีแล้ว",zh:"已保存到图库",vi:"Đã lưu vào Thư viện",id:"Tersimpan di Galeri",ms:"Disimpan ke Galeri"},
   alb_export_fail:{shn:"ဢွၵ်ႇဢမ်ႇလႆႈ — တူၺ်းၶႅပ်းယႂ်ႇပူၼ်ႉ",kac:"N shapraw lu ai — sumla kaba ai kun yu u",th:"สร้างไฟล์ไม่ได้ — ตรวจว่ารูปใหญ่เกินไปหรือไม่",zh:"无法生成文件 — 请检查照片是否过大",vi:"Không tạo được tệp — kiểm tra xem ảnh có quá lớn không",id:"Berkas tidak bisa dibuat — periksa apakah fotonya sangat besar",ms:"Fail tidak dapat dibuat — periksa sama ada foto terlalu besar"},
+  /* 6.104.0 wave B — the ALBUM page's type */
+  alb_pair:{shn:"တွင်ႈလိၵ်ႈ ၶူႈ",kac:"Laika hkum matut",th:"คู่ฟอนต์",zh:"字体搭配",vi:"Cặp phông chữ",id:"Pasangan font",ms:"Pasangan fon"},
+  alb_pair_note:{shn:"ႁူဝ်ၶေႃႈလႄႈ တူဝ်လိၵ်ႈ သွင်ဢၼ် ဢိုတ်းၵမ်းလဵဝ်",kac:"Baw hte laika hkum lahkawng hpe kalang mi lata la",th:"แตะครั้งเดียวได้ทั้งฟอนต์หัวเรื่องและฟอนต์เนื้อความ",zh:"一次点选同时决定标题与内文字体",vi:"Một chạm chọn cả phông tiêu đề và phông nội dung",id:"Sekali ketuk menetapkan font judul dan font isi",ms:"Satu ketik menetapkan fon tajuk dan fon isi"},
+  alb_font:{shn:"တူဝ်လိၵ်ႈ",kac:"Laika hkum",th:"ฟอนต์",zh:"字体",vi:"Phông chữ",id:"Font",ms:"Fon"},
+  alb_font_auto:{shn:"ႁင်းၵူၺ်း",kac:"Hkrai hkrai",th:"อัตโนมัติ",zh:"自动",vi:"Tự động",id:"Otomatis",ms:"Automatik"},
+  alb_font_count:{shn:"တူဝ်လိၵ်ႈ {N} မဵဝ်း · ၶူႈ {P} မဵဝ်း",kac:"Laika hkum {N} · matut {P}",th:"{N} ฟอนต์ · {P} คู่",zh:"{N} 款字体 · {P} 组搭配",vi:"{N} phông · {P} cặp",id:"{N} font · {P} pasangan",ms:"{N} fon · {P} pasangan"},
+  alb_ink:{shn:"သီလိၵ်ႈ",kac:"Laika ahkyeng",th:"สีตัวอักษร",zh:"文字颜色",vi:"Màu chữ",id:"Warna tinta",ms:"Warna dakwat"},
+  alb_font_my:{shn:"လိၵ်ႈမၢၼ်ႈ ဢွၵ်ႇမႃးတီႈ တူဝ်လိၵ်ႈမၢၼ်ႈ တႃႇသေႇ",kac:"Myen laika gaw Myen laika hkum kaw na shagu pru wa ai",th:"ตัวอักษรพม่ามาจากฟอนต์พม่าเสมอ",zh:"缅文始终由缅文字体呈现",vi:"Chữ Miến luôn được lấy từ phông chữ Miến",id:"Huruf Burma selalu berasal dari font Burma",ms:"Huruf Burma sentiasa datang daripada fon Burma"},
+  alb_font_busy:{shn:"ပိုတ်ႇတူဝ်လိၵ်ႈဝႆႉ…",kac:"Laika hkum hpaw nga ai…",th:"กำลังโหลดฟอนต์…",zh:"正在载入字体…",vi:"Đang tải phông chữ…",id:"Memuat font…",ms:"Memuatkan fon…"},
+  alb_font_fail:{shn:"ပိုတ်ႇတူဝ်လိၵ်ႈဢမ်ႇလႆႈ — တႅမ်ႈၼႂ်းတူဝ်လိၵ်ႈသၢႆႈ",kac:"Laika hkum n hpaw lu — shingdu laika hkum hte ka ai",th:"โหลดฟอนต์นั้นไม่ได้ — จะวาดด้วยฟอนต์สำรอง",zh:"该字体未能载入 — 改用后备字体绘制",vi:"Không tải được phông đó — trang được vẽ bằng phông dự phòng",id:"Font itu gagal dimuat — halaman digambar dengan font cadangan",ms:"Fon itu gagal dimuatkan — halaman dilukis dengan fon sandaran"},
   ph_path:{shn:'Look ဢၼ်လဵဝ် ၸႂ်ႉတင်းမူႇၶႅပ်းႁၢင်ႈ — <em>ၵမ်းလဵဝ်တင်းသဵင်ႈ</em>',kac:'Look langai sha, na a sumla yawng hta — <em>kalang ta yawng</em>',th:'ลุคเดียว ใช้กับทั้งอัลบั้ม — <em>พร้อมกันทั้งหมด</em>',zh:'一个风格，套用整本相册 — <em>一次全部完成</em>',vi:'Một look, áp cho cả album — <em>tất cả cùng lúc</em>',id:'Satu look untuk seluruh album — <em>sekaligus</em>',ms:'Satu look untuk seluruh album — <em>serentak</em>'},
   ph_imagine:{shn:'သႂ်ႇၶႅပ်း · လိူၵ်ႈ template · <em>ၼဵၵ်းပွၵ်ႈလဵဝ်</em>',kac:'Sumla bang · template lata · <em>kalang dip</em>',th:'เพิ่มรูป · เลือกเทมเพลต · <em>แตะครั้งเดียว</em> — ไม่ต้องพรอมต์',zh:'添加照片 · 选择模板 · <em>一键</em>——无需提示词',vi:'Thêm ảnh · chọn mẫu · <em>một chạm</em> — không cần prompt',id:'Tambah foto · pilih templat · <em>sekali ketuk</em> — tanpa prompt',ms:'Tambah foto · pilih templat · <em>sekali ketik</em> — tanpa prompt'},
   ph_home:{shn:'Setup ပွၵ်ႈလဵဝ် — <em>ၶႂ်ႈၸႂ်ႉမိူဝ်ႈလႂ်ၵေႃႈ ႁၢင်ႈႁႅၼ်းဝႆႉယဝ်ႉ</em>',kac:'Kalang sha setup galaw u — <em>galoi raitim hkyen da sai</em>',th:'ตั้งค่าครั้งเดียว — <em>พร้อมใช้ทุกเมื่อ</em>',zh:'设置一次 — <em>随时待命</em>',vi:'Thiết lập một lần — <em>sẵn sàng bất cứ lúc nào</em>',id:'Atur sekali — <em>siap kapan saja</em>',ms:'Sedia sekali sahaja — <em>sedia bila-bila masa</em>'}
@@ -5722,6 +5751,9 @@ var TOPGROUPS=[
    tools/build_app_data.js moves the cut forward; the panel lifts this list
    (js/hnk_whats_new.js), so its boot parses these rows and no more. */
 var WHATS_NEW = [
+  { v:"6.104.0", kind:"page", ref:"pgAlbum",
+    t:{my:"Album စာမျက်နှာအတွက် စာလုံး ၂၀ မျိုး — မြန်မာစာလည်း ပါပြီ",en:"Twenty typefaces for an album page — Burmese among them",shn:"တူဝ်လိၵ်ႈ 20 မဵဝ်း တႃႇၼႃႈလိၵ်ႈ album — လိၵ်ႈမၢၼ်ႈၵေႃႈပႃး",kac:"Album laika man matu laika hkum 20 — Myen laika mung lawm ai",th:"ยี่สิบฟอนต์สำหรับหน้าอัลบั้ม — มีฟอนต์พม่าด้วย",zh:"相册页面二十款字体 — 含缅文字体",vi:"Hai mươi kiểu chữ cho trang album — có cả phông Miến",id:"Dua puluh huruf untuk halaman album — termasuk Burma",ms:"Dua puluh fon untuk halaman album — termasuk Burma"},
+    s:{my:"Album စာမျက်နှာရဲ့ စာသား ၇ မျိုးလုံး Georgia တစ်မျိုးတည်းနဲ့ ရေးနေခဲ့တာကို **စာလုံး ၂၀ မျိုး** နဲ့ **တွဲ ၁၂ တွဲ** (မင်္ဂလာ · ရောမ · မဂ္ဂဇင်း · ခေတ်မီ · မြန်မာ သန့် …) အဖြစ် ချဲ့လိုက်ပါပြီ။ တစ်ချက်နှိပ်ရုံနဲ့ ခေါင်းစဉ်စာလုံးနဲ့ စာကိုယ်စာလုံး နှစ်မျိုးလုံး ပြောင်းသွားမယ်၊ စာကြောင်းတစ်ကြောင်းချင်းစီအတွက် ကိုယ်ပိုင် စာလုံးနဲ့ **မင်အရောင် ၆ မျိုး** (ပုံမှောင်ရင် အဖြူ) ရွေးလို့ရပါတယ်။ **မြန်မာစာကို မြန်မာ font က အမြဲထုတ်ပေးပါတယ်** — ခေါင်းစဉ်တစ်ကြောင်းထဲမှာ အင်္ဂလိပ်နဲ့ မြန်မာ ရောနေရင်တောင် တစ်ကြောင်းတည်းအတိုင်း မှန်မှန်ကန်ကန် ထွက်ပါမယ်။ font အားလုံး **OFL လိုင်စင်** ဖြစ်ပြီး ကိုယ့် server ကနေပဲ ပို့ပေးပါတယ်။",en:"The album's seven text roles were all set in one Georgia. They now have **twenty typefaces** and **twelve pairings** (Wedding · Roman · Editorial · Modern · Myanmar clean …). One tap sets the display face and the reading face together; any single line can take its own face and one of **six inks** — white for a line over a dark photograph. **Burmese letters always come from a Burmese font**, so a title mixing English and Burmese comes out right on one line. Every face is **OFL-licensed** and served from this studio's own files.",shn:"ၼႃႈလိၵ်ႈ album ဢၼ်မီးလိၵ်ႈ 7 မဵဝ်း ဢၼ်တႅမ်ႈၸွမ်း Georgia ဢၼ်လဵဝ်ၼၼ်ႉ တေႃႈလဵဝ်မီး **တူဝ်လိၵ်ႈ 20 မဵဝ်း** လႄႈ **ၶူႈ 12 ဢၼ်** ယဝ်ႉ။ ဢိုတ်းၵမ်းလဵဝ် လႅၵ်ႈလႆႈတင်းသွင်ဢၼ်၊ ထႅဝ်လဵဝ်ၵေႃႈလိူၵ်ႈတူဝ်လိၵ်ႈလႄႈသီ 6 မဵဝ်းလႆႈ။ လိၵ်ႈမၢၼ်ႈ ဢွၵ်ႇမႃးတီႈတူဝ်လိၵ်ႈမၢၼ်ႈတႃႇသေႇ။",kac:"Album laika man a laika 7 hkum yawng Georgia langai sha hte ka da ai wa, ya gaw **laika hkum 20** hte **matut 12** lawm sai. Kalang mi lata yang baw laika hkum hte hti na laika hkum yawng hkra shai wa ai; laika hteng langai mi mung tinang a laika hkum hte ahkyeng 6 kaw na lata lu ai. Myen laika gaw Myen laika hkum kaw na shagu pru wa ai.",th:"ทั้งเจ็ดบทบาทข้อความของหน้าอัลบั้มเคยใช้ Georgia แบบเดียว ตอนนี้มี **ยี่สิบฟอนต์** และ **สิบสองคู่** (งานแต่ง · โรมัน · นิตยสาร · สมัยใหม่ · พม่าเรียบ …) แตะครั้งเดียวได้ทั้งฟอนต์หัวเรื่องและฟอนต์เนื้อความ แต่ละบรรทัดเลือกฟอนต์เองและเลือกสีตัวอักษรได้ **หกสี** — สีขาวสำหรับบรรทัดบนภาพมืด ตัวอักษรพม่ามาจากฟอนต์พม่าเสมอ ทุกฟอนต์เป็นลิขสิทธิ์ OFL และเสิร์ฟจากไฟล์ของสตูดิโอเอง",zh:"相册页的七种文字角色过去只有一款 Georgia，现在有 **二十款字体** 与 **十二组搭配**（婚礼 · 罗马 · 杂志 · 现代 · 缅文清爽 …）。一次点选同时决定标题与内文字体；每一行都能单独选字体与 **六种文字颜色** — 深色照片上的文字可用白色。缅文始终由缅文字体呈现，因此中英缅混排的标题在同一行里也正确。所有字体均为 OFL 授权，并由本工作室自己的文件提供。",vi:"Bảy vai trò chữ của trang album trước đây chỉ dùng một Georgia. Nay có **hai mươi kiểu chữ** và **mười hai cặp** (Đám cưới · La Mã · Tạp chí · Hiện đại · Miến sạch …). Một chạm chọn cả phông tiêu đề lẫn phông nội dung; mỗi dòng có thể chọn phông riêng và một trong **sáu màu mực** — màu trắng cho dòng nằm trên ảnh tối. Chữ Miến luôn lấy từ phông Miến nên tiêu đề pha tiếng Anh và tiếng Miến vẫn đúng trên một dòng. Mọi phông đều giấy phép OFL và phục vụ từ tệp của chính studio.",id:"Tujuh peran teks halaman album dulu memakai satu Georgia. Kini ada **dua puluh huruf** dan **dua belas pasangan** (Pernikahan · Romawi · Majalah · Modern · Myanmar bersih …). Sekali ketuk menetapkan font judul dan font isi sekaligus; tiap baris bisa memilih fontnya sendiri dan salah satu dari **enam warna tinta** — putih untuk baris di atas foto gelap. Huruf Burma selalu berasal dari font Burma, jadi judul campuran Inggris dan Burma tetap benar dalam satu baris. Semua font berlisensi OFL dan disajikan dari berkas studio ini sendiri.",ms:"Tujuh peranan teks halaman album dahulu menggunakan satu Georgia sahaja. Kini ada **dua puluh fon** dan **dua belas pasangan** (Perkahwinan · Rom · Majalah · Moden · Myanmar bersih …). Satu ketik menetapkan fon tajuk dan fon isi serentak; setiap baris boleh memilih fonnya sendiri dan satu daripada **enam warna dakwat** — putih untuk baris di atas foto gelap. Huruf Burma sentiasa datang daripada fon Burma, jadi tajuk campuran Inggeris dan Burma tetap betul dalam satu baris. Semua fon berlesen OFL dan disajikan daripada fail studio ini sendiri."} },
   { v:"6.103.0", kind:"page", ref:"pgWf",
     t:{my:"Workflow card ရဲ့ ရှင်းလင်းချက် ကိုယ့်ဘောင်ထဲ ပြန်ရောက်ပြီ — Photoshop ထဲမှာပါ",en:"A card's description is back inside its own box — in Photoshop too",shn:"ၶေႃႈလၢတ်ႈၼႂ်း card ပွၵ်ႈၶိုၼ်းၼႂ်းႁွင်ႈမၼ်း — ၼႂ်း Photoshop ၵေႃႈ",kac:"Card a tsun ai ga shi a box kaw bai du sai — Photoshop kaw mung",th:"คำอธิบายบนการ์ดกลับเข้ากรอบของตัวเองแล้ว — ใน Photoshop ด้วย",zh:"卡片说明回到自己的框内 — 在 Photoshop 里也是",vi:"Mô tả trên thẻ đã về đúng khung của nó — cả trong Photoshop",id:"Deskripsi kartu kembali ke dalam kotaknya — juga di Photoshop",ms:"Penerangan kad kembali ke dalam kotaknya — di Photoshop juga"},
     s:{my:"**ပိုင်ရှင်ရဲ့ ဓာတ်ပုံ ၄ ပုံကနေ ပြင်ထားတာ။** Smart Workflow card တွေမှာ ရှင်းလင်းချက် နေရာ ဗလာဖြစ်နေတာနဲ့ panel ကျဉ်းတဲ့အခါ စာကြောင်းတစ်ကြောင်း card နှစ်ခုကြားမှာ တစ်ဝက်ဖြတ်ပြီး ပေါ်နေတာ — နှစ်ခုလုံး အကြောင်းရင်း **တစ်ခုတည်း**ပါ။ စာသားကို ၃ ကြောင်းအတွင်း ဖြတ်ပေးတဲ့ တွက်ချက်မှုက မျဉ်းတစ်ကြောင်းရဲ့ အမြင့်ကို **၆.၇၅ pixel** လို့ ဖတ်နေတာ ဖြစ်ပြီး အမှန်က **၂၅.၉ pixel** ပါ — ဒါကြောင့် စာလုံး အားလုံး ဖြတ်ပစ်လိုက်တာပါ။ အခု အရှည်တစ်ခုကို px · em · unit မပါတဲ့ ဂဏန်း · normal — ၄ မျိုးလုံး ရိုးရိုးသားသား တွက်ပြီ။ Card ကလည်း ကိုယ့်ဘောင်ကို ကျော်ပြီး ဘာမှ မရေးတော့ပါ။",en:"**From the owner's four photographs.** Smart Workflow cards showed an empty description area, and on a narrow panel one sentence was painted between two cards, sliced — **one cause behind both**. The measurement that cuts a description to three lines was reading a line as **6.75 pixels** where it is really **25.9**, so it cut the whole sentence away. A length is now resolved honestly in all four forms it arrives in — px, em, a bare multiplier and `normal` — and the card clips its own content, so nothing paints outside the frame.",shn:"**ၶႅပ်းႁၢင်ႈ 4 ဢၼ်ၸဝ်ႈၶွင်သူင်ႇမႃး။** ၶေႃႈလၢတ်ႈၼႂ်း card ပဵၼ်ႁွင်ႈလၢင်ႈ လႄႈ လၢႆးတတ်းၶေႃႈလၢတ်ႈ ၼပ်ႉၽိတ်း — တေႃႈလဵဝ်တႅမ်ႈမႅၼ်ႈယဝ်ႉ၊ card ဢမ်ႇပေႃႉဢွၵ်ႇႁွင်ႈမၼ်းထႅင်ႈ။",kac:"**Madu a sumla 4.** Card a tsun ai ga hpe box hta n mu, kaga card lapran kaw tsat da ai — lam langai sha re. Ya gaw shang ai hku bai hti sai, card mung shi a box kaw sha ka sai.",th:"**จากภาพถ่าย 4 รูปของเจ้าของ** การ์ดแสดงพื้นที่คำอธิบายว่าง และบางครั้งประโยคถูกวาดคร่อมระหว่างการ์ด — สาเหตุเดียวกัน คือการวัดความสูงบรรทัดผิดเป็น 6.75 พิกเซลแทนที่จะเป็น 25.9 ตอนนี้วัดถูกแล้ว และการ์ดตัดเนื้อหาของตัวเอง",zh:"**来自店主的四张照片。** 卡片的说明区域是空的，窄面板上还有一句被画在两张卡片之间 —— 同一个原因：把一行的高度读成了 6.75 像素，实际是 25.9。现在四种写法都能正确解析，卡片也会裁掉超出自己边框的内容。",vi:"**Từ bốn bức ảnh của chủ tiệm.** Thẻ hiện vùng mô tả trống, và trên bảng hẹp một câu bị vẽ giữa hai thẻ — cùng một nguyên nhân: chiều cao một dòng bị đọc thành 6.75 pixel thay vì 25.9. Nay đã đọc đúng, và thẻ tự cắt phần tràn.",id:"**Dari empat foto pemilik.** Kartu menampilkan area deskripsi kosong, dan pada panel sempit satu kalimat tergambar di antara dua kartu — satu penyebab yang sama: tinggi baris terbaca 6,75 piksel padahal 25,9. Sekarang terbaca benar, dan kartu memotong isinya sendiri.",ms:"**Daripada empat foto pemilik.** Kad menunjukkan ruang penerangan kosong, dan pada panel sempit satu ayat dilukis antara dua kad — satu punca yang sama: tinggi baris dibaca 6.75 piksel sedangkan sebenarnya 25.9. Kini dibaca betul, dan kad mengerat kandungannya sendiri."} },
@@ -29988,7 +30020,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.103.0";
+var APP_VER="6.104.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -31540,8 +31572,8 @@ var ALBUM = (function(){
   var DOC = null, IMGS = {}, SAVE_T = null;
 
   function blankDoc(){
-    return { v:1, sizeId:"12x36", custom:{ w:12, h:36, unit:"in", dpi:300 },
-             guides:true, cur:0, pages:[ blankPage() ] };
+    return { v:2, sizeId:"12x36", custom:{ w:12, h:36, unit:"in", dpi:300 },
+             guides:true, cur:0, pair:(D.defPair || "classic"), pages:[ blankPage() ] };
   }
   function blankPage(){ return { photos:[], texts:[], tplId:"", auto:true }; }
   function curSize(){
@@ -31599,7 +31631,11 @@ var ALBUM = (function(){
     x.fillStyle = "#ffffff"; x.fillRect(0,0,W,Hh);
     var tpl = pageTpl(pg, idx), rects = cellRects(tpl, safe);
     var photos = pg.photos.slice(0, rects.length);
-    return Promise.all(photos.map(function(ph){ return imgFor(ph.src); })).then(function(ims){
+    /* 6.104.0 — the faces first, then the photographs. One gate for the stage, the page
+       rail and the export alike, so what is downloaded is what was on screen. */
+    return fontsReady(pg).then(function(){
+      return Promise.all(photos.map(function(ph){ return imgFor(ph.src); }));
+    }).then(function(ims){
       var i;
       for (i=0;i<rects.length;i++){
         var r = rects[i], im = ims[i], ph = photos[i];
@@ -31619,6 +31655,102 @@ var ALBUM = (function(){
       return true;
     });
   }
+  /* ======================= THE TYPE (6.104.0 wave B) =======================
+
+     Wave A drew all seven roles in Georgia, at one weight, because there was nothing
+     else to draw them in. This is the something else: twenty OFL families under
+     lib/fonts/, twelve pairings over them, and one rule that decides which face a line
+     is actually set in.
+
+     THE RULE, in order: the student's own pick for that line, else the pairing's face
+     for that line's SIDE (title · subtitle · names are the display side; date · quote ·
+     caption · page number are the reading side), else the first family. Nothing here
+     can name a family whose woff2 is not on disk — tools/build_album_fonts.js verifies
+     the folder against its record before tools/build_album_data.js will fold the table
+     into window.HNK_ALBUM at all.
+
+     AND THE BURMESE RULE, which is why every stack is a list and not a name: a Latin
+     display face has no Burmese glyphs. Every stack ends at a family that does, so a
+     title typed "Ko Ko & Ma Ma · မင်္ဂလာပါ" sets the Latin in Playfair Display and the
+     Burmese in Padauk, on one line, at one size, with nobody asked to know. */
+  var FACES_IN = false;
+  function ensureFaces(){
+    if (FACES_IN) return;
+    if (typeof document === "undefined" || !document.head) return;
+    FACES_IN = true;
+    if (document.getElementById("albFontFaces")) return;
+    var css = [], i, j, dir = D.fontDir || "lib/fonts/";
+    for (i=0;i<D.fonts.length;i++){
+      var f = D.fonts[i];
+      for (j=0;j<f.files.length;j++){
+        var fl = f.files[j], range = D.ranges[fl.r];
+        if (!range) continue;
+        css.push('@font-face{font-family:"' + f.css + '";font-style:normal;font-weight:' + fl.w +
+                 ';font-display:swap;src:url("' + dir + fl.f + '") format("woff2");unicode-range:' + range + '}');
+      }
+    }
+    var st = document.createElement("style");
+    st.id = "albFontFaces"; st.textContent = css.join("\n");
+    document.head.appendChild(st);
+  }
+  function roleById(id){ var i; for (i=0;i<D.roles.length;i++) if (D.roles[i].id === id) return D.roles[i]; return null; }
+  function fontById(id){ var i; for (i=0;i<D.fonts.length;i++) if (D.fonts[i].id === id) return D.fonts[i]; return null; }
+  function pairById(id){ var i; for (i=0;i<D.pairs.length;i++) if (D.pairs[i].id === id) return D.pairs[i]; return null; }
+  function curPair(){ return pairById(DOC && DOC.pair) || pairById(D.defPair) || D.pairs[0]; }
+  function fontForText(tx){
+    var own = (tx && tx.font) ? fontById(tx.font) : null;
+    if (own) return own;
+    var p = curPair(), side = D.roleSide[tx && tx.role] || "b";
+    return fontById(side === "t" ? p.t : p.b) || D.fonts[0];
+  }
+  /* a family that ships only 400 is asked for 400 — never a synthesised bold, which
+     on a printed title is a smeared outline rather than a heavier face */
+  function weightFor(font, role){
+    var want = (role && role.weight >= 600) ? 700 : 400;
+    if (want === 700 && font && font.w.indexOf(700) < 0) want = 400;
+    return want;
+  }
+  /* WHICH SCRIPTS A LINE IS ACTUALLY WRITTEN IN. Myanmar covers Burmese, Shan and Mon
+     (the extended blocks are theirs), Thai its own. Everything else the picked family
+     answers for. */
+  var RE_MY = /[\u1000-\u109F\uA9E0-\uA9FE\uAA60-\uAA7F]/;
+  var RE_TH = /[\u0E01-\u0E5B]/;
+  /* THE FACES A PAGE NEEDS, BEFORE IT IS DRAWN. A canvas asked to set text in a face the
+     document has not loaded silently draws the fallback — and the export is a canvas, so
+     the album a student downloads would not be the album they were shown. Every draw goes
+     through here first, for exactly the characters that page actually carries.
+
+     ONE FAMILY AT A TIME, NOT THE WHOLE STACK, and that was measured rather than assumed:
+     asking for the stack loaded the fallbacks too, so an all-Latin title "Ko Ko" fetched
+     Padauk's and Noto Sans Thai's Latin subsets as well — 18 KB of faces no glyph on that
+     page would ever come from. The picked family is always loaded; a fallback is loaded
+     only when the line really carries a script the picked family cannot set. */
+  function needFor(f, text){
+    var out = [f], i, o;
+    function add(script){
+      for (i=0;i<(f.fb||[]).length;i++){ o = fontById(f.fb[i]); if (o && o.script === script){ out.push(o); return; } }
+    }
+    if (RE_MY.test(text) && f.script !== "my") add("my");
+    if (RE_TH.test(text) && f.script !== "th") add("th");
+    return out;
+  }
+  function fontsReady(pg){
+    ensureFaces();
+    if (typeof document === "undefined" || !document.fonts || typeof document.fonts.load !== "function") return Promise.resolve(false);
+    var jobs = [], i, j, list = (pg && pg.texts) || [];
+    for (i=0;i<list.length;i++){
+      var tx = list[i]; if (!tx || !tx.text) continue;
+      var f = fontForText(tx); if (!f) continue;
+      var text = String(tx.text), w = weightFor(f, roleById(tx.role)), need = needFor(f, text);
+      for (j=0;j<need.length;j++){
+        try { jobs.push(Promise.resolve(document.fonts.load(w + ' 40px "' + need[j].css + '"', text))["catch"](function(){ return null; })); }
+        catch(e){ /* a renderer that refuses the shorthand keeps its fallback */ }
+      }
+    }
+    if (!jobs.length) return Promise.resolve(true);
+    return Promise.all(jobs).then(function(){ return true; }, function(){ return false; });
+  }
+
   /* the text roles the student filled in, laid on the safe area's own fractions */
   function drawTexts(x, pg, safe, scale){
     var i, list = pg.texts || [];
@@ -31632,7 +31764,8 @@ var ALBUM = (function(){
       x.fillStyle = tx.color || "#1b1b1f";
       x.textAlign = tx.align || "center";
       x.textBaseline = "middle";
-      x.font = (role.weight>=600 ? "600 " : "400 ") + Math.round(px) + "px " + (tx.font || "Georgia, serif");
+      var face = fontForText(tx);
+      x.font = weightFor(face, role) + " " + Math.round(px) + "px " + ((face && face.stack) || "Georgia, serif");
       var cx = safe.x*scale + safe.w*scale*((tx.x==null)?0.5:tx.x);
       var cy = safe.y*scale + safe.h*scale*((tx.y==null)?0.92:tx.y);
       var words = role.caps ? String(tx.text).toUpperCase() : String(tx.text);
@@ -31920,15 +32053,44 @@ var ALBUM = (function(){
   }
 
   /* ---- the words ---- */
+  /* the ink a printed line is actually set in. Six, not a colour wheel: near-black for
+     paper, white for a line laid over a dark photograph, and four the studio's own
+     albums use. A page that offers only black puts the caption on a night portrait
+     where nobody can read it, which is what this row is here to stop. */
+  var INKS = ["#1b1b1f", "#ffffff", "#6b6b73", "#8a6a3b", "#b08d57", "#7a2f36"];
+
   function textCard(){
     var card = E("section","card"); card.id = "albTextCard";
     var pg = curPage();
     card.appendChild(E("h2", null, L("alb_text_h")));
+
+    /* the pairing — one tap sets the display face and the reading face together */
+    card.appendChild(E("p","mut", L("alb_pair")));
+    var prow = E("div","row alb-type"); prow.id = "albPairs";
+    var pi, pcur = curPair();
+    for (pi=0; pi<D.pairs.length; pi++){
+      (function(p){
+        prow.appendChild(chip(pick9(p.label), (pcur && pcur.id === p.id), function(){
+          DOC.pair = p.id; onDocChange(false);
+        }));
+      })(D.pairs[pi]);
+    }
+    card.appendChild(prow);
+    var pn = E("p","mut"); pn.id = "albPairNote";
+    pn.textContent = L("alb_pair_note") + " · " +
+      L("alb_font_count").replace("{N}", String(D.fonts.length)).replace("{P}", String(D.pairs.length));
+    card.appendChild(pn);
+
     var i;
     for (i=0;i<D.roles.length;i++){
       (function(role){
         var cur = null, k;
         for (k=0;k<pg.texts.length;k++) if (pg.texts[k].role === role.id) cur = pg.texts[k];
+        function ensure(){
+          if (!cur){ cur = { role: role.id, text:"", x:0.5, y: role.id==="title" ? 0.12 : 0.92,
+                             align:"center", color:"#1b1b1f", font:"" }; pg.texts.push(cur); }
+          return cur;
+        }
         var row = E("div","row alb-textrow");
         row.appendChild(E("span","mut alb-rolelab", pick9(role.label)));
         var inp = document.createElement("input");
@@ -31936,17 +32098,58 @@ var ALBUM = (function(){
         inp.maxLength = 120;
         inp.value = cur ? cur.text : "";
         inp.placeholder = pick9(role.label);
-        inp.oninput = function(){
-          var v = inp.value;
-          if (!cur){ cur = { role: role.id, text:"", x:0.5, y: role.id==="title" ? 0.12 : 0.92 }; pg.texts.push(cur); }
-          cur.text = v;
-          onDocChange(false);
-        };
+        /* 6.104.0 — TYPING NO LONGER REBUILDS THE PAGE. onDocChange() empties #albRoot and
+           draws every card again, so in wave A each keystroke replaced the very input the
+           student was typing into and the caret went with it. The words change nothing but
+           the canvas, so only the canvas is redrawn — and debounced, because it is a print
+           sized page. */
+        inp.oninput = function(){ ensure().text = inp.value; onTextChange(); };
         row.appendChild(inp);
+
+        /* the face for this one line: Auto (the pairing decides) or a family by name */
+        var sel = document.createElement("select");
+        sel.className = "inp alb-fontsel"; sel.id = "albFont_" + role.id;
+        var o0 = document.createElement("option");
+        o0.value = ""; o0.textContent = L("alb_font_auto");
+        if (!(cur && cur.font)) o0.selected = true;
+        sel.appendChild(o0);
+        var fi;
+        for (fi=0; fi<D.fonts.length; fi++){
+          var f = D.fonts[fi];
+          var o = document.createElement("option");
+          o.value = f.id; o.textContent = f.name;
+          if (cur && cur.font === f.id) o.selected = true;
+          sel.appendChild(o);
+        }
+        sel.onchange = function(){ ensure().font = sel.value; onTextChange(); };
+        row.appendChild(sel);
+
+        /* the ink */
+        var inks = E("div","alb-inks");
+        var ii;
+        for (ii=0; ii<INKS.length; ii++){
+          (function(hex){
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "alb-ink" + (((cur && cur.color) || "#1b1b1f") === hex ? " on" : "");
+            b.style.backgroundColor = hex;
+            b.setAttribute("data-ink", hex);
+            b.setAttribute("aria-label", L("alb_ink") + " " + hex);
+            b.onclick = function(){
+              ensure().color = hex;
+              var all = inks.getElementsByTagName("button"), q;
+              for (q=0;q<all.length;q++) all[q].className = "alb-ink" + (all[q].getAttribute("data-ink") === hex ? " on" : "");
+              onTextChange();
+            };
+            inks.appendChild(b);
+          })(INKS[ii]);
+        }
+        row.appendChild(inks);
         card.appendChild(row);
       })(D.roles[i]);
     }
     card.appendChild(E("p","mut", L("alb_text_note")));
+    card.appendChild(E("p","mut", L("alb_font_my")));
     return card;
   }
 
@@ -32068,6 +32271,13 @@ var ALBUM = (function(){
     saveSoon();
     render();
   }
+  /* words, a face or an ink changed: the document is saved and the canvases are redrawn,
+     and NOTHING in the DOM is replaced (see the oninput comment in textCard) */
+  function onTextChange(){
+    saveSoon();
+    if (REDRAW) clearTimeout(REDRAW);
+    REDRAW = setTimeout(repaint, 90);
+  }
   function render(){
     if (!ROOT) return;
     ROOT.innerHTML = "";
@@ -32140,6 +32350,11 @@ var ALBUM = (function(){
                      dpi: clamp(+d.custom.dpi||300,72,600) };
     }
     out.guides = (d.guides !== false);
+    /* 6.104.0 — the pairing, and the one migration this wave needs: wave A stored
+       tx.font as a CSS stack string, and a stack is not a font id. An unknown value
+       falls back to "" (the pairing decides), which is the same album with better
+       type rather than a page that throws. */
+    out.pair = pairById(d.pair) ? d.pair : (D.defPair || "classic");
     out.pages = [];
     var list = (d.pages && d.pages.length) ? d.pages : [blankPage()];
     var i, k;
@@ -32163,7 +32378,9 @@ var ALBUM = (function(){
         if (!ok) continue;
         pg.texts.push({ role:t.role, text:String(t.text).slice(0,120),
                         x: isFinite(t.x) ? clamp(t.x,0,1) : 0.5, y: isFinite(t.y) ? clamp(t.y,0,1) : 0.92,
-                        align: t.align || "center", color: t.color || "#1b1b1f", font: t.font || "" });
+                        align: t.align || "center",
+                        color: (typeof t.color === "string" && /^#[0-9a-fA-F]{6}$/.test(t.color)) ? t.color : "#1b1b1f",
+                        font: (t.font && fontById(t.font)) ? t.font : "" });
       }
       out.pages.push(pg);
     }

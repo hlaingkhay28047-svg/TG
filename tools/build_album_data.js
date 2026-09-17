@@ -38,6 +38,12 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const OUT = path.join(ROOT, "docs", "app", "data", "album.js");
+/* 6.104.0 wave B — the type. FONTS owns the twenty families, the twelve pairings
+   and the role→side map, because it also owns the bytes under docs/app/lib/fonts/;
+   folding its tables in here rather than re-typing them is what makes it impossible
+   for the app to offer a face whose woff2 is not on disk (dataTables() verifies the
+   record against the folder before it hands anything back). */
+const FONTS = require("./build_album_fonts.js");
 
 /* The gap between two neighbouring photos, as a fraction of the safe area.
    One constant for every layout: a page whose gaps differ cell by cell reads
@@ -394,8 +400,10 @@ const ROLES = [
    --------------------------------------------------------------------------- */
 const RHYTHM = [1, 3, 2, 4, 1, 2, 5, 3, 1, 4, 2, 6, 1, 3, 2, 4];
 
+const TYPE = FONTS.dataTables();
+
 const DATA = {
-  v: 1,
+  v: 2,
   bleedMm: 3,
   gutterMm: 5,
   gapFrac: G,
@@ -404,7 +412,14 @@ const DATA = {
   fams: FAMS,
   templates: TEMPLATES,
   roles: ROLES,
-  rhythm: RHYTHM
+  rhythm: RHYTHM,
+  /* wave B */
+  fonts: TYPE.fonts,
+  pairs: TYPE.pairs,
+  ranges: TYPE.ranges,
+  roleSide: TYPE.roleSide,
+  fontDir: "lib/fonts/",
+  defPair: "classic"
 };
 
 /* ---- checks the generator runs on itself ------------------------------- */
@@ -449,6 +464,58 @@ function check() {
   Object.keys(FAMS).forEach(function (k) {
     if (!DATA.templates.some(function (t) { return t.fam === k; })) throw new Error("family " + k + " is named but no template uses it");
   });
+
+  /* ---- wave B: the type ------------------------------------------------- */
+  const fontIds = {};
+  DATA.fonts.forEach(function (f) {
+    if (fontIds[f.id]) throw new Error("duplicate font id " + f.id);
+    fontIds[f.id] = f;
+    if (!f.name || !f.css || !f.stack || f.stack.indexOf('"' + f.css + '"') !== 0) throw new Error(f.id + ": the stack must open with its own CSS handle");
+    if (f.css.indexOf(f.name) < 0) throw new Error(f.id + ": the handle must carry the family's real name");
+    if (!f.files.length) throw new Error(f.id + ": no files");
+    f.files.forEach(function (x) {
+      if (!DATA.ranges[x.r]) throw new Error(f.id + ": " + x.f + " names a unicode-range that is not in the table");
+      if (f.w.indexOf(x.w) < 0) throw new Error(f.id + ": " + x.f + " is a weight this family does not declare");
+    });
+    /* every weight a role can ask for must exist, or the browser synthesises it:
+       400 is the floor and 700 is optional, and drawText() clamps to what is here */
+    if (f.w.indexOf(400) < 0) throw new Error(f.id + ": every family must ship 400");
+  });
+  DATA.pairs.forEach(function (p) {
+    if (!fontIds[p.t]) throw new Error("pairing " + p.id + ": unknown title font " + p.t);
+    if (!fontIds[p.b]) throw new Error("pairing " + p.id + ": unknown body font " + p.b);
+    nine(p.label, "pairing " + p.id);
+  });
+  if (!DATA.pairs.some(function (p) { return p.id === DATA.defPair; })) throw new Error("defPair " + DATA.defPair + " is not one of the pairings");
+  /* A FALLBACK CHAIN THAT NAMES A FAMILY WE DO NOT SHIP is a blank line on a
+     printed page — the one failure mode this whole wave exists to prevent. The
+     chain is read by id (fb) rather than by parsing the stack, because the tail
+     of every stack is a CSS generic ("Helvetica Neue", Georgia, cursive …) that
+     the device supplies and this studio must not claim to ship. */
+  DATA.fonts.forEach(function (f) {
+    let at = 0;
+    (f.fb || []).forEach(function (id) {
+      const o = fontIds[id];
+      if (!o) throw new Error(f.id + ": its fallback chain names " + id + ", which this studio does not ship");
+      if (o.id === f.id) throw new Error(f.id + ": a family may not fall back to itself");
+      const k = f.stack.indexOf('"' + o.css + '"');
+      if (k < 0) throw new Error(f.id + ": " + o.name + " is in the chain but not in the stack");
+      if (k < at) throw new Error(f.id + ": the stack does not keep the chain's order at " + o.name);
+      at = k;
+    });
+    /* a Latin face must be able to set Burmese, or a Burmese title set in it
+       prints as empty boxes — every chain ends at a Myanmar face */
+    if (f.script !== "my" && !(f.fb || []).some(function (id) { return fontIds[id] && fontIds[id].script === "my"; })) {
+      throw new Error(f.id + ": nothing in its chain can set Burmese");
+    }
+  });
+  /* every role must know which side of a pairing it is set in */
+  ROLES.forEach(function (r) { if (DATA.roleSide[r.id] !== "t" && DATA.roleSide[r.id] !== "b") throw new Error("role " + r.id + ": no side in roleSide"); });
+  Object.keys(DATA.roleSide).forEach(function (k) { if (!ROLES.some(function (r) { return r.id === k; })) throw new Error("roleSide names " + k + ", which is not a role"); });
+  /* at least one pairing must be able to set Burmese: this studio's students
+     write in it, and a wave of twenty Latin faces that cannot would be a joke */
+  const myPair = DATA.pairs.filter(function (p) { return fontIds[p.t].script === "my" && fontIds[p.b].script === "my"; });
+  if (myPair.length < 2) throw new Error("only " + myPair.length + " pairing(s) set Burmese in both faces; the students write in it");
 }
 
 function round(o) {

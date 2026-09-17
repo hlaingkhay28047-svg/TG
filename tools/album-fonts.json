@@ -1,0 +1,823 @@
+{
+  "v": 1,
+  "dir": "docs/app/lib/fonts",
+  "ranges": {
+    "u1": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD",
+    "u2": "U+1000-109F,U+200C-200D,U+25CC,U+A92E,U+A9E0-A9FE,U+AA60-AA7F,U+116D0-116E3",
+    "u3": "U+1000-109F,U+200C-200D,U+25CC,U+A92E,U+A9E0-A9FE,U+AA60-AA7F,U+116D0-116E3,U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD",
+    "u4": "U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC"
+  },
+  "families": [
+    {
+      "id": "playfair",
+      "name": "Playfair Display",
+      "pkg": "playfair-display",
+      "kind": "serif",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "playfair-latin-400.woff2",
+          "bytes": 21856,
+          "sha256": "1fe9ad5d8b2ebd8ecb8fbd05bed1e3fdfa52dae3f1a04e1c219918442fe9394d"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "playfair-latin-700.woff2",
+          "bytes": 23224,
+          "sha256": "28453852ea165c47b5a941be00e418402e1407002ed87507f062a1e316328fe6"
+        }
+      ],
+      "upstream": {
+        "version": "v40",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2017 The Playfair Display Project Authors (https://github.com/clauseggers/Playfair-Display), with Reserved Font Name \"Playfair Display\". PlayfairDisplay-Italic[wght].ttf: Copyright 2017 The Playfair Display Project Authors (https://github.com/clauseggers/Playfair-Display), with Reserved Font Name \"Playfair Display\"."
+      }
+    },
+    {
+      "id": "cormorant",
+      "name": "Cormorant Garamond",
+      "pkg": "cormorant-garamond",
+      "kind": "serif",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "cormorant-latin-400.woff2",
+          "bytes": 22876,
+          "sha256": "8048ac209bec741e1c29cd0cfac5aac1c0c2ba8c3ddbd4a58fa9bd92ef5c63c2"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "cormorant-latin-700.woff2",
+          "bytes": 22340,
+          "sha256": "21a0fc1c5c22708cf4aa0c147fd32982e25bf9e21efec0ca31a4495ba41753eb"
+        }
+      ],
+      "upstream": {
+        "version": "v21",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2015 The Cormorant Project Authors (github.com/CatharsisFonts/Cormorant) CormorantGaramond-Italic[wght].ttf: Copyright 2015 The Cormorant Project Authors (github.com/CatharsisFonts/Cormorant)"
+      }
+    },
+    {
+      "id": "cinzel",
+      "name": "Cinzel",
+      "pkg": "cinzel",
+      "kind": "display",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "cinzel-latin-400.woff2",
+          "bytes": 14128,
+          "sha256": "b873cdd90d6bd9ca4793c805b4175abfae00b3611ee8afccf63067133dcf1217"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "cinzel-latin-700.woff2",
+          "bytes": 15184,
+          "sha256": "8efa224fe70fef188a39c095e218b81fd31061809f2752537e33a9ec7b9c2263"
+        }
+      ],
+      "upstream": {
+        "version": "v26",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2020 The Cinzel Project Authors (https://github.com/NDISCOVER/Cinzel)"
+      }
+    },
+    {
+      "id": "baskerville",
+      "name": "Libre Baskerville",
+      "pkg": "libre-baskerville",
+      "kind": "serif",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "baskerville-latin-400.woff2",
+          "bytes": 20108,
+          "sha256": "3eb80fbca70498126925ce16ff5c20b2fa35e67ae7123ddb46302d2778dfbf0e"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "baskerville-latin-700.woff2",
+          "bytes": 20436,
+          "sha256": "96fa63376eed93029fa2514a02f5cb80276b016e239426858787de6e794d8619"
+        }
+      ],
+      "upstream": {
+        "version": "v24",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2012 The Libre Baskerville Project Authors (https://github.com/impallari/Libre-Baskerville) LibreBaskerville-Italic[wght].ttf: Copyright 2012 The Libre Baskerville Project Authors (https://github.com/impallari/Libre-Baskerville)"
+      }
+    },
+    {
+      "id": "garamond",
+      "name": "EB Garamond",
+      "pkg": "eb-garamond",
+      "kind": "serif",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "garamond-latin-400.woff2",
+          "bytes": 23820,
+          "sha256": "912929dba0faab5e151849ea5e988adba3080ad6d2bcc4dbff27aa427896498d"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "garamond-latin-700.woff2",
+          "bytes": 25292,
+          "sha256": "ae7cef029eea959654a474fbcaa2c202f205abfca29caaef62e9a0019c3c8370"
+        }
+      ],
+      "upstream": {
+        "version": "v33",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2017 The EB Garamond Project Authors (https://github.com/octaviopardo/EBGaramond12) EBGaramond-Italic[wght].ttf: Copyright 2017 The EB Garamond Project Authors (https://github.com/octaviopardo/EBGaramond12)"
+      }
+    },
+    {
+      "id": "lora",
+      "name": "Lora",
+      "pkg": "lora",
+      "kind": "serif",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "lora-latin-400.woff2",
+          "bytes": 21148,
+          "sha256": "ac079950fd9885261c0f73d9e87233f31b5427333ce0eb20e26c119458493c40"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "lora-latin-700.woff2",
+          "bytes": 21044,
+          "sha256": "c05fd5289492ed310ed882259b944ca5287e76e572a65d92d3941f9f44f0342a"
+        }
+      ],
+      "upstream": {
+        "version": "v37",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic), with Reserved Font Name \"Lora\". Lora-Italic[wght].ttf: Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic), with Reserved Font Name \"Lora\"."
+      }
+    },
+    {
+      "id": "marcellus",
+      "name": "Marcellus",
+      "pkg": "marcellus",
+      "kind": "display",
+      "script": "latin",
+      "weights": [
+        400
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "marcellus-latin-400.woff2",
+          "bytes": 14552,
+          "sha256": "8a539799d12e3a144273288055490f57e1eee84da7a9145f085bc522e80719c3"
+        }
+      ],
+      "upstream": {
+        "version": "v14",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright (c) 2012 by Brian J. Bonislawsky DBA Astigmatic (AOETI) (astigma@astigmatic.com), with Reserved Font Name \"Marcellus\""
+      }
+    },
+    {
+      "id": "italiana",
+      "name": "Italiana",
+      "pkg": "italiana",
+      "kind": "display",
+      "script": "latin",
+      "weights": [
+        400
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "italiana-latin-400.woff2",
+          "bytes": 10100,
+          "sha256": "5079c87a4e86c58e8cd4f18ec2d3255918b7d565708ed934b15c4710301f838c"
+        }
+      ],
+      "upstream": {
+        "version": "v21",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright (c) 2011 by Santiago Orozco (hi@typemade.mx) with reserved name Italiana"
+      }
+    },
+    {
+      "id": "greatvibes",
+      "name": "Great Vibes",
+      "pkg": "great-vibes",
+      "kind": "script",
+      "script": "latin",
+      "weights": [
+        400
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "greatvibes-latin-400.woff2",
+          "bytes": 42800,
+          "sha256": "c59dc73d29daf142ef2431f455d21464172374aa750d793a79d608735db2d856"
+        }
+      ],
+      "upstream": {
+        "version": "v21",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2010 The Great Vibes Pro Project Authors (https://github.com/googlefonts/great-vibes)"
+      }
+    },
+    {
+      "id": "parisienne",
+      "name": "Parisienne",
+      "pkg": "parisienne",
+      "kind": "script",
+      "script": "latin",
+      "weights": [
+        400
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "parisienne-latin-400.woff2",
+          "bytes": 22600,
+          "sha256": "cf3c285d1ec1ee935746c475ca71e20d9f1fc3b5d62166e2523acdd0737e239c"
+        }
+      ],
+      "upstream": {
+        "version": "v14",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright (c) 2012 by Brian J. Bonislawsky DBA Astigmatic (AOETI) (astigma@astigmatic.com), with Reserved Font Name \"Parisienne\""
+      }
+    },
+    {
+      "id": "montserrat",
+      "name": "Montserrat",
+      "pkg": "montserrat",
+      "kind": "sans",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "montserrat-latin-400.woff2",
+          "bytes": 18780,
+          "sha256": "e66bcd2761ab6924b25ce70dafe10e57a39193c4fea1516730bd9cb5240af6c8"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "montserrat-latin-700.woff2",
+          "bytes": 18824,
+          "sha256": "f9d9e65b15372cebcafc3acd1e664a564c5c4b23278de4d5760de9a13c530371"
+        }
+      ],
+      "upstream": {
+        "version": "v31",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2011 The Montserrat Project Authors (https://github.com/JulietaUla/Montserrat) Montserrat-Italic[wght].ttf: Copyright 2011 The Montserrat Project Authors (https://github.com/JulietaUla/Montserrat)"
+      }
+    },
+    {
+      "id": "raleway",
+      "name": "Raleway",
+      "pkg": "raleway",
+      "kind": "sans",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "raleway-latin-400.woff2",
+          "bytes": 22408,
+          "sha256": "2318962e7930f55b45907ee85a6b6165ca3bba437b05ca17068a5c876d3de18b"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "raleway-latin-700.woff2",
+          "bytes": 22696,
+          "sha256": "05844cd75b25917a8463edbffc9a952205d327775c54a6697745ababb14a10d7"
+        }
+      ],
+      "upstream": {
+        "version": "v37",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2010 The Raleway Project Authors (impallari@gmail.com), with Reserved Font Name \"Raleway\". Raleway-Italic[wght].ttf: Copyright 2010 The Raleway Project Authors (impallari@gmail.com), with Reserved Font Name \"Raleway\"."
+      }
+    },
+    {
+      "id": "lato",
+      "name": "Lato",
+      "pkg": "lato",
+      "kind": "sans",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "lato-latin-400.woff2",
+          "bytes": 23580,
+          "sha256": "918b7dc3e2e2d015c16ce08b57bcb64d2253bafc1707658f361e72865498e537"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "lato-latin-700.woff2",
+          "bytes": 23040,
+          "sha256": "c447dd7677b419db7b21dbdfc6277c7816a913ffda76fd2e52702df538de0e49"
+        }
+      ],
+      "upstream": {
+        "version": "v25",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\". Licensed under the SIL Open Font License, Version 1.1. Lato-HairlineItalic.ttf: Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\". Licensed under the SIL Open Font License, Version 1.1. Lato-Light.ttf: Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\". Licensed under the SIL Open Font License, Version 1.1. Lato-LightItalic.ttf: Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\". Licensed under the SIL Open Font License, Version 1.1. Lato-Regular.ttf: Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\". Licensed under the SIL Open Font License, Version 1.1. Lato-Italic.ttf: Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\". Licensed under the SIL Open Font License, Version 1.1. Lato-Bold.ttf: Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\". Licensed under the SIL Open Font License, Version 1.1. Lato-BoldItalic.ttf: Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\". Licensed under the SIL Open Font License, Version 1.1. Lato-Black.ttf: Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\". Licensed under the SIL Open Font License, Version 1.1. Lato-BlackItalic.ttf: Copyright (c) 2010-2011 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name \"Lato\". Licensed under the SIL Open Font License, Version 1.1."
+      }
+    },
+    {
+      "id": "jost",
+      "name": "Jost",
+      "pkg": "jost",
+      "kind": "sans",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "jost-latin-400.woff2",
+          "bytes": 9404,
+          "sha256": "f94cffda16515fbb1667a2662d6b46f5610a942fd02fe88d67ff98f776288962"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "jost-latin-700.woff2",
+          "bytes": 10520,
+          "sha256": "81da4d711250508c3f686d210ed07d5eb6229185d313fcc73fda7bf2b37d2ca5"
+        }
+      ],
+      "upstream": {
+        "version": "v20",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2020 The Jost Project Authors (https://github.com/indestructible-type/Jost) Jost-Italic[wght].ttf: Copyright 2020 The Jost Project Authors (https://github.com/indestructible-type/Jost)"
+      }
+    },
+    {
+      "id": "josefin",
+      "name": "Josefin Sans",
+      "pkg": "josefin-sans",
+      "kind": "sans",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "josefin-latin-400.woff2",
+          "bytes": 12372,
+          "sha256": "242e98782313218a60ac5397a94a49bbe4cf3dbf4ca31039acacd801d957b13a"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "josefin-latin-700.woff2",
+          "bytes": 12072,
+          "sha256": "a3c6a58cd814957f4d0f30bd99afae615e74cba87dbef88a276593bcb3b3568b"
+        }
+      ],
+      "upstream": {
+        "version": "v34",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2010 The Josefin Sans Project Authors (https://github.com/ThomasJockin/JosefinSansFont-master), with Reserved Font Name \"Josefin Sans\". JosefinSans-Italic[wght].ttf: Copyright 2010 The Josefin Sans Project Authors (https://github.com/ThomasJockin/JosefinSansFont-master), with Reserved Font Name \"Josefin Sans\"."
+      }
+    },
+    {
+      "id": "inter",
+      "name": "Inter",
+      "pkg": "inter",
+      "kind": "sans",
+      "script": "latin",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "inter-latin-400.woff2",
+          "bytes": 23664,
+          "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "inter-latin-700.woff2",
+          "bytes": 24356,
+          "sha256": "6f56409fd3d64bb85f7d070bce20749db2d66b6d63cec586cc22d1c761be2491"
+        }
+      ],
+      "upstream": {
+        "version": "v20",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter) Inter-Italic[opsz,wght].ttf: Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)"
+      }
+    },
+    {
+      "id": "notomy",
+      "name": "Noto Sans Myanmar",
+      "pkg": "noto-sans-myanmar",
+      "kind": "sans",
+      "script": "my",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "notomy-latin-400.woff2",
+          "bytes": 10448,
+          "sha256": "d74d6ac310bc4062a6e77234b67c4a291dd82a326992bcf5cc73297b5c5cfc6b"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "notomy-latin-700.woff2",
+          "bytes": 10448,
+          "sha256": "cf5986521fa87506f69d57123d7acb6e5a6995cf3d06b2ab168f38529fd055d8"
+        },
+        {
+          "s": "myanmar",
+          "w": 400,
+          "r": "u2",
+          "f": "notomy-myanmar-400.woff2",
+          "bytes": 47148,
+          "sha256": "da6f87b8407a0e5a223cfb90328f9aad4cc31c728cfad35263d0e237f13e98ff"
+        },
+        {
+          "s": "myanmar",
+          "w": 700,
+          "r": "u2",
+          "f": "notomy-myanmar-700.woff2",
+          "bytes": 47612,
+          "sha256": "3aef087ebf73c0186dda5b1bd0651b9776ef73e6158a401344a03e0a654b7969"
+        }
+      ],
+      "upstream": {
+        "version": "v27",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/myanmar)"
+      }
+    },
+    {
+      "id": "notoserifmy",
+      "name": "Noto Serif Myanmar",
+      "pkg": "noto-serif-myanmar",
+      "kind": "serif",
+      "script": "my",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "garamond",
+        "padauk",
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "myanmar",
+          "w": 400,
+          "r": "u3",
+          "f": "notoserifmy-myanmar-400.woff2",
+          "bytes": 67708,
+          "sha256": "c38123c916b51f72b60f6f63ef495db54622e1a9d0ff0c453ce39d3a6715628b"
+        },
+        {
+          "s": "myanmar",
+          "w": 700,
+          "r": "u3",
+          "f": "notoserifmy-myanmar-700.woff2",
+          "bytes": 69256,
+          "sha256": "dcadabc637b4a86845ac22691fb573957bc2d1e37d6a09d927da54b10f0e7239"
+        }
+      ],
+      "upstream": {
+        "version": "v14",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2016 Google Inc. All Rights Reserved. NotoSerifMyanmar-ExtraLight.ttf: Copyright 2016 Google Inc. All Rights Reserved. NotoSerifMyanmar-Light.ttf: Copyright 2016 Google Inc. All Rights Reserved. NotoSerifMyanmar-Regular.ttf: Copyright 2016 Google Inc. All Rights Reserved. NotoSerifMyanmar-Medium.ttf: Copyright 2016 Google Inc. All Rights Reserved. NotoSerifMyanmar-SemiBold.ttf: Copyright 2016 Google Inc. All Rights Reserved. NotoSerifMyanmar-Bold.ttf: Copyright 2016 Google Inc. All Rights Reserved. NotoSerifMyanmar-ExtraBold.ttf: Copyright 2016 Google Inc. All Rights Reserved. NotoSerifMyanmar-Black.ttf: Copyright 2016 Google Inc. All Rights Reserved."
+      }
+    },
+    {
+      "id": "padauk",
+      "name": "Padauk",
+      "pkg": "padauk",
+      "kind": "sans",
+      "script": "my",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "notothai"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "padauk-latin-400.woff2",
+          "bytes": 9160,
+          "sha256": "e3c64a13c24be728363037bba1bdbd67c274d85b4ec362c16c7875e2ce991b99"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "padauk-latin-700.woff2",
+          "bytes": 9100,
+          "sha256": "50e4542be569f763363e6ffd35c0560c71e7bc5d51485e6603fb06d148ddf5d1"
+        },
+        {
+          "s": "myanmar",
+          "w": 400,
+          "r": "u2",
+          "f": "padauk-myanmar-400.woff2",
+          "bytes": 38080,
+          "sha256": "fad9c7944d8a0de053e8f8683e0d710b97e428bea7c9bf9397f2b167e1f2acf9"
+        },
+        {
+          "s": "myanmar",
+          "w": 700,
+          "r": "u2",
+          "f": "padauk-myanmar-700.woff2",
+          "bytes": 42024,
+          "sha256": "5e4342af31c8174d55a7a90e95b270a5fdcf40f93e6d1c3940f5937caf50170b"
+        }
+      ],
+      "upstream": {
+        "version": "v17",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright (c) 2002-2022 SIL International Padauk-Bold.ttf: Copyright (c) 2002-2022 SIL International"
+      }
+    },
+    {
+      "id": "notothai",
+      "name": "Noto Sans Thai",
+      "pkg": "noto-sans-thai",
+      "kind": "sans",
+      "script": "th",
+      "weights": [
+        400,
+        700
+      ],
+      "fb": [
+        "padauk"
+      ],
+      "files": [
+        {
+          "s": "latin",
+          "w": 400,
+          "r": "u1",
+          "f": "notothai-latin-400.woff2",
+          "bytes": 10268,
+          "sha256": "fde3c93cfbfd8c97286fac1cca1c89912eb61857dd3996d26b7c0eaf16715bb6"
+        },
+        {
+          "s": "latin",
+          "w": 700,
+          "r": "u1",
+          "f": "notothai-latin-700.woff2",
+          "bytes": 10220,
+          "sha256": "af79e77ba9fd08231b341621ee55fef64a63e0e1da954734e2766bec60830bd9"
+        },
+        {
+          "s": "thai",
+          "w": 400,
+          "r": "u4",
+          "f": "notothai-thai-400.woff2",
+          "bytes": 9112,
+          "sha256": "57776453076ebf0fa935080e63c0ae656f1f1ecd5172112d59d3b259e0dd8796"
+        },
+        {
+          "s": "thai",
+          "w": 700,
+          "r": "u4",
+          "f": "notothai-thai-700.woff2",
+          "bytes": 9128,
+          "sha256": "fa4acaf9f20aa6d9a4c86c6474fe40e65525dd2ed6dd687f55a4ef1da5a0a57e"
+        }
+      ],
+      "upstream": {
+        "version": "v29",
+        "source": "https://github.com/google/fonts",
+        "license": "OFL-1.1",
+        "url": "https://openfontlicense.org",
+        "attribution": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/thai)"
+      }
+    }
+  ]
+}
