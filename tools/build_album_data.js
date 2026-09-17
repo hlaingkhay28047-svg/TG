@@ -400,10 +400,131 @@ const ROLES = [
    --------------------------------------------------------------------------- */
 const RHYTHM = [1, 3, 2, 4, 1, 2, 5, 3, 1, 4, 2, 6, 1, 3, 2, 4];
 
+
+/* ---------------------------------------------------------------------------
+   THE INKS — the colour a printed line is actually set in. Six, not a colour
+   wheel: near-black for paper, white for a line laid over a dark photograph,
+   and four the studio's own albums use. A page that offers only black puts the
+   caption on a night portrait where nobody can read it.
+
+   They live here rather than in the app (where wave B wrote them) because an
+   occasion below names one of them as its default, and a default nothing ships
+   is a page whose words come out in a colour the picker cannot show.
+   --------------------------------------------------------------------------- */
+const INKS = ["#1b1b1f", "#ffffff", "#6b6b73", "#8a6a3b", "#b08d57", "#7a2f36"];
+
+/* ---------------------------------------------------------------------------
+   THE OCCASIONS (6.105.0 wave C)
+
+   Wave A gave a student one page at a time and wave B gave that page its type.
+   What neither gave is the thing a studio is actually paid for: an ALBUM —
+   forty photographs off a card, in an order, on pages that do not all look the
+   same, opening on a title in the student's own language.
+
+   An occasion is the whole recipe for one: a pairing and an ink from wave B, a
+   print size, starter words, and a PLAN — how many photographs each page takes,
+   in order, cycling. The plan is the part that reads as expensive. The research
+   is unambiguous and the RHYTHM comment above says it: two to four photographs
+   a page, one clear subject on each, never two crowded pages in a row. A wedding
+   plan is fuller than a newborn plan because a wedding day is fuller than a
+   newborn morning, and that is a decision about photography, not about code.
+
+   The starter words are STARTERS. Every one is a line the student is expected
+   to type over — they are here so a page opens with something set in the album's
+   own face, in the language the student reads, instead of an empty box that
+   tells them nothing about what the page will look like.
+   --------------------------------------------------------------------------- */
+function occ(id, pair, ink, size, plan, name, note, words) {
+  return { id: id, pair: pair, ink: ink, size: size, plan: plan, name: name, note: note, words: words };
+}
+
+const OCCASIONS = [
+  occ("prewed", "wedding", "#1b1b1f", "12x36", [2, 1, 3, 2, 4, 1, 2, 3],
+    { my: "မင်္ဂလာမတိုင်မီ", en: "Pre-wedding", shn: "ဢွၼ်ၼႃႈမင်ႇၵလႃႇ", kac: "Hkungran shawng", th: "พรีเวดดิ้ง", zh: "婚纱照", vi: "Chụp ảnh cưới", id: "Pra-nikah", ms: "Pra-perkahwinan" },
+    { my: "နှစ်ယောက်တည်း ဇာတ်လမ်းတစ်ပုဒ်", en: "Two people, one story", shn: "သွင်ၵေႃႉ လွင်ႈလဵဝ်", kac: "Masha lahkawng, maumwi langai", th: "สองคน หนึ่งเรื่องราว", zh: "两个人，一个故事", vi: "Hai người, một câu chuyện", id: "Dua orang, satu cerita", ms: "Dua orang, satu cerita" },
+    {
+      title: { my: "ကျွန်ုပ်တို့၏ အချစ်ဇာတ်လမ်း", en: "Our Love Story", shn: "လွင်ႈႁၵ်ႉႁဝ်း", kac: "Anhte a tsawra maumwi", th: "เรื่องราวความรักของเรา", zh: "我们的爱情故事", vi: "Chuyện tình của chúng tôi", id: "Kisah Cinta Kami", ms: "Kisah Cinta Kami" },
+      subtitle: { my: "မင်္ဂလာမတိုင်မီ", en: "PRE-WEDDING", shn: "ဢွၼ်ၼႃႈမင်ႇၵလႃႇ", kac: "Hkungran shawng", th: "พรีเวดดิ้ง", zh: "婚纱照", vi: "Trước ngày cưới", id: "Pra-nikah", ms: "Pra-perkahwinan" },
+      quote: { my: "စတင်ခဲ့သော နေ့မှစ၍", en: "From the day it began", shn: "တႄႇမိူဝ်ႈဝၼ်းၼၼ်ႉမႃး", kac: "Hpang shawng na shani kaw na", th: "ตั้งแต่วันที่เริ่มต้น", zh: "从开始的那一天起", vi: "Từ ngày bắt đầu", id: "Sejak hari itu dimulai", ms: "Sejak hari ia bermula" }
+    }),
+
+  occ("wedding", "classic", "#1b1b1f", "12x36", [1, 2, 3, 2, 4, 3, 6, 2],
+    { my: "မင်္ဂလာနေ့", en: "Wedding day", shn: "ဝၼ်းမင်ႇၵလႃႇ", kac: "Hkungran shani", th: "วันแต่งงาน", zh: "婚礼当天", vi: "Ngày cưới", id: "Hari pernikahan", ms: "Hari perkahwinan" },
+    { my: "တစ်နေ့တာ အစအဆုံး", en: "One day, beginning to end", shn: "ဝၼ်းလဵဝ် တႄႇတေႃႇသုတ်း", kac: "Shani langai, hpang shawng kaw na htum ten", th: "หนึ่งวัน ตั้งแต่ต้นจนจบ", zh: "一整天，从头到尾", vi: "Một ngày, từ đầu đến cuối", id: "Satu hari, dari awal sampai akhir", ms: "Satu hari, dari mula hingga akhir" },
+    {
+      title: { my: "မင်္ဂလာပါ", en: "The Wedding", shn: "မင်ႇၵလႃႇ", kac: "Hkungran", th: "งานแต่งงาน", zh: "婚礼", vi: "Lễ Cưới", id: "Pernikahan", ms: "Perkahwinan" },
+      subtitle: { my: "မင်္ဂလာနေ့", en: "WEDDING DAY", shn: "ဝၼ်းမင်ႇၵလႃႇ", kac: "Hkungran shani", th: "วันแต่งงาน", zh: "婚礼当天", vi: "Ngày cưới", id: "Hari pernikahan", ms: "Hari perkahwinan" },
+      quote: { my: "ယနေ့မှစ၍ အစဉ်အမြဲ", en: "From today, always", shn: "တႄႇဝၼ်းမိူဝ်ႈၼႆႉ ၵူႈမိူဝ်ႈ", kac: "Dai ni kaw na, galoi mung", th: "จากวันนี้ ตลอดไป", zh: "从今天起，直到永远", vi: "Từ hôm nay, mãi mãi", id: "Mulai hari ini, selamanya", ms: "Mulai hari ini, selamanya" }
+    }),
+
+  occ("solo", "editorial", "#1b1b1f", "8x12", [1, 1, 2, 3, 1, 2, 4, 1],
+    { my: "တစ်ကိုယ်တော် ပုံတွဲ", en: "Portrait", shn: "ႁၢင်ႈၵေႃႉလဵဝ်", kac: "Masha langai a sumla", th: "ภาพบุคคล", zh: "个人写真", vi: "Ảnh cá nhân", id: "Potret", ms: "Potret" },
+    { my: "လူတစ်ယောက်၊ အလင်းတစ်မျိုး", en: "One person, one light", shn: "ၵေႃႉလဵဝ် ဢွင်ႈလဵဝ်", kac: "Masha langai, nhtoi langai", th: "หนึ่งคน หนึ่งแสง", zh: "一个人，一种光", vi: "Một người, một thứ ánh sáng", id: "Satu orang, satu cahaya", ms: "Satu orang, satu cahaya" },
+    {
+      title: { my: "ပုံရိပ်", en: "Portrait", shn: "ႁၢင်ႈ", kac: "Sumla", th: "ภาพบุคคล", zh: "写真", vi: "Chân dung", id: "Potret", ms: "Potret" },
+      subtitle: { my: "တစ်ကိုယ်တော်", en: "A PORTRAIT SESSION", shn: "ၵေႃႉလဵဝ်", kac: "Masha langai", th: "เซสชันภาพบุคคล", zh: "个人写真", vi: "Buổi chụp cá nhân", id: "Sesi potret", ms: "Sesi potret" },
+      quote: { my: "မိမိကိုယ်မိမိ", en: "Just as you are", shn: "မိူၼ်ၼင်ႇတူဝ်ၸဝ်ႈၵဝ်ႇ", kac: "Nang nga ai hte maren", th: "เป็นตัวคุณเอง", zh: "就是你本来的样子", vi: "Đúng như bạn vốn là", id: "Apa adanya dirimu", ms: "Seperti dirimu sendiri" }
+    }),
+
+  occ("family", "heritage", "#1b1b1f", "12x12", [1, 3, 2, 4, 2, 6, 3, 2],
+    { my: "မိသားစု", en: "Family", shn: "ပီႈၼွင်ႉ", kac: "Dinghku", th: "ครอบครัว", zh: "全家福", vi: "Gia đình", id: "Keluarga", ms: "Keluarga" },
+    { my: "အားလုံး တစ်နေရာတည်းမှာ", en: "Everyone in one place", shn: "ၵူႈၵေႃႉ တီႈလဵဝ်ၵၼ်", kac: "Yawng langai shara hta", th: "ทุกคนอยู่ในที่เดียวกัน", zh: "所有人都在一起", vi: "Tất cả ở cùng một nơi", id: "Semua di satu tempat", ms: "Semua di satu tempat" },
+    {
+      title: { my: "ကျွန်ုပ်တို့၏ မိသားစု", en: "Our Family", shn: "ပီႈၼွင်ႉႁဝ်း", kac: "Anhte a dinghku", th: "ครอบครัวของเรา", zh: "我们的家", vi: "Gia Đình Chúng Ta", id: "Keluarga Kami", ms: "Keluarga Kami" },
+      subtitle: { my: "မိသားစု ပုံတွဲ", en: "FAMILY ALBUM", shn: "ပပ်ႉႁၢင်ႈပီႈၼွင်ႉ", kac: "Dinghku laika buk", th: "อัลบั้มครอบครัว", zh: "家庭相册", vi: "Album gia đình", id: "Album keluarga", ms: "Album keluarga" },
+      quote: { my: "အိမ်ဆိုတာ လူတွေပါ", en: "Home is the people", shn: "ႁိူၼ်းၼႆႉ ပဵၼ်ၵူၼ်း", kac: "Nta gaw masha ni re", th: "บ้านคือผู้คน", zh: "家就是家人", vi: "Nhà là những con người", id: "Rumah adalah orang-orangnya", ms: "Rumah ialah orangnya" }
+    }),
+
+  occ("baby", "soft", "#6b6b73", "10x10", [1, 2, 4, 1, 3, 2, 4, 2],
+    { my: "ကလေးငယ်", en: "Baby", shn: "လုၵ်ႈဢွၼ်ႇ", kac: "Ma kasha", th: "เบบี้", zh: "宝宝", vi: "Em bé", id: "Bayi", ms: "Bayi" },
+    { my: "ပထမဆုံး တစ်နှစ်", en: "The first year", shn: "ပီႁႅၵ်ႈ", kac: "Shawng nnan a laning", th: "ปีแรก", zh: "第一年", vi: "Năm đầu tiên", id: "Tahun pertama", ms: "Tahun pertama" },
+    {
+      title: { my: "ပထမဆုံး တစ်နှစ်", en: "The First Year", shn: "ပီႁႅၵ်ႈ", kac: "Shawng nnan a laning", th: "ปีแรก", zh: "第一年", vi: "Năm Đầu Tiên", id: "Tahun Pertama", ms: "Tahun Pertama" },
+      subtitle: { my: "ကလေးငယ် ပုံတွဲ", en: "BABY ALBUM", shn: "ပပ်ႉႁၢင်ႈလုၵ်ႈဢွၼ်ႇ", kac: "Ma kasha laika buk", th: "อัลบั้มเบบี้", zh: "宝宝相册", vi: "Album em bé", id: "Album bayi", ms: "Album bayi" },
+      quote: { my: "နေ့တိုင်း အသစ်တစ်ခု", en: "Something new every day", shn: "ၵူႈဝၼ်း မီးလွင်ႈမႂ်ႇ", kac: "Shani shagu nnan langai", th: "ทุกวันมีสิ่งใหม่", zh: "每天都有新变化", vi: "Mỗi ngày một điều mới", id: "Sesuatu yang baru setiap hari", ms: "Sesuatu yang baharu setiap hari" }
+    }),
+
+  occ("newborn", "quiet", "#6b6b73", "10x10", [1, 1, 2, 3, 1, 2, 3, 1],
+    { my: "မွေးကင်းစ", en: "Newborn", shn: "လုၵ်ႈဢွၼ်ႇၵိူတ်ႇမႂ်ႇ", kac: "Ma shangai nnan", th: "ทารกแรกเกิด", zh: "新生儿", vi: "Trẻ sơ sinh", id: "Bayi baru lahir", ms: "Bayi baharu lahir" },
+    { my: "ပထမဆုံး ရက်သတ္တပတ်", en: "The first days", shn: "ဝၼ်းႁႅၵ်ႈ", kac: "Shawng nnan a shani ni", th: "วันแรก ๆ", zh: "最初的日子", vi: "Những ngày đầu tiên", id: "Hari-hari pertama", ms: "Hari-hari pertama" },
+    {
+      title: { my: "ကြိုဆိုပါတယ်", en: "Welcome", shn: "ႁပ်ႉတွၼ်ႈ", kac: "Kabu hkap tau ga", th: "ยินดีต้อนรับ", zh: "欢迎来到这个世界", vi: "Chào Con", id: "Selamat Datang", ms: "Selamat Datang" },
+      subtitle: { my: "မွေးကင်းစ", en: "NEWBORN", shn: "ၵိူတ်ႇမႂ်ႇ", kac: "Shangai nnan", th: "แรกเกิด", zh: "新生", vi: "Sơ sinh", id: "Baru lahir", ms: "Baharu lahir" },
+      quote: { my: "သေးငယ်၍ တိတ်ဆိတ်သော", en: "Small and quiet", shn: "လဵၵ်ႉလႄႈ ႁိမ်း", kac: "Kachyi nna ngwi pyaw ai", th: "เล็กและเงียบ", zh: "小小的，安安静静的", vi: "Nhỏ bé và yên bình", id: "Kecil dan tenang", ms: "Kecil dan tenang" }
+    }),
+
+  occ("kid", "modern", "#1b1b1f", "11x85", [4, 2, 5, 3, 6, 2, 4, 3],
+    { my: "ကလေးများ", en: "Kids", shn: "လုၵ်ႈဢွၼ်ႇ", kac: "Ma ni", th: "เด็ก ๆ", zh: "儿童", vi: "Trẻ em", id: "Anak-anak", ms: "Kanak-kanak" },
+    { my: "တစ်ခဏမှ မငြိမ်", en: "Never still for a second", shn: "ဢမ်ႇယူႇၼိမ်သေဝၼ်း", kac: "Ndai ten hta n hkring ai", th: "ไม่เคยอยู่นิ่ง", zh: "一刻也停不下来", vi: "Không lúc nào chịu ngồi yên", id: "Tak pernah diam sedetik pun", ms: "Tak pernah duduk diam" },
+    {
+      title: { my: "ကစားရတဲ့ နေ့ရက်တွေ", en: "Days of Play", shn: "ဝၼ်းလဵၼ်ႈ", kac: "Gasup ai shani ni", th: "วันแห่งการเล่น", zh: "玩耍的日子", vi: "Những Ngày Rong Chơi", id: "Hari-hari Bermain", ms: "Hari-hari Bermain" },
+      subtitle: { my: "ကလေးများ", en: "KIDS", shn: "လုၵ်ႈဢွၼ်ႇ", kac: "Ma ni", th: "เด็ก ๆ", zh: "儿童", vi: "Trẻ em", id: "Anak-anak", ms: "Kanak-kanak" },
+      quote: { my: "ရယ်မောသံ တစ်မျက်နှာစာ", en: "A page of laughing", shn: "ၼႃႈလိၵ်ႈသဵင်ႁဵၼ်း", kac: "Mani ai laika shara langai", th: "หน้าที่เต็มไปด้วยเสียงหัวเราะ", zh: "一整页的笑声", vi: "Một trang đầy tiếng cười", id: "Satu halaman penuh tawa", ms: "Satu halaman penuh ketawa" }
+    }),
+
+  occ("birthday", "deco", "#8a6a3b", "12x12", [1, 4, 3, 6, 2, 5, 3, 4],
+    { my: "မွေးနေ့", en: "Birthday", shn: "ဝၼ်းၵိူတ်ႇ", kac: "Shangai shani", th: "วันเกิด", zh: "生日", vi: "Sinh nhật", id: "Ulang tahun", ms: "Hari jadi" },
+    { my: "တစ်နှစ်တစ်ခါ", en: "Once a year", shn: "ပီလႂ်ပွၵ်ႈ", kac: "Laning mi hta lang mi", th: "ปีละครั้ง", zh: "一年一次", vi: "Mỗi năm một lần", id: "Setahun sekali", ms: "Setahun sekali" },
+    {
+      title: { my: "မွေးနေ့ မင်္ဂလာပါ", en: "Happy Birthday", shn: "ဝၼ်းၵိူတ်ႇမီးမင်ႇၵလႃႇ", kac: "Shangai shani kabu gara", th: "สุขสันต์วันเกิด", zh: "生日快乐", vi: "Chúc Mừng Sinh Nhật", id: "Selamat Ulang Tahun", ms: "Selamat Hari Jadi" },
+      subtitle: { my: "မွေးနေ့ပွဲ", en: "BIRTHDAY", shn: "ပွႆးဝၼ်းၵိူတ်ႇ", kac: "Shangai shani poi", th: "งานวันเกิด", zh: "生日派对", vi: "Tiệc sinh nhật", id: "Pesta ulang tahun", ms: "Pesta hari jadi" },
+      quote: { my: "ဆန္ဒတစ်ခု ပြုပါ", en: "Make a wish", shn: "ဢဝ်ၵၢင်ၸႂ်သေ", kac: "Myit mada langai galaw u", th: "ขอพรสักข้อ", zh: "许个愿吧", vi: "Ước một điều", id: "Buatlah permohonan", ms: "Buatlah satu hajat" }
+    }),
+
+  occ("event", "roman", "#1b1b1f", "11x85", [6, 4, 2, 5, 3, 6, 4, 5],
+    { my: "ပွဲအခမ်းအနား", en: "Events", shn: "ပွႆး", kac: "Poi", th: "งานอีเวนต์", zh: "活动", vi: "Sự kiện", id: "Acara", ms: "Acara" },
+    { my: "တစ်ညလုံး၊ လူတိုင်း", en: "The whole night, everyone", shn: "တင်းၶိုၼ်း ၵူႈၵေႃႉ", kac: "Shana ting, yawng", th: "ทั้งคืน ทุกคน", zh: "整个晚上，每一个人", vi: "Cả buổi tối, tất cả mọi người", id: "Semalam penuh, semua orang", ms: "Sepanjang malam, semua orang" },
+    {
+      title: { my: "ပွဲတော်", en: "The Event", shn: "ပွႆး", kac: "Poi", th: "งาน", zh: "活动纪实", vi: "Sự Kiện", id: "Acara", ms: "Acara" },
+      subtitle: { my: "ပွဲအခမ်းအနား", en: "EVENT COVERAGE", shn: "ၵဵပ်းႁၢင်ႈပွႆး", kac: "Poi a sumla", th: "บันทึกงาน", zh: "活动记录", vi: "Ghi hình sự kiện", id: "Liputan acara", ms: "Liputan acara" },
+      quote: { my: "ကျင်းပခဲ့သော ည", en: "The night it happened", shn: "ၶိုၼ်းၼၼ်ႉ", kac: "Byin ai shana", th: "คืนที่มันเกิดขึ้น", zh: "那个夜晚", vi: "Đêm ấy", id: "Malam itu terjadi", ms: "Malam ia berlaku" }
+    })
+];
+
 const TYPE = FONTS.dataTables();
 
 const DATA = {
-  v: 2,
+  v: 3,
   bleedMm: 3,
   gutterMm: 5,
   gapFrac: G,
@@ -419,7 +540,12 @@ const DATA = {
   ranges: TYPE.ranges,
   roleSide: TYPE.roleSide,
   fontDir: "lib/fonts/",
-  defPair: "classic"
+  defPair: "classic",
+  inks: INKS,
+  /* wave C */
+  occasions: OCCASIONS,
+  defOcc: "wedding",
+  maxAlbum: 40
 };
 
 /* ---- checks the generator runs on itself ------------------------------- */
@@ -516,6 +642,43 @@ function check() {
      write in it, and a wave of twenty Latin faces that cannot would be a joke */
   const myPair = DATA.pairs.filter(function (p) { return fontIds[p.t].script === "my" && fontIds[p.b].script === "my"; });
   if (myPair.length < 2) throw new Error("only " + myPair.length + " pairing(s) set Burmese in both faces; the students write in it");
+
+  /* ---- wave C: the occasions --------------------------------------------- */
+  const HEX = /^#[0-9a-f]{6}$/;
+  INKS.forEach(function (c) { if (!HEX.test(c)) throw new Error("ink " + c + " is not a six-digit hex colour"); });
+  if (new Set(INKS).size !== INKS.length) throw new Error("the ink row repeats a colour");
+  const occIds = {};
+  DATA.occasions.forEach(function (o) {
+    if (occIds[o.id]) throw new Error("duplicate occasion id " + o.id);
+    occIds[o.id] = 1;
+    nine(o.name, "occasion " + o.id + " name");
+    nine(o.note, "occasion " + o.id + " note");
+    ["title", "subtitle", "quote"].forEach(function (r) {
+      if (!ROLES.some(function (x) { return x.id === r; })) throw new Error("occasion words name role " + r + ", which is not a role");
+      nine(o.words[r], "occasion " + o.id + " " + r);
+    });
+    /* every default an occasion names must be something the studio actually ships:
+       a pairing whose two faces are on disk, an ink the picker can show, and a size
+       the picker can select. A default that is not offered is a page the student
+       cannot get back to once they touch the control. */
+    if (!DATA.pairs.some(function (p) { return p.id === o.pair; })) throw new Error(o.id + ": pairing " + o.pair + " is not shipped");
+    if (INKS.indexOf(o.ink) < 0) throw new Error(o.id + ": ink " + o.ink + " is not one the picker offers");
+    if (!sizeIds[o.size]) throw new Error(o.id + ": size " + o.size + " is not a size");
+    if (!o.plan.length) throw new Error(o.id + ": an occasion with no plan lays out no album");
+    o.plan.forEach(function (n) {
+      if (!Number.isInteger(n) || n < 1 || n > 6) throw new Error(o.id + ": a page of " + n + " photo(s) — the templates hold one to six");
+    });
+    /* a plan that never rests is a plan that prints a contact sheet: at least one
+       page in the cycle carries two photographs or fewer. */
+    if (!o.plan.some(function (n) { return n <= 2; })) throw new Error(o.id + ": every page in the plan is crowded; one must rest at two photographs or fewer");
+  });
+  if (DATA.occasions.length < 9) throw new Error("only " + DATA.occasions.length + " occasions; the owner asked for prewedding, solo, family, baby, kid, newborn and events at the least");
+  if (!occIds[DATA.defOcc]) throw new Error("defOcc names " + DATA.defOcc + ", which is not an occasion");
+  if (!(DATA.maxAlbum >= 12 && DATA.maxAlbum <= 200)) throw new Error("maxAlbum " + DATA.maxAlbum + " is outside what one stored album can carry");
+  /* the owner named seven kinds of session by hand; none of them may quietly vanish */
+  ["prewed", "solo", "family", "baby", "kid", "newborn", "event"].forEach(function (id) {
+    if (!occIds[id]) throw new Error("the owner asked for " + id + " and no occasion carries that id");
+  });
 }
 
 function round(o) {

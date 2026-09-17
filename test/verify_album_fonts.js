@@ -209,7 +209,9 @@ function tables() {
 
   report("B11) the three Tai packs are registered in sweep_v477's PENDING with the reason written down, rather than filled with Shan text a Tai Le reader cannot read",
     /V61040_KEYS/.test(read("test/sweep_v477_upgrades.js")) &&
-    (read("test/sweep_v477_upgrades.js").match(/\.\.\.V61040_KEYS\]/g) || []).length === 3, null);
+    /* the row may name later waves after it — 6.105.0 appends V61050_KEYS — so this
+       matches the entry rather than the end of the list, which every wave moves */
+    (read("test/sweep_v477_upgrades.js").match(/\.\.\.V61040_KEYS[,\]]/g) || []).length === 3, null);
 }
 
 /* ===================== C) the page, in a browser ===================== */

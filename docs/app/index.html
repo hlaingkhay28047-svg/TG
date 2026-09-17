@@ -2214,6 +2214,13 @@ body.wall #wallRetry.on{display:block}
 .alb-inks{flex:0 0 auto;display:flex;flex-wrap:nowrap;align-items:center;margin:4px 0 0 6px}
 .alb-ink{width:22px;height:22px;padding:0;margin-left:4px;border-radius:50%;border:1px solid var(--line-soft);cursor:pointer}
 .alb-ink.on{box-shadow:0 0 0 2px var(--gold)}
+/* 6.105.0 wave C — the occasions. Each chip is a drawing of the plan's first three pages with
+   its name under it, so nine of them fit a phone two to a row and a desktop five. */
+.alb-occs{flex-wrap:wrap;align-items:stretch;margin:0 -4px 6px}
+.alb-occ{display:flex;flex-direction:column;align-items:center;gap:4px;
+         width:96px;padding:6px 4px;margin:4px;white-space:normal;line-height:1.25}
+.alb-plan{display:block;width:84px;height:28px;border-radius:4px}
+.alb-occname{display:block;font-size:12px;text-align:center}
 @media (min-width:900px){
   .alb-thumb{width:128px;max-width:128px}
   .alb-tile{width:96px;height:96px}
@@ -4177,7 +4184,7 @@ html.splashing #splash{display:flex}
 <script src="data/hnkdata.js?v=3b68aeb2725b"></script>
 <script src="data/libwf.js?v=880c3f0f1cf1"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
-<script src="data/album.js?v=f6f0197e2309"></script>
+<script src="data/album.js?v=368bbaac686f"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -4188,7 +4195,7 @@ html.splashing #splash{display:flex}
    synchronous way to add a script while the document is still being parsed;
    the address is built from this fixed list and a two-or-three-letter code,
    never from the link's text. tools/build_app_data.js writes the tags. */
-window.HNK_TRL_TAGS={"bn":"df18417b7687","gu":"20c6615638fe","hi":"094bdc3cd20a","ja":"cccd58457b23","km":"016c2b9441ee","kn":"7cd8823692b9","ko":"558abe671367","lo":"e8cdd4de7679","ml":"6285c39ababd","mr":"10b4104525f4","ne":"20bff37602df","pa":"f842fb7a9412","ta":"498155e6b51d","te":"35d2b2778689","ur":"47acd89798f2","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
+window.HNK_TRL_TAGS={"bn":"618bb60e124e","gu":"739013659a1e","hi":"cc7aa5f399cc","ja":"7f0e14cc74c9","km":"a9e8e9babde1","kn":"d605a2f14963","ko":"b43b6ae7d657","lo":"f10e6dfea15b","ml":"e97483e929f8","mr":"76da335e1baf","ne":"d25f7c62ad53","pa":"92a5c7785308","ta":"0784d0b400c4","te":"0b1483416d9f","ur":"ec3684be54ed","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
 (function(){
   var T=window.HNK_TRL_TAGS, has=function(k){ return Object.prototype.hasOwnProperty.call(T,k); };
   var BASE=/^(my|en|shn|kac|th|zh|vi|id|ms)$/, u="", code="";
@@ -4749,6 +4756,15 @@ var TR_PH={
   alb_font_my:{my:"မြန်မာစာကို မြန်မာ စာလုံးက အမြဲထုတ်ပေးပါတယ်",en:"Burmese letters always come from a Burmese font"},
   alb_font_busy:{my:"စာလုံး ဖွင့်နေသည်…",en:"Loading the font…"},
   alb_font_fail:{my:"စာလုံး မဖွင့်နိုင်ပါ — အရံစာလုံးနဲ့ ဆွဲပါမည်",en:"That font did not load — the page is drawn with the fallback"},
+  alb_occ:{my:"ပွဲအမျိုးအစား",en:"Occasion"},
+  alb_occ_note:{my:"ပွဲတစ်ခုရွေးရင် စာလုံး၊ အရွယ်၊ မင်အရောင် သုံးခုလုံး တစ်ခါတည်း ပြောင်းပါမယ်",en:"One occasion sets the type, the size and the ink together"},
+  alb_make:{my:"အယ်လ်ဘမ် တစ်အုပ်လုံး လုပ်မယ်",en:"Make the whole album"},
+  alb_make_hint:{my:"ပုံ {N} ပုံအထိ တစ်ခါတည်းရွေးပါ — စာမျက်နှာတွေ အလိုအလျောက် ခွဲပေးပါမယ်",en:"Pick up to {N} photos at once — the studio breaks them into pages"},
+  alb_make_busy:{my:"ပုံ {N} ပုံ ဖတ်နေသည်…",en:"Reading {N} photos…"},
+  alb_make_done:{my:"ပုံ {N} ပုံ · စာမျက်နှာ {P} မျက်နှာ ပြီးပါပြီ",en:"{N} photos · {P} pages"},
+  alb_make_cap:{my:"ပုံ {N} ပုံသာ ယူပါမယ် — ကျန်တာကို နောက်အယ်လ်ဘမ်မှာ ထည့်ပါ",en:"Only {N} photos were taken — put the rest in another album"},
+  alb_make_replace:{my:"လက်ရှိ အယ်လ်ဘမ်ကို အသစ်နဲ့ အစားထိုးပါမယ် — ဆက်လုပ်မလား?",en:"This replaces the album you have now. Continue?"},
+  alb_make_none:{my:"ပုံတစ်ပုံမှ မဖတ်နိုင်ပါ",en:"None of those photos could be read"},
   ph_home:{my:'တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်',en:'Set up once — <em>ready whenever you are</em>'},
   ph_path:{my:'ဓာတ်ပုံအားလုံးကို Look တစ်ခုတည်းနဲ့ <em>တစ်ပြိုင်နက်</em> ပြင်မယ်',en:'One look, applied to your whole album — <em>all at once</em>'},
   ph_imagine:{my:'ပုံထည့် · template ရွေး · <em>တစ်ချက်နှိပ်</em> — prompt မလို',en:'Add a photo · pick a template · <em>one tap</em> — no prompt'}
@@ -4819,6 +4835,16 @@ var TR_L14={
   alb_font_my:{shn:"လိၵ်ႈမၢၼ်ႈ ဢွၵ်ႇမႃးတီႈ တူဝ်လိၵ်ႈမၢၼ်ႈ တႃႇသေႇ",kac:"Myen laika gaw Myen laika hkum kaw na shagu pru wa ai",th:"ตัวอักษรพม่ามาจากฟอนต์พม่าเสมอ",zh:"缅文始终由缅文字体呈现",vi:"Chữ Miến luôn được lấy từ phông chữ Miến",id:"Huruf Burma selalu berasal dari font Burma",ms:"Huruf Burma sentiasa datang daripada fon Burma"},
   alb_font_busy:{shn:"ပိုတ်ႇတူဝ်လိၵ်ႈဝႆႉ…",kac:"Laika hkum hpaw nga ai…",th:"กำลังโหลดฟอนต์…",zh:"正在载入字体…",vi:"Đang tải phông chữ…",id:"Memuat font…",ms:"Memuatkan fon…"},
   alb_font_fail:{shn:"ပိုတ်ႇတူဝ်လိၵ်ႈဢမ်ႇလႆႈ — တႅမ်ႈၼႂ်းတူဝ်လိၵ်ႈသၢႆႈ",kac:"Laika hkum n hpaw lu — shingdu laika hkum hte ka ai",th:"โหลดฟอนต์นั้นไม่ได้ — จะวาดด้วยฟอนต์สำรอง",zh:"该字体未能载入 — 改用后备字体绘制",vi:"Không tải được phông đó — trang được vẽ bằng phông dự phòng",id:"Font itu gagal dimuat — halaman digambar dengan font cadangan",ms:"Fon itu gagal dimuatkan — halaman dilukis dengan fon sandaran"},
+  /* 6.105.0 wave C — the ALBUM page's occasions */
+  alb_occ:{shn:"မဵဝ်းပွႆး",kac:"Poi amyu",th:"ประเภทงาน",zh:"场合类型",vi:"Loại dịp",id:"Jenis acara",ms:"Jenis majlis"},
+  alb_occ_note:{shn:"လိူၵ်ႈပွႆးဢၼ်ၼိုင်ႈ တူဝ်လိၵ်ႈ ၶႃႈလူင် လႄႈ သီလိၵ်ႈ သၢမ်ဢၼ် လႅၵ်ႈၽွမ်ႉၵၼ်",kac:"Poi langai lata yang laika hkum, kaba hte laika ahkyeng masum hpe rau jaw ai",th:"เลือกงานหนึ่งอย่าง ฟอนต์ ขนาด และสีตัวอักษรจะถูกตั้งพร้อมกัน",zh:"选一个场合，字体、尺寸和文字颜色一次设定",vi:"Chọn một dịp là đặt xong phông chữ, khổ và màu mực",id:"Pilih satu acara — font, ukuran dan warna tinta tertata sekaligus",ms:"Pilih satu majlis — fon, saiz dan warna dakwat ditetapkan serentak"},
+  alb_make:{shn:"ႁဵတ်းပပ်ႉႁၢင်ႈတင်းပပ်ႉ",kac:"Sumla laika buk yawng galaw",th:"สร้างอัลบั้มทั้งเล่ม",zh:"制作整本相册",vi:"Làm cả cuốn album",id:"Buat seluruh album",ms:"Buat seluruh album"},
+  alb_make_hint:{shn:"လိူၵ်ႈၶႅပ်းလႆႈထိုင် {N} ၶႅပ်း ၵမ်းလဵဝ် — ၽႄၼႃႈလိၵ်ႈပၼ်ႁင်းၵူၺ်း",kac:"Kalang mi hta sumla {N} du hkra lata la — shara shara de garan ya na",th:"เลือกรูปได้ถึง {N} รูปในครั้งเดียว — สตูดิโอจะแบ่งเป็นหน้าให้",zh:"一次最多选 {N} 张照片 — 工作室会自动分页",vi:"Chọn tối đa {N} ảnh một lần — studio sẽ chia thành trang",id:"Pilih hingga {N} foto sekaligus — studio membaginya menjadi halaman",ms:"Pilih sehingga {N} foto sekali gus — studio membahagikannya kepada halaman"},
+  alb_make_busy:{shn:"တိုၵ်ႉလူၶႅပ်း {N} ၶႅပ်း…",kac:"Sumla {N} hti nga ai…",th:"กำลังอ่านรูป {N} รูป…",zh:"正在读取 {N} 张照片…",vi:"Đang đọc {N} ảnh…",id:"Membaca {N} foto…",ms:"Membaca {N} foto…"},
+  alb_make_done:{shn:"ၶႅပ်း {N} · ၼႃႈလိၵ်ႈ {P}",kac:"Sumla {N} · shara {P}",th:"{N} รูป · {P} หน้า",zh:"{N} 张照片 · {P} 页",vi:"{N} ảnh · {P} trang",id:"{N} foto · {P} halaman",ms:"{N} foto · {P} halaman"},
+  alb_make_cap:{shn:"ဢဝ်ၶႅပ်း {N} ၶႅပ်းၵူၺ်း — ဢၼ်လိူဝ်ၼၼ်ႉ သႂ်ႇပပ်ႉတၢင်ႇဢၼ်",kac:"Sumla {N} sha la ai — ngam ai ni hpe laika buk kaga de bang u",th:"รับเพียง {N} รูป — ที่เหลือใส่ในอัลบั้มอื่น",zh:"只取了 {N} 张 — 其余请放进别的相册",vi:"Chỉ lấy {N} ảnh — số còn lại hãy để sang album khác",id:"Hanya {N} foto yang diambil — sisanya taruh di album lain",ms:"Hanya {N} foto diambil — selebihnya letak dalam album lain"},
+  alb_make_replace:{shn:"ပပ်ႉႁၢင်ႈဢၼ်မီးယူႇ တေလႅၵ်ႈပဵၼ်ဢၼ်မႂ်ႇ — ႁဵတ်းထႅင်ႈႁိုဝ်?",kac:"Ya nga ai laika buk hpe galai kau na — matut na i?",th:"อัลบั้มที่มีอยู่จะถูกแทนที่ ดำเนินการต่อหรือไม่?",zh:"现有相册会被替换，是否继续？",vi:"Album hiện tại sẽ bị thay thế. Tiếp tục?",id:"Album yang ada akan diganti. Lanjutkan?",ms:"Album sedia ada akan diganti. Teruskan?"},
+  alb_make_none:{shn:"လူၶႅပ်းသေဢၼ်ဢမ်ႇလႆႈ",kac:"Sumla langai mung hti n lu ai",th:"อ่านรูปไม่ได้สักรูป",zh:"没有一张照片能读取",vi:"Không đọc được ảnh nào",id:"Tidak ada foto yang bisa dibaca",ms:"Tiada foto yang dapat dibaca"},
   ph_path:{shn:'Look ဢၼ်လဵဝ် ၸႂ်ႉတင်းမူႇၶႅပ်းႁၢင်ႈ — <em>ၵမ်းလဵဝ်တင်းသဵင်ႈ</em>',kac:'Look langai sha, na a sumla yawng hta — <em>kalang ta yawng</em>',th:'ลุคเดียว ใช้กับทั้งอัลบั้ม — <em>พร้อมกันทั้งหมด</em>',zh:'一个风格，套用整本相册 — <em>一次全部完成</em>',vi:'Một look, áp cho cả album — <em>tất cả cùng lúc</em>',id:'Satu look untuk seluruh album — <em>sekaligus</em>',ms:'Satu look untuk seluruh album — <em>serentak</em>'},
   ph_imagine:{shn:'သႂ်ႇၶႅပ်း · လိူၵ်ႈ template · <em>ၼဵၵ်းပွၵ်ႈလဵဝ်</em>',kac:'Sumla bang · template lata · <em>kalang dip</em>',th:'เพิ่มรูป · เลือกเทมเพลต · <em>แตะครั้งเดียว</em> — ไม่ต้องพรอมต์',zh:'添加照片 · 选择模板 · <em>一键</em>——无需提示词',vi:'Thêm ảnh · chọn mẫu · <em>một chạm</em> — không cần prompt',id:'Tambah foto · pilih templat · <em>sekali ketuk</em> — tanpa prompt',ms:'Tambah foto · pilih templat · <em>sekali ketik</em> — tanpa prompt'},
   ph_home:{shn:'Setup ပွၵ်ႈလဵဝ် — <em>ၶႂ်ႈၸႂ်ႉမိူဝ်ႈလႂ်ၵေႃႈ ႁၢင်ႈႁႅၼ်းဝႆႉယဝ်ႉ</em>',kac:'Kalang sha setup galaw u — <em>galoi raitim hkyen da sai</em>',th:'ตั้งค่าครั้งเดียว — <em>พร้อมใช้ทุกเมื่อ</em>',zh:'设置一次 — <em>随时待命</em>',vi:'Thiết lập một lần — <em>sẵn sàng bất cứ lúc nào</em>',id:'Atur sekali — <em>siap kapan saja</em>',ms:'Sedia sekali sahaja — <em>sedia bila-bila masa</em>'}
@@ -31412,6 +31438,12 @@ var ALBUM = (function(){
   var DOC_KEY = "hnk_album_doc_v1";   /* the durable album, in the host's own store */
   var THUMB_W = 96;                   /* the page rail's thumbnails */
   var PREVIEW_MAX = 1400;             /* the stage never draws bigger than this on its long edge */
+  /* 6.105.0 wave C — HOW MANY PHOTOGRAPHS ONE ALBUM MAY HOLD. Every photograph is kept in the
+     album record as a data URL measured at 2,400 px on its long edge (the host's readFiles), so
+     forty of them is roughly twenty-five megabytes written to the student's own store on a
+     debounced save. That is a number a phone can carry; four hundred is not, and the honest
+     place to say so is here rather than in a browser's out-of-quota error. */
+  var MAXA = (D && D.maxAlbum) || 40;
 
   /* ======================= THE MATHS (pure, Node-testable) ======================= */
 
@@ -31558,6 +31590,30 @@ var ALBUM = (function(){
     return best ? { tpl: best, score: bestScore } : null;
   }
   /* the shape a page's photos make, for autoTemplate */
+  /* HOW AN ALBUM BREAKS INTO PAGES (6.105.0 wave C). The opener always takes ONE photograph —
+     it is the page the occasion's words are set on — and after it the occasion's own plan
+     cycles. The last page never keeps a single orphan photograph when the page before it has
+     room: a spread that ends on one lonely picture reads as a mistake, and no print shop can
+     fix it after the fact. Pure arithmetic, so test/verify_album_occasions.js drives it in Node. */
+  function planPages(count, plan){
+    var out = [], left = Math.max(0, count|0), i = 0, n;
+    if (!left) return out;
+    if (!(plan && plan.length)) plan = [2];
+    out.push(1); left -= 1;
+    while (left > 0){
+      n = plan[i % plan.length]; i++;
+      if (!(n >= 1)) n = 1;
+      if (n > MAXP) n = MAXP;
+      if (n > left) n = left;
+      out.push(n); left -= n;
+    }
+    if (out.length > 2 && out[out.length-1] === 1 && out[out.length-2] < MAXP){
+      out[out.length-2] += 1;
+      out.pop();
+    }
+    return out;
+  }
+
   function shapesOf(photos){
     var out=[], i;
     for (i=0;i<photos.length;i++) out.push({ w: photos[i].w||1, h: photos[i].h||1 });
@@ -31572,8 +31628,9 @@ var ALBUM = (function(){
   var DOC = null, IMGS = {}, SAVE_T = null;
 
   function blankDoc(){
-    return { v:2, sizeId:"12x36", custom:{ w:12, h:36, unit:"in", dpi:300 },
-             guides:true, cur:0, pair:(D.defPair || "classic"), pages:[ blankPage() ] };
+    return { v:3, sizeId:"12x36", custom:{ w:12, h:36, unit:"in", dpi:300 },
+             guides:true, cur:0, pair:(D.defPair || "classic"), occ:(D.defOcc || ""),
+             pages:[ blankPage() ] };
   }
   function blankPage(){ return { photos:[], texts:[], tplId:"", auto:true }; }
   function curSize(){
@@ -31697,6 +31754,8 @@ var ALBUM = (function(){
   function fontById(id){ var i; for (i=0;i<D.fonts.length;i++) if (D.fonts[i].id === id) return D.fonts[i]; return null; }
   function pairById(id){ var i; for (i=0;i<D.pairs.length;i++) if (D.pairs[i].id === id) return D.pairs[i]; return null; }
   function curPair(){ return pairById(DOC && DOC.pair) || pairById(D.defPair) || D.pairs[0]; }
+  function occById(id){ var i, L = D.occasions || []; for (i=0;i<L.length;i++) if (L[i].id === id) return L[i]; return null; }
+  function curOcc(){ return occById(DOC && DOC.occ) || occById(D.defOcc) || (D.occasions || [])[0] || null; }
   function fontForText(tx){
     var own = (tx && tx.font) ? fontById(tx.font) : null;
     if (own) return own;
@@ -31812,6 +31871,174 @@ var ALBUM = (function(){
   function pick9(o){ return (H && typeof H.pick9 === "function") ? H.pick9(o) : (o && (o.en || o.my)) || ""; }
 
   /* ---- the size card ---- */
+  /* ======================= THE OCCASION (6.105.0 wave C) ======================= */
+
+  /* Which picker opened the file dialog. The host's mirror input is ONE input shared by both
+     buttons, and the native overlay the phone needs (nativePick) swallows the button's own
+     click — so the mode is set through the overlay's `before` hook rather than read off the
+     event, which is the only place both routes pass through. */
+  var PICK_MODE = "page";
+
+  function ask(msg){
+    if (H && typeof H.confirm === "function"){ try { return !!H.confirm(msg); } catch(e){ return true; } }
+    return true;   /* a host with no way to ask is a host that already asked */
+  }
+  function hasWork(){
+    var i;
+    if (!DOC || !DOC.pages) return false;
+    if (DOC.pages.length > 1) return true;
+    for (i=0;i<DOC.pages.length;i++){
+      if (DOC.pages[i].photos.length) return true;
+      var k, tx = DOC.pages[i].texts || [];
+      for (k=0;k<tx.length;k++) if (tx[k].text) return true;
+    }
+    return false;
+  }
+
+  /* the occasion's own starter lines, on the page the album opens with. STARTERS: every one is
+     a line the student is expected to type over. They are here so the first page opens with
+     something set in the album's own face, in the language the student reads, rather than an
+     empty box that says nothing about how the page will look. */
+  function openerTexts(o){
+    if (!o || !o.words) return [];
+    return [
+      { role:"title",    text: pick9(o.words.title)    || "", x:0.5, y:0.12, align:"center", color:o.ink, font:"" },
+      { role:"subtitle", text: pick9(o.words.subtitle) || "", x:0.5, y:0.22, align:"center", color:o.ink, font:"" },
+      { role:"quote",    text: pick9(o.words.quote)    || "", x:0.5, y:0.88, align:"center", color:o.ink, font:"" }
+    ];
+  }
+
+  /* Picking an occasion sets the three decisions a student should not have to make one at a
+     time — the pairing, the print size and the ink — and never touches a photograph or a word
+     they have already typed. A line keeps a colour the student chose themselves; only lines
+     still wearing the default or the previous occasion's ink move. */
+  function setOccasion(id){
+    var o = occById(id); if (!o || !DOC) return;
+    var prev = curOcc(), was = (prev && prev.ink) || INKS[0], i, k, tx;
+    DOC.occ = o.id;
+    DOC.pair = o.pair;
+    if (sizeById(o.size)) DOC.sizeId = o.size;
+    for (i=0;i<DOC.pages.length;i++){
+      tx = DOC.pages[i].texts || [];
+      for (k=0;k<tx.length;k++) if (tx[k].color === was || tx[k].color === INKS[0]) tx[k].color = o.ink;
+    }
+    onDocChange(true);
+  }
+
+  /* MAKE THE ALBUM. The student hands over a card full of photographs; the occasion decides the
+     size, the pairing, the ink and where the pages break, and each page then picks its own
+     layout through the same auto-flow one page uses. This REPLACES what is on screen, so it
+     asks first whenever there is anything to lose. */
+  function makeAlbum(srcs){
+    var all = srcs || [], list = all.slice(0, MAXA), over = all.length - list.length;
+    if (!list.length) return Promise.resolve(0);
+    if (hasWork() && !ask(L("alb_make_replace"))) return Promise.resolve(0);
+    var o = curOcc(), photos = [];
+    H.toast(L("alb_make_busy").replace("{N}", String(list.length)), "");
+    return list.reduce(function(chain, src){
+      return chain.then(function(){
+        return imgFor(src).then(function(im){
+          if (!im) return;
+          var w = im.naturalWidth||im.width, h = im.naturalHeight||im.height;
+          if (!(w>0 && h>0)) return;
+          photos.push({ src:src, w:w, h:h, subject: measureSubject(im, w, h), anchor:{ x:0.5, y:0.5 } });
+        });
+      });
+    }, Promise.resolve()).then(function(){
+      if (!photos.length){ H.toast(L("alb_make_none"), "err"); return 0; }
+      var counts = planPages(photos.length, o && o.plan), doc = blankDoc(), at = 0, i, pg;
+      doc.guides = DOC.guides;
+      if (o){
+        doc.occ = o.id;
+        doc.pair = o.pair;
+        if (sizeById(o.size)) doc.sizeId = o.size;
+      }
+      doc.pages = [];
+      for (i=0;i<counts.length;i++){
+        pg = blankPage();
+        pg.photos = photos.slice(at, at + counts[i]);
+        at += counts[i];
+        doc.pages.push(pg);
+      }
+      if (o) doc.pages[0].texts = openerTexts(o);
+      doc.cur = 0;
+      DOC = doc;
+      for (i=0;i<DOC.pages.length;i++) reAnchor(DOC.pages[i], i);
+      saveSoon();
+      render();
+      H.toast(L("alb_make_done").replace("{N}", String(photos.length)).replace("{P}", String(DOC.pages.length)), "ok");
+      if (over > 0) H.toast(L("alb_make_cap").replace("{N}", String(MAXA)), "");
+      return photos.length;
+    });
+  }
+
+  /* An occasion chip is a drawing of the first three pages the plan lays out — the opener and
+     the two it opens on — each with the layout the auto-flow would actually pick at that
+     position. Nothing else tells a student what "wedding" and "newborn" differ by before they
+     have put a single photograph in.
+     The name beside it is set in the STUDIO's face, never the album's: the album's twenty
+     families are declared under handles nothing else in the app names, and a chip that used one
+     would pull a typeface down on a page that has not asked for one yet. */
+  function planSketch(o){
+    var cv = document.createElement("canvas");
+    cv.className = "alb-plan"; cv.width = 84; cv.height = 28;
+    var x = cv.getContext("2d"); if (!x) return cv;
+    x.fillStyle = "#f4f2ee"; x.fillRect(0,0,84,28);
+    var counts = [1, (o.plan[0]|0) || 1, (o.plan[1]|0) || 1], i, j;
+    for (i=0;i<3;i++){
+      var ox = i*28 + 1, n = clamp(counts[i], 1, MAXP), sq = [], k;
+      for (k=0;k<n;k++) sq.push({ w:1, h:1 });
+      var a = autoTemplate(sq, i), t = (a && a.tpl) || tplsFor(n)[0];
+      x.fillStyle = "#ffffff"; x.fillRect(ox, 2, 26, 24);
+      x.fillStyle = "#c9a227";
+      if (t){
+        for (j=0;j<t.cells.length;j++){
+          var c = t.cells[j];
+          x.fillRect(ox + Math.round(c.x*26), 2 + Math.round(c.y*24),
+                     Math.max(2, Math.round(c.w*26)), Math.max(2, Math.round(c.h*24)));
+        }
+      }
+    }
+    return cv;
+  }
+
+  function occasionCard(){
+    var card = E("section","card"); card.id = "albOccCard";
+    card.appendChild(E("h2", null, L("alb_occ")));
+    var list = D.occasions || [], cur = curOcc(), i;
+    var row = E("div","row alb-occs"); row.id = "albOccs";
+    for (i=0;i<list.length;i++){
+      (function(oc){
+        var b = E("button","chip alb-occ" + ((cur && cur.id === oc.id) ? " on" : ""), "");
+        b.id = "albOcc_" + oc.id;
+        b.title = pick9(oc.note);
+        b.appendChild(planSketch(oc));
+        b.appendChild(E("span","alb-occname", pick9(oc.name)));
+        b.onclick = function(){ setOccasion(oc.id); };
+        row.appendChild(b);
+      })(list[i]);
+    }
+    card.appendChild(row);
+    var note = E("p","mut"); note.id = "albOccNote";
+    if (cur){
+      var pr = pairById(cur.pair), sz = sizeById(cur.size);
+      note.textContent = pick9(cur.note) + " · " + (pr ? pick9(pr.label) : cur.pair) +
+                         (sz ? (" · " + sizeLine(sz, pagePx(sz))) : "");
+    } else note.textContent = L("alb_occ_note");
+    card.appendChild(note);
+
+    var mrow = E("div","row");
+    var mk = E("button","btn btn-gold grow", L("alb_make")); mk.id = "albMake";
+    mk.onclick = function(){ PICK_MODE = "album"; if (H && typeof H.pickFiles === "function") H.pickFiles(); };
+    mrow.appendChild(mk);
+    /* the same 6.23.1 rule the photo button follows: the phone's own picker is laid over the
+       button on EVERY render, and it carries the mode with it */
+    if (H && typeof H.wirePick === "function"){ try { H.wirePick(mk, function(){ PICK_MODE = "album"; }); } catch(e){} }
+    card.appendChild(mrow);
+    card.appendChild(E("p","mut", L("alb_make_hint").replace("{N}", String(MAXA))));
+    return card;
+  }
+
   function sizeCard(){
     var card = E("section","card"); card.id = "albSizeCard";
     var h = E("h2", null, L("alb_size_h")); card.appendChild(h);
@@ -31994,12 +32221,12 @@ var ALBUM = (function(){
     card.appendChild(strip);
     var row = E("div","row");
     var add = E("button","btn btn-gold grow","+ " + L("alb_photo_add")); add.id = "albAddPhotos";
-    add.onclick = function(){ if (H && typeof H.pickFiles === "function") H.pickFiles(); };
+    add.onclick = function(){ PICK_MODE = "page"; if (H && typeof H.pickFiles === "function") H.pickFiles(); };
     row.appendChild(add);
     /* the phone's own picker is laid over the button every time it is drawn — the module
        rebuilds this card on each change, so a one-shot wire at boot would last one render
        (the 6.23.1 Redmi rule, which only holds if the overlay follows the button) */
-    if (H && typeof H.wirePick === "function") { try { H.wirePick(add); } catch(e){} }
+    if (H && typeof H.wirePick === "function") { try { H.wirePick(add, function(){ PICK_MODE = "page"; }); } catch(e){} }
     card.appendChild(row);
     if (pg.photos.length >= MAXP){
       card.appendChild(E("p","mut", L("alb_photo_full")));
@@ -32056,8 +32283,10 @@ var ALBUM = (function(){
   /* the ink a printed line is actually set in. Six, not a colour wheel: near-black for
      paper, white for a line laid over a dark photograph, and four the studio's own
      albums use. A page that offers only black puts the caption on a night portrait
-     where nobody can read it, which is what this row is here to stop. */
-  var INKS = ["#1b1b1f", "#ffffff", "#6b6b73", "#8a6a3b", "#b08d57", "#7a2f36"];
+     where nobody can read it, which is what this row is here to stop.
+     6.105.0 — the row moved into data/album.js, because an occasion names one of these
+     as its default and the generator has to be able to refuse a default nothing offers. */
+  var INKS = (D.inks && D.inks.length) ? D.inks : ["#1b1b1f", "#ffffff", "#6b6b73", "#8a6a3b", "#b08d57", "#7a2f36"];
 
   function textCard(){
     var card = E("section","card"); card.id = "albTextCard";
@@ -32252,10 +32481,14 @@ var ALBUM = (function(){
   }
   /* the anchors the current layout implies — recomputed whenever the layout or the size moves,
      because a crop that was right in a tall cell is wrong in a wide one */
-  function reAnchor(pg){
+  function reAnchor(pg, idx){
     var sz = curSize(), safe = safeArea(sz);
     if (!safe) return;
-    var tpl = pageTpl(pg, DOC.cur), rects = cellRects(tpl, safe), i;
+    /* 6.105.0 — the page's OWN index, not always the open one. The auto-flow scores a template
+       partly on where the page falls in the album (the rhythm's nudge), so anchoring every page
+       of a freshly laid-out album against page 0's template cropped most of them for a layout
+       they are not drawn with. */
+    var tpl = pageTpl(pg, (idx == null) ? DOC.cur : idx), rects = cellRects(tpl, safe), i;
     for (i=0;i<pg.photos.length && i<rects.length;i++){
       var ph = pg.photos[i], r = rects[i];
       ph.anchor = anchorFor(ph.subject, ph.w, ph.h, r.w, r.h);
@@ -32266,8 +32499,8 @@ var ALBUM = (function(){
 
   var REDRAW = null;
   function onDocChange(sizeMoved){
-    if (sizeMoved){ var i; for (i=0;i<DOC.pages.length;i++) reAnchor(DOC.pages[i]); }
-    else reAnchor(curPage());
+    if (sizeMoved){ var i; for (i=0;i<DOC.pages.length;i++) reAnchor(DOC.pages[i], i); }
+    else reAnchor(curPage(), DOC.cur);
     saveSoon();
     render();
   }
@@ -32281,6 +32514,7 @@ var ALBUM = (function(){
   function render(){
     if (!ROOT) return;
     ROOT.innerHTML = "";
+    ROOT.appendChild(occasionCard());
     ROOT.appendChild(sizeCard());
     ROOT.appendChild(pagesCard());
     ROOT.appendChild(stageCard());
@@ -32327,13 +32561,17 @@ var ALBUM = (function(){
       });
     },
     onEnter: function(){ if (MOUNTED) { render(); } },
-    /* the host hands picked files in as data URLs */
-    accept: function(urls){ return addPhotos(urls || []); },
+    /* the host hands picked files in as data URLs — into the open page, or, when the student
+       pressed "Make the album", into a whole new album laid out by the occasion */
+    accept: function(urls){
+      var mode = PICK_MODE; PICK_MODE = "page";
+      return (mode === "album") ? makeAlbum(urls || []) : addPhotos(urls || []);
+    },
     /* what the tests drive: the maths, with nothing of the browser in it */
     math: { pagePx: pagePx, safeArea: safeArea, cellRect: cellRect, cellRects: cellRects,
             coverFit: coverFit, subjectAnchor: subjectAnchor, anchorFor: anchorFor,
             tplScore: tplScore, autoTemplate: autoTemplate, tplsFor: tplsFor, tplById: tplById,
-            sizeById: sizeById, mmPx: mmPx },
+            sizeById: sizeById, mmPx: mmPx, planPages: planPages, occById: occById },
     doc: function(){ return DOC; },
     setDoc: function(d){ DOC = normalize(d); onDocChange(true); },
     reset: function(){ DOC = blankDoc(); onDocChange(true); }
@@ -32355,6 +32593,9 @@ var ALBUM = (function(){
        falls back to "" (the pairing decides), which is the same album with better
        type rather than a page that throws. */
     out.pair = pairById(d.pair) ? d.pair : (D.defPair || "classic");
+    /* 6.105.0 — the occasion, same rule: an id this build no longer ships falls back to the
+       default rather than leaving curOcc() with nothing to answer with. */
+    out.occ = occById(d.occ) ? d.occ : (D.defOcc || "");
     out.pages = [];
     var list = (d.pages && d.pages.length) ? d.pages : [blankPage()];
     var i, k;
@@ -32415,7 +32656,12 @@ var ALBUM = (function(){
     t: function(k){ return t(k); },
     pick9: function(m){ return L9(m); },
     pickFiles: function(){ var mir=$("albFile"); if(mir) mir.click(); },
-    wirePick: function(btn){ nativePick(btn, "albFile"); },
+    /* 6.105.0 — `before` runs the moment the overlay's own input reports files and BEFORE the
+       mirror's onchange, which is the only hook both the programmatic route and the phone's
+       native overlay pass through. The album module uses it to say which button opened the
+       dialog: one page's worth of photographs, or a whole album. */
+    wirePick: function(btn, before){ nativePick(btn, "albFile", before); },
+    confirm: function(msg){ return confirm(msg); },
     store: function(key, val){ try { kvSet(key, val); } catch(e){} },
     restore: function(key){ return kvGet(key).catch(function(){ return null; }); },
     saveGallery: function(dataUrl, name){
