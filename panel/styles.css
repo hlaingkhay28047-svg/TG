@@ -2001,55 +2001,73 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    bottom). Flex-wrap stands in for the grid: the 8px column gap is the odd
    card's right margin, the 8px row gap the top margin of every card past
    the first pair, and the 3:2 art box is a percentage padding. ---- */
-/* 6.169.0 — THE GRID FOLLOWS THE PANEL. Until now every one of these grids was two
-   columns at every width, because the column count lived in two places at once: a
-   `width: calc(50% - 4px)` here and a `col === 2` counter in the screen script. The
-   owner photographed both ends of that. In a 300px panel the content box is 204px, so
-   a card was 98px wide: a 76px picture carrying two 26px corner discs and a 22px badge
-   (79% of it), a title broken over two lines, a summary cut at three. Undocked to
-   1400px the same rule drew 648px cards with 626x417 pictures and a one-line title —
-   and the odd card that fills its row became a 1304x967 slab.
+/* 6.169.1 — THE GRID FOLLOWS THE PANEL, AND EVERY CARD STATES ITS WIDTH.
 
-   The fix is to stop writing a column count anywhere. Each card is a flex item with a
-   percentage BASIS and flex-grow 1, so the basis decides how many fit and the growth
-   makes them fill the row exactly: 100% is one column, 44% is two (2x44+16px of margin
-   fits any container over 133px, 3x44 never does), 30% three, 22% four, 17% five. No
-   calc() is needed — the arithmetic is the flex algorithm's, which UXP does run — and
-   nothing has to be recomputed when a filter hides a card. The 8px gaps are margins as
-   before, 4px on each side against a -4px container, with the row gap on the bottom
-   edge and the container's -8px taking the last row's back.
+   6.169.0 replaced the hard `width: calc(50% - 4px)` with a percentage flex-BASIS, so
+   the panel's width could decide how many cards fit. The arithmetic was right and
+   Chromium drew it correctly — and in Photoshop it broke every card. The owner's
+   photographs of 6.169.0: the card's frame ends just under its picture, the title and
+   the summary paint BELOW the border, and the "open" pill is gone from the card
+   altogether.
 
-   The ladder is measured, not guessed (see the numbers in test/verify_wf_responsive.js):
-   two columns start at 460px, where a card is 178px and its picture 156px — the width at
-   which the summary stops being cut at three lines and the corner controls stop covering
-   half the art. Below that one column, which is the same card the owner already approved
-   in 6.168.2. The 700/1100 steps are the Imagine cards' own breakpoints in this file, and
-   1500 adds the fifth column the web app has had since 6.9.0. The ladder is bounded by
-   the panel itself: manifest.json allows 300px to 2000px, preferring 340 docked and 360
-   floating — so the one-column card is what a docked panel actually shows, and five
-   columns is the widest case that exists. */
-.wfgrid { display: flex; flex-direction: row; flex-wrap: wrap; align-items: stretch; margin: 6px -4px -8px; }
-.wfmini { position: relative; display: flex; flex-direction: column; flex: 1 1 100%; min-width: 0;
-  margin: 0 4px 8px; padding: 10px; box-sizing: border-box;
+   WHY. A card with no width is measured shrink-to-fit. UXP sized each card's HEIGHT
+   from its content laid out UNWRAPPED — one long line of title, one long line of
+   summary — then flex-grow stretched the card to the row's width, the text re-wrapped
+   onto two and three lines, and all of it overflowed a height that was already fixed.
+   `.go` has margin-top:auto and no space left to sit in, so the pill went out of the
+   frame with the words. This is the same lesson 6.150.0 wrote for the dialogs — UXP
+   sizes a container from its content's EXPLICIT width — one element down.
+
+   So the ladder stays and the width comes back: every step states a real width, and the
+   8px gap is the card's right margin, zeroed on the last column of that step. calc()
+   for the browser, exact to the pixel; a plain percentage in front of it for UXP, which
+   resolves no calc() and keeps the last value it understood. Each fallback is chosen so
+   its row can never overflow at the narrow end of its step (2 x 48.5% + 8 fits any box
+   over 267px) and comes up at most ~18px short at the wide end.
+
+   The ladder itself is measured, not guessed (the numbers are in
+   test/verify_wf_responsive.js): two columns start at 460px, where a card is 178px and
+   its picture 156px — the width at which the summary stops being cut at three lines and
+   the corner controls stop covering half the art. Below that one column, which is the
+   card the owner approved in 6.168.2. The 700/1100 steps are the Imagine cards' own
+   breakpoints in this file, and 1500 adds the fifth column the web app has had since
+   6.9.0. manifest.json bounds the panel at 300px to 2000px and prefers 340 docked, so
+   one column is what a docked panel shows and five is the widest case that exists.
+
+   :nth-child counts cards a search has hidden, which is why 6.168.2 marked the right
+   column from the script. It no longer needs to: a stray right margin only makes a row
+   8px narrower, never wider, so a filtered grid stays inside its card either way. */
+.wfgrid { display: flex; flex-direction: row; flex-wrap: wrap; align-items: stretch; margin: 6px 0 -8px; }
+.wfmini { position: relative; display: flex; flex-direction: column; width: 100%; min-width: 0;
+  margin: 0 0 8px; padding: 10px; box-sizing: border-box;
   border: 1px solid var(--line-soft); border-radius: 11px; background-color: var(--panel-2);
   color: var(--text); text-align: left; cursor: pointer; }
-/* the odd card of a group fills what is left of its row — which is the whole row while
-   the grid is one or two columns, and simply the next cell once it is three or more
-   (the web app's own rule: .wfgrid .wf-span2{grid-column:auto} from 1024px up) */
-.wfmini.wf-span2 { flex: 1 1 100%; }
-@media (min-width:460px){ .wfmini { flex: 1 1 44%; } .wfmini.wf-span2 { flex: 1 1 100%; } }
-/* THE LAST ROW MUST NOT STRETCH. flex-grow fills a row exactly, which is what makes the
-   basis arithmetic work without calc — but a group whose count is not a multiple of the
-   column count ends on a SHORT row, and grow would blow those two or three cards up to
-   full width. (At one and two columns there is no short row: one column is always full,
-   and at two the odd card is the spanning one.) So from three columns up the card also
-   carries a ceiling: calc() for the browser, exact to the pixel, and a plain percentage
-   in front of it for UXP, which resolves no calc() and takes the fallback. The
-   percentages are the exact fraction at the low end of each step (33.333% - 8px over a
-   604px box is 32.0%), so the widest a UXP row can come up short is about 15px. */
-@media (min-width:700px){ .wfmini, .wfmini.wf-span2 { flex: 1 1 30%; max-width: 32%; max-width: calc(33.3333% - 8px); } }
-@media (min-width:1100px){ .wfmini, .wfmini.wf-span2 { flex: 1 1 22%; max-width: 24.2%; max-width: calc(25% - 8px); } }
-@media (min-width:1500px){ .wfmini, .wfmini.wf-span2 { flex: 1 1 17%; max-width: 19.4%; max-width: calc(20% - 8px); } }
+@media (min-width:460px){
+  .wfmini { width: 48.5%; width: calc(50% - 4px); margin-right: 8px; }
+  .wfmini:nth-child(2n) { margin-right: 0; }
+}
+@media (min-width:700px){
+  .wfmini { width: 32.3%; width: calc(33.3333% - 5.3333px); margin-right: 8px; }
+  .wfmini:nth-child(2n) { margin-right: 8px; }
+  .wfmini:nth-child(3n) { margin-right: 0; }
+}
+@media (min-width:1100px){
+  .wfmini { width: 24.3%; width: calc(25% - 6px); margin-right: 8px; }
+  .wfmini:nth-child(3n) { margin-right: 8px; }
+  .wfmini:nth-child(4n) { margin-right: 0; }
+}
+@media (min-width:1500px){
+  .wfmini { width: 19.5%; width: calc(20% - 6.4px); margin-right: 8px; }
+  .wfmini:nth-child(4n) { margin-right: 8px; }
+  .wfmini:nth-child(5n) { margin-right: 0; }
+}
+/* the odd card of a group fills what is left of its row — the whole row while the grid
+   is one or two columns, and simply the next cell once it is three or more (the web
+   app's own rule: .wfgrid .wf-span2{grid-column:auto} from 1024px up) */
+.wfmini.wf-span2 { width: 100%; margin-right: 0; }
+@media (min-width:700px){ .wfmini.wf-span2 { width: 32.3%; width: calc(33.3333% - 5.3333px); } }
+@media (min-width:1100px){ .wfmini.wf-span2 { width: 24.3%; width: calc(25% - 6px); } }
+@media (min-width:1500px){ .wfmini.wf-span2 { width: 19.5%; width: calc(20% - 6.4px); } }
 /* 6.168.2 — THE LONE CARD'S SQUASHED PICTURE. The odd card of a group fills the row,
    and it used to fill it with a 2:1 box (padding-top 50%) copied from the app's wide
    layout. The app can do that because it CROPS — object-fit: cover plus an
