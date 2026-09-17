@@ -108,7 +108,7 @@ function sourcePins() {
     /return \{ level: "ok", detail: path \+ " \\u00b7 writable \\u00b7 " \+ takes \+ " saved take" \+ \(takes === 1 \? "" : "s"\) \+ " \\u00b7 " \+ \(Date\.now\(\) - t0\) \+ "ms" \};/.test(PMAIN) &&
     /function hnkSaveProbeRow\(\) \{\n  if \(saveProbe\.state === "idle"\) return \{ label: "Save folder", detail: "\\u2014", level: "pend" \};/.test(PMAIN) &&
     /rows\.push\(hnkSaveProbeRow\(\)\);/.test(PMAIN) && PMAIN.indexOf("rows.push(hnkSaveProbeRow());") > PMAIN.indexOf("rows.push(hnkLayerProbeRow());") &&
-    /hnkLayerProbeStart\(false\); hnkSaveProbeStart\(false\); renderSelfTest\(\);/.test(PMAIN) && /try \{ hnkSaveProbeStart\(true\); \} catch \(eSv\) \{ \}/.test(PMAIN), null);
+    /hnkLayerProbeStart\(false\); hnkSaveProbeStart\(false\);( hnkPlaceProbeStart\(false\);)? renderSelfTest\(\);/.test(PMAIN)  /* 6.171.0 — the Place row starts here too */ && /try \{ hnkSaveProbeStart\(true\); \} catch \(eSv\) \{ \}/.test(PMAIN), null);
 }
 
 /* ================= B) the app, on a phone ================= */

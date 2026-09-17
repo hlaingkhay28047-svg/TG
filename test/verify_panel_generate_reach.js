@@ -100,7 +100,7 @@ function sourcePins() {
   const a6 = { keys: (MAIN.match(/^    rh_err_task_failed: /mg) || []).length, row: MAIN.includes("rows.push(hnkNetProbeRow());"), probe: /function hnkNetProbeStart\(force\)/.test(MAIN),
     hosts: MAIN.includes('url: "https://www.runninghub.ai/openapi/v2/query"') && MAIN.includes('url: "https://' + STORAGE_HOST + '/"') && MAIN.includes('url: "https://' + RESULT_HOST + '/"'),
     stage: /function rhStageWord\(stage\)/.test(MAIN), why: MAIN.includes('((e && e.why) ? " \\u00b7 " + e.why : "")'), /* 6.84.0 — the Layer capture probe re-arms on the same button, between the Network probe and the repaint */
-    run: /hnkNetProbeStart\(true\); \} catch \(eN\) \{ \}( try \{ hnkSaveProbeStart\(true\); \} catch \(eSv\) \{ \})?( try \{ hnkLayerProbeStart\(true\); \} catch \(eL\) \{ \})? renderSelfTest\(\);/.test(MAIN) };   /* 6.155.0 Layer capture, 6.165.0 Save folder join Run again */
+    run: /hnkNetProbeStart\(true\); \} catch \(eN\) \{ \}( try \{ hnkSaveProbeStart\(true\); \} catch \(eSv\) \{ \})?( try \{ hnkLayerProbeStart\(true\); \} catch \(eL\) \{ \})?( try \{ hnkPlaceProbeStart\(true\); \} catch \(eP\) \{ \})? renderSelfTest\(\);/.test(MAIN) };   /* 6.155.0 Layer capture, 6.165.0 Save folder, 6.171.0 Place into Photoshop join Run again */
   report("A6) main.js: rh_err_task_failed in nine languages, the SELF-TEST Network row over RunningHub · uploads · results (probe re-armed by Run again), the classic status line prints the stage and reason (e.why)",
     a6.keys === 9 && a6.row && a6.probe && a6.hosts && a6.stage && a6.why && a6.run, a6);
   const imPins = (src) => src.includes('el("input","im-stagerange")') && /function imStageW\(\)\{ return S\.stageW>0 \? S\.stageW : IM_STAGE_W; \}/.test(src)
