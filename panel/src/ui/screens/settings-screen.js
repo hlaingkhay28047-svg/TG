@@ -143,6 +143,17 @@ function render(root, deps) {
   });
   root.appendChild(layerBtn);
 
+  /* 6.101.0 — White balance match. The owner asked whether the WB matched; it is
+     measured now, and this is the switch that governs it. */
+  var wbBtn = dom.el(doc, "button", { class: "hnk-btn", id: "hnkSetWbMatch",
+    text: dom.tOnOff("ai_wb_match", "Match White Balance to the photo", s.wbMatch !== false) });
+  dom.on(wbBtn, "click", function () {
+    var next = !(svc.get().wbMatch !== false);
+    svc.set({ wbMatch: next });
+    wbBtn.textContent = dom.tOnOff("ai_wb_match", "Match White Balance to the photo", next);
+  });
+  root.appendChild(wbBtn);
+
   /* v6.170.0 — the Learn Mode switch is gone with the three-tap cycle it governed.
      GENERATE, the two Retouch runs and the Studio run all fire on the first tap now,
      so there is no mode left to turn on: the owner asked for the 1-2-3 to go, and a

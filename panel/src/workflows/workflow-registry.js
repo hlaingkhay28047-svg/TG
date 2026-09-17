@@ -245,7 +245,7 @@ if (_CATALOG && _CATALOG.categories) {
       WORKFLOWS.push(wf);
       _byId[wf.id] = wf;
     });
-    _CATEGORIES.push({ category: c.category, icon: c.icon || "", desc: c.desc || "", open: !!c.open, ids: ids });
+    _CATEGORIES.push({ category: c.category, icon: c.icon || "", desc: c.desc || "", open: !!c.open, ids: ids, catIndex: _CATEGORIES.length });
   });
 }
 
@@ -253,6 +253,39 @@ function list() { return WORKFLOWS.slice(); }
 function homeList() { return WORKFLOWS.filter(function (w) { return w.home; }); }
 function get(id) { return _byId[id] || null; }
 function categories() { return _CATEGORIES.slice(); }
+
+/* ---- 6.101.0 — THE APP'S OWN WORDS, IN THE STUDENT'S LANGUAGE ---------------
+   The app resolves a card's summary and a group's intro at render time, so the
+   single-pass lift froze one language into the panel: a Kachin or Thai student
+   read Burmese card lines under every one of the 194 cards, and the workflow
+   page fell back to the English explanation for all nine. The catalog now
+   carries what the app itself printed under ?lang= for each language, and these
+   two readers pick the live one — falling back to English, then to whatever the
+   card already had, so a catalog built before this wave still renders. */
+function _langNow() {
+  try {
+    var g = (typeof globalThis !== "undefined") ? globalThis : {};
+    var l = g.HNK && g.HNK.i18n && g.HNK.i18n.lang && g.HNK.i18n.lang();
+    return String(l || "en");
+  } catch (e) { return "en"; }
+}
+function _i18nTable(lang) {
+  var t = _CATALOG && _CATALOG.i18n;
+  if (!t) return null;
+  return t[lang] || t.en || null;
+}
+function summaryFor(workflowId, fallback) {
+  var id = String(workflowId || "");
+  var live = _i18nTable(_langNow()), en = _i18nTable("en");
+  var s = (live && live.sum && live.sum[id]) || (en && en.sum && en.sum[id]) || "";
+  return s || String(fallback || "");
+}
+function categoryTextFor(index, fallback) {
+  var live = _i18nTable(_langNow()), en = _i18nTable("en");
+  var row = (live && live.cat && live.cat[index]) || (en && en.cat && en.cat[index]) || null;
+  var f = fallback || {};
+  return { title: (row && row.t) || f.title || "", desc: (row && row.desc) || f.desc || "" };
+}
 
 /* Assemble the FULL protected prompt + negatives for a workflow. This is what
    goes to the provider — self-contained, no external guard needed. */
@@ -348,6 +381,7 @@ var API = {
   list: list, homeList: homeList, get: get, categories: categories, compile: compile,
   applyFields: applyFields, colourName: colourName,
   summaryKey: summaryKey, explanationKey: explanationKey,
+  summaryFor: summaryFor, categoryTextFor: categoryTextFor,
   inputLabelKey: inputLabelKey, INPUT_LABEL_KEYS: INPUT_LABEL_KEYS,
   SUBJECT_LOCKS: SUBJECT_LOCKS, NEGATIVES: NEGATIVES, REFERENCE_TRANSFER: REFERENCE_TRANSFER
 };

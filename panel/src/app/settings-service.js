@@ -30,7 +30,12 @@ function defaults() {
     density: "normal",       // compact | normal | comfortable
     directGenerate: false,   // skip the staged Prepare step when inputs are valid
     promoHidden: false,      // the Home Photoshop-panel band's ✕ (app parity)
-    addAsNewLayer: true
+    addAsNewLayer: true,
+    /* 6.101.0 — measure the result's white balance against the pixels that went
+       out and correct a real drift before placing (src/app/wb-match.js). Default
+       on: the owner's report was that it sometimes did not match, and the
+       correction is clamped so a workflow that MEANS to change colour still does. */
+    wbMatch: true
   };
 }
 

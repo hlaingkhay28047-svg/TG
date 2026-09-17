@@ -81,9 +81,13 @@ const B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
       /* v5.63.0 — a workflow may gate GENERATE on required design fields
          (Selection Edit's request box). Satisfy the gate the way a user
          does — type into the empty text fields — and fail loudly if it
-         still refuses; never bypass the gate itself. */
+         still refuses; never bypass the gate itself.
+         6.101.0 — the owner asked for that box "နဲနဲကြီးပေးပြီးသိသာအောင်", so a
+         text field is drawn as a three-line <textarea> now. The gate itself never
+         looked at the control (genReqSync reads wiz.fieldVals), so this types into
+         whichever control the wizard draws rather than only an <input>. */
       if (gold().disabled) {
-        document.querySelectorAll(".wiz.on .wiz-fields input[type=text]").forEach(el => {
+        document.querySelectorAll(".wiz.on .wiz-fields input[type=text], .wiz.on .wiz-fields textarea").forEach(el => {
           if (!el.value.trim()) { el.value = "make the white flower red"; el.dispatchEvent(new Event("input", { bubbles: true })); }
         });
         await sleep(30);

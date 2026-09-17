@@ -1672,9 +1672,16 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .hnk-input { min-height: 42px; box-sizing: border-box; background-color: var(--field-2); border: 1px solid var(--line);
   border-radius: 9px; color: var(--text); padding: 9px 12px; font-size: 13px; font-family: inherit; }
 .hnk-input:focus { border-color: var(--accent); outline: none; }
-.hnk-wf-field.is-text { flex-direction: column; align-items: stretch; }
-.hnk-wf-field.is-text .hnk-wf-field-l { flex: 0 0 auto; margin-bottom: 5px; font-weight: 700; color: var(--text); }
-.hnk-wf-field.is-text .hnk-wf-text { flex: 0 0 auto; width: 100%; min-width: 0; }
+/* 6.101.0 — THE TYPED INSTRUCTION IS THE WHOLE POINT OF THIS WORKFLOW, SO IT LOOKS LIKE IT.
+   The owner: "prompts box နဲနဲကြီးပေးပြီးသိသာအောင်လုပ်ပေးပါ". It was a 42px single line in a
+   bare row, sitting under a paragraph that painted over it. It is now its own framed block
+   with a gold edge, a bold label, three lines of room and a hint under it — the one control
+   a student must fill before the money is spent. */
+.hnk-wf-field.is-text { flex-direction: column; align-items: stretch; margin: 8px 0 6px; padding: 9px 11px 10px;
+  border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; background-color: var(--panel-2); }
+.hnk-wf-field.is-text .hnk-wf-field-l { flex: 0 0 auto; margin-bottom: 6px; font-weight: 700; font-size: 13px; color: var(--text); }
+.hnk-wf-field.is-text .hnk-wf-text { flex: 0 0 auto; width: 100%; min-width: 0; height: 74px; line-height: 1.5; resize: none; }
+.hnk-wf-field-hint { font-size: 10.5px; line-height: 1.45; color: var(--muted); margin-top: 5px; }
 /* 6.164.0 — the selection, checked before the money: a framed block under the Required Images that names the
    live rectangle (W × H px) or says there is none yet, with a Check button that reads Photoshop again.
    6.168.0 — the row became the card: it is now the region workflow's whole required-image block (tick, a map
@@ -1701,8 +1708,22 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 .hnk-sel-cap { font-size: 10px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
 .hnk-sel-check { flex: 0 0 auto; min-height: 34px; padding: 6px 10px; font-size: 11px; white-space: nowrap; margin-top: 8px; }
 /* 6.168.0 — the workflow's own paragraph opens at three lines with a More beside it,
-   and the four output pickers fold behind a header that says what they are set to. */
-.hnk-wf-about.is-clamp { max-height: 4.6em; overflow: hidden; }
+   and the four output pickers fold behind a header that says what they are set to.
+   6.101.0 — AND THERE IS NO CLIPPING RULE HERE ANY MORE, WHICH IS THE POINT.
+   This asked for `max-height: 4.6em; overflow: hidden`, and the owner's photograph of
+   Selection Edit shows what this renderer does with that pair: it sizes the box to
+   4.6em for layout and then paints the whole paragraph straight through the label and
+   the typed-instruction box below it. (6.171.0 measured the same thing over 194 cards.)
+   The words themselves are cut to three lines instead — see the screen's paintDesc,
+   re-run after mount — so there is no overflow for a renderer to decline to hide, and
+   a paragraph that fits keeps its own height instead of being padded out to a ceiling. */
+.hnk-wf-about.is-clamp { display: block; }
+/* 6.101.0 — a history row: its line, a ✕ that forgets just it, and what was asked */
+.hnk-hist-head { display: flex; flex-direction: row; align-items: flex-start; }
+.hnk-hist-head .hnk-hist-meta { flex: 1 1 auto; min-width: 0; }
+.hnk-hist-x { flex: 0 0 auto; min-width: 30px; min-height: 26px; padding: 2px 8px; margin-left: 8px; font-size: 12px; line-height: 1; }
+.hnk-hist-ask { font-size: 11.5px; line-height: 1.45; color: var(--text); margin: 4px 0 2px; }
+.hnk-hist-clear { min-height: 30px; padding: 5px 10px; font-size: 11px; margin-top: 6px; }
 .hnk-wf-more { min-height: 26px; padding: 3px 10px; font-size: 10.5px; margin-bottom: 6px; }
 .hnk-wf-opts-h { margin-top: 6px; text-align: left; }
 .hnk-wf-sw { flex: 0 0 auto; min-width: 52px; margin-left: 8px; }

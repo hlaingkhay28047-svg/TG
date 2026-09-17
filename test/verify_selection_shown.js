@@ -99,16 +99,22 @@ function sourcePins() {
       return LANGS.every((l) => new RegExp("\\b" + l + ': "').test(line));
     }), null);
 
-  report("A5) shorter by construction — a region workflow draws no Required Images heading, the paragraph opens clamped with a More beside it, and the four pickers are a fold whose header carries what they are set to",
+  report("A5) shorter by construction — a region workflow draws no Required Images heading, the paragraph opens cut to three lines with no clipping rule for this renderer to decline and a More beside it, and the four pickers are a fold whose header carries what they are set to",
     /if \(!wf\.region\) root\.appendChild\(dom\.el\(doc, "div", \{ class: "hnk-sec", text: dom\.t\("ai_req_images"/.test(SCREEN) &&
     /if \(wf\.region && inp\.image && inp\.image\.source === "selection"\) reqWrap\.appendChild\(selectionCard\(inp\)\);/.test(SCREEN) &&
     /class: "hnk-wf-desc hnk-wf-about is-clamp", id: "hnkWfDesc"/.test(SCREEN) &&
     /if \(!descOpen\) ellFit\(root, "\.hnk-wf-about", 3\);/.test(SCREEN) &&
-    /descMore\.style\.display = \(descOpen \|\| desc\.querySelector\("\.ell"\)\) \? "" : "none";/.test(SCREEN) &&
+    /descMore\.style\.display = \(descOpen \|\| desc\.querySelector\("\.ell"\) \|\| \(expTxt && expTxt !== descTxt\)\) \? "" : "none";/.test(SCREEN) &&
     /id: "hnkWfOptsH"/.test(SCREEN) && /function optsSummary\(\) \{/.test(SCREEN) &&
     /\.hnk-wf-opts \{ display: none; margin: 8px 0 10px; \}/.test(PCSS) &&
     /\.hnk-wf-opts\.on \{ display: block; \}/.test(PCSS) &&
-    /\.hnk-wf-about\.is-clamp \{ max-height: 4\.6em; overflow: hidden; \}/.test(PCSS) &&
+    /* 6.101.0 — the ceiling is GONE. `max-height` + `overflow: hidden` is the rule
+       this renderer sizes a box by and then paints past anyway, which is how the
+       owner's photograph came to show this paragraph drawn through the field under
+       it. The words are the only thing holding it now. */
+    /\.hnk-wf-about\.is-clamp \{ display: block; \}/.test(PCSS) &&
+    !/\.hnk-wf-about\.is-clamp \{[^}]*max-height/.test(PCSS) &&
+    !/\.hnk-wf-about\.is-clamp \{[^}]*overflow/.test(PCSS) &&
     /\.hnk-sel-page \{ position: relative; width: 104px; height: 78px;/.test(PCSS) &&
     !/\.hnk-sel-(card|page|rect|body|map|side)[^}]*\bgap:/.test(PCSS), null);
 }
@@ -272,8 +278,23 @@ async function panelWalk(browser) {
       o.none = { cls: id("hnkWfSelCard").className, txt: id("hnkWfSelState").textContent, map: getComputedStyle(id("hnkWfSelMap")).display };
 
       /* the paragraph and the fold */
-      o.desc = { clamped: /is-clamp/.test(id("hnkWfDesc").className), ell: !!id("hnkWfDesc").querySelector(".ell"),
-        h: Math.round(id("hnkWfDesc").getBoundingClientRect().height), more: id("hnkWfDescMore").textContent };
+      /* 6.101.0 — the first paragraph is the app's own summary for this workflow in
+         the panel's language now, and in Burmese that is two lines, so there is
+         nothing to cut. The honest question is whether it is cut WHEN IT NEEDS TO BE:
+         measure the words' natural height against the three-line budget and require
+         the marker exactly then. */
+      (function () {
+        var d = id("hnkWfDesc"), cs = getComputedStyle(d);
+        var lh = parseFloat(cs.lineHeight) || 16;
+        var full = d.getAttribute("data-full");
+        var html = d.innerHTML, keep = d.textContent;
+        if (full != null) d.textContent = full;
+        var nat = d.scrollHeight;
+        d.innerHTML = html; if (full != null) d.textContent = keep;
+        o.desc = { clamped: /is-clamp/.test(d.className), ell: !!d.querySelector(".ell"),
+          h: Math.round(d.getBoundingClientRect().height), needsCut: nat > lh * 3 + lh / 2,
+          more: id("hnkWfDescMore").textContent };
+      })();
       o.opts = { head: id("hnkWfOptsH").textContent, closed: Math.round(id("hnkWfOpts").getBoundingClientRect().height) };
       id("hnkWfOptsH").click(); await new Promise((r) => setTimeout(r, 250));
       o.opts.open = Math.round(id("hnkWfOpts").getBoundingClientRect().height);
@@ -308,8 +329,8 @@ async function panelWalk(browser) {
       / none$/.test(out.fail.cls) && /Cannot encode 16-bit data as JPEG/.test(out.fail.txt) &&
       /1191×1191 px/.test(out.fail.txt) && /RGB16/.test(out.fail.txt) && out.fail.shot === "none" &&
       / none$/.test(out.none.cls) && out.none.map === "none", { fail: out.fail, none: out.none });
-    report("C4) the paragraph opens at three lines with a cut it marks, More opens the whole of it and closes it again; the four pickers are shut until their header is tapped and the rail is painted when they open",
-      out.desc.clamped && out.desc.ell && out.desc.h <= 60 &&
+    report("C4) the paragraph opens at three lines or under — cut and marked exactly when the words do not fit — More opens the whole of it (the summary plus the English note) and closes it again; the four pickers are shut until their header is tapped and the rail is painted when they open",
+      out.desc.clamped && out.desc.ell === out.desc.needsCut && out.desc.h <= 60 &&
       !out.descOpen.clamped && out.descOpen.h > out.desc.h && !out.descOpen.ell &&
       out.descOpen.less !== out.desc.more &&
       out.opts.closed === 0 && out.opts.open > 120 && out.opts.rail > 3 &&

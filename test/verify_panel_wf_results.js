@@ -337,11 +337,14 @@ async function main() {
       HNK.aiToolsBoot.services.history.addFromRequest({ mode: "smart-workflow", workflowId: "reference-scenes", model: "nano-banana-2", output: { size: "2k", ratio: "2:3" } }, { now: 1, timeLabel: "10:00" });
       HNK.aiToolsBoot.services.history.addFromRequest({ mode: "smart-workflow", workflowId: "studio-look-copy", model: "nano-banana-2", output: { size: "2k", ratio: "2:3" } }, { now: 2, timeLabel: "10:01" });
       HNK.aiToolsApp.workflowScreen().select("reference-scenes");
-      const rows = Array.from(document.querySelectorAll("#hnkWfHistory .hnk-hist")).map(r => ({ meta: r.querySelector(".hnk-hist-meta").textContent, rerun: r.querySelector(".hnk-btn") && r.querySelector(".hnk-btn").textContent }));
-      return { rows, all: !!document.getElementById("hnkWfHistAll"), empty: !!document.getElementById("hnkWfHistoryEmpty"), rerunWant: HNK.i18n.t("ai_rerun"), stillResult: !!document.getElementById("hnkWfResultImg"), override: HNK.aiToolsApp.controller().workflow.promptOverride };
+      /* 6.101.0 — the row's FIRST .hnk-btn is the ✕ that forgets this run now, so
+         Re-run is read by its own id rather than by being the first button, and the
+         ✕ and the per-workflow Clear are asserted beside it. */
+      const rows = Array.from(document.querySelectorAll("#hnkWfHistory .hnk-hist")).map(r => ({ meta: r.querySelector(".hnk-hist-meta").textContent, rerun: (r.querySelector("[id^=hnkWfHistRerun_]") || {}).textContent, del: (r.querySelector(".hnk-hist-x") || {}).textContent }));
+      return { rows, all: !!document.getElementById("hnkWfHistAll"), clear: !!document.getElementById("hnkWfHistClear"), empty: !!document.getElementById("hnkWfHistoryEmpty"), rerunWant: HNK.i18n.t("ai_rerun"), stillResult: !!document.getElementById("hnkWfResultImg"), override: HNK.aiToolsApp.controller().workflow.promptOverride };
     });
-    report("C8) the History section lists this workflow's sanitized runs only (\"10:00 · Nano Banana 2 · 2K · 2:3\", not Studio Look Copy's) with Re-run and an \"All history →\" door; re-opening the workflow keeps the session's results on the card and clears any prompt edit",
-      c8.rows.length === 1 && c8.rows[0].meta === "10:00 · Nano Banana 2 · 2K · 2:3" && c8.rows[0].rerun === c8.rerunWant && c8.all && !c8.empty && c8.stillResult && c8.override === "", c8);
+    report("C8) the History section lists this workflow's sanitized runs only (\"10:00 · Nano Banana 2 · 2K · 2:3\", not Studio Look Copy's) with a ✕ that forgets the run, Re-run, one Clear for this workflow and an \"All history →\" door; re-opening the workflow keeps the session's results on the card and clears any prompt edit",
+      c8.rows.length === 1 && c8.rows[0].meta === "10:00 · Nano Banana 2 · 2K · 2:3" && c8.rows[0].rerun === c8.rerunWant && c8.rows[0].del === "\u2715" && c8.all && c8.clear && !c8.empty && c8.stillResult && c8.override === "", c8);
 
     /* ---- C9: Open in Edit hands Before + After to Freeform ---- */
     const c9 = await page.evaluate(([a, c]) => {

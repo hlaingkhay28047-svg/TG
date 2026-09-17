@@ -241,6 +241,33 @@ function create(opts) {
             message: dom.t("ai_ready_nolayer", "Result ready (add-as-layer is off in Settings)."), bullets: [] });
           return res;
         }
+        /* 6.101.0 — WHITE BALANCE, MEASURED RATHER THAN ASKED FOR.
+           The owner after a Selection Edit run: "WB ကော ညီရဲ့ လား တစ်ခါလေမညီလို့".
+           Until now the only thing holding the result's white balance to the
+           photograph's was a sentence in the prompt, and on a masked place a 3%
+           cast lands INSIDE the original picture where it reads as a patch. The
+           result is now compared with the pixels that went out and corrected when
+           it has really drifted (mid-tones only, ±12% ceiling, colour not
+           brightness — src/app/wb-match.js), and the run says what it measured. */
+        var wbNote = "";
+        try {
+          var wbm = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.wbMatch : null;
+          var wbRef = (request.images && request.images[0] && request.images[0].ref) || "";
+          if (wbm && wbRef && res.results && res.results.length && s.wbMatch !== false) {
+            for (var wi = 0; wi < res.results.length; wi++) {
+              var r0 = res.results[wi];
+              if (!r0 || !r0.ref) continue;
+              var m0 = await wbm.matchDataUrl(wbRef, r0.ref);
+              if (m0 && m0.applied) { r0.ref = m0.ref; r0.wbMatched = m0.driftPct; }
+              if (m0 && !wbNote) {
+                wbNote = m0.applied
+                  ? dom.t("wb_matched", "White balance matched ({n}%)").replace("{n}", String(m0.driftPct))
+                  : dom.t("wb_already", "White balance already matched ({n}%)").replace("{n}", String(m0.driftPct || 0));
+              }
+            }
+          }
+        } catch (eWB) { }
+
         if (opts.host && maskedPlace && res.results.length) {
           stageAll("PLACING", { label: dom.t("stage_placing", "Placing into Photoshop") });
           var canvas = (opts.host.canvasSize && opts.host.canvasSize()) || { width: 1024, height: 1024 };
@@ -268,10 +295,11 @@ function create(opts) {
               ? dom.tf("ai_placed_group",
                   "Placed into the \u201C{name}\u201D group as a new layer (mask unavailable on this host).", { name: placed.groupName })
               : dom.t("ai_placed_plain", "Placed as a new layer (group/mask unavailable on this host).");
-          status({ code: "ready", title: dom.t("ai_done", "Done."), message: msg, bullets: [] });
+          /* the WB reading rides along as a bullet — the run says what it measured */
+          status({ code: "ready", title: dom.t("ai_done", "Done."), message: msg, bullets: wbNote ? [wbNote] : [] });
           return res;
         }
-        status({ code: "ready", title: dom.t("ai_done", "Done."), message: dom.t("ai_result_ready", "Result ready."), bullets: [] });
+        status({ code: "ready", title: dom.t("ai_done", "Done."), message: dom.t("ai_result_ready", "Result ready."), bullets: wbNote ? [wbNote] : [] });
         return res;
       } catch (e) {
         /* v6.80.0 — NOTHING ON THIS PATH FAILS IN SILENCE. The lease check and

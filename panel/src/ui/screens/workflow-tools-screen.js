@@ -75,6 +75,9 @@ function create(deps) {
   var doc = deps.document;
   var state = deps.state || wstate.defaultState();
   var root = null;
+  /* 6.101.0 — the workflow page's paragraph cut, re-run from render() once the
+     page is in the document; nothing measures before it is mounted. */
+  var wfAboutRepaint = null;
   var nodes = {};
   /* v6.83.0 — the wizard's own Results card: which result is on view, whether
      the Before | After compare is open and where its divider sits, whether the
@@ -125,6 +128,18 @@ function create(deps) {
   var L_SEL_POS = { my: "x {x} \u00b7 y {y} \u00b7 \u1015\u102f\u1036 {W}\u00d7{H}", en: "x {x} \u00b7 y {y} \u00b7 photo {W}\u00d7{H}", shn: "x {x} \u00b7 y {y} \u00b7 \u1075\u1075\u1088\u1017 {W}\u00d7{H}", kac: "x {x} \u00b7 y {y} \u00b7 sumla {W}\u00d7{H}", th: "x {x} \u00b7 y {y} \u00b7 \u0e20\u0e32\u0e1e {W}\u00d7{H}", zh: "x {x} \u00b7 y {y} \u00b7 \u56fe\u50cf {W}\u00d7{H}", vi: "x {x} \u00b7 y {y} \u00b7 \u1ea3nh {W}\u00d7{H}", id: "x {x} \u00b7 y {y} \u00b7 foto {W}\u00d7{H}", ms: "x {x} \u00b7 y {y} \u00b7 foto {W}\u00d7{H}" };
   var L_SEL_READ = { my: "\u101b\u103d\u1031\u1038\u1011\u102c\u1038\u1010\u1032\u1037 pixel \u1010\u103d\u1031 \u1016\u1010\u103a\u1014\u1031\u101e\u100a\u103a...", en: "Reading the selected pixels...", shn: "\u1075\u1076\u1030 pixel \u1011\u102d\u1010\u103a\u1015\u103c\u1031\u102c\u1037...", kac: "Lata da ai pixel ni hpe hti nga ai...", th: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e2d\u0e48\u0e32\u0e19\u0e1e\u0e34\u0e01\u0e40\u0e0b\u0e25\u0e17\u0e35\u0e48\u0e40\u0e25\u0e37\u0e2d\u0e01...", zh: "\u6b63\u5728\u8bfb\u53d6\u9009\u533a\u50cf\u7d20...", vi: "\u0110ang \u0111\u1ecdc pixel v\u00f9ng ch\u1ecdn...", id: "Membaca piksel yang dipilih...", ms: "Membaca piksel yang dipilih..." };
   var L_SEL_PIX = { my: "\u1012\u102b\u1000 \u1015\u102d\u102f\u1037\u1019\u101a\u1037\u103a pixel \u1010\u103d\u1031", en: "These are the pixels that will be sent", shn: "\u1076\u1031\u1038\u1015\u1031\u102c\u1037 pixel \u1011\u1031\u1038\u1014\u1080", kac: "Ndai ni gaw sa na pixel ni re", th: "\u0e19\u0e35\u0e48\u0e04\u0e37\u0e2d\u0e1e\u0e34\u0e01\u0e40\u0e0b\u0e25\u0e17\u0e35\u0e48\u0e08\u0e30\u0e2a\u0e48\u0e07", zh: "\u8fd9\u5c31\u662f\u5c06\u8981\u53d1\u9001\u7684\u50cf\u7d20", vi: "\u0110\u00e2y l\u00e0 c\u00e1c pixel s\u1ebd \u0111\u01b0\u1ee3c g\u1eedi", id: "Inilah piksel yang akan dikirim", ms: "Inilah piksel yang akan dihantar" };
+  /* 6.101.0 — what a good typed instruction looks like, under the box itself */
+  var L_TEXT_HINT = {
+    my: "ဘာပြောင်းချင်လဲ တစ်ကြောင်းတည်း ရေးပါ — ဥပမာ \u201cပန်းအဖြူကို အနီရောင် ပြောင်းပေးပါ\u201d။ ရွေးထားတဲ့နေရာပဲ ပြောင်းပါမယ်။",
+    en: "Write in one line what should change \u2014 for example \u201cmake the white flowers red\u201d. Only the selected area changes.",
+    shn: "တႅမ်ႈၼိုင်ႈထႅဝ် ဝႃႈလႅၵ်ႈသင် \u2014 ႁိုဝ် \u201cႁဵတ်းမွၵ်ႇၶၢဝ်ပဵၼ်လႅင်\u201d။ တီႈလိူၵ်ႈဝႆႉၵူၺ်း လႅၵ်ႈ။",
+    kac: "Hpa galai na ai lam langai mi ka u \u2014 \u201cnampan ahpraw ni hpe ahkyeng galai u\u201d zawn. Lata da ai shara sha galai na.",
+    th: "เขียนบรรทัดเดียวว่าต้องการเปลี่ยนอะไร \u2014 เช่น \u201cเปลี่ยนดอกไม้สีขาวเป็นสีแดง\u201d เปลี่ยนเฉพาะบริเวณที่เลือก",
+    zh: "用一句话写出要改什么 \u2014 例如\u201c把白花变成红色\u201d。只有选区会改变。",
+    vi: "Vi\u1ebft m\u1ed9t d\u00f2ng cho bi\u1ebft c\u1ea7n \u0111\u1ed5i g\u00ec \u2014 v\u00ed d\u1ee5 \u201c\u0111\u1ed5i hoa tr\u1eafng th\u00e0nh \u0111\u1ecf\u201d. Ch\u1ec9 v\u00f9ng \u0111\u00e3 ch\u1ecdn thay \u0111\u1ed5i.",
+    id: "Tulis satu baris apa yang harus berubah \u2014 misalnya \u201cjadikan bunga putih merah\u201d. Hanya area terpilih yang berubah.",
+    ms: "Tulis satu baris apa yang perlu berubah \u2014 contohnya \u201cjadikan bunga putih merah\u201d. Hanya kawasan dipilih berubah."
+  };
   var L_MORE = { my: "\u1015\u102d\u102f\u1016\u1010\u103a\u101b\u1014\u103a", en: "More", shn: "\u101c\u1030\u1011\u1032\u1037", kac: "Grau hti u", th: "\u0e2d\u0e48\u0e32\u0e19\u0e15\u0e48\u0e2d", zh: "\u5c55\u5f00", vi: "Xem th\u00eam", id: "Selengkapnya", ms: "Lagi" };
   var L_LESS = { my: "\u1001\u103b\u102f\u1036\u1037\u101b\u1014\u103a", en: "Less", shn: "\u101b\u1088\u1015", kac: "Hkum u", th: "\u0e22\u0e48\u0e2d", zh: "\u6536\u8d77", vi: "Thu g\u1ecdn", id: "Ringkas", ms: "Ringkas" };
   var L_FAV_HINT = { my: "ကတ်ပေါ်က ★ ကို နှိပ်ပြီး အကြိုက်ဆုံး workflow တွေ ဒီမှာ စုထားနိုင်တယ်", en: "Tap ★ on a card to pin your favorite workflows here", shn: "ၼဵၵ်း ★ ၼိူဝ်ၵၢတ်ႈသေ သိမ်း workflow ဢၼ်လႆႈၸႂ်တီႈၼႆႈ", kac: "Card ntsa na ★ hpe dip nna ra ai workflow ni ndai kaw da u", th: "แตะ ★ บนการ์ดเพื่อปักหมุดเวิร์กโฟลว์โปรดไว้ที่นี่", zh: "点按卡片上的 ★ 把常用工作流固定在这里", vi: "Chạm ★ trên thẻ để ghim workflow yêu thích tại đây", id: "Ketuk ★ pada kartu untuk menyematkan workflow favorit di sini", ms: "Ketik ★ pada kad untuk semat aliran kerja kegemaran di sini" };
@@ -165,6 +180,13 @@ function create(deps) {
   var L_BOARD = { my: "ဒီ workflow ရဲ့ ရလဒ်တွေ — အကုန် ဒီမှာ ပြန်ကြည့်လို့ရတယ်", en: "Results from this workflow — every run stays here", shn: "ၽွၼ်းလႆႈ workflow ၼႆႉ — တင်းမူတ်း ၶိုၼ်းတူၺ်းလႆႈတီႈၼႆႈ", kac: "Ndai workflow na result ni — yawng ndai kaw bai yu lu ai", th: "ผลลัพธ์ของเวิร์กโฟลว์นี้ — ทุกครั้งดูย้อนได้ที่นี่", zh: "这个工作流的全部结果 — 每次生成都留在这里", vi: "Kết quả của workflow này — mọi lần chạy đều còn ở đây", id: "Hasil workflow ini — semua tetap di sini", ms: "Hasil aliran kerja ini — semuanya kekal di sini" };
   var L_EARLIER = { my: "Gallery ထဲက အရင်ရလဒ်တွေ ဖွင့်မယ် ({n})", en: "Load earlier results from Gallery ({n})", shn: "ပိုတ်ႇၽွၼ်းလႆႈၵဝ်ႇတီႈ Gallery ({n})", kac: "Gallery na moi na lachyum ni hpaw u ({n})", th: "โหลดผลลัพธ์ก่อนหน้าจาก Gallery ({n})", zh: "载入 Gallery 中的早期结果（{n}）", vi: "Mở kết quả cũ từ Gallery ({n})", id: "Muat hasil lama dari Gallery ({n})", ms: "Muat hasil lama dari Gallery ({n})" };
   var L_SELECTION = { my: "Selection", en: "Selection", shn: "Selection", kac: "Selection", th: "Selection", zh: "选区", vi: "Vùng chọn", id: "Seleksi", ms: "Pilihan" };
+  /* 6.101.0 — three rows, not eight: the owner said the page was far too long */
+  var HIST_ROWS = 3;
+  var L_HIST_DEL = { my: "\u1016\u103b\u1000\u103a\u1019\u101a\u103a", en: "Delete", shn: "\u1019\u1084\u1010\u103a\u1015\u1088\u1004\u103a", kac: "Kabai kau", th: "\u0e25\u0e1a", zh: "\u5220\u9664", vi: "Xo\u00e1", id: "Hapus", ms: "Padam" };
+  var L_HIST_CLEAR = { my: "\u1012\u102e workflow \u101b\u1032\u1037 \u1019\u103e\u1010\u103a\u1010\u1019\u103a\u1038 \u101b\u103e\u1004\u103a\u1038\u1019\u101a\u103a", en: "Clear this workflow's history",
+    shn: "\u101c\u1042\u1010\u103a\u1015\u1088\u1004\u103a \u1019\u103e\u1010\u103a\u1010\u1019\u103a\u1038 workflow \u1014\u102e\u1037", kac: "Ndai workflow a matsing yawng kabai",
+    th: "\u0e25\u0e49\u0e32\u0e07\u0e1b\u0e23\u0e30\u0e27\u0e31\u0e15\u0e34\u0e02\u0e2d\u0e07 workflow \u0e19\u0e35\u0e49", zh: "\u6e05\u7a7a\u6b64 workflow \u7684\u8bb0\u5f55",
+    vi: "X\u00f3a l\u1ecbch s\u1eed c\u1ee7a workflow n\u00e0y", id: "Bersihkan riwayat workflow ini", ms: "Kosongkan sejarah workflow ini" };
   var L_HIST_ALL = { my: "History အကုန် ကြည့်မယ် →", en: "All history →", shn: "History တင်းမူတ်း →", kac: "History yawng →", th: "History ทั้งหมด →", zh: "全部 History →", vi: "Toàn bộ History →", id: "Semua History →", ms: "Semua History →" };
 
   function _lang() {
@@ -334,10 +356,10 @@ function create(deps) {
     if (_nwNew[wf.id]) box.appendChild(dom.el(doc, "span", { class: "wf-new", text: "NEW" }));
 
     m.appendChild(dom.el(doc, "div", { class: "t", text: wf.title }));
-    /* the app prints the catalog summary as written (one string for every
-       language), so the card does too — the translated wf_sum_* text stays
-       with the wizard */
-    var summary = wf.cardSummary || wf.summary || "";
+    /* 6.101.0 — the card line in the student's own language. The app resolves
+       it per language at render time; the catalog now carries all nine, so a
+       Kachin or Thai student no longer reads Burmese under every card. */
+    var summary = registry.summaryFor(wf.id, wf.cardSummary || wf.summary || "");
     if (summary) m.appendChild(dom.el(doc, "div", { class: "s", text: summary }));
     var go = dom.el(doc, "div", { class: "go" });
     go.appendChild(icon("i-caret-hi"));
@@ -545,8 +567,11 @@ function create(deps) {
 
     if (cats.length) {
       cats.forEach(function (c, ci) {
-        var g = group(c.category, c.ids.length, !!c.open, c.icon);
-        if (c.desc) g.b.appendChild(dom.el(doc, "p", { class: "mut", text: c.desc }));
+        /* 6.101.0 — the app's own group title and intro, in the language this
+           panel is set to (the catalog carries all nine; see registry). */
+        var ct = registry.categoryTextFor(typeof c.catIndex === "number" ? c.catIndex : ci, { title: c.category, desc: c.desc });
+        var g = group(ct.title || c.category, c.ids.length, !!c.open, c.icon);
+        if (ct.desc) g.b.appendChild(dom.el(doc, "p", { class: "mut", text: ct.desc }));
         var gd = dom.el(doc, "div", { class: "wfgrid" });
         var made = 0, wgs = {}, wgOrder = [];
         var cards = [];
@@ -1086,22 +1111,37 @@ function create(deps) {
        opens to three lines with the rest one tap away. The cut is the marker's
        own word-cut (6.167.4), so it is a real cut in Photoshop too, and the
        whole sentence is kept here so "More" can put it back. */
-    var descTxt = dom.t(registry.explanationKey(wf.id), wf.explanation);
+    /* 6.101.0 — THE STUDENT'S OWN LANGUAGE FIRST, AND NOTHING PAINTS OVER THE PAGE.
+       The owner photographed Selection Edit with its English paragraph drawn straight
+       THROUGH the "ဘာပြောင်းချင်လဲ ရေးပါ" label and the box under it. Two faults, one
+       picture: (1) `.hnk-wf-about.is-clamp` asked for max-height + overflow:hidden —
+       the rule this renderer sizes a box by and then paints past anyway (6.171.0's
+       measured finding over 194 cards); (2) the word-cut ran while the page was still
+       being built, and a box that is not in the document yet measures zero, which is
+       under every ceiling — the same silent no-op wfClamp was fixed for. So the cut is
+       the ONLY thing holding the paragraph now (no clipping rule to decline) and it is
+       re-run after mount, from render(), where there is something to measure.
+       And the first paragraph is the app's own summary for this workflow in this
+       panel's language; the long English note sits behind "More" for whoever wants it. */
+    var sumTxt = registry.summaryFor(wf.id, wf.cardSummary || wf.summary || "");
+    var expTxt = dom.t(registry.explanationKey(wf.id), wf.explanation);
+    var descTxt = sumTxt || expTxt;
     var desc = dom.el(doc, "div", { class: "hnk-wf-desc hnk-wf-about is-clamp", id: "hnkWfDesc", text: descTxt });
     root.appendChild(desc);
     var descMore = dom.el(doc, "button", { class: "hnk-btn hnk-wf-more", id: "hnkWfDescMore", text: l9(L_MORE) });
     root.appendChild(descMore);
     var descOpen = false;
     var paintDesc = function () {
-      desc.textContent = descTxt;
+      desc.textContent = descOpen ? ((sumTxt && expTxt && sumTxt !== expTxt) ? (sumTxt + "\n\n" + expTxt) : descTxt) : descTxt;
       desc.className = "hnk-wf-desc hnk-wf-about" + (descOpen ? "" : " is-clamp");
       if (!descOpen) ellFit(root, ".hnk-wf-about", 3);
-      /* a paragraph that fitted was never cut, so it gets no "More" to press */
-      descMore.style.display = (descOpen || desc.querySelector(".ell")) ? "" : "none";
+      /* a paragraph that fitted and has no English note behind it gets no "More" to press */
+      descMore.style.display = (descOpen || desc.querySelector(".ell") || (expTxt && expTxt !== descTxt)) ? "" : "none";
       descMore.textContent = l9(descOpen ? L_LESS : L_MORE);
     };
     dom.on(descMore, "click", function () { descOpen = !descOpen; paintDesc(); });
     paintDesc();
+    wfAboutRepaint = paintDesc;
 
     // v6.35.0 — the workflow's own design controls: poster text, backdrop
     // colour swatches + hex, and one ON/OFF switch per enhancement. The
@@ -1126,13 +1166,19 @@ function create(deps) {
           });
           row.appendChild(tb);
         } else if (f.type === "text") {
-          var ti = dom.el(doc, "input", { class: "hnk-input hnk-wf-text" });
-          ti.setAttribute("type", "text");
+          /* 6.101.0 — A SENTENCE NEEDS ROOM TO BE WRITTEN IN. The owner asked for this box
+             bigger and unmistakable; it was one 42px line. A textarea (the renderer draws
+             these — the Advanced prompt box has been one since 6.83.0) with three lines of
+             room, inside the framed block the stylesheet now gives .is-text, and a hint
+             under it so a student knows what a good instruction looks like. */
+          var ti = dom.el(doc, "textarea", { class: "hnk-input hnk-wf-text", id: "hnkWfText_" + f.key });
+          ti.setAttribute("rows", "3");
           if (f.ph) ti.setAttribute("placeholder", f.ph);
           if (f.max) ti.setAttribute("maxlength", String(f.max));   /* 6.164.0 — the same ceiling the app's wizard sets */
           ti.value = state.fieldVals[f.key] || "";
           dom.on(ti, "input", function () { wstate.setField(state, f.key, ti.value); });
           row.appendChild(ti);
+          row.appendChild(dom.el(doc, "div", { class: "hnk-wf-field-hint", id: "hnkWfTextHint_" + f.key, text: l9(L_TEXT_HINT) }));
         } else if (f.type === "color") {
           var sww = dom.el(doc, "div", { class: "hnk-wf-swatches" });
           var hexInp = dom.el(doc, "input", { class: "hnk-input hnk-wf-hex" });
@@ -1444,6 +1490,15 @@ function create(deps) {
       });
     }).catch(function () { });
   }
+  /* 6.101.0 — THE RECORD A STUDENT CAN READ AND TIDY.
+     The owner photographed eight identical rows — "Nano Banana 2 · 2K · auto" eight
+     times, each with a Re-run that ignored the row it sat on (it called doGenerate(),
+     i.e. run whatever the page is set to NOW) — and asked for history that can be
+     deleted "plus the other things it needs". A row now says when it ran and what was
+     asked for (the typed instruction, previewed from its own compiled prompt), it can
+     be forgotten with the same ✕ the web app has had since 6.18.0, this workflow's rows
+     can be cleared in one press, and the page opens with three rows instead of eight —
+     the owner also said the page was far too long. */
   function renderWfHistory(host, wf) {
     var h = bootHandle(); var svc = h && h.services && h.services.history;
     var rows = [];
@@ -1451,18 +1506,67 @@ function create(deps) {
     host.appendChild(dom.el(doc, "div", { class: "hnk-sec", text: dom.t("ai_history", "History") }));
     var wrap = dom.el(doc, "div", { class: "hnk-wf-hist", id: "hnkWfHistory" });
     if (!rows.length) wrap.appendChild(dom.el(doc, "div", { class: "hnk-wf-desc", id: "hnkWfHistoryEmpty", text: dom.t("ai_no_gen", "No generations yet.") }));
-    rows.slice(0, 8).forEach(function (e, i) {
+    var again = function () { try { renderSelected(); } catch (e) { } };
+    rows.slice(0, HIST_ROWS).forEach(function (e, i) {
       var card = dom.el(doc, "div", { class: "hnk-hist", id: "hnkWfHist_" + i });
-      card.appendChild(dom.el(doc, "div", { class: "hnk-hist-meta", text: [e.timeLabel, e.modelName, e.size, e.ratio].filter(Boolean).join(" \u00b7 ") || e.badge || "WORKFLOW" }));
+      var head = dom.el(doc, "div", { class: "hnk-hist-head" });
+      head.appendChild(dom.el(doc, "div", { class: "hnk-hist-meta", text: [e.timeLabel, e.modelName, e.size, e.ratio].filter(Boolean).join(" \u00b7 ") || e.badge || "WORKFLOW" }));
+      /* ✕ — this run is forgotten; nothing else in the record moves */
+      var del = dom.el(doc, "button", { class: "hnk-btn hnk-hist-x", id: "hnkWfHistDel_" + i, text: "\u2715", attrs: { title: l9(L_HIST_DEL) } });
+      dom.on(del, "click", function () {
+        try { if (svc && svc.remove) svc.remove(e.id); } catch (eR) { }
+        again();
+      });
+      head.appendChild(del);
+      card.appendChild(head);
+      /* what was actually asked for, not the workflow's own id */
+      var asked = String(e.promptPreview || "");
+      if (asked && asked !== wf.id) card.appendChild(dom.el(doc, "div", { class: "hnk-hist-ask", id: "hnkWfHistAsk_" + i, text: asked }));
       var acts = dom.el(doc, "div", { class: "hnk-hist-actions" });
       var rr = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfHistRerun_" + i, text: dom.t("ai_rerun", "Re-run") });
-      dom.on(rr, "click", function () { doGenerate(); });
+      /* 6.101.0 — re-run THIS row: its own typed instruction and its own output
+         choices go back onto the page first, then the run starts. Before this the
+         button ran whatever the page happened to be set to. */
+      dom.on(rr, "click", function () {
+        try {
+          if (asked && asked !== wf.id) {
+            /* the sentence goes back into whichever control this card asks through:
+               the screen's own box (object-edit and friends) or the workflow's first
+               text field (Selection Edit) — the same two places the compiler reads. */
+            var box = doc.getElementById("hnkWfUserText");
+            if (box) { wstate.setUserText(state, asked); box.value = asked; }
+            else {
+              var fields = wf.fields || [];
+              for (var fi = 0; fi < fields.length; fi++) {
+                if (fields[fi] && fields[fi].type === "text") {
+                  wstate.setField(state, fields[fi].key, asked);
+                  var fb = doc.getElementById("hnkWfText_" + fields[fi].key);
+                  if (fb) fb.value = asked;
+                  break;
+                }
+              }
+            }
+          }
+          if (e.size) wstate.setOutput(state, { size: String(e.size).toLowerCase() });
+          if (e.ratio) wstate.setOutput(state, { ratio: e.ratio });
+        } catch (eS) { }
+        doGenerate();
+      });
       acts.appendChild(rr); card.appendChild(acts); wrap.appendChild(card);
     });
     if (rows.length) {
       var allB = dom.el(doc, "button", { class: "hnk-btn", id: "hnkWfHistAll", text: l9(L_HIST_ALL) });
       dom.on(allB, "click", function () { var app = globalThis.HNK && globalThis.HNK.aiToolsApp; if (app && app.navigate) app.navigate("history"); });
       wrap.appendChild(allB);
+      /* one press clears THIS workflow's rows — never anyone else's */
+      var clr = dom.el(doc, "button", { class: "hnk-btn hnk-hist-clear", id: "hnkWfHistClear", text: l9(L_HIST_CLEAR) });
+      dom.on(clr, "click", function () {
+        try {
+          if (svc && svc.clearWhere) svc.clearWhere(function (r) { return r && r.mode === "smart-workflow" && r.workflowId === wf.id; });
+        } catch (eC) { }
+        again();
+      });
+      wrap.appendChild(clr);
     }
     host.appendChild(wrap);
   }
@@ -1867,6 +1971,9 @@ function create(deps) {
       var em = globalThis.HNK && globalThis.HNK.ellMark;
       if (em) em(root, ".wfmini .s", 3);
     } catch (e) { }
+    /* 6.101.0 — and the workflow page's own paragraph, for the same reason: the
+       build-time pass measured a box that was not in the document yet. */
+    try { if (state.workflowId && wfAboutRepaint) wfAboutRepaint(); } catch (e) { }
     return root;
   }
 

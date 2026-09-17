@@ -125,11 +125,11 @@ function sourcePins() {
      a region workflow asks Photoshop for the live rectangle when it opens and on Check,
      and says ok / none / no-host in nine languages. verify_selection_shown pins the rest. */
   const selRow = between(SCREEN, "6.168.0 — THE SELECTION, SHOWN", "dom.on(selBtn, \"click\", function () { selCheck(true); });");
-  report("A6) Selection Edit in the panel: a text field is a column (.is-text) with the app's maxlength, .hnk-input finally has a rule, and a region workflow draws the Selection card (#hnkWfSelCard · #hnkWfSelState · #hnkWfSelCheck) that reads host.getSelectionBounds on open and on Check — ok / none / no-host in nine languages",
+  report("A6) Selection Edit in the panel: a text field is a column (.is-text) — a framed, accented block with 74px of writing room since 6.101.0 — with the app's maxlength, .hnk-input finally has a rule, and a region workflow draws the Selection card (#hnkWfSelCard · #hnkWfSelState · #hnkWfSelCheck) that reads host.getSelectionBounds on open and on Check — ok / none / no-host in nine languages",
     /class: "hnk-wf-field" \+ \(f\.type === "text" \? " is-text" : ""\)/.test(SCREEN) && /if \(f\.max\) ti\.setAttribute\("maxlength", String\(f\.max\)\);/.test(SCREEN) &&
     /id: "hnkWfSelCard"/.test(selRow) && /id: "hnkWfSelState"/.test(selRow) && /id: "hnkWfSelCheck"/.test(selRow) && /deps\.host\.getSelectionBounds\(\)/.test(selRow) && /card\.className = "hnk-req-block hnk-sel-card ok"/.test(selRow) && /card\.className = "hnk-req-block hnk-sel-card none"/.test(selRow) &&
     ["L_SEL_CHECK", "L_SEL_CHECKING", "L_SEL_OK", "L_SEL_NONE", "L_SEL_NOHOST"].every(k => { const line = (SCREEN.match(new RegExp("var " + k + " = \\{[^\\n]*")) || [""])[0]; return LANGS.every(l => new RegExp("\\b" + l + ': "').test(line)); }) &&
-    /L_SEL_OK = \{[^\n]*\{w\} × \{h\} px/.test(SCREEN) && /\.hnk-input \{ min-height: 42px;/.test(PCSS) && /\.hnk-wf-field\.is-text \{ flex-direction: column; align-items: stretch; \}/.test(PCSS) && /\.hnk-sel-card \{ display: block;/.test(PCSS) && !/\.hnk-sel-card \{[^}]*\bgap:/.test(PCSS), null);
+    /L_SEL_OK = \{[^\n]*\{w\} × \{h\} px/.test(SCREEN) && /\.hnk-input \{ min-height: 42px;/.test(PCSS) && /\.hnk-wf-field\.is-text \{ flex-direction: column; align-items: stretch;/.test(PCSS) && /\.hnk-wf-field\.is-text \{[^}]*border-left: 3px solid var\(--accent\)/.test(PCSS) && /\.hnk-wf-field\.is-text \.hnk-wf-text \{[^}]*height: 74px;/.test(PCSS) && /\.hnk-sel-card \{ display: block;/.test(PCSS) && !/\.hnk-sel-card \{[^}]*\bgap:/.test(PCSS), null);
 }
 
 /* ================= B) the web app ================= */
@@ -205,8 +205,14 @@ async function appWalk(browser) {
     /Selected ✓ 210 × 148 px/.test(step2.note1) && step2.rect === "" && /^60/.test(step2.rectLeft) && step2.clear1 === "" && step2.r2 && near(step2.r2.x, 0.6) && step2.r3 === null && /whole photo/.test(step2.note3) && step2.r4 && near(step2.r4.w, 0.35), step2);
   await page.evaluate(() => { const nav = document.querySelectorAll(".wiz.on .wiz-nav .btn"); nav[nav.length - 1].click(); }); await page.waitForTimeout(400);
   const gen = await page.evaluate(async (fullBytes) => {
+    /* 6.101.0 — the request line is a framed block now, so "the whole row" is two
+       measurements, not one: the ROW still spans the fields box, and the control fills
+       the row's inner width (the frame's own padding is the only thing beside it). */
     const f = document.querySelector(".wiz-field-req .inp"); const fr = f.getBoundingClientRect(), box = document.querySelector(".wiz-fields").getBoundingClientRect();
-    const out = { fieldFull: fr.width >= box.width * 0.95, genOff: !!document.querySelector(".wiz.on .wiz-nav .btn-gold").disabled };
+    const rowEl = f.closest(".wiz-field"), rr = rowEl.getBoundingClientRect(), rcs = getComputedStyle(rowEl);
+    const inner = rr.width - parseFloat(rcs.paddingLeft || 0) - parseFloat(rcs.paddingRight || 0);
+    const out = { fieldFull: fr.width >= inner * 0.98 && rr.width >= box.width * 0.95, rowPad: Math.round(rr.width - inner),
+      genOff: !!document.querySelector(".wiz.on .wiz-nav .btn-gold").disabled };
     window.__sent = []; window.__ups = []; const realFetch = window.fetch;
     const RES = (() => { const c = document.createElement("canvas"); c.width = 210; c.height = 148; const x = c.getContext("2d"); x.fillStyle = "#00ff55"; x.fillRect(0, 0, 210, 148); return c.toDataURL("image/png"); })();
     window.fetch = async function (u, o) { const url = String(u);
@@ -298,7 +304,11 @@ async function panelWalk(browser) {
     const c4 = await page.evaluate(async () => {
       HNK.aiToolsApp.workflowScreen().select("region-edit"); await new Promise(r => setTimeout(r, 700));
       const f = document.querySelector("#hnkAiToolsRoot .hnk-wf-text"); const fr = f.getBoundingClientRect(), box = document.querySelector("#hnkAiToolsRoot .hnk-wf-fields").getBoundingClientRect();
-      const out = { isText: !!f.closest(".hnk-wf-field.is-text"), fieldFull: fr.width >= box.width * 0.95, maxlen: f.getAttribute("maxlength"), styled: getComputedStyle(f).borderRadius, row: !!document.getElementById("hnkWfSelCard"), check: !!document.getElementById("hnkWfSelCheck") };
+      /* 6.101.0 — as on the web: the framed block spans the fields box and the textarea
+         fills the block's inner width. */
+      const rowEl = f.closest(".hnk-wf-field"), rr = rowEl.getBoundingClientRect(), rcs = getComputedStyle(rowEl);
+      const inner = rr.width - parseFloat(rcs.paddingLeft || 0) - parseFloat(rcs.paddingRight || 0);
+      const out = { isText: !!f.closest(".hnk-wf-field.is-text"), fieldFull: fr.width >= inner * 0.98 && rr.width >= box.width * 0.95, rowPad: Math.round(rr.width - inner), maxlen: f.getAttribute("maxlength"), styled: getComputedStyle(f).borderRadius, row: !!document.getElementById("hnkWfSelCard"), check: !!document.getElementById("hnkWfSelCheck") };
       const host = HNK.photoshopHost, orig = host.getSelectionBounds, origCap = host.captureRegion;
       /* 6.168.0 — Check reads the pixels too now (verify_selection_shown owns that leg);
          here the read is stubbed so this test keeps asking what it has always asked:

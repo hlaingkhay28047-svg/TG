@@ -37,6 +37,22 @@ function _collect(list) {
     .map(function (s) { return { key: s.key, role: s.role, source: s.image.source, ref: s.image.ref }; });
 }
 
+/* the student's own sentence: the screen's typed box, else the workflow's first
+   text field (Selection Edit asks through a field, object-edit through the box) */
+function _typedText(wf, state) {
+  var t = String((state && state.userText) || "").trim();
+  if (t) return t;
+  var vals = (state && state.fieldVals) || {};
+  var fields = (wf && wf.fields) || [];
+  for (var i = 0; i < fields.length; i++) {
+    if (fields[i] && fields[i].type === "text") {
+      var v = String(vals[fields[i].key] == null ? "" : vals[fields[i].key]).trim();
+      if (v) return v;
+    }
+  }
+  return "";
+}
+
 function compile(state) {
   var wf = registry.get(state && state.workflowId);
   if (!wf) return null;
@@ -102,6 +118,13 @@ function compile(state) {
        the adapter reads request.images; without this a workflow run uploads nothing */
     images: requiredImages.concat(optionalImages),
     workflowProtectionRules: (rules || []).slice(),
+    /* 6.101.0 — WHAT THE STUDENT ACTUALLY ASKED FOR, kept beside the prompt.
+       A workflow run's history row previewed the workflow's own id, so eight runs
+       of Selection Edit read "region-edit" eight times. The typed instruction lives
+       in two places depending on the card — the screen's own box (state.userText)
+       or the workflow's first text field — and both end up inside compiledPrompt
+       where nothing can read them back reliably. This carries the plain sentence. */
+    typedText: _typedText(wf, state),
     model: route.modelId,
     modelResolvedFromAuto: !!route.auto,
     output: {
