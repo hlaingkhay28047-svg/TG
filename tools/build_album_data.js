@@ -123,7 +123,13 @@ function mosaic(rows) {
 function bigGrid(fBig, c, r, side) {
   const runAvail = 1 - G;
   const bw = runAvail * fBig, gw = runAvail * (1 - fBig);
-  const gx = side === "left" ? gw + G : 0;
+  /* 6.102.0 — the column starts after whichever photo is actually to its left.
+     This read `gw + G` for both, so with the big photo on the LEFT the column of
+     small ones began at the GRID's own width (0.414) while the big photo ran to
+     0.572 — every "big left" template printed its small photos over the big one.
+     A layout whose cells overlap is not a layout, and on a printed spread it is a
+     photograph with another photograph on top of it. */
+  const gx = side === "left" ? bw + G : 0;
   const bx = side === "left" ? 0 : gw + G;
   const cw = (gw - (c - 1) * G) / c, ch = (1 - (r - 1) * G) / r;
   const out = [{ x: bx, y: 0, w: bw, h: 1 }];

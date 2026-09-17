@@ -5,6 +5,10 @@
    docs/app/data/hnkdata.js     window.HNK_DATA=<json>;     the studio tables
    docs/app/data/imagine.js     window.HNK_IMAGINE=<json>;  the Imagine tools,
                                                             templates and frame
+   docs/app/data/album.js       window.HNK_ALBUM=<json>;    the Album page's
+                                                            sizes, layout
+                                                            templates and text
+                                                            roles (v6.102.0)
    docs/app/data/trl-<code>.js  window.HNK_TRL=window.HNK_TRL||{};
                                 window.HNK_TRL.<code>=<json>;
                                                             one native language
@@ -29,7 +33,8 @@ const TRL_CODES = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "
 const FILES = {
   libwf: { file: "libwf.js", global: "HNK_LIBWF", head: "window.HNK_LIBWF=", tag: "script" },
   hnkdata: { file: "hnkdata.js", global: "HNK_DATA", head: "window.HNK_DATA=", tag: "script" },
-  imagine: { file: "imagine.js", global: "HNK_IMAGINE", head: "window.HNK_IMAGINE=", tag: "script" }
+  imagine: { file: "imagine.js", global: "HNK_IMAGINE", head: "window.HNK_IMAGINE=", tag: "script" },
+  album: { file: "album.js", global: "HNK_ALBUM", head: "window.HNK_ALBUM=", tag: "script" }
 };
 TRL_CODES.forEach(function (c) {
   FILES["trl-" + c] = { file: "trl-" + c + ".js", global: "HNK_TRL", code: c, head: "window.HNK_TRL=window.HNK_TRL||{};window.HNK_TRL." + c + "=", tag: "loader" };
@@ -52,9 +57,11 @@ function jsonText(key) {
 function libWfText() { return jsonText("libwf"); }
 function hnkDataText() { return jsonText("hnkdata"); }
 function imagineText() { return jsonText("imagine"); }
+function albumText() { return jsonText("album"); }
 function readLibWf() { return JSON.parse(libWfText()); }
 function readHnkData() { return JSON.parse(hnkDataText()); }
 function readImagine() { return JSON.parse(imagineText()); }
+function readAlbum() { return JSON.parse(albumText()); }
 function readTrlPack(code) {
   if (TRL_CODES.indexOf(code) < 0) throw new Error("no native pack for " + code);
   return JSON.parse(jsonText("trl-" + code));
@@ -80,5 +87,5 @@ function trlTags() {
 /* the table the shell's loader carries, as the shell prints it */
 function trlTagsLine() { return "window.HNK_TRL_TAGS=" + JSON.stringify(trlTags()) + ";"; }
 
-module.exports = { ROOT, DATA_DIR, FILES, TRL_CODES, wrapperText, jsonText, libWfText, hnkDataText, imagineText,
-  readLibWf, readHnkData, readImagine, readTrlPack, readTrl, readWhatsNewArchive, contentTag, trlTags, trlTagsLine };
+module.exports = { ROOT, DATA_DIR, FILES, TRL_CODES, wrapperText, jsonText, libWfText, hnkDataText, imagineText, albumText,
+  readLibWf, readHnkData, readImagine, readAlbum, readTrlPack, readTrl, readWhatsNewArchive, contentTag, trlTags, trlTagsLine };

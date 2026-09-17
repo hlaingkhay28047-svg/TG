@@ -69,8 +69,17 @@ report("A3) the inline blocks are gone, the three data scripts and the pack load
   APP.split("var IMAGINE_DATA = window.HNK_IMAGINE;").length === 2 && APP.indexOf("var TR_L = window.HNK_TRL;") > loaderAt &&
   APP.indexOf('getElementById("hnkData")') < 0 && APP.indexOf('getElementById("hnkLibWf")') < 0, { mainAt, loaderAt, im: srcIm && srcIm.index });
 const rawBytes = Buffer.byteLength(APP, "utf8"), gzBytes = zlib.gzipSync(Buffer.from(APP, "utf8"), { level: 6 }).length;
-report("A4) the shell stays under its ceilings — 3.3 MB raw, 1.05 MB gzipped (5.8 MB / 1.58 MB before the data left; 3.78 MB / 1.16 MB before the packs and the Imagine tables followed in 6.92.0)",
-  rawBytes <= 3300000 && gzBytes <= 1050000, { rawBytes, gzBytes });
+/* 6.102.0 — the gzip ceiling moves from 1.05 MB to 1.1 MB, and it is worth saying
+   exactly why rather than quietly nudging it. This ceiling was set in 6.92.0 the
+   moment the DATA left the shell, and what it exists to catch is the data coming
+   back inline — a regression that would put hundreds of kilobytes back in one
+   step. A new PAGE's code is not that: the ALBUM module is ~35 KB of source, its
+   tables are a file (data/album.js, pinned by A1–A3 and D2 like every other), and
+   the raw ceiling is untouched at 3.3 MB with 24 KB of headroom left, so it still
+   binds. Moving this number is a decision about how much page code the shell may
+   carry; it is not a way around the rule the file is named for. */
+report("A4) the shell stays under its ceilings — 3.3 MB raw, 1.1 MB gzipped (5.8 MB / 1.58 MB before the data left; 3.78 MB / 1.16 MB before the packs and the Imagine tables followed in 6.92.0)",
+  rawBytes <= 3300000 && gzBytes <= 1100000, { rawBytes, gzBytes });
 const before = APP;
 const run = spawnSync(process.execPath, [path.join(ROOT, "tools", "build_app_data.js")], { encoding: "utf8" });
 report("A5) tools/build_app_data.js is idempotent on a built tree — it validates, reports the tags and leaves index.html unchanged",
@@ -190,9 +199,13 @@ report("B1) sw.js declares DATA_CACHE (hnk-data-v1), matches /data/<name>.js, ro
   await browser.close();
   report("D1) the app boots from the data files — LW, D and IMAGINE_DATA are the loaded globals, the catalog is whole, the strip is drawn, TR_L is the loader's (empty) object on a Burmese boot, and no page error",
     boot.lw === libwf.items.length && boot.lwGlobal && boot.d && boot.inlineGone && boot.strip && boot.im === im.tools.length && boot.trl === 0 && errs.length === 0, { boot, errs: errs.slice(0, 3) });
-  report("D2) the shell asked for each of the three data files exactly once, under its content tag, and for no language pack",
+  /* 6.102.0 — four files now: the ALBUM page's sizes, layout templates and text
+     roles joined the three in data/album.js, under a content tag like the rest. */
+  const tagAlb = A.contentTag("album");
+  report("D2) the shell asked for each of the four data files exactly once, under its content tag, and for no language pack",
     reqs.filter((u) => u === "/data/libwf.js?v=" + tagLib).length === 1 && reqs.filter((u) => u === "/data/hnkdata.js?v=" + tagData).length === 1 &&
-    reqs.filter((u) => u === "/data/imagine.js?v=" + tagIm).length === 1 && reqs.length === 3, { reqs });
+    reqs.filter((u) => u === "/data/imagine.js?v=" + tagIm).length === 1 &&
+    reqs.filter((u) => u === "/data/album.js?v=" + tagAlb).length === 1 && reqs.length === 4, { reqs });
 
   /* ---------------- E. release pins ---------------- */
   const wn = APP.slice(a0, b0);
