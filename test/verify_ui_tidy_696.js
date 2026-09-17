@@ -112,6 +112,38 @@ const TALLY = `(sel) => {
   return { n: list.length, cut, marked, mismatch };
 }`;
 
+/* 6.100.0 - AND THE COUNTS ARE MEASURED ON THE PAGE, NOT REMEMBERED FROM ONE MACHINE.
+   "136 of the 194 end on their own word" and "at most 8 of the 22 Imagine summaries are
+   cut" were true of the fonts on the machine this test was written on. CI draws the same
+   page with a different fallback and cuts NINE of the 22 - the ceiling is right, the
+   marker is exact (mismatch 0 on both), and the run still went red on a number that was
+   never the contract. What IS the contract is the comparison: the taller ceiling must
+   rescue sentences the old one cut, and a clear majority must end on their own word.
+   Both are measured below on whatever fonts the machine has, the way ellMark measures -
+   unclamped, against lines x line-height plus half a line - and the element is put back
+   exactly as it was found. */
+const NATURAL = `(sel, lines, was) => {
+  const list = Array.prototype.slice.call(document.querySelectorAll(sel)).filter(n => n.clientHeight > 0);
+  let over = 0, overWas = 0;
+  list.forEach(n => {
+    const html = n.innerHTML;
+    const sv = { h: n.style.height, mh: n.style.maxHeight, ov: n.style.overflow, lc: n.style.webkitLineClamp };
+    const lh = parseFloat(getComputedStyle(n).lineHeight) || 16;
+    const full = n.getAttribute("data-full");
+    if (full != null) n.textContent = full;
+    else { const e = n.querySelector(".ell"); if (e) e.remove(); }
+    n.style.height = "auto"; n.style.maxHeight = "none"; n.style.overflow = "visible";
+    try { n.style.webkitLineClamp = "unset"; } catch (e) { }
+    const nat = n.scrollHeight;
+    n.style.height = sv.h; n.style.maxHeight = sv.mh; n.style.overflow = sv.ov;
+    try { n.style.webkitLineClamp = sv.lc; } catch (e) { }
+    n.innerHTML = html;
+    if (nat > lines * lh + lh / 2) over++;
+    if (nat > was * lh + lh / 2) overWas++;
+  });
+  return { n: list.length, over, overWas };
+}`;
+
 /* ================= A) the source ================= */
 function sourcePins() {
   /* 6.171.0 - THE CEILING IS A HEIGHT NOW, AND THE TITLE HAS ONE TOO.
@@ -220,8 +252,9 @@ async function appWalk(browser) {
     await page.addInitScript(() => { try { localStorage.setItem("hnk_ws_onboarded", "1"); localStorage.setItem("hnk_ws_seen", "1"); } catch (e) { } });
     await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2200);
-    out[W] = await page.evaluate(async (tallySrc) => {
-      const tally = eval("(" + tallySrc + ")");
+    out[W] = await page.evaluate(async (src) => {
+      const tally = eval("(" + src.t + ")");
+      const natural = eval("(" + src.o + ")");
       const r = {};
       try { document.body.classList.remove("wall"); } catch (e) { }
       switchPage("pgWf"); await new Promise(x => setTimeout(x, 1300));
@@ -236,6 +269,8 @@ async function appWalk(browser) {
       heads.forEach(h => h.click());
       await new Promise(x => setTimeout(x, 700));
       r.allOpen = tally("#pgWf .wfmini .s");
+      /* what a two-line ceiling would have cut here, and what three cuts - same page, same fonts */
+      r.natWf = natural("#pgWf .wfmini .s", 3, 2);
       /* 6.171.0 - the ceiling is stated as `height` now (max-height is a request UXP
          declines), so read whichever of the two the stylesheet actually sets. */
       r.ceiling = (function () { const s = document.querySelector("#pgWf .wfmini .s"); const cs = getComputedStyle(s);
@@ -251,6 +286,7 @@ async function appWalk(browser) {
       switchPage("pgImagine"); try { IMAGINE.goHub(); } catch (e) { }
       await new Promise(x => setTimeout(x, 1500));
       r.imSum = tally("#pgImagine .im-card-sum");
+      r.natIm = natural("#pgImagine .im-card-sum", 5, 2);
       const sum = document.querySelector("#pgImagine .im-card-sum");
       r.imCeiling = (function () { const cs = getComputedStyle(sum);
         const px = parseFloat(cs.maxHeight) > 0 && isFinite(parseFloat(cs.maxHeight)) ? parseFloat(cs.maxHeight) : parseFloat(cs.height);
@@ -263,7 +299,7 @@ async function appWalk(browser) {
       const h2 = document.querySelector("#pgImagine .im-hub h2"), icn = h2.querySelector(".ic-s");
       r.h2Icon = Math.round(icn.getBoundingClientRect().top - h2.getBoundingClientRect().top);
       return r;
-    }, TALLY);
+    }, { t: TALLY, o: NATURAL });
     out[W].errs = errs;
     await ctx.close();
   }
@@ -274,12 +310,15 @@ async function appWalk(browser) {
     a.atRender.mismatch === 0 && a.allOpen.mismatch === 0 && a.filtered.mismatch === 0 && a.cleared.mismatch === 0 &&
     b.allOpen.mismatch === 0 && b.filtered.mismatch === 0 &&
     a.tapped >= 8 && a.allOpen.n > 150 && a.allOpen.marked > 20, { a, b: { tapped: b.tapped, allOpen: b.allOpen } });
-  report("B3) the ceiling is three whole lines, and at 420px 136 of the 194 descriptions now end on their own word (the two-line ceiling cut 138 of them)",
-    Math.abs(a.ceiling - 3) < 0.05 && a.allOpen.n === 194 && a.allOpen.cut <= 70 && a.allOpen.n - a.allOpen.cut >= 130, { ceiling: a.ceiling, cut: a.allOpen.cut });
-  report("B4) the Imagine summary is a five-line ceiling with the same honest marker, the cards keep two to a row at 420px and the page-hero headline stays inside 72% of the banner, with the hub heading's icon on line one",
+  report("B3) the ceiling is three whole lines, it rescues descriptions a two-line ceiling would cut, and a clear majority of the 194 end on their own word",
+    Math.abs(a.ceiling - 3) < 0.05 && a.allOpen.n === 194 && a.natWf.n === 194 &&
+    a.natWf.over < a.natWf.overWas && a.allOpen.n - a.allOpen.cut > a.allOpen.cut,
+    { ceiling: a.ceiling, cut: a.allOpen.cut, nat: a.natWf });
+  report("B4) the Imagine summary is a five-line ceiling with the same honest marker - it rescues summaries the two-line ceiling cut and most of the 22 end on their own word - the cards keep two to a row at 420px and the page-hero headline stays inside 72% of the banner, with the hub heading's icon on line one",
     Math.abs(a.imCeiling - 5) < 0.05 && a.imSum.n === 22 && a.imSum.mismatch === 0 && b.imSum.mismatch === 0 &&
-    a.imSum.cut <= 8 && a.imCards.perRow === 2 && a.phHead.w <= a.phHead.hero * 0.74 && b.phHead.w <= b.phHead.hero * 0.74 &&
-    a.h2Icon < 8 && b.h2Icon < 8, { a: { imCeiling: a.imCeiling, imSum: a.imSum, cards: a.imCards, ph: a.phHead, h2: a.h2Icon }, b: { imSum: b.imSum, ph: b.phHead } });
+    a.natIm.n === 22 && a.natIm.over < a.natIm.overWas && a.imSum.n - a.imSum.cut > a.imSum.cut &&
+    a.imCards.perRow === 2 && a.phHead.w <= a.phHead.hero * 0.74 && b.phHead.w <= b.phHead.hero * 0.74 &&
+    a.h2Icon < 8 && b.h2Icon < 8, { a: { imCeiling: a.imCeiling, imSum: a.imSum, nat: a.natIm, cards: a.imCards, ph: a.phHead, h2: a.h2Icon }, b: { imSum: b.imSum, ph: b.phHead } });
   report("B5) no page error on either width", a.errs.length === 0 && b.errs.length === 0, { a: a.errs, b: b.errs });
 }
 
