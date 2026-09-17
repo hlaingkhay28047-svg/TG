@@ -1,5 +1,17 @@
-/* verify_wf_responsive.js — 6.98.0 / panel 6.169.0
+/* verify_wf_responsive.js — 6.98.1 / panel 6.169.1
    THE SMART WORKFLOW PAGES, TIDY AND RESPONSIVE.
+
+   6.169.1 — AND EVERY CARD STATES ITS WIDTH. 6.169.0 carried the ladder on a percentage
+   flex-BASIS with no width at all. Chromium drew it correctly and Photoshop did not: the
+   owner's photographs show each card's frame ending just under its picture, the title and
+   summary painting BELOW the border, and the "open" pill gone from the card. A card with
+   no width is measured shrink-to-fit, so UXP sized its HEIGHT from content laid out
+   unwrapped, then flex-grow stretched the card, the text re-wrapped onto two and three
+   lines, and all of it overflowed a height that was already fixed. The ladder stays; every
+   step now states a real width (calc for the browser, a plain percentage in front of it for
+   UXP) and A1-A4 below hold that shape. Chromium cannot reproduce the UXP miss — it does
+   the two-pass correctly — so C7 measures the SYMPTOM instead: on every card at every
+   width, the summary and the pill end inside the card's own frame.
 
    The owner, with twelve photographs: "Smartworkflow pages ui ux က ဒီလို မသပ်ရပ်ဘူး
    responsive မဖြစ်နေဘူး သပ်ရပ်အောင်သေချာအသေးစိတ်လုပ်ပေးပါ" — the Smart Workflow pages'
@@ -77,27 +89,40 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
 
 /* ================= A) the panel's rules ================= */
 function panelPins() {
-  report("A1) the card is a flex item with a percentage basis and no width of its own — the 'two columns' that used to be written into calc(50% - 4px) is gone",
-    /\.wfmini \{[^}]*flex: 1 1 100%;[^}]*min-width: 0;/.test(PCSS) &&
-    !/\.wfmini \{[^}]*width: calc\(50% - 4px\)/.test(PCSS) &&
-    !/\.wfmini:nth-child\(2n\)/.test(PCSS) &&
-    !/\.wfmini:nth-child\(-n\+2\)/.test(PCSS), null);
+  report("A1) every card states a real width — the UXP rule, because a card with no width is measured shrink-to-fit and gets a height its wrapped text cannot fit in",
+    /\.wfmini \{[^}]*width: 100%;[^}]*min-width: 0;/.test(PCSS) &&
+    !/\.wfmini \{[^}]*flex: 1 1 /.test(PCSS) &&
+    /\.wfmini\.wf-span2 \{ width: 100%; margin-right: 0; \}/.test(PCSS) &&
+    /sizes a container from its content's EXPLICIT width/.test(PCSS), null);
 
-  report("A2) the gaps are margins against a negative container, so the grid still sits flush in its card and the last row costs nothing below it",
-    /\.wfgrid \{[^}]*margin: 6px -4px -8px;/.test(PCSS) &&
-    /\.wfmini \{[^}]*margin: 0 4px 8px;/.test(PCSS), null);
+  report("A2) the 8px gap is the card's right margin, zeroed on the last column of each step, and the container takes the last row's bottom margin back",
+    /\.wfgrid \{[^}]*margin: 6px 0 -8px;/.test(PCSS) &&
+    /\.wfmini \{[^}]*margin: 0 0 8px;/.test(PCSS) &&
+    /\.wfmini:nth-child\(2n\) \{ margin-right: 0; \}/.test(PCSS) &&
+    /\.wfmini:nth-child\(5n\) \{ margin-right: 0; \}/.test(PCSS), null);
 
-  const steps = ["460px){ .wfmini { flex: 1 1 44%; }", "700px){ .wfmini, .wfmini.wf-span2 { flex: 1 1 30%;",
-                 "1100px){ .wfmini, .wfmini.wf-span2 { flex: 1 1 22%;", "1500px){ .wfmini, .wfmini.wf-span2 { flex: 1 1 17%;"];
-  report("A3) one column, then 44 / 30 / 22 / 17 per cent at 460 / 700 / 1100 / 1500px — the ladder is four media queries and nothing else decides it",
-    steps.every((t) => PCSS.indexOf("@media (min-width:" + t) > 0), { missing: steps.filter((t) => PCSS.indexOf("@media (min-width:" + t) < 0) });
+  const steps = [["460px", "width: 48.5%; width: calc(50% - 4px);"],
+                 ["700px", "width: 32.3%; width: calc(33.3333% - 5.3333px);"],
+                 ["1100px", "width: 24.3%; width: calc(25% - 6px);"],
+                 ["1500px", "width: 19.5%; width: calc(20% - 6.4px);"]];
+  report("A3) one column, then 50 / 33.3 / 25 / 20 per cent at 460 / 700 / 1100 / 1500px — four media queries and nothing else decides the count",
+    steps.every(([w, decl]) => {
+      const i = PCSS.indexOf("@media (min-width:" + w + "){");
+      return i > 0 && PCSS.slice(i, i + 400).indexOf(decl) > 0;
+    }), { missing: steps.filter(([w, decl]) => {
+      const i = PCSS.indexOf("@media (min-width:" + w + "){");
+      return !(i > 0 && PCSS.slice(i, i + 400).indexOf(decl) > 0);
+    }).map(([w]) => w) });
 
   /* the UXP idiom: the fallback percentage is declared BEFORE the calc, because UXP
-     resolves no calc() and keeps the last value it understood */
-  const caps = [["32%", "33.3333% - 8px"], ["24.2%", "25% - 8px"], ["19.4%", "20% - 8px"]];
-  report("A4) from three columns up a short last row cannot stretch: a calc ceiling for the browser, with a plain-percentage fallback in front of it for UXP",
-    caps.every(([pct, c]) => new RegExp("max-width: " + pct.replace("%", "%") + "; max-width: calc\\(" + c.replace(/[.()%]/g, (m) => "\\" + m) + "\\);").test(PCSS)),
-    { caps: caps.map(([p]) => p + ": " + (PCSS.indexOf("max-width: " + p + "; max-width: calc(") > 0)) });
+     resolves no calc() and keeps the last value it understood. Each fallback is small
+     enough that its row can never overflow at the narrow end of its own step. */
+  const fits = [[2, 0.485, 372], [3, 0.323, 604], [4, 0.243, 1004], [5, 0.195, 1404]];
+  report("A4) the UXP fallback percentage comes first, and no step's row can overflow at the narrow end of that step",
+    /width: 48\.5%; width: calc/.test(PCSS) && /width: 32\.3%; width: calc/.test(PCSS) &&
+    /width: 24\.3%; width: calc/.test(PCSS) && /width: 19\.5%; width: calc/.test(PCSS) &&
+    fits.every(([n, pct, c]) => n * (pct * c) + (n - 1) * 8 <= c),
+    fits.map(([n, pct, c]) => n + " cols at " + c + "px: " + Math.round(n * (pct * c) + (n - 1) * 8) + " <= " + c));
 
   report("A5) the four #pageAiTools overrides that each restated 'two columns' are gone — no .wf-top, no .wf-r, no hard 100% span",
     !/#pageAiTools \.wfmini\.wf-top/.test(PCSS) && !/#pageAiTools \.wfmini\.wf-r /.test(PCSS) &&
@@ -195,12 +220,18 @@ const GRID_SHAPE = () => {
     cardW: widths[0] || 0,
     widthSpread: widths.length ? Math.max.apply(null, widths) - Math.min.apply(null, widths) : 0,
     gridW: gw,
-    /* the grid overhangs its card by 4px on each side and every card carries a 4px
-       margin, so a FULL row ends exactly 4px inside the grid's right edge. rowOver is
-       how far the worst row runs past that line (never above 0), firstRowShort how far
-       the first — always full — row falls behind it. */
-    rowOver: Math.max.apply(null, rowKeys.map((k) => Math.round(Math.max.apply(null, rows[k].map((c) => R(c).right)) - (R(grid).right - 4)))),
-    firstRowShort: Math.round((R(grid).right - 4) - Math.max.apply(null, rows[rowKeys[0]].map((c) => R(c).right))),
+    /* the last column of a full row carries no right margin, so it ends exactly on the
+       grid's right edge. rowOver is how far the worst row runs past it (never above 0),
+       firstRowShort how far the first — always full — row falls behind it. */
+    rowOver: Math.max.apply(null, rowKeys.map((k) => Math.round(Math.max.apply(null, rows[k].map((c) => R(c).right)) - R(grid).right))),
+    firstRowShort: Math.round(R(grid).right - Math.max.apply(null, rows[rowKeys[0]].map((c) => R(c).right))),
+    /* THE PHOTOGRAPHS OF 6.169.0: how far the summary or the pill paints below its own
+       card, and how many cards lost the pill altogether */
+    spill: Math.max.apply(null, cards.map((c) => {
+      const cb = R(c).bottom, su = c.querySelector(".s"), go = c.querySelector(".go");
+      return Math.max(su ? Math.round(R(su).bottom - cb) : -99, go ? Math.round(R(go).bottom - cb) : -99);
+    })),
+    pillMissing: cards.filter((c) => !c.querySelector(".go")).length,
     artOff: arts.filter((r) => Math.abs(r.width / r.height - 1.5) > 0.03).length,
     docOverflow: document.documentElement.scrollWidth > window.innerWidth + 1
   };
@@ -224,7 +255,7 @@ async function panelWalk(browser, server) {
 
   report("C2) a docked panel's card is the big one the owner approved in 6.168.2, not the 98px one of the photograph — at 300 and 340px one card fills the row, over 190px wide",
     seen[300].cardW >= 190 && seen[340].cardW >= 230 &&
-    seen[300].gridW - seen[300].cardW === 8 && seen[340].gridW - seen[340].cardW === 8,
+    seen[300].gridW === seen[300].cardW && seen[340].gridW === seen[340].cardW,
     { at300: seen[300].cardW, at340: seen[340].cardW, grid300: seen[300].gridW, grid340: seen[340].gridW });
 
   report("C3) NO ROW STRETCHES AND NONE RUNS OVER: within a group every plain card is exactly the same width whatever row it is on (a short last row keeps the card size instead of blowing up to fill), the first row fills the grid, and nothing paints past it",
@@ -236,6 +267,15 @@ async function panelWalk(browser, server) {
     Object.keys(want).map((w) => w + ": off " + seen[w].artOff + " overflow " + seen[w].docOverflow));
 
   report("C5) nothing threw at any width", errs.length === 0, errs.slice(0, 4));
+
+  /* 6.169.1 — THE 6.169.0 PHOTOGRAPHS, MEASURED. Chromium cannot reproduce what UXP did
+     with a width-less card (it re-measures after the stretch), so this does not prove the
+     UXP fix by itself — it holds the shape the owner photographed losing: on every card,
+     at every width, the summary and the pill end inside the card's own frame, and no card
+     is missing its pill. */
+  report("C6) every card holds its own text: at all seven widths the summary and the 'open' pill end inside the card's frame, and no card has lost its pill",
+    Object.keys(want).every((w) => seen[w].spill <= 0 && seen[w].pillMissing === 0),
+    Object.keys(want).map((w) => w + ": spill " + seen[w].spill + " pillMissing " + seen[w].pillMissing));
   return seen;
 }
 
@@ -263,7 +303,7 @@ async function faultWalk(browser, server) {
     return { before, after, perRow };
   });
   await s.page.close(); await s.ctx.close();
-  report("C6) FAULT INJECTED: with the old calc(50% - 4px) rule put back, the same docked panel falls to two columns and the card loses half its width — this file would have caught the owner's photograph",
+  report("C7) FAULT INJECTED: with 6.168.2's hard two-column rule put back, the same docked panel falls to two columns and the card loses half its width — this file would have caught the owner's photograph",
     out.before >= 230 && out.perRow === 2 && out.after < out.before * 0.6, out);
 }
 
@@ -282,8 +322,9 @@ async function filterWalk(browser, server) {
       const sp = vis.filter((c) => String(c.className || "").indexOf("wf-span2") >= 0);
       return { n: vis.length, spans: sp.length,
         last: sp.length === 1 ? (sp[0] === vis[vis.length - 1]) : null,
-        /* the grid overhangs by 4px each side, so a card that fills the row is 8px narrower than it */
-        full: sp.length === 1 ? (Math.abs(Math.round(R(sp[0]).width) - (Math.round(R(g).width) - 8)) <= 1) : null,
+        /* 6.169.1 — the grid sits at its parent's width and the last column carries no
+           right margin, so a card that fills the row is exactly as wide as the grid */
+        full: sp.length === 1 ? (Math.abs(Math.round(R(sp[0]).width) - Math.round(R(g).width)) <= 1) : null,
         moved: sp.length === 1 ? (sp[0] !== g.lastElementChild) : (g.lastElementChild ? String(g.lastElementChild.className || "").indexOf("wf-span2") < 0 : null) };
     }).filter(Boolean);
     const input = document.getElementById("hnkWfSearch");
