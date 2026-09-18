@@ -604,6 +604,8 @@ jobs:
         run: PORT=8931 node test/verify_album_occasions.js
       - name: "Album Pages wave D — the album leaves the studio: one print-ready PDF of every page (MediaBox = trim + bleed + mark room, a real TrimBox and BleedBox, eight crop marks outside the bleed, the renderer's own JPEG bytes embedded as DCTDecode and never re-encoded); the open page as a layered .psd (8BPS header, resolution block, PackBits channels, a white base + one layer per photograph + one per line of type) read back by ag-psd, an implementation that owes nothing to this one; a page whose photographs are laid out over the TRIM instead of the safe area so a picture runs off the paper; the spread the book actually falls open at; a shuffle that never loses a photograph; and the studio's closing page (6.106.0)"
         run: PORT=8931 node test/verify_album_output.js
+      - name: "The Album page, tidy and adjustable \u2014 every rail even columns at 340 \u00b7 430 \u00b7 1280 px (measured, because the Photoshop panel draws no CSS grid and honours no media query), the template identifier gone from the student's line, and a free page size that is typed, dragged, locked, swapped, re-united and bounded"
+        run: PORT=8931 node test/verify_album_layout.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel

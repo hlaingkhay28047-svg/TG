@@ -2178,54 +2178,105 @@ body.wall #wallRetry.on{display:block}
 .im-markwrap.on{border-color:#ff3b3b;box-shadow:0 0 0 1px rgba(255,59,59,.55)}
 .im-th-mk{position:absolute;bottom:2px;left:4px;font-size:11px;font-weight:800;color:#ff6b6b;text-shadow:0 1px 2px #000}
 /* ---- /IMAGINE_CSS ---- */
-/* ---- ALBUM_CSS (6.102.0 wave A) — the album page. Flex and margin only: the Photoshop
-   panel's renderer draws no CSS grid and no object-fit, and this block is lifted there
-   in Wave D unchanged. ---- */
-.alb-groups,.alb-sizes,.alb-custom{flex-wrap:wrap;margin:0 -3px 6px}
-.alb-groups .chip,.alb-sizes .chip{margin:3px}
-.alb-custom{align-items:center}
-.alb-custom .mut{margin:0 6px 0 3px}
-.alb-num{width:72px;padding:6px 8px;margin:3px}
+/* ---- ALBUM_CSS (6.102.0 wave A; rebuilt 6.107.0 wave E) — the album page.
+
+   FLEX AND PERCENTAGES ONLY, AND NOT ONE BREAKPOINT.
+
+   The owner photographed this page on a computer and asked for it tidy and
+   professional on a phone, a computer AND in the Photoshop panel. Three things
+   that renderer cannot do decided the whole shape of this block: it draws no CSS
+   grid, panel/index.html carries no @media rule at all (so a breakpoint written
+   here would simply never fire there), and it reads every getBoundingClientRect
+   as zero. A stylesheet therefore cannot be asked how wide the album is.
+
+   So the MODULE measures the width itself — albWidth(), over the 6.79.0 ruler
+   race — and writes the column count onto each rail as .alb-c2 … .alb-c9. Every
+   rail is then even columns BY CONSTRUCTION: one cell width, one chip height per
+   row, the same class doing the same thing on a 340px panel, a 430px phone and a
+   1280px monitor. What the owner photographed — nine occasion chips in a 4/4/1
+   grid of three different heights, four page buttons 160 · 85 · 111 · 132px wide,
+   five export buttons in a ragged block — cannot happen inside a cell. ---- */
+
+/* ONE RAIL. The cell carries the gutter; the control fills the cell. align-items:stretch
+   is what makes a two-line label and a one-line label the same height in one row. */
+#phAlbum em{white-space:nowrap}
+.alb-grid{display:flex;flex-wrap:wrap;align-items:stretch;margin:0 -4px 8px}
+.alb-cell{box-sizing:border-box;display:flex;width:100%;padding:0 4px;margin:0 0 8px}
+.alb-cell>*{width:100%;box-sizing:border-box;margin:0;justify-content:center;text-align:center}
+.alb-cell>.chip{white-space:normal;line-height:1.3;padding:7px 9px}
+.alb-c2 .alb-cell{width:50%}
+.alb-c3 .alb-cell{width:33.3333%}
+.alb-c4 .alb-cell{width:25%}
+.alb-c5 .alb-cell{width:20%}
+.alb-c6 .alb-cell{width:16.6666%}
+.alb-c7 .alb-cell{width:14.2857%}
+.alb-c8 .alb-cell{width:12.5%}
+.alb-c9 .alb-cell{width:11.1111%}
+
+/* the page rail: the one row that stays a scrolling strip, because pages are ordered */
 .alb-rail{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;margin:0 -4px 8px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
 .alb-pagecell{position:relative;flex:0 0 auto;margin:0 4px;border:1px solid var(--line-soft);border-radius:10px;background:var(--panel-2);padding:4px;cursor:pointer}
 .alb-pagecell.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 .alb-thumb{display:block;width:96px;height:auto;max-width:96px;background:#fff;border-radius:6px}
 .alb-pagenum{display:block;text-align:center;font-size:11px;font-weight:700;color:var(--mut);margin-top:3px}
 .alb-pagex{position:absolute;top:-6px;right:-6px;width:22px;height:22px;line-height:20px;text-align:center;border-radius:50%;border:1px solid var(--line-soft);background:var(--panel);color:var(--cream);font-size:12px;padding:0;cursor:pointer}
+
 .alb-stage{border:1px solid var(--line-soft);border-radius:12px;background:#0b0f14;padding:8px;margin-bottom:8px;overflow:hidden;text-align:center}
 .alb-canvas{display:block;width:100%;height:auto;max-width:100%;border-radius:6px;background:#fff}
+
 .alb-strip{display:flex;flex-wrap:wrap;margin:0 -4px 8px}
 .alb-tile{position:relative;flex:0 0 auto;width:78px;height:78px;margin:4px;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;background:var(--panel-2)}
 .alb-tileimg{display:block;width:100%;height:100%;max-width:100%}
 .alb-tilex{position:absolute;top:2px;right:2px;width:20px;height:20px;line-height:18px;text-align:center;border-radius:50%;border:1px solid var(--line-soft);background:rgba(0,0,0,.66);color:#fff;font-size:11px;padding:0;cursor:pointer}
 .alb-tilemv{position:absolute;bottom:2px;left:2px;width:20px;height:20px;line-height:18px;text-align:center;border-radius:50%;border:1px solid var(--line-soft);background:rgba(0,0,0,.66);color:#fff;font-size:13px;padding:0;cursor:pointer}
-.alb-tpls{flex-wrap:wrap;margin:0 -3px 6px}
-.alb-tpls .chip{margin:3px}
-.alb-tpl{padding:4px 6px}
-.alb-sketch{display:block;width:44px;height:26px;border-radius:3px;border:1px solid var(--line-soft)}
-.alb-textrow{align-items:center;flex-wrap:wrap;margin-bottom:6px}
-.alb-rolelab{flex:0 0 auto;width:92px;margin-right:6px}
-/* 6.104.0 wave B — the type. The pairing chips wrap like the size chips; the per-role
-   font picker and the ink swatches sit on the same row as the field and drop under it
-   on a narrow phone, which is what flex-wrap on .alb-textrow is for. */
-.alb-type{flex-wrap:wrap;align-items:center;margin:0 -3px 6px}
-.alb-type .chip{margin:3px}
-.alb-fontsel{flex:0 0 auto;width:136px;padding:6px 8px;margin:4px 0 0 6px}
-.alb-inks{flex:0 0 auto;display:flex;flex-wrap:nowrap;align-items:center;margin:4px 0 0 6px}
-.alb-ink{width:22px;height:22px;padding:0;margin-left:4px;border-radius:50%;border:1px solid var(--line-soft);cursor:pointer}
+
+/* the two drawn chips. Both canvases are cut at twice the size they are shown at, so a
+   cell 140px wide on a monitor gets a crisp sketch instead of a blown-up 44px one. */
+.alb-tpl{flex-direction:column;gap:4px;padding:6px 5px}
+.alb-sketch{display:block;width:100%;max-width:92px;height:auto;border-radius:3px;border:1px solid var(--line-soft)}
+.alb-occ{flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;padding:8px 5px;white-space:normal;line-height:1.28}
+.alb-plan{display:block;width:100%;max-width:104px;height:auto;border-radius:4px}
+.alb-occname{display:block;font-size:12px;font-weight:700;text-align:center}
+
+/* THE SIZE, SAID ONCE AND SAID LOUD. It used to be a grey run-on line of seven
+   fields; a student had to read to the end of it to learn what they were making. */
+.alb-value{display:block;font-size:21px;font-weight:800;color:var(--gold);line-height:1.2;margin:0 0 2px}
+.alb-sub{display:block;font-size:var(--fs-xs);color:var(--mut);line-height:1.5;margin:0 0 10px}
+.alb-warn{display:block;font-size:var(--fs-xs);font-weight:700;color:#ffb3a7;line-height:1.5;margin:0 0 8px}
+
+/* the free size: a number you type and a rail you drag, for width and for height */
+.alb-dim{display:flex;flex-wrap:wrap;align-items:center;margin:0 0 8px}
+.alb-dimlab{flex:0 0 auto;width:52px;font-size:var(--fs-xs);font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.alb-num{flex:0 0 auto;width:88px;padding:6px 8px;margin:0 8px 0 0;text-align:center}
+.alb-rng{flex:1 1 130px;min-width:110px;display:block;box-sizing:border-box;margin:0;min-height:44px;accent-color:var(--gold)}
+.alb-opts{display:flex;flex-wrap:wrap;align-items:center;margin:0 -4px 6px}
+.alb-opts>*{margin:0 4px 6px}
+.alb-sel{width:92px;padding:6px 8px}
+.alb-dpi{width:84px;padding:6px 8px;text-align:center}
+
+/* the words. The role name became a caption ABOVE the field, so the field, the face
+   and the six inks get the whole row instead of 92px of it. */
+.alb-textrow{display:block;margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid var(--line-soft)}
+/* on a monitor the caption goes back beside the field — the module measures the width and
+   puts this class on the card, because the panel honours no @media rule. Seven roles at
+   94 px a row is 660 px of screen for a label that fits in the margin. */
+.alb-lab-side .alb-textrow{display:flex;align-items:flex-start}
+.alb-lab-side .alb-rolelab{flex:0 0 auto;width:124px;margin:13px 8px 0 0}
+.alb-lab-side .alb-field{flex:1 1 auto;min-width:0}
+.alb-textrow.last{border-bottom:0;padding-bottom:0}
+.alb-rolelab{display:block;font-size:var(--fs-xs);font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin:0 0 5px}
+.alb-field{display:flex;flex-wrap:wrap;align-items:center;margin:0 -3px}
+.alb-field>.inp{flex:1 1 200px;min-width:120px;margin:0 3px 6px}
+/* the face picker is drawn as a .hsl wrapper around a parked <select> (the 6.78.0 rule:
+   Photoshop never opens a native select), so the WRAPPER is the flex child and the width
+   belongs on it. 118 px is what lets the picker and the six inks share one line inside a
+   280 px field on a 340 px panel — measured, not guessed. */
+.alb-field>.hsl{flex:0 0 auto;width:118px;margin:0 3px 6px}
+.alb-fontsel{width:100%}
+.alb-inks{flex:0 0 auto;display:flex;flex-wrap:nowrap;align-items:center;margin:0 3px 6px}
+.alb-ink{width:22px;height:22px;padding:0;margin-right:3px;border-radius:50%;border:1px solid var(--line-soft);cursor:pointer}
+.alb-ink:last-child{margin-right:0}
 .alb-ink.on{box-shadow:0 0 0 2px var(--gold)}
-/* 6.105.0 wave C — the occasions. Each chip is a drawing of the plan's first three pages with
-   its name under it, so nine of them fit a phone two to a row and a desktop five. */
-.alb-occs{flex-wrap:wrap;align-items:stretch;margin:0 -4px 6px}
-.alb-occ{display:flex;flex-direction:column;align-items:center;gap:4px;
-         width:96px;padding:6px 4px;margin:4px;white-space:normal;line-height:1.25}
-.alb-plan{display:block;width:84px;height:28px;border-radius:4px}
-.alb-occname{display:block;font-size:12px;text-align:center}
-@media (min-width:900px){
-  .alb-thumb{width:128px;max-width:128px}
-  .alb-tile{width:96px;height:96px}
-  .alb-rolelab{width:120px}
-}
 /* ---- /ALBUM_CSS ---- */
 </style>
 
@@ -4195,7 +4246,7 @@ html.splashing #splash{display:flex}
    synchronous way to add a script while the document is still being parsed;
    the address is built from this fixed list and a two-or-three-letter code,
    never from the link's text. tools/build_app_data.js writes the tags. */
-window.HNK_TRL_TAGS={"bn":"dd8b31476215","gu":"a271a56d18f4","hi":"9037188f6d43","ja":"e49c8d2d856c","km":"4254b73226f7","kn":"409462e343c4","ko":"ced953cf078f","lo":"cbf85e109e6b","ml":"74f5601b2748","mr":"f579053e4bdb","ne":"6ef88907aa23","pa":"5f341bb48f83","ta":"eaf5f8da933a","te":"39e8f04ea5a9","ur":"535c3b200ce3","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
+window.HNK_TRL_TAGS={"bn":"58aff9b053b2","gu":"06cdcdd99f22","hi":"38e0dd27e72f","ja":"9c41c6141feb","km":"00e1d19cce03","kn":"4ede35839b55","ko":"8752c739891e","lo":"f6b9fe6dcb31","ml":"813bb494e869","mr":"e0d763f11ff7","ne":"718d6c7d9fc3","pa":"c5b72c2c8343","ta":"ab86dc82ff5a","te":"ff35c47cd374","ur":"b31975e14567","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
 (function(){
   var T=window.HNK_TRL_TAGS, has=function(k){ return Object.prototype.hasOwnProperty.call(T,k); };
   var BASE=/^(my|en|shn|kac|th|zh|vi|id|ms)$/, u="", code="";
@@ -4764,6 +4815,19 @@ var TR_PH={
   alb_make_done:{my:"ပုံ {N} ပုံ · စာမျက်နှာ {P} မျက်နှာ ပြီးပါပြီ",en:"{N} photos · {P} pages"},
   alb_make_cap:{my:"ပုံ {N} ပုံသာ ယူပါမယ် — ကျန်တာကို နောက်အယ်လ်ဘမ်မှာ ထည့်ပါ",en:"Only {N} photos were taken — put the rest in another album"},
   alb_edge:{my:"ပုံတွေ အနားထိ",en:"Photos to the edge"},
+  /* 6.107.0 wave E — the album page's layout and its free size */
+  alb_size_preset:{my:"အဆင်သင့် အရွယ်",en:"Ready sizes"},
+  alb_size_own:{my:"ကိုယ်ပိုင် အရွယ်",en:"Your own size"},
+  alb_size_own_note:{my:"ရိုက်ထည့်ပါ၊ ဒါမှမဟုတ် ဆွဲပါ။ တစ်ဖက် အများဆုံး {N} px။",en:"Type it or drag it. At most {N} px on a side."},
+  alb_size_big:{my:"{W} × {H} px ဆိုတာ megapixel {M} ရှိပါတယ် — ဖုန်းမှာ memory မလောက်ဘဲ ထွက်မလာနိုင်ပါ။",en:"{W} × {H} px is {M} megapixels — a phone may run out of memory exporting it."},
+  alb_size_max:{my:"စာမျက်နှာ တစ်ဖက်ကို အများဆုံး {N} px ပဲ ရပါတယ်။",en:"A page can be at most {N} px on a side."},
+  alb_swap:{my:"⇄ လှည့်မယ်",en:"⇄ Turn it"},
+  alb_lock:{my:"အချိုးအစား ထိန်း",en:"Keep the shape"},
+  alb_layout_pick:{my:"ပုံ {N} ပုံအတွက် အပြင်အဆင်",en:"Layouts for {N} photos"},
+  alb_layout_of:{my:"ပုံ {N} ပုံ",en:"{N} photos"},
+  alb_layout_yours:{my:"ကိုယ်တိုင် ရွေးထား",en:"Your pick"},
+  alb_out_this:{my:"ဒီစာမျက်နှာ",en:"This page"},
+  alb_out_album:{my:"အယ်လ်ဘမ် တစ်အုပ်လုံး · စာမျက်နှာ {N}",en:"The whole album · {N} pages"},
   alb_edge_note:{my:"ဖြတ်တဲ့မျဉ်းက ပုံထဲကို ဖြတ်ပါမယ်။ စာလုံးတွေက အထဲမှာပဲ နေပါမယ်။",en:"The cut goes through the picture. Words stay inside."},
   alb_spread:{my:"စာမျက်နှာ နှစ်ဖက်",en:"Spread"},
   alb_shuffle:{my:"ပုံတွေ ရောမွှေမယ်",en:"Shuffle the photos"},
@@ -4856,6 +4920,19 @@ var TR_L14={
   alb_make_done:{shn:"ၶႅပ်း {N} · ၼႃႈလိၵ်ႈ {P}",kac:"Sumla {N} · shara {P}",th:"{N} รูป · {P} หน้า",zh:"{N} 张照片 · {P} 页",vi:"{N} ảnh · {P} trang",id:"{N} foto · {P} halaman",ms:"{N} foto · {P} halaman"},
   alb_make_cap:{shn:"ဢဝ်ၶႅပ်း {N} ၶႅပ်းၵူၺ်း — ဢၼ်လိူဝ်ၼၼ်ႉ သႂ်ႇပပ်ႉတၢင်ႇဢၼ်",kac:"Sumla {N} sha la ai — ngam ai ni hpe laika buk kaga de bang u",th:"รับเพียง {N} รูป — ที่เหลือใส่ในอัลบั้มอื่น",zh:"只取了 {N} 张 — 其余请放进别的相册",vi:"Chỉ lấy {N} ảnh — số còn lại hãy để sang album khác",id:"Hanya {N} foto yang diambil — sisanya taruh di album lain",ms:"Hanya {N} foto diambil — selebihnya letak dalam album lain"},
   alb_edge:{shn:"ႁၢင်ႈထိုင်ႁိမ်း",kac:"Sumla ni makau du hkra",th:"ภาพชนขอบ",zh:"照片出血到边",vi:"Ảnh tràn ra mép",id:"Foto sampai tepi",ms:"Foto hingga ke tepi"},
+  /* 6.107.0 wave E */
+  alb_size_preset:{shn:"ၶႅပ်းလူင်ႇ တမ်းဝႆႉ",kac:"Hkyen da ai kaba",th:"ขนาดสำเร็จรูป",zh:"预设尺寸",vi:"Kích thước có sẵn",id:"Ukuran siap pakai",ms:"Saiz sedia ada"},
+  alb_size_own:{shn:"ၶႅပ်းလူင်ႇ ႁင်းၵူၺ်း",kac:"Nang nan a kaba",th:"ขนาดของคุณเอง",zh:"自定尺寸",vi:"Kích thước của bạn",id:"Ukuran Anda sendiri",ms:"Saiz anda sendiri"},
+  alb_size_own_note:{shn:"ပေႃႉသႂ်ႇ ဢမ်ႇၼၼ် လၢၵ်ႈ။ ၾၢႆႇၼိုင်ႈ ၼမ်သုတ်း {N} px။",kac:"Ka-ang u, n rai yang gang u. Maga langai hta grau law ai {N} px.",th:"พิมพ์หรือลากก็ได้ ด้านหนึ่งไม่เกิน {N} px",zh:"输入或拖动皆可，单边最多 {N} px。",id:"Ketik atau geser. Maksimal {N} px per sisi.",vi:"Gõ hoặc kéo. Mỗi cạnh tối đa {N} px.",ms:"Taip atau seret. Maksimum {N} px sesisi."},
+  alb_size_big:{shn:"{W} × {H} px ပဵၼ် megapixel {M} — ၾူၼ်း memory ဢမ်ႇၵုမ်ႇ တေဢွၵ်ႇဢမ်ႇလႆႈ။",kac:"{W} × {H} px gaw megapixel {M} re. Mahkrun hta memory n law yang n pru na.",th:"{W} × {H} px คือ {M} เมกะพิกเซล — โทรศัพท์อาจหน่วยความจำไม่พอ",zh:"{W} × {H} px 约 {M} 百万像素 — 手机可能内存不足。",vi:"{W} × {H} px là {M} megapixel — điện thoại có thể hết bộ nhớ.",id:"{W} × {H} px adalah {M} megapiksel — memori ponsel bisa habis.",ms:"{W} × {H} px ialah {M} megapiksel — memori telefon mungkin tidak cukup."},
+  alb_size_max:{shn:"ၼႃႈလိၵ်ႈ ၾၢႆႇၼိုင်ႈ ၼမ်သုတ်း {N} px ၵူၺ်း။",kac:"Laika shara langai hta {N} px sha lu ai.",th:"หน้าหนึ่งด้านได้ไม่เกิน {N} px",zh:"页面单边最多 {N} px。",vi:"Mỗi cạnh trang tối đa {N} px.",id:"Satu sisi halaman maksimal {N} px.",ms:"Satu sisi halaman maksimum {N} px."},
+  alb_swap:{shn:"⇄ ပိၼ်ႇ",kac:"⇄ Galai",th:"⇄ สลับด้าน",zh:"⇄ 转向",vi:"⇄ Xoay",id:"⇄ Putar",ms:"⇄ Putar"},
+  alb_lock:{shn:"သၢႆငၢႆ ၵိုမ်း",kac:"Shingdu jahkrat",th:"คงสัดส่วน",zh:"保持比例",vi:"Giữ tỉ lệ",id:"Kunci rasio",ms:"Kekalkan nisbah"},
+  alb_layout_pick:{shn:"ႁၢင်ႈ {N} ႁၢင်ႈ တႃႇတမ်းဝၢင်း",kac:"Sumla {N} a matu tawn ladat",th:"เลย์เอาต์สำหรับภาพ {N} รูป",zh:"{N} 张照片的版面",vi:"Bố cục cho {N} ảnh",id:"Tata letak untuk {N} foto",ms:"Susun atur untuk {N} foto"},
+  alb_layout_of:{shn:"ႁၢင်ႈ {N} ႁၢင်ႈ",kac:"Sumla {N}",th:"ภาพ {N} รูป",zh:"{N} 张照片",vi:"{N} ảnh",id:"{N} foto",ms:"{N} foto"},
+  alb_layout_yours:{shn:"လိူၵ်ႈႁင်းၵူၺ်း",kac:"Nang hkyen da ai",th:"คุณเลือกเอง",zh:"你选的",vi:"Bạn chọn",id:"Pilihan Anda",ms:"Pilihan anda"},
+  alb_out_this:{shn:"ၼႃႈလိၵ်ႈဢၼ်ၼႆႉ",kac:"Ndai laika shara",th:"หน้านี้",zh:"本页",vi:"Trang này",id:"Halaman ini",ms:"Halaman ini"},
+  alb_out_album:{shn:"ပပ်ႉႁၢင်ႈ တင်းပပ်ႉ · ၼႃႈလိၵ်ႈ {N}",kac:"Album ting · laika shara {N}",th:"ทั้งอัลบั้ม · {N} หน้า",zh:"整本相册 · {N} 页",vi:"Cả album · {N} trang",id:"Seluruh album · {N} halaman",ms:"Seluruh album · {N} halaman"},
   alb_edge_note:{shn:"သဵၼ်ႈတတ်းတေတတ်းၽၢၼ်ႇႁၢင်ႈ။ တူဝ်လိၵ်ႈယူႇၼႂ်း။",kac:"Kahtam ai lam gaw sumla hpe kahtam na. Laika ni gaw shingkang kata nga na.",th:"รอยตัดจะผ่านภาพ ตัวอักษรอยู่ด้านใน",zh:"裁切线会切进照片，文字留在内侧",vi:"Đường cắt đi xuyên qua ảnh. Chữ vẫn nằm bên trong.",id:"Garis potong memotong foto. Teks tetap di dalam.",ms:"Garis potong memotong foto. Teks kekal di dalam."},
   alb_spread:{shn:"သွင်ၼႃႈ",kac:"Laika shara lahkawng",th:"หน้าคู่",zh:"跨页",vi:"Trang đôi",id:"Halaman ganda",ms:"Halaman berkembar"},
   alb_shuffle:{shn:"ဢႃႈႁၢင်ႈမႂ်ႇ",kac:"Sumla ni hpe gayau",th:"สลับภาพใหม่",zh:"重新洗牌照片",vi:"Xáo lại ảnh",id:"Acak ulang foto",ms:"Kocok semula foto"},
@@ -5801,6 +5878,9 @@ var TOPGROUPS=[
    tools/build_app_data.js moves the cut forward; the panel lifts this list
    (js/hnk_whats_new.js), so its boot parses these rows and no more. */
 var WHATS_NEW = [
+  { v:"6.107.0", kind:"page", ref:"pgAlbum",
+    t:{my:"Album စာမျက်နှာ သပ်ရပ်သွားပြီ — အရွယ်ကို ကိုယ်တိုင် ချိန်လို့ရပြီ",en:"The Album page, tidy — and the size is yours to set",shn:"ၼႃႈလိၵ်ႈ Album မူတ်းသႂ် — ၶႅပ်းလူင်ႇ လိူၵ်ႈႁင်းၵူၺ်းလႆႈ",kac:"Album laika shara hkrak sai — kaba gaw nang hkyen na",th:"หน้าอัลบั้มเป็นระเบียบแล้ว — และขนาดเป็นของคุณ",zh:"相册页面整齐了 — 尺寸由你决定",vi:"Trang album gọn gàng — và kích thước là của bạn",id:"Halaman album jadi rapi — dan ukurannya milik Anda",ms:"Halaman album kemas — dan saiznya milik anda"},
+    s:{my:"**Library ▸ Album — ဖုန်း · ကွန်ပျူတာ · Photoshop panel သုံးမျိုးလုံးမှာ သပ်ရပ်။** ခလုတ်တွေ၊ chip တွေ အားလုံး အတန်းညီညီ တစ်ရွယ်တည်း ဖြစ်သွားပြီ — အရင်က ၉ ခု ၄/၄/၁ ကျနေတာ၊ ခလုတ် ၄ ခု အကျယ် ၄ မျိုး ဖြစ်နေတာ ပျောက်သွားပြီ။ အကျယ်ကို panel ကိုယ်တိုင် တိုင်းပြီး တန်းအရေအတွက် ရွေးတာမို့ Photoshop မှာလည်း အတူတူ သပ်ရပ်ပါတယ်။\n\n**အရွယ်ကို ကိုယ်တိုင် ချိန်ပါ။** အဆင်သင့် အရွယ် ၂၄ မျိုးအောက်မှာ *ကိုယ်ပိုင် အရွယ်* အမြဲ ရှိနေပါပြီ — အလျား/အနံကို **ရိုက်ထည့်လည်းရ ဆွဲလည်းရ**၊ unit (in · cm · mm · px) နဲ့ DPI ကိုယ်တိုင် ရွေး၊ ⇄ လှည့်၊ အချိုးအစား သော့ခတ်။ ဖွင့်ထားတဲ့ အရွယ်ကနေ စတာမို့ ဆွဲလိုက်တာနဲ့ ကိုယ်ကြည့်နေတဲ့ စာမျက်နှာ ရွေ့ပါတယ်။ အရမ်းကြီးလွန်းရင် ကြိုတင် ပြောပါတယ်။\n\n**စာတန်းတွေ ရှင်းသွားပြီ။** အပြင်အဆင် အောက်က `f4d` လို ကုဒ် မပါတော့ဘူး — မျိုးရိုးအမည် · ပုံအရေအတွက် · အလိုအလျောက်/ကိုယ်တိုင် ပဲ ပြပါတယ်။ စာသား ကတ်မှာ role နာမည်က ကွက်လပ် မယူတော့ဘဲ အပေါ်တက်သွားလို့ ဖုန်းမှာ နေရာ ပိုရပါပြီ။",en:"**Library ▸ Album — tidy on a phone, a computer and the Photoshop panel.** Every chip and every button is now one width in even columns: the nine occasion chips that fell 4 / 4 / 1 and the four page buttons that were 160, 85, 111 and 132 px wide are gone. The panel measures its own width and picks the column count, so Photoshop gets the same tidy page.\n\n**Set the size yourself.** Under the twenty-four ready sizes there is now a *Your own size* block that is always there — **type the width and height or drag them**, choose the unit (in · cm · mm · px) and the DPI, turn the page with ⇄, lock the proportion. It starts from the size you are looking at, so a drag moves the page you have. A size too big to export says so before you lay forty pages into it.\n\n**The lines say what they mean.** The line under the layouts no longer prints a code like `f4d` — it names the family, the number of photographs and whether the page chose it or you did. The role name in the words card moved above its field, which gives the whole width back on a phone.",shn:"**Library ▸ Album — ၾူၼ်း · ၶွမ်း · Photoshop panel သၢမ်ဢၼ် မူတ်းသႂ်။** ၶိူင်ႈၵူႈဢၼ် ၵႂၢင်ႈမိူၼ်ၵၼ်၊ ႁႅင်းသဵၼ်ႈမိူၼ်ၵၼ်။ panel တႅၵ်ႈႁင်းၵူၺ်းသေ လိူၵ်ႈသဵၼ်ႈ။\n\n**ၶႅပ်းလူင်ႇ လိူၵ်ႈႁင်းၵူၺ်း။** ပေႃႉသႂ်ႇ ဢမ်ႇၼၼ် လၢၵ်ႈ၊ unit တင်း DPI လိူၵ်ႈ၊ ⇄ ပိၼ်ႇ၊ သၢႆငၢႆ ၵိုမ်း။ ယႂ်ႇပူၼ်ႉတီႈ တေလၢတ်ႈဝႃႈယႂ်ႇပူၼ်ႉ။\n\n**ၽႃႇသႃႇ မႅၼ်ႈ။** ၶူတ်ႉ `f4d` ဢမ်ႇမီးယဝ်ႉ — ၸိုဝ်ႈမုၵ်ႉ · ႁၢင်ႈလၢႆႁၢင်ႈ · ႁင်းၵူၺ်း/လိူၵ်ႈႁင်းၵူၺ်း ၵူၺ်း။",kac:"**Library ▸ Album — mahkrun, kungpyu, Photoshop panel masum hta hkrak sai.** Chip ni hte button ni yawng kaba langai sha, shara langai hta shingdu langai sha. Panel gaw shi a kaba shi shadawn nna shara kadai lu ai hpe hkyen ai.\n\n**Kaba gaw nang hkyen na.** Ka-ang u, n rai yang gang u; unit hte DPI nang hkyen u; ⇄ galai u; shingdu jahkrat u. Grau kaba yang, tsun dan na.\n\n**Ga ni gaw teng man ai.** `f4d` zawn re code gaw n pru sai — amyu a mying, sumla kade, hte nang hkyen ai kun ngu sha.",th:"**Library ▸ Album — เป็นระเบียบทั้งบนโทรศัพท์ คอมพิวเตอร์ และแผง Photoshop** ทุกชิปและทุกปุ่มกว้างเท่ากันในคอลัมน์ที่เท่ากัน แผงวัดความกว้างของตัวเองแล้วเลือกจำนวนคอลัมน์\n\n**กำหนดขนาดเอง** ใต้ขนาดสำเร็จรูป 24 แบบมีบล็อก *ขนาดของคุณเอง* อยู่เสมอ — พิมพ์หรือลากก็ได้ เลือกหน่วยและ DPI สลับด้านด้วย ⇄ คงสัดส่วนได้ ถ้าใหญ่เกินไปจะบอกก่อน\n\n**บรรทัดบอกสิ่งที่หมายถึง** ไม่มีรหัสอย่าง `f4d` อีกแล้ว — บอกชื่อรูปแบบ จำนวนภาพ และว่าคุณเลือกเองหรือไม่",zh:"**Library ▸ Album — 手机、电脑和 Photoshop 面板上都整齐。** 每个标签和按钮在等宽栏里同宽同高；面板自己量宽度并决定栏数。\n\n**尺寸由你决定。** 24 个预设尺寸下面永远有一个*自定尺寸*区块 — 可输入也可拖动，自选单位与 DPI，用 ⇄ 转向，可锁比例。太大时会提前告知。\n\n**文字说人话。** 版面下不再打印 `f4d` 这样的代码 — 只说版式名称、照片数量，以及是自动还是你选的。",vi:"**Library ▸ Album — gọn trên điện thoại, máy tính và bảng Photoshop.** Mọi chip và nút giờ cùng một bề rộng trong các cột đều nhau; bảng tự đo bề rộng và chọn số cột.\n\n**Kích thước là của bạn.** Dưới 24 kích thước có sẵn luôn có khối *Kích thước của bạn* — gõ hoặc kéo, chọn đơn vị và DPI, xoay bằng ⇄, khóa tỉ lệ. Quá lớn thì báo trước.\n\n**Các dòng nói đúng nghĩa.** Không còn mã như `f4d` — chỉ tên bố cục, số ảnh, và tự động hay bạn chọn.",id:"**Library ▸ Album — rapi di ponsel, komputer dan panel Photoshop.** Setiap chip dan tombol kini satu lebar dalam kolom yang rata; panel mengukur lebarnya sendiri dan memilih jumlah kolom.\n\n**Ukurannya milik Anda.** Di bawah 24 ukuran siap pakai selalu ada blok *Ukuran Anda sendiri* — ketik atau geser, pilih satuan dan DPI, putar dengan ⇄, kunci rasio. Terlalu besar akan diberi tahu lebih dulu.\n\n**Barisnya jujur.** Tidak ada lagi kode seperti `f4d` — hanya nama tata letak, jumlah foto, dan otomatis atau pilihan Anda.",ms:"**Library ▸ Album — kemas pada telefon, komputer dan panel Photoshop.** Setiap cip dan butang kini satu lebar dalam lajur sama rata; panel mengukur lebarnya sendiri dan memilih bilangan lajur.\n\n**Saiznya milik anda.** Di bawah 24 saiz sedia ada sentiasa ada blok *Saiz anda sendiri* — taip atau seret, pilih unit dan DPI, putar dengan ⇄, kunci nisbah. Terlalu besar akan diberitahu dahulu.\n\n**Barisnya jujur.** Tiada lagi kod seperti `f4d` — hanya nama susun atur, bilangan foto, dan automatik atau pilihan anda."} },
   { v:"6.106.0", kind:"page", ref:"pgAlbum",
     t:{my:"အယ်လ်ဘမ် ပြင်ပ ထွက်ပြီ — ပုံနှိပ် PDF၊ အလွှာပါ PSD၊ ပုံတွေ အနားထိ",en:"The album leaves the studio — a print PDF, a layered PSD, photos that run off the edge",shn:"ပပ်ႉႁၢင်ႈဢွၵ်ႇပႃႈၼွၵ်ႈ — PDF ပွတ်ႈ, PSD မီးသၢၼ်, ႁၢင်ႈထိုင်ႁိမ်း",kac:"Laika buk gaw shinggan de pru sai — PDF lakhak, PSD lakhap, sumla makau du hkra",th:"อัลบั้มออกจากสตูดิโอแล้ว — PDF สำหรับพิมพ์ PSD แบบเลเยอร์ และภาพชนขอบ",zh:"相册可以交出去了 — 印刷 PDF、分层 PSD、照片出血到边",vi:"Album rời khỏi studio — PDF in, PSD nhiều lớp, ảnh tràn ra mép",id:"Album keluar dari studio — PDF cetak, PSD berlapis, foto sampai tepi",ms:"Album keluar dari studio — PDF cetak, PSD berlapis, foto hingga ke tepi"},
     s:{my:"**Library ▸ Album — ဆိုင်တွေ တကယ်တောင်းတဲ့ ဖိုင် နှစ်မျိုး။** *ပုံနှိပ် PDF · အယ်လ်ဘမ် တစ်အုပ်လုံး* — စာမျက်နှာတိုင်း အရွယ်အတိုင်း၊ အနားပိုနဲ့ ဖြတ်မျဉ်း ၈ ခုပါပြီး ဖိုင်တစ်ခုတည်း။ ပုံတွေကို ပြန်ဖိအားပေး မသိမ်းပါဘူး။ *အလွှာပါ PSD · ဒီစာမျက်နှာ* — အဖြူအခင်းတစ်ခု၊ ပုံတစ်ပုံလျှင် အလွှာတစ်ခု၊ စာတစ်ကြောင်းလျှင် တစ်ခု — Photoshop မှာ ပြန်ရွှေ့လို့ ပြန်ရိုက်လို့ ရတယ်။ **ပုံတွေ အနားထိ** — ပုံက စာရွက်အနားကို ကျော်ထွက်ပြီး ဓားက ပုံထဲကို ဖြတ်တယ်၊ စာလုံးတွေကတော့ အထဲမှာပဲ နေတယ်။ **စာမျက်နှာ နှစ်ဖက်** — စာအုပ်ဖွင့်လိုက်ရင် တွေ့ရမယ့် နှစ်မျက်နှာကို ယှဉ်ပြတယ်။ **ရောမွှေ** — ပုံအရေအတွက် အတူတူထားပြီး ပုံတွေကို ပြန်ဝေတယ်။ **နိဂုံးစာမျက်နှာ** — studio နာမည်နဲ့ အယ်လ်ဘမ်ကို လက်မှတ်ထိုးပေးတယ်။",en:"**Library ▸ Album — the two files a print shop and a retoucher actually ask for.** *Print PDF · whole album* writes one file: every page at its real size, with the bleed, the trim and eight crop marks — and the photographs are not re-encoded on the way in. *Layered PSD · this page* writes the open page as layers — a white base, one layer per photograph, one per line of type — so anyone can nudge a picture or reset a line in Photoshop. **Photos to the edge** lays a page out over the trim instead of the safe area, so a picture runs off the paper and the guillotine cuts through it; the words always stay inside. **Spread** shows the two pages that face each other when the book opens. **Shuffle** deals every photograph again into the same page counts. **Closing page** signs the album with the studio's name in the album's own face.",shn:"**Library ▸ Album — ၾၢႆႇသွင်မဵဝ်း ဢၼ်ႁၢၼ်ႉပွတ်ႈလူဝ်ႇ။** *PDF ပွတ်ႈ · တင်းပပ်ႉ* — ၼႃႈလိၵ်ႈၵူႈၼႃႈ ၶၢဝ်ႇတဵမ်, မီးႁိမ်းလိူဝ်လႄႈ သဵၼ်ႈတတ်း 8 ဢၼ်, ၾၢႆႇလဵဝ်။ ႁၢင်ႈဢမ်ႇလႆႈသႂ်ႇမႂ်ႇ။ *PSD မီးသၢၼ် · ၼႃႈၼႆႉ* — သၢၼ်ၶၢဝ်, ႁၢင်ႈၼိုင်ႈသၢၼ်ၼိုင်ႈ, လိၵ်ႈၼိုင်ႈသၢၼ်ၼိုင်ႈ — Photoshop ၼႂ်း ၶၢႆႉလႆႈ ႁဵတ်းမႂ်ႇလႆႈ။ **ႁၢင်ႈထိုင်ႁိမ်း** — ႁၢင်ႈပူၼ်ႉႁိမ်းၸေႈ သေ မိတ်ႈတတ်းၽၢၼ်ႇႁၢင်ႈ, တူဝ်လိၵ်ႈယူႇၼႂ်း။ **သွင်ၼႃႈ** — ပိုတ်ႇပပ်ႉမႃး တေႁၼ်သွင်ၼႃႈၸွမ်းၵၼ်။ **ဢႃႈမႂ်ႇ** — ၼပ်ႉႁၢင်ႈတိုၵ်ႉၼင်ႇၵဝ်ႇ သေ ဝႄႈမႂ်ႇ။ **ၼႃႈသုတ်း** — ၸိုဝ်ႈႁၢၼ်ႉ သႂ်ႇပၼ်။",kac:"**Library ▸ Album — laika lakhak nta hte sumla galaw ai ni tut hpyi ai file lahkawng.** *PDF lakhak · laika buk yawng* — laika shara yawng tinang a kaba hte, makau jaw, kahtam lam hte kahtam masat 8, file langai sha. Sumla ni hpe bai jahpan na n re. *PSD lakhap · ndai laika shara* — ahpraw ginshang langai, sumla langai hpe lakhap langai, laika langai hpe langai — Photoshop kaw bai shamu bai ka lu ai. **Sumla ni makau du hkra** — sumla gaw laika makau hpe lai nna kahtam ai lam gaw sumla hpe kahtam na; laika ni gaw shingkang kata nga na. **Laika shara lahkawng** — laika buk hpaw yang mu na ai laika shara lahkawng hpe madun ai. **Gayau** — sumla hti ai gaw ndan sha, sumla ni hpe bai garan ya ai. **Hpang jahtum laika shara** — studio a mying hte laika buk hpe masat da ai.",th:"**Library ▸ Album — ไฟล์สองแบบที่โรงพิมพ์และช่างแต่งภาพขอจริง ๆ** *PDF สำหรับพิมพ์ · ทั้งอัลบั้ม* เขียนไฟล์เดียว ทุกหน้าขนาดจริง พร้อมระยะตัดตก เส้นตัด และเครื่องหมายมุมแปดเส้น — และภาพไม่ถูกบีบอัดซ้ำระหว่างทาง *PSD แบบเลเยอร์ · หน้านี้* เขียนหน้านี้เป็นเลเยอร์ — พื้นขาวหนึ่งชั้น ภาพละหนึ่งชั้น ข้อความละหนึ่งชั้น — ขยับภาพหรือพิมพ์ใหม่ใน Photoshop ได้ **ภาพชนขอบ** วางภาพทับขอบตัดแทนพื้นที่ปลอดภัย ภาพจึงล้นออกนอกกระดาษและรอยตัดผ่านภาพ ส่วนตัวอักษรอยู่ด้านในเสมอ **หน้าคู่** แสดงสองหน้าที่ประกบกันเมื่อเปิดเล่ม **สลับภาพใหม่** แจกภาพใหม่ในจำนวนหน้าเดิม **หน้าปิดท้าย** ลงชื่อสตูดิโอด้วยฟอนต์ของอัลบั้มเอง",zh:"**Library ▸ Album — 印刷厂和修图师真正要的两种文件。** *印刷 PDF · 整本相册* 写成一个文件：每页都是真实尺寸，带出血、裁切框和八条裁切线 — 照片不会被二次压缩。*分层 PSD · 本页* 把当前页写成图层 — 一层白底、每张照片一层、每行文字一层 — 在 Photoshop 里可以随意挪动或重打。**照片出血到边** 让照片铺到裁切线之外而不是安全框内，照片因此越出纸边、由裁刀切过；文字始终留在内侧。**跨页** 显示翻开时相对的两页。**重新洗牌照片** 在页数不变的前提下重新分配照片。**结尾页** 用相册自己的字体为作品署上工作室的名字。",vi:"**Library ▸ Album — hai tệp mà nhà in và thợ chỉnh ảnh thật sự cần.** *PDF in · cả album* ghi một tệp duy nhất: mỗi trang đúng kích thước thật, có tràn lề, khung cắt và tám dấu cắt — và ảnh không bị nén lại lần nữa. *PSD nhiều lớp · trang này* ghi trang đang mở thành các lớp — một nền trắng, mỗi ảnh một lớp, mỗi dòng chữ một lớp — để ai cũng chỉnh được trong Photoshop. **Ảnh tràn ra mép** trải ảnh ra ngoài đường cắt thay vì trong vùng an toàn, nên ảnh chạy khỏi giấy và dao cắt đi xuyên qua; chữ thì luôn nằm bên trong. **Trang đôi** cho thấy hai trang đối diện khi mở sách. **Xáo lại ảnh** chia lại toàn bộ ảnh vào đúng số lượng trang cũ. **Trang kết** ký tên studio bằng chính phông chữ của album.",id:"**Library ▸ Album — dua berkas yang benar-benar diminta percetakan dan retoucher.** *PDF cetak · seluruh album* menulis satu berkas: setiap halaman pada ukuran aslinya, lengkap dengan bleed, garis potong, dan delapan tanda potong — dan fotonya tidak dikompres ulang. *PSD berlapis · halaman ini* menulis halaman yang terbuka sebagai lapisan — satu dasar putih, satu lapisan per foto, satu per baris teks — sehingga siapa pun bisa menggeser atau mengetik ulang di Photoshop. **Foto sampai tepi** menata halaman di atas garis potong, bukan di area aman, sehingga foto melewati tepi kertas dan pisau memotong menembusnya; teks selalu di dalam. **Halaman ganda** memperlihatkan dua halaman yang berhadapan saat buku dibuka. **Acak ulang foto** membagi semua foto lagi ke jumlah halaman yang sama. **Halaman penutup** menandatangani album dengan nama studio dalam huruf album itu sendiri.",ms:"**Library ▸ Album — dua fail yang betul-betul diminta kedai cetak dan penyunting foto.** *PDF cetak · seluruh album* menulis satu fail: setiap halaman pada saiz sebenar, lengkap dengan bleed, garis potong dan lapan tanda potong — dan fotonya tidak dimampatkan semula. *PSD berlapis · halaman ini* menulis halaman terbuka sebagai lapisan — satu dasar putih, satu lapisan bagi setiap foto, satu bagi setiap baris teks — supaya sesiapa boleh mengalih atau menaip semula dalam Photoshop. **Foto hingga ke tepi** menyusun halaman di atas garis potong dan bukan kawasan selamat, jadi foto terkeluar dari kertas dan pisau memotong menembusinya; teks sentiasa di dalam. **Halaman berkembar** menunjukkan dua halaman bertentangan apabila buku dibuka. **Kocok semula foto** mengagihkan semula semua foto ke jumlah halaman yang sama. **Halaman penutup** menandatangani album dengan nama studio dalam huruf album itu sendiri."} },
@@ -30076,7 +30156,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.106.0";
+var APP_VER="6.107.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -31678,6 +31758,10 @@ var ALBUM = (function(){
 
   function blankDoc(){
     return { v:4, sizeId:"12x36", custom:{ w:12, h:36, unit:"in", dpi:300 },
+             /* 6.107.0 wave E — the free size keeps two preferences of its own: which preset group
+                the chips are showing while a custom size is in use, and whether dragging one side
+                drags the other with it. */
+             customGroup:"spread", lockRatio:false,
              guides:true, view:"page", cur:0, pair:(D.defPair || "classic"), occ:(D.defOcc || ""),
              pages:[ blankPage() ] };
   }
@@ -31920,6 +32004,106 @@ var ALBUM = (function(){
 
   /* ======================= THE PAGE ======================= */
 
+  /* ======================= THE WIDTH, AND THE COLUMNS (6.107.0, wave E) =======================
+
+     The owner, with three photographs of this page: "မသပ်ရပ်ဘူး professional မဆန်ဘူး ui ux က
+     နောက်ပြီး အရှင်ချိန်လို့ရအောင်လုပ်ပေးပါ ဖုန်းကွန်ပျုတာ photoshop မှာ" — it is untidy and
+     unprofessional, and make it adjustable, on a phone, a computer and in Photoshop.
+
+     MEASURED, NOT DECLARED. Every ragged row in those photographs came from the same thing:
+     the rails were `flex-wrap` over items of their own natural widths, so nine occasion chips
+     fell 4 / 4 / 1 in three different heights and four page buttons came out 160, 85, 111 and
+     132 px wide. A stylesheet could fix that on the web with a grid and a breakpoint — but the
+     Photoshop panel this module was written to be lifted into draws no CSS grid and honours no
+     @media rule (panel/index.html carries none), so a layout that depends on either is a layout
+     that is tidy on a phone and ragged in Photoshop.
+
+     The width is therefore measured HERE, in script, and the column count is written onto the
+     rail as a class. albWidth asks the album root for its own clientWidth first; where that
+     reads zero — which is exactly what Photoshop's renderer returns — it falls back to the
+     6.79.0 ruler race (innerWidth, outerWidth, the visual viewport, then a matchMedia binary
+     search), less the padding every ancestor declares, which getComputedStyle echoes without
+     any layout at all. A browser never reaches past the first line. */
+  function albCssPx(cs, prop){ var v = parseFloat(cs && cs[prop]); return isFinite(v) ? v : 0; }
+  function albViewportW(){
+    var w = (typeof window !== "undefined" && window.innerWidth) || 0; if (w > 0) return w;
+    try { w = window.outerWidth || 0; if (w > 0) return w; } catch(e){}
+    try { w = (window.visualViewport && window.visualViewport.width) || 0; if (w > 0) return w; } catch(e){}
+    try {
+      if (typeof window.matchMedia !== "function") return 0;
+      if (!window.matchMedia("(min-width: 1px)").matches || window.matchMedia("(min-width: 20000px)").matches) return 0;
+      var lo = 1, hi = 20000, i;
+      for (i=0;i<16 && hi-lo>1;i++){ var mid = Math.floor((lo+hi)/2); if (window.matchMedia("(min-width: "+mid+"px)").matches) lo = mid; else hi = mid; }
+      return lo;
+    } catch(e2){ return 0; }
+  }
+  var ALB_FALLBACK_W = 340;           /* the Photoshop panel's own column, where nothing measures */
+  function albWidth(){
+    var el = ROOT;
+    if (el && el.clientWidth > 0) return el.clientWidth;
+    if (H && typeof H.stageWidth === "function"){ try { var hw = H.stageWidth(el); if (hw > 0) return hw; } catch(e){} }
+    var vw = albViewportW(); if (!(vw > 0)) return ALB_FALLBACK_W;
+    var n = el, pad = 0, guard = 0;
+    while (n && n.nodeType === 1 && guard++ < 40){
+      var cs = null; try { cs = getComputedStyle(n); } catch(e3){ cs = null; }
+      if (cs) pad += albCssPx(cs,"paddingLeft") + albCssPx(cs,"paddingRight")
+                   + albCssPx(cs,"borderLeftWidth") + albCssPx(cs,"borderRightWidth")
+                   + albCssPx(cs,"marginLeft") + albCssPx(cs,"marginRight");
+      if (n === document.body) break;
+      n = n.parentNode;
+    }
+    return Math.max(200, vw - pad);
+  }
+  /* WHOLE ROWS WHERE THE COUNT ALLOWS. Nine occasions at four columns is the 4 / 4 / 1 the owner
+     photographed; at three it is three tidy rows of three. So the cap that the width earns is
+     the LARGEST column count tried, and the count actually used is the largest whole divisor of
+     the item count at or below it — falling back to the cap when the count is prime. */
+  function evenCols(n, cap){
+    var c = Math.min(cap, Math.max(1, n)), i;
+    if (c < 2) return 1;
+    for (i=c;i>=2;i--) if (n % i === 0) return i;
+    return c;
+  }
+  /* the cap each kind of rail earns at a measured width. A chip with a drawing in it wants a
+     cell near its drawing's size; a chip with only words wants as few columns as read well. */
+  function albCap(kind, w){
+    var narrow = w < 380, phone = w < 560, mid = w < 820;
+    if (kind === "occ")  return narrow ? 4 : phone ? 5 : mid ? 6 : 9;
+    if (kind === "tpl")  return narrow ? 4 : phone ? 5 : mid ? 7 : 8;
+    if (kind === "size") return narrow ? 2 : phone ? 3 : mid ? 4 : 6;
+    if (kind === "pair") return narrow ? 2 : phone ? 3 : mid ? 4 : 6;
+    if (kind === "btn")  return narrow ? 2 : phone ? 2 : 4;
+    return 2;
+  }
+  function albCols(kind, n, w){ return evenCols(n, albCap(kind, (w > 0) ? w : albWidth())); }
+  /* a rail of even cells: every item gets the same width, and align-items:stretch gives every
+     item in a row the same height whether its label wrapped or not */
+  function grid(kind, items, w){
+    var row = E("div", "alb-grid alb-c" + albCols(kind, items.length, w)), i;
+    for (i=0;i<items.length;i++){
+      var cell = E("div","alb-cell");
+      cell.appendChild(items[i]);
+      row.appendChild(cell);
+    }
+    return row;
+  }
+  /* a small uppercase heading inside a card — the hierarchy the photographs had none of */
+  function subh(text){ return E("p","subh", text); }
+  /* the width bucket the page was last drawn at. A resize only redraws when it crosses one of
+     these, because render() replaces every node and a student typing a caption would lose the
+     caret to a one-pixel window drag. */
+  function widthBucket(w){ return w < 380 ? 0 : w < 560 ? 1 : w < 820 ? 2 : 3; }
+  var BUCKET = -1, RESZ = null, RESIZE_BOUND = false;
+  function onResize(){
+    if (RESZ) clearTimeout(RESZ);
+    RESZ = setTimeout(function(){
+      RESZ = null;
+      if (!ROOT || !MOUNTED) return;
+      if (widthBucket(albWidth()) === BUCKET) { repaint(); return; }
+      render();
+    }, 140);
+  }
+
   function L(k){ return (H && typeof H.t === "function") ? H.t(k) : k; }
   function E(tag, cls, txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; }
   function chip(label, on, fn){
@@ -32037,23 +32221,31 @@ var ALBUM = (function(){
      The name beside it is set in the STUDIO's face, never the album's: the album's twenty
      families are declared under handles nothing else in the app names, and a chip that used one
      would pull a typeface down on a page that has not asked for one yet. */
+  /* THE OCCASION'S PLAN, DRAWN. Three mini pages — the opener and the two page counts the plan
+     repeats — each with the layout that count would actually pick. 6.107.0 cuts the canvas at
+     twice the size it is shown at (168 x 56 for a cell up to 104 px wide), gives every page a
+     hairline frame and every cell a gap, so a monitor gets a drawing rather than a blown-up
+     blur, and a phone gets three readable pages instead of the plain yellow blocks the owner
+     photographed. */
   function planSketch(o){
     var cv = document.createElement("canvas");
-    cv.className = "alb-plan"; cv.width = 84; cv.height = 28;
+    cv.className = "alb-plan"; cv.width = 168; cv.height = 56;
     var x = cv.getContext("2d"); if (!x) return cv;
-    x.fillStyle = "#f4f2ee"; x.fillRect(0,0,84,28);
+    x.fillStyle = "#12161d"; x.fillRect(0,0,168,56);
     var counts = [1, (o.plan[0]|0) || 1, (o.plan[1]|0) || 1], i, j;
     for (i=0;i<3;i++){
-      var ox = i*28 + 1, n = clamp(counts[i], 1, MAXP), sq = [], k;
+      var ox = i*56 + 4, oy = 4, pw = 48, ph = 48;
+      var n = clamp(counts[i], 1, MAXP), sq = [], k;
       for (k=0;k<n;k++) sq.push({ w:1, h:1 });
       var a = autoTemplate(sq, i), t = (a && a.tpl) || tplsFor(n)[0];
-      x.fillStyle = "#ffffff"; x.fillRect(ox, 2, 26, 24);
+      x.fillStyle = "#ffffff"; x.fillRect(ox, oy, pw, ph);
+      x.strokeStyle = "#8a7124"; x.lineWidth = 1; x.strokeRect(ox+0.5, oy+0.5, pw-1, ph-1);
       x.fillStyle = "#c9a227";
       if (t){
         for (j=0;j<t.cells.length;j++){
           var c = t.cells[j];
-          x.fillRect(ox + Math.round(c.x*26), 2 + Math.round(c.y*24),
-                     Math.max(2, Math.round(c.w*26)), Math.max(2, Math.round(c.h*24)));
+          x.fillRect(ox + Math.round(c.x*pw) + 1, oy + Math.round(c.y*ph) + 1,
+                     Math.max(2, Math.round(c.w*pw) - 2), Math.max(2, Math.round(c.h*ph) - 2));
         }
       }
     }
@@ -32063,8 +32255,7 @@ var ALBUM = (function(){
   function occasionCard(){
     var card = E("section","card"); card.id = "albOccCard";
     card.appendChild(E("h2", null, L("alb_occ")));
-    var list = D.occasions || [], cur = curOcc(), i;
-    var row = E("div","row alb-occs"); row.id = "albOccs";
+    var list = D.occasions || [], cur = curOcc(), i, w = albWidth(), chips = [];
     for (i=0;i<list.length;i++){
       (function(oc){
         var b = E("button","chip alb-occ" + ((cur && cur.id === oc.id) ? " on" : ""), "");
@@ -32073,15 +32264,19 @@ var ALBUM = (function(){
         b.appendChild(planSketch(oc));
         b.appendChild(E("span","alb-occname", pick9(oc.name)));
         b.onclick = function(){ setOccasion(oc.id); };
-        row.appendChild(b);
+        chips.push(b);
       })(list[i]);
     }
+    var row = grid("occ", chips, w); row.id = "albOccs";
     card.appendChild(row);
+    /* 6.107.0 — the note used to repeat the whole size line the size card prints one card
+       lower, edge to edge: "... 36 x 12 in - 10800 x 3600 px - 300 DPI - bleed 3 mm - gutter
+       5 mm". The occasion's own two facts are what belongs here; the size belongs to the size
+       card, where it can now be changed. */
     var note = E("p","mut"); note.id = "albOccNote";
     if (cur){
-      var pr = pairById(cur.pair), sz = sizeById(cur.size);
-      note.textContent = pick9(cur.note) + " · " + (pr ? pick9(pr.label) : cur.pair) +
-                         (sz ? (" · " + sizeLine(sz, pagePx(sz))) : "");
+      var pr = pairById(cur.pair);
+      note.textContent = pick9(cur.note) + (pr ? (" \u00b7 " + pick9(pr.label)) : "");
     } else note.textContent = L("alb_occ_note");
     card.appendChild(note);
 
@@ -32097,88 +32292,231 @@ var ALBUM = (function(){
     return card;
   }
 
+  /* ======================= THE SIZE, FREELY SET (6.107.0, wave E) =======================
+
+     "အရှင်ချိန်လို့ရအောင်လုပ်ပေးပါ" — make it adjustable. Until this wave the album's page size
+     could only be one of twenty-four fixed chips; a free size existed, but it was hidden behind
+     a seventh group chip called "Custom", it started at 12 x 36 inches whatever was on screen,
+     and it offered nothing but four bare number boxes. A studio that prints for a customer is
+     told a size, and it is rarely one of twenty-four.
+
+     So the free control is now ALWAYS on the card, under the presets, and it is both things the
+     owner asked for: a number you TYPE and a rail you DRAG. It starts from the size on screen —
+     touch it and the size you were looking at is copied in first, so dragging moves the page you
+     have, not a panorama you never chose. A lock keeps the proportion while you drag; a swap
+     turns the page on its side; the unit and the DPI are the student's too.
+
+     AND IT CANNOT BE ASKED FOR A PAGE THAT CANNOT BE MADE. Every bound below is derived from
+     SIDE_MAX, not guessed: at 300 DPI sixty inches is 18,000 px and allowed, at 600 DPI the same
+     sixty inches is 36,000 px and the control stops at forty. Past MP_WARN the card says so in
+     the student's own language rather than letting a phone run out of canvas half way through a
+     PDF of forty pages. */
+  var SIDE_MAX = 24000;    /* px on one side: past this no canvas in this studio will draw the page */
+  var MP_WARN  = 120;      /* megapixels: a phone's canvas gives out around here */
+  var UNIT_SPAN = { "in":{ min:2,  max:60,   step:0.25 },
+                    "cm":{ min:5,  max:150,  step:0.5  },
+                    "mm":{ min:50, max:1500, step:1    },
+                    "px":{ min:400,max:20000,step:20   } };
+
+  function unitToPx(v, unit, dpi){
+    if (unit === "px") return v;
+    if (unit === "mm") return mmPx(v, dpi);
+    if (unit === "cm") return mmPx(v*10, dpi);
+    return v*dpi;
+  }
+  function pxToUnit(px, unit, dpi){
+    if (unit === "px") return px;
+    if (unit === "mm") return px/dpi*25.4;
+    if (unit === "cm") return px/dpi*2.54;
+    return px/dpi;
+  }
+  /* the largest number this unit may carry at this DPI without the page passing SIDE_MAX */
+  function unitMax(unit, dpi){
+    var span = UNIT_SPAN[unit] || UNIT_SPAN["in"];
+    var ceil = pxToUnit(SIDE_MAX, unit, dpi);
+    var m = Math.min(span.max, ceil);
+    return Math.max(span.min, Math.round(m*100)/100);
+  }
+  /* THE FREE SIZE STARTS FROM WHAT IS ON SCREEN. Touching any control copies the size the
+     student is looking at into DOC.custom and switches to it — the one thing the old card
+     could not do, and the reason its 12 x 36 default was the first thing every student saw. */
+  function seedCustom(){
+    if (DOC.sizeId === "custom") return DOC.custom || (DOC.custom = { w:12, h:36, unit:"in", dpi:300 });
+    var sz = curSize() || { w:8, h:12, unit:"in", dpi:300 };
+    DOC.custom = { w: sz.w, h: sz.h, unit: sz.unit, dpi: sz.dpi || 300 };
+    DOC.sizeId = "custom";
+    return DOC.custom;
+  }
+  function customNow(){ return DOC.custom || (DOC.custom = { w:12, h:36, unit:"in", dpi:300 }); }
+
   function sizeCard(){
     var card = E("section","card"); card.id = "albSizeCard";
-    var h = E("h2", null, L("alb_size_h")); card.appendChild(h);
-    var sz = curSize(), px = pagePx(sz);
+    card.appendChild(E("h2", null, L("alb_size_h")));
+    var sz = curSize(), px = pagePx(sz), w = albWidth();
 
-    var groups = E("div","row alb-groups"); groups.id = "albGroups";
-    var gi;
+    /* what you are making, said once and said loud */
+    var val = E("p","alb-value"); val.id = "albSizeVal";
+    val.textContent = (sz.unit === "px") ? (sz.w + " \u00d7 " + sz.h + " px")
+                                         : (trim(sz.w) + " \u00d7 " + trim(sz.h) + " " + sz.unit);
+    card.appendChild(val);
+    var sub = E("p","alb-sub"); sub.id = "albSizeNote";
+    sub.textContent = sizeLine(sz, px);
+    card.appendChild(sub);
+    var warn = sizeWarning(px);
+    if (warn){ var wn = E("p","alb-warn", warn); wn.id = "albSizeWarn"; card.appendChild(wn); }
+
+    /* the presets, in even columns */
+    card.appendChild(subh(L("alb_size_preset")));
+    var gi, gchips = [];
     for (gi=0; gi<D.sizeGroups.length; gi++){
       (function(g){
-        groups.appendChild(chip(pick9(g.label), (curGroup()===g.id), function(){ setGroup(g.id); }));
+        if (g.id === "custom") return;      /* 6.107.0 — the free size is a block of its own now */
+        gchips.push(chip(pick9(g.label), (curGroup()===g.id), function(){ setGroup(g.id); }));
       })(D.sizeGroups[gi]);
     }
+    var groups = grid("size", gchips, w); groups.id = "albGroups";
     card.appendChild(groups);
 
-    var list = E("div","row alb-sizes"); list.id = "albSizes";
-    if (curGroup() === "custom"){
-      list.appendChild(customFields());
-    } else {
-      var i;
-      for (i=0;i<D.sizes.length;i++){
-        if (D.sizes[i].group !== curGroup()) continue;
-        (function(s){
-          var lbl = (s.unit === "px") ? (s.w + "×" + s.h) : (trim(s.w) + " × " + trim(s.h) + " " + s.unit);
-          list.appendChild(chip(lbl, DOC.sizeId === s.id, function(){ DOC.sizeId = s.id; onDocChange(true); }));
-        })(D.sizes[i]);
-      }
+    var schips = [], i, gnow = curGroup();
+    for (i=0;i<D.sizes.length;i++){
+      if (D.sizes[i].group !== gnow) continue;
+      (function(sp){
+        var lbl = (sp.unit === "px") ? (sp.w + "\u00d7" + sp.h) : (trim(sp.w) + " \u00d7 " + trim(sp.h) + " " + sp.unit);
+        schips.push(chip(lbl, DOC.sizeId === sp.id, function(){ DOC.sizeId = sp.id; onDocChange(true); }));
+      })(D.sizes[i]);
     }
+    var list = grid("size", schips, w); list.id = "albSizes";
     card.appendChild(list);
 
-    var note = E("p","mut"); note.id = "albSizeNote";
-    note.textContent = sizeLine(sz, px);
-    card.appendChild(note);
+    /* the free size */
+    card.appendChild(subh(L("alb_size_own")));
+    card.appendChild(freeSize());
     return card;
   }
   function trim(n){ return (Math.round(n*100)/100) + ""; }
+  /* 6.107.0 — "custom" is no longer one of the groups: it is the block under them. A document
+     saved by an older version may still carry a size id of "custom", so the reader keeps it. */
   function curGroup(){
-    if (DOC.sizeId === "custom") return "custom";
+    if (DOC.sizeId === "custom") return DOC.customGroup || "portrait";
     var s = sizeById(DOC.sizeId);
     return s ? s.group : "spread";
   }
   function setGroup(id){
-    if (id === "custom"){ DOC.sizeId = "custom"; }
-    else {
-      var i; for (i=0;i<D.sizes.length;i++) if (D.sizes[i].group === id){ DOC.sizeId = D.sizes[i].id; break; }
-    }
+    var i; for (i=0;i<D.sizes.length;i++) if (D.sizes[i].group === id){ DOC.sizeId = D.sizes[i].id; break; }
+    DOC.customGroup = id;
     onDocChange(true);
   }
-  /* "36 × 12 in · 10800 × 3600 px · 300 DPI · bleed 3 mm · gutter 5 mm" — the whole truth of
-     what will come out, in one line, before anybody spends a minute laying photos into it */
+  /* "10800 x 3600 px - 300 DPI - bleed 3 mm - gutter 5 mm" — everything the size decides that is
+     not the size itself. The size's own numbers are the headline above this line, not part of it. */
   function sizeLine(sz, px){
     var parts = [];
-    parts.push((sz.unit === "px") ? (sz.w + " × " + sz.h + " px") : (trim(sz.w) + " × " + trim(sz.h) + " " + sz.unit));
-    if (sz.unit !== "px") parts.push(px.w + " × " + px.h + " px");
+    if (sz.unit !== "px") parts.push(px.w + " \u00d7 " + px.h + " px");
     parts.push(px.dpi + " DPI");
     parts.push(L("alb_bleed") + " " + D.bleedMm + " mm");
     if (sz.group === "spread") parts.push(L("alb_gutter") + " " + D.gutterMm + " mm");
-    return parts.join(" · ");
+    return parts.join(" \u00b7 ");
   }
-  function customFields(){
-    var wrap = E("div","row alb-custom"); wrap.id = "albCustom";
-    var c = DOC.custom || (DOC.custom = { w:12, h:36, unit:"in", dpi:300 });
-    function num(id, key, min, max){
-      var i = document.createElement("input");
-      i.type = "number"; i.id = id; i.className = "inp alb-num";
-      i.value = c[key]; i.min = min; i.max = max; i.step = (key === "dpi") ? 1 : 0.1;
-      i.oninput = function(){
-        var v = parseFloat(i.value);
-        if (isFinite(v)) { c[key] = clamp(v, min, max); onDocChange(true); }
-      };
-      return i;
+  /* a page nobody's machine will finish is said so here, before forty of them are laid out */
+  function sizeWarning(px){
+    if (!px) return "";
+    var mp = (px.w*px.h)/1000000;
+    if (px.w > SIDE_MAX || px.h > SIDE_MAX)
+      return L("alb_size_max").replace("{N}", String(SIDE_MAX));
+    if (mp > MP_WARN)
+      return L("alb_size_big").replace("{W}", String(px.w)).replace("{H}", String(px.h))
+                              .replace("{M}", String(Math.round(mp)));
+    return "";
+  }
+
+  /* THE FREE SIZE BLOCK. Two rows that each carry a number box and a rail over the same value —
+     type it or drag it, whichever the student reaches for — then the unit, the DPI, a swap and a
+     ratio lock. Every one of them seeds from the size on screen the first time it is touched. */
+  function freeSize(){
+    var box = E("div"); box.id = "albFree";
+    var c = customNow(), on = (DOC.sizeId === "custom");
+    var unit = on ? c.unit : (curSize().unit || "in");
+    var dpi  = on ? (c.dpi||300) : (curSize().dpi||300);
+    var span = UNIT_SPAN[unit] || UNIT_SPAN["in"];
+    var lo = span.min, hi = unitMax(unit, dpi), step = span.step;
+    var shown = on ? c : curSize();
+    var cur = { w: clamp(shown.w, lo, hi), h: clamp(shown.h, lo, hi) };
+
+    function commit(key, v){
+      var k = seedCustom();
+      var lim = unitMax(k.unit, k.dpi||300), sp = UNIT_SPAN[k.unit] || UNIT_SPAN["in"];
+      var nv = clamp(v, sp.min, lim);
+      if (DOC.lockRatio && (key === "w" || key === "h")){
+        var other = (key === "w") ? "h" : "w";
+        var ratio = (cur[other] > 0 && cur[key] > 0) ? (cur[other]/cur[key]) : 1;
+        k[other] = clamp(Math.round(nv*ratio*100)/100, sp.min, lim);
+      }
+      k[key] = nv;
+      onDocChange(true);
     }
-    wrap.appendChild(E("span","mut", L("alb_width"))); wrap.appendChild(num("albCustomW","w",1,120));
-    wrap.appendChild(E("span","mut", L("alb_height"))); wrap.appendChild(num("albCustomH","h",1,120));
-    var us = document.createElement("select"); us.id = "albCustomUnit"; us.className = "inp alb-num";
+    function dim(key, label){
+      var row = E("div","alb-dim");
+      row.appendChild(E("span","alb-dimlab", label));
+      var n = document.createElement("input");
+      n.type = "number"; n.id = "albFree" + key.toUpperCase(); n.className = "inp alb-num";
+      n.value = trim(cur[key]); n.min = lo; n.max = hi; n.step = step;
+      var r = document.createElement("input");
+      r.type = "range"; r.id = "albRange" + key.toUpperCase(); r.className = "alb-rng";
+      r.min = lo; r.max = hi; r.step = step; r.value = String(cur[key]);
+      n.oninput = function(){ var v = parseFloat(n.value); if (isFinite(v)) commit(key, v); };
+      r.oninput = function(){ var v = parseFloat(r.value); if (isFinite(v)) commit(key, v); };
+      row.appendChild(n); row.appendChild(r);
+      return row;
+    }
+    box.appendChild(dim("w", L("alb_width")));
+    box.appendChild(dim("h", L("alb_height")));
+
+    var opts = E("div","alb-opts"); opts.id = "albFreeOpts";
+    var us = document.createElement("select"); us.id = "albCustomUnit"; us.className = "inp alb-sel";
     ["in","cm","mm","px"].forEach(function(u){
       var o = document.createElement("option"); o.value = u; o.textContent = u;
-      if (c.unit === u) o.selected = true; us.appendChild(o);
+      if (unit === u) o.selected = true; us.appendChild(o);
     });
-    us.onchange = function(){ c.unit = us.value; onDocChange(true); };
-    wrap.appendChild(us);
-    wrap.appendChild(E("span","mut","DPI")); wrap.appendChild(num("albCustomDpi","dpi",72,600));
-    return wrap;
+    /* CHANGING THE UNIT DOES NOT CHANGE THE PAGE. Eight inches asked for in centimetres is
+       20.32 cm, not 8 cm — the numbers are converted through the pixels they already mean. */
+    us.onchange = function(){
+      var k = seedCustom(), old = k.unit, d = k.dpi || 300, nu = us.value;
+      var pw = unitToPx(k.w, old, d), ph = unitToPx(k.h, old, d);
+      var sp = UNIT_SPAN[nu] || UNIT_SPAN["in"], lim = unitMax(nu, d);
+      k.unit = nu;
+      k.w = clamp(Math.round(pxToUnit(pw, nu, d)*100)/100, sp.min, lim);
+      k.h = clamp(Math.round(pxToUnit(ph, nu, d)*100)/100, sp.min, lim);
+      onDocChange(true);
+    };
+    opts.appendChild(us);
+
+    var dp = document.createElement("input");
+    dp.type = "number"; dp.id = "albCustomDpi"; dp.className = "inp alb-dpi";
+    dp.value = dpi; dp.min = 72; dp.max = 600; dp.step = 1;
+    dp.title = "DPI";
+    dp.oninput = function(){
+      var v = parseFloat(dp.value); if (!isFinite(v)) return;
+      var k = seedCustom();
+      k.dpi = clamp(Math.round(v), 72, 600);
+      var sp = UNIT_SPAN[k.unit] || UNIT_SPAN["in"], lim = unitMax(k.unit, k.dpi);
+      k.w = clamp(k.w, sp.min, lim); k.h = clamp(k.h, sp.min, lim);
+      onDocChange(true);
+    };
+    opts.appendChild(dp);
+    opts.appendChild(E("span","mut","DPI"));
+
+    var sw = E("button","chip", L("alb_swap")); sw.id = "albSwap";
+    sw.onclick = function(){ var k = seedCustom(), t = k.w; k.w = k.h; k.h = t; onDocChange(true); };
+    opts.appendChild(sw);
+
+    var lk = E("button","chip" + (DOC.lockRatio ? " on" : ""), L("alb_lock")); lk.id = "albLock";
+    lk.onclick = function(){ DOC.lockRatio = !DOC.lockRatio; onDocChange(false); };
+    opts.appendChild(lk);
+
+    box.appendChild(opts);
+    var note = E("p","mut", L("alb_size_own_note").replace("{N}", String(SIDE_MAX)));
+    note.id = "albFreeNote";
+    box.appendChild(note);
+    return box;
   }
 
   /* ---- the page rail ---- */
@@ -32214,27 +32552,25 @@ var ALBUM = (function(){
       })(i);
     }
     card.appendChild(rail);
-    var row = E("div","row");
+    /* 6.107.0 — these four were a wrapping row of their own natural widths: 160, 85, 111 and
+       132 px, breaking 3 + 1. One rail, one width. */
     var add = E("button","btn","+ " + L("alb_page_add")); add.id = "albPageAdd";
     add.onclick = function(){ DOC.pages.push(blankPage()); DOC.cur = DOC.pages.length-1; onDocChange(false); };
-    row.appendChild(add);
     var dup = E("button","btn", L("alb_page_dup")); dup.id = "albPageDup";
     dup.onclick = function(){
       var src = curPage();
       DOC.pages.splice(DOC.cur+1, 0, JSON.parse(JSON.stringify(src)));
       DOC.cur += 1; onDocChange(false);
     };
-    row.appendChild(dup);
     var close = E("button","btn", L("alb_close_add")); close.id = "albPageClose";
     close.onclick = function(){ DOC.pages.push(closingPage()); DOC.cur = DOC.pages.length-1; onDocChange(false); };
-    row.appendChild(close);
-    card.appendChild(row);
     var sh = E("button","btn", L("alb_shuffle")); sh.id = "albShuffle";
     sh.onclick = function(){
       var n = shuffleAlbum(Math.random);
       H.toast(n ? L("alb_shuffle_done").replace("{N}", String(n)) : L("alb_layout_none"), n ? "ok" : "");
     };
-    card.appendChild(sh);
+    var prow = grid("btn", [add, dup, close, sh], albWidth()); prow.id = "albPageOps";
+    card.appendChild(prow);
     return card;
   }
 
@@ -32247,16 +32583,17 @@ var ALBUM = (function(){
     cv.width = 8; cv.height = 8;
     box.appendChild(cv);
     card.appendChild(box);
-    var row = E("div","row");
+    /* 6.107.0 — the note used to ride in the same flex row as the two chips and dropped under
+       them as a third "column" at every width, computer included. It is a sentence: it gets
+       its own line, and the chips get a rail. */
     var g = E("button","chip" + (DOC.guides ? " on" : ""), L("alb_guides")); g.id = "albGuides";
     g.onclick = function(){ DOC.guides = !DOC.guides; onDocChange(false); };
     var sp = E("button","chip" + (DOC.view === "spread" ? " on" : ""), L("alb_spread")); sp.id = "albSpread";
     sp.onclick = function(){ DOC.view = (DOC.view === "spread") ? "page" : "spread"; onDocChange(false); };
-    row.appendChild(sp);
-    row.appendChild(g);
-    var note = E("span","mut", L("alb_guides_note")); note.id = "albGuidesNote";
-    row.appendChild(note);
+    var row = grid("btn", [sp, g], albWidth()); row.id = "albStageOps";
     card.appendChild(row);
+    var note = E("p","mut", L("alb_guides_note")); note.id = "albGuidesNote";
+    card.appendChild(note);
     return card;
   }
 
@@ -32313,18 +32650,23 @@ var ALBUM = (function(){
       card.appendChild(E("p","mut", L("alb_layout_none")));
       return card;
     }
+    var w = albWidth();
     /* 6.106.0 — off the safe area and over the trim. The one switch that decides whether a
        photograph on this page stops 3 mm short of the paper's edge or runs off it. */
-    var bl = E("div","row");
     var bb = E("button","chip" + (pg.bleed ? " on" : ""), L("alb_edge")); bb.id = "albBleed";
     bb.onclick = function(){ pg.bleed = !pg.bleed; onDocChange(true); };
-    bl.appendChild(bb);
+    /* 6.107.0 — Auto rides WITH the edge switch, not inside the template rail. It is a mode,
+       not a layout; and in Burmese its word is 71 px wide, which did not fit the 61 px cell a
+       rail of template drawings earns on a 340 px panel. */
+    var au = E("button","chip" + (pg.auto ? " on" : ""), L("alb_auto")); au.id = "albAuto";
+    au.onclick = function(){ pg.auto = true; onDocChange(false); };
+    var bl = grid("btn", [au, bb], w); bl.id = "albLayoutModes";
     card.appendChild(bl);
     var bn = E("p","mut", L("alb_edge_note")); bn.id = "albBleedNote";
     card.appendChild(bn);
     var n = clamp(pg.photos.length, 1, MAXP);
-    var row = E("div","row alb-tpls"); row.id = "albTpls";
-    row.appendChild(chip(L("alb_auto"), !!pg.auto, function(){ pg.auto = true; onDocChange(false); }));
+    card.appendChild(subh(L("alb_layout_pick").replace("{N}", String(n))));
+    var chips = [];
     var list = tplsFor(n), i;
     for (i=0;i<list.length;i++){
       (function(t){
@@ -32333,27 +32675,41 @@ var ALBUM = (function(){
         b.title = pick9(D.fams[t.fam] || {}) || t.fam;
         b.appendChild(tplSketch(t));
         b.onclick = function(){ pg.auto = false; pg.tplId = t.id; onDocChange(false); };
-        row.appendChild(b);
+        chips.push(b);
       })(list[i]);
     }
+    var row = grid("tpl", chips, w); row.id = "albTpls";
     card.appendChild(row);
     var tpl = pageTpl(pg, DOC.cur);
+    /* 6.107.0 — THIS LINE USED TO PRINT A TEMPLATE ID. The owner photographed it reading
+       "6 + 7 - f4d": the family's name, then the identifier this build happens to use for the
+       template inside it, printed to a student as if it meant something. It is a debugging
+       aid, and it is gone; what belongs here is the family's name, how many photographs the
+       layout holds, and whether the page picked it or the student did. */
     var note = E("p","mut"); note.id = "albLayoutNote";
-    note.textContent = tpl ? (pick9(D.fams[tpl.fam] || {}) + " · " + tpl.id + (pg.auto ? " · " + L("alb_auto") : "")) : "";
+    note.textContent = tpl
+      ? (pick9(D.fams[tpl.fam] || {}) + " \u00b7 " +
+         L("alb_layout_of").replace("{N}", String(tpl.cells.length)) + " \u00b7 " +
+         (pg.auto ? L("alb_auto") : L("alb_layout_yours")))
+      : "";
     card.appendChild(note);
     return card;
   }
-  /* a template chip is a tiny drawing of its own cells — the only honest label a layout has */
+  /* A TEMPLATE CHIP IS A DRAWING OF ITS OWN CELLS — the only honest label a layout has.
+     6.107.0 cuts it at 88 x 52 (twice the 44 x 26 of wave A) with a gap between the cells and
+     a hairline frame around the page, so a cell up to 92 px wide gets a drawing rather than a
+     doubled-up blur, and six of them beside each other read as six different layouts. */
   function tplSketch(t){
     var cv = document.createElement("canvas");
-    cv.className = "alb-sketch"; cv.width = 44; cv.height = 26;
+    cv.className = "alb-sketch"; cv.width = 88; cv.height = 52;
     var x = cv.getContext("2d"); if (!x) return cv;
-    x.fillStyle = "#ffffff"; x.fillRect(0,0,44,26);
+    x.fillStyle = "#ffffff"; x.fillRect(0,0,88,52);
     x.fillStyle = "#c9a227";
     var i;
     for (i=0;i<t.cells.length;i++){
       var c = t.cells[i];
-      x.fillRect(Math.round(c.x*44), Math.round(c.y*26), Math.max(2,Math.round(c.w*44)), Math.max(2,Math.round(c.h*26)));
+      x.fillRect(Math.round(c.x*88) + 1, Math.round(c.y*52) + 1,
+                 Math.max(2, Math.round(c.w*88) - 2), Math.max(2, Math.round(c.h*52) - 2));
     }
     return cv;
   }
@@ -32369,20 +32725,21 @@ var ALBUM = (function(){
 
   function textCard(){
     var card = E("section","card"); card.id = "albTextCard";
+    if (albWidth() >= 820) card.className = "card alb-lab-side";
     var pg = curPage();
     card.appendChild(E("h2", null, L("alb_text_h")));
 
     /* the pairing — one tap sets the display face and the reading face together */
-    card.appendChild(E("p","mut", L("alb_pair")));
-    var prow = E("div","row alb-type"); prow.id = "albPairs";
-    var pi, pcur = curPair();
+    card.appendChild(subh(L("alb_pair")));
+    var pi, pcur = curPair(), pchips = [], w = albWidth();
     for (pi=0; pi<D.pairs.length; pi++){
       (function(p){
-        prow.appendChild(chip(pick9(p.label), (pcur && pcur.id === p.id), function(){
+        pchips.push(chip(pick9(p.label), (pcur && pcur.id === p.id), function(){
           DOC.pair = p.id; onDocChange(false);
         }));
       })(D.pairs[pi]);
     }
+    var prow = grid("pair", pchips, w); prow.id = "albPairs";
     card.appendChild(prow);
     var pn = E("p","mut"); pn.id = "albPairNote";
     pn.textContent = L("alb_pair_note") + " · " +
@@ -32399,10 +32756,15 @@ var ALBUM = (function(){
                              align:"center", color:"#1b1b1f", font:"" }; pg.texts.push(cur); }
           return cur;
         }
-        var row = E("div","row alb-textrow");
-        row.appendChild(E("span","mut alb-rolelab", pick9(role.label)));
+        /* 6.107.0 — THE ROLE NAME WENT ABOVE THE FIELD. It used to be a fixed 92 px column
+           on the left of the same row, which left an input, a font picker and six ink discs
+           to share what was left of a 306 px panel: seven rows of 141 px, a card 1,465 px
+           tall. As a caption it costs one short line and gives the whole width back. */
+        var row = E("div","alb-textrow" + ((i === D.roles.length-1) ? " last" : ""));
+        row.appendChild(E("span","alb-rolelab", pick9(role.label)));
+        var field = E("div","alb-field");
         var inp = document.createElement("input");
-        inp.type = "text"; inp.className = "inp grow"; inp.id = "albText_" + role.id;
+        inp.type = "text"; inp.className = "inp"; inp.id = "albText_" + role.id;
         inp.maxLength = 120;
         inp.value = cur ? cur.text : "";
         inp.placeholder = pick9(role.label);
@@ -32412,7 +32774,7 @@ var ALBUM = (function(){
            the canvas, so only the canvas is redrawn — and debounced, because it is a print
            sized page. */
         inp.oninput = function(){ ensure().text = inp.value; onTextChange(); };
-        row.appendChild(inp);
+        field.appendChild(inp);
 
         /* the face for this one line: Auto (the pairing decides) or a family by name */
         var sel = document.createElement("select");
@@ -32430,7 +32792,7 @@ var ALBUM = (function(){
           sel.appendChild(o);
         }
         sel.onchange = function(){ ensure().font = sel.value; onTextChange(); };
-        row.appendChild(sel);
+        field.appendChild(sel);
 
         /* the ink */
         var inks = E("div","alb-inks");
@@ -32452,7 +32814,8 @@ var ALBUM = (function(){
             inks.appendChild(b);
           })(INKS[ii]);
         }
-        row.appendChild(inks);
+        field.appendChild(inks);
+        row.appendChild(field);
         card.appendChild(row);
       })(D.roles[i]);
     }
@@ -32462,33 +32825,37 @@ var ALBUM = (function(){
   }
 
   /* ---- export ---- */
+  /* 6.107.0 — FIVE BUTTONS IN TWO NAMED GROUPS. They were one ragged block: two "grow"
+     buttons that took 543 px each on a monitor beside an "All pages" that stayed 188, and
+     133 / 133 / 188 / 133 / 133 in a 340 px panel. They also mixed two different jobs —
+     three of them make a file of THIS page and two make a file of the WHOLE album — with
+     nothing on the card saying which was which. */
   function exportCard(){
     var card = E("section","card"); card.id = "albExportCard";
     card.appendChild(E("h2", null, L("alb_export_h")));
-    var sz = curSize(), px = pagePx(sz);
+    var sz = curSize(), px = pagePx(sz), w = albWidth();
     var note = E("p","mut"); note.id = "albExportNote";
-    note.textContent = L("alb_export_note") + " " + px.w + " × " + px.h + " px · " + px.dpi + " DPI";
+    note.textContent = L("alb_export_note") + " " + px.w + " \u00d7 " + px.h + " px \u00b7 " + px.dpi + " DPI";
     card.appendChild(note);
-    var row = E("div","row");
-    var b = E("button","btn btn-gold grow", L("alb_export_jpg")); b.id = "albExport";
+
+    card.appendChild(subh(L("alb_out_this")));
+    var b = E("button","btn btn-gold", L("alb_export_jpg")); b.id = "albExport";
     b.onclick = function(){ exportPage(false); };
-    row.appendChild(b);
-    var g = E("button","btn grow", L("alb_export_gal")); g.id = "albExportGal";
+    var g = E("button","btn", L("alb_export_gal")); g.id = "albExportGal";
     g.onclick = function(){ exportPage(true); };
-    row.appendChild(g);
-    card.appendChild(row);
+    var psd = E("button","btn", L("alb_out_psd")); psd.id = "albOutPsd";
+    psd.onclick = function(){ exportPsd(); };
+    var one = grid("btn", [b, g, psd], w); one.id = "albOutOne";
+    card.appendChild(one);
+
+    card.appendChild(subh(L("alb_out_album").replace("{N}", String(DOC.pages.length))));
+    var pdf = E("button","btn btn-gold", L("alb_out_pdf")); pdf.id = "albOutPdf";
+    pdf.onclick = function(){ exportPdf(); };
     var all = E("button","btn", L("alb_export_all")); all.id = "albExportAll";
     all.onclick = function(){ exportAll(); };
-    card.appendChild(all);
-    /* 6.106.0 wave D — the two files that leave the studio for somebody else's machine */
-    var out = E("div","row");
-    var pdf = E("button","btn btn-gold grow", L("alb_out_pdf")); pdf.id = "albOutPdf";
-    pdf.onclick = function(){ exportPdf(); };
-    out.appendChild(pdf);
-    var psd = E("button","btn grow", L("alb_out_psd")); psd.id = "albOutPsd";
-    psd.onclick = function(){ exportPsd(); };
-    out.appendChild(psd);
-    card.appendChild(out);
+    var many = grid("btn", [pdf, all], w); many.id = "albOutAll";
+    card.appendChild(many);
+
     var sheet = E("p","mut"); sheet.id = "albOutNote";
     var dpi = px.dpi || 300, bmm = D.bleedMm, mm = 25.4/dpi;
     sheet.textContent = L("alb_out_sheet")
@@ -32673,6 +33040,9 @@ var ALBUM = (function(){
   }
   function render(){
     if (!ROOT) return;
+    /* 6.107.0 — every rail is built against ONE measurement, taken here. Measuring per rail
+       would let a card built before the stage canvas exists disagree with the one after it. */
+    BUCKET = widthBucket(albWidth());
     ROOT.innerHTML = "";
     ROOT.appendChild(occasionCard());
     ROOT.appendChild(sizeCard());
@@ -33147,6 +33517,13 @@ var ALBUM = (function(){
       H = host; ROOT = root;
       DOC = blankDoc();
       MOUNTED = true;
+      /* 6.107.0 — the page follows the window. A resize that does not cross a column boundary
+         only repaints the canvases; one that does rebuilds the rails at their new counts. The
+         listener is bound once, on a host that has one; the Photoshop panel has no resize event
+         and does not need one, because its column never changes width. */
+      if (!RESIZE_BOUND && typeof window !== "undefined" && typeof window.addEventListener === "function"){
+        try { window.addEventListener("resize", onResize, false); RESIZE_BOUND = true; } catch(e){}
+      }
       render();                       /* an empty album is on screen before the store answers */
       loadDoc().then(function(saved){
         if (saved && saved.pages && saved.pages.length){ DOC = normalize(saved); render(); }
@@ -33168,7 +33545,11 @@ var ALBUM = (function(){
             sizeById: sizeById, mmPx: mmPx, planPages: planPages, occById: occById,
             /* 6.106.0 wave D */
             layoutRect: layoutRect, spreadOf: spreadOf, dealOut: dealOut, packRow: packRow,
-            nPdf: nPdf, pdfOfShots: pdfOfShots, psdEstimate: psdEstimate, closingPage: closingPage },
+            nPdf: nPdf, pdfOfShots: pdfOfShots, psdEstimate: psdEstimate, closingPage: closingPage,
+            /* 6.107.0 wave E — the layout arithmetic the rails are built from, and the free
+               size's own bounds, so a test measures what the page uses rather than a copy */
+            evenCols: evenCols, albCap: albCap, widthBucket: widthBucket,
+            unitToPx: unitToPx, pxToUnit: pxToUnit, unitMax: unitMax, sizeWarning: sizeWarning },
     /* the two files, driven straight by the test rather than through a download */
     pdf: exportPdf, psd: function(){ return psdOfPage(DOC.cur); },
     /* A page drawn, its cells measured, and the PSD button pressed, through the SHIPPED
@@ -33193,10 +33574,22 @@ var ALBUM = (function(){
     if (!d || typeof d !== "object") return out;
     if (d.sizeId === "custom" || sizeById(d.sizeId)) out.sizeId = d.sizeId;
     if (d.custom && typeof d.custom === "object"){
-      out.custom = { w: clamp(+d.custom.w||12,1,120), h: clamp(+d.custom.h||36,1,120),
-                     unit: (["in","cm","mm","px"].indexOf(d.custom.unit)>=0 ? d.custom.unit : "in"),
-                     dpi: clamp(+d.custom.dpi||300,72,600) };
+      /* 6.107.0 wave E — the bounds are the unit's own. Wave A clamped every stored custom
+         size to 1..120, which is right for inches and silently turned a 2048 px page into a
+         120 px one the moment the free control could ask for pixels at all. */
+      var cu = (["in","cm","mm","px"].indexOf(d.custom.unit)>=0) ? d.custom.unit : "in";
+      var cd = clamp(+d.custom.dpi||300,72,600);
+      var csp = UNIT_SPAN[cu] || UNIT_SPAN["in"], clim = unitMax(cu, cd);
+      out.custom = { w: clamp(+d.custom.w||csp.min, csp.min, clim),
+                     h: clamp(+d.custom.h||csp.min, csp.min, clim),
+                     unit: cu, dpi: cd };
     }
+    /* 6.107.0 wave E */
+    if (d.customGroup){ var gg, gok = false;
+      for (gg=0; gg<D.sizeGroups.length; gg++) if (D.sizeGroups[gg].id === d.customGroup) gok = true;
+      if (gok) out.customGroup = d.customGroup;
+    }
+    out.lockRatio = !!d.lockRatio;
     out.guides = (d.guides !== false);
     /* 6.106.0 — the stage's own view. An album saved before wave D has no `view` and opens on
        single pages, which is exactly where it was left. */

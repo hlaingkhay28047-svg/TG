@@ -241,10 +241,14 @@ const NEW = Object.keys(SCRIPTS);
   const V61060_KEYS = ["alb_edge", "alb_edge_note", "alb_spread", "alb_shuffle",
     "alb_shuffle_done", "alb_close_add", "alb_out_pdf", "alb_out_psd", "alb_out_sheet",
     "alb_psd_big", "alb_psd_no", "alb_pdf_done"];
+  /* 6.107.0 wave E — the Album page's layout and free-size keys, same three packs */
+  const V61070_KEYS = ["alb_size_preset", "alb_size_own", "alb_size_own_note", "alb_size_big",
+    "alb_size_max", "alb_swap", "alb_lock", "alb_layout_pick", "alb_layout_of",
+    "alb_layout_yours", "alb_out_this", "alb_out_album"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {
