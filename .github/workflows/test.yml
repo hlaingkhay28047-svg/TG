@@ -1042,3 +1042,12 @@ jobs:
       # is what CI checks. A driver cannot make a wrong formula pass here.
       - name: Verify the GPU preview renders the CPU's picture
         run: PORT=8931 node test/verify_gpu_preview.js
+
+      # 6.110.0 — wave A of the owner's album programme: the stage became the
+      # editing surface. A photograph is panned and zoomed inside its own cell
+      # and a line of type is dragged, resized and turned — by pointer, by
+      # wheel and by button. The checks that matter are that no zoom can put
+      # paper inside a frame, that a crop the student set survives a layout
+      # change, and that the marquee is on screen only and never in a file.
+      - name: Verify the album stage can be touched (crop, zoom, move, turn — and never in the export)
+        run: PORT=8931 node test/verify_album_touch.js

@@ -2223,6 +2223,14 @@ body.wall #wallRetry.on{display:block}
 
 .alb-stage{border:1px solid var(--line-soft);border-radius:12px;background:#0b0f14;padding:8px;margin-bottom:8px;overflow:hidden;text-align:center}
 .alb-canvas{display:block;width:100%;height:auto;max-width:100%;border-radius:6px;background:#fff}
+/* 6.110.0 — THE STAGE TAKES THE GESTURE. Without touch-action:none a drag inside a
+   photograph is read by the browser as a page scroll and a pinch as a page zoom, so the
+   crop never moves: the first pointermove is the last one this canvas ever sees. */
+.alb-canvas{touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
+.alb-canvas.dragging{cursor:grabbing}
+.alb-selbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 6px}
+.alb-selname{font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--gold-1,#e6c07a)}
+.alb-selnone{font-size:12px;color:var(--muted,#9aa0a6)}
 
 .alb-strip{display:flex;flex-wrap:wrap;margin:0 -4px 8px}
 .alb-tile{position:relative;flex:0 0 auto;width:78px;height:78px;margin:4px;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;background:var(--panel-2)}
@@ -4236,7 +4244,7 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=880c3f0f1cf1"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=368bbaac686f"></script>
-<script src="data/whatsnew.js?v=ce5833608810"></script>
+<script src="data/whatsnew.js?v=2d23195c8e7a"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -4247,7 +4255,7 @@ html.splashing #splash{display:flex}
    synchronous way to add a script while the document is still being parsed;
    the address is built from this fixed list and a two-or-three-letter code,
    never from the link's text. tools/build_app_data.js writes the tags. */
-window.HNK_TRL_TAGS={"bn":"58aff9b053b2","gu":"06cdcdd99f22","hi":"38e0dd27e72f","ja":"9c41c6141feb","km":"00e1d19cce03","kn":"4ede35839b55","ko":"8752c739891e","lo":"f6b9fe6dcb31","ml":"813bb494e869","mr":"e0d763f11ff7","ne":"718d6c7d9fc3","pa":"c5b72c2c8343","ta":"ab86dc82ff5a","te":"ff35c47cd374","ur":"b31975e14567","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
+window.HNK_TRL_TAGS={"bn":"9e9ea92cc87c","gu":"df8c00198e52","hi":"143f2339032b","ja":"72cb2cc27389","km":"f5ab6145a02f","kn":"7f252ebb5e14","ko":"8e5824986292","lo":"220b08c149ce","ml":"96f82a1bc2e0","mr":"bf937f8158fb","ne":"d3813b844a2b","pa":"2cd61d621bd2","ta":"fcb9532a1ad2","te":"f334f2c42f2c","ur":"853f91bb97af","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
 (function(){
   var T=window.HNK_TRL_TAGS, has=function(k){ return Object.prototype.hasOwnProperty.call(T,k); };
   var BASE=/^(my|en|shn|kac|th|zh|vi|id|ms)$/, u="", code="";
@@ -4860,6 +4868,21 @@ var TR_PH={
   alb_auto:{my:"အလိုအလျောက်",en:"Auto"},
   alb_guides:{my:"အနားသတ်မျဉ်း",en:"Guides"},
   alb_guides_note:{my:"အနီမျဉ်းက စက်ဖြတ်မယ့်နေရာ · အပြာမျဉ်းက စာအုပ်ချုပ်ရာနေရာ — ထုတ်တဲ့ဖိုင်မှာ မပါပါ",en:"Red is what the trimmer takes · blue is the binding — neither is in the exported file"},
+  /* 6.110.0 wave A — the album you can touch */
+  alb_touch_note:{my:"ပုံကို လက် (သို့) mouse နဲ့ ဆွဲပြီး နေရာချိန်ပါ · နှစ်ချောင်းနဲ့ (သို့) mouse wheel နဲ့ ချုံ့ချဲ့ပါ · စာသားကိုလည်း ဆွဲ၊ ချုံ့ချဲ့၊ လှည့်လို့ရပါတယ်",en:"Drag a photo with your finger or mouse to place it · pinch or use the wheel to zoom · a line can be dragged, resized and turned the same way"},
+  alb_sel_none:{my:"ဘာမှ မရွေးရသေးပါ — ပုံ (သို့) စာသားတစ်ခုကို နှိပ်ပါ",en:"Nothing selected — tap a photo or a line"},
+  alb_sel_photo:{my:"ပုံ {N}",en:"Photo {N}"},
+  alb_sel_text:{my:"စာသား · {R}",en:"Text · {R}"},
+  alb_zoom_out:{my:"ချုံ့",en:"Zoom out"},
+  alb_zoom_in:{my:"ချဲ့",en:"Zoom in"},
+  alb_rot_l:{my:"ဘယ်ဘက် လှည့်",en:"Turn left"},
+  alb_rot_r:{my:"ညာဘက် လှည့်",en:"Turn right"},
+  alb_reset_one:{my:"မူလအတိုင်း ပြန်ထား",en:"Put it back"},
+  alb_move_l:{my:"ဘယ်ရွှေ့",en:"Move left"},
+  alb_move_r:{my:"ညာရွှေ့",en:"Move right"},
+  alb_move_u:{my:"အပေါ်ရွှေ့",en:"Move up"},
+  alb_move_d:{my:"အောက်ရွှေ့",en:"Move down"},
+  alb_spread_note:{my:"နှစ်မျက်နှာ ကြည့်နေချိန်မှာ ချိန်ညှိလို့ မရပါ — စာမျက်နှာ တစ်ခုချင်းသို့ ပြောင်းပါ",en:"Nothing can be adjusted while both pages are shown — switch back to one page"},
   alb_bleed:{my:"အနားပို",en:"bleed"},
   alb_gutter:{my:"ချုပ်ရာ",en:"gutter"},
   alb_width:{my:"အလျား",en:"Width"},
@@ -4964,6 +4987,21 @@ var TR_L14={
   alb_auto:{shn:"ႁင်းၵူၺ်း",kac:"Hkrai",th:"อัตโนมัติ",zh:"自动",vi:"Tự động",id:"Otomatis",ms:"Auto"},
   alb_guides:{shn:"သဵၼ်ႈၸီႉ",kac:"Lam madun",th:"เส้นไกด์",zh:"参考线",vi:"Đường dẫn",id:"Panduan",ms:"Panduan"},
   alb_guides_note:{shn:"သဵၼ်ႈလႅင်ပဵၼ်တီႈတတ်း · သဵၼ်ႈၶဵဝ်ပဵၼ်တီႈယဵပ်ႇ — ဢမ်ႇပႃးၼႂ်းၾၢႆႇဢွၵ်ႇ",kac:"Ahkyeng gaw kahtam na shara · alit gaw laika gyit na shara — shapraw ai kaw n lawm ai",th:"เส้นแดงคือส่วนที่ถูกเจียน · เส้นน้ำเงินคือสันหนังสือ — ไม่อยู่ในไฟล์ที่ส่งออก",zh:"红线是裁切掉的部分 · 蓝线是装订位置 — 导出文件中都不包含",vi:"Đỏ là phần bị xén · xanh là gáy sách — cả hai đều không có trong tệp xuất",id:"Merah adalah bagian yang dipotong · biru adalah jilidan — keduanya tidak ada di berkas ekspor",ms:"Merah ialah bahagian yang dipotong · biru ialah jilid — kedua-duanya tiada dalam fail eksport"},
+  /* 6.110.0 wave A */
+  alb_touch_note:{shn:"ဢဝ်မိုဝ်း (ဢမ်ႇၼၼ်) mouse လၢၵ်ႈၶႅပ်းႁၢင်ႈ · သွင်ၼိဝ်ႉ (ဢမ်ႇၼၼ်) wheel ႁဵတ်းလဵၵ်ႉယႂ်ႇ · လိၵ်ႈၵေႃႈ လၢၵ်ႈ လႄႈ ဝိင်ႈလႆႈ",kac:"Sumla hpe lata (sh'ning) mouse hte gang nna shara jahkrat u · lata lahkawng (sh'ning) wheel hte kaji kaba galaw u · laika mung gang, kaba jahkrat, gayin lu ai",th:"ลากรูปด้วยนิ้วหรือเมาส์เพื่อจัดตำแหน่ง · หุบนิ้วหรือใช้ล้อเมาส์เพื่อซูม · ข้อความก็ลาก ย่อขยาย และหมุนได้เช่นกัน",zh:"用手指或鼠标拖动照片来定位 · 双指或滚轮缩放 · 文字同样可以拖动、缩放和旋转",vi:"Kéo ảnh bằng ngón tay hoặc chuột để đặt vị trí · chụm hai ngón hoặc lăn chuột để phóng to · chữ cũng kéo, phóng và xoay được",id:"Seret foto dengan jari atau tetikus untuk menempatkannya · cubit atau putar roda tetikus untuk memperbesar · teks juga bisa diseret, diubah ukurannya dan diputar",ms:"Seret foto dengan jari atau tetikus untuk meletakkannya · cubit atau guna roda tetikus untuk zum · teks juga boleh diseret, diubah saiz dan diputar"},
+  alb_sel_none:{shn:"ပႆႇလိူၵ်ႈသင် — ဢဝ်မိုဝ်းတႅပ်းၶႅပ်းႁၢင်ႈ ဢမ်ႇၼၼ် လိၵ်ႈ",kac:"Kaga n lata shi ai — sumla sh'ning laika langai hpe hkra u",th:"ยังไม่ได้เลือกอะไร — แตะรูปหรือข้อความ",zh:"尚未选择 — 请点一张照片或一行文字",vi:"Chưa chọn gì — hãy chạm vào một ảnh hoặc một dòng chữ",id:"Belum ada yang dipilih — ketuk sebuah foto atau baris teks",ms:"Belum ada yang dipilih — ketik sekeping foto atau satu baris teks"},
+  alb_sel_photo:{shn:"ၶႅပ်းႁၢင်ႈ {N}",kac:"Sumla {N}",th:"รูปที่ {N}",zh:"照片 {N}",vi:"Ảnh {N}",id:"Foto {N}",ms:"Foto {N}"},
+  alb_sel_text:{shn:"လိၵ်ႈ · {R}",kac:"Laika · {R}",th:"ข้อความ · {R}",zh:"文字 · {R}",vi:"Chữ · {R}",id:"Teks · {R}",ms:"Teks · {R}"},
+  alb_zoom_out:{shn:"ႁဵတ်းလဵၵ်ႉ",kac:"Kaji galaw",th:"ย่อ",zh:"缩小",vi:"Thu nhỏ",id:"Perkecil",ms:"Kecilkan"},
+  alb_zoom_in:{shn:"ႁဵတ်းယႂ်ႇ",kac:"Kaba galaw",th:"ขยาย",zh:"放大",vi:"Phóng to",id:"Perbesar",ms:"Besarkan"},
+  alb_rot_l:{shn:"ဝိင်ႈၸၢႆႉ",kac:"Pai de gayin",th:"หมุนซ้าย",zh:"向左旋转",vi:"Xoay trái",id:"Putar kiri",ms:"Putar kiri"},
+  alb_rot_r:{shn:"ဝိင်ႈၶႂႃ",kac:"Hkra de gayin",th:"หมุนขวา",zh:"向右旋转",vi:"Xoay phải",id:"Putar kanan",ms:"Putar kanan"},
+  alb_reset_one:{shn:"ႁဵတ်းၶိုၼ်းၸိူင်ႉၵဝ်ႇ",kac:"Moi hku bai tawn",th:"คืนค่าเดิม",zh:"恢复原样",vi:"Đặt lại như cũ",id:"Kembalikan semula",ms:"Kembalikan semula"},
+  alb_move_l:{shn:"ၸူးၸၢႆႉ",kac:"Pai de",th:"เลื่อนซ้าย",zh:"左移",vi:"Sang trái",id:"Geser kiri",ms:"Alih kiri"},
+  alb_move_r:{shn:"ၸူးၶႂႃ",kac:"Hkra de",th:"เลื่อนขวา",zh:"右移",vi:"Sang phải",id:"Geser kanan",ms:"Alih kanan"},
+  alb_move_u:{shn:"ၸူးၼိူဝ်",kac:"Ntsa de",th:"เลื่อนขึ้น",zh:"上移",vi:"Lên trên",id:"Geser naik",ms:"Alih ke atas"},
+  alb_move_d:{shn:"ၸူးတႂ်ႈ",kac:"Npu de",th:"เลื่อนลง",zh:"下移",vi:"Xuống dưới",id:"Geser turun",ms:"Alih ke bawah"},
+  alb_spread_note:{shn:"မိူဝ်ႈတူၺ်းသွင်ၼႃႈ ႁဵတ်းၶိုၼ်းဢမ်ႇလႆႈ — လႅၵ်ႈၸူးၼႃႈလဵဝ်",kac:"Laika shara lahkawng yu ai ten hta galai n lu ai — laika shara langai de bai galai u",th:"ปรับไม่ได้ขณะดูสองหน้า — สลับกลับไปดูหน้าเดียว",zh:"同时显示两页时无法调整 — 请切回单页",vi:"Không chỉnh được khi đang xem hai trang — hãy chuyển về một trang",id:"Tidak bisa diatur saat dua halaman ditampilkan — kembalilah ke satu halaman",ms:"Tidak boleh dilaraskan semasa dua halaman dipaparkan — kembali ke satu halaman"},
   alb_bleed:{shn:"ၶၢင်ႈလိူဝ်",kac:"Makau",th:"เผื่อตัด",zh:"出血",vi:"tràn lề",id:"bleed",ms:"bleed"},
   alb_gutter:{shn:"တီႈယဵပ်ႇ",kac:"Gyit shara",th:"สันใน",zh:"订口",vi:"gáy",id:"jilid",ms:"jilid"},
   alb_width:{shn:"ၵႂၢင်ႈ",kac:"Galu",th:"กว้าง",zh:"宽",vi:"Rộng",id:"Lebar",ms:"Lebar"},
@@ -30129,7 +30167,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.109.0";
+var APP_VER="6.110.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -31604,15 +31642,56 @@ var ALBUM = (function(){
   }
   /* COVER FIT. The photo fills the cell and the overflow is cropped — never letterboxed, never
      squashed. anchorY (0..1) decides WHICH part of the overflow survives: 0.5 is the middle,
-     and a portrait with a face high in the frame wants less than that. */
-  function coverFit(iw, ih, cw, ch, anchorX, anchorY){
+     and a portrait with a face high in the frame wants less than that.
+     6.110.0 — AND A ZOOM. The student pinches, or turns a wheel, or presses +: the cell does not
+     change, the source rectangle shrinks. Because the rectangle only ever gets SMALLER than the
+     cover rectangle, a zoomed photograph still covers its cell — there is no value of zoom at or
+     above 1 that can put a white edge inside a frame. A call with no zoom is the call wave A
+     made, to the pixel: z is 1, scale is the cover scale, and every number below is unchanged. */
+  var ZOOM_MIN = 1, ZOOM_MAX = 6;
+  function coverFit(iw, ih, cw, ch, anchorX, anchorY, zoom){
     if (!(iw>0 && ih>0 && cw>0 && ch>0)) return null;
     var ax = (anchorX==null) ? 0.5 : clamp(anchorX,0,1);
     var ay = (anchorY==null) ? 0.5 : clamp(anchorY,0,1);
-    var scale = Math.max(cw/iw, ch/ih);
+    var z = (zoom==null || !isFinite(zoom)) ? 1 : clamp(zoom, ZOOM_MIN, ZOOM_MAX);
+    var scale = Math.max(cw/iw, ch/ih) * z;
     var sw = cw/scale, sh = ch/scale;          /* the source rectangle, in the photo's own pixels */
     var sx = (iw - sw) * ax, sy = (ih - sh) * ay;
-    return { sx: clamp(sx,0,Math.max(0,iw-sw)), sy: clamp(sy,0,Math.max(0,ih-sh)), sw: sw, sh: sh, scale: scale };
+    return { sx: clamp(sx,0,Math.max(0,iw-sw)), sy: clamp(sy,0,Math.max(0,ih-sh)), sw: sw, sh: sh, scale: scale, zoom: z };
+  }
+  /* THE CROP, MOVED BY A DRAG. dxPage / dyPage are page pixels the finger travelled; fit.scale is
+     how many page pixels one of the photograph's own pixels is drawn as, zoom included, so the
+     division is the whole of the conversion. The picture follows the finger: dragging right moves
+     the source rectangle LEFT. A rectangle already against an edge stays there — a cell is never
+     allowed to show anything that is not photograph. */
+  function panFit(ph, cell, dxPage, dyPage){
+    var fit = coverFit(ph.w, ph.h, cell.w, cell.h, (ph.anchor||{}).x, (ph.anchor||{}).y, ph.zoom);
+    if (!fit) return false;
+    var maxx = Math.max(0, ph.w - fit.sw), maxy = Math.max(0, ph.h - fit.sh);
+    var sx = fit.sx - dxPage / fit.scale, sy = fit.sy - dyPage / fit.scale;
+    ph.anchor = { x: maxx > 0 ? clamp(sx,0,maxx)/maxx : 0.5,
+                  y: maxy > 0 ? clamp(sy,0,maxy)/maxy : 0.5 };
+    ph.manual = true;
+    return true;
+  }
+  /* THE CROP, ZOOMED ABOUT A POINT. atx / aty are where in the cell the gesture is centred (0..1),
+     so the piece of photograph under two fingers stays under them while the rest grows around it.
+     Pressing + with no point named zooms about the middle of the cell. */
+  function zoomFit(ph, cell, z2, atx, aty){
+    var fit = coverFit(ph.w, ph.h, cell.w, cell.h, (ph.anchor||{}).x, (ph.anchor||{}).y, ph.zoom);
+    if (!fit) return false;
+    var ax = (atx==null) ? 0.5 : clamp(atx,0,1), ay = (aty==null) ? 0.5 : clamp(aty,0,1);
+    var srcX = fit.sx + ax*fit.sw, srcY = fit.sy + ay*fit.sh;
+    var z = clamp(z2, ZOOM_MIN, ZOOM_MAX);
+    var base = Math.max(cell.w/ph.w, cell.h/ph.h) * z;
+    var sw2 = cell.w/base, sh2 = cell.h/base;
+    var maxx = Math.max(0, ph.w - sw2), maxy = Math.max(0, ph.h - sh2);
+    var sx2 = srcX - ax*sw2, sy2 = srcY - ay*sh2;
+    ph.zoom = z;
+    ph.anchor = { x: maxx > 0 ? clamp(sx2,0,maxx)/maxx : 0.5,
+                  y: maxy > 0 ? clamp(sy2,0,maxy)/maxy : 0.5 };
+    ph.manual = true;
+    return true;
   }
   /* WHERE THE PEOPLE ARE, cheaply. A skin-tone mass over a small thumbnail: the same YCbCr
      window the Retouch stage uses for its own skin mask, with the default (unwindowed) bounds,
@@ -31815,12 +31894,17 @@ var ALBUM = (function(){
           continue;
         }
         var a = ph.anchor || { x:0.5, y:0.5 };
-        var fit = coverFit(im.naturalWidth||im.width, im.naturalHeight||im.height, r.w, r.h, a.x, a.y);
+        var fit = coverFit(im.naturalWidth||im.width, im.naturalHeight||im.height, r.w, r.h, a.x, a.y, ph.zoom);
         if (!fit) continue;
         try { x.drawImage(im, fit.sx, fit.sy, fit.sw, fit.sh, dx, dy, dw, dh); } catch(e){}
       }
       drawTexts(x, pg, safe, scale, m);
       if (opt.guides) drawGuides(x, safe, scale, m);
+      /* 6.110.0 — the marquee is the LAST thing drawn and it is drawn only when the stage asks
+         for it. Every export path (the page JPEG, the whole-album PDF, the layered PSD, the page
+         rail's thumbnails) calls drawPage without `sel`, so what a student downloads can never
+         carry the handles they were dragging a moment earlier. */
+      if (opt.sel) drawSel(x, pg, safe, rects, scale, m, opt.sel);
       return true;
     });
   }
@@ -31922,35 +32006,61 @@ var ALBUM = (function(){
     return Promise.all(jobs).then(function(){ return true; }, function(){ return false; });
   }
 
+  /* WHERE A LINE SITS, AND HOW BIG IT IS (6.110.0). Two things need this answer — the painter,
+     and the hit test that decides which line a finger landed on — and they must agree to the
+     pixel, or the student drags the date and the title moves. So there is one answer, and both
+     ask it. Everything returned is in the canvas's own pixels (page pixels × scale).
+     `size` is the student's multiplier over the role's own fraction of the page; `rot` their
+     rotation in degrees about the middle of the line. A line that has neither is laid out exactly
+     where wave B laid it: size 1 and rot 0 reduce every number below to the old ones. */
+  var TEXT_MIN = 0.4, TEXT_MAX = 3;
+  function textLayout(x, tx, role, safe, scale, m){
+    m = m || 0;
+    var px = Math.max(8, role.size * safe.h * scale * clamp(+tx.size || 1, TEXT_MIN, TEXT_MAX));
+    var face = fontForText(tx);
+    var font = weightFor(face, role) + " " + Math.round(px) + "px " + ((face && face.stack) || "Georgia, serif");
+    var words = role.caps ? String(tx.text).toUpperCase() : String(tx.text);
+    var sp = (role.track > 0) ? role.track*px : 0;
+    var chars = null, w = 0, j;
+    x.save(); x.font = font;
+    if (sp > 0){
+      /* letter-spacing by hand: this renderer has no letterSpacing property to set */
+      chars = words.split("");
+      for (j=0;j<chars.length;j++) w += x.measureText(chars[j]).width + sp;
+      w -= sp;
+    } else {
+      w = x.measureText(words).width;
+    }
+    x.restore();
+    return { px: px, font: font, words: words, chars: chars, sp: sp,
+             w: Math.max(1, w), h: px*1.25,
+             cx: (safe.x+m)*scale + safe.w*scale*((tx.x==null)?0.5:tx.x),
+             cy: (safe.y+m)*scale + safe.h*scale*((tx.y==null)?0.92:tx.y),
+             rot: ((+tx.rot || 0) % 360) * Math.PI/180 };
+  }
+  /* the left edge a line of this width starts at, in its own rotated frame */
+  function textLeft(L, align){ return (align === "left") ? 0 : (align === "right") ? -L.w : -L.w/2; }
   /* the text roles the student filled in, laid on the safe area's own fractions */
   function drawTexts(x, pg, safe, scale, m){
     m = m || 0;
     var i, list = pg.texts || [];
     for (i=0;i<list.length;i++){
       var tx = list[i]; if (!tx || !tx.text) continue;
-      var role = null, k;
-      for (k=0;k<D.roles.length;k++) if (D.roles[k].id === tx.role) role = D.roles[k];
-      if (!role) continue;
-      var px = Math.max(8, role.size * safe.h * scale);
+      var role = roleById(tx.role); if (!role) continue;
+      var L = textLayout(x, tx, role, safe, scale, m);
       x.save();
       x.fillStyle = tx.color || "#1b1b1f";
-      x.textAlign = tx.align || "center";
       x.textBaseline = "middle";
-      var face = fontForText(tx);
-      x.font = weightFor(face, role) + " " + Math.round(px) + "px " + ((face && face.stack) || "Georgia, serif");
-      var cx = (safe.x+m)*scale + safe.w*scale*((tx.x==null)?0.5:tx.x);
-      var cy = (safe.y+m)*scale + safe.h*scale*((tx.y==null)?0.92:tx.y);
-      var words = role.caps ? String(tx.text).toUpperCase() : String(tx.text);
-      if (role.track > 0){
-        /* letter-spacing by hand: this renderer has no letterSpacing property to set */
-        var chars = words.split(""), sp = role.track*px, tot = 0, j;
-        for (j=0;j<chars.length;j++) tot += x.measureText(chars[j]).width + sp;
-        tot -= sp;
-        var at = (x.textAlign === "center") ? cx - tot/2 : cx;
-        x.textAlign = "left";
-        for (j=0;j<chars.length;j++){ x.fillText(chars[j], at, cy); at += x.measureText(chars[j]).width + sp; }
+      x.textAlign = "left";                 /* the alignment is in the left edge, so a rotation
+                                               turns the line about its own middle either way */
+      x.font = L.font;
+      x.translate(L.cx, L.cy);
+      if (L.rot) x.rotate(L.rot);
+      var at = textLeft(L, tx.align || "center"), j;
+      if (L.sp > 0){
+        for (j=0;j<L.chars.length;j++){ x.fillText(L.chars[j], at, 0); at += x.measureText(L.chars[j]).width + L.sp; }
       } else {
-        x.fillText(words, cx, cy);
+        x.fillText(L.words, at, 0);
       }
       x.restore();
     }
@@ -31973,6 +32083,401 @@ var ALBUM = (function(){
       x.beginPath(); x.moveTo(mid+g, M); x.lineTo(mid+g, M+Hh); x.stroke();
     }
     x.restore();
+  }
+
+  /* ======================= THE TOUCH (6.110.0) =======================
+
+     The owner, with four photographs of the live Album page:
+     "လက်နဲ့ mouse နဲ့ ပုံအတွင်းပိုင်းကို လိုသလိုပြင်လို့ရအောင် overlay တို့ Texts တို့လဲ အဲ့လို
+     ဆွဲချုံချဲ့လို့ရအောင်" — let the inside of a photograph be adjusted by finger and by mouse,
+     and let the overlays and the words be dragged and resized the same way.
+
+     Until this wave every crop on an album page was decided FOR the student. A photograph
+     arrived, a skin-tone centroid said roughly where the subject was, and anchorFor turned that
+     into one number per axis. It is a good guess and it is only a guess: the one thing a studio
+     actually does with a wedding page is push the bride an inch left so the arch behind her is
+     centred, and there was no way to say so. The words were worse — seven roles at seven fixed
+     positions, every album in the country carrying its title at exactly 12% of the page.
+
+     WHAT THIS IS. The stage canvas becomes the editing surface. A tap selects the photograph or
+     the line under it; a drag moves it; two fingers (or a wheel, or the + and −) zoom it; two
+     fingers turn a line. Nothing here invents a second geometry: a drag ends in ph.anchor and
+     ph.zoom, which is what coverFit already reads, and in tx.x / tx.y / tx.size / tx.rot, which
+     is what textLayout already reads. The export is therefore not a separate code path that has
+     to be kept in step — it is the same drawPage, minus the marquee.
+
+     AND IT IS NOT ONLY A GESTURE. Every one of these moves has a button beside the stage. A
+     Photoshop panel reads no pointer events worth trusting, a student may be on a laptop
+     trackpad, and a hand that shakes should still be able to nudge a crop one step at a time. */
+
+  var SEL = null;                 /* {kind:"photo"|"text", i:index} on the page being looked at */
+  var SELBOX = null;              /* the rail under the stage, refilled in place — never a render */
+  var VIEW = { scale:1, safe:null, cells:[], spread:false };   /* what the stage was last drawn with */
+  var PTRS = {}, DRAG = null, PINCH = null;
+  var NUDGE = 0.02;               /* one press of an arrow: 2% of the cell, 1% of the page for a line */
+
+  function ptrCount(){ var n = 0, k; for (k in PTRS) if (Object.prototype.hasOwnProperty.call(PTRS,k)) n++; return n; }
+  function ptrIds(){ var out = [], k; for (k in PTRS) if (Object.prototype.hasOwnProperty.call(PTRS,k)) out.push(k); return out; }
+  /* the cells the page being looked at is actually drawn with */
+  function curCells(){
+    var safe = safeArea(curSize()); if (!safe) return [];
+    var pg = curPage();
+    return cellRects(pageTpl(pg, DOC.cur), layoutRect(safe, pg));
+  }
+  /* WHAT IS SELECTED, or nothing. A selection is an index, and indexes go stale — a photograph is
+     removed, a page is deleted, an album is replaced. Every reader comes through here, so a stale
+     one is dropped rather than throwing or, worse, quietly moving a different photograph. */
+  function selObj(){
+    if (!SEL || !DOC) return null;
+    var pg = curPage(); if (!pg) { SEL = null; return null; }
+    if (SEL.kind === "photo"){
+      var ph = pg.photos[SEL.i];
+      if (!ph || SEL.i >= Math.min(pg.photos.length, curCells().length)) { SEL = null; return null; }
+      return ph;
+    }
+    var tx = pg.texts[SEL.i];
+    if (!tx || !tx.text || !roleById(tx.role)) { SEL = null; return null; }
+    return tx;
+  }
+  /* THE MARQUEE. Gold, dashed, with four corner ticks — drawn on the stage and nowhere else.
+     A photograph is outlined at its cell; a line at the box textLayout measured for it, turned
+     with it, so what is highlighted is what a drag will actually move. */
+  function drawSel(x, pg, safe, rects, scale, m, sel){
+    if (!sel) return;
+    m = m || 0;
+    var w = Math.max(1.5, 2*scale*2), tick = Math.max(8, 14*scale*2);
+    x.save();
+    x.strokeStyle = "rgba(230,192,122,.95)"; x.lineWidth = w;
+    if (sel.kind === "photo"){
+      var r = rects[sel.i]; if (!r){ x.restore(); return; }
+      var dx = (r.x+m)*scale, dy = (r.y+m)*scale, dw = r.w*scale, dh = r.h*scale;
+      x.setLineDash([Math.max(6,10*scale*2), Math.max(4,7*scale*2)]);
+      x.strokeRect(dx, dy, dw, dh);
+      x.setLineDash([]);
+      var c = [[dx,dy,1,1],[dx+dw,dy,-1,1],[dx,dy+dh,1,-1],[dx+dw,dy+dh,-1,-1]], i;
+      for (i=0;i<c.length;i++){
+        x.beginPath();
+        x.moveTo(c[i][0] + c[i][2]*tick, c[i][1]);
+        x.lineTo(c[i][0], c[i][1]);
+        x.lineTo(c[i][0], c[i][1] + c[i][3]*tick);
+        x.stroke();
+      }
+    } else {
+      var tx = (pg.texts || [])[sel.i]; if (!tx) { x.restore(); return; }
+      var role = roleById(tx.role); if (!role) { x.restore(); return; }
+      var L = textLayout(x, tx, role, safe, scale, m);
+      var left = textLeft(L, tx.align || "center"), pad = Math.max(4, L.h*0.25);
+      x.translate(L.cx, L.cy);
+      if (L.rot) x.rotate(L.rot);
+      x.setLineDash([Math.max(5,8*scale*2), Math.max(3,5*scale*2)]);
+      x.strokeRect(left-pad, -L.h/2-pad, L.w+2*pad, L.h+2*pad);
+      x.setLineDash([]);
+      x.beginPath(); x.arc(left+L.w+pad, L.h/2+pad, Math.max(3, 5*scale*2), 0, Math.PI*2); x.stroke();
+    }
+    x.restore();
+  }
+  /* WHICH LINE A FINGER LANDED ON. Topmost first — the last line drawn is the one on top — and
+     the point is carried into the line's own rotated frame before the box is asked, so a turned
+     title is grabbed where it is seen and not where it would have been unturned. */
+  function hitText(x, pg, safe, scale, px, py){
+    var list = pg.texts || [], i;
+    for (i=list.length-1;i>=0;i--){
+      var tx = list[i]; if (!tx || !tx.text) continue;
+      var role = roleById(tx.role); if (!role) continue;
+      var L = textLayout(x, tx, role, safe, scale, 0);
+      var dx = px - L.cx, dy = py - L.cy;
+      if (L.rot){
+        var c = Math.cos(-L.rot), sn = Math.sin(-L.rot);
+        var rx = dx*c - dy*sn, ry = dx*sn + dy*c;
+        dx = rx; dy = ry;
+      }
+      var left = textLeft(L, tx.align || "center"), pad = Math.max(10, L.h*0.4);
+      if (dx >= left-pad && dx <= left+L.w+pad && dy >= -L.h/2-pad && dy <= L.h/2+pad) return i;
+    }
+    return -1;
+  }
+  /* which filled cell holds this point */
+  function hitCell(cells, n, px, py){
+    var i;
+    for (i=0;i<cells.length && i<n;i++){
+      var r = cells[i];
+      if (px >= r.x && px <= r.x+r.w && py >= r.y && py <= r.y+r.h) return i;
+    }
+    return -1;
+  }
+  /* A LINE BEATS A PHOTOGRAPH. A caption sits on top of the picture it belongs to, so a tap that
+     could be either is the line — which is also the one a student cannot otherwise reach. */
+  function pickAt(x, px, py){
+    var pg = curPage(), safe = VIEW.safe;
+    if (!pg || !safe) return null;
+    /* PAGE PIXELS, NOT CANVAS PIXELS. pagePt() has already divided the scale out, and the cells
+       are the page's own rectangles — so the layout the hit test asks for is the layout at
+       scale 1. The geometry is the same at any scale; measuring both sides in the same one is
+       the whole of the rule. */
+    var t = hitText(x, pg, safe, 1, px, py);
+    if (t >= 0) return { kind:"text", i:t };
+    var c = hitCell(VIEW.cells, pg.photos.length, px, py);
+    if (c >= 0) return { kind:"photo", i:c };
+    return null;
+  }
+
+  /* ---- the moves, one per gesture and one per button ---- */
+
+  function selCell(){ var cells = curCells(); return (SEL && SEL.kind === "photo") ? cells[SEL.i] : null; }
+  function moveSel(dxPage, dyPage){
+    var o = selObj(); if (!o) return false;
+    if (SEL.kind === "photo"){
+      var cell = selCell(); if (!cell) return false;
+      return panFit(o, cell, dxPage, dyPage);
+    }
+    var safe = VIEW.safe || safeArea(curSize()); if (!safe) return false;
+    o.x = clamp(((o.x==null)?0.5:o.x) + dxPage/safe.w, 0, 1);
+    o.y = clamp(((o.y==null)?0.92:o.y) + dyPage/safe.h, 0, 1);
+    return true;
+  }
+  /* zoom a photograph about a point in its cell, or grow a line about its own middle */
+  function scaleSel(f, atx, aty){
+    var o = selObj(); if (!o) return false;
+    if (SEL.kind === "photo"){
+      var cell = selCell(); if (!cell) return false;
+      return zoomFit(o, cell, (+o.zoom || 1) * f, atx, aty);
+    }
+    o.size = clamp((+o.size || 1) * f, TEXT_MIN, TEXT_MAX);
+    return true;
+  }
+  function scaleSelTo(z, atx, aty){
+    var o = selObj(); if (!o) return false;
+    if (SEL.kind === "photo"){
+      var cell = selCell(); if (!cell) return false;
+      return zoomFit(o, cell, z, atx, aty);
+    }
+    o.size = clamp(z, TEXT_MIN, TEXT_MAX);
+    return true;
+  }
+  /* only a line turns: a photograph that turns inside a rectangular cell shows the paper at its
+     corners, which is the one thing a cover crop exists to prevent */
+  function rotSel(deg){
+    var o = selObj(); if (!o || SEL.kind !== "text") return false;
+    var r = ((+o.rot || 0) + deg) % 360;
+    if (r > 180) r -= 360; if (r < -180) r += 360;
+    o.rot = r;
+    return true;
+  }
+  /* BACK TO WHAT THE PAGE CHOSE. A photograph goes back to the anchor the subject finder and the
+     cell's own shape imply — and drops its manual flag, so the layout may move it again. A line
+     goes back to its role's place, upright, at its own size. */
+  function resetSel(){
+    var o = selObj(); if (!o) return false;
+    if (SEL.kind === "photo"){
+      var cell = selCell();
+      o.zoom = 1; o.manual = false;
+      o.anchor = cell ? anchorFor(o.subject, o.w, o.h, cell.w, cell.h) : { x:0.5, y:0.5 };
+      return true;
+    }
+    o.size = 1; o.rot = 0; o.x = 0.5; o.y = (o.role === "title") ? 0.12 : 0.92;
+    return true;
+  }
+  /* a move happened: the album is saved, the stage is redrawn, and the rail's own numbers follow.
+     `live` is a drag in progress — the page rail's forty thumbnails are not redrawn per frame. */
+  function touchChanged(live){
+    saveSoon();
+    repaint(!!live);
+    if (!live) fillSelBar();
+  }
+
+  /* ---- the pointer ---- */
+
+  /* the point in PAGE pixels, which is the only coordinate system the maths above knows. The
+     canvas is drawn at VIEW.scale and laid out by CSS at whatever width the card gives it, so
+     both divisions are needed and neither may be assumed to be 1. */
+  function pagePt(cv, ev){
+    var r = cv.getBoundingClientRect();
+    if (!(r.width > 0) || !(VIEW.scale > 0)) return null;
+    var kx = cv.width / r.width, ky = (r.height > 0) ? cv.height / r.height : kx;
+    return { x: (ev.clientX - r.left) * kx / VIEW.scale, y: (ev.clientY - r.top) * ky / VIEW.scale };
+  }
+  function pinchOf(ids){
+    var a = PTRS[ids[0]], b = PTRS[ids[1]];
+    var dx = b.x - a.x, dy = b.y - a.y;
+    return { d: Math.sqrt(dx*dx + dy*dy), a: Math.atan2(dy, dx) * 180/Math.PI,
+             x: (a.x + b.x)/2, y: (a.y + b.y)/2 };
+  }
+  function startPinch(){
+    var ids = ptrIds(); if (ids.length < 2) { PINCH = null; return; }
+    var o = selObj(); if (!o) { PINCH = null; return; }
+    var g = pinchOf(ids);
+    PINCH = { d0: g.d || 1, a0: g.a, x: g.x, y: g.y,
+              z0: (SEL.kind === "photo") ? (+o.zoom || 1) : (+o.size || 1),
+              r0: (SEL.kind === "text") ? (+o.rot || 0) : 0 };
+  }
+  function applyPinch(){
+    var ids = ptrIds(); if (ids.length < 2 || !PINCH) return;
+    var o = selObj(); if (!o) return;
+    var g = pinchOf(ids);
+    var cell = selCell();
+    var atx = 0.5, aty = 0.5;
+    if (cell && cell.w > 0 && cell.h > 0){
+      atx = clamp((g.x - cell.x)/cell.w, 0, 1);
+      aty = clamp((g.y - cell.y)/cell.h, 0, 1);
+    }
+    scaleSelTo(PINCH.z0 * (g.d / (PINCH.d0 || 1)), atx, aty);
+    if (SEL.kind === "text"){
+      var d = g.a - PINCH.a0;
+      if (d > 180) d -= 360; if (d < -180) d += 360;
+      o.rot = PINCH.r0 + d;
+      moveSel(g.x - PINCH.x, g.y - PINCH.y);
+    }
+    PINCH.x = g.x; PINCH.y = g.y;
+  }
+  /* THE STAGE IS BOUND ONCE PER CANVAS. render() builds a new canvas on every rebuild, so the
+     flag lives on the element rather than in the module: a card drawn twice binds twice and a
+     single drag would move the crop two steps. */
+  function bindStage(cv){
+    if (!cv || cv.__albTouch) return;
+    cv.__albTouch = true;
+    var hasPtr = (typeof window !== "undefined") && !!window.PointerEvent;
+
+    function down(ev){
+      if (DOC.view === "spread") return;
+      var x = cv.getContext("2d"); if (!x) return;
+      var p = pagePt(cv, ev); if (!p) return;
+      var hit = pickAt(x, p.x, p.y);
+      /* A TAP ON THE PAPER LETS GO. Without this a student who has finished with a photograph has
+         no way to put the handles away, and the arrows under the stage keep moving something they
+         are no longer looking at. */
+      if (!hit){ if (SEL){ SEL = null; fillSelBar(); repaint(false); } return; }
+      if (!SEL || SEL.kind !== hit.kind || SEL.i !== hit.i){ SEL = hit; fillSelBar(); }
+      PTRS[ev.pointerId == null ? "m" : ev.pointerId] = p;
+      if (ptrCount() >= 2) startPinch();
+      else { DRAG = { }; if (cv.classList) cv.classList.add("dragging"); }
+      if (hasPtr && cv.setPointerCapture) { try { cv.setPointerCapture(ev.pointerId); } catch(e){} }
+      if (ev.preventDefault) ev.preventDefault();
+    }
+    function move(ev){
+      var id = (ev.pointerId == null) ? "m" : ev.pointerId;
+      if (!Object.prototype.hasOwnProperty.call(PTRS, id)) return;
+      var p = pagePt(cv, ev); if (!p) return;
+      if (ptrCount() >= 2){ PTRS[id] = p; applyPinch(); }
+      else {
+        var last = PTRS[id];
+        PTRS[id] = p;
+        moveSel(p.x - last.x, p.y - last.y);
+      }
+      touchChanged(true);
+      if (ev.preventDefault) ev.preventDefault();
+    }
+    function up(ev){
+      var id = (ev.pointerId == null) ? "m" : ev.pointerId;
+      if (!Object.prototype.hasOwnProperty.call(PTRS, id)) return;
+      delete PTRS[id];
+      PINCH = null;
+      if (ptrCount() === 0){ DRAG = null; if (cv.classList) cv.classList.remove("dragging"); touchChanged(false); }
+      else startPinch();
+    }
+    if (hasPtr){
+      cv.addEventListener("pointerdown", down, false);
+      cv.addEventListener("pointermove", move, false);
+      cv.addEventListener("pointerup", up, false);
+      cv.addEventListener("pointercancel", up, false);
+    } else {
+      /* a host without pointer events still gets the mouse: one button, no pinch, same maths */
+      cv.addEventListener("mousedown", down, false);
+      cv.addEventListener("mousemove", move, false);
+      cv.addEventListener("mouseup", up, false);
+      cv.addEventListener("mouseleave", up, false);
+    }
+    /* the wheel zooms what is under it — and selects it first, so one turn does the whole job */
+    cv.addEventListener("wheel", function(ev){
+      if (DOC.view === "spread") return;
+      var x = cv.getContext("2d"); if (!x) return;
+      var p = pagePt(cv, ev); if (!p) return;
+      var hit = pickAt(x, p.x, p.y); if (!hit) return;
+      if (!SEL || SEL.kind !== hit.kind || SEL.i !== hit.i){ SEL = hit; }
+      var cell = selCell(), atx = 0.5, aty = 0.5;
+      if (cell && cell.w > 0 && cell.h > 0){
+        atx = clamp((p.x - cell.x)/cell.w, 0, 1);
+        aty = clamp((p.y - cell.y)/cell.h, 0, 1);
+      }
+      scaleSel((ev.deltaY < 0) ? 1.12 : 1/1.12, atx, aty);
+      touchChanged(false);
+      if (ev.preventDefault) ev.preventDefault();
+    }, { passive:false });
+    /* two taps put it back the way the page chose it */
+    cv.addEventListener("dblclick", function(ev){
+      if (DOC.view === "spread") return;
+      var x = cv.getContext("2d"); if (!x) return;
+      var p = pagePt(cv, ev); if (!p) return;
+      var hit = pickAt(x, p.x, p.y); if (!hit) return;
+      SEL = hit; resetSel(); touchChanged(false);
+      if (ev.preventDefault) ev.preventDefault();
+    }, false);
+  }
+
+  /* ---- the rail under the stage ---- */
+
+  function selBtn(label, title, fn){
+    var b = E("button","btn", label);
+    b.type = "button";
+    if (title){ b.title = title; b.setAttribute("aria-label", title); }
+    b.onclick = fn;
+    return b;
+  }
+  /* REFILLED, NEVER RE-RENDERED. Selecting a photograph must not rebuild the album page: a
+     render() replaces every node on it, which would take the caret out of a caption being
+     typed and drop the very canvas the finger is still on. */
+  function fillSelBar(){
+    var box = SELBOX || document.getElementById("albSelBox");
+    if (!box) return;
+    SELBOX = box;
+    box.innerHTML = "";
+    var bar = E("div","alb-selbar");
+    if (DOC.view === "spread"){
+      bar.appendChild(E("span","alb-selnone", L("alb_spread_note")));
+      box.appendChild(bar);
+      return;
+    }
+    var o = selObj();
+    if (!o){
+      bar.appendChild(E("span","alb-selnone", L("alb_sel_none")));
+      box.appendChild(bar);
+      return;
+    }
+    var isPhoto = (SEL.kind === "photo");
+    var name = isPhoto
+      ? L("alb_sel_photo").replace("{N}", String(SEL.i+1))
+      : L("alb_sel_text").replace("{R}", pick9((roleById(o.role) || {}).label || {}));
+    var reads = isPhoto
+      ? "×" + (Math.round((+o.zoom || 1)*100)/100)
+      : "×" + (Math.round((+o.size || 1)*100)/100) + " · " + Math.round(+o.rot || 0) + "°";
+    bar.appendChild(E("span","alb-selname", name + " · " + reads));
+    box.appendChild(bar);
+
+    var ops = [
+      selBtn("−", L("alb_zoom_out"), function(){ scaleSel(1/1.15); touchChanged(false); }),
+      selBtn("+", L("alb_zoom_in"),  function(){ scaleSel(1.15);   touchChanged(false); })
+    ];
+    if (!isPhoto){
+      ops.push(selBtn("↺", L("alb_rot_l"), function(){ rotSel(-3); touchChanged(false); }));
+      ops.push(selBtn("↻", L("alb_rot_r"), function(){ rotSel(3);  touchChanged(false); }));
+    }
+    /* the reset carries its WORD, not a third circular arrow beside the two rotations — three
+       of them in a row and a student presses the wrong one */
+    ops.push(selBtn(L("alb_reset_one"), L("alb_reset_one"), function(){ resetSel(); touchChanged(false); }));
+    var orow = grid("btn", ops, albWidth()); orow.id = "albSelOps";
+    box.appendChild(orow);
+
+    var safe = VIEW.safe || safeArea(curSize());
+    var cell = selCell();
+    var sx = isPhoto ? (cell ? cell.w*NUDGE : 0) : (safe ? safe.w*NUDGE/2 : 0);
+    var sy = isPhoto ? (cell ? cell.h*NUDGE : 0) : (safe ? safe.h*NUDGE/2 : 0);
+    var mv = [
+      selBtn("←", L("alb_move_l"), function(){ moveSel(-sx, 0); touchChanged(false); }),
+      selBtn("→", L("alb_move_r"), function(){ moveSel(sx, 0);  touchChanged(false); }),
+      selBtn("↑", L("alb_move_u"), function(){ moveSel(0, -sy); touchChanged(false); }),
+      selBtn("↓", L("alb_move_d"), function(){ moveSel(0, sy);  touchChanged(false); })
+    ];
+    var mrow = grid("btn", mv, albWidth()); mrow.id = "albSelMove";
+    box.appendChild(mrow);
   }
 
   /* ======================= THE PAGE ======================= */
@@ -32565,8 +33070,18 @@ var ALBUM = (function(){
     sp.onclick = function(){ DOC.view = (DOC.view === "spread") ? "page" : "spread"; onDocChange(false); };
     var row = grid("btn", [sp, g], albWidth()); row.id = "albStageOps";
     card.appendChild(row);
+    /* 6.110.0 — the adjusting rail. It is refilled in place by fillSelBar() whenever the
+       selection or one of its numbers changes, and it is built here so it sits directly under
+       the picture it is talking about. */
+    var selbox = E("div", null); selbox.id = "albSelBox";
+    card.appendChild(selbox);
+    SELBOX = selbox;
+    var tnote = E("p","mut", L("alb_touch_note")); tnote.id = "albTouchNote";
+    card.appendChild(tnote);
     var note = E("p","mut", L("alb_guides_note")); note.id = "albGuidesNote";
     card.appendChild(note);
+    bindStage(cv);
+    fillSelBar();
     return card;
   }
 
@@ -32726,6 +33241,7 @@ var ALBUM = (function(){
         for (k=0;k<pg.texts.length;k++) if (pg.texts[k].role === role.id) cur = pg.texts[k];
         function ensure(){
           if (!cur){ cur = { role: role.id, text:"", x:0.5, y: role.id==="title" ? 0.12 : 0.92,
+                             size:1, rot:0,
                              align:"center", color:"#1b1b1f", font:"" }; pg.texts.push(cur); }
           return cur;
         }
@@ -32952,7 +33468,9 @@ var ALBUM = (function(){
           var w = im.naturalWidth||im.width, h = im.naturalHeight||im.height;
           if (!(w>0 && h>0)) return;
           var subj = measureSubject(im, w, h);
-          var ph = { src: src, w: w, h: h, subject: subj, anchor: { x:0.5, y:0.5 } };
+          /* 6.110.0 — zoom 1 and manual false: the page still chooses this photograph's crop,
+             until the student touches it. */
+          var ph = { src: src, w: w, h: h, subject: subj, anchor: { x:0.5, y:0.5 }, zoom: 1, manual: false };
           pg.photos.push(ph);
           added++;
         });
@@ -32991,6 +33509,11 @@ var ALBUM = (function(){
     var rects = cellRects(tpl, layoutRect(safe, pg)), i;
     for (i=0;i<pg.photos.length && i<rects.length;i++){
       var ph = pg.photos[i], r = rects[i];
+      /* 6.110.0 — A CROP THE STUDENT SET IS THEIRS. reAnchor runs on every layout change, every
+         size change and every page rebuild; without this line the studio pushes the bride an inch
+         left, taps the next template, and the app quietly puts her back. "Back to what the page
+         chose" is a button (resetSel), never something that happens on its own. */
+      if (ph.manual) continue;
       ph.anchor = anchorFor(ph.subject, ph.w, ph.h, r.w, r.h);
     }
   }
@@ -33011,8 +33534,12 @@ var ALBUM = (function(){
     if (REDRAW) clearTimeout(REDRAW);
     REDRAW = setTimeout(repaint, 90);
   }
+  var SELPAGE = -1;
   function render(){
     if (!ROOT) return;
+    /* 6.110.0 — the selection belongs to the page it was made on. Turning to page 4 with
+       "photo 2" still selected would hand the arrows a different photograph. */
+    if (SELPAGE !== DOC.cur){ SEL = null; SELPAGE = DOC.cur; }
     /* 6.107.0 — every rail is built against ONE measurement, taken here. Measuring per rail
        would let a card built before the stage canvas exists disagree with the one after it. */
     BUCKET = widthBucket(albWidth());
@@ -33028,8 +33555,10 @@ var ALBUM = (function(){
     if (REDRAW) clearTimeout(REDRAW);
     REDRAW = setTimeout(repaint, 0);
   }
-  /* the stage and every thumbnail, at whatever scale each one can afford */
-  function repaint(){
+  /* the stage and every thumbnail, at whatever scale each one can afford.
+     6.110.0 — `live` is a drag in progress: the stage is the only canvas that has to keep up
+     with a finger, and an album of forty pages must not redraw forty thumbnails per frame. */
+  function repaint(live){
     REDRAW = null;
     var sz = curSize(), px = pagePx(sz);
     if (!px) return;
@@ -33042,9 +33571,16 @@ var ALBUM = (function(){
       var spread = (DOC.view === "spread");
       var room = Math.min(avail, PREVIEW_MAX) / (spread ? 2 : 1);
       var scale = Math.min(1, room / px.w);
+      /* 6.110.0 — THE STAGE'S OWN GEOMETRY, WRITTEN DOWN. A pointer arrives in client pixels and
+         has to become page pixels; the cell it landed in has to be the cell this canvas was drawn
+         with. Both are known here and nowhere else, so here is where they are recorded. */
+      var safeNow = safeArea(sz);
+      VIEW = { scale: scale, safe: safeNow, spread: spread,
+               cells: (spread || !safeNow) ? [] : cellRects(pageTpl(curPage(), DOC.cur), layoutRect(safeNow, curPage())) };
       if (spread) drawSpread(stage, spreadOf(DOC.cur, DOC.pages.length), scale);
-      else drawPage(stage, curPage(), DOC.cur, { scale: scale, guides: !!DOC.guides });
+      else drawPage(stage, curPage(), DOC.cur, { scale: scale, guides: !!DOC.guides, sel: selObj() ? SEL : null });
     }
+    if (live) return;
     var i;
     for (i=0;i<DOC.pages.length;i++){
       (function(idx){
@@ -33522,7 +34058,12 @@ var ALBUM = (function(){
             /* 6.107.0 wave E — the layout arithmetic the rails are built from, and the free
                size's own bounds, so a test measures what the page uses rather than a copy */
             evenCols: evenCols, albCap: albCap, widthBucket: widthBucket,
-            unitToPx: unitToPx, pxToUnit: pxToUnit, unitMax: unitMax, sizeWarning: sizeWarning },
+            unitToPx: unitToPx, pxToUnit: pxToUnit, unitMax: unitMax, sizeWarning: sizeWarning,
+            /* 6.110.0 wave A of the touch programme — the two moves a finger makes, as pure
+               arithmetic over a photograph and a cell, so a test measures the studio's own
+               clamping rather than a copy of it */
+            panFit: panFit, zoomFit: zoomFit, ZOOM_MIN: ZOOM_MIN, ZOOM_MAX: ZOOM_MAX,
+            TEXT_MIN: TEXT_MIN, TEXT_MAX: TEXT_MAX },
     /* the two files, driven straight by the test rather than through a download */
     pdf: exportPdf, psd: function(){ return psdOfPage(DOC.cur); },
     /* A page drawn, its cells measured, and the PSD button pressed, through the SHIPPED
@@ -33536,6 +34077,11 @@ var ALBUM = (function(){
       return cellRects(pageTpl(pg, idx), layoutRect(safe, pg));
     },
     __psdButton: function(){ return exportPsd(); },
+    /* 6.110.0 — what the stage has hold of, and a way to take hold of something without a
+       pointer. The walk drives real pointer events; these two are how it READS the result, and
+       how the Photoshop panel (which has no pointer worth the name) could select from a list. */
+    sel: function(){ return selObj() ? { kind: SEL.kind, i: SEL.i } : null; },
+    select: function(kind, i){ SEL = (kind == null) ? null : { kind: kind, i: i }; fillSelBar(); repaint(); return this.sel(); },
     doc: function(){ return DOC; },
     setDoc: function(d){ DOC = normalize(d); onDocChange(true); },
     reset: function(){ DOC = blankDoc(); onDocChange(true); }
@@ -33589,7 +34135,11 @@ var ALBUM = (function(){
         if (!q || typeof q.src !== "string" || !q.src) continue;
         pg.photos.push({ src:q.src, w:+q.w||1, h:+q.h||1,
                          subject: (q.subject && isFinite(q.subject.x) && isFinite(q.subject.y)) ? q.subject : null,
-                         anchor: (q.anchor && isFinite(q.anchor.x) && isFinite(q.anchor.y)) ? q.anchor : { x:0.5, y:0.5 } });
+                         anchor: (q.anchor && isFinite(q.anchor.x) && isFinite(q.anchor.y)) ? q.anchor : { x:0.5, y:0.5 },
+                         /* 6.110.0 — an album saved before this wave has neither, and reads back as
+                            the page laid it out: zoom 1, and a crop the layout may still choose. */
+                         zoom: isFinite(q.zoom) ? clamp(+q.zoom, ZOOM_MIN, ZOOM_MAX) : 1,
+                         manual: !!q.manual });
       }
       var tx = (p.texts && p.texts.length) ? p.texts : [];
       for (k=0;k<tx.length && pg.texts.length<D.roles.length;k++){
@@ -33599,6 +34149,9 @@ var ALBUM = (function(){
         if (!ok) continue;
         pg.texts.push({ role:t.role, text:String(t.text).slice(0,120),
                         x: isFinite(t.x) ? clamp(t.x,0,1) : 0.5, y: isFinite(t.y) ? clamp(t.y,0,1) : 0.92,
+                        /* 6.110.0 */
+                        size: isFinite(t.size) ? clamp(+t.size, TEXT_MIN, TEXT_MAX) : 1,
+                        rot: isFinite(t.rot) ? clamp(+t.rot, -180, 180) : 0,
                         align: t.align || "center",
                         color: (typeof t.color === "string" && /^#[0-9a-fA-F]{6}$/.test(t.color)) ? t.color : "#1b1b1f",
                         font: (t.font && fontById(t.font)) ? t.font : "" });
