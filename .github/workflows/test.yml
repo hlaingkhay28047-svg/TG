@@ -600,6 +600,8 @@ jobs:
         run: PORT=8931 node test/verify_album_pages.js
       - name: "Album Pages wave B — the type: twenty OFL families as woff2 under lib/fonts/ with every file's SHA-256 recorded and its licence attributed, twelve pairings over them, a face and an ink per line, the Burmese rule (a Latin title sets its Burmese from a Burmese face on the same line), the faces declared under document-local handles so no other page in the studio changes what it is set in, and typing a title that no longer rebuilds the card under the caret (6.104.0)"
         run: PORT=8931 node test/verify_album_fonts.js
+      - name: "Album Pages wave C — the occasions: nine occasions (the seven kinds of session the owner named, plus wedding day and birthday), each setting a pairing, a print size and an ink together and each carrying its own PLAN for how the pages break; 'Make the whole album' laying up to forty photographs out at once with the occasion's words on the opener; the generator refusing six broken occasions by name; every page anchored against its OWN template rather than the open one; and the phone's file overlay carrying the mode the button could not (6.105.0)"
+        run: PORT=8931 node test/verify_album_occasions.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
