@@ -223,7 +223,14 @@
        v6.47.0 — no inline <svg> in this bar: this renderer draws none, so the
        gear and the caret are <img> files like every other icon in the panel. -->
   <div class="hdr nav">
-    <div class="nav-logo-wrap"><img class="nav-logo" src="icons/plugin@2x.png" alt="" /></div>
+    <!-- 6.110.0 — THE HEADER MARK IS ITS OWN FILE AGAIN. It used to point at
+         icons/plugin@2x.png, which is a MANIFEST icon: when 6.179.0 redrew the
+         plugin-list family as a gold H the panel's own header changed with it,
+         which the owner never asked for ("ပထမဟာကို နဂိုမူလ ပြန်ထားပေးပါ"). The two
+         jobs are now two files: icons/brand-logo.png is the studio's own mark,
+         restored byte-for-byte from the artwork that was here before 6.179.0,
+         and icons/plugin*.png stay the Photoshop icon family. -->
+    <div class="nav-logo-wrap"><img class="nav-logo" src="icons/brand-logo.png" alt="" /></div>
     <div class="nav-name">
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
