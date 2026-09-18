@@ -807,7 +807,20 @@ function create(deps) {
   function refresh() {
     if (!state.workflowId) return;
     var ev = validator.evaluate(state);
-    (state.requiredInputs || []).forEach(function (inp) {
+    /* 6.182.0 — AND THE OPTIONAL SLOTS. This walk read state.requiredInputs
+       alone, but inputRow() draws a tile for every OPTIONAL input as well
+       (renderSelected appends them under "Optional Images"). A slot this loop
+       never reached kept the state it was BUILT in for as long as the card was
+       open: all three faces of the tile on screen at once — the picture frame
+       carrying the one-pixel placeholder (a black box), its ✕, AND the dashed
+       "+ Layer" frame — and a mark frozen on "Missing" that no photograph
+       could ever turn into a tick. The owner photographed it on Background
+       Replace and asked the two right questions: "this one cannot be called"
+       and "why are there two of them". 26 of the catalog's workflows carry an
+       optional slot, and every one of them read this way since 6.109.0 put
+       the waiting tile on screen. The list is the one the screen draws. */
+    (state.requiredInputs || []).concat(state.optionalInputs || []).forEach(function (inp) {
+      var isOpt = (state.optionalInputs || []).indexOf(inp) >= 0;
       var mark = nodes["req_" + inp.key];
       if (mark) {
         var okk = !!(inp.image && inp.image.ref);
@@ -827,8 +840,13 @@ function create(deps) {
           if (nm.length > 22) nm = nm.slice(0, 21) + "\u2026";
           tickText += (nm ? " " + nm : "") + ((im0.width > 0 && im0.height > 0) ? " \u00b7 " + im0.width + "\u00d7" + im0.height : "");
         }
-        mark.textContent = okk ? tickText : (failReason || "Missing");
-        mark.className = "hnk-req-mark " + (okk ? "ok" : "miss");
+        /* 6.182.0 — and it says the truth about itself. "Missing" under the
+           heading "Optional Images" told a student a photograph was owed that
+           is not: the web app's own wizard writes wiz_opt on exactly these
+           slots. A real failed attempt still names its reason on either kind. */
+        mark.textContent = okk ? tickText
+          : (failReason || (isOpt ? dom.t("ai_optional", "Optional") : dom.t("ai_missing", "Missing")));
+        mark.className = "hnk-req-mark " + (okk ? "ok" : (isOpt ? "opt" : "miss"));
       }
       /* v6.59.0 — SHOW THE PHOTO THAT LANDED.
          The slot used to answer with a tick and nothing else, so a studio
@@ -1943,6 +1961,16 @@ function create(deps) {
       attrs: { role: "button", tabindex: "0" } }, [emptyPlus, emptyTxt]);
     dom.on(empty, "click", function () { addImage(inp); });
     var thumb = dom.el(doc, "div", { class: "hnk-req-thumb", id: "hnkWfThumb_" + inp.key }, [thumbImg, clear, empty]);
+    /* 6.182.0 — BUILT EMPTY, not built full and corrected afterwards. The tile
+       has two faces and only one of them belongs to a waiting slot, so the
+       waiting face is the one it is born with. Until now every tile appeared
+       with the picture frame, the ✕ and the dashed frame all showing, and only
+       refresh() ever took the first two away — which made a missed refresh
+       (see the optional slots above) render as two boxes side by side, one of
+       them dead to the touch. A tile that starts correct cannot be caught out
+       by a refresh that does not come. */
+    thumbImg.style.display = "none";
+    clear.style.display = "none";
     nodes["thumb_" + inp.key] = thumb;
     nodes["empty_" + inp.key] = empty;
 
