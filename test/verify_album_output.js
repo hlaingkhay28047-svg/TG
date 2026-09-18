@@ -68,6 +68,7 @@ const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const MANIFEST = JSON.parse(read("panel/release-manifest.json"));
 const A = require(path.join(ROOT, "tools", "lib", "app-data.js"));
+const WN = require("./lib/whats-new.js");
 const ALBUM = A.readAlbum();
 const TRL = A.readTrl();
 
@@ -582,12 +583,26 @@ async function browserWalk() {
 
 /* ============================ D) the release ============================ */
 function release() {
-  report("D1) the web app, the service worker, the API and the landing site all say 6.106.0, and the panel moved with them",
-    new RegExp('var APP_VER="' + WEB + '";').test(APP) &&
-    /var CACHE = "hnk-web-studio-v6-106-0";/.test(read("docs/app/sw.js")) &&
-    JSON.parse(read("docs/app/version.json")).v === WEB &&
-    MANIFEST.version === "6.177.0" &&
-    LANDING.indexOf("Panel v6.177.0") >= 0, { manifest: MANIFEST.version });
+  /* 6.107.0 — THIS CHECK USED TO MEASURE A FROZEN PAIR. Wave D wrote "6.106.0" and
+     "6.177.0" into it as literals under the name "they move together", so it said nothing
+     about moving and went red on the first release after it — the same mistake its sibling
+     in verify_album_occasions carried until wave D rewrote it. What it should say is that
+     the four surfaces agree with docs/app/version.json, that the service worker's cache
+     name is that version, and that the panel is at or past the pair this wave shipped. */
+  const web = JSON.parse(read("docs/app/version.json")).v;
+  const cache = "hnk-web-studio-v" + web.replace(/\./g, "-");
+  const cmp = (a, b) => {
+    const x = String(a).split("."), y = String(b).split(".");
+    for (let i = 0; i < 3; i++) { const d = (+x[i] || 0) - (+y[i] || 0); if (d) return d; }
+    return 0;
+  };
+  report("D1) the web app, the service worker, the API and the landing site all say the same version, and the panel moved with them — at or past the 6.106.0 / 6.177.0 this wave shipped",
+    new RegExp('var APP_VER="' + web + '";').test(APP) &&
+    read("docs/app/sw.js").indexOf('var CACHE = "' + cache + '";') >= 0 &&
+    read("server/index.js").indexOf(web) >= 0 &&
+    LANDING.indexOf("Panel v" + MANIFEST.version) >= 0 &&
+    cmp(web, WEB) >= 0 && cmp(MANIFEST.version, "6.177.0") >= 0,
+    { web, cache, manifest: MANIFEST.version });
 
   const n = new Set(CI.match(/node test\/[A-Za-z0-9_]+\.js/g) || []).size;
   const badge = Number((LANDING.match(/"badge\.tests":\s*\{"my":\s*"(\d+) tests green/) || [])[1] || 0);
@@ -596,7 +611,7 @@ function release() {
     /npm install playwright@1\.62\.1 acorn@8\.18\.0 ag-psd@31\.0\.2/.test(CI) &&
     n === badge && n >= 248, { ciTests: n, badge });
 
-  const row = (APP.match(/\{ v:"6\.106\.0", kind:"page", ref:"pgAlbum",[\s\S]{0,12000}?\} \},/) || [""])[0];
+  const row = WN.appRow("6.106.0", "pgAlbum");
   const missing = LANGS.filter(L => !new RegExp("[,{]" + L + ':"').test(row.split("s:{")[0]) ||
                                     !new RegExp("[,{]" + L + ':"').test("s:{" + (row.split("s:{")[1] || "")));
   report("D3) the What's New row for this release is written in all nine base languages, title and body, and points at the Album page",

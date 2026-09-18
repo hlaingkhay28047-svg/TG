@@ -95,7 +95,11 @@ function sourcePins() {
 
   /* A6 — UXP-safe by construction, because Wave D lifts this block into the panel. */
   report("A6) the CSS block is UXP-safe — flex and margin only, no CSS grid and no object-fit, so Wave D can lift it into the Photoshop panel unchanged",
-    /\/\* ---- ALBUM_CSS \(6\.102\.0 wave A\)/.test(APP) &&
+    /* 6.107.0 — wave E rebuilt the block, so the header now reads
+       "(6.102.0 wave A; rebuilt 6.107.0 wave E)" and the closing paren is no
+       longer the next character. The block's identity is what this pins; the
+       teeth below — no CSS grid, no object-fit — are untouched. */
+    /\/\* ---- ALBUM_CSS \(6\.102\.0 wave A/.test(APP) &&
     !/\.alb-[a-z-]*\{[^}]*display:grid/.test(APP) &&
     !/\.alb-[a-z-]*\{[^}]*object-fit/.test(APP), null);
 
@@ -230,6 +234,11 @@ async function browserWalk() {
     stage: !!document.getElementById("albCanvas"),
     pages: (ALBUM.doc().pages || []).length,
     groups: document.querySelectorAll("#albGroups .chip").length,
+    /* 6.107.0 — the seventh group chip was "Custom", a door a student had to
+       find before they could type a size. The free size is now ALWAYS on the
+       card, so there are six real groups and four controls that must be
+       present instead of that chip. */
+    free: ["albFreeW", "albFreeH", "albRangeW", "albRangeH"].filter(id => !!document.getElementById(id)).length,
     sizes: document.querySelectorAll("#albSizes .chip").length,
     occs: document.querySelectorAll("#albOccs .alb-occ").length,
     make: !!document.getElementById("albMake")
@@ -238,7 +247,7 @@ async function browserWalk() {
     opened.on && opened.cards.length === 8 &&
     opened.cards.join(",") === "albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albTextCard,albExportCard" &&
     opened.occs === 9 && opened.make &&
-    opened.stage && opened.pages === 1 && opened.groups === 7 && opened.sizes >= 4 &&
+    opened.stage && opened.pages === 1 && opened.groups === 6 && opened.free === 4 && opened.sizes >= 4 &&
     /10800/.test(opened.sizeNote) && /300 DPI/.test(opened.sizeNote), opened);
 
   /* C2 — photos in, measured once, and the layout chosen for their shapes. */
@@ -250,6 +259,11 @@ async function browserWalk() {
       photos: pg.photos.length,
       measured: pg.photos.map(p => ({ w: p.w, h: p.h, hasSubject: !!p.subject })),
       tplChips: document.querySelectorAll("#albTpls .chip").length,
+      /* 6.107.0 — Auto was the 13th chip in the template rail and overflowed its
+         cell in Burmese at 340 px (77 px of ink in a 61 px cell). It now sits in
+         its own two-column rail beside Edge, so the template rail is templates
+         only and Auto is still one tap away — pinned here by its new home. */
+      autoChip: !!document.querySelector("#albLayoutModes .chip"),
       auto: pg.auto,
       note: (document.getElementById("albLayoutNote") || {}).textContent || "",
       strip: document.querySelectorAll("#albStrip .alb-tile").length
@@ -257,7 +271,7 @@ async function browserWalk() {
   });
   report("C2) two photographs go in, are measured once each, and a layout for two is chosen automatically — the strip shows both and the chip row offers every two-photo template plus Auto",
     added.photos === 2 && added.measured.every(m => m.w > 0 && m.h > 0 && m.hasSubject) &&
-    added.tplChips === 13 && added.auto === true && added.strip === 2 && added.note.length > 3, added);
+    added.tplChips === 12 && added.autoChip && added.auto === true && added.strip === 2 && added.note.length > 3, added);
 
   /* C3 — THE RULE. The same template through five page sizes must land on the same
      proportions. This is "size အစုံ ကြိုက်သလိုပြောင်းလဲလို့ရတာ", measured. */
@@ -402,11 +416,16 @@ async function browserWalk() {
     const px = M.pagePx({ id: "custom", group: "custom", w: 24, h: 8, unit: "in", dpi: 240 });
     const cm = M.pagePx({ id: "c", group: "custom", w: 30, h: 20, unit: "cm", dpi: 300 });
     return { px, cm, note: (document.getElementById("albSizeNote") || {}).textContent || "",
-             fields: ["albCustomW","albCustomH","albCustomUnit","albCustomDpi"].filter(id => !!document.getElementById(id)).length };
+             /* 6.107.0 — albCustomW/H became albFreeW/H when the free size came out
+                from behind the "Custom" chip, and each side gained a rail you can
+                drag as well as a number you can type (the owner asked for both).
+                Six controls now, not four. */
+             fields: ["albFreeW","albFreeH","albRangeW","albRangeH","albCustomUnit","albCustomDpi"]
+               .filter(id => !!document.getElementById(id)).length };
   });
-  report("C10) a studio can type its own size — 24 × 8 in at 240 DPI is 5760 × 1920 px, 30 × 20 cm at 300 DPI is 3543 × 2362 px, and the four fields (w · h · unit · DPI) are all on the page",
+  report("C10) a studio can type its own size — 24 × 8 in at 240 DPI is 5760 × 1920 px, 30 × 20 cm at 300 DPI is 3543 × 2362 px, and the six controls (w · h as a number AND a rail each · unit · DPI) are all on the page",
     custom.px.w === 5760 && custom.px.h === 1920 && custom.cm.w === 3543 && custom.cm.h === 2362 &&
-    custom.fields === 4 && /240 DPI/.test(custom.note), custom);
+    custom.fields === 6 && /240 DPI/.test(custom.note), custom);
 
   report("C11) nothing threw in the app while the whole page was driven", errs.length === 0, errs.slice(0, 4));
   await browser.close();

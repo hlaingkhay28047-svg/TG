@@ -49,6 +49,7 @@ const path = require("path");
 const http = require("http");
 const { chromium } = require("playwright-core");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -295,8 +296,8 @@ async function panelWalk() {
 /* =================== D) the release =================== */
 function releasePins() {
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
-  const wn = (APP.match(/\{ v:"6\.99\.0", kind:"page", ref:"pgCreate",[\s\S]*?\} \},\n/) || [""])[0];
-  const wnP = (WHATS.match(/\{ v:"6\.99\.0", kind:"page", ref:"pgCreate",[\s\S]*?\} \},\n/) || [""])[0];
+  const wn = WN.appRow("6.99.0", "pgCreate");
+  const wnP = WN.panelRow("6.99.0", "pgCreate");
   report("D1) CI runs this test right after verify_wf_responsive; the landing counts at least 241 tests; What's New carries the 6.99.0 row in nine languages on the app and the panel; the panel release is 6.170.0 or later and the manifest, panel-version.json and PANEL_VERSION all say the same thing",
     CI.indexOf("node test/verify_panel_one_tap_place.js") > CI.indexOf("node test/verify_wf_responsive.js") &&
     CI.indexOf("node test/verify_wf_responsive.js") > 0 && tests >= 241 &&

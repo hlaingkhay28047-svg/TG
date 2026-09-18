@@ -42,6 +42,7 @@ const zlib = require("zlib");
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
+const WN = require("./lib/whats-new.js");
 
 let failures = 0;
 function report(name, ok, detail) {
@@ -134,7 +135,7 @@ function sourcePins() {
   const ciIdx = CI.indexOf("node test/verify_panel_freeform_sources.js"), prevIdx = CI.indexOf("node test/verify_panel_result_host.js");
   const landingTests = parseInt((/data-count="tests">(\d+)</.exec(LANDING) || [])[1] || "0", 10);
   report("A7) CI runs this test right after verify_panel_result_host, the landing claims at least the 217 tests this wave reached, the What's New row 6.82.0 exists on both surfaces",
-    ciIdx > prevIdx && prevIdx > 0 && landingTests >= 217 && /v:"6\.82\.0", kind:"page", ref:"pgWf"/.test(APP) && /v:"6\.82\.0"/.test(WHATS), { ciIdx, prevIdx, landingTests });
+    ciIdx > prevIdx && prevIdx > 0 && landingTests >= 217 && !!WN.appRow("6.82.0", "pgWf") && WN.panelRow("6.82.0", "pgWf") === WN.appRow("6.82.0", "pgWf"), { ciIdx, prevIdx, landingTests });
 }
 
 /* a fake http.request: the test decides what each hop answers */

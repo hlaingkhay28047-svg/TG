@@ -14,6 +14,8 @@
                                                             one native language
                                                             pack; the shell loads
                                                             only the chosen one
+   docs/app/data/whatsnew.js    window.HNK_WHATS_NEW=<json>; the What's New strip
+                                                            the app shows (v6.107.0)
    docs/app/data/whats-new-archive.json                    What's New rows older
                                                             than the strip's cut
    Each .js file is a fixed assignment head wrapped around verbatim JSON, so
@@ -34,7 +36,11 @@ const FILES = {
   libwf: { file: "libwf.js", global: "HNK_LIBWF", head: "window.HNK_LIBWF=", tag: "script" },
   hnkdata: { file: "hnkdata.js", global: "HNK_DATA", head: "window.HNK_DATA=", tag: "script" },
   imagine: { file: "imagine.js", global: "HNK_IMAGINE", head: "window.HNK_IMAGINE=", tag: "script" },
-  album: { file: "album.js", global: "HNK_ALBUM", head: "window.HNK_ALBUM=", tag: "script" }
+  album: { file: "album.js", global: "HNK_ALBUM", head: "window.HNK_ALBUM=", tag: "script" },
+  /* v6.107.0 — the What's New strip. The A4 ceiling in verify_app_data_files said, in so
+     many words, that a third rise of the raw figure was not the answer and that WHATS_NEW
+     was the obvious next table to move. It was 186 KB of the shell. */
+  whatsnew: { file: "whatsnew.js", global: "HNK_WHATS_NEW", head: "window.HNK_WHATS_NEW=", tag: "script" }
 };
 TRL_CODES.forEach(function (c) {
   FILES["trl-" + c] = { file: "trl-" + c + ".js", global: "HNK_TRL", code: c, head: "window.HNK_TRL=window.HNK_TRL||{};window.HNK_TRL." + c + "=", tag: "loader" };
@@ -58,10 +64,12 @@ function libWfText() { return jsonText("libwf"); }
 function hnkDataText() { return jsonText("hnkdata"); }
 function imagineText() { return jsonText("imagine"); }
 function albumText() { return jsonText("album"); }
+function whatsNewText() { return jsonText("whatsnew"); }
 function readLibWf() { return JSON.parse(libWfText()); }
 function readHnkData() { return JSON.parse(hnkDataText()); }
 function readImagine() { return JSON.parse(imagineText()); }
 function readAlbum() { return JSON.parse(albumText()); }
+function readWhatsNew() { return JSON.parse(whatsNewText()); }
 function readTrlPack(code) {
   if (TRL_CODES.indexOf(code) < 0) throw new Error("no native pack for " + code);
   return JSON.parse(jsonText("trl-" + code));
@@ -87,5 +95,5 @@ function trlTags() {
 /* the table the shell's loader carries, as the shell prints it */
 function trlTagsLine() { return "window.HNK_TRL_TAGS=" + JSON.stringify(trlTags()) + ";"; }
 
-module.exports = { ROOT, DATA_DIR, FILES, TRL_CODES, wrapperText, jsonText, libWfText, hnkDataText, imagineText, albumText,
-  readLibWf, readHnkData, readImagine, readAlbum, readTrlPack, readTrl, readWhatsNewArchive, contentTag, trlTags, trlTagsLine };
+module.exports = { ROOT, DATA_DIR, FILES, TRL_CODES, wrapperText, jsonText, libWfText, hnkDataText, imagineText, albumText, whatsNewText,
+  readLibWf, readHnkData, readImagine, readAlbum, readWhatsNew, readTrlPack, readTrl, readWhatsNewArchive, contentTag, trlTags, trlTagsLine };

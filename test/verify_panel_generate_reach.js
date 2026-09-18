@@ -46,6 +46,7 @@ const http = require("http");
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
+const WN = require("./lib/whats-new.js");
 
 let failures = 0;
 function report(name, ok, detail) {
@@ -112,7 +113,7 @@ function sourcePins() {
   report("A8) CI runs this test right after verify_panel_uxp_dialogs, and the landing claims at least the 215 tests this wave reached",
     ciIdx > prevIdx && prevIdx > 0 && landingTests >= 215, { ciIdx, prevIdx, landingTests });
   report("A9) the What's New row 6.80.0 exists in the app and in the panel's lifted table",
-    /v:"6\.80\.0", kind:"page", ref:"pgWf"/.test(APP) && /v:"6\.80\.0"/.test(WHATS));
+    !!WN.appRow("6.80.0", "pgWf") && WN.panelRow("6.80.0", "pgWf") === WN.appRow("6.80.0", "pgWf"));
 }
 
 async function transportInNode() {

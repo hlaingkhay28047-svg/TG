@@ -20,9 +20,13 @@ const path = require("path");
 const PORT = process.env.PORT || 8931;
 const APP_SRC = fs.readFileSync(path.join(__dirname, "..", "docs", "app", "index.html"), "utf8");
 const REANNOUNCE = (() => {
-  const open = "var WHATS_NEW = [\n";
-  const a = APP_SRC.indexOf(open); const b = APP_SRC.indexOf("\n];", a);
-  const inline = new Function("return [" + APP_SRC.slice(a + open.length, b) + "]")();
+  /* v6.107.0 — the table itself left the shell for data/whatsnew.js, so the
+     live rows are read from the data file rather than sliced out of the HTML.
+     Until this release the slice was `var WHATS_NEW = [` in index.html; with
+     that literal gone the old code evaluated the file's first `[` and threw
+     "Unexpected identifier". readWhatsNew() is the same pair the other four
+     data files already use. */
+  const inline = require("../tools/lib/app-data.js").readWhatsNew();
   if (inline.some(e => e.kind === "wf")) return null;
   const appVer = APP_SRC.match(/var APP_VER="([^"]+)"/)[1];
   const arch = require("../tools/lib/app-data.js").readWhatsNewArchive()

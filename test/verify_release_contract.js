@@ -351,19 +351,15 @@ check("the panel agrees with itself about which version it is",
      here. The safety property is unchanged and now covers the whole set: if
      the panel's version ever appeared among them the exemption could hide a
      real panel literal, so that fails instead of quietly passing. */
-  const newsVersions = [];
-  {
-    const i = app.indexOf("var WHATS_NEW = [");
-    const start = app.indexOf("[", i);
-    let d = 0, end = -1;
-    for (let k = start; k < app.length && i >= 0; k++) {
-      if (app[k] === "[") d++;
-      else if (app[k] === "]") { d--; if (!d) { end = k; break; } }
-    }
-    const table = end > 0 ? app.slice(start, end) : "";
-    let m; const re = /\bv:"(\d+\.\d+\.\d+)"/g;
-    while ((m = re.exec(table))) newsVersions.push(m[1]);
-  }
+  /* v6.107.0 — the table moved to data/whatsnew.js, so the exemption reads it
+     from there. It used to be sliced out of index.html by `var WHATS_NEW = [`;
+     with that literal gone the slice degraded silently to an EMPTY exemption
+     set — passing today only because the rows left the file with it, and ready
+     to refuse a real release the moment a row's version appeared in the shell
+     again. Reading the rows themselves keeps the exemption true wherever the
+     table lives. */
+  const newsVersions = appData.readWhatsNew()
+    .map(e => e.v).filter(v => /^\d+\.\d+\.\d+$/.test(v));
   const appVersions = new Set([appVersion].concat(newsVersions));
   const own = new Set();
   appVersions.forEach(v => { own.add('"' + v + '"'); own.add("v" + v); });

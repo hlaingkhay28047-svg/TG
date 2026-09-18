@@ -34,6 +34,7 @@ const zlib = require("zlib");
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
+const WN = require("./lib/whats-new.js");
 
 let failures = 0;
 function report(name, ok, detail) {
@@ -107,8 +108,8 @@ function sourcePins() {
     /try \{ hnkLayerProbeStart\(true\); \} catch \(eL\) \{ \}/.test(MAIN) && /label: "Layer capture"/.test(MAIN) &&
     /detail: "REFUSED \\u2014 " \+ String\(r\.error\)\.slice\(0, 140\)/.test(MAIN) && /"no document open \\u2014 open a photo, select its layer, then Run again"/.test(MAIN) &&
     !/hnkLayerProbeStart\(\)[^\n]*setupApplyStatics/.test(MAIN), null);
-  const wn = (APP.match(/\{ v:"6\.84\.0", kind:"page", ref:"pgWf",[\s\S]*?\} \},\n/) || [""])[0];
-  const wnP = (WHATS.match(/\{ v:"6\.84\.0", kind:"page", ref:"pgWf",[\s\S]*?\} \},\n/) || [""])[0];
+  const wn = WN.appRow("6.84.0", "pgWf");
+  const wnP = WN.panelRow("6.84.0", "pgWf");
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
   report("A6) CI runs this test right after verify_panel_wf_results; the landing counts at least 219 tests; What's New carries the 6.84.0 page row in nine languages on the app and the panel",
     CI.indexOf("node test/verify_panel_selection_results.js") > CI.indexOf("node test/verify_panel_wf_results.js") && tests >= 219 &&

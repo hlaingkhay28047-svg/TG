@@ -43,6 +43,7 @@ const http = require("http");
 const { chromium } = require("playwright-core");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
 const { unstyledElements } = require("./lib/dead-classes.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -204,9 +205,12 @@ function releasePins() {
     { appVer, panVer, pv: pv.v, count });
 
   /* the row this test's own wave added, wherever it now sits in the table */
-  const head = '{ v:"6.96.1"';
-  const i = APP.indexOf(head);
-  const row = i < 0 ? "" : APP.slice(i, APP.indexOf('{ v:"', i + head.length));
+  /* 6.107.0 — the row used to be sliced out of the WHATS_NEW literal in
+     index.html by hand, from one `{ v:"` to the next. The table now lives in
+     data/whatsnew.js as JSON, so the row is read from there and rendered back
+     into the spelling this check was written against — same row, same nine
+     language keys, no slicing arithmetic. */
+  const row = WN.appRow("6.96.1");
   report("D2) the 6.96.1 What's New row still names the two banners in all nine languages",
     row.length > 100 && LANGS.every(l => new RegExp('\\b' + l + ':"').test(row)), { len: row.length });
 }

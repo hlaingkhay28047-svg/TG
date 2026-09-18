@@ -36,6 +36,7 @@ const path = require("path");
 const http = require("http");
 const { chromium } = require("playwright-core");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -98,8 +99,8 @@ function undeclaredScreaming(src) {
     /g\.HNK\.spendBook = function \(usage, meta\) \{ try \{ rhBookUsage\(usage, meta\); \} catch \(e\) \{ \} \};/.test(MAIN) &&
     /return \{ ok: true, results: all, model: request\.model, machine: m, usage: deps\._usage \|\| \[\] \};/.test(read("panel/src/providers/runninghub-enterprise-adapter.js")), null);
 
-  const wn = (APP.match(/\{ v:"6\.88\.1", kind:"page", ref:"pgCreate",[\s\S]*?\} \},\n/) || [""])[0];
-  const wnP = (WHATS.match(/\{ v:"6\.88\.1", kind:"page", ref:"pgCreate",[\s\S]*?\} \},\n/) || [""])[0];
+  const wn = WN.appRow("6.88.1", "pgCreate");
+  const wnP = WN.panelRow("6.88.1", "pgCreate");
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
   report("A4) CI runs this test right after verify_tutorials; the landing counts at least 224 tests; What's New carries the 6.88.1 Freeform row in nine languages on the app and the panel",
     CI.indexOf("node test/verify_panel_freeform_generate.js") > CI.indexOf("node test/verify_tutorials.js") && CI.indexOf("node test/verify_tutorials.js") > 0 && tests >= 224 &&

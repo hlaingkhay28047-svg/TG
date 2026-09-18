@@ -23,6 +23,7 @@ const http = require("http");
 const { chromium } = require("playwright-core");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
 const { withPremium } = require("./_seed_premium.js");   /* the app shows its wall to a signed-out visitor; this seeds a signed-in studio */
+const WN = require("./lib/whats-new.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -92,8 +93,8 @@ const PAGE_IDS = new Set((APP.match(/id="pg[A-Za-z0-9]+"/g) || []).map(x => x.sl
     PHTML.indexOf('<script src="js/hnk_tutorials.js"></script>') > PHTML.indexOf('<script src="js/hnk_whats_new.js"></script>'),
     { page: PAGE, keys: [...panelKeys] });
 
-  const wn = (APP.match(/\{ v:"6\.88\.0", kind:"page", ref:"pgTutorials",[\s\S]*?\} \},\n/) || [""])[0];
-  const wnP = (WHATS.match(/\{ v:"6\.88\.0", kind:"page", ref:"pgTutorials",[\s\S]*?\} \},\n/) || [""])[0];
+  const wn = WN.appRow("6.88.0", "pgTutorials");
+  const wnP = WN.panelRow("6.88.0", "pgTutorials");
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
   report("A4) CI runs this test right after verify_panel_video_takes_persist; the landing counts at least 223 tests; What's New carries the 6.88.0 Tutorials row in nine languages on the app and the panel",
     CI.indexOf("node test/verify_tutorials.js") > CI.indexOf("node test/verify_panel_video_takes_persist.js") && CI.indexOf("node test/verify_panel_video_takes_persist.js") > 0 && tests >= 223 &&
