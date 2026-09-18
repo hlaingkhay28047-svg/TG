@@ -102,7 +102,11 @@ function sourcePins() {
   /* A7 — the phone's own picker, re-laid every render (the 6.23.1 Redmi rule). */
   report("A7) the add-photos button carries the phone's own file input, re-laid on EVERY render — the module rebuilds its cards on each change, so a one-shot wire at boot would last exactly one render",
     /if \(H && typeof H\.wirePick === "function"\)/.test(APP) &&
-    /wirePick: function\(btn\)\{ nativePick\(btn, "albFile"\); \}/.test(APP), null);
+    /* 6.105.0 — the wire now carries a `before` hook too: one mirror input serves both the
+       photo button and "Make the whole album", and the overlay swallows the button's own
+       click, so the mode has to travel with the wire. */
+    /wirePick: function\(btn, before\)\{ nativePick\(btn, "albFile", before\); \}/.test(APP) &&
+    /H\.wirePick\(add, function\(\)\{ PICK_MODE = "page"; \}\)/.test(APP), null);
 
   /* A8 — the student's own language, everywhere, including the hero. */
   const keys = ["alb_size_h","alb_pages_h","alb_stage_h","alb_photos_h","alb_layout_h","alb_text_h","alb_export_h",
@@ -226,11 +230,14 @@ async function browserWalk() {
     stage: !!document.getElementById("albCanvas"),
     pages: (ALBUM.doc().pages || []).length,
     groups: document.querySelectorAll("#albGroups .chip").length,
-    sizes: document.querySelectorAll("#albSizes .chip").length
+    sizes: document.querySelectorAll("#albSizes .chip").length,
+    occs: document.querySelectorAll("#albOccs .alb-occ").length,
+    make: !!document.getElementById("albMake")
   }));
-  report("C1) the ALBUM page opens complete on a 430px phone — size · pages · preview · photos · layout · text · export, one size group chip per group, and the page's true output size stated before a single photo is added",
-    opened.on && opened.cards.length === 7 &&
-    opened.cards.join(",") === "albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albTextCard,albExportCard" &&
+  report("C1) the ALBUM page opens complete on a 430px phone — occasion · size · pages · preview · photos · layout · text · export, the nine occasions and \"Make the whole album\" first of all, one size group chip per group, and the page's true output size stated before a single photo is added",
+    opened.on && opened.cards.length === 8 &&
+    opened.cards.join(",") === "albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albTextCard,albExportCard" &&
+    opened.occs === 9 && opened.make &&
     opened.stage && opened.pages === 1 && opened.groups === 7 && opened.sizes >= 4 &&
     /10800/.test(opened.sizeNote) && /300 DPI/.test(opened.sizeNote), opened);
 
@@ -383,7 +390,7 @@ async function browserWalk() {
     restore.sizeId === "12x36" && restore.customUnit === "in" && restore.customDpi === 600 &&
     restore.cur === 0 && restore.photos <= 6 && restore.texts.indexOf("no-such-role") < 0 &&
     restore.texts.indexOf("title") >= 0 && restore.titleX >= 0 && restore.titleX <= 1 &&
-    restore.tplId === "" && restore.cards === 7, restore);
+    restore.tplId === "" && restore.cards === 8, restore);
 
   /* C10 — the custom size: the owner's "ကြိုက်သလိုပြောင်းလဲလို့ရတာ", in full. */
   const custom = await page.evaluate(async () => {
