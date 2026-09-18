@@ -176,9 +176,20 @@ function sourcePins() {
        line for line below. */
     /var cs=getComputedStyle\(n\), fs=parseFloat\(cs\.fontSize\);/.test(APP) &&
     /var lh=ellLenPx\(cs\.lineHeight, fs\);/.test(APP) && /function ellLenPx\(v, fs\)\{/.test(APP) &&
-    /var sv=\{h:n\.style\.height,mh:n\.style\.maxHeight,ov:n\.style\.overflow,dp:n\.style\.display,lc:n\.style\.webkitLineClamp\};/.test(helper) &&
+    /* 6.109.0 — THE SAVED SET GREW BY TWO, and this check has to grow with it rather than
+       be relaxed. The four properties 6.171.0 borrowed hide the overflow the reading needs;
+       they were not the only thing standing between the box and its own text. .im-card-sum
+       is `flex:1 1 auto` inside a column flex card, so the card STRETCHES it — an empty
+       summary measured 103px against an 86.25px ceiling and the clamp deleted the whole
+       sentence (8 of 22 at 360px in Burmese). The measurement now neutralises the growth as
+       well, and this check pins the two new properties on both the borrow and the restore,
+       so the saved set can never quietly shrink back. */
+    /var sv=\{h:n\.style\.height,mh:n\.style\.maxHeight,ov:n\.style\.overflow,dp:n\.style\.display,\s*lc:n\.style\.webkitLineClamp,fx:n\.style\.flex,mnh:n\.style\.minHeight\};/.test(helper) &&
     /n\.style\.height="auto"; n\.style\.maxHeight="none"; n\.style\.overflow="visible";/.test(helper) &&
+    /n\.style\.flex="0 0 auto"; n\.style\.minHeight="0";/.test(helper) &&
     /n\.style\.height=sv\.h; n\.style\.maxHeight=sv\.mh; n\.style\.overflow=sv\.ov; n\.style\.display=sv\.dp;/.test(helper) &&
+    /n\.style\.flex=sv\.fx; n\.style\.minHeight=sv\.mnh;/.test(helper) &&
+    !/alignSelf/.test(helper) &&   /* the cross axis in a column is the WIDTH; touching it wraps at a different character */
     /if\(n\.scrollHeight>m\.ceil\+m\.lh\/2\)\{/.test(helper) &&
     /if\(cut\)\{ var e=document\.createElement\("span"\); e\.className="ell"; e\.textContent="…"; n\.appendChild\(e\); \}/.test(helper) &&
     !/m\.ceil\+1\b/.test(helper) && (helper.match(/catch\(e\)\{\}/g) || []).length >= 2, { len: helper.length });
