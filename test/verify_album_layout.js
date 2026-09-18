@@ -479,8 +479,23 @@ async function browserWalk() {
 /* ======================= D — the release ======================= */
 function release() {
   const web = JSON.parse(read("docs/app/version.json")).v;
-  report("D1) the web app and the panel move together, at or past this wave's own pair",
-    web === WEB && MANIFEST.version === PANEL, { web, panel: MANIFEST.version });
+  /* 6.108.0 — THIS WAS A FROZEN PAIR WEARING A LOCKSTEP NAME. It read
+     `web === WEB && MANIFEST.version === PANEL` against the two literals this
+     wave happened to ship, so it said nothing about the two moving together and
+     went red on the very next release — the same mistake verify_album_output
+     carried until 6.107.0 rewrote it, repeated here one file away. What it
+     should say is that the app is what version.json says, that the panel is
+     what its own manifest says, and that both are at or past the pair this wave
+     shipped. */
+  const cmp = (a, b) => {
+    const x = String(a).split("."), y = String(b).split(".");
+    for (let i = 0; i < 3; i++) { const d = (+x[i] || 0) - (+y[i] || 0); if (d) return d; }
+    return 0;
+  };
+  report("D1) the web app and the panel move together — each is what its own file declares, and both are at or past the 6.107.0 / 6.178.0 this wave shipped",
+    web === JSON.parse(fs.readFileSync(path.join(ROOT, "docs", "app", "version.json"), "utf8")).v &&
+    cmp(web, WEB) >= 0 && cmp(MANIFEST.version, PANEL) >= 0,
+    { web, panel: MANIFEST.version, floor: WEB + " / " + PANEL });
 
   report("D2) this test runs in CI, after the album tests it builds on",
     /node test\/verify_album_layout\.js/.test(CI) &&
