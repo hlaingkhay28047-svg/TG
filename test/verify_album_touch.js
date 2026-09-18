@@ -47,8 +47,17 @@ const KEYS = ["alb_touch_note", "alb_sel_none", "alb_sel_photo", "alb_sel_text",
   "alb_move_u", "alb_move_d", "alb_spread_note"];
 const PORT = Number(process.env.PORT || 8931);
 const BASE = "http://127.0.0.1:" + PORT;
-const WEB = "6.110.0";
-const PANEL = "6.181.0";
+const WEB = "6.111.0";
+const PANEL = "6.182.0";
+/* 6.111.0 — WEB/PANEL are the CURRENT release, which E1 pins in lockstep and
+   which every release moves. ALBUM_WAVE is a different fact: the release that
+   actually SHIPPED this stage, and therefore the release whose What's New row
+   E4 reads. They were the same number for one release and E4 conflated them,
+   so the first unrelated release after it (6.111.0, a Smart Workflow fix whose
+   row correctly points at pgWf) turned E4 red for no defect. E4 now asks the
+   question it means to ask — "the album wave announced itself, in all nine
+   languages, on the album page" — and that answer does not expire. */
+const ALBUM_WAVE = "6.110.0";
 let failures = 0;
 
 function report(name, ok, detail) {
@@ -523,12 +532,12 @@ function release() {
   const n = new Set(CI.match(/node test\/[A-Za-z0-9_]+\.js/g) || []).size;
   const badge = Number((LANDING.match(/"badge\.tests":\s*\{"my":\s*"(\d+) tests green/) || [])[1] || 0);
   report("E3) the landing site's count is the number of tests CI actually runs",
-    n === badge && n >= 252, { ciTests: n, badge });
+    n === badge && n >= 253, { ciTests: n, badge });
 
-  const row = WN.appRow(WEB, "pgAlbum");
+  const row = WN.appRow(ALBUM_WAVE, "pgAlbum");
   const missing = LANGS.filter(L => !new RegExp("[,{]" + L + ':"').test(row.split("s:{")[0]) ||
                                     !new RegExp("[,{]" + L + ':"').test("s:{" + (row.split("s:{")[1] || "")));
-  report("E4) the What's New row for this release is written in all nine base languages, title and body, and points at the Album page",
+  report("E4) the album wave's What's New row (" + ALBUM_WAVE + ") is written in all nine base languages, title and body, and points at the Album page",
     row.length > 1200 && missing.length === 0, { bytes: row.length, missing });
 }
 

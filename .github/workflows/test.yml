@@ -1051,3 +1051,14 @@ jobs:
       # change, and that the marquee is on screen only and never in a file.
       - name: Verify the album stage can be touched (crop, zoom, move, turn — and never in the export)
         run: PORT=8931 node test/verify_album_touch.js
+
+      # 6.111.0 / panel 6.182.0 — the owner photographed a Smart Workflow card in
+      # Photoshop: its second image slot drew TWO boxes (a black picture frame
+      # with its ✕ beside a dashed "+ Layer" frame) and one of them answered no
+      # tap. The screen's refresh pass walked the REQUIRED inputs only, while the
+      # tile is drawn for the optional ones too, so an optional slot kept its
+      # build state for the life of the card — 26 catalog workflows, since
+      # 6.109.0. This walks every one of them and fault-injects both halves of
+      # the fix.
+      - name: Verify the optional image slot draws one box, shows its photograph, and says "Optional"
+        run: PORT=8931 node test/verify_wf_optional_slot.js

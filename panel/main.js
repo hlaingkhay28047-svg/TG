@@ -1072,6 +1072,7 @@ const I18N = {
     ai_lib_pick_first: "Pick a photo from the Presets tab \u2192 Visual Library first.",
     ai_lib_load_fail: "Library image could not be loaded.",
     ai_missing: "Missing",
+    ai_optional: "Optional",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 add a model endpoint (Advanced \u2014 optional)",
     ai_rh_note: "Built-in models already work with the key above \u2014 nothing to do. If a model shows \"not connected\" (its endpoint path isn't confirmed yet), copy the path from RunningHub's API docs and paste it here.",
@@ -1281,6 +1282,7 @@ const I18N = {
     ai_lib_pick_first: "Presets tab \u2192 Visual Library \u1000\u1014\u1031 \u1015\u102f\u1036\u1010\u1005\u103a\u1015\u102f\u1036 \u1021\u101b\u1004\u103a\u101b\u103d\u1031\u1038\u1015\u102b\u104b",
     ai_lib_load_fail: "Library \u1015\u102f\u1036\u1000\u102d\u102f \u1019\u1016\u103d\u1004\u1037\u103a\u1014\u102d\u102f\u1004\u103a\u1015\u102b\u104b",
     ai_missing: "\u1019\u101b\u103e\u102d\u101e\u1031\u1038",
+    ai_optional: "Optional \u2014 \u1019\u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 model endpoint \u1011\u100a\u1037\u103a\u101b\u1014\u103a (Advanced \u2014 \u1019\u1011\u100a\u1037\u103a\u101c\u100a\u103a\u1038\u101b)",
     ai_rh_note: "\u1015\u102b\u1015\u103c\u102e\u1038\u101e\u102c\u1038 model \u1010\u103d\u1031\u1000 \u1021\u1015\u1031\u102b\u103a\u1000 key \u1014\u1032\u1037 \u1021\u101c\u102f\u1015\u103a\u101c\u102f\u1015\u103a\u1015\u102b\u1015\u103c\u102e \u2014 \u1018\u102c\u1019\u103e\u101c\u102f\u1015\u103a\u1005\u101b\u102c \u1019\u101c\u102d\u102f\u1015\u102b\u104b model \u1010\u1005\u103a\u1001\u102f\u1000 \"not connected\" \u1015\u103c\u1014\u1031\u101b\u1004\u103a (endpoint path \u1019\u101e\u1031\u1001\u103b\u102c\u101e\u1031\u1038\u101c\u102d\u102f\u1037) RunningHub API docs \u1000\u1014\u1031 path \u1000\u102d\u102f \u1000\u1030\u1038\u1015\u103c\u102e\u1038 \u1012\u102e\u1019\u103e\u102c \u1011\u100a\u1037\u103a\u1015\u102b\u104b",
@@ -1490,6 +1492,7 @@ const I18N = {
     ai_lib_pick_first: "\u101c\u102d\u1030\u1075\u103a\u1088\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088\u1010\u102e\u1088 Presets tab \u2192 Visual Library \u1022\u103d\u107c\u103a\u1010\u1062\u1004\u103a\u1038\u104b",
     ai_lib_load_fail: "\u1076\u1085\u1015\u103a\u1038\u1081\u1062\u1004\u103a\u1088 Library \u1015\u102d\u102f\u1010\u103a\u1087\u1022\u1019\u103a\u1087\u101c\u1086\u1088\u104b",
     ai_missing: "\u1015\u1086\u1087\u1019\u102e\u1038",
+    ai_optional: "Optional \u2014 \u1022\u1019\u103a\u1087\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 \u101e\u1082\u103a\u1087 model endpoint (Advanced \u2014 \u1022\u1019\u103a\u1087\u101e\u1082\u103a\u1087\u1075\u1031\u1083\u1088\u101c\u1086\u1088)",
     ai_rh_note: "Model \u1022\u107c\u103a\u1015\u1083\u1038\u1019\u1083\u1038\u1078\u102d\u102f\u1004\u103a \u1078\u1082\u103a\u1089\u1010\u1004\u103a\u1038 key \u107c\u102d\u1030\u101d\u103a\u107c\u1086\u1089\u101c\u1086\u1088\u101a\u101d\u103a\u1089 \u2014 \u1022\u1019\u103a\u1087\u101c\u1030\u101d\u103a\u1087\u1081\u1035\u1010\u103a\u1038\u101e\u1004\u103a\u104b Model \u101c\u1082\u103a\u107c\u1084\u101d\u1083\u1088 \"not connected\" (endpoint path \u1015\u1086\u1087\u1010\u1085\u1010\u103a\u1088) \u1078\u102d\u102f\u1004\u103a \u1022\u101d\u103a path \u1010\u102e\u1088 RunningHub API docs \u101e\u1031 \u101e\u1082\u103a\u1087\u1010\u102e\u1088\u107c\u1086\u1088\u104b",
@@ -1699,6 +1702,7 @@ const I18N = {
     ai_lib_pick_first: "Presets tab \u2192 Visual Library kaw na sumla langai shawng lata u.",
     ai_lib_load_fail: "Library sumla hpe n hpaw lu ai.",
     ai_missing: "N nga shi ai",
+    ai_optional: "Optional \u2014 n bang tim mai ai",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 model endpoint bang (Advanced \u2014 n bang mung mai)",
     ai_rh_note: "Nlung ai model ni gaw ntsa na key hte galaw sai \u2014 hpa galaw ra ai n nga. Model langai \"not connected\" madun yang (endpoint path teng sha n chye shi ai), RunningHub API docs kaw na path hpe la nna ndai kaw bang u.",
@@ -1908,6 +1912,7 @@ const I18N = {
     ai_lib_pick_first: "\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01\u0e41\u0e17\u0e47\u0e1a Presets \u2192 Visual Library \u0e01\u0e48\u0e2d\u0e19",
     ai_lib_load_fail: "\u0e42\u0e2b\u0e25\u0e14\u0e20\u0e32\u0e1e\u0e08\u0e32\u0e01 Library \u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08",
     ai_missing: "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35",
+    ai_optional: "\u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 \u0e40\u0e1e\u0e34\u0e48\u0e21 model endpoint (\u0e02\u0e31\u0e49\u0e19\u0e2a\u0e39\u0e07 \u2014 \u0e44\u0e21\u0e48\u0e1a\u0e31\u0e07\u0e04\u0e31\u0e1a)",
     ai_rh_note: "\u0e42\u0e21\u0e40\u0e14\u0e25\u0e17\u0e35\u0e48\u0e21\u0e35\u0e21\u0e32\u0e43\u0e2b\u0e49\u0e43\u0e0a\u0e49\u0e07\u0e32\u0e19\u0e44\u0e14\u0e49\u0e14\u0e49\u0e27\u0e22\u0e04\u0e35\u0e22\u0e4c\u0e14\u0e49\u0e32\u0e19\u0e1a\u0e19\u0e41\u0e25\u0e49\u0e27 \u2014 \u0e44\u0e21\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e17\u0e33\u0e2d\u0e30\u0e44\u0e23 \u0e2b\u0e32\u0e01\u0e42\u0e21\u0e40\u0e14\u0e25\u0e43\u0e14\u0e02\u0e36\u0e49\u0e19\u0e27\u0e48\u0e32 \"not connected\" (\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19 endpoint path) \u0e43\u0e2b\u0e49\u0e04\u0e31\u0e14\u0e25\u0e2d\u0e01 path \u0e08\u0e32\u0e01 API docs \u0e02\u0e2d\u0e07 RunningHub \u0e21\u0e32\u0e27\u0e32\u0e07\u0e17\u0e35\u0e48\u0e19\u0e35\u0e48",
@@ -2117,6 +2122,7 @@ const I18N = {
     ai_lib_pick_first: "\u8bf7\u5148\u5728 Presets \u6807\u7b7e\u9875 \u2192 Visual Library \u4e2d\u9009\u4e00\u5f20\u56fe\u7247\u3002",
     ai_lib_load_fail: "\u65e0\u6cd5\u8f7d\u5165 Library \u56fe\u7247\u3002",
     ai_missing: "\u7f3a\u5c11",
+    ai_optional: "\u53ef\u9009",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 \u6dfb\u52a0 model endpoint\uff08\u9ad8\u7ea7 \u2014 \u53ef\u9009\uff09",
     ai_rh_note: "\u5185\u7f6e model \u5df2\u53ef\u7528\u4e0a\u65b9\u7684 key \u8fd0\u884c\uff0c\u65e0\u9700\u8bbe\u7f6e\u3002\u82e5\u67d0\u4e2a model \u663e\u793a \"not connected\"\uff08\u5176 endpoint path \u5c1a\u672a\u786e\u8ba4\uff09\uff0c\u8bf7\u4ece RunningHub \u7684 API \u6587\u6863\u590d\u5236 path \u5e76\u7c98\u8d34\u5230\u8fd9\u91cc\u3002",
@@ -2326,6 +2332,7 @@ const I18N = {
     ai_lib_pick_first: "H\u00e3y ch\u1ecdn \u1ea3nh \u1edf tab Presets \u2192 Visual Library tr\u01b0\u1edbc.",
     ai_lib_load_fail: "Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c \u1ea3nh t\u1eeb Library.",
     ai_missing: "C\u00f2n thi\u1ebfu",
+    ai_optional: "T\u00f9y ch\u1ecdn",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 th\u00eam model endpoint (N\u00e2ng cao \u2014 t\u00f9y ch\u1ecdn)",
     ai_rh_note: "C\u00e1c model t\u00edch h\u1ee3p \u0111\u00e3 ch\u1ea1y \u0111\u01b0\u1ee3c v\u1edbi key \u1edf tr\u00ean \u2014 kh\u00f4ng c\u1ea7n l\u00e0m g\u00ec. N\u1ebfu m\u1ed9t model hi\u1ec7n \"not connected\" (endpoint path ch\u01b0a \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn), h\u00e3y sao ch\u00e9p path t\u1eeb t\u00e0i li\u1ec7u API c\u1ee7a RunningHub v\u00e0 d\u00e1n v\u00e0o \u0111\u00e2y.",
@@ -2535,6 +2542,7 @@ const I18N = {
     ai_lib_pick_first: "Pilih foto dari tab Presets \u2192 Visual Library dulu.",
     ai_lib_load_fail: "Gambar Library gagal dimuat.",
     ai_missing: "Belum ada",
+    ai_optional: "Opsional",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 tambah model endpoint (Lanjutan \u2014 opsional)",
     ai_rh_note: "Model bawaan sudah berjalan dengan key di atas \u2014 tidak perlu diatur. Jika sebuah model menampilkan \"not connected\" (endpoint path-nya belum dipastikan), salin path dari dokumentasi API RunningHub lalu tempel di sini.",
@@ -2744,6 +2752,7 @@ const I18N = {
     ai_lib_pick_first: "Pilih foto dari tab Presets \u2192 Visual Library dahulu.",
     ai_lib_load_fail: "Imej Library gagal dimuatkan.",
     ai_missing: "Belum ada",
+    ai_optional: "Pilihan",
     ai_library: "Library",
     ai_rh_sec: "RunningHub \u2014 tambah model endpoint (Lanjutan \u2014 pilihan)",
     ai_rh_note: "Model terbina dalam sudah berfungsi dengan key di atas \u2014 tiada apa perlu dibuat. Jika sesuatu model memaparkan \"not connected\" (endpoint path belum disahkan), salin path dari dokumentasi API RunningHub dan tampal di sini.",
@@ -2780,7 +2789,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.181.0";
+const PANEL_VERSION = "6.182.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
