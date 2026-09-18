@@ -234,10 +234,17 @@ const NEW = Object.keys(SCRIPTS);
      one reason as every block above it. */
   const V61050_KEYS = ["alb_occ", "alb_occ_note", "alb_make", "alb_make_hint",
     "alb_make_busy", "alb_make_done", "alb_make_cap", "alb_make_replace", "alb_make_none"];
+  /* 6.106.0 wave D — the twelve lines the album's print file, layered file, spread,
+     shuffle and closing page brought, registered for the same one reason as every block
+     above: no Tai Le, Tai Lue or Khamti reader here, and LANG_FB routes all three to the
+     real Shan that TR carries. A2 below measures that the fallback lands. */
+  const V61060_KEYS = ["alb_edge", "alb_edge_note", "alb_spread", "alb_shuffle",
+    "alb_shuffle_done", "alb_close_add", "alb_out_pdf", "alb_out_psd", "alb_out_sheet",
+    "alb_psd_big", "alb_psd_no", "alb_pdf_done"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {

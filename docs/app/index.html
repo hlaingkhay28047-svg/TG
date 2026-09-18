@@ -4195,7 +4195,7 @@ html.splashing #splash{display:flex}
    synchronous way to add a script while the document is still being parsed;
    the address is built from this fixed list and a two-or-three-letter code,
    never from the link's text. tools/build_app_data.js writes the tags. */
-window.HNK_TRL_TAGS={"bn":"618bb60e124e","gu":"739013659a1e","hi":"cc7aa5f399cc","ja":"7f0e14cc74c9","km":"a9e8e9babde1","kn":"d605a2f14963","ko":"b43b6ae7d657","lo":"f10e6dfea15b","ml":"e97483e929f8","mr":"76da335e1baf","ne":"d25f7c62ad53","pa":"92a5c7785308","ta":"0784d0b400c4","te":"0b1483416d9f","ur":"ec3684be54ed","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
+window.HNK_TRL_TAGS={"bn":"dd8b31476215","gu":"a271a56d18f4","hi":"9037188f6d43","ja":"e49c8d2d856c","km":"4254b73226f7","kn":"409462e343c4","ko":"ced953cf078f","lo":"cbf85e109e6b","ml":"74f5601b2748","mr":"f579053e4bdb","ne":"6ef88907aa23","pa":"5f341bb48f83","ta":"eaf5f8da933a","te":"39e8f04ea5a9","ur":"535c3b200ce3","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
 (function(){
   var T=window.HNK_TRL_TAGS, has=function(k){ return Object.prototype.hasOwnProperty.call(T,k); };
   var BASE=/^(my|en|shn|kac|th|zh|vi|id|ms)$/, u="", code="";
@@ -4763,6 +4763,18 @@ var TR_PH={
   alb_make_busy:{my:"ပုံ {N} ပုံ ဖတ်နေသည်…",en:"Reading {N} photos…"},
   alb_make_done:{my:"ပုံ {N} ပုံ · စာမျက်နှာ {P} မျက်နှာ ပြီးပါပြီ",en:"{N} photos · {P} pages"},
   alb_make_cap:{my:"ပုံ {N} ပုံသာ ယူပါမယ် — ကျန်တာကို နောက်အယ်လ်ဘမ်မှာ ထည့်ပါ",en:"Only {N} photos were taken — put the rest in another album"},
+  alb_edge:{my:"ပုံတွေ အနားထိ",en:"Photos to the edge"},
+  alb_edge_note:{my:"ဖြတ်တဲ့မျဉ်းက ပုံထဲကို ဖြတ်ပါမယ်။ စာလုံးတွေက အထဲမှာပဲ နေပါမယ်။",en:"The cut goes through the picture. Words stay inside."},
+  alb_spread:{my:"စာမျက်နှာ နှစ်ဖက်",en:"Spread"},
+  alb_shuffle:{my:"ပုံတွေ ရောမွှေမယ်",en:"Shuffle the photos"},
+  alb_shuffle_done:{my:"ပုံ {N} ပုံ ပြန်ဝေပြီး",en:"{N} photos dealt again"},
+  alb_close_add:{my:"နိဂုံးစာမျက်နှာ",en:"Closing page"},
+  alb_out_pdf:{my:"ပုံနှိပ် PDF · အယ်လ်ဘမ် တစ်အုပ်လုံး",en:"Print PDF · whole album"},
+  alb_out_psd:{my:"အလွှာပါ PSD · ဒီစာမျက်နှာ",en:"Layered PSD · this page"},
+  alb_out_sheet:{my:"စာရွက် {W} × {H} mm · အနားပိုနဲ့ ဖြတ်မျဉ်းပါ · {N} မျက်နှာ · PSD ခန့်မှန်း {M} MB",en:"Sheet {W} × {H} mm with bleed and crop marks · {N} pages · PSD about {M} MB"},
+  alb_psd_big:{my:"ဒီစာမျက်နှာက ဖိုင် {N} MB ခန့် ဖြစ်ပါမယ်။ ဆက်လုပ်မလား။",en:"This page makes a file of about {N} MB. Carry on?"},
+  alb_psd_no:{my:"ဒီမှာ အလွှာပါဖိုင် လုပ်ဖို့ ကြီးလွန်းပါတယ် ({N} MB ခန့်)။ ပုံနှိပ် PDF ကို သုံးပါ။",en:"Too big for a layered file here (about {N} MB). Use the print PDF."},
+  alb_pdf_done:{my:"{N} မျက်နှာ · {M} MB သိမ်းပြီး",en:"{N} pages · {M} MB saved"},
   alb_make_replace:{my:"လက်ရှိ အယ်လ်ဘမ်ကို အသစ်နဲ့ အစားထိုးပါမယ် — ဆက်လုပ်မလား?",en:"This replaces the album you have now. Continue?"},
   alb_make_none:{my:"ပုံတစ်ပုံမှ မဖတ်နိုင်ပါ",en:"None of those photos could be read"},
   ph_home:{my:'တစ်ခါချိန်ညှိရုံနဲ့ <em>အမြဲအဆင်သင့်</em> ဖြစ်နေမယ်',en:'Set up once — <em>ready whenever you are</em>'},
@@ -4843,6 +4855,18 @@ var TR_L14={
   alb_make_busy:{shn:"တိုၵ်ႉလူၶႅပ်း {N} ၶႅပ်း…",kac:"Sumla {N} hti nga ai…",th:"กำลังอ่านรูป {N} รูป…",zh:"正在读取 {N} 张照片…",vi:"Đang đọc {N} ảnh…",id:"Membaca {N} foto…",ms:"Membaca {N} foto…"},
   alb_make_done:{shn:"ၶႅပ်း {N} · ၼႃႈလိၵ်ႈ {P}",kac:"Sumla {N} · shara {P}",th:"{N} รูป · {P} หน้า",zh:"{N} 张照片 · {P} 页",vi:"{N} ảnh · {P} trang",id:"{N} foto · {P} halaman",ms:"{N} foto · {P} halaman"},
   alb_make_cap:{shn:"ဢဝ်ၶႅပ်း {N} ၶႅပ်းၵူၺ်း — ဢၼ်လိူဝ်ၼၼ်ႉ သႂ်ႇပပ်ႉတၢင်ႇဢၼ်",kac:"Sumla {N} sha la ai — ngam ai ni hpe laika buk kaga de bang u",th:"รับเพียง {N} รูป — ที่เหลือใส่ในอัลบั้มอื่น",zh:"只取了 {N} 张 — 其余请放进别的相册",vi:"Chỉ lấy {N} ảnh — số còn lại hãy để sang album khác",id:"Hanya {N} foto yang diambil — sisanya taruh di album lain",ms:"Hanya {N} foto diambil — selebihnya letak dalam album lain"},
+  alb_edge:{shn:"ႁၢင်ႈထိုင်ႁိမ်း",kac:"Sumla ni makau du hkra",th:"ภาพชนขอบ",zh:"照片出血到边",vi:"Ảnh tràn ra mép",id:"Foto sampai tepi",ms:"Foto hingga ke tepi"},
+  alb_edge_note:{shn:"သဵၼ်ႈတတ်းတေတတ်းၽၢၼ်ႇႁၢင်ႈ။ တူဝ်လိၵ်ႈယူႇၼႂ်း။",kac:"Kahtam ai lam gaw sumla hpe kahtam na. Laika ni gaw shingkang kata nga na.",th:"รอยตัดจะผ่านภาพ ตัวอักษรอยู่ด้านใน",zh:"裁切线会切进照片，文字留在内侧",vi:"Đường cắt đi xuyên qua ảnh. Chữ vẫn nằm bên trong.",id:"Garis potong memotong foto. Teks tetap di dalam.",ms:"Garis potong memotong foto. Teks kekal di dalam."},
+  alb_spread:{shn:"သွင်ၼႃႈ",kac:"Laika shara lahkawng",th:"หน้าคู่",zh:"跨页",vi:"Trang đôi",id:"Halaman ganda",ms:"Halaman berkembar"},
+  alb_shuffle:{shn:"ဢႃႈႁၢင်ႈမႂ်ႇ",kac:"Sumla ni hpe gayau",th:"สลับภาพใหม่",zh:"重新洗牌照片",vi:"Xáo lại ảnh",id:"Acak ulang foto",ms:"Kocok semula foto"},
+  alb_shuffle_done:{shn:"ႁၢင်ႈ {N} ၶႅပ်း ဝႄႈမႂ်ႇယဝ်ႉ",kac:"Sumla {N} hpe bai garan ya sai",th:"แจกภาพใหม่ {N} รูป",zh:"已重新分配 {N} 张照片",vi:"Đã chia lại {N} ảnh",id:"{N} foto dibagi ulang",ms:"{N} foto diagih semula"},
+  alb_close_add:{shn:"ၼႃႈသုတ်း",kac:"Hpang jahtum laika shara",th:"หน้าปิดท้าย",zh:"结尾页",vi:"Trang kết",id:"Halaman penutup",ms:"Halaman penutup"},
+  alb_out_pdf:{shn:"PDF ပွတ်ႈ · တင်းပပ်ႉ",kac:"PDF lakhak · laika buk yawng",th:"PDF สำหรับพิมพ์ · ทั้งอัลบั้ม",zh:"印刷 PDF · 整本相册",vi:"PDF in · cả album",id:"PDF cetak · seluruh album",ms:"PDF cetak · seluruh album"},
+  alb_out_psd:{shn:"PSD မီးသၢၼ် · ၼႃႈၼႆႉ",kac:"PSD lakhap · ndai laika shara",th:"PSD แบบเลเยอร์ · หน้านี้",zh:"分层 PSD · 本页",vi:"PSD nhiều lớp · trang này",id:"PSD berlapis · halaman ini",ms:"PSD berlapis · halaman ini"},
+  alb_out_sheet:{shn:"ၸေႈ {W} × {H} mm · မီးႁိမ်းလိူဝ်လႄႈ သဵၼ်ႈတတ်း · {N} ၼႃႈ · PSD မွၵ်ႈ {M} MB",kac:"Laika {W} × {H} mm · makau jaw hte kahtam lam rawng · {N} shara · PSD {M} MB ram",th:"แผ่น {W} × {H} มม. มีระยะตัดตกและเส้นตัด · {N} หน้า · PSD ราว {M} MB",zh:"幅面 {W} × {H} 毫米，含出血与裁切线 · {N} 页 · PSD 约 {M} MB",vi:"Khổ {W} × {H} mm có tràn lề và dấu cắt · {N} trang · PSD khoảng {M} MB",id:"Lembar {W} × {H} mm dengan bleed dan tanda potong · {N} halaman · PSD sekitar {M} MB",ms:"Helaian {W} × {H} mm dengan bleed dan tanda potong · {N} halaman · PSD kira-kira {M} MB"},
+  alb_psd_big:{shn:"ၼႃႈၼႆႉ တေပဵၼ်ၾၢႆႇ မွၵ်ႈ {N} MB။ သိုပ်ႇႁဲႈ။",kac:"Ndai laika shara gaw {N} MB ram na re. Matut na i?",th:"หน้านี้จะได้ไฟล์ราว {N} MB ทำต่อไหม",zh:"本页将生成约 {N} MB 的文件，继续吗？",vi:"Trang này tạo tệp khoảng {N} MB. Tiếp tục?",id:"Halaman ini menghasilkan berkas sekitar {N} MB. Lanjutkan?",ms:"Halaman ini menghasilkan fail kira-kira {N} MB. Teruskan?"},
+  alb_psd_no:{shn:"ယႂ်ႇပူၼ်ႉတီႈၼႆႈ ({N} MB မွၵ်ႈ)။ ၸႂ်ႉ PDF ပွတ်ႈ။",kac:"Ndai kaw lakhap rawng ai file gaw kaba wa sai ({N} MB ram). PDF lakhak hpe jashawn u.",th:"ใหญ่เกินกว่าจะทำไฟล์เลเยอร์ที่นี่ (ราว {N} MB) ใช้ PDF สำหรับพิมพ์แทน",zh:"在这里做分层文件太大了（约 {N} MB），请用印刷 PDF。",vi:"Quá lớn để làm tệp nhiều lớp ở đây (khoảng {N} MB). Hãy dùng PDF in.",id:"Terlalu besar untuk berkas berlapis di sini (sekitar {N} MB). Pakai PDF cetak.",ms:"Terlalu besar untuk fail berlapis di sini (kira-kira {N} MB). Guna PDF cetak."},
+  alb_pdf_done:{shn:"{N} ၼႃႈ · {M} MB သိမ်းယဝ်ႉ",kac:"{N} shara · {M} MB mahkawng sai",th:"{N} หน้า · {M} MB บันทึกแล้ว",zh:"{N} 页 · 已保存 {M} MB",vi:"{N} trang · đã lưu {M} MB",id:"{N} halaman · {M} MB tersimpan",ms:"{N} halaman · {M} MB disimpan"},
   alb_make_replace:{shn:"ပပ်ႉႁၢင်ႈဢၼ်မီးယူႇ တေလႅၵ်ႈပဵၼ်ဢၼ်မႂ်ႇ — ႁဵတ်းထႅင်ႈႁိုဝ်?",kac:"Ya nga ai laika buk hpe galai kau na — matut na i?",th:"อัลบั้มที่มีอยู่จะถูกแทนที่ ดำเนินการต่อหรือไม่?",zh:"现有相册会被替换，是否继续？",vi:"Album hiện tại sẽ bị thay thế. Tiếp tục?",id:"Album yang ada akan diganti. Lanjutkan?",ms:"Album sedia ada akan diganti. Teruskan?"},
   alb_make_none:{shn:"လူၶႅပ်းသေဢၼ်ဢမ်ႇလႆႈ",kac:"Sumla langai mung hti n lu ai",th:"อ่านรูปไม่ได้สักรูป",zh:"没有一张照片能读取",vi:"Không đọc được ảnh nào",id:"Tidak ada foto yang bisa dibaca",ms:"Tiada foto yang dapat dibaca"},
   ph_path:{shn:'Look ဢၼ်လဵဝ် ၸႂ်ႉတင်းမူႇၶႅပ်းႁၢင်ႈ — <em>ၵမ်းလဵဝ်တင်းသဵင်ႈ</em>',kac:'Look langai sha, na a sumla yawng hta — <em>kalang ta yawng</em>',th:'ลุคเดียว ใช้กับทั้งอัลบั้ม — <em>พร้อมกันทั้งหมด</em>',zh:'一个风格，套用整本相册 — <em>一次全部完成</em>',vi:'Một look, áp cho cả album — <em>tất cả cùng lúc</em>',id:'Satu look untuk seluruh album — <em>sekaligus</em>',ms:'Satu look untuk seluruh album — <em>serentak</em>'},
@@ -5777,6 +5801,9 @@ var TOPGROUPS=[
    tools/build_app_data.js moves the cut forward; the panel lifts this list
    (js/hnk_whats_new.js), so its boot parses these rows and no more. */
 var WHATS_NEW = [
+  { v:"6.106.0", kind:"page", ref:"pgAlbum",
+    t:{my:"အယ်လ်ဘမ် ပြင်ပ ထွက်ပြီ — ပုံနှိပ် PDF၊ အလွှာပါ PSD၊ ပုံတွေ အနားထိ",en:"The album leaves the studio — a print PDF, a layered PSD, photos that run off the edge",shn:"ပပ်ႉႁၢင်ႈဢွၵ်ႇပႃႈၼွၵ်ႈ — PDF ပွတ်ႈ, PSD မီးသၢၼ်, ႁၢင်ႈထိုင်ႁိမ်း",kac:"Laika buk gaw shinggan de pru sai — PDF lakhak, PSD lakhap, sumla makau du hkra",th:"อัลบั้มออกจากสตูดิโอแล้ว — PDF สำหรับพิมพ์ PSD แบบเลเยอร์ และภาพชนขอบ",zh:"相册可以交出去了 — 印刷 PDF、分层 PSD、照片出血到边",vi:"Album rời khỏi studio — PDF in, PSD nhiều lớp, ảnh tràn ra mép",id:"Album keluar dari studio — PDF cetak, PSD berlapis, foto sampai tepi",ms:"Album keluar dari studio — PDF cetak, PSD berlapis, foto hingga ke tepi"},
+    s:{my:"**Library ▸ Album — ဆိုင်တွေ တကယ်တောင်းတဲ့ ဖိုင် နှစ်မျိုး။** *ပုံနှိပ် PDF · အယ်လ်ဘမ် တစ်အုပ်လုံး* — စာမျက်နှာတိုင်း အရွယ်အတိုင်း၊ အနားပိုနဲ့ ဖြတ်မျဉ်း ၈ ခုပါပြီး ဖိုင်တစ်ခုတည်း။ ပုံတွေကို ပြန်ဖိအားပေး မသိမ်းပါဘူး။ *အလွှာပါ PSD · ဒီစာမျက်နှာ* — အဖြူအခင်းတစ်ခု၊ ပုံတစ်ပုံလျှင် အလွှာတစ်ခု၊ စာတစ်ကြောင်းလျှင် တစ်ခု — Photoshop မှာ ပြန်ရွှေ့လို့ ပြန်ရိုက်လို့ ရတယ်။ **ပုံတွေ အနားထိ** — ပုံက စာရွက်အနားကို ကျော်ထွက်ပြီး ဓားက ပုံထဲကို ဖြတ်တယ်၊ စာလုံးတွေကတော့ အထဲမှာပဲ နေတယ်။ **စာမျက်နှာ နှစ်ဖက်** — စာအုပ်ဖွင့်လိုက်ရင် တွေ့ရမယ့် နှစ်မျက်နှာကို ယှဉ်ပြတယ်။ **ရောမွှေ** — ပုံအရေအတွက် အတူတူထားပြီး ပုံတွေကို ပြန်ဝေတယ်။ **နိဂုံးစာမျက်နှာ** — studio နာမည်နဲ့ အယ်လ်ဘမ်ကို လက်မှတ်ထိုးပေးတယ်။",en:"**Library ▸ Album — the two files a print shop and a retoucher actually ask for.** *Print PDF · whole album* writes one file: every page at its real size, with the bleed, the trim and eight crop marks — and the photographs are not re-encoded on the way in. *Layered PSD · this page* writes the open page as layers — a white base, one layer per photograph, one per line of type — so anyone can nudge a picture or reset a line in Photoshop. **Photos to the edge** lays a page out over the trim instead of the safe area, so a picture runs off the paper and the guillotine cuts through it; the words always stay inside. **Spread** shows the two pages that face each other when the book opens. **Shuffle** deals every photograph again into the same page counts. **Closing page** signs the album with the studio's name in the album's own face.",shn:"**Library ▸ Album — ၾၢႆႇသွင်မဵဝ်း ဢၼ်ႁၢၼ်ႉပွတ်ႈလူဝ်ႇ။** *PDF ပွတ်ႈ · တင်းပပ်ႉ* — ၼႃႈလိၵ်ႈၵူႈၼႃႈ ၶၢဝ်ႇတဵမ်, မီးႁိမ်းလိူဝ်လႄႈ သဵၼ်ႈတတ်း 8 ဢၼ်, ၾၢႆႇလဵဝ်။ ႁၢင်ႈဢမ်ႇလႆႈသႂ်ႇမႂ်ႇ။ *PSD မီးသၢၼ် · ၼႃႈၼႆႉ* — သၢၼ်ၶၢဝ်, ႁၢင်ႈၼိုင်ႈသၢၼ်ၼိုင်ႈ, လိၵ်ႈၼိုင်ႈသၢၼ်ၼိုင်ႈ — Photoshop ၼႂ်း ၶၢႆႉလႆႈ ႁဵတ်းမႂ်ႇလႆႈ။ **ႁၢင်ႈထိုင်ႁိမ်း** — ႁၢင်ႈပူၼ်ႉႁိမ်းၸေႈ သေ မိတ်ႈတတ်းၽၢၼ်ႇႁၢင်ႈ, တူဝ်လိၵ်ႈယူႇၼႂ်း။ **သွင်ၼႃႈ** — ပိုတ်ႇပပ်ႉမႃး တေႁၼ်သွင်ၼႃႈၸွမ်းၵၼ်။ **ဢႃႈမႂ်ႇ** — ၼပ်ႉႁၢင်ႈတိုၵ်ႉၼင်ႇၵဝ်ႇ သေ ဝႄႈမႂ်ႇ။ **ၼႃႈသုတ်း** — ၸိုဝ်ႈႁၢၼ်ႉ သႂ်ႇပၼ်။",kac:"**Library ▸ Album — laika lakhak nta hte sumla galaw ai ni tut hpyi ai file lahkawng.** *PDF lakhak · laika buk yawng* — laika shara yawng tinang a kaba hte, makau jaw, kahtam lam hte kahtam masat 8, file langai sha. Sumla ni hpe bai jahpan na n re. *PSD lakhap · ndai laika shara* — ahpraw ginshang langai, sumla langai hpe lakhap langai, laika langai hpe langai — Photoshop kaw bai shamu bai ka lu ai. **Sumla ni makau du hkra** — sumla gaw laika makau hpe lai nna kahtam ai lam gaw sumla hpe kahtam na; laika ni gaw shingkang kata nga na. **Laika shara lahkawng** — laika buk hpaw yang mu na ai laika shara lahkawng hpe madun ai. **Gayau** — sumla hti ai gaw ndan sha, sumla ni hpe bai garan ya ai. **Hpang jahtum laika shara** — studio a mying hte laika buk hpe masat da ai.",th:"**Library ▸ Album — ไฟล์สองแบบที่โรงพิมพ์และช่างแต่งภาพขอจริง ๆ** *PDF สำหรับพิมพ์ · ทั้งอัลบั้ม* เขียนไฟล์เดียว ทุกหน้าขนาดจริง พร้อมระยะตัดตก เส้นตัด และเครื่องหมายมุมแปดเส้น — และภาพไม่ถูกบีบอัดซ้ำระหว่างทาง *PSD แบบเลเยอร์ · หน้านี้* เขียนหน้านี้เป็นเลเยอร์ — พื้นขาวหนึ่งชั้น ภาพละหนึ่งชั้น ข้อความละหนึ่งชั้น — ขยับภาพหรือพิมพ์ใหม่ใน Photoshop ได้ **ภาพชนขอบ** วางภาพทับขอบตัดแทนพื้นที่ปลอดภัย ภาพจึงล้นออกนอกกระดาษและรอยตัดผ่านภาพ ส่วนตัวอักษรอยู่ด้านในเสมอ **หน้าคู่** แสดงสองหน้าที่ประกบกันเมื่อเปิดเล่ม **สลับภาพใหม่** แจกภาพใหม่ในจำนวนหน้าเดิม **หน้าปิดท้าย** ลงชื่อสตูดิโอด้วยฟอนต์ของอัลบั้มเอง",zh:"**Library ▸ Album — 印刷厂和修图师真正要的两种文件。** *印刷 PDF · 整本相册* 写成一个文件：每页都是真实尺寸，带出血、裁切框和八条裁切线 — 照片不会被二次压缩。*分层 PSD · 本页* 把当前页写成图层 — 一层白底、每张照片一层、每行文字一层 — 在 Photoshop 里可以随意挪动或重打。**照片出血到边** 让照片铺到裁切线之外而不是安全框内，照片因此越出纸边、由裁刀切过；文字始终留在内侧。**跨页** 显示翻开时相对的两页。**重新洗牌照片** 在页数不变的前提下重新分配照片。**结尾页** 用相册自己的字体为作品署上工作室的名字。",vi:"**Library ▸ Album — hai tệp mà nhà in và thợ chỉnh ảnh thật sự cần.** *PDF in · cả album* ghi một tệp duy nhất: mỗi trang đúng kích thước thật, có tràn lề, khung cắt và tám dấu cắt — và ảnh không bị nén lại lần nữa. *PSD nhiều lớp · trang này* ghi trang đang mở thành các lớp — một nền trắng, mỗi ảnh một lớp, mỗi dòng chữ một lớp — để ai cũng chỉnh được trong Photoshop. **Ảnh tràn ra mép** trải ảnh ra ngoài đường cắt thay vì trong vùng an toàn, nên ảnh chạy khỏi giấy và dao cắt đi xuyên qua; chữ thì luôn nằm bên trong. **Trang đôi** cho thấy hai trang đối diện khi mở sách. **Xáo lại ảnh** chia lại toàn bộ ảnh vào đúng số lượng trang cũ. **Trang kết** ký tên studio bằng chính phông chữ của album.",id:"**Library ▸ Album — dua berkas yang benar-benar diminta percetakan dan retoucher.** *PDF cetak · seluruh album* menulis satu berkas: setiap halaman pada ukuran aslinya, lengkap dengan bleed, garis potong, dan delapan tanda potong — dan fotonya tidak dikompres ulang. *PSD berlapis · halaman ini* menulis halaman yang terbuka sebagai lapisan — satu dasar putih, satu lapisan per foto, satu per baris teks — sehingga siapa pun bisa menggeser atau mengetik ulang di Photoshop. **Foto sampai tepi** menata halaman di atas garis potong, bukan di area aman, sehingga foto melewati tepi kertas dan pisau memotong menembusnya; teks selalu di dalam. **Halaman ganda** memperlihatkan dua halaman yang berhadapan saat buku dibuka. **Acak ulang foto** membagi semua foto lagi ke jumlah halaman yang sama. **Halaman penutup** menandatangani album dengan nama studio dalam huruf album itu sendiri.",ms:"**Library ▸ Album — dua fail yang betul-betul diminta kedai cetak dan penyunting foto.** *PDF cetak · seluruh album* menulis satu fail: setiap halaman pada saiz sebenar, lengkap dengan bleed, garis potong dan lapan tanda potong — dan fotonya tidak dimampatkan semula. *PSD berlapis · halaman ini* menulis halaman terbuka sebagai lapisan — satu dasar putih, satu lapisan bagi setiap foto, satu bagi setiap baris teks — supaya sesiapa boleh mengalih atau menaip semula dalam Photoshop. **Foto hingga ke tepi** menyusun halaman di atas garis potong dan bukan kawasan selamat, jadi foto terkeluar dari kertas dan pisau memotong menembusinya; teks sentiasa di dalam. **Halaman berkembar** menunjukkan dua halaman bertentangan apabila buku dibuka. **Kocok semula foto** mengagihkan semula semua foto ke jumlah halaman yang sama. **Halaman penutup** menandatangani album dengan nama studio dalam huruf album itu sendiri."} },
   { v:"6.105.0", kind:"page", ref:"pgAlbum",
     t:{my:"ပွဲ ၉ မျိုး — ပုံ ၄၀ ထည့်လိုက်ရုံနဲ့ album တစ်အုပ်လုံး ထွက်လာပြီ",en:"Nine occasions — drop in forty photos and a whole album comes out",shn:"ပွႆး 9 မဵဝ်း — သႂ်ႇၶႅပ်း 40 ၶႅပ်းသေ ပပ်ႉႁၢင်ႈတင်းပပ်ႉဢွၵ်ႇမႃး",kac:"Poi 9 mying — sumla 40 bang yang laika buk yawng pru wa ai",th:"เก้าโอกาส — ใส่รูป 40 รูป แล้วได้อัลบั้มทั้งเล่ม",zh:"九种场合 — 放入 40 张照片，整本相册就出来了",vi:"Chín dịp — thả vào 40 ảnh là có cả cuốn album",id:"Sembilan acara — masukkan 40 foto, satu album utuh jadi",ms:"Sembilan majlis — masukkan 40 foto, satu album penuh terhasil"},
     s:{my:"**Library ▸ Album — ပွဲအမျိုးအစား ၉ မျိုး။** မင်္ဂလာမတိုင်မီ · မင်္ဂလာနေ့ · တစ်ကိုယ်တော် · မိသားစု · ကလေးငယ် · မွေးကင်းစ · ကလေးများ · မွေးနေ့ · ပွဲအခမ်းအနား။ တစ်ခုရွေးလိုက်ရင် **စာလုံး၊ အရွယ်၊ မင်အရောင်** သုံးခုလုံး တစ်ခါတည်း ပြောင်းပေးတယ် — ကိုယ်ရိုက်ထားတဲ့စာ၊ ထည့်ထားတဲ့ပုံကို မထိဘူး။ ပြီးတော့ **“အယ်လ်ဘမ် တစ်အုပ်လုံး လုပ်မယ်”** ခလုတ်နဲ့ ပုံ ၄၀ အထိ တစ်ခါတည်းရွေးလိုက်ရင် စာမျက်နှာတွေကို အလိုအလျောက် ခွဲပေးပြီး၊ ပထမစာမျက်နှာမှာ ပွဲရဲ့ ခေါင်းစဉ်တွေ ကိုယ့်ဘာသာစကားနဲ့ တင်ပေးထားတယ်။ စာမျက်နှာတိုင်း ကိုယ်ပိုင်အပြင်အဆင် ရွေးတယ် — တစ်မျက်နှာမှာ ပုံ ၂–၄ ပုံ၊ ကျပ်တဲ့မျက်နှာ နှစ်ခု ဆက်မလာဘူး။",en:"**Library ▸ Album — nine occasions.** Pre-wedding · Wedding day · Portrait · Family · Baby · Newborn · Kids · Birthday · Events. One tap sets the **type, the print size and the ink** together and never touches a photo or a word you have already typed. Then **“Make the whole album”** takes up to forty photos at once, breaks them into pages, and sets the occasion's title lines on the opener in your own language. Every page picks its own layout — two to four photos a page, and never two crowded pages in a row.",shn:"**Library ▸ Album — ပွႆး 9 မဵဝ်း။** ဢွၼ်ၼႃႈမင်ႇၵလႃႇ · ဝၼ်းမင်ႇၵလႃႇ · ၵေႃႉလဵဝ် · ပီႈၼွင်ႉ · လုၵ်ႈဢွၼ်ႇ · ၵိူတ်ႇမႂ်ႇ · လုၵ်ႈဢွၼ်ႇ · ဝၼ်းၵိူတ်ႇ · ပွႆး။ ၼဵၵ်းပွၵ်ႈလဵဝ် တူဝ်လိၵ်ႈ ၶႃႈလူင် သီလိၵ်ႈ သၢမ်ဢၼ် လႅၵ်ႈၽွမ်ႉၵၼ်။ သေ **“ႁဵတ်းပပ်ႉႁၢင်ႈတင်းပပ်ႉ”** ၼၼ်ႉ ၶႅပ်း 40 ၶႅပ်း ၵမ်းလဵဝ်သေ ၽႄၼႃႈလိၵ်ႈပၼ်ႁင်းၵူၺ်း။",kac:"**Library ▸ Album — poi 9 mying.** Hkungran shawng · Hkungran shani · Masha langai · Dinghku · Ma kasha · Shangai nnan · Ma ni · Shangai shani · Poi. Kalang mi lata yang laika hkum, kaba hte laika ahkyeng masum hpe rau jaw ai. **“Sumla laika buk yawng galaw”** gaw sumla 40 hpe kalang mi la nna shara shara de garan ya ai.",th:"**Library ▸ Album — เก้าโอกาส** พรีเวดดิ้ง · วันแต่งงาน · ภาพบุคคล · ครอบครัว · เบบี้ · แรกเกิด · เด็ก ๆ · วันเกิด · งานอีเวนต์ แตะครั้งเดียวตั้ง **ฟอนต์ ขนาด และสีตัวอักษร** พร้อมกัน แล้ว **“สร้างอัลบั้มทั้งเล่ม”** รับรูปได้ถึง 40 รูปในครั้งเดียวและแบ่งเป็นหน้าให้เอง",zh:"**Library ▸ Album — 九种场合。**婚纱照 · 婚礼当天 · 个人写真 · 全家福 · 宝宝 · 新生儿 · 儿童 · 生日 · 活动。选一个场合，**字体、尺寸和文字颜色**一次设定，已输入的文字和照片不受影响。再用**“制作整本相册”**一次放入最多 40 张照片，自动分页，首页已用你的语言写好标题。每页各自挑版式 —— 一页两到四张，绝不连着两页排得满满的。",vi:"**Library ▸ Album — chín dịp.** Chụp ảnh cưới · Ngày cưới · Ảnh cá nhân · Gia đình · Em bé · Sơ sinh · Trẻ em · Sinh nhật · Sự kiện. Một chạm đặt xong **phông chữ, khổ in và màu mực**. Rồi **“Làm cả cuốn album”** nhận tối đa 40 ảnh một lần và tự chia thành trang, trang mở đầu đã có tiêu đề bằng ngôn ngữ của bạn.",id:"**Library ▸ Album — sembilan acara.** Pra-nikah · Hari pernikahan · Potret · Keluarga · Bayi · Baru lahir · Anak-anak · Ulang tahun · Acara. Sekali ketuk menetapkan **font, ukuran cetak dan warna tinta** sekaligus. Lalu **“Buat seluruh album”** menerima hingga 40 foto sekaligus dan membaginya menjadi halaman.",ms:"**Library ▸ Album — sembilan majlis.** Pra-perkahwinan · Hari perkahwinan · Potret · Keluarga · Bayi · Baharu lahir · Kanak-kanak · Hari jadi · Acara. Satu ketik menetapkan **fon, saiz cetakan dan warna dakwat** serentak. Kemudian **“Buat seluruh album”** menerima sehingga 40 foto sekali gus dan membahagikannya kepada halaman."} },
@@ -30049,7 +30076,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.105.0";
+var APP_VER="6.106.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -31488,6 +31515,20 @@ var ALBUM = (function(){
     }
     return r;
   }
+  /* THE LAYOUT RECTANGLE (6.106.0, wave D). Every photograph until now was laid out over the SAFE
+     AREA, which is the trim inset by the bleed — so nothing on an album page could reach the paper's
+     edge, and the template family called "Full bleed" stopped three millimetres short of it.
+     A page marked `bleed` is laid out over the trim GROWN by that same bleed instead: the picture
+     runs past the trim on all four sides and the guillotine cuts through it, which is the only way
+     a photograph reaches the edge of a printed page at all.
+     Words never move. drawTexts is handed the safe area whatever the page is marked, because type
+     that bleeds is type that gets cut off. */
+  function layoutRect(safe, pg){
+    if (!safe || !pg || !pg.bleed) return safe;
+    var b = safe.bleed;
+    return { x: -b, y: -b, w: safe.page.w + 2*b, h: safe.page.h + 2*b,
+             page: safe.page, bleed: b, gutter: safe.gutter };
+  }
   /* A CELL'S PIXEL RECTANGLE. The fractions multiply straight through the safe area; on a
      spread a cell that would cross the binding is pushed clear of it, never stretched over it. */
   function cellRect(c, safe){
@@ -31636,11 +31677,11 @@ var ALBUM = (function(){
   var DOC = null, IMGS = {}, SAVE_T = null;
 
   function blankDoc(){
-    return { v:3, sizeId:"12x36", custom:{ w:12, h:36, unit:"in", dpi:300 },
-             guides:true, cur:0, pair:(D.defPair || "classic"), occ:(D.defOcc || ""),
+    return { v:4, sizeId:"12x36", custom:{ w:12, h:36, unit:"in", dpi:300 },
+             guides:true, view:"page", cur:0, pair:(D.defPair || "classic"), occ:(D.defOcc || ""),
              pages:[ blankPage() ] };
   }
-  function blankPage(){ return { photos:[], texts:[], tplId:"", auto:true }; }
+  function blankPage(){ return { photos:[], texts:[], tplId:"", auto:true, bleed:false }; }
   function curSize(){
     if (DOC.sizeId === "custom"){
       var c = DOC.custom || {};
@@ -31690,11 +31731,17 @@ var ALBUM = (function(){
     var sz = curSize(), safe = safeArea(sz);
     if (!safe) return Promise.resolve(false);
     var scale = opt.scale || 1;
-    var W = Math.max(1, Math.round(safe.page.w*scale)), Hh = Math.max(1, Math.round(safe.page.h*scale));
+    /* 6.106.0 — the print file asks for the page PLUS its bleed, so the overflow a bleeding
+       photograph needs actually exists in the pixels the PDF is handed. One offset carries it:
+       the page's own origin sits at (m, m) in the canvas, and m is zero everywhere else. */
+    var m = opt.bleed ? safe.bleed : 0;
+    var W = Math.max(1, Math.round((safe.page.w + 2*m)*scale));
+    var Hh = Math.max(1, Math.round((safe.page.h + 2*m)*scale));
     cv.width = W; cv.height = Hh;
     var x = cv.getContext("2d"); if (!x) return Promise.resolve(false);
     x.fillStyle = "#ffffff"; x.fillRect(0,0,W,Hh);
-    var tpl = pageTpl(pg, idx), rects = cellRects(tpl, safe);
+    var lay = layoutRect(safe, pg);
+    var tpl = pageTpl(pg, idx), rects = cellRects(tpl, lay);
     var photos = pg.photos.slice(0, rects.length);
     /* 6.104.0 — the faces first, then the photographs. One gate for the stage, the page
        rail and the export alike, so what is downloaded is what was on screen. */
@@ -31704,7 +31751,7 @@ var ALBUM = (function(){
       var i;
       for (i=0;i<rects.length;i++){
         var r = rects[i], im = ims[i], ph = photos[i];
-        var dx = r.x*scale, dy = r.y*scale, dw = r.w*scale, dh = r.h*scale;
+        var dx = (r.x+m)*scale, dy = (r.y+m)*scale, dw = r.w*scale, dh = r.h*scale;
         if (!im || !ph){
           /* an empty cell is an empty cell — a light frame, never a broken picture */
           x.fillStyle = "#f2f2f4"; x.fillRect(dx,dy,dw,dh);
@@ -31715,8 +31762,8 @@ var ALBUM = (function(){
         if (!fit) continue;
         try { x.drawImage(im, fit.sx, fit.sy, fit.sw, fit.sh, dx, dy, dw, dh); } catch(e){}
       }
-      drawTexts(x, pg, safe, scale);
-      if (opt.guides) drawGuides(x, safe, scale);
+      drawTexts(x, pg, safe, scale, m);
+      if (opt.guides) drawGuides(x, safe, scale, m);
       return true;
     });
   }
@@ -31819,7 +31866,8 @@ var ALBUM = (function(){
   }
 
   /* the text roles the student filled in, laid on the safe area's own fractions */
-  function drawTexts(x, pg, safe, scale){
+  function drawTexts(x, pg, safe, scale, m){
+    m = m || 0;
     var i, list = pg.texts || [];
     for (i=0;i<list.length;i++){
       var tx = list[i]; if (!tx || !tx.text) continue;
@@ -31833,8 +31881,8 @@ var ALBUM = (function(){
       x.textBaseline = "middle";
       var face = fontForText(tx);
       x.font = weightFor(face, role) + " " + Math.round(px) + "px " + ((face && face.stack) || "Georgia, serif");
-      var cx = safe.x*scale + safe.w*scale*((tx.x==null)?0.5:tx.x);
-      var cy = safe.y*scale + safe.h*scale*((tx.y==null)?0.92:tx.y);
+      var cx = (safe.x+m)*scale + safe.w*scale*((tx.x==null)?0.5:tx.x);
+      var cy = (safe.y+m)*scale + safe.h*scale*((tx.y==null)?0.92:tx.y);
       var words = role.caps ? String(tx.text).toUpperCase() : String(tx.text);
       if (role.track > 0){
         /* letter-spacing by hand: this renderer has no letterSpacing property to set */
@@ -31853,17 +31901,19 @@ var ALBUM = (function(){
   /* WHAT THE TRIMMER AND THE BINDING WILL EAT. Red is the bleed the guillotine takes; the
      centre band is the gutter a flush-mount spread loses into its own spine. Guides are a
      preview only — the export never carries them. */
-  function drawGuides(x, safe, scale){
+  function drawGuides(x, safe, scale, m){
+    m = m || 0;
+    var M = m*scale;
     var W = safe.page.w*scale, Hh = safe.page.h*scale, b = safe.bleed*scale;
     x.save();
     x.strokeStyle = "rgba(214,54,54,.85)"; x.lineWidth = Math.max(1, 1*scale*2);
     x.setLineDash([Math.max(4,6*scale*2), Math.max(3,4*scale*2)]);
-    x.strokeRect(b, b, W-2*b, Hh-2*b);
+    x.strokeRect(M+b, M+b, W-2*b, Hh-2*b);
     if (safe.gutter > 0){
-      var mid = safe.x*scale + safe.w*scale/2, g = safe.gutter*scale;
+      var mid = (safe.x+m)*scale + safe.w*scale/2, g = safe.gutter*scale;
       x.strokeStyle = "rgba(38,110,200,.85)";
-      x.beginPath(); x.moveTo(mid-g, 0); x.lineTo(mid-g, Hh); x.stroke();
-      x.beginPath(); x.moveTo(mid+g, 0); x.lineTo(mid+g, Hh); x.stroke();
+      x.beginPath(); x.moveTo(mid-g, M); x.lineTo(mid-g, M+Hh); x.stroke();
+      x.beginPath(); x.moveTo(mid+g, M); x.lineTo(mid+g, M+Hh); x.stroke();
     }
     x.restore();
   }
@@ -32175,7 +32225,16 @@ var ALBUM = (function(){
       DOC.cur += 1; onDocChange(false);
     };
     row.appendChild(dup);
+    var close = E("button","btn", L("alb_close_add")); close.id = "albPageClose";
+    close.onclick = function(){ DOC.pages.push(closingPage()); DOC.cur = DOC.pages.length-1; onDocChange(false); };
+    row.appendChild(close);
     card.appendChild(row);
+    var sh = E("button","btn", L("alb_shuffle")); sh.id = "albShuffle";
+    sh.onclick = function(){
+      var n = shuffleAlbum(Math.random);
+      H.toast(n ? L("alb_shuffle_done").replace("{N}", String(n)) : L("alb_layout_none"), n ? "ok" : "");
+    };
+    card.appendChild(sh);
     return card;
   }
 
@@ -32191,6 +32250,9 @@ var ALBUM = (function(){
     var row = E("div","row");
     var g = E("button","chip" + (DOC.guides ? " on" : ""), L("alb_guides")); g.id = "albGuides";
     g.onclick = function(){ DOC.guides = !DOC.guides; onDocChange(false); };
+    var sp = E("button","chip" + (DOC.view === "spread" ? " on" : ""), L("alb_spread")); sp.id = "albSpread";
+    sp.onclick = function(){ DOC.view = (DOC.view === "spread") ? "page" : "spread"; onDocChange(false); };
+    row.appendChild(sp);
     row.appendChild(g);
     var note = E("span","mut", L("alb_guides_note")); note.id = "albGuidesNote";
     row.appendChild(note);
@@ -32251,6 +32313,15 @@ var ALBUM = (function(){
       card.appendChild(E("p","mut", L("alb_layout_none")));
       return card;
     }
+    /* 6.106.0 — off the safe area and over the trim. The one switch that decides whether a
+       photograph on this page stops 3 mm short of the paper's edge or runs off it. */
+    var bl = E("div","row");
+    var bb = E("button","chip" + (pg.bleed ? " on" : ""), L("alb_edge")); bb.id = "albBleed";
+    bb.onclick = function(){ pg.bleed = !pg.bleed; onDocChange(true); };
+    bl.appendChild(bb);
+    card.appendChild(bl);
+    var bn = E("p","mut", L("alb_edge_note")); bn.id = "albBleedNote";
+    card.appendChild(bn);
     var n = clamp(pg.photos.length, 1, MAXP);
     var row = E("div","row alb-tpls"); row.id = "albTpls";
     row.appendChild(chip(L("alb_auto"), !!pg.auto, function(){ pg.auto = true; onDocChange(false); }));
@@ -32409,7 +32480,85 @@ var ALBUM = (function(){
     var all = E("button","btn", L("alb_export_all")); all.id = "albExportAll";
     all.onclick = function(){ exportAll(); };
     card.appendChild(all);
+    /* 6.106.0 wave D — the two files that leave the studio for somebody else's machine */
+    var out = E("div","row");
+    var pdf = E("button","btn btn-gold grow", L("alb_out_pdf")); pdf.id = "albOutPdf";
+    pdf.onclick = function(){ exportPdf(); };
+    out.appendChild(pdf);
+    var psd = E("button","btn grow", L("alb_out_psd")); psd.id = "albOutPsd";
+    psd.onclick = function(){ exportPsd(); };
+    out.appendChild(psd);
+    card.appendChild(out);
+    var sheet = E("p","mut"); sheet.id = "albOutNote";
+    var dpi = px.dpi || 300, bmm = D.bleedMm, mm = 25.4/dpi;
+    sheet.textContent = L("alb_out_sheet")
+      .replace("{W}", trim(px.w*mm + 2*bmm + 2*PDF_MARK_MM))
+      .replace("{H}", trim(px.h*mm + 2*bmm + 2*PDF_MARK_MM))
+      .replace("{N}", String(DOC.pages.length))
+      .replace("{M}", String(Math.max(1, Math.round(psdEstimate(curPage(), DOC.cur)/1048576))));
+    card.appendChild(sheet);
     return card;
+  }
+  /* ONE PDF, EVERY PAGE. Each page is drawn once at its real print size WITH its bleed, the
+     renderer's own JPEG bytes go straight into the file, and the canvas is dropped before the
+     next one is drawn — an album of forty pages never has two of them alive at once. */
+  function exportPdf(){
+    var sz = curSize(), px = pagePx(sz), shots = [], i = 0, n = DOC.pages.length;
+    if (!px) return Promise.resolve(false);
+    H.toast(L("alb_export_busy"), "");
+    function step(){
+      if (i >= n) return Promise.resolve(true);
+      var at = i++;
+      var cv = document.createElement("canvas");
+      return drawPage(cv, DOC.pages[at], at, { scale: 1, guides: false, bleed: true }).then(function(ok){
+        var url = null;
+        if (ok){ try { url = cv.toDataURL("image/jpeg", 0.92); } catch(e){ url = null; } }
+        var w = cv.width, h = cv.height;
+        cv.width = cv.height = 1;
+        var by = url ? dataUrlBytes(url) : null;
+        if (by) shots.push({ jpeg: by, w: w, h: h });
+        return new Promise(function(go){ setTimeout(go, 0); }).then(step);
+      });
+    }
+    return step().then(function(){
+      if (!shots.length){ H.toast(L("alb_export_fail"), "err"); return false; }
+      var bytes = pdfOfShots(shots, px, "HNK album " + curSize().id);
+      var name = "hnk-album-" + curSize().id + ".pdf";
+      return Promise.resolve(sendFile(bytes, name, "application/pdf")).then(function(){
+        H.toast(L("alb_pdf_done").replace("{N}", String(shots.length))
+                                 .replace("{M}", String(Math.max(1, Math.round(bytes.length/1048576)))), "ok");
+        return true;
+      });
+    }).catch(function(){ H.toast(L("alb_export_fail"), "err"); return false; });
+  }
+  /* THE OPEN PAGE, IN LAYERS. Big pages make big files and a browser that cannot hold one says
+     so rather than dying quietly: over the soft ceiling the student is told the size and asked,
+     over the hard one the studio refuses and names the PDF instead. */
+  function exportPsd(){
+    var sz = curSize(), px = pagePx(sz);
+    if (!px) return Promise.resolve(false);
+    var mb = Math.max(1, Math.round(psdEstimate(curPage(), DOC.cur)/1048576));
+    if (mb > PSD_HARD_MB){ H.toast(L("alb_psd_no").replace("{N}", String(mb)), "err"); return Promise.resolve(false); }
+    if (mb > PSD_SOFT_MB && !ask(L("alb_psd_big").replace("{N}", String(mb)))) return Promise.resolve(false);
+    H.toast(L("alb_export_busy"), "");
+    return psdOfPage(DOC.cur).then(function(bytes){
+      if (!bytes || !bytes.length){ H.toast(L("alb_export_fail"), "err"); return false; }
+      var name = "hnk-album-" + (DOC.cur+1) + "-" + curSize().id + ".psd";
+      return Promise.resolve(sendFile(bytes, name, "image/vnd.adobe.photoshop")).then(function(){
+        H.toast(L("alb_pdf_done").replace("{N}", "1")
+                                 .replace("{M}", String(Math.max(1, Math.round(bytes.length/1048576)))), "ok");
+        return true;
+      });
+    }).catch(function(){ H.toast(L("alb_export_fail"), "err"); return false; });
+  }
+  /* A print file is tens of megabytes, and a data: URL of one is a string the phone has to hold
+     twice. A host that can take the bytes themselves is given them; anything else still gets the
+     data URL it always got. */
+  function sendFile(bytes, name, mime){
+    if (H && typeof H.exportFile === "function") return H.exportFile(bytes, name, mime);
+    var bin = "", i, CH = 0x8000;
+    for (i=0;i<bytes.length;i+=CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i+CH));
+    return H.exportOut("data:" + mime + ";base64," + btoa(bin), name);
   }
   function pageJpeg(idx){
     var pg = DOC.pages[idx]; if (!pg) return Promise.resolve(null);
@@ -32496,7 +32645,10 @@ var ALBUM = (function(){
        partly on where the page falls in the album (the rhythm's nudge), so anchoring every page
        of a freshly laid-out album against page 0's template cropped most of them for a layout
        they are not drawn with. */
-    var tpl = pageTpl(pg, (idx == null) ? DOC.cur : idx), rects = cellRects(tpl, safe), i;
+    /* 6.106.0 — and against the page's own layout rectangle: a bleeding page's cells are bigger
+       and a different shape, so a crop chosen against the safe area is the wrong crop. */
+    var tpl = pageTpl(pg, (idx == null) ? DOC.cur : idx);
+    var rects = cellRects(tpl, layoutRect(safe, pg)), i;
     for (i=0;i<pg.photos.length && i<rects.length;i++){
       var ph = pg.photos[i], r = rects[i];
       ph.anchor = anchorFor(ph.subject, ph.w, ph.h, r.w, r.h);
@@ -32543,8 +32695,12 @@ var ALBUM = (function(){
       var box = document.getElementById("albStage");
       var avail = (box && box.clientWidth) || 0;
       if (!(avail > 0)) avail = 360;                          /* a renderer with no ruler still draws */
-      var scale = Math.min(1, Math.min(avail, PREVIEW_MAX) / px.w);
-      drawPage(stage, curPage(), DOC.cur, { scale: scale, guides: !!DOC.guides });
+      /* 6.106.0 — a spread is two pages wide, so it gets half the room each */
+      var spread = (DOC.view === "spread");
+      var room = Math.min(avail, PREVIEW_MAX) / (spread ? 2 : 1);
+      var scale = Math.min(1, room / px.w);
+      if (spread) drawSpread(stage, spreadOf(DOC.cur, DOC.pages.length), scale);
+      else drawPage(stage, curPage(), DOC.cur, { scale: scale, guides: !!DOC.guides });
     }
     var i;
     for (i=0;i<DOC.pages.length;i++){
@@ -32554,6 +32710,434 @@ var ALBUM = (function(){
         drawPage(cv, DOC.pages[idx], idx, { scale: THUMB_W / px.w, guides: false });
       })(i);
     }
+  }
+
+  /* ======================= THE SPREAD (6.106.0, wave D) =======================
+
+     An album is not read a page at a time. It is opened, and two pages face each other across
+     the fold; a picture that works alone can fight the one beside it. So the stage can show the
+     spread the open page belongs to, laid out the way the book actually falls: page one on its
+     own on the right, then 2–3, 4–5, and a last page alone on the left if the count is even. */
+  function spreadOf(i, n){
+    if (!(n > 0)) return [null, null];
+    if (i <= 0) return [null, 0];
+    var k = i - 1, start = 1 + (k - (k % 2));
+    return [start, (start + 1 < n) ? start + 1 : null];
+  }
+  function drawSpread(cv, pair, scale){
+    var sz = curSize(), px = pagePx(sz);
+    if (!px) return Promise.resolve(false);
+    var W = Math.max(1, Math.round(px.w*scale)), Hh = Math.max(1, Math.round(px.h*scale));
+    cv.width = W*2; cv.height = Hh;
+    var x = cv.getContext("2d"); if (!x) return Promise.resolve(false);
+    x.fillStyle = "#e9e9ee"; x.fillRect(0,0,W*2,Hh);
+    function side(at, dx){
+      if (at == null) return Promise.resolve(true);
+      var one = document.createElement("canvas");
+      return drawPage(one, DOC.pages[at], at, { scale: scale, guides: !!DOC.guides }).then(function(ok){
+        if (ok) { try { x.drawImage(one, dx, 0); } catch(e){} }
+        one.width = one.height = 1;
+        return true;
+      });
+    }
+    return side(pair[0], 0).then(function(){ return side(pair[1], W); }).then(function(){
+      /* the fold: where the two pages meet and where a flush-mount album loses a few millimetres */
+      x.save();
+      x.fillStyle = "rgba(0,0,0,.14)"; x.fillRect(W - Math.max(1, 2*scale*3), 0, Math.max(2, 4*scale*3), Hh);
+      x.restore();
+      return true;
+    });
+  }
+
+  /* ======================= SHUFFLE (6.106.0, wave D) =======================
+
+     Every photograph out of every page, dealt back in a new order into the SAME page counts. The
+     album's shape does not move: the plan, the templates and the words stay exactly where they
+     were, and only which picture sits in which cell changes. Nothing is ever lost — the deal is
+     pure arithmetic over one list, and the test drives it with its own generator so the result is
+     something to check rather than something to hope for. */
+  function dealOut(list, counts, rnd){
+    var a = list.slice(), i, j, t;
+    for (i = a.length - 1; i > 0; i--){
+      j = Math.floor(rnd() * (i + 1));
+      if (!(j >= 0 && j <= i)) j = 0;
+      t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    var out = [], at = 0, k;
+    for (k = 0; k < counts.length; k++) out.push(a.slice(at, at + counts[k])), at += counts[k];
+    return out;
+  }
+  function shuffleAlbum(rnd){
+    var all = [], counts = [], i;
+    for (i=0;i<DOC.pages.length;i++){ counts.push(DOC.pages[i].photos.length); all = all.concat(DOC.pages[i].photos); }
+    if (all.length < 2) return 0;
+    var dealt = dealOut(all, counts, rnd || Math.random);
+    for (i=0;i<DOC.pages.length;i++) DOC.pages[i].photos = dealt[i];
+    onDocChange(true);
+    return all.length;
+  }
+
+  /* ======================= THE CLOSING PAGE (6.106.0, wave D) =======================
+
+     The studio signs its own work. A page with no photograph on it, carrying the studio's name in
+     the album's own display face and the occasion's line under it, in the student's language and
+     in the occasion's ink — the colophon a printed album ends on. It is an ordinary page after
+     that: the words can be retyped, the ink changed, a photograph dropped onto it. */
+  var STUDIO_MARK = "HNK Create Studio";
+  function closingPage(){
+    var o = curOcc(), pg = blankPage();
+    pg.tplId = "f1i"; pg.auto = false;                  /* the opener template: type, room, no grid */
+    var ink = (o && o.ink) || INKS[0];
+    pg.texts.push({ role:"title", text: STUDIO_MARK, x:0.5, y:0.46, align:"center", color: ink, font:"" });
+    if (o && o.note) pg.texts.push({ role:"caption", text: pick9(o.note), x:0.5, y:0.58, align:"center", color: ink, font:"" });
+    return pg;
+  }
+
+  /* ======================= THE PRINT FILE (6.106.0, wave D) =======================
+
+     Everything the album could make until now was a JPEG of one page: the right pixels inside a
+     file no print shop accepts as artwork. This is the file they do accept.
+
+     ONE PDF, EVERY PAGE, AT THE ALBUM'S OWN SIZE, and each page carries the three boxes a press
+     operator reads before anything else:
+       MediaBox   the sheet — the trim, plus the bleed, plus the room the marks need
+       BleedBox   the trim grown by the bleed: exactly the pixels drawPage({bleed:true}) drew
+       TrimBox    the finished page — where the guillotine lands
+     with eight crop marks, a pair per corner, starting OUTSIDE the bleed so they never print on
+     the artwork and always survive the cut.
+
+     THE PHOTOGRAPHS ARE NOT RE-ENCODED. The page is drawn once at its real print size and handed
+     to toDataURL("image/jpeg"); those same bytes become a /DCTDecode image stream. A PDF writer
+     that decodes and re-encodes a JPEG throws away a generation of quality for nothing.
+
+     There is no library here. A PDF is a byte file with a cross-reference table and the whole of
+     one is below, so test/verify_album_output.js parses what comes out instead of trusting it. */
+
+  var PDF_MARK_MM = 4;          /* how long a crop mark is */
+  var PT_PER_IN = 72;           /* a PDF point */
+
+  function u8s(str){ var i, a = new Uint8Array(str.length); for (i=0;i<str.length;i++) a[i] = str.charCodeAt(i) & 255; return a; }
+  function b64Bytes(b64){
+    var bin = atob(b64), i, a = new Uint8Array(bin.length);
+    for (i=0;i<bin.length;i++) a[i] = bin.charCodeAt(i) & 255;
+    return a;
+  }
+  function dataUrlBytes(url){
+    var m = /^data:[^;,]*;base64,([\s\S]*)$/.exec(url || "");
+    if (!m) return null;
+    try { return b64Bytes(m[1]); } catch(e){ return null; }
+  }
+  /* PDF numbers: three decimals, no exponent, and never "100" written as "1" by a greedy strip */
+  function nPdf(v){
+    if (!isFinite(v)) v = 0;
+    var s = (Math.round(v*1000)/1000).toFixed(3);
+    if (s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
+    return s;
+  }
+  function pdfText(s){ return String(s == null ? "" : s).replace(/[\\()]/g, "\\$&").replace(/[^\x20-\x7e]/g, "?"); }
+  function joinBytes(list){
+    var n = 0, i, at = 0;
+    for (i=0;i<list.length;i++) n += list[i].length;
+    var out = new Uint8Array(n);
+    for (i=0;i<list.length;i++){ out.set(list[i], at); at += list[i].length; }
+    return out;
+  }
+
+  /* shots: [{ jpeg: Uint8Array, w: px, h: px }] — one per album page, drawn WITH its bleed. */
+  function pdfOfShots(shots, px, title){
+    var dpi = px.dpi || 300, perPx = PT_PER_IN / dpi;
+    var bleedPt = mmPx(D.bleedMm, dpi) * perPx;
+    var markPt  = (PDF_MARK_MM / 25.4) * PT_PER_IN;
+    var trimW = px.w * perPx, trimH = px.h * perPx;
+    var O = bleedPt + markPt;                       /* the trim's own origin on the sheet */
+    var sheetW = trimW + 2*O, sheetH = trimH + 2*O;
+
+    var out = [], at = 0, xref = [];
+    function put(a){ out.push(a); at += a.length; }
+    function obj(n, body){ xref[n] = at; put(u8s(n + " 0 obj\n" + body + "\nendobj\n")); }
+    function objStream(n, dict, bytes){
+      xref[n] = at;
+      put(u8s(n + " 0 obj\n" + dict + "\nstream\n"));
+      put(bytes);
+      put(u8s("\nendstream\nendobj\n"));
+    }
+
+    put(u8s("%PDF-1.4\n"));
+    put(new Uint8Array([0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A]));   /* the binary comment every reader wants */
+
+    var n = shots.length, i, kids = [];
+    for (i=0;i<n;i++) kids.push((4 + i*3) + " 0 R");
+
+    obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+    obj(2, "<< /Type /Pages /Count " + n + " /Kids [" + kids.join(" ") + "] >>");
+    obj(3, "<< /Producer (HNK Create Studio " + pdfText(APP_VER) + ") /Creator (HNK Create Studio) /Title (" + pdfText(title || "HNK album") + ") >>");
+
+    for (i=0;i<n;i++){
+      var P = 4 + i*3, C = 5 + i*3, X = 6 + i*3, sh = shots[i];
+      /* the artwork sits on the BleedBox, which is where drawPage's extra margin already put it */
+      var bx = markPt, by = markPt, bw = trimW + 2*bleedPt, bh = trimH + 2*bleedPt;
+      var body = "q\n" + nPdf(bw) + " 0 0 " + nPdf(bh) + " " + nPdf(bx) + " " + nPdf(by) + " cm\n/Im0 Do\nQ\n";
+      /* the marks: outside the bleed on every side, so the cut goes through the corner of a pair */
+      var L = O, R = O + trimW, B = O, T = O + trimH, g = bleedPt, m = markPt, lines = [
+        [0, B, m, B], [L, 0, L, m],
+        [R + g, B, sheetW, B], [R, 0, R, m],
+        [0, T, m, T], [L, T + g, L, sheetH],
+        [R + g, T, sheetW, T], [R, T + g, R, sheetH]
+      ], k;
+      body += "q\n0 G\n0.4 w\n";
+      for (k=0;k<lines.length;k++){
+        body += nPdf(lines[k][0]) + " " + nPdf(lines[k][1]) + " m " + nPdf(lines[k][2]) + " " + nPdf(lines[k][3]) + " l S\n";
+      }
+      body += "Q\n";
+      var cs = u8s(body);
+      obj(P, "<< /Type /Page /Parent 2 0 R" +
+             " /MediaBox [0 0 " + nPdf(sheetW) + " " + nPdf(sheetH) + "]" +
+             " /BleedBox [" + nPdf(O-g) + " " + nPdf(O-g) + " " + nPdf(R+g) + " " + nPdf(T+g) + "]" +
+             " /TrimBox [" + nPdf(L) + " " + nPdf(B) + " " + nPdf(R) + " " + nPdf(T) + "]" +
+             " /Resources << /XObject << /Im0 " + X + " 0 R >> /ProcSet [/PDF /ImageC] >>" +
+             " /Contents " + C + " 0 R >>");
+      objStream(C, "<< /Length " + cs.length + " >>", cs);
+      objStream(X, "<< /Type /XObject /Subtype /Image /Width " + sh.w + " /Height " + sh.h +
+                   " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + sh.jpeg.length + " >>", sh.jpeg);
+    }
+
+    var count = 4 + n*3, startx = at, rows = "xref\n0 " + count + "\n0000000000 65535 f \n";
+    for (i=1;i<count;i++){
+      var off = xref[i] || 0, s = String(off);
+      while (s.length < 10) s = "0" + s;
+      rows += s + " 00000 n \n";
+    }
+    put(u8s(rows));
+    put(u8s("trailer\n<< /Size " + count + " /Root 1 0 R /Info 3 0 R >>\nstartxref\n" + startx + "\n%%EOF\n"));
+    return joinBytes(out);
+  }
+
+  /* ======================= THE LAYERED FILE (6.106.0, wave D) =======================
+
+     A PDF is finished work. A retoucher who has to nudge one photograph or reset one line wants
+     the page BEFORE it was finished, and that is a .psd: a white base, one layer per photograph,
+     one layer per line of type, every one of them still its own object.
+
+     The canvas is the TRIM — the page as it will be cut, not the sheet — because this is the
+     artwork document, not the press file. Layers are clipped to it; a bleeding photograph simply
+     runs off the edge of the document, which is what it does on paper.
+
+     Written byte by byte: an 8BPS header, the resolution block so Photoshop opens it at the right
+     DPI, the layer records, every channel PackBits-compressed, and the flattened composite that a
+     reader without layer support shows. The test reads the file back with ag-psd — an
+     implementation that owes nothing to this one — and compares names, rectangles and pixels. */
+
+  /* The ceilings are in BYTES, not in pixels, because bytes are what a browser runs out of.
+     A twelve-by-thirty-six panorama is only 38 megapixels and would pass any pixel ceiling
+     worth setting; the layered file it makes is a quarter of a gigabyte, and no phone is
+     going to hold that. The estimate below is what the student is shown and what these two
+     numbers are compared against, so the warning and the refusal say the same thing the
+     button says. */
+  var PSD_SOFT_MB = 80;         /* above this the student is told the size and asked */
+  var PSD_HARD_MB = 220;        /* above this no browser is going to hold the file: say so */
+
+  function ByteBag(){ this.a = new Uint8Array(1 << 16); this.n = 0; }
+  ByteBag.prototype.need = function(k){
+    if (this.n + k <= this.a.length) return;
+    var cap = this.a.length;
+    while (cap < this.n + k) cap *= 2;
+    var b = new Uint8Array(cap); b.set(this.a.subarray(0, this.n)); this.a = b;
+  };
+  ByteBag.prototype.byte = function(v){ this.need(1); this.a[this.n++] = v & 255; };
+  ByteBag.prototype.put = function(src, off, n){ this.need(n); this.a.set(src.subarray(off, off+n), this.n); this.n += n; };
+  ByteBag.prototype.take = function(){ return this.a.subarray(0, this.n); };
+
+  /* PackBits, the run-length coding every PSD channel is written in. A run of three or more equal
+     bytes is worth a two-byte code; anything shorter stays literal, because a two-byte run inside
+     a literal stretch costs a byte to leave and a byte to come back. */
+  function packRow(src, n, bag){
+    var i = 0, was = bag.n;
+    while (i < n){
+      var run = 1;
+      while (i + run < n && src[i+run] === src[i] && run < 128) run++;
+      if (run >= 3){ bag.byte(257 - run); bag.byte(src[i]); i += run; }
+      else {
+        var st = i, lit = 0;
+        while (i < n && lit < 128){
+          if (i + 2 < n && src[i] === src[i+1] && src[i] === src[i+2]) break;
+          i++; lit++;
+        }
+        bag.byte(lit - 1);
+        bag.put(src, st, lit);
+      }
+    }
+    return bag.n - was;
+  }
+  /* One canvas, however tall, read a band at a time and split into PSD channels. The band keeps
+     the ImageData small: a full-size album page read in one call is hundreds of megabytes. */
+  function rleCanvas(cv, order){
+    var w = cv.width, h = cv.height, x = cv.getContext("2d");
+    var nch = order.length, bags = [], counts = [], c;
+    for (c=0;c<nch;c++){ bags.push(new ByteBag()); counts.push(new Uint16Array(h)); }
+    var row = new Uint8Array(w), y = 0;
+    var band = Math.max(1, Math.min(h, Math.floor(4e6 / Math.max(1, w))));
+    while (y < h){
+      var rows = Math.min(band, h - y);
+      var d = x.getImageData(0, y, w, rows).data, r, i;
+      for (c=0;c<nch;c++){
+        var comp = order[c];
+        for (r=0;r<rows;r++){
+          var base = r*w*4 + comp;
+          for (i=0;i<w;i++) row[i] = d[base + i*4];
+          counts[c][y+r] = packRow(row, w, bags[c]);
+        }
+      }
+      y += rows;
+    }
+    return { w: w, h: h, counts: counts, bags: bags };
+  }
+  function chanBytes(rle, c){
+    var h = rle.h, head = new Uint8Array(2 + 2*h), i, k = 0;
+    head[k++] = 0; head[k++] = 1;                      /* compression 1 = RLE */
+    for (i=0;i<h;i++){ head[k++] = (rle.counts[c][i] >> 8) & 255; head[k++] = rle.counts[c][i] & 255; }
+    return joinBytes([head, rle.bags[c].take()]);
+  }
+  function be16(v){ return new Uint8Array([(v>>8)&255, v&255]); }
+  function be32(v){ return new Uint8Array([(v>>>24)&255, (v>>>16)&255, (v>>>8)&255, v&255]); }
+  function pascal4(name){
+    var s = String(name).replace(/[^\x20-\x7e]/g, "?").slice(0, 63);
+    var len = 1 + s.length, pad = (4 - (len % 4)) % 4;
+    var a = new Uint8Array(len + pad), i;
+    a[0] = s.length;
+    for (i=0;i<s.length;i++) a[1+i] = s.charCodeAt(i) & 255;
+    return a;
+  }
+
+  /* THE LAYERS OF ONE PAGE, bottom to top: the white base, then each photograph in its own cell,
+     then each line of type in a band of its own. Each one knows its rectangle and how to paint
+     itself into a canvas of exactly that rectangle. */
+  function pageLayers(pg, idx){
+    var sz = curSize(), safe = safeArea(sz);
+    if (!safe) return [];
+    var W = safe.page.w, Hh = safe.page.h;
+    var lay = layoutRect(safe, pg), tpl = pageTpl(pg, idx), rects = cellRects(tpl, lay);
+    var out = [], i;
+    out.push({ name: "Background", rect: { l:0, t:0, r:W, b:Hh }, flat: "#ffffff" });
+    var photos = pg.photos.slice(0, rects.length);
+    for (i=0;i<photos.length;i++){
+      (function(ph, r, at){
+        /* the rectangle is ROUNDED, not floored and ceiled, and the photograph is drawn to fill
+           exactly that: an outward round leaves a one-pixel transparent seam down every join
+           between two cells, which is a hairline of nothing in the middle of a printed page. */
+        var l0 = Math.round(r.x), t0 = Math.round(r.y);
+        var r0 = Math.round(r.x + r.w), b0 = Math.round(r.y + r.h);
+        var l = Math.max(0, l0), t = Math.max(0, t0), rr = Math.min(W, r0), bb = Math.min(Hh, b0);
+        if (!(rr > l && bb > t)) return;
+        out.push({ name: "Photo " + (at+1), rect: { l:l, t:t, r:rr, b:bb }, paint: function(x){
+          var im = IMGS[ph.src];
+          if (!im) return;
+          var a = ph.anchor || { x:0.5, y:0.5 };
+          var fit = coverFit(im.naturalWidth||im.width, im.naturalHeight||im.height, r.w, r.h, a.x, a.y);
+          if (!fit) return;
+          try { x.drawImage(im, fit.sx, fit.sy, fit.sw, fit.sh, l0 - l, t0 - t, r0 - l0, b0 - t0); } catch(e){}
+        } });
+      })(photos[i], rects[i], i);
+    }
+    var texts = pg.texts || [];
+    for (i=0;i<texts.length;i++){
+      (function(tx, at){
+        if (!tx || !tx.text) return;
+        var role = null, k;
+        for (k=0;k<D.roles.length;k++) if (D.roles[k].id === tx.role) role = D.roles[k];
+        if (!role) return;
+        var size = Math.max(8, role.size * safe.h);
+        var cy = safe.y + safe.h*((tx.y==null)?0.92:tx.y);
+        var t = Math.max(0, Math.floor(cy - size*1.4)), b = Math.min(Hh, Math.ceil(cy + size*1.4));
+        if (!(b > t)) return;
+        out.push({ name: role.id.charAt(0).toUpperCase() + role.id.slice(1), rect: { l:0, t:t, r:W, b:b }, paint: function(x){
+          x.translate(0, -t);
+          drawTexts(x, { texts: [tx] }, safe, 1, 0);
+        } });
+      })(texts[i], i);
+    }
+    return out;
+  }
+  /* estimated bytes on disk: the composite plus every layer's own rectangle, four channels each,
+     with the compression PackBits actually gets on photographs */
+  function psdEstimate(pg, idx){
+    var sz = curSize(), px = pagePx(sz);
+    if (!px) return 0;
+    var total = px.w*px.h*3, list = pageLayers(pg, idx), i;
+    for (i=0;i<list.length;i++){
+      var r = list[i].rect;
+      total += (r.r - r.l) * (r.b - r.t) * (list[i].flat ? 0.02 : 4);
+    }
+    return Math.round(total * 0.92);
+  }
+  function psdOfPage(idx){
+    var pg = DOC.pages[idx], sz = curSize(), px = pagePx(sz);
+    if (!pg || !px) return Promise.resolve(null);
+    /* the same gate drawPage uses: no layer is painted before its face and its photograph are in */
+    return fontsReady(pg).then(function(){
+      return Promise.all((pg.photos||[]).map(function(p){ return imgFor(p.src); }));
+    }).then(function(){ return psdBuild(pg, idx, px); });
+  }
+  function psdBuild(pg, idx, px){
+    var list = pageLayers(pg, idx);
+    if (!list.length) return Promise.resolve(null);
+    var records = [], channels = [];
+    /* the layers, one at a time, so only one page-sized canvas is alive at any moment */
+    function layerAt(i){
+      if (i >= list.length) return Promise.resolve(true);
+      var L = list[i], r = L.rect, w = r.r - r.l, h = r.b - r.t;
+      var cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      var x = cv.getContext("2d");
+      if (!x) return Promise.reject(new Error("no renderer"));
+      if (L.flat){ x.fillStyle = L.flat; x.fillRect(0, 0, w, h); }
+      else { x.save(); try { L.paint(x); } catch(e){} x.restore(); }
+      var rle = rleCanvas(cv, [3, 0, 1, 2]);           /* alpha first, then R G B — the PSD order */
+      cv.width = cv.height = 1;                         /* let the renderer drop it now */
+      var ids = [-1, 0, 1, 2], blocks = [], c;
+      for (c=0;c<4;c++) blocks.push(chanBytes(rle, c));
+      var info = [];
+      for (c=0;c<4;c++) info.push(joinBytes([be16(ids[c] & 0xffff), be32(blocks[c].length)]));
+      var name = pascal4(L.name);
+      var extra = joinBytes([be32(0), be32(0), name]);
+      records.push(joinBytes([
+        be32(r.t), be32(r.l), be32(r.b), be32(r.r),
+        be16(4), joinBytes(info),
+        u8s("8BIMnorm"), new Uint8Array([255, 0, 0, 0]),
+        be32(extra.length), extra
+      ]));
+      for (c=0;c<4;c++) channels.push(blocks[c]);
+      return new Promise(function(go){ setTimeout(go, 0); }).then(function(){ return layerAt(i+1); });
+    }
+    return layerAt(0).then(function(){
+      /* the flattened page, which is what a reader without layer support shows */
+      var flat = document.createElement("canvas");
+      return drawPage(flat, pg, idx, { scale: 1, guides: false }).then(function(){
+        var merged = rleCanvas(flat, [0, 1, 2]);
+        flat.width = flat.height = 1;
+        var h = px.h, cnt = new Uint8Array(2 + 2*h*3), k = 0, c, i;
+        cnt[k++] = 0; cnt[k++] = 1;
+        for (c=0;c<3;c++) for (i=0;i<h;i++){ cnt[k++] = (merged.counts[c][i] >> 8) & 255; cnt[k++] = merged.counts[c][i] & 255; }
+        var mergedBytes = [cnt];
+        for (c=0;c<3;c++) mergedBytes.push(merged.bags[c].take());
+
+        var layerBody = joinBytes([be16(records.length), joinBytes(records), joinBytes(channels)]);
+        if (layerBody.length % 2) layerBody = joinBytes([layerBody, new Uint8Array(1)]);
+        var layerSection = joinBytes([be32(layerBody.length), layerBody, be32(0)]);
+
+        /* the one image resource that matters: what DPI this document is */
+        var res = joinBytes([
+          u8s("8BIM"), be16(1005), new Uint8Array([0, 0]), be32(16),
+          be32((px.dpi|0) << 16), be16(1), be16(1),
+          be32((px.dpi|0) << 16), be16(1), be16(1)
+        ]);
+        var header = joinBytes([
+          u8s("8BPS"), be16(1), new Uint8Array(6),
+          be16(3), be32(px.h), be32(px.w), be16(8), be16(3)
+        ]);
+        return joinBytes([header, be32(0), be32(res.length), res,
+                          be32(layerSection.length), layerSection].concat(mergedBytes));
+      });
+    });
   }
 
   /* ======================= THE PUBLIC FACE ======================= */
@@ -32581,7 +33165,23 @@ var ALBUM = (function(){
     math: { pagePx: pagePx, safeArea: safeArea, cellRect: cellRect, cellRects: cellRects,
             coverFit: coverFit, subjectAnchor: subjectAnchor, anchorFor: anchorFor,
             tplScore: tplScore, autoTemplate: autoTemplate, tplsFor: tplsFor, tplById: tplById,
-            sizeById: sizeById, mmPx: mmPx, planPages: planPages, occById: occById },
+            sizeById: sizeById, mmPx: mmPx, planPages: planPages, occById: occById,
+            /* 6.106.0 wave D */
+            layoutRect: layoutRect, spreadOf: spreadOf, dealOut: dealOut, packRow: packRow,
+            nPdf: nPdf, pdfOfShots: pdfOfShots, psdEstimate: psdEstimate, closingPage: closingPage },
+    /* the two files, driven straight by the test rather than through a download */
+    pdf: exportPdf, psd: function(){ return psdOfPage(DOC.cur); },
+    /* A page drawn, its cells measured, and the PSD button pressed, through the SHIPPED
+       functions. A test that re-implements drawPage or re-derives a template to measure it
+       measures its own copy; these three exist so that what test/verify_album_output.js
+       drives is the code the student runs. */
+    __drawForTest: function(cv, idx, opt){ return drawPage(cv, DOC.pages[idx], idx, opt || {}); },
+    __cellsForTest: function(idx){
+      var pg = DOC.pages[idx], safe = safeArea(curSize());
+      if (!pg || !safe) return [];
+      return cellRects(pageTpl(pg, idx), layoutRect(safe, pg));
+    },
+    __psdButton: function(){ return exportPsd(); },
     doc: function(){ return DOC; },
     setDoc: function(d){ DOC = normalize(d); onDocChange(true); },
     reset: function(){ DOC = blankDoc(); onDocChange(true); }
@@ -32598,6 +33198,9 @@ var ALBUM = (function(){
                      dpi: clamp(+d.custom.dpi||300,72,600) };
     }
     out.guides = (d.guides !== false);
+    /* 6.106.0 — the stage's own view. An album saved before wave D has no `view` and opens on
+       single pages, which is exactly where it was left. */
+    out.view = (d.view === "spread") ? "spread" : "page";
     /* 6.104.0 — the pairing, and the one migration this wave needs: wave A stored
        tx.font as a CSS stack string, and a stack is not a font id. An unknown value
        falls back to "" (the pairing decides), which is the same album with better
@@ -32612,6 +33215,7 @@ var ALBUM = (function(){
     for (i=0;i<list.length && i<200;i++){
       var p = list[i] || {}, pg = blankPage();
       pg.auto = (p.auto !== false);
+      pg.bleed = !!p.bleed;
       if (p.tplId && tplById(p.tplId)) pg.tplId = p.tplId;
       var ph = (p.photos && p.photos.length) ? p.photos : [];
       for (k=0;k<ph.length && pg.photos.length<MAXP;k++){
@@ -32678,6 +33282,15 @@ var ALBUM = (function(){
       var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl||"");
       if(!m) return Promise.resolve(false);
       return galleryAdd({ mime:m[1], b64:m[2] }, name||"album page", { page:"pgAlbum", before:null });
+    },
+    /* 6.106.0 — a PDF of a forty-page album is tens of megabytes; an object URL hands the
+       browser the bytes once instead of a base64 string it must hold twice. */
+    exportFile: function(bytes, name, mime){
+      var url = URL.createObjectURL(new Blob([bytes], { type: mime || "application/octet-stream" }));
+      var a=document.createElement("a"); a.href=url; a.download=name; a.style.display="none";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },1500);
+      return true;
     },
     exportOut: function(dataUrl, name){
       var a=document.createElement("a"); a.href=dataUrl; a.download=name; a.style.display="none";
