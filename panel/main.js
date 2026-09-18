@@ -405,7 +405,62 @@ function grpSyncAll(root) {
    line budget the caller names, and the clamp goes back. Chromium and UXP now
    cut at the same character, so the marker tells the truth on both surfaces and
    the parity is a fact instead of a coincidence. */
+/* 6.109.0 / panel 6.180.0 — THE BOX WAS MEASURED WHILE SOMETHING ELSE WAS
+   SETTING ITS HEIGHT, AND SOME CARDS LOST THEIR WHOLE SENTENCE.
+
+   Wave 11's pass over the web app opened Imagine on a phone and found cards
+   showing nothing but "…". Measured, at 390px, English: three of the twenty-two.
+   In Burmese at 360px, eight of twenty-two.
+
+   6.171.0 unclamps height, max-height, overflow and -webkit-line-clamp before
+   reading scrollHeight, because each of those hides the overflow the reading
+   needs. What it did not unclamp is the FLEX GROWTH, and this panel ships the
+   same two rules (styles.css):
+
+       .im-card-body { display:flex; flex-direction:column; flex:1 1 auto }
+       .im-card-sum  { max-height:7.5em; overflow:hidden; flex:1 1 auto }
+
+   The summary grows to fill whatever the card has left, and the cards in a
+   wrapping flex row are stretched to the tallest card in their line, so the box
+   has a height of its own that has nothing to do with its text: an EMPTY
+   .im-card-sum measured 103px against an 86.25px ceiling. Every prefix the
+   binary search tried — including one character — measured over the ceiling,
+   `lo` finished at 0, and the sentence was replaced with an ellipsis.
+
+   The measurement neutralises the growth too: `flex:0 0 auto` makes the box
+   report the height of its own text and `min-height:0` drops the flex item's
+   `min-height:auto` floor, both restored with the rest. align-self is NOT
+   touched: in a column flex container that is the CROSS axis — the width — and
+   a narrower box wraps at a different character.
+
+   AND THE SAME ANSWER IS NOT MEASURED TWICE. The cut is a pure function of the
+   sentence, the line budget, the box's content width and its text metrics, so it
+   is remembered under exactly those. It is a content key and not a WeakMap on the
+   node because Imagine rebuilds all its cards on every visit and the Workflows
+   filter re-marks every box on every keystroke. Measured in the browser at CPU x4:
+   opening Imagine froze 1,105 ms of a 1,300 ms switch and one keystroke in the
+   Workflows search froze 1,279 ms of 1,439 ms — every time, because the identical
+   work was redone. UXP reads geometry no faster than a browser does.
+
+   The pass is in two phases: phase one only READS, so the whole list shares one
+   layout; phase two writes, and a box whose answer is known never unclamps. A box
+   that must be measured is still measured alone, under the conditions 6.171.0 set
+   — unclamping several at once changes the page height, which at 360-412px changes
+   the width, which cuts at a different character (tried, rejected: it moved 40 of
+   3,000 readings). */
 const ELL_FULL = new WeakMap();
+const ELL_CUT = new Map();      /* key -> {t:cut text, c:was it cut} */
+const ELL_CUT_MAX = 3000;
+function ellRemember(k, v) { if (ELL_CUT.size >= ELL_CUT_MAX) ELL_CUT.clear(); ELL_CUT.set(k, v); }
+function ellKey(n, full, lines) {
+  const cs = getComputedStyle(n);
+  return lines + "|" + n.clientWidth + "|" + cs.fontSize + "|" + cs.lineHeight + "|" + cs.fontFamily
+       + "|" + cs.fontWeight + "|" + cs.letterSpacing + "|" + cs.wordSpacing + "|" + full;
+}
+function ellApply(n, text, cut) {
+  if (n.textContent !== text) n.textContent = text;
+  if (cut) { const e = document.createElement("span"); e.className = "ell"; e.textContent = "…"; n.appendChild(e); }
+}
 /* 6.103.0 — A COMPUTED VALUE IS NOT ALWAYS A PIXEL LENGTH, and this is where
    that assumption was hiding.
 
@@ -451,13 +506,25 @@ function ellCeil(n, lines) {
 function ellMark(root, sel, lines) {
   try {
     const list = (root || document).querySelectorAll(sel);
+    const jobs = [];
+    /* PHASE 1 — READS ONLY, so the whole list costs one layout. Nothing is
+       written here: not the text, not the attribute, not a style. */
     Array.prototype.forEach.call(list, function (n) {
+      try {
+        const full = ELL_FULL.has(n) ? ELL_FULL.get(n) : (n.textContent || "");
+        const m = ellCeil(n, lines);
+        jobs.push({ n: n, full: full, m: m, key: (m.ceil > 0 ? ellKey(n, full, lines) : "") });
+      } catch (e) { }
+    });
+    /* PHASE 2 — the writes. A sentence whose answer is already known never
+       unclamps; one that is not known is measured alone, exactly as 6.171.0
+       measured it. */
+    for (let i = 0; i < jobs.length; i++) {
+      const j = jobs[i], n = j.n, full = j.full, m = j.m;
       try {
         const old = n.querySelector(".ell");
         if (old && old.parentNode) old.parentNode.removeChild(old);
-        const full = ELL_FULL.has(n) ? ELL_FULL.get(n) : (n.textContent || "");
         ELL_FULL.set(n, full);
-        if (n.textContent !== full) n.textContent = full;
         /* 6.171.0 — AND THE WHOLE SENTENCE STAYS READABLE FROM THE ELEMENT.
            The cut is width-dependent: the app walk and the panel walk open their
            surfaces at different widths, so the same sentence legitimately cuts at
@@ -466,17 +533,23 @@ function ellMark(root, sel, lines) {
            treatment, so the original is kept here for it to read. It is also what
            a screen reader and a tooltip should have. */
         try { n.setAttribute("data-full", full); } catch (e) { }
-        const m = ellCeil(n, lines);
-        if (!(m.ceil > 0)) return;
+        if (!(m.ceil > 0)) { if (n.textContent !== full) n.textContent = full; continue; }
+        const memo = ELL_CUT.get(j.key);
+        if (memo) { ellApply(n, memo.t, memo.c); continue; }
+        if (n.textContent !== full) n.textContent = full;
         /* unclamp: height, max-height, overflow AND the -webkit-line-clamp the
            web app's copy of this rule uses. Each of them hides the very overflow
-           this measurement needs to read. All of it is put back below. */
-        const sv = { h: n.style.height, mh: n.style.maxHeight, ov: n.style.overflow, dp: n.style.display, lc: n.style.webkitLineClamp };
+           this measurement needs to read, and flex growth gives the box a height
+           of its own that the text never asked for (6.180.0). All of it is put
+           back below. */
+        const sv = { h: n.style.height, mh: n.style.maxHeight, ov: n.style.overflow, dp: n.style.display,
+                     lc: n.style.webkitLineClamp, fx: n.style.flex, mnh: n.style.minHeight };
         n.style.height = "auto"; n.style.maxHeight = "none"; n.style.overflow = "visible";
+        n.style.flex = "0 0 auto"; n.style.minHeight = "0";
         let dpNow = sv.dp; try { dpNow = dpNow || getComputedStyle(n).display; } catch (e) { }
         if (String(dpNow || "").indexOf("box") >= 0) n.style.display = "block";
         try { n.style.webkitLineClamp = "unset"; } catch (e) { }
-        let cut = false;
+        let cut = false, text = full;
         /* half a line, never a pixel: Burmese stacked diacritics draw past their line box, so a box that
            holds its text exactly still reports a few pixels of overflow (the app measured 73 against 69) */
         if (n.scrollHeight > m.ceil + m.lh / 2) {
@@ -489,18 +562,21 @@ function ellMark(root, sel, lines) {
           let s = full.slice(0, lo);
           const sp = s.lastIndexOf(" ");
           if (sp > 12) s = s.slice(0, sp);   /* end on a whole word when there is one to end on */
-          n.textContent = s.replace(/[\s…,.;:—-]+$/, "");
-          cut = n.textContent.length < full.length;
+          text = s.replace(/[\s…,.;:—-]+$/, "");
+          cut = text.length < full.length;
         }
+        n.textContent = text;
         n.style.height = sv.h; n.style.maxHeight = sv.mh; n.style.overflow = sv.ov; n.style.display = sv.dp;
+        n.style.flex = sv.fx; n.style.minHeight = sv.mnh;
         try { n.style.webkitLineClamp = sv.lc; } catch (e) { }
         if (cut) {
           const e = document.createElement("span");
           e.className = "ell"; e.textContent = "…";
           n.appendChild(e);
         }
+        ellRemember(j.key, { t: text, c: cut });
       } catch (e) { }
-    });
+    }
   } catch (e) { }
 }
 /* the Workflows screen is its own module and had no way to reach this — which
@@ -2704,7 +2780,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.179.0";
+const PANEL_VERSION = "6.180.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);

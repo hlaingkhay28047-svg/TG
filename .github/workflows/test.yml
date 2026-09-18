@@ -608,6 +608,8 @@ jobs:
         run: PORT=8931 node test/verify_album_layout.js
       - name: "The CCX carries its own logo \u2014 the plugin-list icon at 24 and 48 pt and the panel tab icon for the dark and the light themes, each on disk at exactly the declared size with an alpha channel and an @2x that is exactly double; the two theme icons are two PICTURES (6.108.0: both entries pointed at one file, md5 798793d3\u2026); the letterforms are geometry, not type, so a runner with no Arial Black draws what a laptop draws; and the stamp covers the geometry and every icon's bytes, so a hand-repainted PNG cannot pass as current"
         run: node test/verify_panel_brand_icons.js
+      - name: "No card loses its sentence to its own box height \u2014 the Imagine summary is a growing flex item, so an EMPTY one measured 103px against an 86px ceiling and the clamp deleted the whole sentence (8 of 22 at 360px in Burmese); the measurement now switches the growth off and back, align-self untouched because in a column that is the width; and the same cut is never measured twice \u2014 a content key, not a WeakMap, because the cards are rebuilt on every visit"
+        run: PORT=8931 node test/verify_text_clamp_measure.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
