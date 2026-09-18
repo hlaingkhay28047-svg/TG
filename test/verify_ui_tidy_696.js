@@ -154,9 +154,15 @@ function sourcePins() {
      budget so the box is full rather than clipped. The title was never clamped at all and
      is now 2 lines / 4.5em, which was one of the six reasons a card overran. The marker
      sits on both. */
-  report("A1) the web app states .wfmini .s as a three-line height (6.75em at 2.25) and .wfmini .t as a two-line one, and .ell is an absolutely-placed marker on the card's own background, shared by title, summary and .im-card-sum",
-    /\.wfmini \.s\{position:relative;font-size:11\.5px;color:var\(--muted\);line-height:2\.25;height:6\.75em;overflow:hidden;overflow-wrap:anywhere\}/.test(APP) &&
-    /\.wfmini \.t\{[^}]*line-height:2\.25;[^}]*height:4\.5em\}/.test(APP) &&
+  /* 6.112.0 — RE-PINNED, AND THE CONTRACT IS UNCHANGED: the summary is still
+     stated as a three-line height and the title as a two-line one. Only the
+     numbers moved, from a guessed 2.25 to a measured 1.95 / 1.9 (the sweep is
+     in docs/app/index.html above .wfmini .t — 1.7 clipped 31 Vietnamese boxes,
+     1.85 is the floor). What this check is for — a STATED height rather than a
+     max-height UXP declines — is exactly as it was. */
+  report("A1) the web app states .wfmini .s as a three-line height (5.85em at 1.95) and .wfmini .t as a two-line one (3.8em at 1.9), and .ell is an absolutely-placed marker on the card's own background, shared by title, summary and .im-card-sum",
+    /\.wfmini \.s\{position:relative;font-size:11\.5px;color:var\(--muted\);line-height:1\.95;height:5\.85em;overflow:hidden;overflow-wrap:anywhere\}/.test(APP) &&
+    /\.wfmini \.t\{[^}]*line-height:1\.9;[^}]*height:3\.8em\}/.test(APP) &&
     !/\.wfmini \.s\{[^}]*max-height/.test(APP) &&
     /\.wfmini \.t \.ell,\.wfmini \.s \.ell,\.im-card-sum \.ell\{position:absolute;right:0;bottom:0;padding-left:12px;background:var\(--panel-2\);color:var\(--muted\);font-weight:700\}/.test(APP), null);
 
@@ -223,8 +229,8 @@ function sourcePins() {
     /\.im-card-sum\{position:relative;margin:4px 0 8px;font-size:11\.5px;line-height:1\.5;max-height:7\.5em;overflow:hidden;flex:1 1 auto\}/.test(css), null);
 
   report("A7) the panel stylesheet carries the same ceilings - stated as heights, and on the title too - and the same kicker, plus the two rules only this renderer needs: the hub heading's row never wraps, and the summary ceiling is stated against the panel's own 1.7 line (5 × 1.7 = 8.5em) because .mut wins the cascade here",
-    /\.wfmini \.s \{ position: relative; display: block; margin-top: 4px; margin-bottom: 4px; height: 6\.75em;/.test(PCSS) &&
-    /\.wfmini \.t \{ position: relative; display: block; margin-top: 4px; height: 4\.5em;/.test(PCSS) &&
+    /\.wfmini \.s \{ position: relative; display: block; margin-top: 3px; margin-bottom: 3px; height: 5\.85em;/.test(PCSS) &&
+    /\.wfmini \.t \{ position: relative; display: block; margin-top: 3px; height: 3\.8em;/.test(PCSS) &&
     /\.wfmini \.t \.ell, \.wfmini \.s \.ell, \.im-card-sum \.ell \{ position: absolute; right: 0; bottom: 0; padding-left: 12px;/.test(PCSS) &&
     /#pageAiTools \.hero-mini \.kick \{ position: relative; max-width: 100%; margin: 0 0 1px; padding: 10px 6px 0 0;/.test(PCSS) &&
     /letter-spacing: \.12em; text-transform: uppercase; color: var\(--accent\); line-height: 1\.7;/.test(PCSS) &&

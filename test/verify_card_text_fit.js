@@ -9,7 +9,7 @@
    THE CAUSE. Marking a cut is not the same as making one. The clamp was two rules that
    only ever worked together:
 
-       .wfmini .s { max-height: 6.75em; overflow: hidden }   (the renderer hides the rest)
+       .wfmini .s { max-height: 5.85em; overflow: hidden }   (the renderer hides the rest)
        ellMark()                                            (and we mark what it hid)
 
    ellMark asks the only honest question there is — scrollHeight against clientHeight —
@@ -150,17 +150,17 @@ function sourcePins() {
      so the stylesheet asked for a ceiling the renderer never applied. An explicit `height`
      is honoured, and with the words cut to the same budget the box is full, not clipped. */
   report("A5) the stylesheet states the ceiling as an explicit height — max-height is a request this renderer declines",
-    /\.wfmini \.s \{ position: relative; display: block; margin-top: 4px; margin-bottom: 4px; height: 6\.75em;/.test(read("panel/styles.css")) &&
-    /\.wfmini \.t \{ position: relative; display: block; margin-top: 4px; height: 4\.5em;/.test(read("panel/styles.css")) &&
-    /\.wfmini \.s\{[^}]*height:6\.75em/.test(APP) && /\.wfmini \.t\{[^}]*height:4\.5em/.test(APP),
+    /\.wfmini \.s \{ position: relative; display: block; margin-top: 3px; margin-bottom: 3px; height: 5\.85em;/.test(read("panel/styles.css")) &&
+    /\.wfmini \.t \{ position: relative; display: block; margin-top: 3px; height: 3\.8em;/.test(read("panel/styles.css")) &&
+    /\.wfmini \.s\{[^}]*height:5\.85em/.test(APP) && /\.wfmini \.t\{[^}]*height:3\.8em/.test(APP),
     null);
 
   /* 6.103.0 — AND THE CEILING IS COUNTED IN PIXELS, whatever the renderer answers with.
      ellCeil read getComputedStyle().lineHeight straight through parseFloat and treated the
-     number as pixels. The card summary is authored `line-height: 2.25`, with no unit.
+     number as pixels. The card summary is authored `line-height: 1.95`, with no unit.
      Chromium resolves that before it answers — an 11.5px summary comes back "25.875px" —
      so three lines is 77.6px and the cut lands where the box ends. A renderer that answers
-     with the AUTHORED value hands back "2.25"; parseFloat reads 2.25, the ceiling becomes
+     with the AUTHORED value hands back "1.95"; parseFloat reads 1.95, the ceiling becomes
      6.75px, and the cut takes the whole sentence. E1 below runs exactly that renderer. */
   report("A6) both surfaces resolve a length before they trust it — px, a bare multiplier, em/rem and normal, against the element's own font size",
     /function ellLenPx\(v, fs\) \{/.test(MAIN) && /function ellLenPx\(v, fs\)\{/.test(APP) &&
@@ -412,7 +412,7 @@ function releasePins() {
    being made against a ceiling of 6.75 pixels.
 
    This leg installs that renderer. getComputedStyle is replaced, for the measured element
-   only, with one that answers the AUTHORED values — `line-height: 2.25`, `height: 6.75em`
+   only, with one that answers the AUTHORED values — `line-height: 1.95`, `height: 5.85em`
    — the way a renderer that does not resolve before it answers would. The page's own
    ellMark then runs. With this wave's ellCeil the cut lands on three real lines; with the
    old one it would have landed on 6.75px, which E2 states as the number it is. */
@@ -435,7 +435,12 @@ async function authoredUnits(browser) {
     const realLh = parseFloat(real(s).lineHeight);          /* what Chromium resolves it to */
     const realFs = parseFloat(real(s).fontSize);
     /* the renderer under test: the authored strings, unresolved */
-    const AUTHORED = { lineHeight: "2.25", fontSize: "11.5px", height: "6.75em", maxHeight: "none" };
+    /* 6.112.0 — the fixture follows the stylesheet, because its whole point is
+       to answer with what the stylesheet AUTHORS. The summary is now
+       `line-height: 1.95; height: 5.85em`; the defect being modelled — a
+       renderer that hands back the unresolved value, so parseFloat reads it as
+       pixels — is unchanged, and E2 below still states what that would cost. */
+    const AUTHORED = { lineHeight: "1.95", fontSize: "11.5px", height: "5.85em", maxHeight: "none" };
     window.getComputedStyle = function (el, pe) {
       const cs = real(el, pe);
       if (el !== s) return cs;
