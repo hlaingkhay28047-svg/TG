@@ -174,7 +174,7 @@ jobs:
 
       - name: Install Playwright + Chromium
         run: |
-          npm install playwright@1.62.1 acorn@8.18.0
+          npm install playwright@1.62.1 acorn@8.18.0 ag-psd@31.0.2
           ./node_modules/.bin/playwright install --with-deps chromium
 
       - name: Serve docs/app
@@ -602,6 +602,8 @@ jobs:
         run: PORT=8931 node test/verify_album_fonts.js
       - name: "Album Pages wave C — the occasions: nine occasions (the seven kinds of session the owner named, plus wedding day and birthday), each setting a pairing, a print size and an ink together and each carrying its own PLAN for how the pages break; 'Make the whole album' laying up to forty photographs out at once with the occasion's words on the opener; the generator refusing six broken occasions by name; every page anchored against its OWN template rather than the open one; and the phone's file overlay carrying the mode the button could not (6.105.0)"
         run: PORT=8931 node test/verify_album_occasions.js
+      - name: "Album Pages wave D — the album leaves the studio: one print-ready PDF of every page (MediaBox = trim + bleed + mark room, a real TrimBox and BleedBox, eight crop marks outside the bleed, the renderer's own JPEG bytes embedded as DCTDecode and never re-encoded); the open page as a layered .psd (8BPS header, resolution block, PackBits channels, a white base + one layer per photograph + one per line of type) read back by ag-psd, an implementation that owes nothing to this one; a page whose photographs are laid out over the TRIM instead of the safe area so a picture runs off the paper; the spread the book actually falls open at; a shuffle that never loses a photograph; and the studio's closing page (6.106.0)"
+        run: PORT=8931 node test/verify_album_output.js
       - name: Results History delete — a ✕ on every take of all seven strips (the Gallery copy goes with it when there is one), a Clear on the five that had none, the panel's two strips alike
         run: PORT=8931 node test/verify_result_history_delete.js
       - name: Video cards cut fast with VFX — the three tails rewritten, the four exact reference cards untouched, every prompt under its model's cap; reference slots follow the model's image capacity on the strip, in the wizard, on the badge and on the panel
