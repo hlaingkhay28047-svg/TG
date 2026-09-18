@@ -38,6 +38,7 @@ const { chromium } = require("playwright-core");
 const { withPremium } = require("./_seed_premium.js");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
 const { build } = require("../tools/build_panel_video_wizard.js");
+const WN = require("./lib/whats-new.js");
 
 const PORT = process.env.PORT || 8931;
 const ROOT = path.join(__dirname, "..");
@@ -110,8 +111,8 @@ function report(name, ok, detail) {
     /if\(state\[histKey\]\[0\]!==before\)\{ vwiz\.result=state\[histKey\]\[0\]; vwiz\.sel=0; \}/.test(APP) &&
     /\.wiz-from\{display:flex;align-items:center;gap:10px;margin:8px 0 10px\}/.test(APP), null);
 
-  const wn = (APP.match(/\{ v:"6\.85\.0", kind:"page", ref:"pgVideo",[\s\S]*?\} \},\n/) || [""])[0];
-  const wnP = (WHATS.match(/\{ v:"6\.85\.0", kind:"page", ref:"pgVideo",[\s\S]*?\} \},\n/) || [""])[0];
+  const wn = WN.appRow("6.85.0", "pgVideo");
+  const wnP = WN.panelRow("6.85.0", "pgVideo");
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
   report("A6) CI runs this test right after verify_panel_selection_results; the landing counts at least 220 tests; What's New carries the 6.85.0 Video row in nine languages on the app and the panel",
     CI.indexOf("node test/verify_panel_video_wizard_result.js") > CI.indexOf("node test/verify_panel_selection_results.js") && tests >= 220 &&

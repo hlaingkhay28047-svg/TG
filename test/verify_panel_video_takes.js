@@ -33,6 +33,7 @@ const path = require("path");
 const http = require("http");
 const { chromium } = require("playwright-core");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -92,8 +93,8 @@ const nineLangs = (line) => !!line && LANGS.every(l => new RegExp("[{,]" + l + '
   report("A4) SELF-TEST carries a \"Video player\" row — ok where <video> decodes, the host level where it does not, naming Download / Open Direct Link / Open the folder as what plays the clip",
     /rows\.push\(\{ label: "Video player",\n\s*detail: VIDEO_OK \? "plays MP4 inline" : "no inline player \\u2014 Download \/ Open Direct Link \/ Open the folder play the clip",\n\s*level: VIDEO_OK \? "ok" : "host" \}\);/.test(MAIN), null);
 
-  const wn = (APP.match(/\{ v:"6\.86\.0", kind:"page", ref:"pgTalk",[\s\S]*?\} \},\n/) || [""])[0];
-  const wnP = (WHATS.match(/\{ v:"6\.86\.0", kind:"page", ref:"pgTalk",[\s\S]*?\} \},\n/) || [""])[0];
+  const wn = WN.appRow("6.86.0", "pgTalk");
+  const wnP = WN.panelRow("6.86.0", "pgTalk");
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
   report("A5) CI runs this test right after verify_panel_video_wizard_result; the landing counts at least 221 tests; What's New carries the 6.86.0 Talk row in nine languages on the app and the panel",
     CI.indexOf("node test/verify_panel_video_takes.js") > CI.indexOf("node test/verify_panel_video_wizard_result.js") && tests >= 221 &&

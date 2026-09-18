@@ -62,6 +62,7 @@ const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const MANIFEST = JSON.parse(read("panel/release-manifest.json"));
 const A = require(path.join(ROOT, "tools", "lib", "app-data.js"));
+const WN = require("./lib/whats-new.js");
 const TRL = A.readTrl();
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const READERS = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "ne", "pa", "ta", "te", "ur"];
@@ -490,7 +491,7 @@ function release() {
   report("D3) the landing site's count is the number of tests CI actually runs",
     n === badge && n >= 249, { ciTests: n, badge });
 
-  const row = (APP.match(/\{ v:"6\.107\.0", kind:"page", ref:"pgAlbum",[\s\S]{0,12000}?\} \},/) || [""])[0];
+  const row = WN.appRow("6.107.0", "pgAlbum");
   const missing = LANGS.filter(L => !new RegExp("[,{]" + L + ':"').test(row.split("s:{")[0]) ||
                                     !new RegExp("[,{]" + L + ':"').test("s:{" + (row.split("s:{")[1] || "")));
   report("D4) the What's New row for this release is written in all nine base languages, title and body, and points at the Album page",

@@ -59,6 +59,7 @@ const http = require("http");
 const { chromium } = require("playwright-core");
 const { withPremium } = require("./_seed_premium.js");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -422,9 +423,11 @@ function releasePins() {
     count >= 232, { appVer, panVer, pv: pv.v, count,
       app: (APP.match(/var APP_VER *= *"([^"]+)"/) || [])[1],
       ci: CI.indexOf("node test/verify_ui_tidy_696.js") > 0 });
-  const head = 'var WHATS_NEW = [\n  { v:"' + appVer + '"';
-  const i = APP.indexOf(head);
-  const row = i < 0 ? "" : APP.slice(i, APP.indexOf('{ v:"', i + head.length));
+  /* 6.107.0 — the strip left the shell for docs/app/data/whatsnew.js, so the newest row is
+     read from the table rather than sliced out of index.html; WN renders it in the spelling
+     this check was written against. */
+  const rows = WN.appRows();
+  const row = (rows[0] && rows[0].v === appVer) ? WN.rowText(rows[0]) : "";
   report("D2) the newest What's New row is this wave's own version and speaks all nine languages",
     row.length > 100 && LANGS.every(l => new RegExp('\\b' + l + ':"').test(row)), { v: appVer, len: row.length });
 }

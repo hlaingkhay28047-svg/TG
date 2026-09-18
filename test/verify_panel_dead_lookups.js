@@ -43,6 +43,7 @@ const http = require("http");
 const { chromium } = require("playwright-core");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
 const D = require("./lib/dead-lookups.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -218,8 +219,8 @@ const stripCode = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "");
   report("E4) panel · no page error", pan.errs.length === 0, pan.errs.slice(0, 3));
 
   /* ---------------- F. release pins ---------------- */
-  const wn = (APP.match(/\{ v:"6\.90\.0", kind:"page", ref:"pgHome",[\s\S]*?\} \},\n/) || [""])[0];
-  const wnP = (WHATS.match(/\{ v:"6\.90\.0", kind:"page", ref:"pgHome",[\s\S]*?\} \},\n/) || [""])[0];
+  const wn = WN.appRow("6.90.0", "pgHome");
+  const wnP = WN.panelRow("6.90.0", "pgHome");
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
   report("F1) CI runs this test right after verify_no_undeclared_identifiers; the landing counts at least 226 tests; What's New carries the 6.90.0 row in nine languages on the app and the panel",
     CI.indexOf("node test/verify_panel_dead_lookups.js") > CI.indexOf("node test/verify_no_undeclared_identifiers.js") && CI.indexOf("node test/verify_no_undeclared_identifiers.js") > 0 && tests >= 226 &&

@@ -38,6 +38,7 @@ const zlib = require("zlib");
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
+const WN = require("./lib/whats-new.js");
 
 let failures = 0;
 function report(name, ok, detail) {
@@ -138,8 +139,8 @@ function sourcePins() {
     !/FRAME LOCK|TASK GUARD|EXTRA REQUEST|\{\{/.test(w.prompt) && /IMAGE 2's framing, IMAGE 2's head size, head-and-shoulders crop of a full-body subject, tighter crop than IMAGE 1, subject re-fitted to the scene$/.test(w.negative) &&
     !!pw && pw.prompt.indexOf(w.prompt) === 0 && pw.negative.indexOf(w.negative) === 0,
     w && { head: w.prompt.slice(0, 80), tail: w.prompt.slice(-90), neg: w.negative.slice(-120), panel: !!pw && pw.prompt.indexOf(w.prompt) === 0 });
-  const wn = (APP.match(/\{ v:"6\.83\.0", kind:"page", ref:"pgWf",[\s\S]*?\} \},\n/) || [""])[0];
-  const wnP = (WHATS.match(/\{ v:"6\.83\.0", kind:"page", ref:"pgWf",[\s\S]*?\} \},\n/) || [""])[0];
+  const wn = WN.appRow("6.83.0", "pgWf");
+  const wnP = WN.panelRow("6.83.0", "pgWf");
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
   report("A7) the compare draws in percent only (.cmp-top width, the Before picture 100/pct % wide) with no new object-fit; CI runs this test right after verify_panel_freeform_sources; the landing counts at least 218 tests; What's New carries the 6.83.0 page row (pgWf) in nine languages on the app and the panel",
     /\.apg \.hnk-wf-cmp \.cmp-top img \{ position: absolute; left: 0; top: 0; display: block; width: 200%; max-width: none; height: auto; \}/.test(CSS) && /nodes\.cmpBefore\.style\.width = \(pct > 0 \? \(10000 \/ pct\) : 100\) \+ "%"/.test(SCREEN) &&

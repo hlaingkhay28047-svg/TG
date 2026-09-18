@@ -15,6 +15,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const A = require("../tools/lib/app-data.js");
 const http = require("http");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
 
@@ -29,17 +30,11 @@ function report(name, ok, detail) {
   if (!ok) failures++;
 }
 
-/* the app's own table, read the way the panel's lift read it */
+/* the app's own table, read the way the panel's lift reads it. v6.107.0 — the strip
+   left index.html for docs/app/data/whatsnew.js, so this reads the data file through the
+   same accessor the lifter uses; the shell now only holds the one line that picks it up. */
 function appList() {
-  const src = fs.readFileSync(path.join(ROOT, "docs", "app", "index.html"), "utf8");
-  const i = src.indexOf("var WHATS_NEW = [");
-  const start = src.indexOf("[", i);
-  let d = 0;
-  for (let k = start; k < src.length; k++) {
-    if (src[k] === "[") d++;
-    else if (src[k] === "]") { d--; if (!d) return eval(src.slice(start, k + 1)); }
-  }
-  throw new Error("the app's WHATS_NEW array is unterminated");
+  return A.readWhatsNew();
 }
 function appVer() {
   const src = fs.readFileSync(path.join(ROOT, "docs", "app", "index.html"), "utf8");

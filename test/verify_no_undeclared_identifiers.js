@@ -39,6 +39,7 @@ const vm = require("vm");
 const { chromium } = require("playwright-core");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
 const F = require("./lib/free-identifiers.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -215,8 +216,8 @@ const brief = (r) => ({ n: r.findings.length, first: r.findings.slice(0, 20).map
   report("C5) panel · no page error", pan.errs.length === 0, pan.errs.slice(0, 3));
 
   /* ---------------- D. release pins ---------------- */
-  const wn = (APP.match(/\{ v:"6\.89\.0", kind:"page", ref:"pgMeitu",[\s\S]*?\} \},\n/) || [""])[0];
-  const wnP = (WHATS.match(/\{ v:"6\.89\.0", kind:"page", ref:"pgMeitu",[\s\S]*?\} \},\n/) || [""])[0];
+  const wn = WN.appRow("6.89.0", "pgMeitu");
+  const wnP = WN.panelRow("6.89.0", "pgMeitu");
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
   report("D1) CI runs this test right after verify_panel_freeform_generate and installs acorn beside Playwright; the landing counts at least 225 tests; What's New carries the 6.89.0 Retouch row in nine languages on the app and the panel",
     CI.indexOf("node test/verify_no_undeclared_identifiers.js") > CI.indexOf("node test/verify_panel_freeform_generate.js") && CI.indexOf("node test/verify_panel_freeform_generate.js") > 0 && tests >= 225 &&

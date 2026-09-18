@@ -13,12 +13,16 @@ const fs = require("fs");
 const path = require("path");
 const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 
+const A = require("./lib/app-data.js");
 const ROOT = path.join(__dirname, "..");
-const APP = path.join(ROOT, "docs", "app", "index.html");
 const OUT = path.join(ROOT, "panel", "js", "hnk_whats_new.js");
 
-/* the array literal itself, characters and all — not a re-serialised object,
-   so the panel's nine languages are the app's bytes */
+/* v6.107.0 — THE SOURCE MOVED, THE RULE DID NOT. The strip left the shell for
+   docs/app/data/whatsnew.js (the A4 ceiling in verify_app_data_files named it as the
+   table to move rather than raise the number a fourth time), so the app's bytes are now
+   that file's JSON rather than an array literal inside index.html. The panel still gets
+   the app's bytes verbatim: the JSON text is sliced out of the wrapper by app-data.js
+   and dropped in whole, so the two copies remain byte-identical by construction. */
 function block(src, decl) {
   const i = src.indexOf(decl);
   if (i < 0) throw new Error("not found: " + decl);
@@ -32,7 +36,7 @@ function block(src, decl) {
 }
 
 function build() {
-  const lit = block(fs.readFileSync(APP, "utf8"), "var WHATS_NEW = [");
+  const lit = A.whatsNewText();
   const cur = fs.readFileSync(OUT, "utf8");
   const old = block(cur, "var WHATS_NEW = [");
   return uxpSafeCode(cur.replace(old, lit), "build_panel_whats_new");
@@ -41,7 +45,7 @@ function build() {
 if (require.main === module) {
   const out = build();
   fs.writeFileSync(OUT, out);
-  const n = (out.match(/\{ v:"/g) || []).length;
+  const n = (out.match(/\{"v":"|\{ v:"/g) || []).length;
   console.log("wrote panel/js/hnk_whats_new.js — " + n + " entries, " +
     Buffer.byteLength(out) + " bytes");
 }

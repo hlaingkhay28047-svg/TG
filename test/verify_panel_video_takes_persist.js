@@ -35,6 +35,7 @@ const path = require("path");
 const http = require("http");
 const { chromium } = require("playwright-core");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -145,8 +146,8 @@ const FAKE_FS_SRC = `(function () {
     /globalThis\.HNK\.openTake\(v\.id\)/.test(HSCREEN) && count(HSCREEN, /renderTakes\(root, deps\);/g) === 2 && /var API = \{ render: render, renderTakes: renderTakes, TAKE_PAGE: TAKE_PAGE \};/.test(HSCREEN) &&
     nineKeys("ai_videos") && nineKeys("ai_open") && /^    ai_videos: "Videos",\n    ai_open: "Open",/m.test(MAIN) && /^    ai_videos: "ဗီဒီယိုများ",\n    ai_open: "ဖွင့်",/m.test(MAIN), null);
 
-  const wn = (APP.match(/\{ v:"6\.87\.0", kind:"page", ref:"pgVideo",[\s\S]*?\} \},\n/) || [""])[0];
-  const wnP = (WHATS.match(/\{ v:"6\.87\.0", kind:"page", ref:"pgVideo",[\s\S]*?\} \},\n/) || [""])[0];
+  const wn = WN.appRow("6.87.0", "pgVideo");
+  const wnP = WN.panelRow("6.87.0", "pgVideo");
   const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
   report("A5) CI runs this test right after verify_panel_video_takes; the landing counts at least 222 tests; What's New carries the 6.87.0 Video row in nine languages on the app and the panel",
     CI.indexOf("node test/verify_panel_video_takes_persist.js") > CI.indexOf("node test/verify_panel_video_takes.js") && CI.indexOf("node test/verify_panel_video_takes.js") > 0 && tests >= 222 &&

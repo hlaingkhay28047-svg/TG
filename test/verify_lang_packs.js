@@ -27,6 +27,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const A = require("../tools/lib/app-data.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = A.ROOT;
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
@@ -183,7 +184,7 @@ report("B2) a blocked localStorage (private window) loads nothing and throws not
   const packBytes = CODES.reduce((n, c) => n + Buffer.byteLength(A.wrapperText("trl-" + c), "utf8"), 0);
   report("E1) CI runs this test right after verify_app_data_files; the landing counts at least 228 tests; What's New carries the " + appVer + " row on the app and the panel; the packs weigh " + Math.round(packBytes / 1024) + " KB that the shell no longer carries",
     /verify_app_data_files\.js\n      - name: [^\n]*\n        run: PORT=8931 node test\/verify_lang_packs\.js/.test(CI) &&
-    (parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10) >= 228) && APP.indexOf('{ v:"' + appVer + '"') > 0 && PANEL_WN.indexOf('{ v:"' + appVer + '"') >= 0 && packBytes > 400000, { packBytes });
+    (parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10) >= 228) && !!WN.appRow(appVer) && WN.panelRow(appVer) === WN.appRow(appVer) && packBytes > 400000, { packBytes });
 
   /* ---------------- F. the scans bite ---------------- */
   const hostile = JSON.parse(JSON.stringify({ hi: packs.hi })); hostile.hi.zz_no_such_key = "x"; hostile.hi.btn_show = "  ";

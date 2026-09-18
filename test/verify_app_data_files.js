@@ -29,6 +29,7 @@ const vm = require("vm");
 const zlib = require("zlib");
 const { spawnSync } = require("child_process");
 const A = require("../tools/lib/app-data.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = A.ROOT;
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
@@ -85,13 +86,19 @@ const rawBytes = Buffer.byteLength(APP, "utf8"), gzBytes = zlib.gzipSync(Buffer.
    put the file 4,397 bytes over. This is a ceiling to catch growth nobody noticed, not a
    product limit, so it moves deliberately and the measurement is written down: 3,304,397
    raw at 6.104.0, and it still fails on the next 45 KB that arrives unannounced.
-   The gzipped ceiling is the one a student pays for on mobile data, and it is untouched:
-   1,059,817 of 1,100,000, with 40 KB of headroom. If the raw figure ever needs a third
-   rise, the answer is the same one 6.91.0 and 6.92.0 gave — move a table out of the
-   shell (WHATS_NEW is 174 KB over 34 live rows and is the obvious next one) rather than
-   raise this number again. */
-report("A4) the shell stays under its ceilings — 3.40 MB raw, 1.1 MB gzipped (5.8 MB / 1.58 MB before the data left; 3.78 MB / 1.16 MB before the packs and the Imagine tables followed in 6.92.0; 3.30 MB raw until the Album page's type in 6.104.0; 3.35 MB until 6.106.0 wrote a PDF and a PSD writer into the album module — about 34 KB of code and twelve more lines in nine languages, which is the price of the album leaving the studio as a print file rather than a JPEG)",
-  rawBytes <= 3400000 && gzBytes <= 1100000, { rawBytes, gzBytes });
+   The gzipped ceiling is the one a student pays for on mobile data. v6.107.0 did what
+   the note here said to do the next time the raw figure ran out: 6.106.0 wrote a PDF and
+   a PSD writer into the album module and 6.107.0 rebuilt the Album page's layout, which
+   together took the shell to 3,414,828 bytes — past 3,400,000. Rather than raise the
+   number a fourth time, WHATS_NEW left the shell for docs/app/data/whatsnew.js, the same
+   shape as the Library catalog and the packs: 186 KB of release notes that every boot was
+   parsing and no first paint needs. The shell is 3,131,531 bytes now, and the ceiling is
+   tightened to 3.20 MB to hold that ground rather than leave 270 KB of unearned slack.
+
+   If it ever runs out again the answer is the same one three waves have given: move a
+   table out, do not raise this number. */
+report("A4) the shell stays under its ceilings — 3.20 MB raw, 1.1 MB gzipped (5.8 MB / 1.58 MB before the data left; 3.78 MB / 1.16 MB before the packs and the Imagine tables followed in 6.92.0; 3.30 MB raw until the Album page's type in 6.104.0; 3.35 MB until 6.106.0 wrote a PDF and a PSD writer into the album module; 3.40 MB until 6.107.0 rebuilt the Album page's layout and then moved the 186 KB What's New strip out to data/whatsnew.js rather than raise the number a fourth time)",
+  rawBytes <= 3200000 && gzBytes <= 1100000, { rawBytes, gzBytes });
 const before = APP;
 const run = spawnSync(process.execPath, [path.join(ROOT, "tools", "build_app_data.js")], { encoding: "utf8" });
 report("A5) tools/build_app_data.js is idempotent on a built tree — it validates, reports the tags and leaves index.html unchanged",
@@ -173,8 +180,11 @@ report("B1) sw.js declares DATA_CACHE (hnk-data-v1), matches /data/<name>.js, ro
     left.join() === [CACHE, "hnk-data-v1", "hnk-lib-v1"].sort().join(), { left });
 
   /* ---------------- C. What's New: the cut and the archive record ---------------- */
-  const open = "var WHATS_NEW = [\n"; const a0 = APP.indexOf(open); const b0 = APP.indexOf("\n];", a0);
-  const inline = new Function("return [" + APP.slice(a0 + open.length, b0) + "]")();
+  /* v6.107.0 — the live table is no longer inline: it is docs/app/data/whatsnew.js, moved
+     there because A4 above said to move a table rather than raise its number a fourth time.
+     The name `inline` is kept so the rest of this block reads as it did; what it holds is
+     the same rows, now read through the same accessor the shell and the panel use. */
+  const inline = A.readWhatsNew();
   const archive = A.readWhatsNewArchive();
   const appVer = APP.match(/var APP_VER="([^"]+)"/)[1];
   const keys = (rows) => rows.map((e) => e.v + "|" + e.kind + "|" + e.ref);
@@ -186,7 +196,7 @@ report("B1) sw.js declares DATA_CACHE (hnk-data-v1), matches /data/<name>.js, ro
     inline.length >= 10 && inlineOk && archOk && overlap.length === 0 && inline[0].v === appVer && newestFirst(inline) && newestFirst(archive) &&
     inline.length + archive.length >= 123 && nineOk(inline) && nineOk(archive),
     { inline: inline.length, archive: archive.length, overlap, first: inline[0] && inline[0].v, appVer });
-  const panelRows = (PANEL_WN.match(/\{ v:"/g) || []).length;
+  const panelRows = (PANEL_WN.match(/\{"v":"|\{ v:"/g) || []).length;
   report("C2) the panel lifts the live table only (" + panelRows + " rows) and nothing in the app loads the archive — it is a record, not a download",
     panelRows === inline.length && !/whats-new-archive\.json/.test(APP.replace(/\/\*[\s\S]*?\*\//g, "")) && !/whats-new-archive/.test(PANEL_WN),
     { panelRows, inline: inline.length });
@@ -211,20 +221,27 @@ report("B1) sw.js declares DATA_CACHE (hnk-data-v1), matches /data/<name>.js, ro
   await browser.close();
   report("D1) the app boots from the data files — LW, D and IMAGINE_DATA are the loaded globals, the catalog is whole, the strip is drawn, TR_L is the loader's (empty) object on a Burmese boot, and no page error",
     boot.lw === libwf.items.length && boot.lwGlobal && boot.d && boot.inlineGone && boot.strip && boot.im === im.tools.length && boot.trl === 0 && errs.length === 0, { boot, errs: errs.slice(0, 3) });
-  /* 6.102.0 — four files now: the ALBUM page's sizes, layout templates and text
-     roles joined the three in data/album.js, under a content tag like the rest. */
-  const tagAlb = A.contentTag("album");
-  report("D2) the shell asked for each of the four data files exactly once, under its content tag, and for no language pack",
+  /* 6.102.0 — four files: the ALBUM page's sizes, layout templates and text roles joined
+     the three in data/album.js, under a content tag like the rest.
+     6.107.0 — five: the What's New strip followed them into data/whatsnew.js. */
+  const tagAlb = A.contentTag("album"), tagWn = A.contentTag("whatsnew");
+  report("D2) the shell asked for each of the five data files exactly once, under its content tag, and for no language pack",
     reqs.filter((u) => u === "/data/libwf.js?v=" + tagLib).length === 1 && reqs.filter((u) => u === "/data/hnkdata.js?v=" + tagData).length === 1 &&
     reqs.filter((u) => u === "/data/imagine.js?v=" + tagIm).length === 1 &&
-    reqs.filter((u) => u === "/data/album.js?v=" + tagAlb).length === 1 && reqs.length === 4, { reqs });
+    reqs.filter((u) => u === "/data/album.js?v=" + tagAlb).length === 1 &&
+    reqs.filter((u) => u === "/data/whatsnew.js?v=" + tagWn).length === 1 && reqs.length === 5, { reqs });
 
   /* ---------------- E. release pins ---------------- */
-  const wn = APP.slice(a0, b0);
-  const inlineWn = wn.indexOf('{ v:"' + appVer + '"') >= 0 && LANGS.every((l) => (wn.slice(0, wn.indexOf("\n  { v:", 20) > 0 ? wn.indexOf("\n  { v:", 20) : wn.length).match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2);
+  /* v6.107.0 — the row is read from the table the shell now loads, and rendered in the
+     spelling this check was written against; the panel's row is rendered the same way, so
+     comparing them compares content. Byte-identity of the two files is
+     verify_panel_whats_new.js's job. */
+  const row = WN.appRow(appVer);
+  const inlineWn = !!row && LANGS.every((l) => (row.match(new RegExp("(^|[,{])" + l + ':"', "g")) || []).length === 2);
   report("E1) CI runs this test right after verify_panel_dead_lookups; the landing counts at least 227 tests; What's New carries the " + appVer + " row in nine languages on the app and the panel",
     /verify_panel_dead_lookups\.js\n      - name: [^\n]*\n        run: PORT=8931 node test\/verify_app_data_files\.js/.test(CI) &&
-    (parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10) >= 227) && inlineWn && PANEL_WN.indexOf('{ v:"' + appVer + '"') >= 0, null);
+    (parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10) >= 227) && inlineWn &&
+    WN.panelRow(appVer) === row, null);
 
   console.log(failures ? "\n" + failures + " check(s) failed." : "\nALL PASS — the data left the shell, tagged and cached; the strip keeps what is new and the record keeps the rest.");
   process.exit(failures ? 1 : 0);
