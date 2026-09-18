@@ -428,8 +428,19 @@ function occasionIdInCode() {
 
 function release() {
   const app = (APP.match(/var APP_VER\s*=\s*"([\d.]+)"/) || [])[1];
-  report("D1) the web app and the panel move together",
-    app === "6.105.0" && MANIFEST.version === "6.176.0", { app, panel: MANIFEST.version });
+  /* 6.106.0 — this pin used to name 6.105.0 and 6.176.0 outright, so it went red on the very
+     next release and said "the web app and the panel move together" while meaning "the web app
+     is exactly the version wave C shipped". What it is for is the LOCKSTEP: the shell agrees
+     with its own version.json, and neither surface has fallen behind the wave that needs it. */
+  const cmp = (a, b) => {
+    const x = String(a).split(".").map(Number), y = String(b).split(".").map(Number);
+    for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0);
+    return 0;
+  };
+  const shipped = JSON.parse(read("docs/app/version.json")).v;
+  report("D1) the web app and the panel move together — the shell says what version.json says, and neither has fallen behind the release that brought the occasions",
+    app === shipped && cmp(app, "6.105.0") >= 0 && cmp(MANIFEST.version, "6.176.0") >= 0,
+    { app, shipped, panel: MANIFEST.version });
 
   const n = new Set(CI.match(/node test\/[A-Za-z0-9_]+\.js/g) || []).size;
   const badge = Number((LANDING.match(/"badge\.tests":\s*\{"my":\s*"(\d+) tests green/) || [])[1] || 0);
