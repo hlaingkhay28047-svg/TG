@@ -33,6 +33,7 @@ const { chromium } = require("playwright-core");
 const { withPremium } = require("./_seed_premium.js");
 const { UXP_STUB } = require("./lib/panel-parity-harness.js");
 const { FAKE_FS_SRC } = require("./lib/fake-fs.js");
+const WN = require("./lib/whats-new.js");
 
 const ROOT = path.join(__dirname, "..");
 const PANEL = path.join(ROOT, "panel");
@@ -456,7 +457,12 @@ function releasePins() {
   report("D1) the release: app " + appVer + " / panel " + panVer + " agree across version.json, APP_VER, docs/download/panel-version.json and the release manifest; CI runs this test right after verify_clip_handoff_694; the landing counts at least 231 tests; What's New carries the " + appVer + " row on both surfaces",
     /^6\.9[5-9]\.\d+$|^6\.\d{3}\.\d+$|^[7-9]\./.test(appVer) && APP.indexOf('APP_VER="' + appVer + '"') > 0 && pv.v === panVer && pv.latest_version === panVer && /^6\.16[6-9]\.\d+$|^6\.1[7-9]\d\.\d+$|^6\.[2-9]\d\d\.\d+$/.test(panVer) &&
     CI.indexOf("node test/verify_convenience_695.js") > CI.indexOf("node test/verify_clip_handoff_694.js") && (parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10) >= 231) &&
-    APP.indexOf('{ v:"' + appVer + '"') > 0 && PWN.indexOf('{ v:"' + appVer + '"') >= 0, { appVer, panVer, pv: pv.v });
+    /* 6.107.0 — the table left index.html for data/whatsnew.js and the panel's
+       copy is that JSON dropped in whole, so neither file spells a row `{ v:"…"`
+       any more. test/lib/whats-new.js renders a PARSED row back into that
+       spelling; an empty string means the release has no row, which is exactly
+       what this pinned before. */
+    WN.appRow(appVer).length > 0 && WN.panelRow(appVer).length > 0, { appVer, panVer, pv: pv.v });
 }
 
 (async () => {
