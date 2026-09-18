@@ -245,10 +245,20 @@ const NEW = Object.keys(SCRIPTS);
   const V61070_KEYS = ["alb_size_preset", "alb_size_own", "alb_size_own_note", "alb_size_big",
     "alb_size_max", "alb_swap", "alb_lock", "alb_layout_pick", "alb_layout_of",
     "alb_layout_yours", "alb_out_this", "alb_out_album"];
+  /* 6.110.0 — the fourteen lines the album's touch editing brought (the rail under the stage
+     and its note), registered on exactly the terms every album block above it was: this
+     repository has no Tai Le, Tai Lue or Khamti reader, so the only two ways to make the
+     count pass are to invent sentences in a script nobody here reads, or to paste the Shan
+     into a Tai Le pack and let a Tai Le reader look at Shan. Both are refused. LANG_FB routes
+     tdd, khb and kht to Shan, TR carries real Shan for all fourteen, and A2 below measures
+     that the fallback actually lands rather than assuming it. */
+  const V61100_KEYS = ["alb_touch_note", "alb_sel_none", "alb_sel_photo", "alb_sel_text",
+    "alb_zoom_out", "alb_zoom_in", "alb_rot_l", "alb_rot_r", "alb_reset_one",
+    "alb_move_l", "alb_move_r", "alb_move_u", "alb_move_d", "alb_spread_note"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {

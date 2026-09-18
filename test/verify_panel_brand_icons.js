@@ -149,6 +149,22 @@ report("C2) the 24 pt plugin slot and the 48 pt slot are allowed to differ, and 
   png("plugin@2x.png").md5 !== png("plugin-48.png").md5,
   { p24: png("plugin.png").md5.slice(0, 12), p48: png("plugin-48.png").md5.slice(0, 12) });
 
+/* ================= C3) the panel's own header is NOT a manifest icon ======= */
+/* 6.110.0 — THE DEFECT THIS CHECK EXISTS FOR. panel/index.html drew its header mark from
+   icons/plugin@2x.png, which is a file the MANIFEST owns. Redrawing the plugin-list family
+   in 6.179.0 therefore silently changed the panel's own brand mark, and the owner, who had
+   asked for a logo on the CCX and not on the header, photographed it: "ငါ့ logo ဒီပထမပုံက
+   နေရာမှာ မတပ်ခိုင်းပါဘူး … ပထမဟာကို နဂိုမူလ ပြန်ထားပေးပါ". The two jobs are two files now, and
+   this check is what keeps them apart: the header may name no file the manifest declares. */
+const HEADER_SRC = (fs.readFileSync(path.join(ROOT, "panel", "index.html"), "utf8")
+  .match(/<img class="nav-logo" src="([^"]+)"/) || [])[1] || "";
+const DECLARED_PATHS = new Set(DECLARED.map(d => "icons/" + d.file).concat(DECLARED.map(d => "icons/" + twoX(d.file))));
+report("C3) the panel's header mark is its own file, not one of the manifest's icons — a redraw of the Photoshop icon family can never again change the studio's own brand mark, and the file it names is on disk",
+  !!HEADER_SRC && !DECLARED_PATHS.has(HEADER_SRC) &&
+  HEADER_SRC.indexOf("icons/") === 0 &&
+  fs.existsSync(path.join(ROOT, "panel", HEADER_SRC)),
+  { header: HEADER_SRC, declared: [...DECLARED_PATHS] });
+
 /* ================= D) the builder is the source, and is current =========== */
 report("D1) the geometry lives in tools/build_panel_brand_icons.js and every file the manifest names is drawn by it",
   DECLARED.every(d => BUILDER_SRC.indexOf('"' + d.file + '"') > 0) &&

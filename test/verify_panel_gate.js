@@ -115,7 +115,7 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
    images it loads. Missing JS, CSS, HTML and every other resource still return
    404 and remain visible to the console-error assertion below. */
 const GATE_ICON_PATHS = new Set([
-  "icons/plugin@2x.png",
+  "icons/brand-logo.png",
   "icons/hero-banner.jpg",
   "icons/banners/studio.jpg",
 ]);
@@ -125,7 +125,7 @@ const GATE_ICON_PIXEL = Buffer.from("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUw
    matching and check J goes red rather than quietly covering a real error. */
 const LIBRARY_ASSET_GLOB = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/lib/**";
 report("A5) the gate harness isolates only the three excluded initial-view images and the Library plate host",
-  GATE_ICON_PATHS.size === 3 && GATE_ICON_PATHS.has("icons/plugin@2x.png") &&
+  GATE_ICON_PATHS.size === 3 && GATE_ICON_PATHS.has("icons/brand-logo.png") &&
   GATE_ICON_PATHS.has("icons/hero-banner.jpg") &&
   GATE_ICON_PATHS.has("icons/banners/studio.jpg") &&
   fs.readFileSync(path.join(PANEL, "js/hnk_library_compact_cards.js"), "utf8")
