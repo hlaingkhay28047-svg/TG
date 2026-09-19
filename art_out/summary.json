@@ -1,0 +1,341 @@
+{
+ "ok": [
+  {
+   "name": "face-cards5__editorial-caption",
+   "file": "face-cards5__editorial-caption.png",
+   "taskId": "2101289502059499521",
+   "bytes": 1787902,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__blue-silk",
+   "file": "face-cards5__blue-silk.png",
+   "taskId": "2101289497160552450",
+   "bytes": 1958922,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__white-balance-fix",
+   "file": "face-cards5__white-balance-fix.png",
+   "taskId": "2101289499004366850",
+   "bytes": 1864568,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__card-bodyshape-after",
+   "file": "face-imagine__card-bodyshape-after.png",
+   "taskId": "2101289928882778114",
+   "bytes": 1687092,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__card-colortone-before",
+   "file": "face-imagine__card-colortone-before.png",
+   "taskId": "2101289934299303938",
+   "bytes": 1690017,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__bodyshape-flatTummy",
+   "file": "face-imagine__th__bodyshape-flatTummy.png",
+   "taskId": "2101289962053013506",
+   "bytes": 1521883,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__bodyshape-posture",
+   "file": "face-imagine__th__bodyshape-posture.png",
+   "taskId": "2101290265767002114",
+   "bytes": 1603552,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__colortone-midnightLaceMood",
+   "file": "face-imagine__th__colortone-midnightLaceMood.png",
+   "taskId": "2101290273411297282",
+   "bytes": 1246555,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__faceclear-lowRes",
+   "file": "face-imagine__th__faceclear-lowRes.png",
+   "taskId": "2101290314429317122",
+   "bytes": 1586569,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__hairmakeup-ashBlonde",
+   "file": "face-imagine__th__hairmakeup-ashBlonde.png",
+   "taskId": "2101290693220864001",
+   "bytes": 1374713,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__hairmakeup-softGlam",
+   "file": "face-imagine__th__hairmakeup-softGlam.png",
+   "taskId": "2101290710038343682",
+   "bytes": 1388022,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__outfit-sequinParty",
+   "file": "face-imagine__th__outfit-sequinParty.png",
+   "taskId": "2101290819813347329",
+   "bytes": 1665909,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__portrait-beach",
+   "file": "face-imagine__th__portrait-beach.png",
+   "taskId": "2101291033112997889",
+   "bytes": 1492427,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__sky-milkyWay",
+   "file": "face-imagine__th__sky-milkyWay.png",
+   "taskId": "2101291159393378305",
+   "bytes": 1576949,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__fairy-wings",
+   "file": "face-cards5__fairy-wings.png",
+   "taskId": "2101291498498662401",
+   "bytes": 2037383,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-gold-parasol",
+   "file": "face-cards5__look-gold-parasol.png",
+   "taskId": "2101291647576260609",
+   "bytes": 2233293,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__manga-panel",
+   "file": "face-cards5__manga-panel.png",
+   "taskId": "2101291911035351042",
+   "bytes": 2481143,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__pr-repFamily",
+   "file": "face-cards5__pr-repFamily.png",
+   "taskId": "2101292065092136961",
+   "bytes": 2220358,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__pr-roFaceSwap",
+   "file": "face-cards5__pr-roFaceSwap.png",
+   "taskId": "2101292377001553922",
+   "bytes": 1819417,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__reference-transfer",
+   "file": "face-cards5__reference-transfer.png",
+   "taskId": "2101292865908084738",
+   "bytes": 2163798,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__studio-look-copy",
+   "file": "face-cards5__studio-look-copy.png",
+   "taskId": "2101293018658762753",
+   "bytes": 2176983,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__sky-purpleDusk",
+   "file": "face-imagine__th__sky-purpleDusk.png",
+   "taskId": "2101291264152039426",
+   "bytes": 1464119,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__wed-veil-3",
+   "file": "face-cards5__wed-veil-3.png",
+   "taskId": "2101293349882949633",
+   "bytes": 1614245,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__background-gardenPath",
+   "file": "face-imagine__th__background-gardenPath.png",
+   "taskId": "2101293389357465601",
+   "bytes": 2289361,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__portrait-flowerGarden",
+   "file": "face-imagine__th__portrait-flowerGarden.png",
+   "taskId": "2101293683763810306",
+   "bytes": 1945290,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__surface-naturalFlowers",
+   "file": "face-imagine__th__surface-naturalFlowers.png",
+   "taskId": "2101293776917622786",
+   "bytes": 1954145,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-imagine__th__surface-pebbles",
+   "file": "face-imagine__th__surface-pebbles.png",
+   "taskId": "2101293792446615553",
+   "bytes": 1885005,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-lookchips__pt_porcelain",
+   "file": "face-lookchips__pt_porcelain.png",
+   "taskId": "2101294131023417346",
+   "bytes": 1874893,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  }
+ ],
+ "failed": []
+}
