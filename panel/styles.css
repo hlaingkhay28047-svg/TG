@@ -2146,9 +2146,11 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
 /* 6.112.0 — the app's measured compaction, box for box (the sweep and the
    numbers are in docs/app/index.html above .wfmini .t): a line box clips its own
    ink when the ink ascent passes the font ascent by more than the half-leading,
-   and over all 194 cards in nine languages the summary's threshold is 1.85 —
-   1.70 clipped 31 Vietnamese boxes. 1.95 and 1.9 ship, with 0.71px and 0.37px
-   clear, where 2.25 carried 7.1px of nothing per line. Stated heights, as this
+   and over all 194 cards in nine languages the summary's threshold is 1.85 in
+   the container that swept it — 1.70 clipped 31 Vietnamese boxes there and none
+   on the CI runner, whose fonts are not the same. 1.95 and 1.9 ship, clear in
+   both (0.71px and 2.21px on the summary), where 2.25 carried 7.1px of nothing
+   per line. Stated heights, as this
    renderer requires, and each is exactly its line budget. */
 .wfmini .t { position: relative; display: block; margin-top: 3px; height: 3.8em;
   font-size: 12.5px; font-weight: 800; line-height: 1.9; overflow: hidden; }

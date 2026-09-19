@@ -415,20 +415,54 @@ async function appWalk(browser) {
   report("F1) put 6.111.0's line-height back and D1 has nothing left to report — the card returns to its old height",
     old.med > good.med + 20, { with6112: good.med, with6111: old.med });
 
-  /* THE FAULT THIS SECTION HAS TO INJECT IS THE ONE THIS WAVE ALMOST SHIPPED:
-     1.7, which is under the measured 1.85 floor. It clipped 31 Vietnamese boxes
-     by 0.72px, and nothing in Burmese, Shan, Kachin, Thai, English, Chinese,
-     Indonesian or Malay noticed — so the injection is run in Vietnamese, the
-     language that found it. */
+  /* F2 HAD TO BE REWRITTEN, AND THE REASON IS WORTH MORE THAN THE CHECK.
+
+     Its first form injected the 1.7 this wave rejected and required the probe
+     to report the 31 clipped Vietnamese boxes that rejected it. That passed
+     here and FAILED on the CI runner, which reported `clipped: 0` at 1.7 — not
+     because the probe is wrong but because the runner's font set is not this
+     one. Ả is drawn by whatever font the host resolves, its ink is that font's
+     ink, and the floor moves with it. A fault injection whose defect only
+     exists in one font list is not a test; it is a coincidence.
+
+     So F2 now asserts the part that is true in EVERY font, and it is the
+     stronger claim anyway: lowering the line-height lowers the half-leading by
+     exactly half the difference, so the overhang must rise by
+
+         Δoverhang = Δline-height × font-size / 2
+
+     no matter which font draws the glyphs. Measured on the runner at 11.5px:
+     1.95 → −2.21, 1.7 → −0.78, a rise of 1.43 against a predicted 1.4375. That
+     arithmetic is what makes the probe trustworthy, and it is checked here.
+
+     F3 then proves the probe still SAYS "clipped" when something is: a
+     line-height of 1.0 is under every font's floor, so it must report boxes.
+
+     WHAT THIS MEANS FOR THE SHIPPED VALUE, stated plainly. 1.85 is the floor in
+     THIS container's fonts; the runner's floor is lower. 1.95 was chosen from
+     the stricter of the two environments that can be measured and is clear in
+     both — 0.71px here, 2.21px there. A student's phone is a third font set
+     nobody here can measure, which is exactly why the margin was taken from the
+     tightest one seen rather than the most generous. */
   await open("vi", 390);
-  const clean = await page.evaluate(INK_PROBE + '("#pgWf")');
+  const at195 = await page.evaluate(INK_PROBE + '("#pgWf")');
   await page.addStyleTag({ content: ".wfmini .s{line-height:1.7 !important;height:5.1em !important}" });
   await page.waitForTimeout(400);
-  const cut = await page.evaluate(INK_PROBE + '("#pgWf")');
-  report("F2) put the 1.7 this wave first tried back, in Vietnamese, and the same probe reports the same clipped glyphs — B2 is measuring something, and it is what caught this",
-    clean.clipped === 0 && cut.n > 300 && cut.clipped >= 20 && cut.worstTop > 0,
-    { with195: { clipped: clean.clipped, worstTop: clean.worstTop },
-      with17: { clipped: cut.clipped, of: cut.n, worstTop: cut.worstTop, example: cut.bad[0] } });
+  const at17 = await page.evaluate(INK_PROBE + '("#pgWf")');
+  const predicted = (NEW.sLh - 1.7) * NEW.sFs / 2;      /* 1.4375px at 11.5px */
+  const observed = at17.worstTop - at195.worstTop;
+  report("F2) the probe answers the metric exactly — drop the summary's line-height by 0.25 and the overhang rises by half of that, " + r1(predicted) + "px, in whatever font the host happens to draw with",
+    at195.n > 300 && Math.abs(observed - predicted) <= 0.35 && at195.worstTop <= -0.5,
+    { at195: at195.worstTop, at17: at17.worstTop, observedRise: r1(observed), predictedRise: r1(predicted),
+      note: "the shipped value's own headroom is font-dependent; this arithmetic is not" });
+
+  await open("my", 390);
+  await page.addStyleTag({ content: ".wfmini .t{line-height:1.0 !important;height:2em !important}.wfmini .s{line-height:1.0 !important;height:3em !important}" });
+  await page.waitForTimeout(400);
+  const at10 = await page.evaluate(INK_PROBE + '("#pgWf")');
+  report("F3) and it still says CLIPPED when something is — a line-height of 1.0 is under every font's floor, and the probe names the boxes",
+    at10.n > 300 && at10.clipped > 20 && at10.worstTop > 0,
+    { clipped: at10.clipped, of: at10.n, worstTop: at10.worstTop, example: at10.bad[0] });
 
   report("B4) no page error while any of that was measured", errs.length === 0, errs.slice(0, 3));
   await page.close();

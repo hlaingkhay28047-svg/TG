@@ -788,8 +788,15 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 
    The first draft of this wave shipped 1.7 and the check above caught it: it is
    Vietnamese's stacked diacritics (Ả, Ẳ, Ế), not Burmese, that set the floor.
-   1.95 is the measured threshold plus 0.57px — ten steps of 0.05 below the
-   guess it replaces — and still hands back 19.1px of text box per card. The
+
+   AND THE FLOOR MOVES WITH THE FONT, which the CI runner proved by disagreeing:
+   at 1.7 it measured no clipping at all, because Ả is drawn there by a font
+   with different metrics. Shipped 1.95 is clear in both — 0.71px in the
+   container the sweep above was run in, 2.21px on the runner — and the margin
+   was deliberately taken from the TIGHTER of the two, because a student's phone
+   is a third font set nobody can measure from here. 1.95 is that threshold plus
+   0.57px — ten steps of 0.05 below the guess it replaces — and still hands back
+   19.1px of text box per card. The
    heights stay STATED (6.171.0: the panel's renderer declines max-height), and
    each one is still EXACTLY its line budget (2 × 1.9, 3 × 1.95), because that
    budget is what ellCeil cuts against. */
