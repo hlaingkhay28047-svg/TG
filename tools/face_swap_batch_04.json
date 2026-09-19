@@ -1,32 +1,6 @@
 {
  "jobs": [
   {
-   "name": "face-cards5__wed-trail-trailRed",
-   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
-   "refs": [
-    "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/threequarter.jpg"
-   ],
-   "base": "docs/app/lib/wf/cards5/wed-trail-trailRed.jpg",
-   "ratio": "3:2",
-   "resolution": "2k",
-   "maxMs": 1200000,
-   "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
-  },
-  {
-   "name": "face-cards5__wed-trail-trailSunset",
-   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
-   "refs": [
-    "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/threequarter.jpg"
-   ],
-   "base": "docs/app/lib/wf/cards5/wed-trail-trailSunset.jpg",
-   "ratio": "3:2",
-   "resolution": "2k",
-   "maxMs": 1200000,
-   "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
-  },
-  {
    "name": "face-cards5__wed-trail-trailWhite",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
@@ -144,638 +118,677 @@
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__bg-replace",
+   "name": "face-imagine__card-background-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/bg-replace.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-background-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__bridal-decor",
+   "name": "face-imagine__card-background-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/bridal-decor.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-background-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__cl-full",
+   "name": "face-imagine__card-batch-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/cl-full.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-batch-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__cl-hands",
+   "name": "face-imagine__card-batch-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/cl-hands.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-batch-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__cl-legs",
+   "name": "face-imagine__card-bodyshape-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/cl-legs.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-bodyshape-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__cl-people",
+   "name": "face-imagine__card-bodyshape-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/cl-people.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-bodyshape-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__gown-perfect",
+   "name": "face-imagine__card-colortone-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/gown-perfect.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-colortone-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__lg-back",
+   "name": "face-imagine__card-colortone-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/lg-back.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-colortone-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__lg-bglight",
+   "name": "face-imagine__card-describe-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/lg-bglight.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-describe-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__lg-butterfly",
+   "name": "face-imagine__card-describe-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/lg-butterfly.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-describe-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__lg-fill",
+   "name": "face-imagine__card-faceclear-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/lg-fill.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-faceclear-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__lg-hair",
+   "name": "face-imagine__card-faceclear-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/lg-hair.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-faceclear-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__lg-key",
+   "name": "face-imagine__card-hairmakeup-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/lg-key.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-hairmakeup-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__lg-rim",
+   "name": "face-imagine__card-hairmakeup-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/lg-rim.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-hairmakeup-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__lg-side",
+   "name": "face-imagine__card-idphoto-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/lg-side.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-idphoto-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__mx-bg",
+   "name": "face-imagine__card-lighting-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/mx-bg.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-lighting-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__mx-color",
+   "name": "face-imagine__card-lighting-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/mx-color.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-lighting-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__mx-fg",
+   "name": "face-imagine__card-objadd-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/mx-fg.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-objadd-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__mx-light",
+   "name": "face-imagine__card-objadd-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/mx-light.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-objadd-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__mx-object",
+   "name": "face-imagine__card-objremove-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/mx-object.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-objremove-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__object-edit",
+   "name": "face-imagine__card-objremove-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/object-edit.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-objremove-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pl-0",
+   "name": "face-imagine__card-outfit-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pl-0.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-outfit-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pl-1",
+   "name": "face-imagine__card-outfit-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pl-1.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-outfit-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pl-2",
+   "name": "face-imagine__card-portrait-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pl-2.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-portrait-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pl-3",
+   "name": "face-imagine__card-portrait-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pl-3.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-portrait-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pl-4",
+   "name": "face-imagine__card-restore-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pl-4.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-restore-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pl-5",
+   "name": "face-imagine__card-restore-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pl-5.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-restore-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pl-7",
+   "name": "face-imagine__card-sky-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pl-7.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-sky-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-access",
+   "name": "face-imagine__card-sky-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-access.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-sky-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-evoto",
+   "name": "face-imagine__card-surface-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-evoto.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-surface-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-fgProps",
+   "name": "face-imagine__card-surface-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-fgProps.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-surface-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-fgbglc",
+   "name": "face-imagine__card-textedit-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-fgbglc.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-textedit-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-hair",
+   "name": "face-imagine__card-textedit-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-hair.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-textedit-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-meitu",
+   "name": "face-imagine__card-upscale-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-meitu.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-upscale-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-pose",
+   "name": "face-imagine__card-upscale-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-pose.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-upscale-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-repCouple",
+   "name": "face-imagine__card-weather-after",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-repCouple.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-weather-after.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-repFamily",
+   "name": "face-imagine__card-weather-before",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-repFamily.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/card-weather-before.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-repSolo",
+   "name": "face-imagine__th__background-blackStudio",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-repSolo.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-blackStudio.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-restore",
+   "name": "face-imagine__th__background-brickWall",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-restore.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-brickWall.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-roBgRep",
+   "name": "face-imagine__th__background-cafe",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-roBgRep.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-cafe.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-roBgSwap",
+   "name": "face-imagine__th__background-campus",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-roBgSwap.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-campus.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-roDressRef",
+   "name": "face-imagine__th__background-cityBokeh",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-roDressRef.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-cityBokeh.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-roDressRep",
+   "name": "face-imagine__th__background-gardenPath",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-roDressRep.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-gardenPath.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-roFaceRep",
+   "name": "face-imagine__th__background-greyGradient",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-roFaceRep.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-greyGradient.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-roFaceSwap",
+   "name": "face-imagine__th__background-homeLiving",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-roFaceSwap.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-homeLiving.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-roFgRep",
+   "name": "face-imagine__th__background-library",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-roFgRep.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-library.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-roLcCopy",
+   "name": "face-imagine__th__background-lobby",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-roLcCopy.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-lobby.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-roLcRef",
+   "name": "face-imagine__th__background-modernOffice",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-roLcRef.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-modernOffice.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
   },
   {
-   "name": "face-cards4__pr-roMatch",
+   "name": "face-imagine__th__background-neonStreet",
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
-   "base": "docs/app/lib/wf/cards4/pr-roMatch.jpg",
-   "ratio": "4:3",
+   "base": "docs/app/lib/wf/imagine/th/background-neonStreet.jpg",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
+  },
+  {
+   "name": "face-imagine__th__background-rooftop",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/imagine/th/background-rooftop.jpg",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
+  },
+  {
+   "name": "face-imagine__th__background-stage",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/imagine/th/background-stage.jpg",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
+  },
+  {
+   "name": "face-imagine__th__background-whiteStudio",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/imagine/th/background-whiteStudio.jpg",
+   "ratio": "2:3",
    "resolution": "2k",
    "maxMs": 1200000,
    "prompt": "REPLACE THIS WOMAN'S FACE WITH THE FACE IN THE REFERENCE PHOTOGRAPHS. They are two DIFFERENT women. The face currently in the supplied picture is the wrong one — remove it completely and put the reference woman's face there instead. The finished picture must NOT look like the woman who is in it now. Do not blend the two faces, do not average them, do not merely soften or retouch the existing face: swap it.\n\nTHE FACE YOU MUST PUT THERE — copy these from the references exactly, they are what make her her:\n· a slim oval face that narrows to a small, softly pointed chin — not a round or square jaw\n· large, round-leaning almond eyes, set a touch wide, with a deep double eyelid crease, a light warm-brown iris, and long heavy lashes under a soft winged liner\n· straight brows with a low gentle arch, darker and fuller than average\n· a small nose, narrow at the bridge, neat and rounded at the tip\n· FULL lips — a distinctly fuller lower lip, a sharply drawn cupid's bow, and a deep rose-red lip colour\n· high, rounded cheekbones with a warm pink blush sitting high on the cheek\n· fair porcelain skin, early twenties\nIf the result still has the old woman's thinner lips, wider jaw or narrower eyes, it is wrong.\n\nIGNORE in the references — copy NONE of this: the silver headdress, the silver earrings, the embroidered collar, her clothing, and the sky behind her. Only the face.\n\nMATCH TO THE SUPPLIED PICTURE: her new face must sit at the same head angle, look in the same direction, carry the same expression, and take the same light and shadow as the face it replaces. The swap must look photographed, not pasted.\n\nKEEP EVERYTHING ELSE EXACTLY AS IT IS: the framing and crop; her pose, body and hands; her hair — style, length, colour and how it falls; her clothing and jewellery; the background and every object in it; the colour grade, grain and focus; every other person, untouched; and every letter of any text, label, badge or number, in the same place and the same font.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, an IMAGE 1 / IMAGE 2 / RESULT layout, an inset chip, or a strip — she appears more than once. Give her the new face in EVERY place she appears, and keep each panel's own difference.\n\nChange nothing but the face. Do not re-light, re-grade, re-crop, upscale or sharpen the picture."
