@@ -1,0 +1,718 @@
+{
+ "ok": [
+  {
+   "name": "face-cards5__bg-replace",
+   "file": "face-cards5__bg-replace.png",
+   "taskId": "2101172688879480834",
+   "bytes": 1731392,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__anime-3d-portrait",
+   "file": "face-cards5__anime-3d-portrait.png",
+   "taskId": "2101172687941636098",
+   "bytes": 1669837,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__anime-2d-portrait",
+   "file": "face-cards5__anime-2d-portrait.png",
+   "taskId": "2101172685037498369",
+   "bytes": 1562441,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__bridal-decor",
+   "file": "face-cards5__bridal-decor.png",
+   "taskId": "2101173224682766337",
+   "bytes": 1743306,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__blue-silk",
+   "file": "face-cards5__blue-silk.png",
+   "taskId": "2101173152288837633",
+   "bytes": 2089383,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__character-sheet",
+   "file": "face-cards5__character-sheet.png",
+   "taskId": "2101173292817313794",
+   "bytes": 1387334,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__cl-full",
+   "file": "face-cards5__cl-full.png",
+   "taskId": "2101173665900654594",
+   "bytes": 1633080,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__cinematic-poster",
+   "file": "face-cards5__cinematic-poster.png",
+   "taskId": "2101173627261001729",
+   "bytes": 2365425,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__chinese-ink-painting",
+   "file": "face-cards5__chinese-ink-painting.png",
+   "taskId": "2101173614732615681",
+   "bytes": 1515518,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__cl-hands",
+   "file": "face-cards5__cl-hands.png",
+   "taskId": "2101174029208752129",
+   "bytes": 1909139,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__cl-legs",
+   "file": "face-cards5__cl-legs.png",
+   "taskId": "2101174105530822658",
+   "bytes": 1509198,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__cl-people",
+   "file": "face-cards5__cl-people.png",
+   "taskId": "2101174121470857218",
+   "bytes": 1761021,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__comic-to-real",
+   "file": "face-cards5__comic-to-real.png",
+   "taskId": "2101174332859826177",
+   "bytes": 1687735,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__couple-compose",
+   "file": "face-cards5__couple-compose.png",
+   "taskId": "2101174510019387393",
+   "bytes": 1597599,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__concept-poster",
+   "file": "face-cards5__concept-poster.png",
+   "taskId": "2101174505829277698",
+   "bytes": 2074944,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__cute-3d-figure",
+   "file": "face-cards5__cute-3d-figure.png",
+   "taskId": "2101174816077750273",
+   "bytes": 1726096,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__doll-boudoir",
+   "file": "face-cards5__doll-boudoir.png",
+   "taskId": "2101174968510550017",
+   "bytes": 1977649,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__derma-skin",
+   "file": "face-cards5__derma-skin.png",
+   "taskId": "2101174940964876290",
+   "bytes": 1743375,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__dress-reference",
+   "file": "face-cards5__dress-reference.png",
+   "taskId": "2101175348859215874",
+   "bytes": 1589593,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__editorial-caption",
+   "file": "face-cards5__editorial-caption.png",
+   "taskId": "2101175392291233794",
+   "bytes": 1751636,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__elevator-mirror",
+   "file": "face-cards5__elevator-mirror.png",
+   "taskId": "2101175463333564418",
+   "bytes": 1795150,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__film-grade",
+   "file": "face-cards5__film-grade.png",
+   "taskId": "2101175819002396673",
+   "bytes": 1979857,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__film-grain-90s",
+   "file": "face-cards5__film-grain-90s.png",
+   "taskId": "2101175869652811778",
+   "bytes": 1539011,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__fairy-wings",
+   "file": "face-cards5__fairy-wings.png",
+   "taskId": "2101175777797554177",
+   "bytes": 1993546,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__fisheye-street",
+   "file": "face-cards5__fisheye-street.png",
+   "taskId": "2101176170779222017",
+   "bytes": 1706225,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__flower-path-copy",
+   "file": "face-cards5__flower-path-copy.png",
+   "taskId": "2101176196726910978",
+   "bytes": 1622979,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__foggy-morning",
+   "file": "face-cards5__foggy-morning.png",
+   "taskId": "2101176473225740289",
+   "bytes": 1490459,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__full-look-transfer",
+   "file": "face-cards5__full-look-transfer.png",
+   "taskId": "2101176547536224258",
+   "bytes": 1900389,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__giant-accessory",
+   "file": "face-cards5__giant-accessory.png",
+   "taskId": "2101176796988809217",
+   "bytes": 1549860,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__gold-chrysanth",
+   "file": "face-cards5__gold-chrysanth.png",
+   "taskId": "2101176831863656449",
+   "bytes": 1818624,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__gown-perfect",
+   "file": "face-cards5__gown-perfect.png",
+   "taskId": "2101176873964400642",
+   "bytes": 1624533,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__id-photo",
+   "file": "face-cards5__id-photo.png",
+   "taskId": "2101177154561613826",
+   "bytes": 1372746,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__ink-atelier",
+   "file": "face-cards5__ink-atelier.png",
+   "taskId": "2101177269418434562",
+   "bytes": 1977099,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__ink-sketch",
+   "file": "face-cards5__ink-sketch.png",
+   "taskId": "2101177317048950785",
+   "bytes": 2031020,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__instant-film",
+   "file": "face-cards5__instant-film.png",
+   "taskId": "2101177538660921346",
+   "bytes": 1483400,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lanna-gold-heritage",
+   "file": "face-cards5__lanna-gold-heritage.png",
+   "taskId": "2101177767470514177",
+   "bytes": 1889586,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__kitsune-nine-tail",
+   "file": "face-cards5__kitsune-nine-tail.png",
+   "taskId": "2101177673145360386",
+   "bytes": 1912814,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-bglight",
+   "file": "face-cards5__lg-bglight.png",
+   "taskId": "2101178219653992450",
+   "bytes": 1864390,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-butterfly",
+   "file": "face-cards5__lg-butterfly.png",
+   "taskId": "2101178310859132930",
+   "bytes": 1596259,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-back",
+   "file": "face-cards5__lg-back.png",
+   "taskId": "2101178142175129601",
+   "bytes": 1858982,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-fill",
+   "file": "face-cards5__lg-fill.png",
+   "taskId": "2101178656656846849",
+   "bytes": 1684761,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-key",
+   "file": "face-cards5__lg-key.png",
+   "taskId": "2101178694897995777",
+   "bytes": 1615105,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-rim",
+   "file": "face-cards5__lg-rim.png",
+   "taskId": "2101179003823583233",
+   "bytes": 1699545,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-side",
+   "file": "face-cards5__lg-side.png",
+   "taskId": "2101179064403836930",
+   "bytes": 1610533,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-winHard",
+   "file": "face-cards5__lg-winHard.png",
+   "taskId": "2101179464871546882",
+   "bytes": 1584628,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-sunShaft",
+   "file": "face-cards5__lg-sunShaft.png",
+   "taskId": "2101179366989316098",
+   "bytes": 1829459,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-winSoftL",
+   "file": "face-cards5__lg-winSoftL.png",
+   "taskId": "2101179773690552322",
+   "bytes": 1785493,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lg-winWide",
+   "file": "face-cards5__lg-winWide.png",
+   "taskId": "2101179834138861569",
+   "bytes": 1727751,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-blossom-braids",
+   "file": "face-cards5__look-blossom-braids.png",
+   "taskId": "2101180299593359362",
+   "bytes": 1581512,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__lion-dance",
+   "file": "face-cards5__lion-dance.png",
+   "taskId": "2101180206951297025",
+   "bytes": 1750068,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-butterfly-wing",
+   "file": "face-cards5__look-butterfly-wing.png",
+   "taskId": "2101180659246538753",
+   "bytes": 1680184,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-chiaroscuro-cream",
+   "file": "face-cards5__look-chiaroscuro-cream.png",
+   "taskId": "2101180767383535617",
+   "bytes": 1241646,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-gold-parasol",
+   "file": "face-cards5__look-gold-parasol.png",
+   "taskId": "2101181000364298242",
+   "bytes": 2118437,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-golden-grecian",
+   "file": "face-cards5__look-golden-grecian.png",
+   "taskId": "2101181197062893569",
+   "bytes": 1643010,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-highland-indigo",
+   "file": "face-cards5__look-highland-indigo.png",
+   "taskId": "2101181219515002881",
+   "bytes": 1844122,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-imperial-yellow",
+   "file": "face-cards5__look-imperial-yellow.png",
+   "taskId": "2101181465655218177",
+   "bytes": 1868706,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-marigold-veil",
+   "file": "face-cards5__look-marigold-veil.png",
+   "taskId": "2101181569668083713",
+   "bytes": 1619704,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-misty-grey",
+   "file": "face-cards5__look-misty-grey.png",
+   "taskId": "2101181595016732674",
+   "bytes": 1388513,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-noir-feather",
+   "file": "face-cards5__look-noir-feather.png",
+   "taskId": "2101181936390586369",
+   "bytes": 1664303,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  }
+ ],
+ "failed": [
+  {
+   "name": "face-cards5__lg-hair",
+   "error": "failed {\"taskId\":\"2101178687763484674\",\"status\":\"FAILED\",\"errorCode\":\"1006\",\"errorMessage\":\"Task execution timed out, please retry | 任务执行超时，请重试\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":{\"consumeMoney\":null,\"consumeCo"
+  }
+ ]
+}
