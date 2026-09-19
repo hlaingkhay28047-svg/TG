@@ -248,7 +248,7 @@ var LIB_ART_REV = {
   "lib/vid/vt-filmlook.jpg": 4, "lib/vid/vt-heritage.jpg": 4, "lib/vid/vt-extend.jpg": 4,
   "lib/vid/vt-restore.jpg": 4, "lib/vid/vt-erasesub.jpg": 4, "lib/vid/vt-char30.jpg": 4,
   "lib/vid/vt-headswap.jpg": 3,
-  "lib/wf/cards5/look-golden-grecian.jpg": 3, "lib/wf/cards5/studio-look-copy.jpg": 2,
+  "lib/wf/cards5/look-golden-grecian.jpg": 3, "lib/wf/cards5/studio-look-copy.jpg": 3,
   /* 6.17.0 — Couple Compose redrawn for its three-input redesign, under its own name */
   "lib/wf/cards5/couple-compose.jpg": 3,
   /* 6.29.2 — Imagine re-shot on the brand model under its own names: the page banner, the four card pairs and the 54 template thumbnails.
@@ -268,12 +268,12 @@ var LIB_ART_REV = {
   "lib/wf/imagine/th/lighting-window.jpg": 5, "lib/wf/imagine/th/lighting-warmWindow.jpg": 5, "lib/wf/imagine/th/lighting-brightGlow.jpg": 5, "lib/wf/imagine/th/lighting-warm.jpg": 5,
   "lib/wf/imagine/th/lighting-harshSun.jpg": 5, "lib/wf/imagine/th/lighting-goldenSun.jpg": 5, "lib/wf/imagine/th/lighting-sunRays.jpg": 5, "lib/wf/imagine/th/lighting-afternoon.jpg": 5,
   "lib/wf/imagine/th/lighting-windowStreaks.jpg": 5, "lib/wf/imagine/th/lighting-leafDapple.jpg": 5, "lib/wf/imagine/th/lighting-soft.jpg": 5, "lib/wf/imagine/th/lighting-goldRim.jpg": 5,
-  "lib/wf/imagine/th/portrait-winterStreet.jpg": 4, "lib/wf/imagine/th/portrait-softGarden.jpg": 4, "lib/wf/imagine/th/portrait-flowerGarden.jpg": 3, "lib/wf/imagine/th/portrait-wildflowerField.jpg": 4,
+  "lib/wf/imagine/th/portrait-winterStreet.jpg": 4, "lib/wf/imagine/th/portrait-softGarden.jpg": 4, "lib/wf/imagine/th/portrait-flowerGarden.jpg": 4, "lib/wf/imagine/th/portrait-wildflowerField.jpg": 4,
   "lib/wf/imagine/th/portrait-countryField.jpg": 4, "lib/wf/imagine/th/portrait-riceField.jpg": 5, "lib/wf/imagine/th/portrait-goldenHill.jpg": 4, "lib/wf/imagine/th/portrait-autumnPark.jpg": 4,
-  "lib/wf/imagine/th/portrait-beach.jpg": 3, "lib/wf/imagine/th/portrait-sunsetSea.jpg": 4, "lib/wf/imagine/th/portrait-morningSun.jpg": 4, "lib/wf/imagine/th/portrait-mistyDawn.jpg": 4,
+  "lib/wf/imagine/th/portrait-beach.jpg": 4, "lib/wf/imagine/th/portrait-sunsetSea.jpg": 4, "lib/wf/imagine/th/portrait-morningSun.jpg": 4, "lib/wf/imagine/th/portrait-mistyDawn.jpg": 4,
   "lib/wf/imagine/th/portrait-goldenWind.jpg": 4, "lib/wf/imagine/th/portrait-goldenSunset.jpg": 4, "lib/wf/imagine/th/portrait-blueTwilight.jpg": 4,
   "lib/wf/imagine/th/surface-grass.jpg": 4, "lib/wf/imagine/th/surface-naturalGrass.jpg": 4, "lib/wf/imagine/th/surface-meadowGrass.jpg": 4, "lib/wf/imagine/th/surface-wildGrass.jpg": 4,
-  "lib/wf/imagine/th/surface-dryGrass.jpg": 4, "lib/wf/imagine/th/surface-greenFlowerField.jpg": 4, "lib/wf/imagine/th/surface-whiteFlowers.jpg": 4, "lib/wf/imagine/th/surface-naturalFlowers.jpg": 3,
+  "lib/wf/imagine/th/surface-dryGrass.jpg": 4, "lib/wf/imagine/th/surface-greenFlowerField.jpg": 4, "lib/wf/imagine/th/surface-whiteFlowers.jpg": 4, "lib/wf/imagine/th/surface-naturalFlowers.jpg": 4,
   "lib/wf/imagine/th/surface-wildflowers.jpg": 4, "lib/wf/imagine/th/surface-goldenSand.jpg": 4, "lib/wf/imagine/th/surface-whiteSand.jpg": 4, "lib/wf/imagine/th/surface-blueLake.jpg": 4,
   "lib/wf/imagine/th/surface-stillWater.jpg": 4, "lib/wf/imagine/th/surface-pebbles.jpg": 4, "lib/wf/imagine/th/surface-deepBlueSea.jpg": 4,
   "lib/wf/imagine/th/weather-snowfall.jpg": 4, "lib/wf/imagine/th/weather-lightRain.jpg": 4, "lib/wf/imagine/th/weather-heavyRain.jpg": 4, "lib/wf/imagine/th/weather-fogMist.jpg": 4,
@@ -435,7 +435,18 @@ var LIB_ART_REV = {
   "lib/wf/imagine/th/textedit-shirtPrint.jpg": 2, "lib/wf/imagine/th/textedit-toEnglish.jpg": 2, "lib/wf/imagine/th/upscale-crisp2x.jpg": 2,
   "lib/wf/imagine/th/upscale-denoise.jpg": 2, "lib/wf/imagine/th/upscale-faceFirst.jpg": 2, "lib/wf/imagine/th/upscale-phoneBoost.jpg": 2,
   "lib/wf/imagine/th/upscale-printReady.jpg": 2, "lib/wf/imagine/th/upscale-textureKeep.jpg": 2, "lib/wf/imagine/th/upscale-ultra4x.jpg": 2,
-  "lib/wf/imagine/th/upscale-webLowres.jpg": 2
+  "lib/wf/imagine/th/upscale-webLowres.jpg": 2,
+
+  /* 6.113.1 — the last seventeen. The whole-frame job had refused these: seven came back untouched and ten came
+     back with the rest of the frame re-rendered. They were re-done as face crops — only the face square was sent,
+     so there was nothing else in frame to repaint — and pasted back through a feathered ellipse, which is why the
+     man and the child in pr-repFamily and the "before" panel of pr-roFaceSwap come out of this untouched. Four of
+     the seventeen already carried a token and are bumped; the other thirteen get theirs. */
+  "lib/wf/cards5/blue-silk.jpg": 2, "lib/wf/cards5/editorial-caption.jpg": 2, "lib/wf/cards5/fairy-wings.jpg": 2,
+  "lib/wf/cards5/look-gold-parasol.jpg": 2, "lib/wf/cards5/manga-panel.jpg": 2, "lib/wf/cards5/pr-repFamily.jpg": 2,
+  "lib/wf/cards5/pr-roFaceSwap.jpg": 2, "lib/wf/cards5/wed-veil-3.jpg": 2, "lib/wf/cards5/white-balance-fix.jpg": 2,
+  "lib/wf/imagine/th/background-gardenPath.jpg": 2, "lib/wf/imagine/th/colortone-midnightLaceMood.jpg": 2, "lib/wf/imagine/th/faceclear-lowRes.jpg": 2,
+  "lib/wf/imagine/th/hairmakeup-softGlam.jpg": 2
 };
 function libArt(p){
   var k=String(p||"").replace(/^\.?\//, "").split("?")[0];

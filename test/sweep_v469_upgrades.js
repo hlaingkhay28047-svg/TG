@@ -178,10 +178,16 @@ const DECLARED = [
      face and replaced under their own names, one tag per set. Restated here in
      full, name for name, because that is what D0 is for: the worker cannot gain
      an entry, or lose a name out of one, without a human writing it here too.
-     Seventeen pictures the gate refused keep the old face and are deliberately
-     absent, as are the /lib/vid/vw-* cards, which were never in the wave. All six
-     carry drop: true in the worker — they delete without refilling, because the
-     LIB_ART_REV token already fetches the new picture under a new url. */
+     Seventeen pictures the gate refused kept the old face and are deliberately
+     absent from these six, as are the /lib/vid/vw-* cards, which were never in
+     the wave. All six carry drop: true in the worker — they delete without
+     refilling, because the LIB_ART_REV token already fetches the new picture
+     under a new url.
+
+     6.113.1 adds two more, for those same seventeen: re-done as face crops and
+     now shipped, so they need their own tags. They are separate entries and not
+     an edit of the six, because one marker fires once — folding them in would
+     mean a device that already took 6.113.0 never receives these. */
   { tag: "./__lib-purge-v6-113-0-face-cards5",
     re: new RegExp("/lib/wf/cards5/(" + [
       "anime-2d-portrait", "anime-3d-portrait", "bg-replace", "bridal-decor", "business-headshot",
@@ -300,6 +306,16 @@ const DECLARED = [
       "vt-4k60", "vt-anime", "vt-char30", "vt-charSwap", "vt-erasesub", "vt-extend", "vt-extend30", "vt-faceSwap",
       "vt-filmlook", "vt-headswap", "vt-heritage", "vt-lego", "vt-multiangle", "vt-pixel", "vt-restore",
       "vt-sceneswap", "vt-translate", "vt-vangogh"
+    ].join("|") + ")\\.jpg$") },
+  { tag: "./__lib-purge-v6-113-1-face17-cards5",
+    re: new RegExp("/lib/wf/cards5/(" + [
+      "blue-silk", "editorial-caption", "fairy-wings", "look-gold-parasol", "manga-panel", "pr-repFamily",
+      "pr-roFaceSwap", "studio-look-copy", "wed-veil-3", "white-balance-fix"
+    ].join("|") + ")\\.jpg$") },
+  { tag: "./__lib-purge-v6-113-1-face17-imagine-th",
+    re: new RegExp("/lib/wf/imagine/th/(" + [
+      "background-gardenPath", "colortone-midnightLaceMood", "faceclear-lowRes", "hairmakeup-softGlam",
+      "portrait-beach", "portrait-flowerGarden", "surface-naturalFlowers"
     ].join("|") + ")\\.jpg$") }
 ];
 const declaredInSw = (listBlock.match(/\{ tag: "([^"]+)"/g) || []).map(s => s.replace(/^\{ tag: "|"$/g, ""));

@@ -1,11 +1,6 @@
 {
- "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed — these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set — re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign — pinned to __lib-purge-v6-17-0-couple-compose. 6.29.2: Imagine's banner, four card pairs and 54 template thumbnails re-shot on the brand model under their own names (6.29.1 had replaced the thumbnails and the banner in place with no entry) — pinned to __lib-purge-v6-29-2-imagine. 6.29.3: the Imagine hero's motion clip pair (mp4 + webm), replaced in place in 6.29.2 — recorded under the same tag; the clips skip LIB_CACHE, the URL token (LIB_ART_REV) is the repair. 6.30.0: Portrait Scene's card after and its Golden Rice Field thumbnail re-shot with a pose lock (rev 3) — pinned to __lib-purge-v6-30-0-portrait-card; a replaced path keeps one record, the newest. 6.30.0: the four Imagine W1 tools re-shot as short modern fashion with the house beauty retouch — 62 files pinned to __lib-purge-v6-30-0-imagine-w1-beauty (rev 3; Portrait's after and Golden Rice Field rev 4). 6.31.0: the Lighting tool re-shot front-facing on Qwen — 14 files pinned to __lib-purge-v6-31-0-lighting-card (rev 4). 6.32.1: three Imagine hub cards re-made so each Before | After tells its tool's story — Color Tone + Skin's after is the same photo regraded (it had been the Sky Blue Grace look tile, a different scene), Face Clarity's before an honest soft focus and its after the clean picture, Upscale's after the clean picture — pinned to __lib-purge-v6-32-1-repair-cards. 6.113.0: the brand model changed face (owner) — 501 pictures across six sets were re-shot on the new face and replaced under their own names, the largest in-place replacement the studio has made. Six tags, one per set (__lib-purge-v6-113-0-face-cards5 / -imagine / -imagine-th / -lookchips / -looks / -vid), so a device that loses the line between two sets still receives the rest on its next launch. All six carry drop: true — they delete without refilling and say nothing to the page, because every one of these files now rides a fresh LIB_ART_REV token: the page asks for a url no cache holds and already has the new picture, so a refill would download ~40MB of the OLD pictures under urls nothing will request again. Each set is encoded at the highest JPEG quality that still lands it at or under the weight of the art it replaced (looks q86, vid q84, wf/cards5 q89, wf/imagine q89, wf/imagine/th q88, wf/lookchips q91) — install.py had written all 501 at q92/4:4:4 and sweep_v464 E caught the 14.8 MB that cost a phone. Seventeen pictures the acceptance gate refused still carry the old face and are deliberately absent from all six patterns, as are the /lib/vid/vw-* cards, which were never in the wave.",
+ "note": "Files under docs/app/lib REPLACED under their own names. /lib/ is served cache-first and never revalidated, so a replacement is invisible to a returning device until a LIB_PURGES entry NEWER than it clears the cached copy. Recording the shipped bytes here means the next replacement changes the hash and fails the check until whoever made it adds a purge entry and updates this record. Icons are absent by design: LIB_ICON_RE routes them through the network-first branch. 6.7.1: the 6.6.1 entries ran but refilled from the browser's HTTP cache, so their markers are spent on every device and the repair never landed \u2014 these files are re-pinned to the new __lib-purge-v6-7-1-http-refill entry, whose refill bypasses that cache. 6.10.0: the ten vt cards re-arted as one set \u2014 re-pinned to __lib-purge-v6-10-0-cards-v3 (vt-headswap joins the record: first replaced here). 6.17.0: couple-compose.jpg redrawn for the three-input redesign \u2014 pinned to __lib-purge-v6-17-0-couple-compose. 6.29.2: Imagine's banner, four card pairs and 54 template thumbnails re-shot on the brand model under their own names (6.29.1 had replaced the thumbnails and the banner in place with no entry) \u2014 pinned to __lib-purge-v6-29-2-imagine. 6.29.3: the Imagine hero's motion clip pair (mp4 + webm), replaced in place in 6.29.2 \u2014 recorded under the same tag; the clips skip LIB_CACHE, the URL token (LIB_ART_REV) is the repair. 6.30.0: Portrait Scene's card after and its Golden Rice Field thumbnail re-shot with a pose lock (rev 3) \u2014 pinned to __lib-purge-v6-30-0-portrait-card; a replaced path keeps one record, the newest. 6.30.0: the four Imagine W1 tools re-shot as short modern fashion with the house beauty retouch \u2014 62 files pinned to __lib-purge-v6-30-0-imagine-w1-beauty (rev 3; Portrait's after and Golden Rice Field rev 4). 6.31.0: the Lighting tool re-shot front-facing on Qwen \u2014 14 files pinned to __lib-purge-v6-31-0-lighting-card (rev 4). 6.32.1: three Imagine hub cards re-made so each Before | After tells its tool's story \u2014 Color Tone + Skin's after is the same photo regraded (it had been the Sky Blue Grace look tile, a different scene), Face Clarity's before an honest soft focus and its after the clean picture, Upscale's after the clean picture \u2014 pinned to __lib-purge-v6-32-1-repair-cards. 6.113.0: the brand model changed face (owner) \u2014 501 pictures across six sets were re-shot on the new face and replaced under their own names, the largest in-place replacement the studio has made. Six tags, one per set (__lib-purge-v6-113-0-face-cards5 / -imagine / -imagine-th / -lookchips / -looks / -vid), so a device that loses the line between two sets still receives the rest on its next launch. All six carry drop: true \u2014 they delete without refilling and say nothing to the page, because every one of these files now rides a fresh LIB_ART_REV token: the page asks for a url no cache holds and already has the new picture, so a refill would download ~40MB of the OLD pictures under urls nothing will request again. Each set is encoded at the highest JPEG quality that still lands it at or under the weight of the art it replaced (looks q86, vid q84, wf/cards5 q89, wf/imagine q89, wf/imagine/th q88, wf/lookchips q91) \u2014 install.py had written all 501 at q92/4:4:4 and sweep_v464 E caught the 14.8 MB that cost a phone. Seventeen pictures the acceptance gate refused still carry the old face and are deliberately absent from all six patterns, as are the /lib/vid/vw-* cards, which were never in the wave. 6.113.1 \u2014 the seventeen the 6.113.0 gate refused were re-done as face crops (only the face square sent, pasted back through a feathered ellipse) and now ride ?v= too: ten under -cards5 and seven under -imagine-th.",
  "files": [
-  {
-   "path": "docs/app/lib/wf/cards5/studio-look-copy.jpg",
-   "sha256": "8edfc98bee97c7b087ccacb29dabbbd96882ae70a3dc899bb9ad20a389926ff4",
-   "tag": "./__lib-purge-v6-7-1-http-refill"
-  },
   {
    "path": "docs/app/lib/banners/banner-imagine.jpg",
    "sha256": "9d59fe40e254b2bb265fa842cf4129894fb648a7d359b856c0f5a6f684dc8ace",
@@ -22,19 +17,174 @@
    "tag": "./__lib-purge-v6-29-2-imagine"
   },
   {
-   "path": "docs/app/lib/wf/imagine/th/portrait-flowerGarden.jpg",
-   "sha256": "e0a04ef6988f7a92f6ce59b34f0e5aff2e1ac314d5326ac2c58c609a01f8b191",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+   "path": "docs/app/lib/looks/look-evAiry.jpg",
+   "sha256": "00269d3e4edf121c6769ad18ceea86d48a60930d0fdc2c5b130d1817875bbfd4",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
   },
   {
-   "path": "docs/app/lib/wf/imagine/th/portrait-beach.jpg",
-   "sha256": "d391922e24a31ad1138786548a3a243abefcb897d4828b93d45cac69df638dd0",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+   "path": "docs/app/lib/looks/look-evBW.jpg",
+   "sha256": "7dce013834a3026a782b2378abd2587612f6d49e1bbd9a81f29658922291c38a",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
   },
   {
-   "path": "docs/app/lib/wf/imagine/th/surface-naturalFlowers.jpg",
-   "sha256": "e4b8cf41d805699476e4886359207d883814d827f098560a03c85b8bbe83a31a",
-   "tag": "./__lib-purge-v6-30-0-imagine-w1-beauty"
+   "path": "docs/app/lib/looks/look-evCommercial.jpg",
+   "sha256": "405ef03632886dce91936ca2bcbb59a6b427105ab20d829320cfecc299e400eb",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-evEditorial.jpg",
+   "sha256": "20c6d86a55a4c3d7928821501130881044af27c44afb44b07e93f6a83681855b",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-evMatte.jpg",
+   "sha256": "e49e1648366840efc6046bd122a10ed22e40b9502e5eef42b3a4d63fba6d8cbf",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-evNaturalPro.jpg",
+   "sha256": "a8482e3c49cb86d0b1f6255be2c003f5c76c7b2834dcce922673702134bff843",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-evSoftFilm.jpg",
+   "sha256": "44cce0b45faa8a9ac7e557e6cffa2f3b72a717b784eb0489ba527a6c0e1ee0f3",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-evWedding.jpg",
+   "sha256": "760d65b70d4fec47a4ea4d60157a12b49039fe6017f13014cee401183f767ca6",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-muCCD.jpg",
+   "sha256": "753e2c9b99820118b348cb4ea8e20aa0344464e831ee5cfe0aaca5a673213398",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-muCream.jpg",
+   "sha256": "69c0c75012c3e9039336b3133bbfdbfc69775e76444251e700ae19134500c7ca",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-muDouyin.jpg",
+   "sha256": "fb3982a5e5017c12aa70a45cd197f58cd5be2b1d699221579198db9f11fe404a",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-muFirstLove.jpg",
+   "sha256": "4c2e5504acecf73990c6fb77d189092893aa56d6ebc32e72e9f991aa16f2e7f1",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-muGoddess.jpg",
+   "sha256": "7f55b7d46ace57df17a718859c560598a9f5ab47ed1d83210bfd0cc9160d8aa5",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-muHoney.jpg",
+   "sha256": "af0b50af24ef61c685e5a4fea24f480b73ad7f9bc34cf549c4f3a73bad01dc9d",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-muNatural.jpg",
+   "sha256": "3cc37b6067553a39ba0693d8397c331044033e6db8a6b75f90a05b0e60298d9e",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/looks/look-muPorcelain.jpg",
+   "sha256": "af4d64d84ab889a61206e29fac82eefa4d1571fb3c4b79ed551938bc113e13d7",
+   "tag": "./__lib-purge-v6-113-0-face-looks"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-4k60.jpg",
+   "sha256": "586ad0c7d7aebed3a3e36152105410db80b6b708f456029a9be4803a2aa41b14",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-anime.jpg",
+   "sha256": "b24f8ff17bcd6178e3c9afd6b966f965371973d744d8a42e7569f7d378f4ae00",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-char30.jpg",
+   "sha256": "4c9937329a8281d16e3077b7bd9be87b57f621d9365148cb533025c4d20305e5",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-charSwap.jpg",
+   "sha256": "c67e18a017b47efc2c3b2541d15308d62d09089a2a4653cb898fede0f41670ee",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-erasesub.jpg",
+   "sha256": "66efca8df62557a18040a6a7d821ca29a08a2e332195de5883bb23235ef490ba",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-extend.jpg",
+   "sha256": "7f0daa94f961e3fd05705235a0646ed6493726f5521baf3dcaf68ff52fbafb53",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-extend30.jpg",
+   "sha256": "6813514ff79a2d6cf86b5800727a1244ed6fc491fc985bab702b4523eef81969",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-faceSwap.jpg",
+   "sha256": "7466ade15b9dd4919d6ce796f04d51d89fac96cce106cb40711b307abbb94336",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-filmlook.jpg",
+   "sha256": "f4997ee79e9b71f59f04a6da63dccc9a1b2389dfa5abb545b88a6393d42980be",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-headswap.jpg",
+   "sha256": "47e1ae3722b1b4830e41f89d41b7da67bf6de8ee5e53866a6066118ab62f48e8",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-heritage.jpg",
+   "sha256": "962b9f321fd9b722df9ec1b2ef00075a53bff58b5d844b05dd58501f66bee946",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-lego.jpg",
+   "sha256": "798926b66e8aece169fd1bcecba9303bcf8885bcab9897b228b663b4387aa923",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-multiangle.jpg",
+   "sha256": "87c626aa49ba0705d2166e5ed4cd97d14421227329fa9a49fe18956de524decd",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-pixel.jpg",
+   "sha256": "5cdf956b32fea233ff65376dd1633d34964b185f332c1d00607cc6bc523c1913",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-restore.jpg",
+   "sha256": "ea60dcb05082799ec2a6eec75129bcec886d57c2f40e38ba506a1717a40eaed4",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-sceneswap.jpg",
+   "sha256": "642c2e185412eb4ec245e245679024b0585384c7c750bf2b0b6d1342ab2f46e5",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-translate.jpg",
+   "sha256": "be0096f2a1cb98d45d066537426ffe01c690cb2cf39a7012d08a2bcbdd374fba",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
+  },
+  {
+   "path": "docs/app/lib/vid/vt-vangogh.jpg",
+   "sha256": "b5676f9100d8fbed05e393509ee8b07fed9d8822fc98cab2d40431ceafcd71de",
+   "tag": "./__lib-purge-v6-113-0-face-vid"
   },
   {
    "path": "docs/app/lib/wf/cards5/anime-2d-portrait.jpg",
@@ -50,6 +200,11 @@
    "path": "docs/app/lib/wf/cards5/bg-replace.jpg",
    "sha256": "007e7fe1711fca783ab6d0fbace282fca21dc20c5f3d5b2932c48778e5ceb1f5",
    "tag": "./__lib-purge-v6-113-0-face-cards5"
+  },
+  {
+   "path": "docs/app/lib/wf/cards5/blue-silk.jpg",
+   "sha256": "ea410e9319da459c31cf41d3545cbd9587c576460aa4217c55ea16787e6028f4",
+   "tag": "./__lib-purge-v6-113-1-face17-cards5"
   },
   {
    "path": "docs/app/lib/wf/cards5/bridal-decor.jpg",
@@ -132,9 +287,19 @@
    "tag": "./__lib-purge-v6-113-0-face-cards5"
   },
   {
+   "path": "docs/app/lib/wf/cards5/editorial-caption.jpg",
+   "sha256": "4eac2f17970dce41a20f009eb1a3c4106337a68e20e8dce0610cd558870b13a4",
+   "tag": "./__lib-purge-v6-113-1-face17-cards5"
+  },
+  {
    "path": "docs/app/lib/wf/cards5/elevator-mirror.jpg",
    "sha256": "bc019e11f0403a758cdcb3cf01011c8941dba429e7528effd39b83c6741c7a5d",
    "tag": "./__lib-purge-v6-113-0-face-cards5"
+  },
+  {
+   "path": "docs/app/lib/wf/cards5/fairy-wings.jpg",
+   "sha256": "22892f4b37e2b2077a1bc4a7ad409427150774e2b131eaeb9f97d59618f9897a",
+   "tag": "./__lib-purge-v6-113-1-face17-cards5"
   },
   {
    "path": "docs/app/lib/wf/cards5/film-grade.jpg",
@@ -292,6 +457,11 @@
    "tag": "./__lib-purge-v6-113-0-face-cards5"
   },
   {
+   "path": "docs/app/lib/wf/cards5/look-gold-parasol.jpg",
+   "sha256": "515a41d3360002e8e77b7ec7fc2900752f784a8ff14d9697d0a8dbd3045a0072",
+   "tag": "./__lib-purge-v6-113-1-face17-cards5"
+  },
+  {
    "path": "docs/app/lib/wf/cards5/look-golden-grecian.jpg",
    "sha256": "bb4f3f05de75f7740b97b37ed2a81a097cd49b2f0615f7e97d96b1df7362e228",
    "tag": "./__lib-purge-v6-113-0-face-cards5"
@@ -350,6 +520,11 @@
    "path": "docs/app/lib/wf/cards5/magazine-cover.jpg",
    "sha256": "eee3024a3d61caf90bb2440d2267a11c6ae245fbdbe634d04bf5bfe9cb0f1a6d",
    "tag": "./__lib-purge-v6-113-0-face-cards5"
+  },
+  {
+   "path": "docs/app/lib/wf/cards5/manga-panel.jpg",
+   "sha256": "8fc09329e92c2f19a3f478daa15741ab07a706c7b278956b3e404fc0e226d731",
+   "tag": "./__lib-purge-v6-113-1-face17-cards5"
   },
   {
    "path": "docs/app/lib/wf/cards5/master-bgfg-replace.jpg",
@@ -532,6 +707,11 @@
    "tag": "./__lib-purge-v6-113-0-face-cards5"
   },
   {
+   "path": "docs/app/lib/wf/cards5/pr-repFamily.jpg",
+   "sha256": "171e15a2ef9f142c95851183de253e4777404a72dfbe1de5456138f12c1d1b33",
+   "tag": "./__lib-purge-v6-113-1-face17-cards5"
+  },
+  {
    "path": "docs/app/lib/wf/cards5/pr-repSolo.jpg",
    "sha256": "7b39045f970b61ff8059a30fcc3db6c2f1e58efede2322b51c0d163608bedf1b",
    "tag": "./__lib-purge-v6-113-0-face-cards5"
@@ -565,6 +745,11 @@
    "path": "docs/app/lib/wf/cards5/pr-roFaceRep.jpg",
    "sha256": "e97e6923627363e653c27a3dfbec5e5fd0e8dc47a245a6c206819e4899f043c5",
    "tag": "./__lib-purge-v6-113-0-face-cards5"
+  },
+  {
+   "path": "docs/app/lib/wf/cards5/pr-roFaceSwap.jpg",
+   "sha256": "f959d8f54816babf18dbe680f5e9275dc9edf04453bb2db7626c8953dfc9dcdc",
+   "tag": "./__lib-purge-v6-113-1-face17-cards5"
   },
   {
    "path": "docs/app/lib/wf/cards5/pr-roFgRep.jpg",
@@ -715,6 +900,11 @@
    "path": "docs/app/lib/wf/cards5/spotlight-stage.jpg",
    "sha256": "5ea8a42e7bcfd2d3085d3af1f7d96ec154f812e011b8ee51953bff9289a1e0b8",
    "tag": "./__lib-purge-v6-113-0-face-cards5"
+  },
+  {
+   "path": "docs/app/lib/wf/cards5/studio-look-copy.jpg",
+   "sha256": "099b45fb45c74a3f3aa6736d399585eecda2d349509fc9726eda1a5f9c048525",
+   "tag": "./__lib-purge-v6-113-1-face17-cards5"
   },
   {
    "path": "docs/app/lib/wf/cards5/subject-face.jpg",
@@ -932,6 +1122,11 @@
    "tag": "./__lib-purge-v6-113-0-face-cards5"
   },
   {
+   "path": "docs/app/lib/wf/cards5/wed-veil-3.jpg",
+   "sha256": "44a85a1b10ff0e30ed4fbc805c1b35f787109b3954a8aa254074223f78a49f91",
+   "tag": "./__lib-purge-v6-113-1-face17-cards5"
+  },
+  {
    "path": "docs/app/lib/wf/cards5/wed-veil-4.jpg",
    "sha256": "37e9eb98b2c40ad12deab7bc10324706c1a71342579ef2a5a06dff3cea796c26",
    "tag": "./__lib-purge-v6-113-0-face-cards5"
@@ -940,6 +1135,11 @@
    "path": "docs/app/lib/wf/cards5/wed-veil-5.jpg",
    "sha256": "79bb81db00a66e9ab9f9e723d7e1eff260fe632429f0bf4677612588fab5e9ad",
    "tag": "./__lib-purge-v6-113-0-face-cards5"
+  },
+  {
+   "path": "docs/app/lib/wf/cards5/white-balance-fix.jpg",
+   "sha256": "2dbfa3c928bde977d1d0bb39f6c0cc78ff93296a45d2c136916a32f18f26abc0",
+   "tag": "./__lib-purge-v6-113-1-face17-cards5"
   },
   {
    "path": "docs/app/lib/wf/cards5/y2k-poster.jpg",
@@ -1162,6 +1362,11 @@
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
   },
   {
+   "path": "docs/app/lib/wf/imagine/th/background-gardenPath.jpg",
+   "sha256": "9435ef8cb00245fff628a5a1fc92e8445b718f3eddd03dadd6620d8d4daedd37",
+   "tag": "./__lib-purge-v6-113-1-face17-imagine-th"
+  },
+  {
    "path": "docs/app/lib/wf/imagine/th/background-greyGradient.jpg",
    "sha256": "c4dbdcb69330141f1c1ebf3b5295f6f8e4b5130325a3960e8980cfd2b21264f1",
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
@@ -1357,6 +1562,11 @@
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
   },
   {
+   "path": "docs/app/lib/wf/imagine/th/colortone-midnightLaceMood.jpg",
+   "sha256": "35fcdf3071ce4887b776ea33a4b7e54444fefc5f5ecfc27e4a4fd6b93fd96074",
+   "tag": "./__lib-purge-v6-113-1-face17-imagine-th"
+  },
+  {
    "path": "docs/app/lib/wf/imagine/th/colortone-moodyBronzeSoft.jpg",
    "sha256": "ff34327883cb4b7a55c937bb564ac98c67fffb97a169592b6b6ed67248ea09af",
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
@@ -1522,6 +1732,11 @@
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
   },
   {
+   "path": "docs/app/lib/wf/imagine/th/faceclear-lowRes.jpg",
+   "sha256": "b1d19940f136e201a389ace68ea9ba468056c83e21acadd80c21097e9038548d",
+   "tag": "./__lib-purge-v6-113-1-face17-imagine-th"
+  },
+  {
    "path": "docs/app/lib/wf/imagine/th/faceclear-motionBlur.jpg",
    "sha256": "57342ed07e90e0fd0cc8097c4616c660120a070c7c40a38a1b70a1371008c8d4",
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
@@ -1610,6 +1825,11 @@
    "path": "docs/app/lib/wf/imagine/th/hairmakeup-smokyEye.jpg",
    "sha256": "018bdfd2ae03b54aae1886b79a87ad46285ba4d49a811079758c8ccc22bdfb86",
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/hairmakeup-softGlam.jpg",
+   "sha256": "061d33924d68c008953b3f832ca627f230a6891be08e8ea4f53e725f356ec05a",
+   "tag": "./__lib-purge-v6-113-1-face17-imagine-th"
   },
   {
    "path": "docs/app/lib/wf/imagine/th/idphoto-blackSuit.jpg",
@@ -1922,6 +2142,11 @@
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
   },
   {
+   "path": "docs/app/lib/wf/imagine/th/portrait-beach.jpg",
+   "sha256": "bb8d5cda7fe35358c1a02fc8d49a6ebda496021c05993b45e4f93816aaed4ff8",
+   "tag": "./__lib-purge-v6-113-1-face17-imagine-th"
+  },
+  {
    "path": "docs/app/lib/wf/imagine/th/portrait-blueTwilight.jpg",
    "sha256": "e27a123327908f861dfbc38f5661ef53d7cce373d274ea93211c9f8caf098d55",
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
@@ -1930,6 +2155,11 @@
    "path": "docs/app/lib/wf/imagine/th/portrait-countryField.jpg",
    "sha256": "9330b395265991a202d32f573d9ab1582e246a967e326b4861e3a5df6781c702",
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/portrait-flowerGarden.jpg",
+   "sha256": "581201b35c9684f09c44717ac315f884e6ff006ae086e26d15cba2e27c1b74df",
+   "tag": "./__lib-purge-v6-113-1-face17-imagine-th"
   },
   {
    "path": "docs/app/lib/wf/imagine/th/portrait-goldenHill.jpg",
@@ -2135,6 +2365,11 @@
    "path": "docs/app/lib/wf/imagine/th/surface-meadowGrass.jpg",
    "sha256": "2ca290fc352710fdcf1a8f4bc5bda879c49e5bb955829171bf569d4d52d13112",
    "tag": "./__lib-purge-v6-113-0-face-imagine-th"
+  },
+  {
+   "path": "docs/app/lib/wf/imagine/th/surface-naturalFlowers.jpg",
+   "sha256": "331cfef230c19837f623e76c86e4766f272366d39ff1d058f47b22b78e7779f3",
+   "tag": "./__lib-purge-v6-113-1-face17-imagine-th"
   },
   {
    "path": "docs/app/lib/wf/imagine/th/surface-naturalGrass.jpg",
@@ -2370,176 +2605,6 @@
    "path": "docs/app/lib/wf/lookchips/pt_window.jpg",
    "sha256": "6b18eda22f37a1fcdbaedb0f51a8227fe3a139b28b09ef6e4070a873b2be0fa0",
    "tag": "./__lib-purge-v6-113-0-face-lookchips"
-  },
-  {
-   "path": "docs/app/lib/looks/look-evAiry.jpg",
-   "sha256": "00269d3e4edf121c6769ad18ceea86d48a60930d0fdc2c5b130d1817875bbfd4",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-evBW.jpg",
-   "sha256": "7dce013834a3026a782b2378abd2587612f6d49e1bbd9a81f29658922291c38a",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-evCommercial.jpg",
-   "sha256": "405ef03632886dce91936ca2bcbb59a6b427105ab20d829320cfecc299e400eb",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-evEditorial.jpg",
-   "sha256": "20c6d86a55a4c3d7928821501130881044af27c44afb44b07e93f6a83681855b",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-evMatte.jpg",
-   "sha256": "e49e1648366840efc6046bd122a10ed22e40b9502e5eef42b3a4d63fba6d8cbf",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-evNaturalPro.jpg",
-   "sha256": "a8482e3c49cb86d0b1f6255be2c003f5c76c7b2834dcce922673702134bff843",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-evSoftFilm.jpg",
-   "sha256": "44cce0b45faa8a9ac7e557e6cffa2f3b72a717b784eb0489ba527a6c0e1ee0f3",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-evWedding.jpg",
-   "sha256": "760d65b70d4fec47a4ea4d60157a12b49039fe6017f13014cee401183f767ca6",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-muCCD.jpg",
-   "sha256": "753e2c9b99820118b348cb4ea8e20aa0344464e831ee5cfe0aaca5a673213398",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-muCream.jpg",
-   "sha256": "69c0c75012c3e9039336b3133bbfdbfc69775e76444251e700ae19134500c7ca",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-muDouyin.jpg",
-   "sha256": "fb3982a5e5017c12aa70a45cd197f58cd5be2b1d699221579198db9f11fe404a",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-muFirstLove.jpg",
-   "sha256": "4c2e5504acecf73990c6fb77d189092893aa56d6ebc32e72e9f991aa16f2e7f1",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-muGoddess.jpg",
-   "sha256": "7f55b7d46ace57df17a718859c560598a9f5ab47ed1d83210bfd0cc9160d8aa5",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-muHoney.jpg",
-   "sha256": "af0b50af24ef61c685e5a4fea24f480b73ad7f9bc34cf549c4f3a73bad01dc9d",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-muNatural.jpg",
-   "sha256": "3cc37b6067553a39ba0693d8397c331044033e6db8a6b75f90a05b0e60298d9e",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/looks/look-muPorcelain.jpg",
-   "sha256": "af4d64d84ab889a61206e29fac82eefa4d1571fb3c4b79ed551938bc113e13d7",
-   "tag": "./__lib-purge-v6-113-0-face-looks"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-4k60.jpg",
-   "sha256": "586ad0c7d7aebed3a3e36152105410db80b6b708f456029a9be4803a2aa41b14",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-anime.jpg",
-   "sha256": "b24f8ff17bcd6178e3c9afd6b966f965371973d744d8a42e7569f7d378f4ae00",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-char30.jpg",
-   "sha256": "4c9937329a8281d16e3077b7bd9be87b57f621d9365148cb533025c4d20305e5",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-charSwap.jpg",
-   "sha256": "c67e18a017b47efc2c3b2541d15308d62d09089a2a4653cb898fede0f41670ee",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-erasesub.jpg",
-   "sha256": "66efca8df62557a18040a6a7d821ca29a08a2e332195de5883bb23235ef490ba",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-extend.jpg",
-   "sha256": "7f0daa94f961e3fd05705235a0646ed6493726f5521baf3dcaf68ff52fbafb53",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-extend30.jpg",
-   "sha256": "6813514ff79a2d6cf86b5800727a1244ed6fc491fc985bab702b4523eef81969",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-faceSwap.jpg",
-   "sha256": "7466ade15b9dd4919d6ce796f04d51d89fac96cce106cb40711b307abbb94336",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-filmlook.jpg",
-   "sha256": "f4997ee79e9b71f59f04a6da63dccc9a1b2389dfa5abb545b88a6393d42980be",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-headswap.jpg",
-   "sha256": "47e1ae3722b1b4830e41f89d41b7da67bf6de8ee5e53866a6066118ab62f48e8",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-heritage.jpg",
-   "sha256": "962b9f321fd9b722df9ec1b2ef00075a53bff58b5d844b05dd58501f66bee946",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-lego.jpg",
-   "sha256": "798926b66e8aece169fd1bcecba9303bcf8885bcab9897b228b663b4387aa923",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-multiangle.jpg",
-   "sha256": "87c626aa49ba0705d2166e5ed4cd97d14421227329fa9a49fe18956de524decd",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-pixel.jpg",
-   "sha256": "5cdf956b32fea233ff65376dd1633d34964b185f332c1d00607cc6bc523c1913",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-restore.jpg",
-   "sha256": "ea60dcb05082799ec2a6eec75129bcec886d57c2f40e38ba506a1717a40eaed4",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-sceneswap.jpg",
-   "sha256": "642c2e185412eb4ec245e245679024b0585384c7c750bf2b0b6d1342ab2f46e5",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-translate.jpg",
-   "sha256": "be0096f2a1cb98d45d066537426ffe01c690cb2cf39a7012d08a2bcbdd374fba",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
-  },
-  {
-   "path": "docs/app/lib/vid/vt-vangogh.jpg",
-   "sha256": "b5676f9100d8fbed05e393509ee8b07fed9d8822fc98cab2d40431ceafcd71de",
-   "tag": "./__lib-purge-v6-113-0-face-vid"
   }
  ]
 }
