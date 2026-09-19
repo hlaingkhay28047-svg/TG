@@ -1,0 +1,53 @@
+{
+ "ok": [],
+ "failed": [
+  {
+   "name": "face-cards5__chinese-ink-painting",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-cards5__couple-compose",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-cards5__business-headshot",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-cards5__anime-2d-portrait",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-cards5__lg-key",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-cards4__pr-repFamily",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-cards5__wed-gown-0",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-cards5__neon-street-night",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-imagine__card-idphoto-after",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-imagine__th__idphoto-blackSuit",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-imagine__th__portrait-goldenWind",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  },
+  {
+   "name": "face-lookchips__pt_window",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'imageUrls' input number is greater than the maximum number of inputs, maximum number of inputs: 3\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":nul"
+  }
+ ]
+}
