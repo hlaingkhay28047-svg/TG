@@ -341,8 +341,8 @@ async function boot(browser, port) {
   /* ------------------------------------------------------ E: the release */
   const man = JSON.parse(fs.readFileSync(path.join(PANEL, "release-manifest.json"), "utf8"));
   const ver = JSON.parse(fs.readFileSync(path.join(ROOT, "docs", "app", "version.json"), "utf8"));
-  report("E1) the web app is 6.111.0", ver.v === "6.111.0", ver.v);
-  report("E2) the panel is 6.182.0", String(man.version) === "6.182.0", man.version);
+  report("E1) the web app is 6.112.0", ver.v === "6.112.0", ver.v);
+  report("E2) the panel is 6.183.0", String(man.version) === "6.183.0", man.version);
 
   console.log(failures === 0 ? "\nALL PASS" : "\n" + failures + " FAILED");
   process.exit(failures === 0 ? 0 : 1);

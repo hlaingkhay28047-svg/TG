@@ -706,7 +706,9 @@ textarea.wiz-prompt{min-height:220px}
   .wfmini.wf-span2 .wfv{aspect-ratio:3/2}
   .wfmini.wf-span2 .wfv img{object-position:center 12%}
 }
-.wfmini{border:1px solid var(--line-soft);border-radius:11px;background:var(--panel-2);padding:10px;text-align:left;color:var(--cream);display:flex;flex-direction:column;gap:4px}
+/* 6.112.0 — the frame tightens with the text: 10px of padding and a 4px gap
+   were set when the text box was 134px tall and looked mean beside it. */
+.wfmini{border:1px solid var(--line-soft);border-radius:11px;background:var(--panel-2);padding:8px;text-align:left;color:var(--cream);display:flex;flex-direction:column;gap:3px}
 @media(hover:hover){.wfmini:hover{border-color:var(--gold)}}
 /* v4.81: a video card STAYS selected after the tap, where a pgWf card hands
    off to the wizard and forgets. Inset ring rather than a thicker border so
@@ -761,8 +763,45 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
    ragged one in Photoshop (235px of card-height spread against 54). Two lines
    tall whatever the text does, on both surfaces, and the words are cut to fit
    by ellMark rather than hidden by the box. */
-.wfmini .t{position:relative;font-size:12.5px;font-weight:800;line-height:2.25;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;height:4.5em}
-.wfmini .s{position:relative;font-size:11.5px;color:var(--muted);line-height:2.25;height:6.75em;overflow:hidden;overflow-wrap:anywhere}
+/* 6.112.0 — SMALLER, BUT MEASURED SMALLER. The owner asked for the card to be
+   "သေးသေးကျစ်ကျစ်". Half the card was air: at 390px the text boxes were 133.9px
+   of a 273.1px card while the picture was only 80.7px. The air was line-height
+   2.25, which 6.41.0 chose as a SAFE number after 1.6 clipped Burmese — safe,
+   but never measured.
+
+   SO IT WAS MEASURED, and by the only question that matters: does a glyph lose
+   pixels at the edge of a box with overflow:hidden? A line box clips its own
+   ink when the ink's ascent runs past the font's ascent by more than the
+   half-leading, i.e. when `actualBoundingBoxAscent > fontBoundingBoxAscent +
+   (lineHeight − (fontAscent + fontDescent)) / 2`. Swept over all 194 cards in
+   all nine base languages at 390px, the first line of every title and the last
+   line of every summary:
+
+     summary   1.70  31 boxes clipped   worst overhang  +0.72px   (Vietnamese)
+               1.75   0                                 +0.44px
+               1.80   0                                 +0.15px
+               1.85   0                                 −0.14px   ← the threshold
+               1.95   0                                 −0.71px   ← shipped
+               2.25   0                                 −2.44px   (6.111.0)
+     title     every value from 1.85 to 2.25 is identical — the title is not
+               where the clipping lives, so 1.9 ships with −0.37px to spare.
+
+   The first draft of this wave shipped 1.7 and the check above caught it: it is
+   Vietnamese's stacked diacritics (Ả, Ẳ, Ế), not Burmese, that set the floor.
+
+   AND THE FLOOR MOVES WITH THE FONT, which the CI runner proved by disagreeing:
+   at 1.7 it measured no clipping at all, because Ả is drawn there by a font
+   with different metrics. Shipped 1.95 is clear in both — 0.71px in the
+   container the sweep above was run in, 2.21px on the runner — and the margin
+   was deliberately taken from the TIGHTER of the two, because a student's phone
+   is a third font set nobody can measure from here. 1.95 is that threshold plus
+   0.57px — ten steps of 0.05 below the guess it replaces — and still hands back
+   19.1px of text box per card. The
+   heights stay STATED (6.171.0: the panel's renderer declines max-height), and
+   each one is still EXACTLY its line budget (2 × 1.9, 3 × 1.95), because that
+   budget is what ellCeil cuts against. */
+.wfmini .t{position:relative;font-size:12.5px;font-weight:800;line-height:1.9;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;height:3.8em}
+.wfmini .s{position:relative;font-size:11.5px;color:var(--muted);line-height:1.95;height:5.85em;overflow:hidden;overflow-wrap:anywhere}
 /* 6.96.0 — THE CUT THE OWNER PHOTOGRAPHED. Measured over all 194 cards at 420px: the two-line ceiling
    cut 138 of them, and the panel (UXP draws no -webkit-line-clamp) cut them with no ellipsis at all, so a
    card simply stopped mid-sentence. The ceiling is three lines now — 136 of the 194 end on their own — and
@@ -4244,7 +4283,7 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=880c3f0f1cf1"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=368bbaac686f"></script>
-<script src="data/whatsnew.js?v=f4465198ff1c"></script>
+<script src="data/whatsnew.js?v=a6b23166e73f"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -30167,7 +30206,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.111.0";
+var APP_VER="6.112.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

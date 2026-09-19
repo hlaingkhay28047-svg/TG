@@ -109,12 +109,17 @@ function sourcePins() {
     /globalThis\.HNK\.ellMark\s*=\s*ellMark/.test(MAIN_C));
 
   /* C — an explicit height, not a ceiling, on both surfaces */
+  /* 6.112.0 — the two heights came down from 4.5em / 6.75em to 3.8em / 5.85em,
+     measured rather than guessed (verify_wf_card_compact holds the sweep). This
+     check never cared what the numbers are — it cares that they are STATED, and
+     that no max-height is asked for. Both still hold, and section B below still
+     measures the words against them, which is the part that matters. */
   report("A7) panel: .wfmini .t and .s state a height; neither asks for a max-height the renderer may decline",
-    /\.wfmini \.t \{[^}]*height: 4\.5em/.test(CSS_C) && !/\.wfmini \.t \{[^}]*max-height/.test(CSS_C)
-    && /\.wfmini \.s \{[^}]*height: 6\.75em/.test(CSS_C) && !/\.wfmini \.s \{[^}]*max-height/.test(CSS_C));
+    /\.wfmini \.t \{[^}]*height: 3\.8em/.test(CSS_C) && !/\.wfmini \.t \{[^}]*max-height/.test(CSS_C)
+    && /\.wfmini \.s \{[^}]*height: 5\.85em/.test(CSS_C) && !/\.wfmini \.s \{[^}]*max-height/.test(CSS_C));
   report("A8) web app: the same two heights, so a card is the same shape on both surfaces",
-    /\.wfmini \.t\{[^}]*height:4\.5em/.test(APP_C) && !/\.wfmini \.t\{[^}]*max-height/.test(APP_C)
-    && /\.wfmini \.s\{[^}]*height:6\.75em/.test(APP_C) && !/\.wfmini \.s\{[^}]*max-height/.test(APP_C));
+    /\.wfmini \.t\{[^}]*height:3\.8em/.test(APP_C) && !/\.wfmini \.t\{[^}]*max-height/.test(APP_C)
+    && /\.wfmini \.s\{[^}]*height:5\.85em/.test(APP_C) && !/\.wfmini \.s\{[^}]*max-height/.test(APP_C));
 
   /* D — the title's marker is out of the flow on both surfaces */
   report("A9) the TITLE's ellipsis is positioned, on both surfaces — in the flow it added the very line it was there to prevent",

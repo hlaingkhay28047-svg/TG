@@ -255,12 +255,47 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
        clips at the element's edge. The fix is half an em of padding on each
        side; what has to be guarded is therefore the ink, not the arithmetic.
 
-       Range.getClientRects reports the painted box directly. For every clamped
-       box this asks: does the ink of the first line, or of the last line the
-       ceiling means to show, fall outside the box that clips it? Fault-inject
-       by deleting the padding from .wfmini .t and this check names the boxes. */
+       6.112.0 — AND THE READING WAS NOT THE INK. This check asked
+       Range.getClientRects and called what came back "the painted box". It is
+       not: Chromium sizes those rects to the FONT'S CONTENT BOX
+       (fontBoundingBoxAscent + fontBoundingBoxDescent), which for the card's
+       Burmese fallback is 25px at an 11.5px font — 2.17em, far taller than
+       anything the glyphs paint. So the number this reported was the distance
+       between two metrics, and it went positive the moment a line box was set
+       shorter than that content box, whether or not one pixel was lost.
+
+       It was settled by rasterising, at 6x supersample, the worst string each
+       of five languages can build, at exactly the baseline CSS places it, and
+       finding the topmost painted row:
+
+         summary 11.5/1.95 (shipped)   ink starts 1.33px INSIDE the box (vi)
+         summary 11.5/1.70 (rejected)  ink starts at 0.00px            (vi)
+         summary 11.5/2.25 (6.111.0)   ink starts 3.17px inside
+         title   12.5/1.90 (shipped)   ink starts 0.83px inside        (vi)
+
+       while getClientRects reported +2 and +3 for the shipped values. The ink
+       is what a student loses, so the ink is what is read here now — the same
+       definition verify_wf_card_compact uses, so the two tests can no longer
+       disagree about whether a glyph is cut:
+
+           clipped at the top  iff  actualAscent > fontAscent + halfLeading
+           halfLeading = (lineHeight - (fontAscent + fontDescent)) / 2
+
+       measured on the first line's own text and the last visible line's own
+       text, because those are the only two that meet the element's edge.
+
+       WHAT THIS CHECK CAN AND CANNOT CATCH, stated so nobody leans on it for
+       the wrong thing. The panel boots in ONE language, so this sees only that
+       language's glyphs: setting .wfmini .s to 1.7 — the value 6.112.0 rejected
+       — leaves this check green, because 1.7 only clips Vietnamese. Fault
+       inject with line-height 1.0 and it names 9 of the 18 boxes. The
+       nine-language floor is guarded by verify_wf_card_compact B2/E4, which
+       walks Burmese, Shan, Kachin and Vietnamese at three widths on both
+       surfaces; what THIS check adds is the news strip (.nw-t / .nw-s), which
+       that test does not look at. */
     const clamp = await page.evaluate(() => {
       const px = v => Math.round(v * 100) / 100;
+      const cv = document.createElement("canvas"), cx = cv.getContext("2d");
       const bad = [];
       let seen = 0;
       [...document.querySelectorAll(".wfmini .t, .wfmini .s, .nw-t, .nw-s")].forEach(el => {
@@ -268,24 +303,45 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
         if (bb.height < 4 || bb.width < 4) return;
         const cs = getComputedStyle(el);
         if (cs.overflow !== "hidden" && cs.overflowY !== "hidden") return;
-        const r = document.createRange();
-        r.selectNodeContents(el);
-        let rects;
-        try { rects = [...r.getClientRects()].filter(x => x.height > 0.5 && x.width > 0.5); } catch (e) { return; }
-        if (!rects.length) return;
-        const lines = [];
-        rects.forEach(x => {
-          const hit = lines.find(l => Math.abs(l.top - x.top) < 2);
-          if (hit) hit.bottom = Math.max(hit.bottom, x.bottom);
-          else lines.push({ top: x.top, bottom: x.bottom });
-        });
-        lines.sort((a, b) => a.top - b.top);
+        /* the element's own words; the clamp marker is a separate, absolutely
+           placed span and is not part of the sentence */
+        const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, { acceptNode: n =>
+          (n.parentNode && n.parentNode.classList && n.parentNode.classList.contains("ell"))
+            ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+        let node = null, n;
+        while ((n = w.nextNode())) if (!node || n.nodeValue.length > node.nodeValue.length) node = n;
+        if (!node) return;
+        const txt = node.nodeValue || "";
+        if (!txt.trim()) return;
         const lh = parseFloat(cs.lineHeight) || bb.height;
-        /* the lines the ceiling means to show: those whose LINE box is inside */
-        const vis = lines.filter(l => (l.top + (l.bottom - l.top) / 2 - lh / 2) + lh <= bb.bottom + 0.75);
-        const last = vis.length ? vis[vis.length - 1] : lines[0];
-        const overTop = px(Math.max(bb.top - lines[0].top, 0));
-        const overBot = px(Math.max(last.bottom - bb.bottom, 0));
+        if (!(lh > 0)) return;
+        /* the rows the browser really laid out, and where each one starts */
+        const r = document.createRange(); r.selectNodeContents(node);
+        let rects; try { rects = [...r.getClientRects()].filter(x => x.height > 0.5 && x.width > 0.5); } catch (e) { return; }
+        if (!rects.length) return;
+        const tops = [];
+        rects.forEach(x => { const t = Math.round(x.top * 10) / 10; if (!tops.some(v => Math.abs(v - t) < 2)) tops.push(t); });
+        tops.sort((a, b) => a - b);
+        const topAt = i => { const q = document.createRange(); q.setStart(node, i); q.setEnd(node, i + 1);
+          const b2 = q.getBoundingClientRect(); return b2.height > 0 ? b2.top : -1; };
+        const startOf = k => { let lo = 0, hi = txt.length - 1, ans = txt.length - 1;
+          while (lo <= hi) { const mid = (lo + hi) >> 1, t = topAt(mid);
+            if (t < 0) { lo = mid + 1; continue; }
+            if (t >= tops[k] - 0.6) { ans = mid; hi = mid - 1; } else lo = mid + 1; }
+          return ans; };
+        /* only the lines the ceiling means to show can meet the element's edge */
+        const shown = Math.max(1, Math.min(tops.length, Math.round(bb.height / lh)));
+        const firstEnd = tops.length > 1 ? startOf(1) : txt.length;
+        const lastStart = shown > 1 ? startOf(shown - 1) : 0;
+        cx.font = cs.fontStyle + " " + cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+        const mAll = cx.measureText(txt);
+        const A = mAll.fontBoundingBoxAscent, D = mAll.fontBoundingBoxDescent;
+        if (!(isFinite(A) && isFinite(D))) return;
+        const half = (lh - (A + D)) / 2;
+        const m0 = cx.measureText(txt.slice(0, firstEnd));
+        const mL = cx.measureText(txt.slice(lastStart, shown > 1 ? (shown < tops.length ? startOf(shown) : txt.length) : txt.length));
+        const overTop = px(Math.max(m0.actualBoundingBoxAscent - A - half, 0));
+        const overBot = px(Math.max(mL.actualBoundingBoxDescent - D - half, 0));
         seen++;
         if (overTop > 0.6 || overBot > 0.6)
           bad.push((el.className || el.tagName) + " top+" + overTop + " bot+" + overBot);

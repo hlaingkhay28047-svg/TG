@@ -1062,3 +1062,15 @@ jobs:
       # the fix.
       - name: Verify the optional image slot draws one box, shows its photograph, and says "Optional"
         run: PORT=8931 node test/verify_wf_optional_slot.js
+
+      # 6.112.0 — THE CARD IS SMALLER, AND THE MEASUREMENT SAYS WHAT THAT COST.
+      # `line-height: 2.25` was chosen in 6.41.0 as a SAFE number after 1.6
+      # clipped Burmese, and never measured; it was carrying 7.1px of nothing on
+      # every line. This test measures the thing that actually matters — whether
+      # a glyph loses pixels at the edge of a box with overflow:hidden — per
+      # laid-out line, in nine languages, on both surfaces; proves the same words
+      # are still shown by re-rendering the page with 6.111.0's metrics; and
+      # injects 1.7 back, which clipped 31 Vietnamese boxes and is how the floor
+      # was found.
+      - name: Verify the Smart Workflow card is measurably smaller with no clipped glyph and no lost word
+        run: PORT=8931 node test/verify_wf_card_compact.js

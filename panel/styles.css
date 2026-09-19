@@ -2050,7 +2050,7 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    loses that line at its own border instead of painting it onto the page
    between two cards, which is what the owner photographed on 6.173.0. */
 .wfmini { position: relative; display: flex; flex-direction: column; width: 100%; min-width: 0;
-  margin: 0 0 8px; padding: 10px; box-sizing: border-box; overflow: hidden;
+  margin: 0 0 8px; padding: 8px; box-sizing: border-box; overflow: hidden;
   border: 1px solid var(--line-soft); border-radius: 11px; background-color: var(--panel-2);
   color: var(--text); text-align: left; cursor: pointer; }
 @media (min-width:460px){
@@ -2143,12 +2143,21 @@ select.inp:focus, .lang-sel:focus, .hnk-sel:focus, .hnk-model:focus {
    height is not a request — the box is two lines tall whatever the text does,
    in both engines, so a row of cards lines up. The words themselves are cut
    to fit by ellMark, called from the Workflows screen's layoutGrid. */
-.wfmini .t { position: relative; display: block; margin-top: 4px; height: 4.5em;
-  font-size: 12.5px; font-weight: 800; line-height: 2.25; overflow: hidden; }
+/* 6.112.0 — the app's measured compaction, box for box (the sweep and the
+   numbers are in docs/app/index.html above .wfmini .t): a line box clips its own
+   ink when the ink ascent passes the font ascent by more than the half-leading,
+   and over all 194 cards in nine languages the summary's threshold is 1.85 in
+   the container that swept it — 1.70 clipped 31 Vietnamese boxes there and none
+   on the CI runner, whose fonts are not the same. 1.95 and 1.9 ship, clear in
+   both (0.71px and 2.21px on the summary), where 2.25 carried 7.1px of nothing
+   per line. Stated heights, as this
+   renderer requires, and each is exactly its line budget. */
+.wfmini .t { position: relative; display: block; margin-top: 3px; height: 3.8em;
+  font-size: 12.5px; font-weight: 800; line-height: 1.9; overflow: hidden; }
 /* 6.167.0 — three lines, and a marker where the words really run on (the app's own 6.96.0 rule: 138 of
    194 cards were cut at two lines, and this renderer cut them with no ellipsis at all). */
-.wfmini .s { position: relative; display: block; margin-top: 4px; margin-bottom: 4px; height: 6.75em;
-  font-size: 11.5px; color: var(--muted); line-height: 2.25; overflow: hidden; }
+.wfmini .s { position: relative; display: block; margin-top: 3px; margin-bottom: 3px; height: 5.85em;
+  font-size: 11.5px; color: var(--muted); line-height: 1.95; overflow: hidden; }
 /* 6.171.0 — the TITLE's marker was missing from this rule, so it sat in the
    flow and added the third line it was there to prevent: measured 84px of ink
    in a 56px box on "Window Light \u00b7 Window Blinds" and "True Color / White
