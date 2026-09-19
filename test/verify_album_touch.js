@@ -47,8 +47,8 @@ const KEYS = ["alb_touch_note", "alb_sel_none", "alb_sel_photo", "alb_sel_text",
   "alb_move_u", "alb_move_d", "alb_spread_note"];
 const PORT = Number(process.env.PORT || 8931);
 const BASE = "http://127.0.0.1:" + PORT;
-const WEB = "6.113.0";
-const PANEL = "6.184.0";
+const WEB = "6.113.1";
+const PANEL = "6.184.1";
 /* 6.111.0 — WEB/PANEL are the CURRENT release, which E1 pins in lockstep and
    which every release moves. ALBUM_WAVE is a different fact: the release that
    actually SHIPPED this stage, and therefore the release whose What's New row

@@ -1,0 +1,366 @@
+{
+ "note": "The 24 face crops the 6.113.1 wave sent to the endpoint, by geometry rather than by file. Each row is one face: the picture it came from, the YuNet box (cv2.FaceDetectorYN, every box checked by eye on a drawn sheet before it was used), and the square actually cropped \u2014 2.1x the longer side of the box, centred a little above it for hair, clamped inside the frame, and upscaled to 1024 before sending. The crops themselves are not kept: they are derived from the shipped pictures and regenerate exactly from this. pr-repFamily lists only the woman (the man and the child are not ours) and pr-roFaceSwap only the source face and the result (its \"before\" panel has to stay a different person or the card demonstrates nothing).",
+ "engine": "alibaba/qwen-image-3.0-pro/image-edit, ratio 1:1, resolution 2k",
+ "crops": [
+  {
+   "picture": "docs/app/lib/wf/cards5/blue-silk.jpg",
+   "face_box": [
+    438.1,
+    113.7,
+    97.0,
+    135.1
+   ],
+   "crop": {
+    "x": 345,
+    "y": 33,
+    "size": 284
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/editorial-caption.jpg",
+   "face_box": [
+    127.4,
+    110.1,
+    154.6,
+    215.6
+   ],
+   "crop": {
+    "x": 0,
+    "y": 0,
+    "size": 453
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/editorial-caption.jpg",
+   "face_box": [
+    604.4,
+    162.7,
+    138.6,
+    199.7
+   ],
+   "crop": {
+    "x": 464,
+    "y": 43,
+    "size": 419
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/white-balance-fix.jpg",
+   "face_box": [
+    620.1,
+    80.2,
+    165.4,
+    233.5
+   ],
+   "crop": {
+    "x": 458,
+    "y": 0,
+    "size": 490
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/white-balance-fix.jpg",
+   "face_box": [
+    133.4,
+    86.8,
+    172.2,
+    220.1
+   ],
+   "crop": {
+    "x": 0,
+    "y": 0,
+    "size": 462
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/imagine/th/colortone-midnightLaceMood.jpg",
+   "face_box": [
+    178.5,
+    46.2,
+    54.3,
+    72.7
+   ],
+   "crop": {
+    "x": 129,
+    "y": 3,
+    "size": 153
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/imagine/th/faceclear-lowRes.jpg",
+   "face_box": [
+    151.0,
+    146.7,
+    99.7,
+    131.3
+   ],
+   "crop": {
+    "x": 63,
+    "y": 68,
+    "size": 276
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/imagine/th/hairmakeup-softGlam.jpg",
+   "face_box": [
+    149.6,
+    102.3,
+    113.6,
+    153.7
+   ],
+   "crop": {
+    "x": 45,
+    "y": 10,
+    "size": 323
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/imagine/th/portrait-beach.jpg",
+   "face_box": [
+    197.8,
+    60.3,
+    44.0,
+    62.1
+   ],
+   "crop": {
+    "x": 155,
+    "y": 23,
+    "size": 130
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/fairy-wings.jpg",
+   "face_box": [
+    636.2,
+    101.1,
+    44.1,
+    59.5
+   ],
+   "crop": {
+    "x": 596,
+    "y": 65,
+    "size": 125
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/look-gold-parasol.jpg",
+   "face_box": [
+    460.5,
+    71.7,
+    41.5,
+    58.9
+   ],
+   "crop": {
+    "x": 419,
+    "y": 36,
+    "size": 124
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/manga-panel.jpg",
+   "face_box": [
+    176.0,
+    92.9,
+    134.4,
+    186.1
+   ],
+   "crop": {
+    "x": 48,
+    "y": 0,
+    "size": 391
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/manga-panel.jpg",
+   "face_box": [
+    659.1,
+    105.3,
+    141.8,
+    183.8
+   ],
+   "crop": {
+    "x": 537,
+    "y": 0,
+    "size": 386
+   },
+   "style": "manga"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/pr-repFamily.jpg",
+   "face_box": [
+    678.0,
+    110.3,
+    37.0,
+    46.6
+   ],
+   "crop": {
+    "x": 648,
+    "y": 82,
+    "size": 98
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/pr-repFamily.jpg",
+   "face_box": [
+    193.9,
+    46.8,
+    24.5,
+    32.0
+   ],
+   "crop": {
+    "x": 173,
+    "y": 28,
+    "size": 67
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/pr-repFamily.jpg",
+   "face_box": [
+    196.5,
+    367.7,
+    22.5,
+    29.9
+   ],
+   "crop": {
+    "x": 176,
+    "y": 350,
+    "size": 63
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/pr-roFaceSwap.jpg",
+   "face_box": [
+    600.3,
+    69.0,
+    112.4,
+    156.0
+   ],
+   "crop": {
+    "x": 493,
+    "y": 0,
+    "size": 328
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/pr-roFaceSwap.jpg",
+   "face_box": [
+    133.9,
+    413.9,
+    89.6,
+    126.0
+   ],
+   "crop": {
+    "x": 46,
+    "y": 338,
+    "size": 265
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/studio-look-copy.jpg",
+   "face_box": [
+    402.1,
+    63.0,
+    189.4,
+    243.7
+   ],
+   "crop": {
+    "x": 241,
+    "y": 0,
+    "size": 512
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/wed-veil-3.jpg",
+   "face_box": [
+    115.2,
+    57.1,
+    115.8,
+    150.8
+   ],
+   "crop": {
+    "x": 15,
+    "y": 0,
+    "size": 317
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/cards5/wed-veil-3.jpg",
+   "face_box": [
+    513.4,
+    58.1,
+    111.2,
+    149.2
+   ],
+   "crop": {
+    "x": 412,
+    "y": 0,
+    "size": 313
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/imagine/th/background-gardenPath.jpg",
+   "face_box": [
+    179.9,
+    88.4,
+    44.5,
+    59.0
+   ],
+   "crop": {
+    "x": 140,
+    "y": 53,
+    "size": 124
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/imagine/th/portrait-flowerGarden.jpg",
+   "face_box": [
+    197.8,
+    61.1,
+    43.3,
+    61.4
+   ],
+   "crop": {
+    "x": 155,
+    "y": 24,
+    "size": 129
+   },
+   "style": "photo"
+  },
+  {
+   "picture": "docs/app/lib/wf/imagine/th/surface-naturalFlowers.jpg",
+   "face_box": [
+    255.0,
+    189.6,
+    38.4,
+    55.3
+   ],
+   "crop": {
+    "x": 216,
+    "y": 156,
+    "size": 116
+   },
+   "style": "photo"
+  }
+ ]
+}

@@ -8,6 +8,12 @@
  * could keep; it was measured picture by picture and 17 of 518 were refused and
  * kept their old face rather than ship a groom with a new head.
  *
+ * 6.113.1 finished those seventeen by changing the technique rather than
+ * re-running the same job a fourth time: the face alone is cropped out and sent,
+ * so there is no groom, no child and no background in frame for the endpoint to
+ * re-render, and the result is pasted back through a feathered ellipse. They
+ * ship under two purge tags of their own, and B5 now holds that.
+ *
  * That measurement lives in the wave. What lives HERE is everything a future
  * release can silently break:
  *
@@ -52,6 +58,10 @@ const box = vm.createContext({});
 vm.runInContext(SW.match(/var LIB_PURGES = \[[\s\S]*?\n\];/)[0] + "; globalThis.__P = LIB_PURGES;", box);
 const PURGES = box.__P;
 const FACE = PURGES.filter((p) => /__lib-purge-v6-113-0-face-/.test(p.tag));
+/* 6.113.1 — the seventeen the whole-frame gate refused were re-done as face
+   crops (only the face square sent to the endpoint, pasted back through a
+   feathered ellipse) and now ship, under two tags of their own. */
+const FACE17 = PURGES.filter((p) => /__lib-purge-v6-113-1-face17-/.test(p.tag));
 
 /* ================= A) the panel's copies of the studio's art ================= */
 
@@ -146,17 +156,46 @@ const REFUSED = ["wf/cards5/blue-silk.jpg", "wf/cards5/editorial-caption.jpg", "
   "wf/imagine/th/colortone-midnightLaceMood.jpg", "wf/imagine/th/faceclear-lowRes.jpg",
   "wf/imagine/th/hairmakeup-softGlam.jpg", "wf/imagine/th/portrait-beach.jpg",
   "wf/imagine/th/portrait-flowerGarden.jpg", "wf/imagine/th/surface-naturalFlowers.jpg"];
-const wrongRefusal = REFUSED.filter((rel) => {
+/* 6.113.1 re-contracts B5. These seventeen no longer keep the old face: they
+   were re-done as face crops and shipped. What has to stay true is sharper than
+   before, and it is three things at once — each of them is on disk, each is
+   matched by exactly ONE of the two 6.113.1 tags, and NONE of them is matched
+   by a 6.113.0 tag. The last clause is the one worth a test: 6.113.0's six
+   patterns name their files one by one precisely so these seventeen stay out of
+   them, and a careless edit that widened a 6.113.0 pattern to a folder sweep
+   would charge every returning device a re-download of 501 pictures it already
+   has. */
+const wrongRefusal = REFUSED.map((rel) => {
   const url = "/app/lib/" + rel;
-  return !fs.existsSync(path.join(ROOT, "docs/app/lib", rel)) || FACE.some((e) => e.re.test(url));
-});
-report("B5) the seventeen pictures the acceptance gate refused are on disk and are matched by NO face entry — they keep the old face rather than ship a wrong one",
-  REFUSED.length === 17 && wrongRefusal.length === 0, wrongRefusal);
+  const hits = FACE17.filter((e) => e.re.test(url)).map((e) => e.tag);
+  const old = FACE.filter((e) => e.re.test(url)).map((e) => e.tag);
+  if (!fs.existsSync(path.join(ROOT, "docs/app/lib", rel))) return { rel, why: "not on disk" };
+  if (hits.length !== 1) return { rel, why: "matched by " + hits.length + " of the 6.113.1 entries", hits };
+  if (old.length) return { rel, why: "also matched by a 6.113.0 entry", old };
+  return null;
+}).filter(Boolean);
+report("B5) the seventeen the 6.113.0 gate refused now ship: each is on disk, each is matched by exactly one 6.113.1 face-crop entry, and none of them is matched by a 6.113.0 entry",
+  REFUSED.length === 17 && FACE17.length === 2 && wrongRefusal.length === 0, wrongRefusal);
+
+/* And the mirror of B3 for the new pair: between them they match the seventeen
+   and not one file more, over every picture in the two folders they touch. */
+const face17Over = [];
+for (const dir of ["wf/cards5", "wf/imagine/th"]) {
+  for (const f of fs.readdirSync(path.join(ROOT, "docs/app/lib", dir))) {
+    if (!/\.jpg$/.test(f)) continue;
+    const rel = dir + "/" + f;
+    const hit = FACE17.some((e) => e.re.test("/app/lib/" + rel));
+    if (hit !== (REFUSED.indexOf(rel) >= 0)) face17Over.push({ rel, matched: hit });
+  }
+}
+report("B5b) the two 6.113.1 entries match exactly those seventeen across both folders — not one picture more",
+  face17Over.length === 0, face17Over.slice(0, 8));
 
 /* ================= C) drop: true, in the worker itself ================= */
 
-report("C1) all six face entries declare drop: true, and no earlier entry does — the refill is still the default",
-  FACE.every((p) => p.drop === true) && PURGES.filter((p) => p.drop === true).length === FACE.length,
+report("C1) all eight face entries declare drop: true, and no other entry does — the refill is still the default",
+  FACE.every((p) => p.drop === true) && FACE17.every((p) => p.drop === true) &&
+  PURGES.filter((p) => p.drop === true).length === FACE.length + FACE17.length,
   PURGES.filter((p) => p.drop === true).map((p) => p.tag));
 
 function swBox() {
@@ -259,6 +298,6 @@ report("C1b) at least one replaced picture is matched by the face entry alone, s
 
   console.log(failures.length
     ? `\n${failures.length} check(s) failed`
-    : `\nAll checks passed — 501 pictures on the new face, ${FACE.length} drop entries, the panel's copies byte-identical.`);
+    : `\nAll checks passed — all 518 pictures on the new face (501 whole-frame in 6.113.0, the last ${REFUSED.length} as face crops in 6.113.1), ${FACE.length + FACE17.length} drop entries, the panel's copies byte-identical.`);
   process.exit(failures.length ? 1 : 0);
 })();

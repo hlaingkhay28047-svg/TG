@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-113-0";
+var CACHE = "hnk-web-studio-v6-113-1";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -439,6 +439,19 @@ var LIB_PURGES = [
       "vt-4k60", "vt-anime", "vt-char30", "vt-charSwap", "vt-erasesub", "vt-extend", "vt-extend30", "vt-faceSwap",
       "vt-filmlook", "vt-headswap", "vt-heritage", "vt-lego", "vt-multiangle", "vt-pixel", "vt-restore",
       "vt-sceneswap", "vt-translate", "vt-vangogh"
+    ].join("|") + ")\\.jpg$") },
+  /* 6.113.1 — the last seventeen, done as face crops. Same DROP rule as 6.113.0: a bumped ?v= already
+     misses both caches, so refilling 17 dead urls would only cost a phone the download twice. Named one
+     by one, so a device re-fetches exactly the seventeen that changed. */
+  { tag: "./__lib-purge-v6-113-1-face17-cards5", drop: true,
+    re: new RegExp("/lib/wf/cards5/(" + [
+      "blue-silk", "editorial-caption", "fairy-wings", "look-gold-parasol", "manga-panel", "pr-repFamily",
+      "pr-roFaceSwap", "studio-look-copy", "wed-veil-3", "white-balance-fix"
+    ].join("|") + ")\\.jpg$") },
+  { tag: "./__lib-purge-v6-113-1-face17-imagine-th", drop: true,
+    re: new RegExp("/lib/wf/imagine/th/(" + [
+      "background-gardenPath", "colortone-midnightLaceMood", "faceclear-lowRes", "hairmakeup-softGlam",
+      "portrait-beach", "portrait-flowerGarden", "surface-naturalFlowers"
     ].join("|") + ")\\.jpg$") }
 ];
 
