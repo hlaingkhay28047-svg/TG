@@ -28,7 +28,14 @@ const SW = fs.readFileSync(path.join(ROOT, "docs", "app", "sw.js"), "utf8");
 const PANEL_CAT = fs.readFileSync(path.join(ROOT, "panel", "js", "hnk_wf_catalog_data.js"), "utf8");
 const FIX = JSON.parse(fs.readFileSync(path.join(ROOT, "test", "fixtures", "lib-replacements.json"), "utf8"));
 const SWEEP = fs.readFileSync(path.join(ROOT, "test", "sweep_v469_upgrades.js"), "utf8");
-const ID = "couple-compose", TAG = "./__lib-purge-v6-17-0-couple-compose";
+const ID = "couple-compose";
+/* 6.113.0 — THE TAG IS READ, NOT WRITTEN DOWN. It was "./__lib-purge-v6-17-0-couple-compose"
+   as a literal until the brand model changed face and this card was replaced a second time,
+   under a second entry that is now the newest one matching it. A literal here asserts only
+   that somebody typed the same string twice; what this check actually defends is the CONTRACT
+   — a card replaced in place carries a token, the NEWEST matching purge entry, the fixture's
+   shipped bytes under THAT entry's tag, and a restatement in sweep_v469. So the tag comes from
+   the fixture record, and every other half is measured against it. */
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 
 let failures = 0;
@@ -94,16 +101,17 @@ const bytes = fs.existsSync(art) ? fs.readFileSync(art) : null;
 const sz = bytes ? jpegSize(bytes) : null;
 report("D) the card picture is 960x640", !!sz && sz.w === 960 && sz.h === 640, sz);
 const rev = (APP.match(/var LIB_ART_REV = \{[\s\S]*?\n\};/) || [])[0] || "";
-const swEntry = SW.indexOf('{ tag: "' + TAG + '", re: new RegExp("/lib/wf/cards5/(couple-compose)\\\\.jpg$") }') >= 0;
+const TAG = (() => { const r = FIX.files.find(f => f.path === "docs/app/lib/wf/cards5/couple-compose.jpg"); return r ? r.tag : "(no fixture record)"; })();
+const swEntry = SW.indexOf('{ tag: "' + TAG + '"') >= 0;
 /* 6.29.2 — "newest" means the newest entry that MATCHES this card, not the last line of the list: later
    releases add entries for other files (Imagine's art), and the rule that keeps a returning device right
    is verify_lib_purge_complete's E — the last matching entry must be this one. */
 const swLast = (() => { const vm = require("vm"), box = vm.createContext({}); vm.runInContext(SW.match(/var LIB_PURGES = \[[\s\S]*?\n\];/)[0] + "; globalThis.__P = LIB_PURGES;", box); const m = box.__P.filter(p => p.re.test("/app/lib/wf/cards5/couple-compose.jpg")); return m.length > 0 && m[m.length - 1].tag === TAG; })();
 const fixRow = FIX.files.find(f => f.path === "docs/app/lib/wf/cards5/couple-compose.jpg");
 const sha = bytes ? crypto.createHash("sha256").update(bytes).digest("hex") : "";
-report("D2) replaced under its own name: LIB_ART_REV lists it at 2, sw.js carries its own purge entry as the newest, the fixture records the shipped bytes under that tag, and sweep_v469 restates the entry",
-  /"lib\/wf\/cards5\/couple-compose\.jpg": 2/.test(rev) && swEntry && swLast && !!fixRow && fixRow.sha256 === sha && fixRow.tag === TAG &&
-  SWEEP.indexOf('{ tag: "' + TAG + '",') >= 0, { rev: /couple-compose/.test(rev), swEntry, swLast, fix: fixRow && fixRow.tag, shaMatch: !!fixRow && fixRow.sha256 === sha });
+report("D2) replaced under its own name: LIB_ART_REV carries a revision above 1, the NEWEST sw.js purge entry matching this card is the one the fixture names, the fixture records the shipped bytes under it, and sweep_v469 restates that entry",
+  /"lib\/wf\/cards5\/couple-compose\.jpg": ([2-9]|\d\d)/.test(rev) && swEntry && swLast && !!fixRow && fixRow.sha256 === sha && fixRow.tag === TAG &&
+  SWEEP.indexOf('{ tag: "' + TAG + '",') >= 0, { rev: (rev.match(/"lib\/wf\/cards5\/couple-compose\.jpg": (\d+)/) || [])[1], tag: TAG, swEntry, swLast, fix: fixRow && fixRow.tag, shaMatch: !!fixRow && fixRow.sha256 === sha });
 
 /* ---- E) the panel carries it ---- */
 const cat = JSON.parse(PANEL_CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);

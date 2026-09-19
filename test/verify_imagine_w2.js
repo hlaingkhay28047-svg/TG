@@ -144,17 +144,22 @@ report("A6) the archive record keeps the 6.30.0 Imagine row with a title and a l
       IMAGINE.goHub(); await new Promise(r => setTimeout(r, 80));
       }
       const oc = document.querySelector('#pgImagine .im-card[data-tool="outfit"]');
-      out.outfitCard = !!oc && /card-outfit-after\.jpg$/.test(oc.querySelector(".im-hubcmp img.im-base").getAttribute("src")) && /card-outfit-before\.jpg$/.test(oc.querySelector(".im-hubcmp img.im-orig").getAttribute("src"));
+      out.outfitCard = !!oc && /card-outfit-after\.jpg(\?v=\d+)?$/.test(oc.querySelector(".im-hubcmp img.im-base").getAttribute("src")) && /card-outfit-before\.jpg(\?v=\d+)?$/.test(oc.querySelector(".im-hubcmp img.im-orig").getAttribute("src"));
       return out;
     });
-    report("B1) the hub shows the " + WORD + " cards in roster order and the Outfit card is its own Before | After pair (first versions: plain URLs, no ?v=)",
+    /* 6.113.0 — these four url pins ended in .jpg$ because the W2 pictures were FIRST versions:
+       nothing had replaced them, so libArt added no token and a bare path was the honest shape.
+       The face wave replaced every one of them, so each is served as "…jpg?v=N" now. The pins
+       accept the token rather than forbid it — what they are for is that the tile shows ITS OWN
+       picture, and that is the filename, not the query. */
+    report("B1) the hub shows the " + WORD + " cards in roster order and the Outfit card is its own Before | After pair, each under its cache token",
       B.cards.join(",") === ORDER.join(",") && B.outfitCard, B);
     report("B2) the prompt the page would send honours the tool's own lines — Outfit: its clothing-only lock and its AVOID (no shared identity lock), Product: PRODUCT LOCK, Architecture: STRUCTURE LOCK, Describe (your own words, no template): its lock — while Background keeps the shared frame",
       B.outfit && B.product && B.background && B.describe && B.architecture, B);
-    report("B3) Outfit opens with 15 tiles (the Sequin Party tile is its own thumbnail), Architecture with 15, the tool title in the page's language",
-      B.outfitTiles === 15 && /\/th\/outfit-sequinParty\.jpg$/.test(B.sqSrc) && B.archTiles === 15 && B.title === B.wantTitle, B);
+    report("B3) Outfit opens with 15 tiles (the Sequin Party tile is its own thumbnail, under its token), Architecture with 15, the tool title in the page's language",
+      B.outfitTiles === 15 && /\/th\/outfit-sequinParty\.jpg(\?v=\d+)?$/.test(B.sqSrc) && B.archTiles === 15 && B.title === B.wantTitle, B);
     if (HAS_CT) report("B5) Color Tone + Skin opens with 28 preset cards: the first tile shows its own thumbnail, five painted swatch dots (#1F2F4A first) and the mood line in the page's language at 10px; the prompt for Violet Porcelain names the look under the TONE LOCK, the signature skin finish and the gear rule",
-      B.ctTiles === 28 && /\/th\/colortone-rusticBlueGrace\.jpg$/.test(B.ctSrc) && B.ctDots.length === 5 && B.ctDots[0] === "rgb(31, 47, 74)" && B.ctSub === B.ctWantSub && Math.abs(B.ctSubPx - 10) < 0.6 && B.ctPrompt,
+      B.ctTiles === 28 && /\/th\/colortone-rusticBlueGrace\.jpg(\?v=\d+)?$/.test(B.ctSrc) && B.ctDots.length === 5 && B.ctDots[0] === "rgb(31, 47, 74)" && B.ctSub === B.ctWantSub && Math.abs(B.ctSubPx - 10) < 0.6 && B.ctPrompt,
       { tiles: B.ctTiles, dots: B.ctDots, sub: B.ctSub, want: B.ctWantSub, px: B.ctSubPx, src: B.ctSrc, prompt: B.ctPrompt });
     report("B4) no page error", errs.length === 0, errs.slice(0, 3));
   } finally { await browser.close(); }
