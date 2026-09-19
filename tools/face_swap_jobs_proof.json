@@ -1,0 +1,172 @@
+{
+ "jobs": [
+  {
+   "name": "face-cards5__anime-2d-portrait",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/cards5/anime-2d-portrait.jpg",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-cards5__business-headshot",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/cards5/business-headshot.jpg",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-cards5__chinese-ink-painting",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/cards5/chinese-ink-painting.jpg",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-cards5__couple-compose",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/cards5/couple-compose.jpg",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-cards5__lg-key",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/cards5/lg-key.jpg",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-cards5__neon-street-night",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/cards5/neon-street-night.jpg",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-cards5__wed-gown-0",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/cards5/wed-gown-0.jpg",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-cards4__pr-repFamily",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/cards4/pr-repFamily.jpg",
+   "ratio": "4:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-imagine__card-idphoto-after",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/imagine/card-idphoto-after.jpg",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-imagine__th__idphoto-blackSuit",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/imagine/th/idphoto-blackSuit.jpg",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-imagine__th__portrait-goldenWind",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/imagine/th/portrait-goldenWind.jpg",
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  },
+  {
+   "name": "face-lookchips__pt_window",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/frontup.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": "docs/app/lib/wf/lookchips/pt_window.jpg",
+   "ratio": "3:4",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "FACE REPLACEMENT ONLY. The reference photographs show ONE woman — the HNK brand model. Put HER face on the woman in the supplied picture.\n\nHER FACE, from the references: an oval face with a softly pointed chin and high rounded cheekbones; large almond eyes set slightly wide, with a clear double eyelid, a dark-brown iris and long lashes under a soft winged liner; straight well-defined brows with a gentle arch; a small straight nose, narrow at the bridge, rounded at the tip; full lips with a defined cupid's bow and a fuller lower lip; fair porcelain skin with a soft warm blush across the cheeks; early twenties. Keep her face EXACTLY as the references show it — the same eye shape and spacing, the same nose, the same lips, the same jawline and chin, the same skin tone.\n\nIGNORE, in the references: the silver headdress, the silver earrings, the embroidered collar, the clothing and the sky behind her. None of that is part of what to copy. Copy the FACE and nothing else.\n\nTAKE FROM THE SUPPLIED PICTURE, not from the references: her head angle, the direction she is looking, and her expression. Her new face must sit at the same angle, in the same light, with the same expression as the face it replaces.\n\nKEEP UNCHANGED, from the supplied picture: the whole composition, framing and crop; her pose, body, hands and proportions; her HAIR — style, length, colour, parting and the way it falls; her clothing, jewellery and accessories; the background, the set and every object in it; the lighting direction, the shadows and the colour grade; the grain, the softness, the focus and the overall photographic look; every other person in the picture, exactly as they are; and every letter of any text, label, badge, number or watermark — same words, same place, same font, same size.\n\nIF THE PICTURE HAS MORE THAN ONE PANEL — a before/after pair, a numbered IMAGE 1 / IMAGE 2 / RESULT layout, or a strip — she appears more than once. Replace her face in EVERY panel she appears in, and keep each panel's own difference: the before panel stays the before, the after panel stays the after.\n\nDo not restyle, re-light, re-grade, re-crop, upscale, sharpen, denoise or otherwise \"improve\" the picture. Do not change her age or her body. Do not change the skin anywhere except her face. Change nothing but her face."
+  }
+ ]
+}
