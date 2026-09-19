@@ -4283,7 +4283,7 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=880c3f0f1cf1"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=368bbaac686f"></script>
-<script src="data/whatsnew.js?v=a6b23166e73f"></script>
+<script src="data/whatsnew.js?v=88caaada711a"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -4541,13 +4541,13 @@ function setIcnText(elm, name, text, opts){
    fails until you do. */
 var LIB_ART_REV = {
   /* 6.10.0 — the ten Video Smart Workflow cards re-arted as one set (third cut) */
-  "lib/vid/vt-charSwap.jpg": 3, "lib/vid/vt-faceSwap.jpg": 3, "lib/vid/vt-anime.jpg": 3,
-  "lib/vid/vt-filmlook.jpg": 3, "lib/vid/vt-heritage.jpg": 3, "lib/vid/vt-extend.jpg": 3,
-  "lib/vid/vt-restore.jpg": 3, "lib/vid/vt-erasesub.jpg": 3, "lib/vid/vt-char30.jpg": 3,
-  "lib/vid/vt-headswap.jpg": 2,
-  "lib/wf/cards5/look-golden-grecian.jpg": 2, "lib/wf/cards5/studio-look-copy.jpg": 2,
+  "lib/vid/vt-charSwap.jpg": 4, "lib/vid/vt-faceSwap.jpg": 4, "lib/vid/vt-anime.jpg": 4,
+  "lib/vid/vt-filmlook.jpg": 4, "lib/vid/vt-heritage.jpg": 4, "lib/vid/vt-extend.jpg": 4,
+  "lib/vid/vt-restore.jpg": 4, "lib/vid/vt-erasesub.jpg": 4, "lib/vid/vt-char30.jpg": 4,
+  "lib/vid/vt-headswap.jpg": 3,
+  "lib/wf/cards5/look-golden-grecian.jpg": 3, "lib/wf/cards5/studio-look-copy.jpg": 2,
   /* 6.17.0 — Couple Compose redrawn for its three-input redesign, under its own name */
-  "lib/wf/cards5/couple-compose.jpg": 2,
+  "lib/wf/cards5/couple-compose.jpg": 3,
   /* 6.29.2 — Imagine re-shot on the brand model under its own names: the page banner, the four card pairs and the 54 template thumbnails.
      6.29.1 had ALREADY replaced the thumbnails and the banner in place without a revision — the owner opened the templates and saw
      the 6.29.0 library pictures, exactly the failure this map exists for. Every one of them now rides ?v=2. */
@@ -4558,27 +4558,181 @@ var LIB_ART_REV = {
   /* 6.29.3 — and its motion clip pair: the clips skip the worker cache but not the browser's HTTP cache, and 6.29.2 had
      replaced them in place; a device that played the 6.29.1 clip kept it under the hero until this token */
   "lib/banners/motion/banner-imagine.mp4": 2, "lib/banners/motion/banner-imagine.webm": 2,
-  "lib/wf/imagine/card-lighting-before.jpg": 4, "lib/wf/imagine/card-lighting-after.jpg": 4,
-  "lib/wf/imagine/card-portrait-before.jpg": 3, "lib/wf/imagine/card-portrait-after.jpg": 4,
-  "lib/wf/imagine/card-surface-before.jpg": 3, "lib/wf/imagine/card-surface-after.jpg": 3,
-  "lib/wf/imagine/card-weather-before.jpg": 3, "lib/wf/imagine/card-weather-after.jpg": 3,
-  "lib/wf/imagine/th/lighting-window.jpg": 4, "lib/wf/imagine/th/lighting-warmWindow.jpg": 4, "lib/wf/imagine/th/lighting-brightGlow.jpg": 4, "lib/wf/imagine/th/lighting-warm.jpg": 4,
-  "lib/wf/imagine/th/lighting-harshSun.jpg": 4, "lib/wf/imagine/th/lighting-goldenSun.jpg": 4, "lib/wf/imagine/th/lighting-sunRays.jpg": 4, "lib/wf/imagine/th/lighting-afternoon.jpg": 4,
-  "lib/wf/imagine/th/lighting-windowStreaks.jpg": 4, "lib/wf/imagine/th/lighting-leafDapple.jpg": 4, "lib/wf/imagine/th/lighting-soft.jpg": 4, "lib/wf/imagine/th/lighting-goldRim.jpg": 4,
-  "lib/wf/imagine/th/portrait-winterStreet.jpg": 3, "lib/wf/imagine/th/portrait-softGarden.jpg": 3, "lib/wf/imagine/th/portrait-flowerGarden.jpg": 3, "lib/wf/imagine/th/portrait-wildflowerField.jpg": 3,
-  "lib/wf/imagine/th/portrait-countryField.jpg": 3, "lib/wf/imagine/th/portrait-riceField.jpg": 4, "lib/wf/imagine/th/portrait-goldenHill.jpg": 3, "lib/wf/imagine/th/portrait-autumnPark.jpg": 3,
-  "lib/wf/imagine/th/portrait-beach.jpg": 3, "lib/wf/imagine/th/portrait-sunsetSea.jpg": 3, "lib/wf/imagine/th/portrait-morningSun.jpg": 3, "lib/wf/imagine/th/portrait-mistyDawn.jpg": 3,
-  "lib/wf/imagine/th/portrait-goldenWind.jpg": 3, "lib/wf/imagine/th/portrait-goldenSunset.jpg": 3, "lib/wf/imagine/th/portrait-blueTwilight.jpg": 3,
-  "lib/wf/imagine/th/surface-grass.jpg": 3, "lib/wf/imagine/th/surface-naturalGrass.jpg": 3, "lib/wf/imagine/th/surface-meadowGrass.jpg": 3, "lib/wf/imagine/th/surface-wildGrass.jpg": 3,
-  "lib/wf/imagine/th/surface-dryGrass.jpg": 3, "lib/wf/imagine/th/surface-greenFlowerField.jpg": 3, "lib/wf/imagine/th/surface-whiteFlowers.jpg": 3, "lib/wf/imagine/th/surface-naturalFlowers.jpg": 3,
-  "lib/wf/imagine/th/surface-wildflowers.jpg": 3, "lib/wf/imagine/th/surface-goldenSand.jpg": 3, "lib/wf/imagine/th/surface-whiteSand.jpg": 3, "lib/wf/imagine/th/surface-blueLake.jpg": 3,
-  "lib/wf/imagine/th/surface-stillWater.jpg": 3, "lib/wf/imagine/th/surface-pebbles.jpg": 3, "lib/wf/imagine/th/surface-deepBlueSea.jpg": 3,
-  "lib/wf/imagine/th/weather-snowfall.jpg": 3, "lib/wf/imagine/th/weather-lightRain.jpg": 3, "lib/wf/imagine/th/weather-heavyRain.jpg": 3, "lib/wf/imagine/th/weather-fogMist.jpg": 3,
-  "lib/wf/imagine/th/weather-goldenHaze.jpg": 3, "lib/wf/imagine/th/weather-overcast.jpg": 3, "lib/wf/imagine/th/weather-stormClouds.jpg": 3, "lib/wf/imagine/th/weather-rainbow.jpg": 3,
-  "lib/wf/imagine/th/weather-blueHour.jpg": 3, "lib/wf/imagine/th/weather-clearSunny.jpg": 3, "lib/wf/imagine/th/weather-autumnLeaves.jpg": 3, "lib/wf/imagine/th/weather-blossomPetals.jpg": 3,
+  "lib/wf/imagine/card-lighting-before.jpg": 5, "lib/wf/imagine/card-lighting-after.jpg": 5,
+  "lib/wf/imagine/card-portrait-before.jpg": 4, "lib/wf/imagine/card-portrait-after.jpg": 5,
+  "lib/wf/imagine/card-surface-before.jpg": 4, "lib/wf/imagine/card-surface-after.jpg": 4,
+  "lib/wf/imagine/card-weather-before.jpg": 4, "lib/wf/imagine/card-weather-after.jpg": 4,
+  "lib/wf/imagine/th/lighting-window.jpg": 5, "lib/wf/imagine/th/lighting-warmWindow.jpg": 5, "lib/wf/imagine/th/lighting-brightGlow.jpg": 5, "lib/wf/imagine/th/lighting-warm.jpg": 5,
+  "lib/wf/imagine/th/lighting-harshSun.jpg": 5, "lib/wf/imagine/th/lighting-goldenSun.jpg": 5, "lib/wf/imagine/th/lighting-sunRays.jpg": 5, "lib/wf/imagine/th/lighting-afternoon.jpg": 5,
+  "lib/wf/imagine/th/lighting-windowStreaks.jpg": 5, "lib/wf/imagine/th/lighting-leafDapple.jpg": 5, "lib/wf/imagine/th/lighting-soft.jpg": 5, "lib/wf/imagine/th/lighting-goldRim.jpg": 5,
+  "lib/wf/imagine/th/portrait-winterStreet.jpg": 4, "lib/wf/imagine/th/portrait-softGarden.jpg": 4, "lib/wf/imagine/th/portrait-flowerGarden.jpg": 3, "lib/wf/imagine/th/portrait-wildflowerField.jpg": 4,
+  "lib/wf/imagine/th/portrait-countryField.jpg": 4, "lib/wf/imagine/th/portrait-riceField.jpg": 5, "lib/wf/imagine/th/portrait-goldenHill.jpg": 4, "lib/wf/imagine/th/portrait-autumnPark.jpg": 4,
+  "lib/wf/imagine/th/portrait-beach.jpg": 3, "lib/wf/imagine/th/portrait-sunsetSea.jpg": 4, "lib/wf/imagine/th/portrait-morningSun.jpg": 4, "lib/wf/imagine/th/portrait-mistyDawn.jpg": 4,
+  "lib/wf/imagine/th/portrait-goldenWind.jpg": 4, "lib/wf/imagine/th/portrait-goldenSunset.jpg": 4, "lib/wf/imagine/th/portrait-blueTwilight.jpg": 4,
+  "lib/wf/imagine/th/surface-grass.jpg": 4, "lib/wf/imagine/th/surface-naturalGrass.jpg": 4, "lib/wf/imagine/th/surface-meadowGrass.jpg": 4, "lib/wf/imagine/th/surface-wildGrass.jpg": 4,
+  "lib/wf/imagine/th/surface-dryGrass.jpg": 4, "lib/wf/imagine/th/surface-greenFlowerField.jpg": 4, "lib/wf/imagine/th/surface-whiteFlowers.jpg": 4, "lib/wf/imagine/th/surface-naturalFlowers.jpg": 3,
+  "lib/wf/imagine/th/surface-wildflowers.jpg": 4, "lib/wf/imagine/th/surface-goldenSand.jpg": 4, "lib/wf/imagine/th/surface-whiteSand.jpg": 4, "lib/wf/imagine/th/surface-blueLake.jpg": 4,
+  "lib/wf/imagine/th/surface-stillWater.jpg": 4, "lib/wf/imagine/th/surface-pebbles.jpg": 4, "lib/wf/imagine/th/surface-deepBlueSea.jpg": 4,
+  "lib/wf/imagine/th/weather-snowfall.jpg": 4, "lib/wf/imagine/th/weather-lightRain.jpg": 4, "lib/wf/imagine/th/weather-heavyRain.jpg": 4, "lib/wf/imagine/th/weather-fogMist.jpg": 4,
+  "lib/wf/imagine/th/weather-goldenHaze.jpg": 4, "lib/wf/imagine/th/weather-overcast.jpg": 4, "lib/wf/imagine/th/weather-stormClouds.jpg": 4, "lib/wf/imagine/th/weather-rainbow.jpg": 4,
+  "lib/wf/imagine/th/weather-blueHour.jpg": 4, "lib/wf/imagine/th/weather-clearSunny.jpg": 4, "lib/wf/imagine/th/weather-autumnLeaves.jpg": 4, "lib/wf/imagine/th/weather-blossomPetals.jpg": 4,
   /* 6.32.1 — three hub cards re-made so each Before | After tells its tool's story (owner): Color Tone's after is now the same photo regraded
      (it had been a different scene), Face Clarity's before is an honest soft focus and its after the clean picture, Upscale's after the clean picture: ?v=2 */
-  "lib/wf/imagine/card-colortone-after.jpg": 2, "lib/wf/imagine/card-faceclear-before.jpg": 2, "lib/wf/imagine/card-faceclear-after.jpg": 2, "lib/wf/imagine/card-upscale-after.jpg": 2
+  "lib/wf/imagine/card-colortone-after.jpg": 3, "lib/wf/imagine/card-faceclear-before.jpg": 3, "lib/wf/imagine/card-faceclear-after.jpg": 3, "lib/wf/imagine/card-upscale-after.jpg": 3,
+  /* 6.113.0 — the brand model changed face (owner). Every studio picture that carried the Freeform hero was re-shot on the new
+     face and replaced in place, so every one of them needs its token: 501 files across six sets. The replacement is a patch —
+     in each picture only OUR model's face changed; every other person in the frame (groom, second woman, child, reference panel)
+     came out of the edit unchanged, which is what the owner asked for and what the acceptance gate measured picture by picture. */
+  /* the Smart Workflow cards — 180 */
+  "lib/wf/cards5/anime-2d-portrait.jpg": 2, "lib/wf/cards5/anime-3d-portrait.jpg": 2, "lib/wf/cards5/bg-replace.jpg": 2,
+  "lib/wf/cards5/bridal-decor.jpg": 2, "lib/wf/cards5/business-headshot.jpg": 2, "lib/wf/cards5/character-sheet.jpg": 2,
+  "lib/wf/cards5/chinese-ink-painting.jpg": 2, "lib/wf/cards5/cinematic-poster.jpg": 2, "lib/wf/cards5/cl-full.jpg": 2,
+  "lib/wf/cards5/cl-hands.jpg": 2, "lib/wf/cards5/cl-legs.jpg": 2, "lib/wf/cards5/cl-people.jpg": 2,
+  "lib/wf/cards5/comic-to-real.jpg": 2, "lib/wf/cards5/concept-poster.jpg": 2, "lib/wf/cards5/cute-3d-figure.jpg": 2,
+  "lib/wf/cards5/derma-skin.jpg": 2, "lib/wf/cards5/doll-boudoir.jpg": 2, "lib/wf/cards5/dress-reference.jpg": 2,
+  "lib/wf/cards5/elevator-mirror.jpg": 2, "lib/wf/cards5/film-grade.jpg": 2, "lib/wf/cards5/film-grain-90s.jpg": 2,
+  "lib/wf/cards5/fisheye-street.jpg": 2, "lib/wf/cards5/flower-path-copy.jpg": 2, "lib/wf/cards5/foggy-morning.jpg": 2,
+  "lib/wf/cards5/full-look-transfer.jpg": 2, "lib/wf/cards5/giant-accessory.jpg": 2, "lib/wf/cards5/gold-chrysanth.jpg": 2,
+  "lib/wf/cards5/gown-perfect.jpg": 2, "lib/wf/cards5/id-photo.jpg": 2, "lib/wf/cards5/ink-atelier.jpg": 2,
+  "lib/wf/cards5/ink-sketch.jpg": 2, "lib/wf/cards5/instant-film.jpg": 2, "lib/wf/cards5/kitsune-nine-tail.jpg": 2,
+  "lib/wf/cards5/lanna-gold-heritage.jpg": 2, "lib/wf/cards5/lg-back.jpg": 2, "lib/wf/cards5/lg-bglight.jpg": 2,
+  "lib/wf/cards5/lg-butterfly.jpg": 2, "lib/wf/cards5/lg-fill.jpg": 2, "lib/wf/cards5/lg-hair.jpg": 2,
+  "lib/wf/cards5/lg-key.jpg": 2, "lib/wf/cards5/lg-rim.jpg": 2, "lib/wf/cards5/lg-side.jpg": 2,
+  "lib/wf/cards5/lg-sunShaft.jpg": 2, "lib/wf/cards5/lg-winHard.jpg": 2, "lib/wf/cards5/lg-winSoftL.jpg": 2,
+  "lib/wf/cards5/lg-winWide.jpg": 2, "lib/wf/cards5/lion-dance.jpg": 2, "lib/wf/cards5/look-blossom-braids.jpg": 2,
+  "lib/wf/cards5/look-butterfly-wing.jpg": 2, "lib/wf/cards5/look-chiaroscuro-cream.jpg": 2, "lib/wf/cards5/look-highland-indigo.jpg": 2,
+  "lib/wf/cards5/look-imperial-yellow.jpg": 2, "lib/wf/cards5/look-marigold-veil.jpg": 2, "lib/wf/cards5/look-misty-grey.jpg": 2,
+  "lib/wf/cards5/look-noir-feather.jpg": 2, "lib/wf/cards5/look-peach-velvet.jpg": 2, "lib/wf/cards5/look-sunflower-olive.jpg": 2,
+  "lib/wf/cards5/look-temple-lightfall.jpg": 2, "lib/wf/cards5/lotus-dance.jpg": 2, "lib/wf/cards5/lotus-garden.jpg": 2,
+  "lib/wf/cards5/magazine-cover.jpg": 2, "lib/wf/cards5/master-bgfg-replace.jpg": 2, "lib/wf/cards5/master-pro-retouch.jpg": 2,
+  "lib/wf/cards5/mecha-poster.jpg": 2, "lib/wf/cards5/mermaid-transform.jpg": 2, "lib/wf/cards5/mx-bg.jpg": 2,
+  "lib/wf/cards5/mx-color.jpg": 2, "lib/wf/cards5/mx-fg.jpg": 2, "lib/wf/cards5/mx-light.jpg": 2,
+  "lib/wf/cards5/mx-object.jpg": 2, "lib/wf/cards5/neon-street-night.jpg": 2, "lib/wf/cards5/object-edit.jpg": 2,
+  "lib/wf/cards5/oil-painting.jpg": 2, "lib/wf/cards5/outfit-scene-couple.jpg": 2, "lib/wf/cards5/outfit-scene-family.jpg": 2,
+  "lib/wf/cards5/outfit-scene-group.jpg": 2, "lib/wf/cards5/outfit-scene-solo.jpg": 2, "lib/wf/cards5/outfit-set-sheet.jpg": 2,
+  "lib/wf/cards5/outpaint-extend.jpg": 2, "lib/wf/cards5/peony-night.jpg": 2, "lib/wf/cards5/pet-portrait.jpg": 2,
+  "lib/wf/cards5/pl-0.jpg": 2, "lib/wf/cards5/pl-1.jpg": 2, "lib/wf/cards5/pl-2.jpg": 2,
+  "lib/wf/cards5/pl-3.jpg": 2, "lib/wf/cards5/pl-4.jpg": 2, "lib/wf/cards5/pl-5.jpg": 2,
+  "lib/wf/cards5/pl-7.jpg": 2, "lib/wf/cards5/playing-card-queen.jpg": 2, "lib/wf/cards5/pr-access.jpg": 2,
+  "lib/wf/cards5/pr-evoto.jpg": 2, "lib/wf/cards5/pr-fgProps.jpg": 2, "lib/wf/cards5/pr-fgbglc.jpg": 2,
+  "lib/wf/cards5/pr-hair.jpg": 2, "lib/wf/cards5/pr-meitu.jpg": 2, "lib/wf/cards5/pr-pose.jpg": 2,
+  "lib/wf/cards5/pr-repCouple.jpg": 2, "lib/wf/cards5/pr-repSolo.jpg": 2, "lib/wf/cards5/pr-restore.jpg": 2,
+  "lib/wf/cards5/pr-roBgRep.jpg": 2, "lib/wf/cards5/pr-roBgSwap.jpg": 2, "lib/wf/cards5/pr-roDressRef.jpg": 2,
+  "lib/wf/cards5/pr-roDressRep.jpg": 2, "lib/wf/cards5/pr-roFaceRep.jpg": 2, "lib/wf/cards5/pr-roFgRep.jpg": 2,
+  "lib/wf/cards5/pr-roLcCopy.jpg": 2, "lib/wf/cards5/pr-roLcRef.jpg": 2, "lib/wf/cards5/pr-roMatch.jpg": 2,
+  "lib/wf/cards5/pr-roMkCopy.jpg": 2, "lib/wf/cards5/pr-roSubSwap.jpg": 2, "lib/wf/cards5/pr-scnBday.jpg": 2,
+  "lib/wf/cards5/pr-scnChinese.jpg": 2, "lib/wf/cards5/pr-scnGrad.jpg": 2, "lib/wf/cards5/pr-scnMyanmar.jpg": 2,
+  "lib/wf/cards5/pr-scnPrewed.jpg": 2, "lib/wf/cards5/pr-scnScarf.jpg": 2, "lib/wf/cards5/pr-scnShan.jpg": 2,
+  "lib/wf/cards5/pr-scnThailand.jpg": 2, "lib/wf/cards5/pr-scnVietnam.jpg": 2, "lib/wf/cards5/pr-sketchPose.jpg": 2,
+  "lib/wf/cards5/pr-style.jpg": 2, "lib/wf/cards5/pr-textLogo.jpg": 2, "lib/wf/cards5/product-ad-shot.jpg": 2,
+  "lib/wf/cards5/red-balloon.jpg": 2, "lib/wf/cards5/reference-scenes.jpg": 2, "lib/wf/cards5/reference-transfer.jpg": 2,
+  "lib/wf/cards5/regency-birthday.jpg": 2, "lib/wf/cards5/region-edit.jpg": 2, "lib/wf/cards5/retouch.jpg": 2,
+  "lib/wf/cards5/saigon-glam.jpg": 2, "lib/wf/cards5/scene-fit-pro.jpg": 2, "lib/wf/cards5/silhouette-romance.jpg": 2,
+  "lib/wf/cards5/sky-water-enhance.jpg": 2, "lib/wf/cards5/spotlight-stage.jpg": 2, "lib/wf/cards5/subject-face.jpg": 2,
+  "lib/wf/cards5/text-logo.jpg": 2, "lib/wf/cards5/through-the-glass.jpg": 2, "lib/wf/cards5/upscale.jpg": 2,
+  "lib/wf/cards5/vintage-photobooth.jpg": 2, "lib/wf/cards5/water-edit.jpg": 2, "lib/wf/cards5/watermark-clean.jpg": 2,
+  "lib/wf/cards5/wed-extra-atmos1.jpg": 2, "lib/wf/cards5/wed-extra-atmos2.jpg": 2, "lib/wf/cards5/wed-extra-atmos3.jpg": 2,
+  "lib/wf/cards5/wed-extra-horse1.jpg": 2, "lib/wf/cards5/wed-extra-horse2.jpg": 2, "lib/wf/cards5/wed-extra-horse3.jpg": 2,
+  "lib/wf/cards5/wed-extra-water1.jpg": 2, "lib/wf/cards5/wed-extra-water2.jpg": 2, "lib/wf/cards5/wed-extra-water3.jpg": 2,
+  "lib/wf/cards5/wed-extra-water4.jpg": 2, "lib/wf/cards5/wed-gown-0.jpg": 2, "lib/wf/cards5/wed-gown-1.jpg": 2,
+  "lib/wf/cards5/wed-gown-2.jpg": 2, "lib/wf/cards5/wed-gown-3.jpg": 2, "lib/wf/cards5/wed-gown-4.jpg": 2,
+  "lib/wf/cards5/wed-gown-5.jpg": 2, "lib/wf/cards5/wed-petal-petBg.jpg": 2, "lib/wf/cards5/wed-petal-petCherry.jpg": 2,
+  "lib/wf/cards5/wed-petal-petFg.jpg": 2, "lib/wf/cards5/wed-petal-petGentle.jpg": 2, "lib/wf/cards5/wed-petal-petGold.jpg": 2,
+  "lib/wf/cards5/wed-petal-petRose.jpg": 2, "lib/wf/cards5/wed-petal-petSnow.jpg": 2, "lib/wf/cards5/wed-petal-petSpiral.jpg": 2,
+  "lib/wf/cards5/wed-petal-petStorm.jpg": 2, "lib/wf/cards5/wed-petal-petSwirl.jpg": 2, "lib/wf/cards5/wed-trail-trailBlue.jpg": 2,
+  "lib/wf/cards5/wed-trail-trailBlush.jpg": 2, "lib/wf/cards5/wed-trail-trailLav.jpg": 2, "lib/wf/cards5/wed-trail-trailPeach.jpg": 2,
+  "lib/wf/cards5/wed-trail-trailRed.jpg": 2, "lib/wf/cards5/wed-trail-trailSunset.jpg": 2, "lib/wf/cards5/wed-trail-trailWhite.jpg": 2,
+  "lib/wf/cards5/wed-veil-0.jpg": 2, "lib/wf/cards5/wed-veil-1.jpg": 2, "lib/wf/cards5/wed-veil-2.jpg": 2,
+  "lib/wf/cards5/wed-veil-4.jpg": 2, "lib/wf/cards5/wed-veil-5.jpg": 2, "lib/wf/cards5/y2k-poster.jpg": 2,
+  /* the Retouch A look chips — 12 */
+  "lib/wf/lookchips/pt_cine.jpg": 2, "lib/wf/lookchips/pt_foliage.jpg": 2, "lib/wf/lookchips/pt_forest.jpg": 2,
+  "lib/wf/lookchips/pt_golden.jpg": 2, "lib/wf/lookchips/pt_mist.jpg": 2, "lib/wf/lookchips/pt_mono.jpg": 2,
+  "lib/wf/lookchips/pt_noir.jpg": 2, "lib/wf/lookchips/pt_overcast.jpg": 2, "lib/wf/lookchips/pt_porcelain.jpg": 2,
+  "lib/wf/lookchips/pt_rain.jpg": 2, "lib/wf/lookchips/pt_sunset.jpg": 2, "lib/wf/lookchips/pt_window.jpg": 2,
+  /* the Retouch B look tiles — 16 */
+  "lib/looks/look-evAiry.jpg": 2, "lib/looks/look-evBW.jpg": 2, "lib/looks/look-evCommercial.jpg": 2,
+  "lib/looks/look-evEditorial.jpg": 2, "lib/looks/look-evMatte.jpg": 2, "lib/looks/look-evNaturalPro.jpg": 2,
+  "lib/looks/look-evSoftFilm.jpg": 2, "lib/looks/look-evWedding.jpg": 2, "lib/looks/look-muCCD.jpg": 2,
+  "lib/looks/look-muCream.jpg": 2, "lib/looks/look-muDouyin.jpg": 2, "lib/looks/look-muFirstLove.jpg": 2,
+  "lib/looks/look-muGoddess.jpg": 2, "lib/looks/look-muHoney.jpg": 2, "lib/looks/look-muNatural.jpg": 2,
+  "lib/looks/look-muPorcelain.jpg": 2,
+  /* the Video Smart Workflow cards — 8 */
+  "lib/vid/vt-4k60.jpg": 2, "lib/vid/vt-extend30.jpg": 2, "lib/vid/vt-lego.jpg": 2,
+  "lib/vid/vt-multiangle.jpg": 2, "lib/vid/vt-pixel.jpg": 2, "lib/vid/vt-sceneswap.jpg": 2,
+  "lib/vid/vt-translate.jpg": 2, "lib/vid/vt-vangogh.jpg": 2,
+  /* the Imagine hub cards — 26 */
+  "lib/wf/imagine/card-background-after.jpg": 2, "lib/wf/imagine/card-background-before.jpg": 2, "lib/wf/imagine/card-batch-after.jpg": 2,
+  "lib/wf/imagine/card-batch-before.jpg": 2, "lib/wf/imagine/card-bodyshape-after.jpg": 2, "lib/wf/imagine/card-bodyshape-before.jpg": 2,
+  "lib/wf/imagine/card-colortone-before.jpg": 2, "lib/wf/imagine/card-describe-after.jpg": 2, "lib/wf/imagine/card-describe-before.jpg": 2,
+  "lib/wf/imagine/card-hairmakeup-after.jpg": 2, "lib/wf/imagine/card-hairmakeup-before.jpg": 2, "lib/wf/imagine/card-idphoto-after.jpg": 2,
+  "lib/wf/imagine/card-idphoto-before.jpg": 2, "lib/wf/imagine/card-objadd-after.jpg": 2, "lib/wf/imagine/card-objadd-before.jpg": 2,
+  "lib/wf/imagine/card-objremove-after.jpg": 2, "lib/wf/imagine/card-objremove-before.jpg": 2, "lib/wf/imagine/card-outfit-after.jpg": 2,
+  "lib/wf/imagine/card-outfit-before.jpg": 2, "lib/wf/imagine/card-restore-after.jpg": 2, "lib/wf/imagine/card-restore-before.jpg": 2,
+  "lib/wf/imagine/card-sky-after.jpg": 2, "lib/wf/imagine/card-sky-before.jpg": 2, "lib/wf/imagine/card-textedit-after.jpg": 2,
+  "lib/wf/imagine/card-textedit-before.jpg": 2, "lib/wf/imagine/card-upscale-before.jpg": 2,
+  /* the Imagine template thumbnails — 184 */
+  "lib/wf/imagine/th/background-blackStudio.jpg": 2, "lib/wf/imagine/th/background-brickWall.jpg": 2, "lib/wf/imagine/th/background-cafe.jpg": 2,
+  "lib/wf/imagine/th/background-campus.jpg": 2, "lib/wf/imagine/th/background-cityBokeh.jpg": 2, "lib/wf/imagine/th/background-greyGradient.jpg": 2,
+  "lib/wf/imagine/th/background-homeLiving.jpg": 2, "lib/wf/imagine/th/background-library.jpg": 2, "lib/wf/imagine/th/background-lobby.jpg": 2,
+  "lib/wf/imagine/th/background-modernOffice.jpg": 2, "lib/wf/imagine/th/background-neonStreet.jpg": 2, "lib/wf/imagine/th/background-rooftop.jpg": 2,
+  "lib/wf/imagine/th/background-stage.jpg": 2, "lib/wf/imagine/th/background-whiteStudio.jpg": 2, "lib/wf/imagine/th/batch-cleanProfile.jpg": 2,
+  "lib/wf/imagine/th/batch-dreamScene.jpg": 2, "lib/wf/imagine/th/batch-fashionEdit.jpg": 2, "lib/wf/imagine/th/batch-glamNight.jpg": 2,
+  "lib/wf/imagine/th/batch-portraitPolish.jpg": 2, "lib/wf/imagine/th/batch-softGlow.jpg": 2, "lib/wf/imagine/th/batch-sunsetGlow.jpg": 2,
+  "lib/wf/imagine/th/batch-travelFix.jpg": 2, "lib/wf/imagine/th/bodyshape-balanced.jpg": 2, "lib/wf/imagine/th/bodyshape-flatTummy.jpg": 2,
+  "lib/wf/imagine/th/bodyshape-hourglass.jpg": 2, "lib/wf/imagine/th/bodyshape-longLegs.jpg": 2, "lib/wf/imagine/th/bodyshape-openShoulders.jpg": 2,
+  "lib/wf/imagine/th/bodyshape-posture.jpg": 2, "lib/wf/imagine/th/bodyshape-slimThighs.jpg": 2, "lib/wf/imagine/th/bodyshape-slimWaist.jpg": 2,
+  "lib/wf/imagine/th/bodyshape-tallFrame.jpg": 2, "lib/wf/imagine/th/bodyshape-tonedArms.jpg": 2, "lib/wf/imagine/th/colortone-blossomGardenGlow.jpg": 2,
+  "lib/wf/imagine/th/colortone-botanicalMist.jpg": 2, "lib/wf/imagine/th/colortone-bridalIvoryGlow.jpg": 2, "lib/wf/imagine/th/colortone-butterflyIvoryDream.jpg": 2,
+  "lib/wf/imagine/th/colortone-classicLilyPearl.jpg": 2, "lib/wf/imagine/th/colortone-copperVelvetBloom.jpg": 2, "lib/wf/imagine/th/colortone-crimsonBronze.jpg": 2,
+  "lib/wf/imagine/th/colortone-goldenChrysanthemum.jpg": 2, "lib/wf/imagine/th/colortone-goldenVeilGlow.jpg": 2, "lib/wf/imagine/th/colortone-ivoryPeonyLight.jpg": 2,
+  "lib/wf/imagine/th/colortone-lotusWeddingHarmony.jpg": 2, "lib/wf/imagine/th/colortone-mapleAutumn.jpg": 2, "lib/wf/imagine/th/colortone-moodyBronzeSoft.jpg": 2,
+  "lib/wf/imagine/th/colortone-peachWindowMist.jpg": 2, "lib/wf/imagine/th/colortone-pinkDahliaMuse.jpg": 2, "lib/wf/imagine/th/colortone-rosyBridalNude.jpg": 2,
+  "lib/wf/imagine/th/colortone-royalBlueBlossom.jpg": 2, "lib/wf/imagine/th/colortone-rubyRose.jpg": 2, "lib/wf/imagine/th/colortone-rusticBlueGrace.jpg": 2,
+  "lib/wf/imagine/th/colortone-skyBlueGrace.jpg": 2, "lib/wf/imagine/th/colortone-sunflowerSoftOlive.jpg": 2, "lib/wf/imagine/th/colortone-sunlitBotanical.jpg": 2,
+  "lib/wf/imagine/th/colortone-vintageFloralCream.jpg": 2, "lib/wf/imagine/th/colortone-vintageWeddingGlow.jpg": 2, "lib/wf/imagine/th/colortone-violetOrchid.jpg": 2,
+  "lib/wf/imagine/th/colortone-violetPorcelain.jpg": 2, "lib/wf/imagine/th/colortone-whiteVeilSerenity.jpg": 2, "lib/wf/imagine/th/describe-addHat.jpg": 2,
+  "lib/wf/imagine/th/describe-blueSky.jpg": 2, "lib/wf/imagine/th/describe-bwFilm.jpg": 2, "lib/wf/imagine/th/describe-declutter.jpg": 2,
+  "lib/wf/imagine/th/describe-flowers.jpg": 2, "lib/wf/imagine/th/describe-hairBrown.jpg": 2, "lib/wf/imagine/th/describe-necklace.jpg": 2,
+  "lib/wf/imagine/th/describe-redOutfit.jpg": 2, "lib/wf/imagine/th/describe-removePeople.jpg": 2, "lib/wf/imagine/th/describe-softSmile.jpg": 2,
+  "lib/wf/imagine/th/describe-sunglasses.jpg": 2, "lib/wf/imagine/th/describe-toNight.jpg": 2, "lib/wf/imagine/th/faceclear-backlit.jpg": 2,
+  "lib/wf/imagine/th/faceclear-compression.jpg": 2, "lib/wf/imagine/th/faceclear-eyesSharp.jpg": 2, "lib/wf/imagine/th/faceclear-glassesGlare.jpg": 2,
+  "lib/wf/imagine/th/faceclear-groupFaces.jpg": 2, "lib/wf/imagine/th/faceclear-lowLight.jpg": 2, "lib/wf/imagine/th/faceclear-motionBlur.jpg": 2,
+  "lib/wf/imagine/th/faceclear-oldPhotoFace.jpg": 2, "lib/wf/imagine/th/faceclear-oversmooth.jpg": 2, "lib/wf/imagine/th/faceclear-skinClean.jpg": 2,
+  "lib/wf/imagine/th/faceclear-softFocus.jpg": 2, "lib/wf/imagine/th/hairmakeup-ashBlonde.jpg": 2, "lib/wf/imagine/th/hairmakeup-braidCrown.jpg": 2,
+  "lib/wf/imagine/th/hairmakeup-copperRed.jpg": 2, "lib/wf/imagine/th/hairmakeup-curtainBangs.jpg": 2, "lib/wf/imagine/th/hairmakeup-frenchBob.jpg": 2,
+  "lib/wf/imagine/th/hairmakeup-highPony.jpg": 2, "lib/wf/imagine/th/hairmakeup-honeyBrown.jpg": 2, "lib/wf/imagine/th/hairmakeup-longWaves.jpg": 2,
+  "lib/wf/imagine/th/hairmakeup-lowBun.jpg": 2, "lib/wf/imagine/th/hairmakeup-noMakeup.jpg": 2, "lib/wf/imagine/th/hairmakeup-redLip.jpg": 2,
+  "lib/wf/imagine/th/hairmakeup-sleekStraight.jpg": 2, "lib/wf/imagine/th/hairmakeup-smokyEye.jpg": 2, "lib/wf/imagine/th/idphoto-blackSuit.jpg": 2,
+  "lib/wf/imagine/th/idphoto-blueBg.jpg": 2, "lib/wf/imagine/th/idphoto-corporate.jpg": 2, "lib/wf/imagine/th/idphoto-gradientBg.jpg": 2,
+  "lib/wf/imagine/th/idphoto-greyBg.jpg": 2, "lib/wf/imagine/th/idphoto-ivoryBlouse.jpg": 2, "lib/wf/imagine/th/idphoto-mmFormal.jpg": 2,
+  "lib/wf/imagine/th/idphoto-navyBlazer.jpg": 2, "lib/wf/imagine/th/idphoto-redBg.jpg": 2, "lib/wf/imagine/th/idphoto-student.jpg": 2,
+  "lib/wf/imagine/th/idphoto-whiteBg.jpg": 2, "lib/wf/imagine/th/idphoto-whiteShirt.jpg": 2, "lib/wf/imagine/th/objadd-balloons.jpg": 2,
+  "lib/wf/imagine/th/objadd-birds.jpg": 2, "lib/wf/imagine/th/objadd-bouquet.jpg": 2, "lib/wf/imagine/th/objadd-butterflies.jpg": 2,
+  "lib/wf/imagine/th/objadd-cat.jpg": 2, "lib/wf/imagine/th/objadd-coffee.jpg": 2, "lib/wf/imagine/th/objadd-dog.jpg": 2,
+  "lib/wf/imagine/th/objadd-hat.jpg": 2, "lib/wf/imagine/th/objadd-lanterns.jpg": 2, "lib/wf/imagine/th/objadd-moon.jpg": 2,
+  "lib/wf/imagine/th/objadd-sunglasses.jpg": 2, "lib/wf/imagine/th/objadd-umbrella.jpg": 2, "lib/wf/imagine/th/objremove-clutter.jpg": 2,
+  "lib/wf/imagine/th/objremove-people.jpg": 2, "lib/wf/imagine/th/objremove-photobomb.jpg": 2, "lib/wf/imagine/th/objremove-props.jpg": 2,
+  "lib/wf/imagine/th/objremove-reflections.jpg": 2, "lib/wf/imagine/th/objremove-shadows.jpg": 2, "lib/wf/imagine/th/objremove-signs.jpg": 2,
+  "lib/wf/imagine/th/objremove-stains.jpg": 2, "lib/wf/imagine/th/objremove-vehicles.jpg": 2, "lib/wf/imagine/th/objremove-wires.jpg": 2,
+  "lib/wf/imagine/th/outfit-athleisure.jpg": 2, "lib/wf/imagine/th/outfit-blazerDress.jpg": 2, "lib/wf/imagine/th/outfit-corsetJeans.jpg": 2,
+  "lib/wf/imagine/th/outfit-cropCargo.jpg": 2, "lib/wf/imagine/th/outfit-cutoutMaxi.jpg": 2, "lib/wf/imagine/th/outfit-denimSet.jpg": 2,
+  "lib/wf/imagine/th/outfit-glamGown.jpg": 2, "lib/wf/imagine/th/outfit-leatherMini.jpg": 2, "lib/wf/imagine/th/outfit-offShoulder.jpg": 2,
+  "lib/wf/imagine/th/outfit-redFitted.jpg": 2, "lib/wf/imagine/th/outfit-satinSlip.jpg": 2, "lib/wf/imagine/th/outfit-sequinParty.jpg": 2,
+  "lib/wf/imagine/th/outfit-silkCami.jpg": 2, "lib/wf/imagine/th/outfit-trenchSlip.jpg": 2, "lib/wf/imagine/th/outfit-y2kTee.jpg": 2,
+  "lib/wf/imagine/th/restore-colorize.jpg": 2, "lib/wf/imagine/th/restore-creases.jpg": 2, "lib/wf/imagine/th/restore-fade.jpg": 2,
+  "lib/wf/imagine/th/restore-fullRestore.jpg": 2, "lib/wf/imagine/th/restore-grain.jpg": 2, "lib/wf/imagine/th/restore-lowres.jpg": 2,
+  "lib/wf/imagine/th/restore-scratches.jpg": 2, "lib/wf/imagine/th/restore-sepiaKeep.jpg": 2, "lib/wf/imagine/th/restore-sharpen.jpg": 2,
+  "lib/wf/imagine/th/restore-stains.jpg": 2, "lib/wf/imagine/th/restore-torn.jpg": 2, "lib/wf/imagine/th/restore-yellowing.jpg": 2,
+  "lib/wf/imagine/th/sky-blueHour.jpg": 2, "lib/wf/imagine/th/sky-clearBlue.jpg": 2, "lib/wf/imagine/th/sky-cottonClouds.jpg": 2,
+  "lib/wf/imagine/th/sky-dramaticClouds.jpg": 2, "lib/wf/imagine/th/sky-fullMoon.jpg": 2, "lib/wf/imagine/th/sky-goldenSunset.jpg": 2,
+  "lib/wf/imagine/th/sky-milkyWay.jpg": 2, "lib/wf/imagine/th/sky-northernLights.jpg": 2, "lib/wf/imagine/th/sky-pinkPastel.jpg": 2,
+  "lib/wf/imagine/th/sky-purpleDusk.jpg": 2, "lib/wf/imagine/th/sky-starryNight.jpg": 2, "lib/wf/imagine/th/sky-stormClouds.jpg": 2,
+  "lib/wf/imagine/th/textedit-bigBold.jpg": 2, "lib/wf/imagine/th/textedit-blankSign.jpg": 2, "lib/wf/imagine/th/textedit-chalkboard.jpg": 2,
+  "lib/wf/imagine/th/textedit-eraseText.jpg": 2, "lib/wf/imagine/th/textedit-neonSign.jpg": 2, "lib/wf/imagine/th/textedit-newWords.jpg": 2,
+  "lib/wf/imagine/th/textedit-shirtPrint.jpg": 2, "lib/wf/imagine/th/textedit-toEnglish.jpg": 2, "lib/wf/imagine/th/upscale-crisp2x.jpg": 2,
+  "lib/wf/imagine/th/upscale-denoise.jpg": 2, "lib/wf/imagine/th/upscale-faceFirst.jpg": 2, "lib/wf/imagine/th/upscale-phoneBoost.jpg": 2,
+  "lib/wf/imagine/th/upscale-printReady.jpg": 2, "lib/wf/imagine/th/upscale-textureKeep.jpg": 2, "lib/wf/imagine/th/upscale-ultra4x.jpg": 2,
+  "lib/wf/imagine/th/upscale-webLowres.jpg": 2
 };
 function libArt(p){
   var k=String(p||"").replace(/^\.?\//, "").split("?")[0];
@@ -11840,7 +11994,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       body.appendChild(fast);
     }
     if (wiz.step===1){
-      if (w.cardImg||w.svg){ var sv=document.createElement("img"); sv.className="wiz-visual svgv"; sv.src=w.cardImg||w.svg; sv.alt=w.title;
+      if (w.cardImg||w.svg){ var sv=document.createElement("img"); sv.className="wiz-visual svgv"; sv.src=libArt(w.cardImg||w.svg); sv.alt=w.title;
         if(w.cardImg&&w.svg) sv.onerror=function(){ this.onerror=null; this.src=w.svg; };
         body.appendChild(sv); }
       else if (w.vis2){
@@ -12985,7 +13139,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
   function cardVisual(w){
     if(w.cardImg||w.svg){
       var sv=el("div","wfv");
-      var si=document.createElement("img"); si.src=w.cardImg||w.svg; si.className="svgv ld"; si.loading="lazy"; si.alt=w.title;
+      var si=document.createElement("img"); si.src=libArt(w.cardImg||w.svg); si.className="svgv ld"; si.loading="lazy"; si.alt=w.title;
       si.onload=function(){ si.classList.remove("ld"); };
       if(w.cardImg&&w.svg) si.onerror=function(){ this.onerror=null; this.src=w.svg; };
       else si.onerror=function(){ si.classList.remove("ld"); };
@@ -13039,7 +13193,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
         /* v4.41: the chip carries the card's real art so the shelf is visual */
         if(w.cardImg){
           var im=document.createElement("img");
-          im.className="chip-th"; im.src=w.cardImg; im.alt=""; im.loading="lazy"; im.decoding="async";
+          im.className="chip-th"; im.src=libArt(w.cardImg); im.alt=""; im.loading="lazy"; im.decoding="async";
           im.onerror=function(){ im.remove(); };
           c.appendChild(im);
         }
@@ -15165,7 +15319,7 @@ function ptRenderRailInto(hostId, selId, onPick, withClear){
       };
     }
     if(pro){
-      im.src="lib/wf/lookchips/"+id+".jpg";
+      im.src=libArt("lib/wf/lookchips/"+id+".jpg");
       im.onerror=function(){ im.onerror=null; filteredPreview(); };
     } else filteredPreview();
     wr.appendChild(im);
@@ -15389,7 +15543,7 @@ function ptRenderWfList(){
     var b=el("button","pt-wfrow"+(state.pt.wf===w.id?" on":""));
     if(w.cardImg){
       var im=document.createElement("img");
-      im.src=w.cardImg; im.alt=""; im.loading="lazy"; im.decoding="async";
+      im.src=libArt(w.cardImg); im.alt=""; im.loading="lazy"; im.decoding="async";
       im.onerror=function(){ im.remove(); };
       b.appendChild(im);
     }
@@ -24727,7 +24881,7 @@ function stLookArt(key){
     if(!ST_LOOK_RAF) ST_LOOK_RAF=requestAnimationFrame(function(){ ST_LOOK_RAF=0; stRenderPresetCards(); });
   };
   im.onerror=function(){ ST_LOOK_ART[key]="missing"; };  /* falls back to the computed tile */
-  im.src="lib/looks/look-"+key+".jpg";
+  im.src=libArt("lib/looks/look-"+key+".jpg");
   return null;
 }
 /* cover-fill, biased upward: the art is 2:3 inside a 4:5 tile, so the crop eats
@@ -30206,7 +30360,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.112.0";
+var APP_VER="6.113.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

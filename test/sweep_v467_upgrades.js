@@ -98,8 +98,13 @@ report("B) rhV2Body still sends imageUrls as an ordered array, not one image",
     page.on("pageerror", e => pageErrors.push(w + "px " + String(e).slice(0, 160)));
     page.on("response", r => {
       const u = r.url();
-      if (!/\/lib\/wf\/cards5\/[^/]+\.jpg$/.test(u)) return;
-      const f = u.split("/").pop();
+      /* 6.113.0 — the token is part of the url now. cards5 rides libArt since
+         the face wave, so every card is requested as "…jpg?v=N"; a matcher
+         anchored on .jpg$ saw only the handful of cards that were NOT replaced
+         and reported 11 served out of 194 — the check went quiet exactly where
+         it had the most to watch. */
+      if (!/\/lib\/wf\/cards5\/[^/?]+\.jpg(\?|$)/.test(u)) return;
+      const f = u.split("/").pop().split("?")[0];
       if (r.status() === 404) art404.push(w + "px " + f); else if (r.status() < 400) artOK.add(f);
     });
     await page.addInitScript(() => {

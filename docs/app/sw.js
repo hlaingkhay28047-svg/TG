@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-112-0";
+var CACHE = "hnk-web-studio-v6-113-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -278,7 +278,168 @@ var LIB_PURGES = [
   /* 6.31.0 — the Lighting tool re-shot front-facing (Qwen): its card pair and 12 thumbnails replaced in place, rev 4. */
   { tag: "./__lib-purge-v6-31-0-lighting-card", re: new RegExp("/lib/wf/imagine/(card-lighting-(before|after)|th/lighting-[A-Za-z0-9]+)\\.jpg$") },
   /* 6.32.1 — three hub cards re-made (Color Tone after = the same photo regraded; Face Clarity before/after; Upscale after): four files, rev 2. */
-  { tag: "./__lib-purge-v6-32-1-repair-cards", re: new RegExp("/lib/wf/imagine/card-(colortone-after|faceclear-(before|after)|upscale-after)\\.jpg$") }
+  { tag: "./__lib-purge-v6-32-1-repair-cards", re: new RegExp("/lib/wf/imagine/card-(colortone-after|faceclear-(before|after)|upscale-after)\\.jpg$") },
+  /* 6.113.0 — THE BRAND MODEL CHANGED FACE. 501 pictures across six sets were
+     re-shot on the new face and replaced under their own names, so every one of
+     them is a cache-first file whose bytes changed: the whole reason this list
+     exists, at the largest scale it has ever run.
+
+     Six entries, one per set, because one marker fires once: a device that took
+     the cards but lost the line before the thumbnails must still receive the
+     thumbnails on its next launch.
+
+     AND drop: true ON ALL SIX — the first entries in this list that delete
+     without refilling. The refill exists because the page re-requests the SAME
+     url and the browser's HTTP cache would hand back the old bytes (v6.7.1).
+     That is not this wave: every one of these 501 files now carries a fresh
+     LIB_ART_REV token, so the page asks for "…jpg?v=N", which misses both
+     caches and fetches the new picture on its own. Refilling would download
+     ~40MB of the OLD pictures, under urls nothing will ever request again, onto
+     a phone on mobile data. The delete is the whole repair here; the token is
+     what delivers the new face.
+
+     The names are listed one by one rather than swept by folder, because the
+     wave did NOT replace everything: seventeen pictures were refused by the
+     acceptance gate and still carry the old face, and the /lib/vid/vw-* cards
+     were never in it. Sweeping those out would cost a returning device a
+     re-download to deliver a picture that did not change. */
+  /* the Smart Workflow cards — 182 files, the new face. drop: true — the app asks for every one of
+     these under a fresh ?v= token now, so refetching the old URL would spend a
+     phone's data on a picture nothing will ever request again. */
+  { tag: "./__lib-purge-v6-113-0-face-cards5", drop: true,
+    re: new RegExp("/lib/wf/cards5/(" + [
+      "anime-2d-portrait", "anime-3d-portrait", "bg-replace", "bridal-decor", "business-headshot",
+      "character-sheet", "chinese-ink-painting", "cinematic-poster", "cl-full", "cl-hands", "cl-legs", "cl-people",
+      "comic-to-real", "concept-poster", "couple-compose", "cute-3d-figure", "derma-skin", "doll-boudoir",
+      "dress-reference", "elevator-mirror", "film-grade", "film-grain-90s", "fisheye-street", "flower-path-copy",
+      "foggy-morning", "full-look-transfer", "giant-accessory", "gold-chrysanth", "gown-perfect", "id-photo",
+      "ink-atelier", "ink-sketch", "instant-film", "kitsune-nine-tail", "lanna-gold-heritage", "lg-back",
+      "lg-bglight", "lg-butterfly", "lg-fill", "lg-hair", "lg-key", "lg-rim", "lg-side", "lg-sunShaft",
+      "lg-winHard", "lg-winSoftL", "lg-winWide", "lion-dance", "look-blossom-braids", "look-butterfly-wing",
+      "look-chiaroscuro-cream", "look-golden-grecian", "look-highland-indigo", "look-imperial-yellow",
+      "look-marigold-veil", "look-misty-grey", "look-noir-feather", "look-peach-velvet", "look-sunflower-olive",
+      "look-temple-lightfall", "lotus-dance", "lotus-garden", "magazine-cover", "master-bgfg-replace",
+      "master-pro-retouch", "mecha-poster", "mermaid-transform", "mx-bg", "mx-color", "mx-fg", "mx-light",
+      "mx-object", "neon-street-night", "object-edit", "oil-painting", "outfit-scene-couple", "outfit-scene-family",
+      "outfit-scene-group", "outfit-scene-solo", "outfit-set-sheet", "outpaint-extend", "peony-night",
+      "pet-portrait", "pl-0", "pl-1", "pl-2", "pl-3", "pl-4", "pl-5", "pl-7", "playing-card-queen", "pr-access",
+      "pr-evoto", "pr-fgProps", "pr-fgbglc", "pr-hair", "pr-meitu", "pr-pose", "pr-repCouple", "pr-repSolo",
+      "pr-restore", "pr-roBgRep", "pr-roBgSwap", "pr-roDressRef", "pr-roDressRep", "pr-roFaceRep", "pr-roFgRep",
+      "pr-roLcCopy", "pr-roLcRef", "pr-roMatch", "pr-roMkCopy", "pr-roSubSwap", "pr-scnBday", "pr-scnChinese",
+      "pr-scnGrad", "pr-scnMyanmar", "pr-scnPrewed", "pr-scnScarf", "pr-scnShan", "pr-scnThailand", "pr-scnVietnam",
+      "pr-sketchPose", "pr-style", "pr-textLogo", "product-ad-shot", "red-balloon", "reference-scenes",
+      "reference-transfer", "regency-birthday", "region-edit", "retouch", "saigon-glam", "scene-fit-pro",
+      "silhouette-romance", "sky-water-enhance", "spotlight-stage", "subject-face", "text-logo",
+      "through-the-glass", "upscale", "vintage-photobooth", "water-edit", "watermark-clean", "wed-extra-atmos1",
+      "wed-extra-atmos2", "wed-extra-atmos3", "wed-extra-horse1", "wed-extra-horse2", "wed-extra-horse3",
+      "wed-extra-water1", "wed-extra-water2", "wed-extra-water3", "wed-extra-water4", "wed-gown-0", "wed-gown-1",
+      "wed-gown-2", "wed-gown-3", "wed-gown-4", "wed-gown-5", "wed-petal-petBg", "wed-petal-petCherry",
+      "wed-petal-petFg", "wed-petal-petGentle", "wed-petal-petGold", "wed-petal-petRose", "wed-petal-petSnow",
+      "wed-petal-petSpiral", "wed-petal-petStorm", "wed-petal-petSwirl", "wed-trail-trailBlue",
+      "wed-trail-trailBlush", "wed-trail-trailLav", "wed-trail-trailPeach", "wed-trail-trailRed",
+      "wed-trail-trailSunset", "wed-trail-trailWhite", "wed-veil-0", "wed-veil-1", "wed-veil-2", "wed-veil-4",
+      "wed-veil-5", "y2k-poster"
+    ].join("|") + ")\\.jpg$") },
+  /* the Imagine hub card pairs — 38 files, the new face. drop: true — the app asks for every one of
+     these under a fresh ?v= token now, so refetching the old URL would spend a
+     phone's data on a picture nothing will ever request again. */
+  { tag: "./__lib-purge-v6-113-0-face-imagine", drop: true,
+    re: new RegExp("/lib/wf/imagine/(" + [
+      "card-background-after", "card-background-before", "card-batch-after", "card-batch-before",
+      "card-bodyshape-after", "card-bodyshape-before", "card-colortone-after", "card-colortone-before",
+      "card-describe-after", "card-describe-before", "card-faceclear-after", "card-faceclear-before",
+      "card-hairmakeup-after", "card-hairmakeup-before", "card-idphoto-after", "card-idphoto-before",
+      "card-lighting-after", "card-lighting-before", "card-objadd-after", "card-objadd-before",
+      "card-objremove-after", "card-objremove-before", "card-outfit-after", "card-outfit-before",
+      "card-portrait-after", "card-portrait-before", "card-restore-after", "card-restore-before", "card-sky-after",
+      "card-sky-before", "card-surface-after", "card-surface-before", "card-textedit-after", "card-textedit-before",
+      "card-upscale-after", "card-upscale-before", "card-weather-after", "card-weather-before"
+    ].join("|") + ")\\.jpg$") },
+  /* the Imagine template thumbnails — 235 files, the new face. drop: true — the app asks for every one of
+     these under a fresh ?v= token now, so refetching the old URL would spend a
+     phone's data on a picture nothing will ever request again. */
+  { tag: "./__lib-purge-v6-113-0-face-imagine-th", drop: true,
+    re: new RegExp("/lib/wf/imagine/th/(" + [
+      "background-blackStudio", "background-brickWall", "background-cafe", "background-campus",
+      "background-cityBokeh", "background-greyGradient", "background-homeLiving", "background-library",
+      "background-lobby", "background-modernOffice", "background-neonStreet", "background-rooftop",
+      "background-stage", "background-whiteStudio", "batch-cleanProfile", "batch-dreamScene", "batch-fashionEdit",
+      "batch-glamNight", "batch-portraitPolish", "batch-softGlow", "batch-sunsetGlow", "batch-travelFix",
+      "bodyshape-balanced", "bodyshape-flatTummy", "bodyshape-hourglass", "bodyshape-longLegs",
+      "bodyshape-openShoulders", "bodyshape-posture", "bodyshape-slimThighs", "bodyshape-slimWaist",
+      "bodyshape-tallFrame", "bodyshape-tonedArms", "colortone-blossomGardenGlow", "colortone-botanicalMist",
+      "colortone-bridalIvoryGlow", "colortone-butterflyIvoryDream", "colortone-classicLilyPearl",
+      "colortone-copperVelvetBloom", "colortone-crimsonBronze", "colortone-goldenChrysanthemum",
+      "colortone-goldenVeilGlow", "colortone-ivoryPeonyLight", "colortone-lotusWeddingHarmony",
+      "colortone-mapleAutumn", "colortone-moodyBronzeSoft", "colortone-peachWindowMist", "colortone-pinkDahliaMuse",
+      "colortone-rosyBridalNude", "colortone-royalBlueBlossom", "colortone-rubyRose", "colortone-rusticBlueGrace",
+      "colortone-skyBlueGrace", "colortone-sunflowerSoftOlive", "colortone-sunlitBotanical",
+      "colortone-vintageFloralCream", "colortone-vintageWeddingGlow", "colortone-violetOrchid",
+      "colortone-violetPorcelain", "colortone-whiteVeilSerenity", "describe-addHat", "describe-blueSky",
+      "describe-bwFilm", "describe-declutter", "describe-flowers", "describe-hairBrown", "describe-necklace",
+      "describe-redOutfit", "describe-removePeople", "describe-softSmile", "describe-sunglasses",
+      "describe-toNight", "faceclear-backlit", "faceclear-compression", "faceclear-eyesSharp",
+      "faceclear-glassesGlare", "faceclear-groupFaces", "faceclear-lowLight", "faceclear-motionBlur",
+      "faceclear-oldPhotoFace", "faceclear-oversmooth", "faceclear-skinClean", "faceclear-softFocus",
+      "hairmakeup-ashBlonde", "hairmakeup-braidCrown", "hairmakeup-copperRed", "hairmakeup-curtainBangs",
+      "hairmakeup-frenchBob", "hairmakeup-highPony", "hairmakeup-honeyBrown", "hairmakeup-longWaves",
+      "hairmakeup-lowBun", "hairmakeup-noMakeup", "hairmakeup-redLip", "hairmakeup-sleekStraight",
+      "hairmakeup-smokyEye", "idphoto-blackSuit", "idphoto-blueBg", "idphoto-corporate", "idphoto-gradientBg",
+      "idphoto-greyBg", "idphoto-ivoryBlouse", "idphoto-mmFormal", "idphoto-navyBlazer", "idphoto-redBg",
+      "idphoto-student", "idphoto-whiteBg", "idphoto-whiteShirt", "lighting-afternoon", "lighting-brightGlow",
+      "lighting-goldRim", "lighting-goldenSun", "lighting-harshSun", "lighting-leafDapple", "lighting-soft",
+      "lighting-sunRays", "lighting-warm", "lighting-warmWindow", "lighting-window", "lighting-windowStreaks",
+      "objadd-balloons", "objadd-birds", "objadd-bouquet", "objadd-butterflies", "objadd-cat", "objadd-coffee",
+      "objadd-dog", "objadd-hat", "objadd-lanterns", "objadd-moon", "objadd-sunglasses", "objadd-umbrella",
+      "objremove-clutter", "objremove-people", "objremove-photobomb", "objremove-props", "objremove-reflections",
+      "objremove-shadows", "objremove-signs", "objremove-stains", "objremove-vehicles", "objremove-wires",
+      "outfit-athleisure", "outfit-blazerDress", "outfit-corsetJeans", "outfit-cropCargo", "outfit-cutoutMaxi",
+      "outfit-denimSet", "outfit-glamGown", "outfit-leatherMini", "outfit-offShoulder", "outfit-redFitted",
+      "outfit-satinSlip", "outfit-sequinParty", "outfit-silkCami", "outfit-trenchSlip", "outfit-y2kTee",
+      "portrait-autumnPark", "portrait-blueTwilight", "portrait-countryField", "portrait-goldenHill",
+      "portrait-goldenSunset", "portrait-goldenWind", "portrait-mistyDawn", "portrait-morningSun",
+      "portrait-riceField", "portrait-softGarden", "portrait-sunsetSea", "portrait-wildflowerField",
+      "portrait-winterStreet", "restore-colorize", "restore-creases", "restore-fade", "restore-fullRestore",
+      "restore-grain", "restore-lowres", "restore-scratches", "restore-sepiaKeep", "restore-sharpen",
+      "restore-stains", "restore-torn", "restore-yellowing", "sky-blueHour", "sky-clearBlue", "sky-cottonClouds",
+      "sky-dramaticClouds", "sky-fullMoon", "sky-goldenSunset", "sky-milkyWay", "sky-northernLights",
+      "sky-pinkPastel", "sky-purpleDusk", "sky-starryNight", "sky-stormClouds", "surface-blueLake",
+      "surface-deepBlueSea", "surface-dryGrass", "surface-goldenSand", "surface-grass", "surface-greenFlowerField",
+      "surface-meadowGrass", "surface-naturalGrass", "surface-pebbles", "surface-stillWater",
+      "surface-whiteFlowers", "surface-whiteSand", "surface-wildGrass", "surface-wildflowers", "textedit-bigBold",
+      "textedit-blankSign", "textedit-chalkboard", "textedit-eraseText", "textedit-neonSign", "textedit-newWords",
+      "textedit-shirtPrint", "textedit-toEnglish", "upscale-crisp2x", "upscale-denoise", "upscale-faceFirst",
+      "upscale-phoneBoost", "upscale-printReady", "upscale-textureKeep", "upscale-ultra4x", "upscale-webLowres",
+      "weather-autumnLeaves", "weather-blossomPetals", "weather-blueHour", "weather-clearSunny", "weather-fogMist",
+      "weather-goldenHaze", "weather-heavyRain", "weather-lightRain", "weather-overcast", "weather-rainbow",
+      "weather-snowfall", "weather-stormClouds"
+    ].join("|") + ")\\.jpg$") },
+  /* the Retouch A look chips — 12 files, the new face. drop: true — the app asks for every one of
+     these under a fresh ?v= token now, so refetching the old URL would spend a
+     phone's data on a picture nothing will ever request again. */
+  { tag: "./__lib-purge-v6-113-0-face-lookchips", drop: true,
+    re: new RegExp("/lib/wf/lookchips/(" + [
+      "pt_cine", "pt_foliage", "pt_forest", "pt_golden", "pt_mist", "pt_mono", "pt_noir", "pt_overcast",
+      "pt_porcelain", "pt_rain", "pt_sunset", "pt_window"
+    ].join("|") + ")\\.jpg$") },
+  /* the Retouch B look tiles — 16 files, the new face. drop: true — the app asks for every one of
+     these under a fresh ?v= token now, so refetching the old URL would spend a
+     phone's data on a picture nothing will ever request again. */
+  { tag: "./__lib-purge-v6-113-0-face-looks", drop: true,
+    re: new RegExp("/lib/looks/(" + [
+      "look-evAiry", "look-evBW", "look-evCommercial", "look-evEditorial", "look-evMatte", "look-evNaturalPro",
+      "look-evSoftFilm", "look-evWedding", "look-muCCD", "look-muCream", "look-muDouyin", "look-muFirstLove",
+      "look-muGoddess", "look-muHoney", "look-muNatural", "look-muPorcelain"
+    ].join("|") + ")\\.jpg$") },
+  /* the Video Smart Workflow cards — 18 files, the new face. drop: true — the app asks for every one of
+     these under a fresh ?v= token now, so refetching the old URL would spend a
+     phone's data on a picture nothing will ever request again. */
+  { tag: "./__lib-purge-v6-113-0-face-vid", drop: true,
+    re: new RegExp("/lib/vid/(" + [
+      "vt-4k60", "vt-anime", "vt-char30", "vt-charSwap", "vt-erasesub", "vt-extend", "vt-extend30", "vt-faceSwap",
+      "vt-filmlook", "vt-headswap", "vt-heritage", "vt-lego", "vt-multiangle", "vt-pixel", "vt-restore",
+      "vt-sceneswap", "vt-translate", "vt-vangogh"
+    ].join("|") + ")\\.jpg$") }
 ];
 
 /* v6.6.1 — AND THE PAGE IS TOLD WHAT WENT, which is what makes the repair
@@ -330,6 +491,18 @@ function purgeReplacedLibArt() {
           }).map(function (k) {
             var url = k.url;
             return c.delete(k).then(function () {
+              /* 6.113.0 — a DROP entry deletes and stops there, and says nothing
+                 to the page either. The refill and the repaint below both exist
+                 for a file replaced under a url the page still asks for: the
+                 browser's own HTTP cache would hand the old bytes straight back
+                 (v6.7.1), and a card already on screen would keep the old
+                 picture until the next launch (v6.6.1). Neither applies to a
+                 drop: every one of its files now carries a fresh LIB_ART_REV
+                 token, so the page asks for "…jpg?v=N" — a url no cache has —
+                 and already has the new picture on screen. Refetching the old
+                 url, or busting the new one, would only spend a phone's data.
+                 Nothing can fail here, so there is nothing to retry. */
+              if (p.drop) return;
               removed.push(url);
               return purgeRefill(c, url).catch(function () { failed = true; });
             });

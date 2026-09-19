@@ -106,11 +106,21 @@ const swEntries = (function () {
   if (i < 0) return "";
   return sw.slice(i, sw.indexOf("\n];", i)).replace(/\/\*[\s\S]*?\*\//g, " ");
 })();
-report("E) the replaced base sample has a purge entry; the new art needs none",
+/* 6.113.0 — THE SECOND HALF OF THIS CHECK CHANGED ITS TRUTH, and saying so is
+   the point of it. In v4.73 the sixteen look tiles were brand-new ids: a cache
+   miss fetched them normally, so an entry for them would have charged every
+   device a re-download for nothing, and "the new art needs none" was exactly
+   right. The face wave replaced all sixteen IN PLACE, which is the one thing
+   that makes an entry necessary. So the assertion now reads the way the rule
+   always read: the sample keeps its own entry, and /lib/looks/ is claimed by
+   the 6.113.0 entry and by nothing older — an older tag would have a spent
+   marker on every device and could never fire again. */
+const looksTags = (swEntries.match(/tag: "([^"]*looks[^"]*)"/g) || []).map(t => t.slice(6, -1));
+report("E) the replaced base sample has a purge entry; the look tiles are claimed by the 6.113.0 entry and by nothing older",
   /tag: "\.\/__lib-purge-v4-73-st-sample"/.test(swEntries) &&
   /re: \/\\\/lib\\\/st-sample\\\.jpg\$\//.test(swEntries) &&
-  swEntries.indexOf("/lib/looks/") < 0 && swEntries.indexOf("looks") < 0,
-  { entriesOnly: swEntries.replace(/\s+/g, " ").slice(0, 240) });
+  looksTags.length === 1 && looksTags[0] === "./__lib-purge-v6-113-0-face-looks",
+  { looksTags, entriesOnly: swEntries.replace(/\s+/g, " ").slice(0, 200) });
 
 report("E2) the art is a fallback-safe upgrade, not a dependency",
   /im\.onerror=function\(\)\{ ST_LOOK_ART\[key\]="missing"; \}/.test(src) &&

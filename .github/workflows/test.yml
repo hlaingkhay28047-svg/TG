@@ -1074,3 +1074,17 @@ jobs:
       # was found.
       - name: Verify the Smart Workflow card is measurably smaller with no clipped glyph and no lost word
         run: PORT=8931 node test/verify_wf_card_compact.js
+
+      # 6.113.0 — THE BRAND MODEL CHANGED FACE, on 501 pictures at once. The
+      # owner's correction made it the hard version of the job: in each picture
+      # change HER face and nothing else, while the only edit endpoint we have
+      # re-renders the whole frame by design. That was settled by measuring every
+      # picture and refusing 17 of 518. This test holds the parts a later release
+      # can break in silence: the panel's own copies of the art are the app's
+      # bytes (two of the three sets had drifted a release, because they were
+      # copied by hand); the six purge patterns match exactly the 501 files they
+      # repair and not one more; and drop: true really does delete without
+      # refilling, without telling the page, and still marks itself — proved in
+      # the worker, in a VM, with the flag injected back out.
+      - name: Verify the new face reaches every surface, and a drop purge costs a phone nothing
+        run: node test/verify_face_wave_6113.js
