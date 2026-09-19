@@ -1,0 +1,17 @@
+{
+ "ok": [
+  {
+   "name": "q2__wf__cards5__manga-panel__f1",
+   "file": "q2__wf__cards5__manga-panel__f1.png",
+   "taskId": "2101370910522974209",
+   "bytes": 3022567,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.076"
+   }
+  }
+ ],
+ "failed": []
+}
