@@ -198,7 +198,19 @@ var _CATALOG = (typeof module !== "undefined" && module.exports)
   ? (function () { try { return require("../../js/hnk_wf_catalog_data.js"); } catch (e) { return null; } })()
   : ((typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.WF_CATALOG : null);
 var _CATEGORIES = [];
-var _ART_BASE = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/lib/wf/cards5/";
+var _ART_HOST = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/app/";
+var _ART_REL = "lib/wf/cards5/";
+/* 6.113.0 — the card URL carries the app's replacement token, exactly as the
+   video tool cards have since 6.107.0 (main.js vidArtSrc). These 194 pictures
+   are fetched from the web app's host, and remoteArt asks for them with a
+   plain fetch, so the renderer's own HTTP cache can answer a re-shot card with
+   the bytes it saw last week. LIB_ART_REV is lifted into hnk_video_tool_wf.js
+   from the app's one map; a file that was never replaced keeps its bare URL. */
+function _cardArt(id) {
+  var W = (typeof globalThis !== "undefined" && globalThis.HNK) ? globalThis.HNK.videoToolWorkflows : null;
+  var rel = _ART_REL + id + ".jpg";
+  return _ART_HOST + ((W && typeof W.libArt === "function") ? W.libArt(rel) : rel);
+}
 if (_CATALOG && _CATALOG.categories) {
   _CATALOG.categories.forEach(function (c) {
     var ids = [];
@@ -226,7 +238,7 @@ if (_CATALOG && _CATALOG.categories) {
            app's host for a file that is not there: a silent 404 on every
            render, and a black tile with no fallback. Honour hasCard and the
            card falls back to wfv-noart, exactly as the app's grid does. */
-        visual: w.hasCard ? (_ART_BASE + w.id + ".jpg") : "",
+        visual: w.hasCard ? _cardArt(w.id) : "",
         badge: w.badge || "", wedGroup: w.wedGroup || "",
         summary: w.summary, explanation: w.explanation,
         humanSubject: false, referenceTransfer: false, bespoke: true,

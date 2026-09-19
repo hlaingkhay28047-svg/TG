@@ -11840,7 +11840,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       body.appendChild(fast);
     }
     if (wiz.step===1){
-      if (w.cardImg||w.svg){ var sv=document.createElement("img"); sv.className="wiz-visual svgv"; sv.src=w.cardImg||w.svg; sv.alt=w.title;
+      if (w.cardImg||w.svg){ var sv=document.createElement("img"); sv.className="wiz-visual svgv"; sv.src=libArt(w.cardImg||w.svg); sv.alt=w.title;
         if(w.cardImg&&w.svg) sv.onerror=function(){ this.onerror=null; this.src=w.svg; };
         body.appendChild(sv); }
       else if (w.vis2){
@@ -12985,7 +12985,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
   function cardVisual(w){
     if(w.cardImg||w.svg){
       var sv=el("div","wfv");
-      var si=document.createElement("img"); si.src=w.cardImg||w.svg; si.className="svgv ld"; si.loading="lazy"; si.alt=w.title;
+      var si=document.createElement("img"); si.src=libArt(w.cardImg||w.svg); si.className="svgv ld"; si.loading="lazy"; si.alt=w.title;
       si.onload=function(){ si.classList.remove("ld"); };
       if(w.cardImg&&w.svg) si.onerror=function(){ this.onerror=null; this.src=w.svg; };
       else si.onerror=function(){ si.classList.remove("ld"); };
@@ -13039,7 +13039,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
         /* v4.41: the chip carries the card's real art so the shelf is visual */
         if(w.cardImg){
           var im=document.createElement("img");
-          im.className="chip-th"; im.src=w.cardImg; im.alt=""; im.loading="lazy"; im.decoding="async";
+          im.className="chip-th"; im.src=libArt(w.cardImg); im.alt=""; im.loading="lazy"; im.decoding="async";
           im.onerror=function(){ im.remove(); };
           c.appendChild(im);
         }
@@ -15165,7 +15165,7 @@ function ptRenderRailInto(hostId, selId, onPick, withClear){
       };
     }
     if(pro){
-      im.src="lib/wf/lookchips/"+id+".jpg";
+      im.src=libArt("lib/wf/lookchips/"+id+".jpg");
       im.onerror=function(){ im.onerror=null; filteredPreview(); };
     } else filteredPreview();
     wr.appendChild(im);
@@ -15389,7 +15389,7 @@ function ptRenderWfList(){
     var b=el("button","pt-wfrow"+(state.pt.wf===w.id?" on":""));
     if(w.cardImg){
       var im=document.createElement("img");
-      im.src=w.cardImg; im.alt=""; im.loading="lazy"; im.decoding="async";
+      im.src=libArt(w.cardImg); im.alt=""; im.loading="lazy"; im.decoding="async";
       im.onerror=function(){ im.remove(); };
       b.appendChild(im);
     }
@@ -24727,7 +24727,7 @@ function stLookArt(key){
     if(!ST_LOOK_RAF) ST_LOOK_RAF=requestAnimationFrame(function(){ ST_LOOK_RAF=0; stRenderPresetCards(); });
   };
   im.onerror=function(){ ST_LOOK_ART[key]="missing"; };  /* falls back to the computed tile */
-  im.src="lib/looks/look-"+key+".jpg";
+  im.src=libArt("lib/looks/look-"+key+".jpg");
   return null;
 }
 /* cover-fill, biased upward: the art is 2:3 inside a 4:5 tile, so the crop eats
