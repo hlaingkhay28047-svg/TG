@@ -10,6 +10,13 @@ drift", run #10).
   frontup.jpg        B — front, chin raised
   threequarter.jpg   C — three-quarter, turned to her left
 
+The face-swap jobs send only TWO of these, front.jpg + threequarter.jpg. The endpoint
+(qwen-image-3.0-pro/image-edit) takes at most three imageUrls in total and the card being
+edited is one of them, so three references plus a base is four and is refused outright
+(errorCode 1007, run 35419140136 — refused at submit, nothing charged). D + C is the widest
+angular spread of the three; B is the closest to D and so the one that can be spared. All
+three are kept here because a future job with no base can use all three.
+
 PROVENANCE, stated plainly: these came from the owner, who says they are their own
 studio's AI generations of a synthetic character — not a photograph of a real person.
 That is the owner's attestation; it was not independently verified here. The owner was

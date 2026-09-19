@@ -5,7 +5,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/cards5/anime-2d-portrait.jpg",
@@ -19,7 +18,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/cards5/business-headshot.jpg",
@@ -33,7 +31,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/cards5/chinese-ink-painting.jpg",
@@ -47,7 +44,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/cards5/couple-compose.jpg",
@@ -61,7 +57,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/cards5/lg-key.jpg",
@@ -75,7 +70,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/cards5/neon-street-night.jpg",
@@ -89,7 +83,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/cards5/wed-gown-0.jpg",
@@ -103,7 +96,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/cards4/pr-repFamily.jpg",
@@ -117,7 +109,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/imagine/card-idphoto-after.jpg",
@@ -131,7 +122,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/imagine/th/idphoto-blackSuit.jpg",
@@ -145,7 +135,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/imagine/th/portrait-goldenWind.jpg",
@@ -159,7 +148,6 @@
    "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
    "refs": [
     "tools/art_ref/model2/front.jpg",
-    "tools/art_ref/model2/frontup.jpg",
     "tools/art_ref/model2/threequarter.jpg"
    ],
    "base": "docs/app/lib/wf/lookchips/pt_window.jpg",
