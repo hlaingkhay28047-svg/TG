@@ -1,0 +1,41 @@
+{
+ "ok": [
+  {
+   "name": "face-imagine__card-idphoto-after",
+   "file": "face-imagine__card-idphoto-after.png",
+   "taskId": "2101158914091360257",
+   "bytes": 1585922,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-lookchips__pt_window",
+   "file": "face-lookchips__pt_window.png",
+   "taskId": "2101158910961860609",
+   "bytes": 1905633,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__business-headshot",
+   "file": "face-cards5__business-headshot.png",
+   "taskId": "2101158913459744769",
+   "bytes": 1627894,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  }
+ ],
+ "failed": []
+}
