@@ -1,0 +1,89 @@
+{
+ "ok": [
+  {
+   "name": "face-cards5__reference-transfer",
+   "file": "face-cards5__reference-transfer.png",
+   "taskId": "2101218398037295106",
+   "bytes": 2055856,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__pr-repFamily",
+   "file": "face-cards5__pr-repFamily.png",
+   "taskId": "2101218400159612929",
+   "bytes": 2238159,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__pr-repCouple",
+   "file": "face-cards5__pr-repCouple.png",
+   "taskId": "2101218398032859137",
+   "bytes": 1855050,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__look-noir-feather",
+   "file": "face-cards5__look-noir-feather.png",
+   "taskId": "2101219339006504962",
+   "bytes": 1656580,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__pr-repSolo",
+   "file": "face-cards5__pr-repSolo.png",
+   "taskId": "2101218862315466753",
+   "bytes": 1728907,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__playing-card-queen",
+   "file": "face-cards5__playing-card-queen.png",
+   "taskId": "2101219014529228802",
+   "bytes": 1530668,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-cards5__wed-gown-0",
+   "file": "face-cards5__wed-gown-0.png",
+   "taskId": "2101219731301679105",
+   "bytes": 1656746,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  }
+ ],
+ "failed": []
+}
