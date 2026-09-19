@@ -1,0 +1,413 @@
+{
+ "ok": [
+  {
+   "name": "face-looks__look-evAiry",
+   "file": "face-looks__look-evAiry.png",
+   "taskId": "2101256576408195074",
+   "bytes": 1613999,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-evCommercial",
+   "file": "face-looks__look-evCommercial.png",
+   "taskId": "2101256577157296129",
+   "bytes": 1701433,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-evEditorial",
+   "file": "face-looks__look-evEditorial.png",
+   "taskId": "2101256991074107393",
+   "bytes": 1502839,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-evMatte",
+   "file": "face-looks__look-evMatte.png",
+   "taskId": "2101257084705828866",
+   "bytes": 1486612,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-evNaturalPro",
+   "file": "face-looks__look-evNaturalPro.png",
+   "taskId": "2101257361154875394",
+   "bytes": 1573537,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-evBW",
+   "file": "face-looks__look-evBW.png",
+   "taskId": "2101256575745495042",
+   "bytes": 1692673,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-evSoftFilm",
+   "file": "face-looks__look-evSoftFilm.png",
+   "taskId": "2101257454213898241",
+   "bytes": 1468344,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-evWedding",
+   "file": "face-looks__look-evWedding.png",
+   "taskId": "2101257695315075074",
+   "bytes": 1672780,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-muCCD",
+   "file": "face-looks__look-muCCD.png",
+   "taskId": "2101257699058118657",
+   "bytes": 1603195,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-muCream",
+   "file": "face-looks__look-muCream.png",
+   "taskId": "2101257897515806722",
+   "bytes": 1572398,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-muDouyin",
+   "file": "face-looks__look-muDouyin.png",
+   "taskId": "2101258103625584642",
+   "bytes": 1507127,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-muFirstLove",
+   "file": "face-looks__look-muFirstLove.png",
+   "taskId": "2101258149041750017",
+   "bytes": 1628755,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-muGoddess",
+   "file": "face-looks__look-muGoddess.png",
+   "taskId": "2101258271297323010",
+   "bytes": 1698361,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-muHoney",
+   "file": "face-looks__look-muHoney.png",
+   "taskId": "2101258529136046081",
+   "bytes": 1545283,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-muNatural",
+   "file": "face-looks__look-muNatural.png",
+   "taskId": "2101258575518580737",
+   "bytes": 1587649,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-looks__look-muPorcelain",
+   "file": "face-looks__look-muPorcelain.png",
+   "taskId": "2101258733836537858",
+   "bytes": 1547347,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-4k60",
+   "file": "face-vid__vt-4k60.png",
+   "taskId": "2101258940007550978",
+   "bytes": 1456245,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-anime",
+   "file": "face-vid__vt-anime.png",
+   "taskId": "2101259020160942082",
+   "bytes": 1645550,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-char30",
+   "file": "face-vid__vt-char30.png",
+   "taskId": "2101259198134198273",
+   "bytes": 1452353,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-charSwap",
+   "file": "face-vid__vt-charSwap.png",
+   "taskId": "2101259418657570817",
+   "bytes": 1536335,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-erasesub",
+   "file": "face-vid__vt-erasesub.png",
+   "taskId": "2101259425962127362",
+   "bytes": 1523840,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-extend",
+   "file": "face-vid__vt-extend.png",
+   "taskId": "2101259802687803394",
+   "bytes": 1527966,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-extend30",
+   "file": "face-vid__vt-extend30.png",
+   "taskId": "2101259832727408641",
+   "bytes": 1535233,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-faceSwap",
+   "file": "face-vid__vt-faceSwap.png",
+   "taskId": "2101259926092857345",
+   "bytes": 1660981,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-headswap",
+   "file": "face-vid__vt-headswap.png",
+   "taskId": "2101260259037257730",
+   "bytes": 1494034,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-filmlook",
+   "file": "face-vid__vt-filmlook.png",
+   "taskId": "2101260231906029570",
+   "bytes": 1353983,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-heritage",
+   "file": "face-vid__vt-heritage.png",
+   "taskId": "2101260498219167746",
+   "bytes": 1697730,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-multiangle",
+   "file": "face-vid__vt-multiangle.png",
+   "taskId": "2101260636356845570",
+   "bytes": 1386128,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-pixel",
+   "file": "face-vid__vt-pixel.png",
+   "taskId": "2101260887989129217",
+   "bytes": 1520760,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-lego",
+   "file": "face-vid__vt-lego.png",
+   "taskId": "2101260631067037698",
+   "bytes": 1638836,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-restore",
+   "file": "face-vid__vt-restore.png",
+   "taskId": "2101261098257977345",
+   "bytes": 1528250,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-sceneswap",
+   "file": "face-vid__vt-sceneswap.png",
+   "taskId": "2101261299479711745",
+   "bytes": 1702912,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-translate",
+   "file": "face-vid__vt-translate.png",
+   "taskId": "2101261452834369538",
+   "bytes": 1520721,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  },
+  {
+   "name": "face-vid__vt-vangogh",
+   "file": "face-vid__vt-vangogh.png",
+   "taskId": "2101261511657209857",
+   "bytes": 2356830,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.044"
+   }
+  }
+ ],
+ "failed": []
+}
