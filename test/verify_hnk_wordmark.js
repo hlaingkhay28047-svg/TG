@@ -20,7 +20,7 @@ const checks = [
   ["brand accent line", /\.nav-name::after\s*\{[^}]*linear-gradient\(/s],
   ["reduced-motion support", /prefers-reduced-motion:\s*reduce[^}]*\.hnk-wordmark[^}]*animation:none!important/s],
   ["forced-colors fallback", /forced-colors:active[^}]*\.hnk-wordmark\s*\{[^}]*-webkit-text-fill-color:CanvasText[^}]*animation:none/s],
-  ["small-phone label stays visible (compact)", /@media\(max-width:479px\)\{[\s\S]{0,300}\.hnk-studio-label\s*\{[^}]*font-size:9\.5px/],
+  ["small-phone label stays visible (compact) — at the 10px floor since 6.118.0", /@media\(max-width:479px\)\{[\s\S]{0,300}\.hnk-studio-label\s*\{[^}]*font-size:10px/],
   ["type label gold gradient", /\.hnk-studio-label\s*\{[^}]*linear-gradient\([^}]*background-clip:text/s],
   ["small-phone sizing", /@media\(max-width:379px\)[^{]*\{[^}]*\.hnk-wordmark\s*\{[^}]*font-size:/s]
 ];
@@ -38,7 +38,7 @@ const siteChecks = [
   ["landing-page brand accent line", /\.nav-name::after\s*\{[^}]*linear-gradient\(/s],
   ["landing-page reduced-motion support", /prefers-reduced-motion:reduce[^}]*\*\{[^}]*animation:none!important/s],
   ["landing-page forced-colors fallback", /forced-colors:active[^}]*\.hnk-wordmark\s*\{[^}]*-webkit-text-fill-color:CanvasText[^}]*animation:none/s],
-  ["landing-page mobile label stays visible (compact)", /\.hnk-studio-label\s*\{[^}]*font-size:8\.5px/s],
+  ["landing-page mobile label stays visible (compact) — at the 10px floor since 6.118.0", /@media \(max-width:479px\)\{\s*\.hnk-studio-label\{font-size:10px/],
   ["landing-page type label gold gradient", /\.hnk-studio-label\s*\{[^}]*linear-gradient\([^}]*background-clip:text/s],
   ["landing-page small-phone sizing", /@media \(max-width:379px\)\{[\s\S]{0,500}\.hnk-wordmark\s*\{[^}]*font-size:/]
 ];

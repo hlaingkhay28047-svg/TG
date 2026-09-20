@@ -290,7 +290,7 @@ select.inp{padding:9px 10px}
 .ratio-rail{display:flex;gap:6px;margin-top:var(--sp-2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
 .ratio-rail::-webkit-scrollbar{display:none}
 .rchip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:46px;min-height:54px;padding:7px 9px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;color:var(--muted);font:inherit;font-size:11px;cursor:pointer}
-.rchip i{display:flex;align-items:center;justify-content:center;border:1.6px solid currentColor;border-radius:3px;opacity:.85;font-style:normal;font-size:9px;font-weight:800;line-height:1}
+.rchip i{display:flex;align-items:center;justify-content:center;border:1.6px solid currentColor;border-radius:3px;opacity:.85;font-style:normal;font-size:10px;font-weight:800;line-height:1} /* 6.118.0 — the text floor: nothing under 10px */
 .rchip.auto i{border-style:dashed}
 .rchip.on{border-color:var(--gold);color:var(--gold-hi);background:rgba(217,164,65,.10)}
 .rr-native{display:none}
@@ -335,8 +335,15 @@ select.inp{padding:9px 10px}
 /* 6.41.0 — the same line box that holds its own ink, for the same reason as
    .wfmini .t: 4px of the first line and 4px of the last were being shaved off
    at 1.6. Still two lines per row. */
-.nw-t{font-weight:800;font-size:12.5px;line-height:2.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.nw-s{font-size:12px;color:var(--muted);line-height:2.25;margin-top:2px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+/* 6.118.0 — MEASURED, NOT GUESSED (#212). 6.41.0 set 2.25 for the tallest
+   scripts without measuring these two rows. Measured with the ink probe over
+   the rows in all nine languages (Burmese, Shan and Thai carry the tallest
+   marks: 14px of ascender ink on a 12.5px title, 13px on the 12px story):
+   the title needs 1.92 and the story 1.83 to keep a 1px margin above the
+   line box; 2.0 and 1.9 keep 1.5px. Each row is 11px shorter and no mark is
+   clipped — verify_ux_wave_6118 re-measures every release. */
+.nw-t{font-weight:800;font-size:12.5px;line-height:2;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.nw-s{font-size:12px;color:var(--muted);line-height:1.9;margin-top:2px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .nw-tag{flex:0 0 auto;font-size:11px;font-weight:900;letter-spacing:.06em;color:#1a1408;background:var(--gold);border-radius:999px;padding:3px 7px}
 .nw-x{flex:0 0 auto;min-width:40px;min-height:40px;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
 /* the card ribbon. Sits opposite .wf-need (top-left) so neither covers the
@@ -1462,11 +1469,11 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
    by dropping the version tag (still shown in Setup + footer) and, at the
    narrowest widths, the logo mark, instead of letting the brand stack */
 .nav-name{white-space:nowrap}
-@media(max-width:479px){ .nav-tag{display:none} .nav-in{gap:8px} .hnk-studio-label{font-size:9.5px;letter-spacing:.16em} }
+@media(max-width:479px){ .nav-tag{display:none} .nav-in{gap:8px} .hnk-studio-label{font-size:10px;letter-spacing:.14em} } /* 6.118.0 — the 10px floor holds on a phone: tighter tracking, not a smaller face */
 /* v4.28: the logo is the brand — never drop it. At the narrowest widths it
    shrinks (and the wordmark tightens) instead of disappearing, which is what
    made the mark vanish on 360px phones. */
-@media(max-width:379px){.hnk-wordmark{font-size:17px;letter-spacing:.08em}.hnk-studio-label{font-size:9px;letter-spacing:.12em}.nav-name::after{width:30px}}
+@media(max-width:379px){.hnk-wordmark{font-size:17px;letter-spacing:.08em}.hnk-studio-label{font-size:10px;letter-spacing:.1em}.nav-name::after{width:30px}}
 @media(max-width:379px){ .nav-logo{width:30px;height:30px;border-radius:8px} .nav-in{gap:6px} .nav-in #selLang{max-width:88px;padding:8px 6px;font-size:12px} .nav-name{font-size:12px;letter-spacing:.02em} }
 @media(max-width:339px){ .nav-name{font-size:11px} .nav-in #selLang{max-width:74px} }
 /* ---- v4.30 Accounts + Premium ----
@@ -1903,7 +1910,7 @@ body.wall #wallRetry.on{display:block}
 .hsl-t{display:block;font-size:var(--fs-sm);font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hsl-s{display:block;font-size:10px;font-weight:500;line-height:1.35;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hsl-b{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px}
-.hsl-tag{font-size:7.5px;font-weight:800;line-height:1;letter-spacing:.09em;padding:3.5px 6px;border-radius:6px;text-transform:uppercase}
+.hsl-tag{font-size:10px;font-weight:800;line-height:1;letter-spacing:.08em;padding:3px 6px;border-radius:6px;text-transform:uppercase} /* 6.118.0 — 7.5px → the 10px floor */
 .hsl-tag.of{color:#1a1408;background:linear-gradient(160deg,var(--gold-hi),var(--gold))}
 .hsl-tag.pro{color:#efe6ff;background:linear-gradient(160deg,#8b62ff,#6a3fe0)}
 .hsl-dot{width:6.5px;height:6.5px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 2.5px rgba(126,201,126,.16),0 0 8px rgba(126,201,126,.7)}
@@ -2022,7 +2029,7 @@ body.wall #wallRetry.on{display:block}
 .st-q{flex:0 0 auto;order:2;width:15px;height:15px;border-radius:50%;border:1px solid var(--line-soft);
   color:var(--muted);font-size:9px;font-weight:700;line-height:13px;text-align:center;cursor:help;user-select:none}
 .st-q:hover{color:var(--gold-hi);border-color:var(--line)}
-.st-bg{flex:0 0 auto;order:2;font-size:7.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+.st-bg{flex:0 0 auto;order:2;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase; /* 6.118.0 — 7.5px → the 10px floor */
   padding:3px 5px;border-radius:5px;white-space:nowrap}
 .st-bg.nw{color:#0b1a2a;background:linear-gradient(160deg,#7fd4ff,#3aa6e8)}
 .st-bg.pro{color:#efe6ff;background:linear-gradient(160deg,#8b62ff,#6a3fe0)}
@@ -4376,11 +4383,11 @@ html.splashing #splash{display:flex}
 <div class="wiz" id="wizPay" role="dialog" aria-modal="true"><div class="wiz-in" id="wizPayIn"></div></div>
 
 <script src="data/hnkdata.js?v=3b68aeb2725b"></script>
-<script src="data/libwf.js?v=880c3f0f1cf1"></script>
+<script src="data/libwf.js?v=c6f022cf791e"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=368bbaac686f"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
-<script src="data/whatsnew.js?v=e6abdb2afa07"></script>
+<script src="data/whatsnew.js?v=38a8f5d083ae"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -30597,7 +30604,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.117.0";
+var APP_VER="6.118.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
