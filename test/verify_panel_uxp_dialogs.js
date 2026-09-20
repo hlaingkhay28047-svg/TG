@@ -142,7 +142,7 @@ function sourcePins() {
   report("A8) .hdr .hsl no longer shrinks (flex 0 0 auto, min-width 108px), #genOpts .hsl takes the row, textarea drops the host frame, #rhConfiguredList chips are denser",
     /\.hdr \.hsl \{ position: relative; flex: 0 0 auto; display: flex; flex-direction: row; max-width: 132px; min-width: 108px; \}/.test(CSS)
     && /\.apg #genOpts \.hsl \{ width: 100%; \}/.test(CSS) && /^textarea \{ -webkit-appearance: none; appearance: none; outline: none; box-shadow: none; border-width: 1px; border-style: solid; \}/m.test(CSS)
-    && /#rhConfiguredList \.chip \{ font-size: 10\.5px;/.test(CSS), {});
+    && /#rhConfiguredList \.chip \{ font-size: 11px;/.test(CSS), {});   /* 6.114.0: 10.5 → 11px, the text floor; still denser than the 13px chip */
 
   report("A9) .github/workflows/test.yml runs verify_panel_uxp_dialogs.js right after verify_panel_pickers.js",
     /node test\/verify_panel_pickers\.js\n[\s\S]{0,400}node test\/verify_panel_uxp_dialogs\.js/.test(CI), {});

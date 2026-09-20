@@ -187,7 +187,8 @@ function ctxTint(node) {
   return "cream";
 }
 function iconTag(name, cls, tint) {
-  return '<img class="' + cls + " " + TINT_LETTER[tint] + ' icn-t" data-icn="' + name
+  /* 6.114.0 — alt="": the icon decorates a label that already carries the words */
+  return '<img class="' + cls + " " + TINT_LETTER[tint] + ' icn-t" alt="" data-icn="' + name
     + '" src="icons/ui/' + name + "-" + tint + '.png">';
 }
 function icn(name, cls) {
@@ -200,9 +201,9 @@ function icn(name, cls) {
      screens the owner photographed with black marks still in them — drew every
      one of theirs from the stroke SVG that Photoshop paints as a black
      silhouette. The gate now matches the concatenated form too. */
-  if (c.indexOf("ic-car") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-gold.png">';
-  if (c.indexOf("ic-xl") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-muted.png">';
-  if (c.indexOf("ic-h2") >= 0) return '<img class="' + c + '" src="icons/ui/' + name + '-gold.png">';
+  if (c.indexOf("ic-car") >= 0) return '<img class="' + c + '" alt="" src="icons/ui/' + name + '-gold.png">';
+  if (c.indexOf("ic-xl") >= 0) return '<img class="' + c + '" alt="" src="icons/ui/' + name + '-muted.png">';
+  if (c.indexOf("ic-h2") >= 0) return '<img class="' + c + '" alt="" src="icons/ui/' + name + '-gold.png">';
   /* no element to walk up from yet: cream, then retint() corrects it in place */
   return iconTag(name, c, "cream");
 }

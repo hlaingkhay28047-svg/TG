@@ -86,7 +86,7 @@
      rules should reach for these instead of hand-picking another one-off. */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px;
   --r-sm:9px; --r-md:12px; --r-lg:14px; --r-pill:999px;
-  --fs-2xs:10px; --fs-xs:11px; --fs-sm:12px; --fs-base:13px; --fs-md:14px; --fs-xl:clamp(24px,5vw,34px);
+  --fs-2xs:11px; --fs-xs:12px; --fs-sm:13px; --fs-base:14px; --fs-md:15px; --fs-xl:clamp(24px,5vw,34px);
   /* v4.28 motion tokens — every animation/transition in the app draws from
      these three durations + two easings (transform/opacity only, entrance-
      biased). New motion must reach for a token, never a hand-picked ms. */
@@ -148,13 +148,16 @@ input,textarea,select{font-family:inherit}
 /* v5.63.0 — owner, live phone: the first cut ran ~2x the other pages' bands.
    Same 126px floor as .page-hero, tighter type, no desktop growth — the
    card language matches AND the size does. */
-.hero-mini .kick{padding:10px 6px 0 0;font-size:.68rem;letter-spacing:.12em;max-width:100%}
+.hero-mini .kick{padding:10px 6px 0 0;font-size:.7rem;letter-spacing:.12em;max-width:100%}
 /* 6.96.0 — THE KICKER THE OWNER PHOTOGRAPHED. .hero-strip caps every child at 76% (295px of the 388px
    banner on a 420px phone) and the line wants 382px at .28em tracking, so "RUNNINGHUB AI" fell to a
    second line on its own. Measured on the live page: 263px with no tracking, +1 char-width per .01em.
    The kicker takes the whole banner and .12em (314px), and under 390px it steps down to 269px — one
    line from a 320px Photoshop panel up to a monitor. */
-@media (max-width:389px){.hero-mini .kick{font-size:.6rem;letter-spacing:.10em}}
+@media (max-width:389px){.hero-mini .kick{font-size:.69rem;letter-spacing:.04em}}
+/* 6.114.0 — under 340px the kicker is the one place that steps below the 11px floor: a 320px plate is 286px
+   wide and the CI runner's wider fallback font wrapped the 11px line, so the 320px case reads 10px at .02em */
+@media (max-width:339px){.hero-mini .kick{font-size:.625rem;letter-spacing:.02em}}
 .hero-mini h1{font-size:clamp(.98rem,3.7vw,1.2rem);line-height:1.35}
 .hero-mini .lede{display:none}
 /* ---- page-hero: compact per-page banner band — same visual language as .hero-art
@@ -177,7 +180,7 @@ input,textarea,select{font-family:inherit}
    stays fully clear until past the middle and only the text zone at the
    bottom is shaded; the doubled text-shadows on .ph-kick/.ph-head carry the
    rest of the legibility. */
-.page-hero:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(180deg,rgba(11,13,20,0) 0%,rgba(11,13,20,.04) 52%,rgba(11,13,20,.72) 100%)}
+.page-hero:after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background:linear-gradient(180deg,rgba(11,13,20,.06) 0%,rgba(11,13,20,.16) 42%,rgba(11,13,20,.6) 74%,rgba(11,13,20,.88) 100%)}
 /* v5.57.0 — VIDEO HERO BANNERS. A looping motion clip named after the
    banner (lib/banners/motion/<name>.mp4) slides in ABOVE the still and
    fades up once it can actually play; the JPG stays underneath as the
@@ -189,10 +192,10 @@ input,textarea,select{font-family:inherit}
 video.ph-motion{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
 video.ph-motion.live{opacity:1}
 @media (prefers-reduced-motion: reduce){video.ph-motion,.dash-greet video.greet-motion{display:none}}
-.page-hero .ph-kick{position:relative;z-index:2;max-width:72%;font-size:10px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 3px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.75)}
+.page-hero .ph-kick{position:relative;z-index:2;max-width:72%;font-size:11px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:var(--gold-hi);text-shadow:0 1px 3px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.75)}
 .page-hero .ph-head{position:relative;z-index:2;max-width:72%;font-size:clamp(15px,3.6vw,20px);font-weight:800;line-height:1.5;margin:0;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.95),0 2px 14px rgba(0,0,0,.8)}
 @media (min-width:768px){.page-hero{min-height:172px;padding:16px 20px 14px}}
-.kick{font-size:10.5px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+.kick{font-size:11px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
 h1{font-size:var(--fs-xl);font-weight:800;line-height:1.3;margin:var(--sp-1) 0 var(--sp-1)}
 h1 em{font-style:normal;color:var(--gold-hi)}
 .lede{color:var(--muted);font-size:var(--fs-md);margin-bottom:var(--sp-2)}
@@ -204,7 +207,7 @@ h1 em{font-style:normal;color:var(--gold-hi)}
 .card h2{font-size:var(--fs-sm);font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:var(--sp-3)}
 .row{display:flex;gap:var(--sp-2);flex-wrap:wrap;align-items:center}
 .grow{flex:1;min-width:0}
-.inp{width:100%;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:var(--r-sm);color:var(--cream);padding:10px 12px;font-size:var(--fs-md)}
+.inp{width:100%;min-height:40px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:var(--r-sm);color:var(--cream);padding:10px 12px;font-size:var(--fs-md)}
 /* select.inp needs equal-or-higher specificity than the #host .inp rule
    below (which sets flex:1 1 30%) — a bare type selector loses to that
    class selector regardless of source order, so a plain "select" min-width
@@ -286,7 +289,7 @@ select.inp{padding:9px 10px}
    pick by shape instead of decoding "9:16" */
 .ratio-rail{display:flex;gap:6px;margin-top:var(--sp-2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
 .ratio-rail::-webkit-scrollbar{display:none}
-.rchip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:46px;min-height:54px;padding:7px 9px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;color:var(--muted);font:inherit;font-size:10.5px;cursor:pointer}
+.rchip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:46px;min-height:54px;padding:7px 9px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;color:var(--muted);font:inherit;font-size:11px;cursor:pointer}
 .rchip i{display:flex;align-items:center;justify-content:center;border:1.6px solid currentColor;border-radius:3px;opacity:.85;font-style:normal;font-size:9px;font-weight:800;line-height:1}
 .rchip.auto i{border-style:dashed}
 .rchip.on{border-color:var(--gold);color:var(--gold-hi);background:rgba(217,164,65,.10)}
@@ -333,9 +336,9 @@ select.inp{padding:9px 10px}
    .wfmini .t: 4px of the first line and 4px of the last were being shaved off
    at 1.6. Still two lines per row. */
 .nw-t{font-weight:800;font-size:12.5px;line-height:2.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.nw-s{font-size:11px;color:var(--muted);line-height:2.25;margin-top:2px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.nw-tag{flex:0 0 auto;font-size:9.5px;font-weight:900;letter-spacing:.06em;color:#1a1408;background:var(--gold);border-radius:999px;padding:3px 7px}
-.nw-x{flex:0 0 auto;min-width:36px;min-height:36px;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
+.nw-s{font-size:12px;color:var(--muted);line-height:2.25;margin-top:2px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.nw-tag{flex:0 0 auto;font-size:11px;font-weight:900;letter-spacing:.06em;color:#1a1408;background:var(--gold);border-radius:999px;padding:3px 7px}
+.nw-x{flex:0 0 auto;min-width:40px;min-height:40px;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
 /* the card ribbon. Sits opposite .wf-need (top-left) so neither covers the
    other, and above the ★/batch corner buttons in z-order but not over them. */
 .wf-new{position:absolute;top:8px;right:8px;z-index:3;pointer-events:none;background:var(--gold);color:#1a1408;border-radius:999px;padding:2px 8px;font-size:9.5px;font-weight:900;letter-spacing:.06em}
@@ -345,11 +348,11 @@ select.inp{padding:9px 10px}
 .tabb .nw-dot{position:absolute;top:5px;right:calc(50% - 17px);width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 2px var(--bg)}
 /* v4.41: photo-count pill on workflow cards */
 .wfmini{position:relative}
-.wf-need{position:absolute;top:8px;left:8px;z-index:2;pointer-events:none;background:rgba(11,13,20,.78);border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:10px;color:var(--cream)}
+.wf-need{position:absolute;top:8px;left:8px;z-index:2;pointer-events:none;background:rgba(11,13,20,.78);border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:11px;color:var(--cream)}
 /* min-height:38px keeps every chip at/near the touch-target minimum — was
    originally scoped to #pgRetouch only, now global (Library filters, prompt
    history, add-ons, saved-model chips were still 28px tall) */
-.chip{border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--cream);padding:6px 13px;font-size:var(--fs-sm);font-weight:700;min-height:38px;box-sizing:border-box;display:inline-flex;align-items:center}
+.chip{border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--cream);padding:6px 13px;font-size:var(--fs-sm);font-weight:700;min-height:40px;box-sizing:border-box;display:inline-flex;align-items:center}
 @media(hover:hover){.chip:hover{border-color:var(--gold)}}
 .chip.on{background:var(--gold);border-color:var(--gold);color:#1a1408}
 .subh{font-size:var(--fs-xs);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:var(--sp-3) 0 2px}
@@ -391,7 +394,7 @@ select.inp{padding:9px 10px}
 .ref .add{font-size:26px;color:var(--gold);background:none;border:none;width:100%;height:100%}
 .ref .x{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:8px;border:1px solid var(--line-soft);background:rgba(11,13,20,.8);color:var(--cream);font-size:13px;display:none}
 .ref.filled .x{display:block}
-.ref .tag{position:absolute;left:4px;bottom:4px;background:rgba(11,13,20,.8);border-radius:6px;padding:1px 7px;font-size:10px;color:var(--gold-hi);font-weight:800}
+.ref .tag{position:absolute;left:4px;bottom:4px;background:rgba(11,13,20,.8);border-radius:6px;padding:1px 7px;font-size:11px;color:var(--gold-hi);font-weight:800}
 /* v4.45 — editable role chip on each filled ref slot */
 /* v5.39.0 — THE ROLE LABEL WAS BEING CUT IN HALF, on every phone width, in
    both languages. white-space:nowrap plus a 76px content box meant "လူ
@@ -479,7 +482,7 @@ select.inp{padding:9px 10px}
    the slot is empty, gold once it is filled, and tapping one opens that
    slot's picker. */
 .slotchips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px}
-.slotchip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
+.slotchip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;min-height:40px;border-radius:999px;
   border:1px dashed var(--line);background:var(--panel-2);color:var(--muted);
   font-size:var(--fs-xs,11px);font-weight:600;cursor:pointer;line-height:1.4}
 .slotchip .ic-s{width:14px;height:14px;flex:0 0 14px}
@@ -519,7 +522,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 @keyframes pagein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:rgba(11,13,20,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px);padding-bottom:env(safe-area-inset-bottom);padding-left:var(--sa-l);padding-right:var(--sa-r)}
 .tabbar::-webkit-scrollbar{display:none}
-.tabb{flex:1 0 auto;min-width:58px;background:none;border:none;color:var(--muted);padding:9px 4px 10px;font-size:10.5px;font-weight:800;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap}
+.tabb{flex:1 0 auto;min-width:58px;background:none;border:none;color:var(--muted);padding:9px 4px 10px;font-size:11px;font-weight:800;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap}
 .tabb .ic{font-size:19px;line-height:1}
 .tabb.on{color:var(--gold-hi)}
 .tabb.on .ic{transform:translateY(-1px)}
@@ -532,7 +535,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
    (Create: Freeform/Studio/Retouch/Text→Img/Video/VidUp, Library:
    Reference/Gallery) — flows with the page content rather than fixed,
    so it doesn't compete with the primary bottom nav for screen space */
-.subtabbar{display:none;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:var(--sp-3) 0;position:relative}
+.subtabbar{display:none;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:var(--sp-3) 0;position:relative;scroll-snap-type:x proximity;scroll-padding:0 40px}
 .subtabbar::-webkit-scrollbar{display:none}
 .subtabbar.on{display:flex}
 /* edge fade cues: no native scrollbar and no other affordance means a pill
@@ -542,12 +545,12 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 /* scroll-edge fades must be position:sticky flex items — absolute overlays
    inside a scroll container travel with the content and end up smeared
    across whichever chip sits at that content offset once the bar scrolls */
-.subtabbar:before,.subtabbar:after{content:"";position:sticky;flex:0 0 28px;width:28px;align-self:stretch;pointer-events:none;z-index:2;opacity:0;transition:opacity .15s ease}
-.subtabbar:before{left:0;margin-right:-34px;background:linear-gradient(to right,var(--ink),transparent)}
-.subtabbar:after{right:0;margin-left:-34px;background:linear-gradient(to left,var(--ink),transparent)}
+.subtabbar:before,.subtabbar:after{content:"";position:sticky;flex:0 0 40px;width:40px;align-self:stretch;pointer-events:none;z-index:2;opacity:0;transition:opacity .15s ease}
+.subtabbar:before{left:0;margin-right:-46px;background:linear-gradient(to right,var(--ink) 35%,transparent)}
+.subtabbar:after{right:0;margin-left:-46px;background:linear-gradient(to left,var(--ink) 35%,transparent)}
 .subtabbar.fade-l:before{opacity:1}
 .subtabbar.fade-r:after{opacity:1}
-.subtab{flex:0 0 auto;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--muted);padding:7px 14px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
+.subtab{flex:0 0 auto;scroll-snap-align:center;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--panel-2);color:var(--muted);padding:7px 14px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
 .subtab.on{background:var(--gold);border-color:var(--gold);color:#1a1408}
 .toast{position:fixed;left:calc(16px + var(--sa-l));right:calc(16px + var(--sa-r));bottom:calc(86px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:60;background:var(--panel-2);border:1px solid var(--gold);border-radius:11px;padding:11px 14px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(8px);pointer-events:none;transition:opacity var(--dur-2) var(--ease-out),transform var(--dur-2) var(--ease-out),visibility 0s linear var(--dur-2)}
 .toast.on{opacity:1;visibility:visible;transform:none;transition-delay:0s}
@@ -735,7 +738,7 @@ textarea.wiz-prompt{min-height:220px}
    commissioned to show. The favourite star stays top-RIGHT: measured against
    both card layouts, it clears "AFTER" and "RESULT". */
 .wfv .bdg{position:absolute;bottom:6px;right:6px;z-index:2;background:rgba(11,13,20,.8);border:1px solid rgba(255,255,255,.16);border-radius:999px;width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1}
-.wfv .wf-need{top:auto;bottom:6px;left:6px;height:22px;line-height:20px;padding:0 9px;border-radius:999px;font-size:10px;font-weight:800;background:rgba(11,13,20,.8);border:1px solid rgba(255,255,255,.16);box-sizing:border-box}
+.wfv .wf-need{top:auto;bottom:6px;left:6px;height:22px;line-height:20px;padding:0 9px;border-radius:999px;font-size:11px;font-weight:800;background:rgba(11,13,20,.8);border:1px solid rgba(255,255,255,.16);box-sizing:border-box}
 .wfv img.pl{clip-path:inset(0 50% 0 0)}
 .wfv img.pr{clip-path:inset(0 0 0 50%)}
 .wfv img.svgv{object-position:center;object-fit:cover}
@@ -810,14 +813,14 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
    added the very line it was there to prevent (measured: 84px of ink in a 56px
    box, the last two cards still spilling once everything else was fixed). */
 .wfmini .t .ell,.wfmini .s .ell,.im-card-sum .ell{position:absolute;right:0;bottom:0;padding-left:12px;background:var(--panel-2);color:var(--muted);font-weight:700}
-.wfmini .go{margin-top:auto;font-size:10.5px;color:var(--gold-hi);font-weight:800;align-self:flex-end;display:inline-flex;align-items:center;padding:5px 11px 5px 8px;border:1px solid rgba(233,185,73,.38);border-radius:999px;background:rgba(233,185,73,.08);line-height:1.2}
+.wfmini .go{margin-top:auto;font-size:11px;color:var(--gold-hi);font-weight:800;align-self:flex-end;display:inline-flex;align-items:center;padding:5px 11px 5px 8px;border:1px solid rgba(233,185,73,.38);border-radius:999px;background:rgba(233,185,73,.08);line-height:1.2}
 
 /* v3.0 UX */
 .refstrip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
 .refstrip .rs{position:relative;width:52px;height:52px;border:1px dashed var(--line);border-radius:10px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:16px;overflow:hidden;flex:none}
 .refstrip .rs.filled{border-style:solid}
 .refstrip .rs img{width:100%;height:100%;object-fit:contain;background:var(--ink)}
-.refstrip .rs .tag{position:absolute;left:2px;bottom:2px;background:rgba(11,13,20,.85);border-radius:5px;padding:0 4px;font-size:9.5px;color:var(--gold-hi);font-weight:800}
+.refstrip .rs .tag{position:absolute;left:2px;bottom:2px;background:rgba(11,13,20,.85);border-radius:5px;padding:0 4px;font-size:11px;color:var(--gold-hi);font-weight:800}
 .refstrip .rsx{position:absolute;top:1px;right:1px;width:20px;height:20px;border-radius:6px;border:none;background:rgba(11,13,20,.85);color:var(--cream);font-size:10px;display:flex;align-items:center;justify-content:center;padding:0}
 .refstrip .note{flex:1 1 100%;font-size:11px;color:var(--muted);line-height:1.5}
 .refstrip .note.cap{margin-top:-6px;color:var(--gold-hi);opacity:.85;font-weight:700}
@@ -846,6 +849,9 @@ img.wiz-visual.svgv{object-fit:contain;background:#0d1424}
 .chainrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .keybanner{display:none;background:rgba(217,164,65,.12);border:1px solid var(--gold);border-radius:11px;padding:10px 14px;font-size:12.5px;margin:12px 0;color:var(--gold-hi);font-weight:700;cursor:pointer}
 .keybanner.on{display:block}
+/* 6.114.0 — off Home the banner is a one-line reminder, not a three-line block on
+   every page. No display here: body.wall .keybanner must keep winning. */
+.keybanner.compact.on{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 12px;margin:8px 0;font-size:var(--fs-xs);line-height:26px}
 .hero-mini .lede,.hero-mini .statline{display:none}
 .hero-mini h1{font-size:clamp(18px,4vw,24px);margin:2px 0}
 .hero-mini{padding:14px 0 2px}
@@ -1179,7 +1185,7 @@ input.rng::-webkit-slider-thumb{width:22px;height:22px}
 .st880-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-top:8px}
 .st880-grid .pcard{flex:none;width:auto}
 .st880-grid .pcard img{width:100%;height:112px;object-fit:cover;object-position:50% 18%;display:block}
-.st880-grid .pcard span{display:block;font-size:10.5px;line-height:1.3;padding:4px 5px;white-space:normal;word-break:break-word}
+.st880-grid .pcard span{display:block;font-size:11px;line-height:1.3;padding:4px 5px;white-space:normal;word-break:break-word}
 .st880-grid .pcard.on{outline:2px solid var(--gold)}
 .prow{display:flex;gap:var(--sp-2);overflow-x:auto;padding-bottom:var(--sp-1);scrollbar-width:none}
 .prow::-webkit-scrollbar{display:none}
@@ -1363,7 +1369,7 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 #stSuiteTabs .chip{flex:0 0 auto;white-space:nowrap}
 #stJumpBar .chip{min-height:40px}
 #stStageMin{min-width:44px;justify-content:center}
-#stSearch{flex:1;min-width:80px;min-height:38px;padding:6px 10px;font-size:var(--fs-xs)}
+#stSearch{flex:1;min-width:80px;min-height:40px;padding:6px 10px;font-size:var(--fs-xs)}
 #stGroupChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
 #stGroupChips::-webkit-scrollbar{display:none}
 /* v4.62 — two meanings, two treatments, so neither can erase the other.
@@ -1373,7 +1379,7 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 #stGroupChips .chip.edited{border-color:var(--gold);color:var(--gold-hi)}
 #stGroupChips .chip.here{background:var(--gold);color:#1a1408;border-color:var(--gold)}
 #stGroupChips .chip.here.edited{box-shadow:inset 0 -3px 0 var(--gold-hi)}
-#stGroupChips .chip{flex:0 0 auto;white-space:nowrap;min-height:34px;padding:4px 11px;font-size:var(--fs-2xs)}
+#stGroupChips .chip{flex:0 0 auto;white-space:nowrap;min-height:40px;padding:4px 11px;font-size:var(--fs-2xs)}
 /* v4.27.1 jump-bar diet: compact drops the two-row top (suite tabs + search) to one 44-50px chip row;
    #stSearch stays in the DOM (search still fully functional) — the #stSearchTgl chip swaps it back in */
 #stSearchTgl{display:none}#pgStudio.stcompact #stJumpTop,#pgMeitu.stcompact #stJumpTop,#pgEvoto.stcompact #stJumpTop{display:none}#pgStudio.stcompact #stSearchTgl,#pgMeitu.stcompact #stSearchTgl,#pgEvoto.stcompact #stSearchTgl{display:inline-flex;min-width:44px;min-height:44px;justify-content:center;position:sticky;left:0;z-index:1;background:var(--ink)}#pgStudio.stcompact #stGroupChips,#pgMeitu.stcompact #stGroupChips,#pgEvoto.stcompact #stGroupChips{margin-top:2px}#pgStudio.stcompact #stJumpBar.searchopen #stJumpTop,#pgMeitu.stcompact #stJumpBar.searchopen #stJumpTop,#pgEvoto.stcompact #stJumpBar.searchopen #stJumpTop{display:flex;margin-top:2px}#pgStudio.stcompact #stJumpBar.searchopen #stSuiteTabs,#pgMeitu.stcompact #stJumpBar.searchopen #stSuiteTabs,#pgEvoto.stcompact #stJumpBar.searchopen #stSuiteTabs{display:none}#pgStudio.stcompact #stJumpBar.searchopen #stGroupChips,#pgMeitu.stcompact #stJumpBar.searchopen #stGroupChips,#pgEvoto.stcompact #stJumpBar.searchopen #stGroupChips{display:none}#pgStudio.stcompact #stJumpBar.searchopen #stSearch,#pgMeitu.stcompact #stJumpBar.searchopen #stSearch,#pgEvoto.stcompact #stJumpBar.searchopen #stSearch{min-height:44px}
@@ -1493,6 +1499,9 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 .acc-kv{display:flex;gap:var(--sp-3);align-items:baseline;margin-top:var(--sp-2);font-size:var(--fs-md)}
 .acc-kv .k{color:var(--muted);flex:0 0 auto;min-width:96px}
 .acc-kv .v{color:var(--cream);word-break:break-word;min-width:0}
+/* 6.114.0 — the Setup readiness rows are buttons (setupJump): a 26px row is not a
+   finger target, so the button form gets the 40px floor every other control has. */
+button.acc-kv{min-height:40px;align-items:center;padding:2px 0;border-radius:8px}
 /* v4.58 money strip — the base .statline is a 3-up inventory of static counts
    in 17px gold. These are amounts that change while you work, so they get a
    tabular font (a column of prices that does not line up is unreadable) and
@@ -1612,7 +1621,7 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 .dash-strip img{width:96px;height:128px;object-fit:cover;border-radius:var(--r-md);flex:none;border:1px solid var(--line-soft)}
 .dash-cont-thumb{width:72px;height:72px;object-fit:contain;background:var(--ink);border-radius:var(--r-md);flex:none;border:1px solid var(--line-soft)}
 .dash-stat{margin:var(--sp-5) 0 var(--sp-2);text-align:center}
-.dash-stat-link{cursor:pointer;border-radius:var(--r-md);transition:background .2s}
+.dash-stat-link{cursor:pointer;border-radius:var(--r-md);transition:background .2s;min-height:40px;box-sizing:border-box}
 .dash-stat-link:hover,.dash-stat-link:focus-visible{background:rgba(217,164,65,.1)}
 .dash-stat-link:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
 .dash-stat-link:active{transform:scale(.96)}
@@ -1628,7 +1637,7 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 /* 6.94.0 — the "Send to" row under every video result box: two small chips, wrapping */
 /* 6.95.0 — Gallery tools (search · kind · sort), the Home recent strip, the Settings card, text size */
 .gal-tools{margin:8px 0;gap:6px;flex-wrap:wrap;align-items:center}
-.gal-tools .inp{min-height:38px;font-size:var(--fs-sm)}
+.gal-tools .inp{min-height:40px;font-size:var(--fs-sm)}
 .gal-tools #galSearch{flex:1 1 150px;min-width:0}
 #galCount{margin:0 0 8px;font-size:var(--fs-xs)}
 .dash-recent-h{font-size:var(--fs-2xs);color:var(--muted);margin-top:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
@@ -1637,9 +1646,9 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 .prefs-row{align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px}
 .prefs-row .lbl{font-size:var(--fs-sm);color:var(--muted);margin-right:4px}
 /* text size — the three steps move the type tokens every component reads (S · M · L) */
-html.tsize-l{--fs-2xs:11px;--fs-xs:12.5px;--fs-sm:13.5px;--fs-base:14.5px;--fs-md:16px}
+html.tsize-l{--fs-2xs:12px;--fs-xs:13px;--fs-sm:14px;--fs-base:15px;--fs-md:16.5px}
 html.tsize-l body{font-size:17px}
-html.tsize-s{--fs-2xs:9px;--fs-xs:10px;--fs-sm:11px;--fs-base:12px;--fs-md:13px}
+html.tsize-s{--fs-2xs:10px;--fs-xs:11px;--fs-sm:12px;--fs-base:13px;--fs-md:14px}
 html.tsize-s body{font-size:13.5px}
 .vid-send{margin-top:8px;flex-wrap:wrap;gap:6px}
 .vid-send:empty{display:none}
@@ -1756,7 +1765,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
    kept for the pressed look. */
 .hsl-btn:focus-visible{border-color:var(--gold);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
 .hsl-lab{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
-.hsl-ctx{font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);line-height:1}
+.hsl-ctx{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);line-height:1}
 /* 6.41.0 — "မြန်မာ" lost 6px off the top and 5.6px off the bottom: one line,
    ink box 26px inside a 14.4px line box, clipped by the overflow:hidden that
    carries the ellipsis. A single line needs no padding, only a line box tall
@@ -1861,7 +1870,7 @@ body.wall #wallRetry.on{display:block}
    secure handoff to the separate Control Center. */
 .hsl-hd{padding:9px 10px 5px;font-size:9.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;line-height:1.5;
   display:flex;align-items:center;gap:8px;color:var(--gold-hi);opacity:.85}
-.hsl-hd.nolat{letter-spacing:0;text-transform:none;font-size:10.5px}
+.hsl-hd.nolat{letter-spacing:0;text-transform:none;font-size:11px}
 .hsl-hd::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(233,185,73,.3),rgba(233,185,73,0))}
 @keyframes hslIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .hsl-op{position:relative;display:flex;align-items:center;gap:10px;min-height:38px;padding:6px 9px 6px 10px;border-radius:10px;cursor:pointer;color:var(--cream);
@@ -1923,13 +1932,15 @@ body.wall #wallRetry.on{display:block}
   transition:transform var(--dur-2) var(--ease-pop)}
 #stMuCard .grp.open .grp-h .car .ic-car,#stEvCard .grp.open .grp-h .car .ic-car{transform:rotate(180deg)}
 #stMuCard .grp-h .cnt,#stEvCard .grp-h .cnt{order:5;background:var(--panel-2);border-radius:var(--r-pill);
-  padding:4px 9px;font-size:10px;font-weight:600;color:var(--muted);white-space:nowrap}
+  padding:4px 9px;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
 #stMuCard .grp-h .dot,#stEvCard .grp-h .dot{order:3}
 #stMuCard .grp-b,#stEvCard .grp-b{padding:2px 12px 12px}
 
 /* section-level actions (reset) — spans, never counted by the badge law */
-.st-sact{order:4;display:inline-flex;gap:2px;flex:0 0 auto}
-.st-sact .sa{width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
+.st-sact{order:4;display:inline-flex;gap:6px;flex:0 0 auto}
+/* 6.114.0 — the disc stays a 34px visual (owner-approved) but the element is 40px:
+   the -3px margin keeps its layout box at 34, so the header row does not grow. */
+.st-sact .sa{width:40px;height:40px;margin:-3px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
   color:var(--muted);cursor:pointer;transition:background var(--dur-1) var(--ease-out),color var(--dur-1) var(--ease-out)}
 /* Split apart: the hover treatment is fine, but sharing the selector with
    :focus-visible meant `outline:none` killed the keyboard ring too. */
@@ -2000,7 +2011,7 @@ body.wall #wallRetry.on{display:block}
 #stMuCard .subh,#stEvCard .subh{margin-top:11px;font-size:11px;font-weight:700;letter-spacing:.06em;
   color:var(--muted);text-transform:none}
 #stMuCard .chips,#stEvCard .chips{gap:6px;margin-top:6px}
-#stMuCard .chip,#stEvCard .chip{min-height:34px;padding:5px 12px;font-size:12px;font-weight:600;
+#stMuCard .chip,#stEvCard .chip{min-height:40px;padding:5px 12px;font-size:12px;font-weight:600;
   border-radius:var(--r-pill);transition:background var(--dur-1) var(--ease-out),color var(--dur-1) var(--ease-out),border-color var(--dur-1) var(--ease-out)}
 #stMuCard .chip.on,#stEvCard .chip.on{background:linear-gradient(160deg,var(--gold-hi),var(--gold));color:#1a1408;
   border-color:transparent;font-weight:700;box-shadow:0 2px 9px rgba(217,164,65,.28)}
@@ -2008,7 +2019,7 @@ body.wall #wallRetry.on{display:block}
 #stMuCard .chips.seg,#stEvCard .chips.seg{gap:0;background:var(--panel-2);border:1px solid var(--line-soft);
   border-radius:var(--r-sm);padding:3px;flex-wrap:nowrap}
 #stMuCard .chips.seg .chip,#stEvCard .chips.seg .chip{flex:1;justify-content:center;border:0;background:transparent;
-  border-radius:6px;box-shadow:none;min-height:32px;padding:5px 8px}
+  border-radius:6px;box-shadow:none;min-height:40px;padding:5px 8px}
 #stMuCard .chips.seg .chip.on,#stEvCard .chips.seg .chip.on{background:linear-gradient(160deg,var(--gold-hi),var(--gold));color:#1a1408}
 /* thumbnail picker: the chip keeps its class (badge law) and grows art */
 #stMuCard .chips.thumbs,#stEvCard .chips.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
@@ -2081,8 +2092,8 @@ body.wall #wallRetry.on{display:block}
 @media(min-width:1200px){
   .page-hero .ph-kick{font-size:12px}
   .wf-need,.wfv .wf-need{font-size:11px}   /* 6.93.0 — the tidied pill (.wfv .wf-need) keeps the monitor size too */
-  .refstrip .rs .tag{font-size:10px}
-  .hsl-lab .hsl-ctx{font-size:9.5px}
+  .refstrip .rs .tag{font-size:11px}
+  .hsl-lab .hsl-ctx{font-size:11px}
 }
 .tutorial-card{display:flex;flex-direction:column}
 .tutorial-card>.chip{align-self:flex-start} /* a flex item stretches — the number stays a pill */
@@ -2103,7 +2114,8 @@ body.wall #wallRetry.on{display:block}
 .im-grid{display:flex;flex-wrap:wrap;margin:0 -5px}
 /* 6.93.0 — two cards to a row on a phone (150px floor, was 240px: twenty-two cards in one 14,000px column), three at 700px, four at 1100px; a compact body */
 .im-card{flex:1 1 40%;min-width:132px;margin:5px;border:1px solid var(--line-soft);border-radius:14px;background:var(--panel-2);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;color:var(--cream);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
-.im-card:hover,.im-card.lift,.im-card:focus-visible{border-color:var(--gold);outline:none;transform:translateY(-6px) scale(1.012);box-shadow:0 16px 34px rgba(0,0,0,.5)}
+.im-card:hover,.im-card.lift,.im-card:focus-visible{border-color:var(--gold);transform:translateY(-6px) scale(1.012);box-shadow:0 16px 34px rgba(0,0,0,.5)}
+.im-card:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .im-card.lift{border-color:var(--gold-hi)}
 /* the card picture: a 2:3 Before | After compare, the after as the whole picture, the before clipped on top */
 .im-hubcmp{position:relative;overflow:hidden;background:#050b10;user-select:none;-webkit-user-select:none;touch-action:pan-y pinch-zoom;cursor:ew-resize}
@@ -2118,10 +2130,10 @@ body.wall #wallRetry.on{display:block}
 .im-card-name .ic-s{margin-right:6px;flex:none}
 /* 6.96.0 — measured over all 22 hub cards at 420px: 9 end inside four lines, 17 inside five, and the
    fifth line costs 17px on a 448px card. Five it is; what is still long ends in the .ell marker. */
-.im-card-sum{position:relative;margin:4px 0 8px;font-size:11.5px;line-height:1.5;max-height:7.5em;overflow:hidden;flex:1 1 auto}
+.im-card-sum{position:relative;margin:4px 0 8px;font-size:12px;line-height:1.5;max-height:7.5em;overflow:hidden;flex:1 1 auto}
 .im-card-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:0 -3px}
-.im-card-foot .im-tplcount{font-size:10.5px;padding:3px 8px;min-height:0;white-space:nowrap;flex:1 1 auto;margin:3px;text-align:center;justify-content:center}
-.im-card-foot .im-open{min-height:32px;padding:5px 12px;margin:3px;flex:1 1 auto;font-size:11.5px}
+.im-card-foot .im-tplcount{font-size:11px;padding:3px 8px;min-height:0;white-space:nowrap;flex:1 1 auto;margin:3px;text-align:center;justify-content:center}
+.im-card-foot .im-open{min-height:40px;padding:5px 12px;margin:3px;flex:1 1 auto;font-size:12px}
 .im-next{margin-top:12px;line-height:1.6}
 .im-toolhead{display:flex;align-items:center;margin:0 0 6px}
 /* 6.93.0 — the tool rail: every Imagine tool as a chip under the title, the open one lit; a row that scrolls sideways, margins not gap */
@@ -2154,7 +2166,7 @@ body.wall #wallRetry.on{display:block}
 .im-cmp-top img.im-orig{position:absolute;top:0;left:0;height:100%;width:auto;max-width:none;display:block}
 .im-cmp-line{position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:var(--gold);box-shadow:0 0 6px rgba(217,164,65,.8);pointer-events:none}
 .im-cmp-knob{position:absolute;top:50%;left:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:var(--gold);color:#1a1408;font-weight:800;font-size:14px;line-height:30px;text-align:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.5)}
-.im-lb{position:absolute;bottom:8px;font-size:10px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:6px;background:rgba(11,13,20,.78);color:var(--cream);pointer-events:none}
+.im-lb{position:absolute;bottom:8px;font-size:11px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:6px;background:rgba(11,13,20,.78);color:var(--cream);pointer-events:none}
 .im-lb.l{left:8px}.im-lb.r{right:8px}
 .im-badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;background:var(--gold);color:#1a1408;pointer-events:none}
 .im-busy{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(11,13,20,.55);display:flex;align-items:center;justify-content:center;color:var(--cream);font-weight:800}
@@ -2172,7 +2184,8 @@ body.wall #wallRetry.on{display:block}
 .im-tabs .chip{margin-right:6px;cursor:pointer}
 .im-tpls{display:flex;flex-wrap:wrap;margin:0 -1%}
 .im-tpl{width:31.3%;margin:1%;border:2px solid var(--line-soft);border-radius:10px;background:var(--panel-2);overflow:hidden;cursor:pointer;text-align:center;color:var(--cream);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
-.im-tpl:hover,.im-tpl.lift,.im-tpl:focus-visible{border-color:var(--gold-hi);outline:none;transform:translateY(-4px) scale(1.02);box-shadow:0 12px 26px rgba(0,0,0,.5)}
+.im-tpl:hover,.im-tpl.lift,.im-tpl:focus-visible{border-color:var(--gold-hi);transform:translateY(-4px) scale(1.02);box-shadow:0 12px 26px rgba(0,0,0,.5)}
+.im-tpl:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
 .im-tpl.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 .im-tpl.on.lift,.im-tpl.on:hover{box-shadow:0 0 0 1px var(--gold),0 12px 26px rgba(0,0,0,.5)}
 /* 6.29.2 — the template picture is the whole 2:3 photograph: a 2:3 box (padding-top, no aspect-ratio for UXP) holding a lazy <img> */
@@ -2321,9 +2334,13 @@ body.wall #wallRetry.on{display:block}
 .alb-field>.hsl{flex:0 0 auto;width:118px;margin:0 3px 6px}
 .alb-fontsel{width:100%}
 .alb-inks{flex:0 0 auto;display:flex;flex-wrap:nowrap;align-items:center;margin:0 3px 6px}
-.alb-ink{width:22px;height:22px;padding:0;margin-right:3px;border-radius:50%;border:1px solid var(--line-soft);cursor:pointer}
-.alb-ink:last-child{margin-right:0}
-.alb-ink.on{box-shadow:0 0 0 2px var(--gold)}
+/* 6.114.0 — the swatch stays a 22px disc, the button is 40px: a 9px transparent border
+   carries the hit area, the colour is clipped to the padding box (the inline
+   background shorthand would reset the clip, hence !important), and the negative
+   margins keep the row exactly where it was (25px per swatch, 22px tall). */
+.alb-ink{width:40px;height:40px;padding:0;margin:-9px -6px -9px -9px;border-radius:50%;border:9px solid transparent;background-clip:padding-box !important;box-shadow:inset 0 0 0 1px var(--line-soft);cursor:pointer}
+.alb-ink:last-child{margin-right:-9px}
+.alb-ink.on{box-shadow:inset 0 0 0 2px var(--gold)}
 /* ---- /ALBUM_CSS ---- */
 </style>
 
@@ -4283,7 +4300,7 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=880c3f0f1cf1"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=368bbaac686f"></script>
-<script src="data/whatsnew.js?v=d52e15c9b1ff"></script>
+<script src="data/whatsnew.js?v=2391768ae8fe"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -6488,6 +6505,7 @@ function switchPage(id, fromPop){
      button walks pages instead of exiting the PWA (popstate must not re-push) */
   if(!fromPop && curPage && curPage!==id){ try{ history.pushState({pg:id},""); }catch(e){} }
   curPage=id;
+  try{ if(typeof updateKeyBanner==="function") updateKeyBanner(); }catch(e){}
   PAGES.forEach(function(p){
     var pg=$(p[0]); if(pg) pg.className="page"+(p[0]===id?" on":"");
   });
@@ -30371,7 +30389,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.113.1";
+var APP_VER="6.114.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -30941,7 +30959,7 @@ $("pendingGo").onclick=function(){
 
 /* key banner (shows until the RunningHub key is saved — the one engine) */
 function updateKeyBanner(){
-  var b=$("keyBanner"); if(b) b.className="keybanner"+(state.rhKey?"":" on");
+  var b=$("keyBanner"); if(b) b.className="keybanner"+(state.rhKey?"":" on")+((typeof curPage==="string"&&curPage==="pgHome")?"":" compact");
 }
 $("keyBanner").onclick=function(){ switchPage("pgHome"); $("cardRh").scrollIntoView(); };
 updateKeyBanner();
