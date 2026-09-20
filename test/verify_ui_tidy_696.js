@@ -218,8 +218,8 @@ function sourcePins() {
     PIMAGINE.indexOf('if(H.ellMark) H.ellMark(root, ".im-card-sum", 5);') > 0, null);
 
   report("A5) the app hero kicker takes the whole banner at .12em and steps down under 390px; .ph-kick and .ph-head are capped at 72% so a headline never runs across the model",
-    /\.hero-mini \.kick\{padding:10px 6px 0 0;font-size:\.68rem;letter-spacing:\.12em;max-width:100%\}/.test(APP) &&
-    /@media \(max-width:389px\)\{\.hero-mini \.kick\{font-size:\.6rem;letter-spacing:\.10em\}\}/.test(APP) &&
+    /\.hero-mini \.kick\{padding:10px 6px 0 0;font-size:\.7rem;letter-spacing:\.12em;max-width:100%\}/.test(APP) &&   /* 6.114.0: .68rem → .7rem, the 11px text floor */
+    /@media \(max-width:389px\)\{\.hero-mini \.kick\{font-size:\.69rem;letter-spacing:\.10em\}\}/.test(APP) &&
     /\.page-hero \.ph-kick\{position:relative;z-index:2;max-width:72%;/.test(APP) &&
     /\.page-hero \.ph-head\{position:relative;z-index:2;max-width:72%;/.test(APP), null);
 

@@ -2789,7 +2789,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.184.1";
+const PANEL_VERSION = "6.185.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5534,7 +5534,7 @@ function renderSetupStatus() {
     const r = rows[i];
     if (!r[0]) continue;
     const row = document.createElement("div");
-    row.className = "acc-kv";
+    row.className = "acc-kv acc-kv-btn";
     row.setAttribute("role", "button");
     row.setAttribute("tabindex", "0");
     row.style.width = "100%"; row.style.cursor = "pointer"; row.style.background = "none";
@@ -8175,7 +8175,7 @@ function renderVWiz() {
   const d = vtDef();
   if (vwiz.step === 1) {
     if (vwizInputsOk()) { const fast = mkBtn("btn wiz-fast", ""); setIcnText(fast, "i-bolt", "cream", vwizL("fast")); ffPressable(fast, function () { goStep(3); }); body.appendChild(fast); }
-    const im = document.createElement("img"); im.className = "wiz-visual";
+    const im = document.createElement("img"); im.className = "wiz-visual"; im.alt = "";
     pnlArt(im, vidArtSrc(w), function () { if (im.parentNode) im.parentNode.removeChild(im); });
     body.appendChild(im);
     const s = el("s", deckP ? stripIcn(deckP.tr(w.summary)) : ""); s.style.margin = "10px 0 2px"; body.appendChild(s);
@@ -13332,6 +13332,7 @@ function paintCGallery() {
     (function (item, idx) {
       const im = document.createElement("img");
       im.className = "gthumb" + (idx === state.cSel ? " sel" : "");
+      im.alt = (item && item.name) ? String(item.name).slice(0, 80) : "gallery result";
       dataSrc(im, item.mime, item.b64);
       im.addEventListener("click", function () {
         state.cSel = idx;

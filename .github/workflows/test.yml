@@ -1088,3 +1088,9 @@ jobs:
       # the worker, in a VM, with the flag injected back out.
       - name: Verify the new face reaches every surface, and a drop purge costs a phone nothing
         run: node test/verify_face_wave_6113.js
+      # 6.114.0 — UI/UX wave A, reach · read · focus: every control on every page of the app (390px) and
+      # the panel (360px) is at least 40px, no text under 11px but the wordmark label, one gold focus
+      # ring and no :focus rule that kills it, hero headings on a band no brighter than L 0.15, the
+      # key banner one line off Home, every icon <img> with an alt — measured live, and pinned.
+      - name: Verify the reach-read-focus floor on every page of the app and the panel
+        run: node test/verify_ux_wave_6114.js

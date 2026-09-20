@@ -119,7 +119,7 @@ function sourcePins() {
     APP.indexOf('<section class="card" id="cardPrefs">') > APP.indexOf('<section class="card" id="cardData">') && APP.indexOf('<section class="card" id="cardPrefs">') - APP.indexOf('<section class="card" id="cardData">') < 1200 &&
     /<button class="chip" id="prefsTsizeS" data-tsize="s"><\/button>\s*<button class="chip" id="prefsTsizeM" data-tsize="m"><\/button>\s*<button class="chip" id="prefsTsizeL2" data-tsize="l"><\/button>/.test(APP) &&
     /<button class="chip" id="prefsNotify"><\/button>\s*<span class="mut" id="prefsNotifyNote"/.test(APP) &&
-    /html\.tsize-l\{--fs-2xs:11px;--fs-xs:12\.5px;--fs-sm:13\.5px;--fs-base:14\.5px;--fs-md:16px\}\s*html\.tsize-l body\{font-size:17px\}/.test(APP) && /html\.tsize-s\{--fs-2xs:[\d.]+px;[^}]*\}\s*html\.tsize-s body\{font-size:13\.5px\}/.test(APP) &&
+    /html\.tsize-l\{--fs-2xs:12px;--fs-xs:13px;--fs-sm:14px;--fs-base:15px;--fs-md:16\.5px\}\s*html\.tsize-l body\{font-size:17px\}/.test(APP)   /* 6.114.0: every tier one step up, Large stays above Normal */ && /html\.tsize-s\{--fs-2xs:[\d.]+px;[^}]*\}\s*html\.tsize-s body\{font-size:13\.5px\}/.test(APP) &&
     /var _ts0 = localStorage\.getItem\("hnk_ws_tsize"\); if \(_ts0 === "s" \|\| _ts0 === "l"\) document\.documentElement\.classList\.add\("tsize-" \+ _ts0\);/.test(APP) &&
     /function tsizeSet\(v\)\{\n\s*v = v==="s"\|\|v==="l" \? v : "m";\n\s*var root=document\.documentElement; root\.classList\.remove\("tsize-s","tsize-l"\); if\(v!=="m"\) root\.classList\.add\("tsize-"\+v\);\n\s*try\{ localStorage\.setItem\(TSIZE_KEY, v\); \}catch\(e\)\{\}/.test(APP) &&
     /var TSIZE_KEY="hnk_ws_tsize", NOTIFY_KEY="hnk_ws_notify";/.test(APP) &&
