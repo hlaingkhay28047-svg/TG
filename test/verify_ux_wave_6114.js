@@ -20,7 +20,8 @@
         12px, many at 8–10px (.hsl-ctx 8px, .nw-tag 9.5px, .ph-kick 10px, .tabb 10.5px).
         Every --fs-* token moves one step (Normal 13 → 14px for body copy; Small and
         Large keep their distance) and nothing is set under 11px any more, except the
-        header's wordmark label, a brand mark and not a line to read.
+        header's wordmark label (a brand mark, not a line to read) and, under 340px only,
+        the Workflows hero kicker, which must stay one line in a 286px plate (10px there).
      3. FOCUS. The app had a global gold :focus-visible ring but .im-card and .im-tpl
         killed it with outline:none; the panel had outline:none on .pbox:focus,
         .hnk-input:focus and the same two cards, and a ring on seven classes only.

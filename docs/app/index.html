@@ -154,9 +154,10 @@ input,textarea,select{font-family:inherit}
    second line on its own. Measured on the live page: 263px with no tracking, +1 char-width per .01em.
    The kicker takes the whole banner and .12em (314px), and under 390px it steps down to 269px — one
    line from a 320px Photoshop panel up to a monitor. */
-@media (max-width:389px){.hero-mini .kick{font-size:.69rem;letter-spacing:.06em}}
-/* 6.114.0 — the kicker keeps the 11px floor on a 320px screen by tightening its tracking, not by shrinking: 275px of text in a 286px plate */
-@media (max-width:339px){.hero-mini .kick{letter-spacing:.02em}}
+@media (max-width:389px){.hero-mini .kick{font-size:.69rem;letter-spacing:.04em}}
+/* 6.114.0 — under 340px the kicker is the one place that steps below the 11px floor: a 320px plate is 286px
+   wide and the CI runner's wider fallback font wrapped the 11px line, so the 320px case reads 10px at .02em */
+@media (max-width:339px){.hero-mini .kick{font-size:.625rem;letter-spacing:.02em}}
 .hero-mini h1{font-size:clamp(.98rem,3.7vw,1.2rem);line-height:1.35}
 .hero-mini .lede{display:none}
 /* ---- page-hero: compact per-page banner band — same visual language as .hero-art

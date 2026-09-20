@@ -219,7 +219,7 @@ function sourcePins() {
 
   report("A5) the app hero kicker takes the whole banner at .12em and steps down under 390px; .ph-kick and .ph-head are capped at 72% so a headline never runs across the model",
     /\.hero-mini \.kick\{padding:10px 6px 0 0;font-size:\.7rem;letter-spacing:\.12em;max-width:100%\}/.test(APP) &&   /* 6.114.0: .68rem → .7rem, the 11px text floor */
-    /@media \(max-width:389px\)\{\.hero-mini \.kick\{font-size:\.69rem;letter-spacing:\.06em\}\}/.test(APP) && /@media \(max-width:339px\)\{\.hero-mini \.kick\{letter-spacing:\.02em\}\}/.test(APP) &&
+    /@media \(max-width:389px\)\{\.hero-mini \.kick\{font-size:\.69rem;letter-spacing:\.04em\}\}/.test(APP) && /@media \(max-width:339px\)\{\.hero-mini \.kick\{font-size:\.625rem;letter-spacing:\.02em\}\}/.test(APP) &&
     /\.page-hero \.ph-kick\{position:relative;z-index:2;max-width:72%;/.test(APP) &&
     /\.page-hero \.ph-head\{position:relative;z-index:2;max-width:72%;/.test(APP), null);
 
@@ -234,7 +234,7 @@ function sourcePins() {
     /\.wfmini \.t \.ell, \.wfmini \.s \.ell, \.im-card-sum \.ell \{ position: absolute; right: 0; bottom: 0; padding-left: 12px;/.test(PCSS) &&
     /#pageAiTools \.hero-mini \.kick \{ position: relative; max-width: 100%; margin: 0 0 1px; padding: 10px 6px 0 0;/.test(PCSS) &&
     /letter-spacing: \.12em; text-transform: uppercase; color: var\(--accent\); line-height: 1\.7;/.test(PCSS) &&
-    /@media \(max-width:389px\)\{ #pageAiTools \.hero-mini \.kick \{ font-size: 11\.04px; letter-spacing: \.06em; \} \}/.test(PCSS) &&   /* 6.114.0: the 11px floor; the one line comes from tracking (.02em under 340) */
+    /@media \(max-width:389px\)\{ #pageAiTools \.hero-mini \.kick \{ font-size: 11\.04px; letter-spacing: \.04em; \} \}/.test(PCSS) && /@media \(max-width:339px\)\{ #pageAiTools \.hero-mini \.kick \{ font-size: 10px; letter-spacing: \.02em; \} \}/.test(PCSS) &&   /* 6.114.0: 11px from 340 up; 10px at .02em under 340, where the plate is 286px */
     /\.ph-kick \{\n  max-width: 72%;/.test(PCSS) && /\.ph-head \{\n  max-width: 72%;/.test(PCSS) &&
     /#pageImagine \.im-hub h2 \{ flex-wrap: nowrap; align-items: flex-start; \}/.test(PCSS) &&
     /#pageImagine \.im-hub h2 \.ic-s \{ flex: 0 0 auto; margin-top: 2px; \}/.test(PCSS) &&
@@ -407,7 +407,7 @@ async function panelWalk(browser) {
   server.close();
   const a = out[400], b = out[320];
   report("C1) the panel's Workflows hero kicker is one line at a 400px panel AND at a 320px one (the step-down rule earns the narrow case)",
-    a.kick.lines === 1 && b.kick.lines === 1 && a.kick.fs === "11.2px" && b.kick.fs === "11.04px", { a: a.kick, b: b.kick });   /* 6.114.0: the 11px floor holds at 320 — the one line comes from .02em tracking, not a 9.6px step-down */
+    a.kick.lines === 1 && b.kick.lines === 1 && a.kick.fs === "11.2px" && b.kick.fs === "10px", { a: a.kick, b: b.kick });   /* 6.114.0: 11.2px at 400; 10px at .02em under 340 — the CI runner's wider font wrapped an 11px line in the 286px plate */
   report("C2) three whole lines in the panel too, and the marker is exact: every cut description marked, no uncut one marked, at render and after every group is tapped open",
     Math.abs(a.ceiling - 3) < 0.05 && a.atRender.mismatch === 0 && a.allOpen.mismatch === 0 &&
     b.atRender.mismatch === 0 && b.allOpen.mismatch === 0 && a.tapped >= 8 && a.allOpen.n === 194, { a, b: { tapped: b.tapped, allOpen: b.allOpen } });
