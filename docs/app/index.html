@@ -1024,15 +1024,11 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
   #pgHome.on,#pgAccount.on{column-count:2;column-gap:18px}
   #pgHome .page-hero,#pgAccount .page-hero,#pgHome #pendingGo{column-span:all}
   #pgHome>.card,#pgHome>section,#pgAccount>.card,#pgAccount>section{break-inside:avoid;display:inline-block;width:100%;box-sizing:border-box;margin-top:0;margin-bottom:var(--sp-4)}
-  #pgTutorials>.card,#pgText2Img>.card,#pgVideo>.card,#pgVideoUp>.card,#pgV2V>.card,#pgRetouch>.card,#pgCreate>.card,#pgGallery>.card,#pgText2Img>.result-box,#pgCreate>.result-box{max-width:880px;margin-left:auto;margin-right:auto}
-  /* the edge-to-edge phone tab strip becomes a floating centered dock — a
-     desktop control, not a stretched thumb bar. Deliberately still at the
-     bottom: the editors' slim-header mode owns the top edge, and a fixed
-     top dock would collide with it. */
-  .tabbar{left:50%;right:auto;bottom:18px;transform:translateX(-50%);width:auto;border:1px solid var(--line);border-radius:16px;padding:4px 10px;box-shadow:0 12px 40px rgba(0,0,0,.5);background:rgba(11,13,20,.94)}
-  .tabb{flex:0 0 auto;min-width:88px;padding:8px 14px 9px;border-radius:10px}
-  body{padding-bottom:112px}
-  .page-hero{min-height:208px}
+  #pgTutorials>.card,#pgText2Img>.card,#pgVideo>.card,#pgVideoUp>.card,#pgV2V>.card,#pgTalk>.card,#pgRetouch>.card,#pgCreate>.card,#pgGallery>.card,#pgText2Img>.result-box,#pgCreate>.result-box,#pgTalk>.result-box{max-width:880px;margin-left:auto;margin-right:auto}
+  /* v5.46 floated the phone tab strip as a centred dock at the bottom; 6.115.0
+     (DESKTOP LAYER 4, declared last in this sheet) makes it a left rail and
+     turns every hero into a two-cell band — the dock, the 112px body pad and
+     the 208px banner floor moved there. */
 }
 /* v6.9.0 — DESKTOP LAYER 3: THE APP FILLS THE MONITOR.
    Owner, photos of a wide ASUS monitor: "ကွန်ပျူတာ mac/win မှာ အပြည့်ပေါ်အောင်".
@@ -1048,15 +1044,12 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
   .wrap{max-width:min(1720px,94vw)}
   .wfgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
   #pgHome.on,#pgAccount.on{column-count:3}
-  #pgTutorials>.card,#pgText2Img>.card,#pgVideo>.card,#pgVideoUp>.card,#pgV2V>.card,#pgRetouch>.card,#pgCreate>.card,#pgGallery>.card,#pgText2Img>.result-box,#pgCreate>.result-box{max-width:1120px}
+  #pgTutorials>.card,#pgText2Img>.card,#pgVideo>.card,#pgVideoUp>.card,#pgV2V>.card,#pgTalk>.card,#pgRetouch>.card,#pgCreate>.card,#pgGallery>.card,#pgText2Img>.result-box,#pgCreate>.result-box,#pgTalk>.result-box{max-width:1120px}
   .lib-grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
-  /* THE BANNERS GROW WITH THE COLUMN. Every plate is 1600x800 (2:1). A fixed
-     240px banner across a 1720px column is 7:1 — cover keeps a 28% band of the
-     plate and the owner's screenshot showed the model cut off at the eyes on
-     every page. The banner now holds ~4.2:1 at any width (22vw, clamped so a
-     1080p screen is not half banner), and the art is anchored a little above
+  /* 6.9.0 grew the banners with the column (22vw, ~4.2:1) so cover did not cut the
+     model off at the eyes; 6.115.0's band (layer 4, below) shows the whole 2:1 plate
+     instead, so the growth rule is gone. The art stays anchored a little above
      centre, where the faces in these plates sit. */
-  .page-hero,.hero-mini{min-height:clamp(260px,22vw,460px)} /* .dash-greet: beside its own 768px rule */
   .page-hero>img,.dash-greet .greet-art,.dash-greet>img{object-position:center 35%}
 }
 @media(min-width:1800px){
@@ -1561,9 +1554,8 @@ button.acc-kv{min-height:40px;align-items:center;padding:2px 0;border-radius:8px
 .dash-greet video.greet-motion.live{opacity:1}
 .dash-greet.has-motion{animation:none}
 @media (min-width:768px){.dash-greet{min-height:168px;padding:16px 20px}}
-/* v6.9.0 — on a monitor the greeting grows with the column (see the 1440px
-   layer for the reasoning); declared HERE, after the 768px rule it must outrank */
-@media (min-width:1440px){.dash-greet{min-height:clamp(260px,22vw,460px)}}
+/* v6.9.0 grew the greeting with the column here (after the 768px rule it had to
+   outrank); 6.115.0's band (DESKTOP LAYER 4, last in the sheet) sets its height now. */
 /* The scrim is sized from the art rather than guessed, and it is sized ONCE
    PER FRAME because the frames are not alike. Measured over the text zone
    (left 55%, bottom 45%): morning 193, afternoon 203, evening 30. Cream type
@@ -2094,6 +2086,64 @@ body.wall #wallRetry.on{display:block}
   .wf-need,.wfv .wf-need{font-size:11px}   /* 6.93.0 — the tidied pill (.wfv .wf-need) keeps the monitor size too */
   .refstrip .rs .tag{font-size:11px}
   .hsl-lab .hsl-ctx{font-size:11px}
+}
+/* 6.115.0 — DESKTOP LAYER 4: A RAIL, NOT A THUMB BAR; A BAND, NOT A BILLBOARD.
+   Owner (2026-09-20): every page professional on every computer. The 1440px audit
+   sheet showed a phone shell stretched wide: the five sections in a floating dock at
+   the bottom of a 900px window, and on every page a 317px banner (422px at 1920)
+   whose cover crop kept a third of a 2:1 plate — the fold's biggest object, saying
+   the least.
+   THE RAIL. From 1200px the tab bar is a fixed left rail the height of the window
+   (200px, 232px from 1800px): the header and the column move right by that width
+   through body padding, so the sticky header, the toast box and the GENERATE docks
+   keep their own geometry; each section is a 44px row with its icon, the active one
+   carries a gold bar on its left edge, the NEW dot sits at the row's end. The wall
+   rule (body.wall .tabbar{display:none}) is untouched.
+   THE BAND. Every hero (.page-hero on fifteen pages, the Workflows .hero-mini, Home's
+   .dash-greet) becomes a two-cell band: the words on the left on the panel's own
+   ink, the WHOLE 2:1 plate on the right (width = 2 × height — nothing is cropped),
+   a seam fade joining them. 236px tall at 1200, 260 at 1440, 300 at 1800, 340 at
+   2200: the fold gives back 80–120px on every page. The phone and the 768/1024
+   layers are untouched — the band starts where the rail starts. The GENERATE docks
+   give up the 76px they held clear of the thumb bar. */
+@media(min-width:1200px){
+  body{padding-left:200px;padding-bottom:28px}
+  .tabbar{top:0;bottom:0;left:0;right:auto;width:200px;transform:none;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:4px;padding:18px 10px 16px;border:0;border-right:1px solid var(--line);border-radius:0;box-shadow:none;overflow-x:hidden;overflow-y:auto;background:rgba(11,13,20,.97)}
+  .tabb{flex:0 0 auto;flex-direction:row;justify-content:flex-start;align-items:center;gap:12px;width:100%;min-width:0;min-height:44px;padding:10px 12px 10px 14px;border-radius:10px;font-size:13px;letter-spacing:.01em;text-align:left;white-space:normal}
+  .tabb .ic{flex:none;width:22px;display:inline-flex;justify-content:center;font-size:20px}
+  .tabb.on{background:rgba(217,164,65,.12)}
+  .tabb::before{top:9px;bottom:9px;left:0;width:3px;height:auto;margin:0;border-radius:2px;background:var(--gold);transform:scaleY(.35);transform-origin:center}
+  .tabb.on::before{transform:scaleY(1)}
+  .tabb .nw-dot{top:50%;right:12px;margin-top:-4px}
+  .toast{left:calc(216px + var(--sa-l));bottom:24px}
+  #btnRsGen,#btnGen,#btnVidGen,#btnVuGen,#btnT2IGen,.st-genbar,#ptRunCard.pt-sticky{bottom:12px}
+  #pgStudio.stslim .st-genbar,#pgMeitu.stslim .st-genbar,#pgEvoto.stslim .st-genbar{bottom:8px}
+  .fab-top{bottom:24px}
+  /* the band */
+  .page-hero,.hero-mini,.dash-greet{--hero-h:236px;--hero-pic:calc(var(--hero-h)*2);min-height:var(--hero-h);justify-content:center;gap:6px;padding:20px calc(var(--hero-pic) + 28px) 20px 26px;background:var(--panel);animation:none}
+  .hero-mini{isolation:isolate}
+  .dash-greet{background-color:var(--panel);background-size:auto 100%;background-position:right center;background-repeat:no-repeat}
+  .page-hero>img,.page-hero>video.ph-motion,.hero-mini .hero-art,.dash-greet video.greet-motion{left:auto;right:0;width:var(--hero-pic)}
+  .hero-mini .hero-art{border-radius:0}
+  .page-hero:after,.hero-mini .hero-art:after,.dash-greet::before,.dash-greet[data-art="evening"]::before{left:auto;right:0;width:var(--hero-pic);background:linear-gradient(90deg,var(--panel) 0%,rgba(19,24,38,.8) 10%,rgba(19,24,38,.28) 28%,rgba(19,24,38,0) 46%),linear-gradient(180deg,rgba(11,13,20,0) 62%,rgba(11,13,20,.28) 100%)}
+  .page-hero .ph-kick,.page-hero .ph-head,.hero-strip .kick,.hero-strip h1,.hero-strip .lede,.dash-greet .hi,.dash-greet .sub,.dash-greet .wx{max-width:none}
+  .page-hero .ph-head{font-size:26px;line-height:1.35}
+  .hero-mini .kick{padding:0}
+  .hero-mini h1{font-size:26px;line-height:1.3;margin:6px 0 0}
+  .dash-greet .hi{font-size:22px}
+  .dash-greet .sub,.dash-greet .wx{font-size:13px}
+}
+@media(min-width:1440px){
+  .page-hero,.hero-mini,.dash-greet{--hero-h:260px}
+}
+@media(min-width:1800px){
+  body{padding-left:232px}
+  .tabbar{width:232px}
+  .toast{left:calc(248px + var(--sa-l))}
+  .page-hero,.hero-mini,.dash-greet{--hero-h:300px}
+}
+@media(min-width:2200px){
+  .page-hero,.hero-mini,.dash-greet{--hero-h:340px}
 }
 .tutorial-card{display:flex;flex-direction:column}
 .tutorial-card>.chip{align-self:flex-start} /* a flex item stretches — the number stays a pill */
@@ -4300,7 +4350,7 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=880c3f0f1cf1"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=368bbaac686f"></script>
-<script src="data/whatsnew.js?v=2391768ae8fe"></script>
+<script src="data/whatsnew.js?v=b9b5e6a2c78e"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -30389,7 +30439,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.114.0";
+var APP_VER="6.115.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
