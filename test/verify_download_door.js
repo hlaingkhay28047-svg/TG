@@ -77,13 +77,14 @@ report("A4) panel-version.json stays where the panel's update probe reads it",
   exists("docs/download/panel-version.json") && PANEL.includes("/download/panel-version.json"));
 
 /* ---- B) the web app's ONE place ---- */
+const TUTS = read("docs/app/data/tutorials.js");   /* 6.116.0 — the Tutorials table left the shell for a data file */
 const intentDoors = (APP.match(/data-panel-intent/g) || []).length;
 report("B) 6.33.1 ONE PLACE: no door link anywhere — Home, Tutorials and Account Center carry no download button or promo band; the Account card's Panel button keeps ?panel=download as its no-script fallback; Tutorials card 03 opens Setup",
   !APP.includes('href="../download/"') && intentDoors === 0 &&
   !APP.includes('id="unifiedDownload"') && !APP.includes('id="dashPromo"') && !APP.includes('id="dashPromoGo"') &&
   !APP.includes(">Photoshop Panel download<") && !APP.includes("Secure Panel download") &&
   APP.includes('<a class="btn btn-gold grow" id="accPanelDownload" href="?panel=download" style="text-align:center"></a>') &&
-  APP.includes('{ n:"03", page:"pgHome",') && /b:\{my:"Setup ဖွင့်",en:"Open Setup",/.test(APP) && APP.includes('data-tutorial-page') /* 6.88.0 — card 03 is painted from TUTORIALS */ &&
+  TUTS.includes('{"n":"03","page":"pgHome",') && TUTS.includes('"b":{"my":"Setup ဖွင့်","en":"Open Setup",') && APP.includes('data-tutorial-page') /* 6.88.0 — card 03 is painted from TUTORIALS; 6.116.0 — the table is docs/app/data/tutorials.js */ &&
   !APP.includes("Open secure download area"), { intentDoors });
 report("B2) unifiedWire binds exactly ONE control to the request — the Account card's Panel button — and wires no door links",
   !APP.includes('querySelectorAll("a[data-panel-intent]")') &&
