@@ -93,6 +93,25 @@ function measure() {
     if (el.tagName === "A" && getComputedStyle(el).display === "inline") continue;   /* a link inside a sentence: WCAG 2.5.8 inline exception */
     if (r.width < 40 || r.height < 40) small.push(desc(el) + " " + Math.round(r.width) + "x" + Math.round(r.height));
   }
+  /* the one-line ruler. CI's runner has no Myanmar face: a Burmese label that wraps to two
+     lines on this machine fits one line there, and its fallback face (DejaVu / Liberation)
+     draws a tighter line box than Noto Sans Myanmar — so a control that reaches 40px only
+     because its label wrapped, or because the face here is tall, is under 40px on that
+     runner, on an English phone, and in the shortest of the nine languages (run 35486844206:
+     the Gallery search box at 38, the watermark strip's chips at 32; both 40+ here from the
+     text alone). Force every label onto one line at the tightest "normal" line box a device
+     may land on (1.15 — Arial / Liberation Sans is 1.149) and measure the same controls
+     again: the floor has to hold with no help from the text. */
+  const oneLine = document.createElement("style"); oneLine.id = "hnkOneLineRuler";
+  oneLine.textContent = ".hnk-oneline :is(button,a[href],input,select,textarea,[role=button],[role=tab],[tabindex]:not([tabindex='-1']),.chip){white-space:nowrap!important;line-height:1.15!important}";
+  document.head.appendChild(oneLine); document.documentElement.classList.add("hnk-oneline");
+  const smallOneLine = [];
+  for (const el of targets) {
+    if (el.tagName === "A" && getComputedStyle(el).display === "inline") continue;
+    const r = el.getBoundingClientRect();
+    if (r.height > 0 && r.height < 40) smallOneLine.push(desc(el) + " " + Math.round(r.width) + "x" + Math.round(r.height));
+  }
+  document.documentElement.classList.remove("hnk-oneline"); oneLine.remove();
   const textEls = Array.from(document.querySelectorAll("body *")).filter((el) => vis(el) && inPage(el) && Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent.trim().length > 1));
   const tiny = [];
   for (const el of textEls) {
@@ -104,7 +123,7 @@ function measure() {
   const imgNoAlt = Array.from(document.images).filter((i) => vis(i) && inPage(i) && !i.hasAttribute("alt")).map((i) => desc(i) + " " + String(i.getAttribute("src") || "").slice(0, 40));
   let focusOutlineNone = 0, focusVisibleRules = 0;
   for (const ss of Array.from(document.styleSheets)) { try { for (const r of Array.from(ss.cssRules)) { const t = r.selectorText || ""; if (t.indexOf(":focus-visible") >= 0) focusVisibleRules++; if (t.indexOf(":focus") >= 0 && /outline\s*:\s*(none|0)(\s|;|})/.test(r.cssText)) focusOutlineNone++; } } catch (e) { } }
-  return { overflowX: Math.max(0, document.documentElement.scrollWidth - innerWidth), targets: targets.length, small, textEls: textEls.length, tiny, imgNoAlt, focusOutlineNone, focusVisibleRules };
+  return { overflowX: Math.max(0, document.documentElement.scrollWidth - innerWidth), targets: targets.length, small, smallOneLine, textEls: textEls.length, tiny, imgNoAlt, focusOutlineNone, focusVisibleRules };
 }
 
 /* the band behind the active page's hero heading, read from pixels */
@@ -138,7 +157,7 @@ function sourcePins() {
     has(APP, "html.tsize-l{--fs-2xs:12px;--fs-xs:13px;--fs-sm:14px;--fs-base:15px;--fs-md:16.5px}\nhtml.tsize-l body{font-size:17px}") &&
     has(APP, "html.tsize-s{--fs-2xs:10px;--fs-xs:11px;--fs-sm:12px;--fs-base:13px;--fs-md:14px}\nhtml.tsize-s body{font-size:13.5px}"), null);
 
-  report("A2) the 40px reach floor in the app's stylesheet: .chip, the card Open button, .inp, button.acc-kv, #stSearch, .nw-x, .slotchip, the studio group chips and suite chips; the 34px studio disc and the 22px Album dot grow as ELEMENTS only (negative margins keep the layout box, the dot's hit area is a transparent border with the colour clipped to the padding box)",
+  report("A2) the 40px reach floor in the app's stylesheet: .chip, the card Open button, .inp (the Gallery search box included — its own rule said 38), button.acc-kv, #stSearch, .nw-x, .slotchip, the studio group chips, suite chips, the segmented strips (32 → 40 on both surfaces) and the two Home stat links (a firm 40, not the line box's gift); the 34px studio disc and the 22px Album dot grow as ELEMENTS only (negative margins keep the layout box, the dot's hit area is a transparent border with the colour clipped to the padding box)",
     /\.chip\{[^}]*min-height:40px;box-sizing:border-box;display:inline-flex;align-items:center\}/.test(APP) &&
     has(APP, ".im-card-foot .im-open{min-height:40px;padding:5px 12px;margin:3px;flex:1 1 auto;font-size:12px}") &&
     has(APP, ".inp{width:100%;min-height:40px;") &&
@@ -148,6 +167,11 @@ function sourcePins() {
     has(APP, ".slotchip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;min-height:40px;") &&
     has(APP, "#stGroupChips .chip{flex:0 0 auto;white-space:nowrap;min-height:40px;") &&
     has(APP, "#stMuCard .chip,#stEvCard .chip{min-height:40px;") &&
+    has(APP, ".gal-tools .inp{min-height:40px;font-size:var(--fs-sm)}") &&
+    has(APP, ".dash-stat-link{cursor:pointer;border-radius:var(--r-md);transition:background .2s;min-height:40px;box-sizing:border-box}") &&
+    has(PCSS, "#pageAiTools .dash-stat .dash-stat-link { cursor: pointer; border-radius: 12px; min-height: 40px; box-sizing: border-box; }") &&
+    has(APP, "#stMuCard .chips.seg .chip,#stEvCard .chips.seg .chip{flex:1;justify-content:center;border:0;background:transparent;\n  border-radius:6px;box-shadow:none;min-height:40px;padding:5px 8px}") &&
+    has(PCSS, ".stpg .chips.seg .chip {\n  flex: 1 1 0; justify-content: center; border: 0; background-color: transparent;\n  border-radius: 6px; min-height: 40px; padding: 5px 8px; margin: 0;\n}") &&
     has(APP, ".st-sact{order:4;display:inline-flex;gap:6px;flex:0 0 auto}") && has(APP, ".st-sact .sa{width:40px;height:40px;margin:-3px;border-radius:8px;") &&
     has(APP, ".alb-ink{width:40px;height:40px;padding:0;margin:-9px -6px -9px -9px;border-radius:50%;border:9px solid transparent;background-clip:padding-box !important;box-shadow:inset 0 0 0 1px var(--line-soft);cursor:pointer}") &&
     has(APP, ".alb-ink:last-child{margin-right:-9px}") && has(APP, ".alb-ink.on{box-shadow:inset 0 0 0 2px var(--gold)}"), null);
@@ -234,6 +258,8 @@ async function appWalk(browser) {
   const small = APP_PAGES.flatMap((id) => per[id].small.map((s) => id + " " + s));
   const targets = APP_PAGES.reduce((a, id) => a + per[id].targets, 0);
   report("B2) REACH — of the " + targets + " visible controls across the nineteen pages, none is under 40px in either dimension (the audit counted 217)", small.length === 0 && targets > 700, small.slice(0, 30));
+  const smallOne = APP_PAGES.flatMap((k) => per[k].smallOneLine.map((s) => k + " " + s));
+  report("B2b) REACH on one line — with every label forced onto a single line at a 1.15 line box (CI's runner has no Myanmar face; an English phone; the shortest of the nine languages) still none of the " + targets + " controls is under 40px tall: the floor holds with no help from the text (run 35486844206 caught the Gallery search box at 38 this way)", smallOne.length === 0, smallOne.slice(0, 30));
   const tiny = APP_PAGES.flatMap((id) => per[id].tiny.map((s) => id + " " + s));
   report("B3) READ — no text node under 11px on any page (the wordmark label and labels drawn inside SVG pictures excepted); the audit counted 677 under 12px", tiny.length === 0, tiny.slice(0, 30));
   const noAlt = APP_PAGES.flatMap((id) => per[id].imgNoAlt.map((s) => id + " " + s));
@@ -308,6 +334,8 @@ async function panelWalk(browser) {
     const small = PANEL_KEYS.flatMap((k) => per[k].small.map((s) => k + " " + s));
     const targets = PANEL_KEYS.reduce((a, k) => a + per[k].targets, 0);
     report("C2) REACH — of the " + targets + " visible panel controls, none is under 40px (the audit counted 161: suite chips at 34/38, readiness rows at 26, discs at 28)", small.length === 0 && targets > 600, small.slice(0, 30));
+    const smallOne = PANEL_KEYS.flatMap((k) => per[k].smallOneLine.map((s) => k + " " + s));
+    report("C2b) REACH on one line — with every panel label forced onto a single line at a 1.15 line box still none of the " + targets + " controls is under 40px tall (run 35486844206 caught the watermark-position strip's four chips at 32 this way: two-line Burmese here, one line on the runner)", smallOne.length === 0, smallOne.slice(0, 30));
     const tiny = PANEL_KEYS.flatMap((k) => per[k].tiny.map((s) => k + " " + s));
     report("C3) READ — no panel text under 11px (the wordmark label excepted); the audit counted 773 under 12px, with .hsl-ctx at 8px and the SELF-TEST rows at 10px", tiny.length === 0, tiny.slice(0, 30));
     const noAlt = PANEL_KEYS.flatMap((k) => per[k].imgNoAlt.map((s) => k + " " + s));

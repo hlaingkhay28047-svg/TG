@@ -1621,7 +1621,7 @@ button.acc-kv{min-height:40px;align-items:center;padding:2px 0;border-radius:8px
 .dash-strip img{width:96px;height:128px;object-fit:cover;border-radius:var(--r-md);flex:none;border:1px solid var(--line-soft)}
 .dash-cont-thumb{width:72px;height:72px;object-fit:contain;background:var(--ink);border-radius:var(--r-md);flex:none;border:1px solid var(--line-soft)}
 .dash-stat{margin:var(--sp-5) 0 var(--sp-2);text-align:center}
-.dash-stat-link{cursor:pointer;border-radius:var(--r-md);transition:background .2s}
+.dash-stat-link{cursor:pointer;border-radius:var(--r-md);transition:background .2s;min-height:40px;box-sizing:border-box}
 .dash-stat-link:hover,.dash-stat-link:focus-visible{background:rgba(217,164,65,.1)}
 .dash-stat-link:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
 .dash-stat-link:active{transform:scale(.96)}
@@ -1637,7 +1637,7 @@ button.acc-kv{min-height:40px;align-items:center;padding:2px 0;border-radius:8px
 /* 6.94.0 — the "Send to" row under every video result box: two small chips, wrapping */
 /* 6.95.0 — Gallery tools (search · kind · sort), the Home recent strip, the Settings card, text size */
 .gal-tools{margin:8px 0;gap:6px;flex-wrap:wrap;align-items:center}
-.gal-tools .inp{min-height:38px;font-size:var(--fs-sm)}
+.gal-tools .inp{min-height:40px;font-size:var(--fs-sm)}
 .gal-tools #galSearch{flex:1 1 150px;min-width:0}
 #galCount{margin:0 0 8px;font-size:var(--fs-xs)}
 .dash-recent-h{font-size:var(--fs-2xs);color:var(--muted);margin-top:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
@@ -2019,7 +2019,7 @@ body.wall #wallRetry.on{display:block}
 #stMuCard .chips.seg,#stEvCard .chips.seg{gap:0;background:var(--panel-2);border:1px solid var(--line-soft);
   border-radius:var(--r-sm);padding:3px;flex-wrap:nowrap}
 #stMuCard .chips.seg .chip,#stEvCard .chips.seg .chip{flex:1;justify-content:center;border:0;background:transparent;
-  border-radius:6px;box-shadow:none;min-height:32px;padding:5px 8px}
+  border-radius:6px;box-shadow:none;min-height:40px;padding:5px 8px}
 #stMuCard .chips.seg .chip.on,#stEvCard .chips.seg .chip.on{background:linear-gradient(160deg,var(--gold-hi),var(--gold));color:#1a1408}
 /* thumbnail picker: the chip keeps its class (badge law) and grows art */
 #stMuCard .chips.thumbs,#stEvCard .chips.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
