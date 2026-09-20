@@ -43,7 +43,10 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
   const browser = await chromium.launch();
   withPremium(browser);
   try {
-    const want = { 1366: 85, 1920: 90, 2560: 78 }; /* column as % of the viewport, at least */
+    /* 6.9.0 asked the column alone for these shares. 6.115.0 (DESKTOP LAYER 4) put a left
+       rail beside it from 1200px — chrome the student uses, never a dark gutter — so the
+       share is now rail + column, and the same numbers hold. */
+    const want = { 1366: 85, 1920: 90, 2560: 78 }; /* rail + column as % of the viewport, at least */
     for (const w of [1366, 1920, 2560]) {
       const ctx = await browser.newContext({ viewport: { width: w, height: 1000 } });
       const page = await ctx.newPage();
@@ -54,19 +57,21 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
       await page.waitForTimeout(2000);
       const m = await page.evaluate(() => {
         const r = document.querySelector(".wrap").getBoundingClientRect();
+        const rail = document.querySelector(".tabbar").getBoundingClientRect();
+        const railW = (rail.left === 0 && rail.top === 0 && rail.height >= innerHeight - 1) ? rail.width : 0;   /* the 6.115.0 left rail; 0 where the dock is still at the bottom */
         switchPage("pgDash");
         const dg = document.querySelector("#pgDash .dash-grid") || document.querySelector(".dash-grid");
         const dashCols = dg ? getComputedStyle(dg).gridTemplateColumns.split(" ").length : 0;
         switchPage("pgWf");
         const wf = document.querySelector("#pgWf .wfgrid") || document.querySelector(".wfgrid");
         return {
-          pct: Math.round(r.width / innerWidth * 100),
+          pct: Math.round((r.width + railW) / innerWidth * 100), railW: Math.round(railW), wrapPct: Math.round(r.width / innerWidth * 100),
           wfCols: wf ? getComputedStyle(wf).gridTemplateColumns.split(" ").length : 0,
           dashCols,
           overflow: document.documentElement.scrollWidth > innerWidth + 1
         };
       });
-      check(`B) at ${w}px the column is at least ${want[w]}% of the screen`, m.pct >= want[w], JSON.stringify(m));
+      check(`B) at ${w}px the rail and the column together are at least ${want[w]}% of the screen (the rail is ${w >= 1800 ? 232 : 200}px from 1200px)`, m.pct >= want[w] && m.railW === (w >= 1800 ? 232 : 200), JSON.stringify(m));
       check(`B2) at ${w}px nothing scrolls sideways and no page error`, !m.overflow && errs.length === 0, JSON.stringify({ overflow: m.overflow, errs }));
       if (w >= 1920) check(`B3) at ${w}px the Smart Workflow grid shows ${w >= 1800 ? 5 : 4} columns`, m.wfCols === (w >= 1800 ? 5 : 4), JSON.stringify(m));
       /* the Home tiles are declared beside their 768px rule on purpose — a
@@ -75,11 +80,17 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
       if (w >= 1800) check(`B4) at ${w}px Home shows six tiles across`, m.dashCols === 6, JSON.stringify(m));
       await ctx.close();
     }
-    /* ---- D) every page's banner keeps a banner's shape on a monitor ----
-       The owner's screenshot: at 2560 the greeting plate was a 7:1 sliver
-       with the model cut off at the eyes. Plates are 1600x800; a box wider
-       than ~4.6:1 throws away more than half the picture, a box squarer than
-       3:1 is a poster, not a banner. Measured on every page that has one. */
+    /* ---- D) every page's banner shows its plate whole on a monitor ----
+       The owner's screenshot (6.9.0): at 2560 the greeting plate was a 7:1 sliver
+       with the model cut off at the eyes; 6.9.0 answered by growing the header box
+       with the column (3:1 … 4.6:1). 6.115.0 (DESKTOP LAYER 4) answers it better:
+       from 1200px every banner is a two-cell band whose PICTURE cell is the whole
+       1600x800 plate (2:1, nothing cropped) at the band's height, so what is
+       measured now is the picture box itself — on .page-hero its <img>, on the
+       Workflows hero the .hero-art wrapper, on Home's greeting the clip box
+       (or the CSS background: auto 100%, anchored right) — and the band stays
+       a band: 260px tall at 1440, 300 at 1800, 340 at 2200, never taller than
+       the plate's own 2:1 width lets it be. Measured on every page that has one. */
     for (const w of [1920, 2560]) {
       const ctx = await browser.newContext({ viewport: { width: w, height: 1200 } });
       const page = await ctx.newPage();
@@ -96,12 +107,17 @@ check("A4) the wide grids keep the minmax(0,1fr) floor sweep_v492_gridfit taught
           if (!el) continue;
           const r = el.getBoundingClientRect();
           if (r.width < 100) continue;
-          out.push({ id, w: Math.round(r.width), h: Math.round(r.height), ratio: +(r.width / r.height).toFixed(2) });
+          let pic = el.querySelector(":scope > img, :scope > .hero-art, :scope > video.greet-motion");
+          let pw = 0, ph = 0, anchoredRight = false;
+          if (pic) { const p = pic.getBoundingClientRect(); pw = p.width; ph = p.height; anchoredRight = Math.abs(p.right - r.right) <= 2; }
+          else { const cs = getComputedStyle(el); if (cs.backgroundSize === "auto 100%" && /right/.test(cs.backgroundPosition) || cs.backgroundPosition === "100% 50%") { ph = r.height; pw = ph * 2; anchoredRight = true; } }
+          out.push({ id, w: Math.round(r.width), h: Math.round(r.height), pw: Math.round(pw), ph: Math.round(ph), pic: pw && ph ? +(pw / ph).toFixed(2) : 0, right: anchoredRight, band: Math.abs(ph - r.height) <= 3 });
         }
         return out;
       });
-      const bad = D.filter(b => b.ratio > 4.6 || b.ratio < 3.0);
-      check(`D) at ${w}px every page banner keeps a banner's shape (3:1 … 4.6:1) — ${D.length} banners measured`,
+      const wantH = w >= 2200 ? 340 : w >= 1800 ? 300 : 260;
+      const bad = D.filter(b => !(b.pic >= 1.9 && b.pic <= 2.1 && b.right && b.band && b.h >= wantH && b.h <= wantH + 60));
+      check(`D) at ${w}px every page banner shows its whole 2:1 plate on the right of a ${wantH}px band (picture 1.9…2.1:1, the band's full height, on the header's right edge) — ${D.length} banners measured`,
         D.length >= 8 && bad.length === 0, JSON.stringify(bad.length ? bad : D).slice(0, 280));
       await ctx.close();
     }

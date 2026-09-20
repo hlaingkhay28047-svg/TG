@@ -354,15 +354,20 @@ function releasePins() {
   const wn = JSON.parse(read("docs/app/data/whatsnew.js").replace(/^window\.HNK_WHATS_NEW=/, "").replace(/;\s*$/, ""));
   const row = wn[0];
   const manifest = JSON.parse(read("panel/manifest.json")), rel = JSON.parse(read("panel/release-manifest.json")), pv = JSON.parse(read("docs/download/panel-version.json")), ver = JSON.parse(read("docs/app/version.json"));
-  report("D1) 6.114.0 / panel 6.185.0 in lockstep: APP_VER, version.json, sw.js cache, API_VERSION, PANEL_VERSION, manifest, release-manifest (+ artifact file), panel-version.json, the download footer, the landing's badges",
-    has(APP, 'var APP_VER="6.114.0";') && ver.v === "6.114.0" && has(SW, 'var CACHE = "hnk-web-studio-v6-114-0";') && has(read("server/index.js"), 'const API_VERSION = "6.114.0";') &&
-    has(PMAIN, 'const PANEL_VERSION = "6.185.0";') && manifest.version === "6.185.0" && rel.version === "6.185.0" && rel.artifact_file === "HNK_Ai_Panel_v6.185.0.ccx" &&
-    pv.v === "6.185.0" && pv.latest_version === "6.185.0" && has(read("docs/download/index.html"), "Web App 6.114.0 · Panel 6.185.0") &&
-    has(LANDING, "Web Studio v6.114.0") && has(LANDING, "Panel v6.185.0") && !has(LANDING, "6.113.1") && !has(LANDING, "6.184.1"), null);
-  report("D2) the What's New strip leads with the 6.114.0 row — title and story in all nine languages, pointing at Home — and the panel's lifted table carries it",
-    row && row.v === "6.114.0" && row.kind === "page" && row.ref === "pgHome" && LANGS.every((l) => typeof row.t[l] === "string" && row.t[l].length > 8 && typeof row.s[l] === "string" && row.s[l].length > 80) &&
-    has(read("panel/js/hnk_whats_new.js"), '"6.114.0"'), row && { v: row.v, langs: LANGS.map((l) => (row.t[l] || "").length + "/" + (row.s[l] || "").length) });
-  report("D3) CI runs this test (the 256th `node test/` invocation) and the landing says 256 tests", has(CI, "run: node test/verify_ux_wave_6114.js") && (CI.match(/node test\//g) || []).length === 256 && has(LANDING, "256 tests") && !has(LANDING, "255 tests"),
+  /* 6.115.0 — this wave shipped as 6.114.0 / 6.185.0; every wave after it moves the pair on. What
+     stays true is the LOCKSTEP: one app version in every app file, one panel version in every panel
+     file, the landing carrying both, and the pair at or past this wave's. */
+  const appV = (APP.match(/var APP_VER="([0-9.]+)";/) || [])[1], panV = (PMAIN.match(/const PANEL_VERSION = "([0-9.]+)";/) || [])[1];
+  const ge = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < 3; i++) { if (x[i] !== y[i]) return x[i] > y[i]; } return true; };
+  report("D1) the release pair is in lockstep (this wave shipped as 6.114.0 / panel 6.185.0; the pair only moves forward): APP_VER, version.json, sw.js cache, API_VERSION agree; PANEL_VERSION, manifest, release-manifest (+ artifact file), panel-version.json agree; the download footer and the landing carry both",
+    !!appV && !!panV && ge(appV, "6.114.0") && ge(panV, "6.185.0") && ver.v === appV && has(SW, 'var CACHE = "hnk-web-studio-v' + appV.replace(/\./g, "-") + '";') && has(read("server/index.js"), 'const API_VERSION = "' + appV + '";') &&
+    manifest.version === panV && rel.version === panV && rel.artifact_file === "HNK_Ai_Panel_v" + panV + ".ccx" && pv.v === panV && pv.latest_version === panV &&
+    has(read("docs/download/index.html"), "Web App " + appV + " · Panel " + panV) && has(LANDING, "Web Studio v" + appV) && has(LANDING, "Panel v" + panV) && !has(LANDING, "6.113.1") && !has(LANDING, "6.184.1"), { appV, panV, ver: ver.v, manifest: manifest.version, rel: rel.version, pv: pv.v });
+  const row614 = wn.find((r) => r.v === "6.114.0");
+  report("D2) the What's New strip carries the 6.114.0 row (it led the strip when this wave shipped) — title and story in all nine languages, pointing at Home — and the panel's lifted table carries it",
+    !!row614 && row614.kind === "page" && row614.ref === "pgHome" && LANGS.every((l) => typeof row614.t[l] === "string" && row614.t[l].length > 8 && typeof row614.s[l] === "string" && row614.s[l].length > 80) &&
+    has(read("panel/js/hnk_whats_new.js"), '"6.114.0"'), row614 && { v: row614.v, lead: wn[0].v, langs: LANGS.map((l) => (row614.t[l] || "").length + "/" + (row614.s[l] || "").length) });
+  report("D3) CI runs this test and the landing says how many tests the suite runs (256 when this wave shipped, 257 since 6.115.0 added verify_ux_wave_6115)", has(CI, "run: node test/verify_ux_wave_6114.js") && (CI.match(/node test\//g) || []).length === 257 && has(LANDING, "257 tests") && !has(LANDING, "255 tests"),
     { invocations: (CI.match(/node test\//g) || []).length });
 }
 
