@@ -15,28 +15,22 @@ const fs = require("fs");
 const path = require("path");
 const { uxpSafeCode } = require("./lib/uxp_safe_text.js");
 
+const A = require("./lib/app-data.js");
 const ROOT = path.join(__dirname, "..");
-const APP = path.join(ROOT, "docs", "app", "index.html");
 const OUT = path.join(ROOT, "panel", "js", "hnk_tutorials.js");
 
-/* the literal that follows `decl`, from its opening bracket to the matching
-   closing one (the lesson texts carry no bracket of the kind being matched) */
-function block(src, decl, open, close) {
-  const i = src.indexOf(decl);
-  if (i < 0) throw new Error("not found: " + decl);
-  const start = src.indexOf(open, i);
-  let d = 0;
-  for (let k = start; k < src.length; k++) {
-    if (src[k] === open) d++;
-    else if (src[k] === close) { d--; if (!d) return src.slice(start, k + 1); }
-  }
-  throw new Error("unterminated: " + decl);
+/* 6.116.0 — the table lives in docs/app/data/tutorials.js (window.HNK_TUTORIALS = {hero, list}),
+   the shell reads it from there, and so does this tool: the JSON text of each member, verbatim. */
+function member(key) {
+  const t = A.readTutorials();
+  if (!t || !t.hero || !Array.isArray(t.list)) throw new Error("data/tutorials.js is not {hero, list}");
+  return JSON.stringify(t[key]);
 }
 
 const HEADER = `/* ============================================================
    HNK Tutorials — LIFTED, do not edit by hand.
    Source of truth: the web app's own TUT_HERO + TUTORIALS tables
-   (docs/app/index.html), copied verbatim by tools/build_panel_tutorials.js
+   (docs/app/data/tutorials.js), copied verbatim by tools/build_panel_tutorials.js
    so a student reads the same ten lessons in Photoshop as on their phone,
    in the same words and the same nine languages. test/verify_tutorials.js
    pins this file to the app's tables.
@@ -52,16 +46,15 @@ else { globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.tutorials = API; }
 `;
 
 function build() {
-  const src = fs.readFileSync(APP, "utf8");
-  const hero = block(src, "var TUT_HERO = {", "{", "}");
-  const list = block(src, "var TUTORIALS = [", "[", "]");
+  const hero = member("hero");
+  const list = member("list");
   return uxpSafeCode(HEADER + "var TUT_HERO = " + hero + ";\nvar TUTORIALS = " + list + ";\n" + FOOTER, "build_panel_tutorials");
 }
 
 if (require.main === module) {
   const out = build();
   fs.writeFileSync(OUT, out);
-  const n = (out.match(/\{ n:"/g) || []).length;
+  const n = (out.match(/\{"n":"/g) || []).length;
   console.log("wrote panel/js/hnk_tutorials.js — " + n + " lessons, " + Buffer.byteLength(out) + " bytes");
 }
 module.exports = { build, OUT };

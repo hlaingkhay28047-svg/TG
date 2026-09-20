@@ -96,7 +96,10 @@ const rawBytes = Buffer.byteLength(APP, "utf8"), gzBytes = zlib.gzipSync(Buffer.
    tightened to 3.20 MB to hold that ground rather than leave 270 KB of unearned slack.
 
    If it ever runs out again the answer is the same one three waves have given: move a
-   table out, do not raise this number. */
+   table out, do not raise this number.
+   6.116.0 did exactly that: the compare-fit, the panes and the Retouch labels put the shell
+   4,781 bytes over, and the Tutorials table (TUT_HERO + ten lessons, 20 KB of the shell)
+   left for data/tutorials.js. 3,175,354 bytes now; the number stays. */
 report("A4) the shell stays under its ceilings — 3.20 MB raw, 1.1 MB gzipped (5.8 MB / 1.58 MB before the data left; 3.78 MB / 1.16 MB before the packs and the Imagine tables followed in 6.92.0; 3.30 MB raw until the Album page's type in 6.104.0; 3.35 MB until 6.106.0 wrote a PDF and a PSD writer into the album module; 3.40 MB until 6.107.0 rebuilt the Album page's layout and then moved the 186 KB What's New strip out to data/whatsnew.js rather than raise the number a fourth time)",
   rawBytes <= 3200000 && gzBytes <= 1100000, { rawBytes, gzBytes });
 const before = APP;
@@ -224,12 +227,15 @@ report("B1) sw.js declares DATA_CACHE (hnk-data-v1), matches /data/<name>.js, ro
   /* 6.102.0 — four files: the ALBUM page's sizes, layout templates and text roles joined
      the three in data/album.js, under a content tag like the rest.
      6.107.0 — five: the What's New strip followed them into data/whatsnew.js. */
-  const tagAlb = A.contentTag("album"), tagWn = A.contentTag("whatsnew");
-  report("D2) the shell asked for each of the five data files exactly once, under its content tag, and for no language pack",
+  const tagAlb = A.contentTag("album"), tagWn = A.contentTag("whatsnew"), tagTut = A.contentTag("tutorials");
+  /* 6.116.0 — six: the Tutorials table (TUT_HERO + the ten lessons) followed into data/tutorials.js
+     when the A4 raw ceiling ran out by 4.8 KB — the answer the note above prescribes. */
+  report("D2) the shell asked for each of the six data files exactly once, under its content tag, and for no language pack",
     reqs.filter((u) => u === "/data/libwf.js?v=" + tagLib).length === 1 && reqs.filter((u) => u === "/data/hnkdata.js?v=" + tagData).length === 1 &&
     reqs.filter((u) => u === "/data/imagine.js?v=" + tagIm).length === 1 &&
     reqs.filter((u) => u === "/data/album.js?v=" + tagAlb).length === 1 &&
-    reqs.filter((u) => u === "/data/whatsnew.js?v=" + tagWn).length === 1 && reqs.length === 5, { reqs });
+    reqs.filter((u) => u === "/data/tutorials.js?v=" + tagTut).length === 1 &&
+    reqs.filter((u) => u === "/data/whatsnew.js?v=" + tagWn).length === 1 && reqs.length === 6, { reqs });
 
   /* ---------------- E. release pins ---------------- */
   /* v6.107.0 — the row is read from the table the shell now loads, and rendered in the

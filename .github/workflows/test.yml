@@ -1099,3 +1099,8 @@ jobs:
       # layers untouched — measured at 1280/1440/1920 and 390, and pinned.
       - name: Verify the desktop rail and the two-cell hero band on every page
         run: node test/verify_ux_wave_6115.js
+      # 6.116.0 — B3: a panel past 600px lays Retouch A/B in two columns and, past 800px, a
+      # generate page with a result in two panes (controls left · result right; the DOM reverts
+      # under 800). R1: the Retouch A/B/V2 result fits the window, the wipe drags from anywhere.
+      - name: Verify the wide panel's columns and panes and the result compare that fits the screen
+        run: node test/verify_ux_wave_6116.js

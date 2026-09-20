@@ -2789,7 +2789,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.186.0";
+const PANEL_VERSION = "6.187.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -8868,6 +8868,7 @@ function showVidResult() {
   const box = $("vidResultBox");
   if (!out || !box) return;
   box.className = "card result-box on";
+  try { hnkPanesFor(box); } catch (ep) { }
   const vid = $("vidResultVideo");
   if (vid) {
     try {
@@ -9029,6 +9030,7 @@ function showVtResult(scroll) {
   const box = $("vtResultBox");
   if (!out || !box) return;
   box.className = "card result-box on";
+  try { hnkPanesFor(box); } catch (ep) { }
   const vid = $("vtResultVideo");
   if (vid) {
     try {
@@ -9124,6 +9126,7 @@ function mkTakes(pre, L, page) {
   T.show = function (scroll) {
     const out = T.list[T.sel]; const box = $(id("ResultBox")); if (!out || !box) return;
     box.className = "card result-box on";
+    try { hnkPanesFor(box); } catch (ep) { }
     const vid = $(id("ResultVideo"));
     if (vid) { try { if (VIDEO_OK && out.url) { vid.style.display = ""; vid.src = out.url; } else { vid.style.display = "none"; clearSrc(vid); } } catch (e) { } }
     const note = $(id("NoInline"));
@@ -11986,7 +11989,7 @@ function histRemoveP(idx) {
 }
 function histClearP(say) {
   state.history = []; state.histSel = -1; state.resultB64 = null; state.resultMime = null;
-  const rb = $("resultBox"); if (rb) rb.className = clsOf(rb).replace(/ ?\bon\b/, "");
+  const rb = $("resultBox"); if (rb) { rb.className = clsOf(rb).replace(/ ?\bon\b/, ""); try { hnkPanesFor(rb); } catch (ep) { } }
   try { refreshCompare(); } catch (e) { }
   renderHistory();
   if (say !== false) setStatus(ff9(HIST_L.cleared), "ok");
@@ -12519,7 +12522,7 @@ async function saveResultAs() {
 function refreshCompare() {
   const hasB = !!state.beforeB64, hasA = !!state.resultB64;
   const box = $("resultBox");
-  if (box) box.className = "card result-box" + (hasA ? " on" : "");
+  if (box) { box.className = "card result-box" + (hasA ? " on" : ""); try { hnkPanesFor(box); } catch (ep) { } }
   const ri = $("resultImg");
   if (ri) {
     if (hasA) dataSrc(ri, state.resultMime, state.resultB64);
@@ -12555,6 +12558,28 @@ function refreshCompare() {
 function fitCompareBox() {
   const box = $("cmpBox");
   if (!box) return;
+  /* 6.187.0 — the wipe fits the panel's height (the app's cmpFit): on a wide
+     panel a portrait result stood taller than the window and only a strip of
+     it showed. max-width = (panel height − the card's chrome) × the picture's
+     ratio, centred by an explicit margin (no margin:auto in UXP). */
+  try {
+    const iA = $("imgAfter"), rg = $("cmpRange");
+    const iw = iA ? (iA.naturalWidth || 0) : 0, ih = iA ? (iA.naturalHeight || 0) : 0;
+    let vh = 0; try { vh = Number(document.documentElement.clientHeight) || 0; } catch (e0) { }
+    if (!(vh > 0)) { try { vh = Number(window.innerHeight) || 0; } catch (e1) { } }
+    const pw = (box.parentNode && box.parentNode.clientWidth) || 0;
+    let fit = 0;
+    if (iw > 0 && ih > 0 && vh > 0) fit = Math.round(Math.max(240, vh - CMP_CHROME) * iw / ih);
+    const on = fit > 0 && pw > 0 && fit < pw;
+    const side = on ? Math.round((pw - fit) / 2) : 0;
+    [box, rg].forEach(function (el) {
+      if (!el || !el.style) return;
+      el.style.maxWidth = on ? fit + "px" : "";
+      el.style.marginLeft = on ? side + "px" : "";
+      el.style.marginRight = on ? side + "px" : "";
+    });
+    box.setAttribute("data-fit", on ? String(fit) : "0");
+  } catch (e) { }
   const w = box.clientWidth;
   if (!w) return;
   const iB = $("imgBefore");
@@ -12562,6 +12587,7 @@ function fitCompareBox() {
   const r = $("cmpRange");
   updateCmpPos(r ? r.value : 50);
 }
+const CMP_CHROME = 300;   /* header + card padding + title + range + labels + buttons + the GENERATE dock */
 
 function updateCmpPos(v) {
   const pct = Math.max(0, Math.min(100, Number(v) || 0));
@@ -13006,6 +13032,7 @@ function bindFreeform() {
     try { renderRefs(); if (globalThis.HNK && globalThis.HNK.lib) globalThis.HNK.lib.repaint(); } catch (e) { hwarn("library:", e); }
   });
   stickyGenBind();
+  hnkPanesBind();   /* 6.187.0 — the generate pages' two panes on a wide panel */
 }
 
 /* ================= STICKY GENERATE (app: position:sticky) =================
@@ -13085,6 +13112,110 @@ function stickyGenSchedule() {
   if (stickyS.raf) return;
   stickyS.raf = (typeof requestAnimationFrame === "function") ? requestAnimationFrame(stickyGenUpdate) : setTimeout(stickyGenUpdate, 16);
 }
+/* 6.187.0 — TWO PANES ON A WIDE PANEL (UI/UX wave B3). On the six generate pages
+   (Freeform, Text→Img, Video, VidUp, V→V, Talk) the cards stack the way a phone
+   stacks them at any width, and a result on a 900px panel lands at the bottom of a
+   long scroll. From 800px the page's cards (everything after the hero) are moved
+   into two panes: the controls on the left (55%), the result card and everything
+   after it on the right (45%), side by side — the same shape the app's wave B2
+   gives a monitor — and only once the page has a result to show (an empty right
+   pane would be a blank half). Under 800px the children go back to the page in their recorded
+   order and the panes are removed, so the DOM a phone-width panel shows is exactly
+   what it was. The panes are flexbox with a margin between (UXP has no gap, no
+   grid, no media query — the width comes from the host's own ruler). The shared
+   result card (#resultBox, borrowed by the studio pages and returned by
+   giveResultCard) is re-adopted on every pass, wherever it came back to. */
+const PANE_PAGES = ["pagePrompt", "pageCreate", "pageVideo", "pageVideoUp", "pageV2V", "pageTalk"];
+const PANE_MIN = 800;
+const PANE_GUTTER = 14;
+function hnkHostWidth() {
+  /* the panel's own width, by the host ruler (inner → outer → visualViewport →
+     matchMedia search); the document's box when every ruler reads 0 */
+  let w = 0;
+  try { w = Number(hnkWidthProbes().best) || 0; } catch (e) { w = 0; }
+  if (!(w > 0)) { try { w = Number(document.documentElement.clientWidth) || 0; } catch (e2) { } }
+  if (!(w > 0)) { try { w = Number(window.innerWidth) || 0; } catch (e3) { } }
+  return w;
+}
+function hnkHasResult(pageEl) {
+  try { return !!pageEl.querySelector(".result-box.on"); } catch (e) { return false; }
+}
+function hnkPanes(pageEl) {
+  if (!pageEl || !pageEl.children) return 0;
+  const w = hnkHostWidth();
+  /* two panes need the width AND a result to show — an empty result pane
+     would leave the right half of a wide panel blank */
+  const two = w >= PANE_MIN && hnkHasResult(pageEl);
+  let wrap = null, L = null, R = null;
+  for (let i = 0; i < pageEl.children.length; i++) { const c = pageEl.children[i]; if (clsOf(c).indexOf("hnk-panes") >= 0) wrap = c; }
+  if (wrap) { L = wrap.firstElementChild; R = wrap.lastElementChild; }
+  const isHero = (n) => clsOf(n).indexOf("page-hero") >= 0;
+  const isResult = (n) => clsOf(n).indexOf("result-box") >= 0;
+  if (two) {
+    if (!wrap) {
+      wrap = document.createElement("div"); wrap.className = "hnk-panes";
+      wrap.style.display = "flex"; wrap.style.flexDirection = "row"; wrap.style.alignItems = "flex-start";
+      L = document.createElement("div"); L.className = "hnk-pane hnk-pane-l";
+      L.style.flex = "1 1 55%"; L.style.minWidth = "0"; L.style.marginRight = PANE_GUTTER + "px"; L.style.boxSizing = "border-box";
+      R = document.createElement("div"); R.className = "hnk-pane hnk-pane-r";
+      R.style.flex = "1 1 45%"; R.style.minWidth = "0"; R.style.boxSizing = "border-box";
+      wrap.appendChild(L); wrap.appendChild(R);
+      pageEl.appendChild(wrap);
+    }
+    /* adopt every stray child (the first pass takes them all; later passes take a
+       returned #resultBox or a card a screen re-created) — order is recorded once */
+    const strays = [];
+    for (let i = 0; i < pageEl.children.length; i++) { const c = pageEl.children[i]; if (c !== wrap && !isHero(c) && c.tagName !== "SCRIPT") strays.push(c); }
+    let afterResult = false;
+    strays.forEach((c) => {
+      if (!c.getAttribute("data-pane-i")) c.setAttribute("data-pane-i", String(pageEl._paneSeq = (pageEl._paneSeq || 0) + 1));
+      if (isResult(c)) afterResult = true;
+      (isResult(c) || afterResult) ? R.appendChild(c) : L.appendChild(c);
+    });
+    /* a returned result card lands at the page's end, i.e. AFTER the wrapper — the
+       loop above moved it into R; a card that lost its order goes by data-pane-i */
+    const ordered = Array.prototype.slice.call(R.children).sort((a, b) => (+a.getAttribute("data-pane-i") || 0) - (+b.getAttribute("data-pane-i") || 0));
+    ordered.forEach((c) => R.appendChild(c));
+    pageEl.setAttribute("data-panes", "2"); pageEl.setAttribute("data-host", String(Math.round(w)));
+    return 2;
+  }
+  if (wrap) {
+    const all = Array.prototype.slice.call(L.children).concat(Array.prototype.slice.call(R.children));
+    all.sort((a, b) => (+a.getAttribute("data-pane-i") || 0) - (+b.getAttribute("data-pane-i") || 0));
+    all.forEach((c) => pageEl.appendChild(c));
+    if (wrap.parentNode === pageEl) pageEl.removeChild(wrap);
+  }
+  pageEl.setAttribute("data-panes", "1"); pageEl.setAttribute("data-host", String(Math.round(w)));
+  return 1;
+}
+/* a result box that just turned on (or off) re-lays out its own page */
+function hnkPanesFor(el) {
+  let p = el;
+  while (p && p !== document.body) {
+    if (p.id && PANE_PAGES.indexOf(p.id) >= 0) { try { return hnkPanes(p); } catch (e) { return 0; } }
+    p = p.parentNode;
+  }
+  return 0;
+}
+function hnkPanesAll() {
+  for (let i = 0; i < PANE_PAGES.length; i++) { const pe = $(PANE_PAGES[i]); if (pe) { try { hnkPanes(pe); } catch (e) { } } }
+  try { const sc = globalThis.HNK && globalThis.HNK.studioScreen; if (sc && sc.twoCol) sc.twoCol(); } catch (e2) { }
+  try { stickyGenSchedule(); } catch (e3) { }
+  try { fitCompareBox(); } catch (e4) { }
+}
+let hnkPanesTimer = 0;
+function hnkPanesBind() {
+  try {
+    window.addEventListener("resize", function () {
+      try { if (hnkPanesTimer) clearTimeout(hnkPanesTimer); } catch (e) { }
+      hnkPanesTimer = setTimeout(function () { hnkPanesTimer = 0; hnkPanesAll(); }, 80);
+    });
+  } catch (e2) { }
+  hnkPanesAll();
+}
+globalThis.HNK = globalThis.HNK || {};
+globalThis.HNK.panes = { layout: hnkPanes, of: hnkPanesFor, all: hnkPanesAll, host: hnkHostWidth, MIN: PANE_MIN, pages: PANE_PAGES.slice() };
+
 function stickyGenBind() {
   const pages = $("pages");
   if (!pages || !$("genDock")) return;
@@ -13239,7 +13370,7 @@ function createAspect() {
 /* the app's result card exists only once there is a result to show */
 function paintCreateResultBox() {
   const box = $("cResultBox");
-  if (box) box.className = "card result-box" + (state.cResultB64 ? " on" : "");
+  if (box) { box.className = "card result-box" + (state.cResultB64 ? " on" : ""); try { hnkPanesFor(box); } catch (ep) { } }
 }
 
 function refreshCreateCompare() {
@@ -13855,6 +13986,8 @@ function switchPage(key) {
   if (active) { const ape = $(active.page); if (ape) fitBtnInAllLater(ape); }
   /* and a group body is shown by its own inline display, never by the cascade alone (6.168.0) */
   if (active) { const ape3 = $(active.page); if (ape3) grpSyncAll(ape3); }
+  /* 6.187.0 — one pane or two, from the panel's width, the moment the page is on screen */
+  if (active && PANE_PAGES.indexOf(active.page) >= 0) { const ape4 = $(active.page); if (ape4) { try { hnkPanes(ape4); } catch (e) { } } }
   if (key === "prompt") { try { fitCompareBox(); } catch (e) { } }
   if (key === "presets") { try { if (globalThis.HNK && globalThis.HNK.lib) globalThis.HNK.lib.layout(); } catch (e) { } }
   if (key === "create") { try { refreshCreateCompare(); } catch (e) { } }
