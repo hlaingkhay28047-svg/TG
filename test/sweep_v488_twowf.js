@@ -156,8 +156,13 @@ const gaps = Object.keys(DEPTS).filter(k => !DEPTS[k].test(RT.prompt));
 report("E) Master Pro Retouch covers every department the owner listed",
   gaps.length === 0, { missing: gaps });
 
+/* 6.118.0 — AI Retouch grew its own TEXTURE RULE (1,773 → 2,246 characters) after the
+   owner's photograph of a face aged by the retouch, so "three times the old card" is no
+   longer the honest measure of Master Pro Retouch's completeness. It is stated on its
+   own terms: a five-thousand-character department-by-department brief that is still
+   at least twice the one-tap card. */
 report("E2) it is materially more complete than the existing AI Retouch",
-  RT.prompt.length > byId["retouch"].prompt.length * 3,
+  RT.prompt.length >= 5000 && RT.prompt.length > byId["retouch"].prompt.length * 2,
   { new: RT.prompt.length, old: byId["retouch"].prompt.length });
 
 /* ---- F ---- */

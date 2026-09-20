@@ -124,8 +124,23 @@ var WORKFLOWS = [
     humanSubject: true, referenceTransfer: false,
     requiredInputs: [{ key: "portrait", label: "Portrait", role: "main" }],
     optionalInputs: [],
-    hiddenPrompt: "Apply a natural, subtle portrait retouch to skin, hair and tone — on ALL visible skin alike: face, neck, chest, shoulders, arms and hands finished to one consistent texture and tone, the body matching the face with no boundary at the jawline. Keep the person's identity, features, expression, pose, framing and composition exactly; keep real pore texture — never plastic or waxy skin.",
-    route: { modelId: "qwen-image-2-pro", auto: true }
+    /* 6.189.0 — THE OWNER'S PHOTOGRAPH: "wrinkles came out and the face looks
+       older". This card carried its own prompt — "a natural, subtle retouch …
+       keep real pore texture … keep natural skin character and apparent age" —
+       while the web app's AI Retouch asks for the studio beauty finish; and it
+       was routed to Qwen Image 2.0 Pro, whose 800-character cap cut the Subject
+       lock mid-sentence and left no room for the AVOID list (which the panel
+       never appended anyway — see the request compiler). Told to keep pores
+       and age on a frame it re-renders, the model painted texture the
+       photograph never had. The card now takes the app's prompt and AVOID list
+       verbatim (appPrompt: the catalog merge below copies them at load, so the
+       two surfaces cannot drift), and Auto routes to the same edit deployment
+       every other catalog card uses, which carries the whole instruction. The
+       hiddenPrompt here is only the offline fallback for a build without the
+       lifted catalog. */
+    appPrompt: true,
+    hiddenPrompt: "Apply a premium studio beauty retouch to this portrait: flawless, smooth, evenly luminous skin on the face, neck, chest, shoulders, arms and hands finished as one continuous skin; every blemish, mark, flyaway hair, oil shine and trace of under-eye darkness removed. TEXTURE RULE: wrinkles, fine lines, creases, enlarged pores and rough texture are reduced or erased, never added, deepened or sharpened — the person reads the same age or younger, never older. Keep the identity, features, expression, pose, framing and composition exactly; never blurry, smeared or waxy.",
+    route: { modelId: "nano-banana-2", auto: true }
   },
   {
     id: "upscale", title: "AI Upscale", home: true,
@@ -226,6 +241,18 @@ if (_CATALOG && _CATALOG.categories) {
         /* the app's own card line for this id; `summary` stays the English
            wizard fallback the wf_sum_* translations key off */
         if (!own.cardSummary) own.cardSummary = w.summary || "";
+        /* 6.189.0 — a hand-built card marked appPrompt sends exactly what the
+           web app sends: the app's prompt (already carrying its Subject lock
+           and COMPOSITION LOCK, so nothing is appended — bespoke), its AVOID
+           list and its design fields. The AI Retouch photograph of 6.188.0 was
+           this card saying "keep real pore texture and apparent age" while the
+           app said "studio beauty retouch". */
+        if (own.appPrompt && w.prompt) {
+          own.hiddenPrompt = w.prompt;
+          own.negative = w.negative || own.negative;
+          own.fields = w.fields || [];
+          own.bespoke = true;
+        }
         return;
       }
       var wf = {

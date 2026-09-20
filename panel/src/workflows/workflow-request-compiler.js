@@ -77,6 +77,18 @@ function compile(state) {
      request existed anywhere in the payload. */
   if (state.userText) prompt += "\nUSER REQUEST: " + state.userText;
 
+  /* 6.189.0 — THE AVOID LIST TRAVELS INSIDE THE PROMPT, AS THE APP SENDS IT.
+     The web app's wizard composes every Smart Workflow as
+     prompt + "\n\nAVOID: " + negative + "." (openWizard), because RunningHub's
+     image-edit endpoints take one prompt and nothing else. The panel carried
+     negativePrompt beside the request for history and presets and never put
+     it in the body, so from Photoshop no card's AVOID list ever reached the
+     model: AI Retouch ran without "plastic or waxy skin, over-smoothing, …
+     altered bone structure". The tail goes before the SCENE PRESET line, in
+     the app's own order (wizSendPrompt), and prompt-fit already knows it —
+     a capped model keeps it only whole, exactly as the app cuts. */
+  if (negative && prompt.indexOf("\n\nAVOID:") < 0) prompt += "\n\nAVOID: " + String(negative) + ".";
+
   /* v6.76.0 — a Library scene preset names itself to the model, one line,
      the same line the web app's wizard sends (wizSendPrompt). */
   prompt += _scenePresetLine(state);

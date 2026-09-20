@@ -1110,3 +1110,8 @@ jobs:
       # becomes two panes — controls left, the result sticky on the right; one column without one.
       - name: Verify the aspect-sized stage, the sharp frame at fit and the two-pane generation pages
         run: node test/verify_ux_wave_6117.js
+      # 6.118.0 — wave C: the 10px text floor on all three surfaces (functional text 11+), the What's New
+      # rows measured in nine languages instead of the guessed 2.25 (#212), and the panel profiled under a
+      # 4x slower CPU with nothing overrunning at 360px in nine languages (Wave 11 pass B).
+      - name: Verify the text floor, the measured What's New rows and the panel under a slow CPU
+        run: node test/verify_ux_wave_6118.js
