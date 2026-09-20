@@ -1053,8 +1053,26 @@ button,.btn,.chip,.tabb,.subtab,.grp-h,.wfmini,.wf-go,.wiz-x,.fav,label,.subh,.c
      centre, where the faces in these plates sit. */
   .page-hero>img,.dash-greet .greet-art,.dash-greet>img{object-position:center 35%}
 }
+/* 6.117.0 — WAVE B2: THE RESULT BESIDE THE CONTROLS. On a monitor the six
+   generation pages (Freeform · Text→Image · Video · Video Upscale · V→V ·
+   Talking Photo) stacked the result box UNDER a 1120px column of controls:
+   after GENERATE the student scrolled past every card to see the picture,
+   then back up to change a setting. From 1200px, the moment a page carries a
+   shown result, it becomes two panes — controls left, the result right and
+   sticky under the header — and reverts to the one centred column when the
+   result is cleared. :has() is the switch (Chrome 105 / Safari 15.4 /
+   Firefox 121); without it the page simply stays one column. The Retouch
+   pages keep their own studio grid. */
+@media(min-width:1200px){
+  #pgCreate.on:has(>.result-box.on),#pgText2Img.on:has(>.result-box.on),#pgVideo.on:has(>.result-box.on),#pgVideoUp.on:has(>.result-box.on),#pgV2V.on:has(>.result-box.on),#pgTalk.on:has(>.result-box.on){display:grid;grid-template-columns:minmax(0,1fr) minmax(380px,40%);column-gap:18px;align-items:start}
+  #pgCreate.on:has(>.result-box.on)>.page-hero,#pgText2Img.on:has(>.result-box.on)>.page-hero,#pgVideo.on:has(>.result-box.on)>.page-hero,#pgVideoUp.on:has(>.result-box.on)>.page-hero,#pgV2V.on:has(>.result-box.on)>.page-hero,#pgTalk.on:has(>.result-box.on)>.page-hero{grid-column:1/-1}
+  #pgCreate.on:has(>.result-box.on)>.card,#pgText2Img.on:has(>.result-box.on)>.card,#pgVideo.on:has(>.result-box.on)>.card,#pgVideoUp.on:has(>.result-box.on)>.card,#pgV2V.on:has(>.result-box.on)>.card,#pgTalk.on:has(>.result-box.on)>.card{grid-column:1;max-width:none;margin-left:0;margin-right:0}
+  #pgCreate.on:has(>.result-box.on)>.result-box,#pgText2Img.on:has(>.result-box.on)>.result-box,#pgVideo.on:has(>.result-box.on)>.result-box,#pgVideoUp.on:has(>.result-box.on)>.result-box,#pgV2V.on:has(>.result-box.on)>.result-box,#pgTalk.on:has(>.result-box.on)>.result-box{grid-column:2;grid-row:2/span 12;max-width:none;margin:0;position:sticky;top:calc(var(--navH,65px) + 12px);max-height:calc(100vh - var(--navH,65px) - 24px);overflow-y:auto;overscroll-behavior:contain}
+  #pgCreate.on:has(>.result-box.on) .wfgrid,#pgText2Img.on:has(>.result-box.on) .wfgrid,#pgVideo.on:has(>.result-box.on) .wfgrid,#pgVideoUp.on:has(>.result-box.on) .wfgrid,#pgV2V.on:has(>.result-box.on) .wfgrid,#pgTalk.on:has(>.result-box.on) .wfgrid{grid-template-columns:repeat(3,minmax(0,1fr))} /* the card grid in the control pane keeps ~220px tiles */
+}
 @media(min-width:1800px){
   .wfgrid{grid-template-columns:repeat(5,minmax(0,1fr))}
+  #pgCreate.on:has(>.result-box.on) .wfgrid,#pgText2Img.on:has(>.result-box.on) .wfgrid,#pgVideo.on:has(>.result-box.on) .wfgrid,#pgVideoUp.on:has(>.result-box.on) .wfgrid,#pgV2V.on:has(>.result-box.on) .wfgrid,#pgTalk.on:has(>.result-box.on) .wfgrid{grid-template-columns:repeat(4,minmax(0,1fr))} /* 6.117.0 — two panes: four across in the control pane */
 }
 /* QHD and up (the owner's own monitor): the 1720px cap would leave a third of
    a 2560 screen dark, so the column takes 92% up to 2040px — five Smart
@@ -1351,6 +1369,11 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 .st-split-line{position:absolute;top:10px;bottom:12px;width:2px;background:var(--gold);z-index:2;display:none}
 .st-split-line::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:var(--gold) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1408' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 8l-4 4 4 4M16 8l4 4-4 4M4 12h16'/%3E%3C/svg%3E") center/13px 13px no-repeat}
 #stStage.split .st-split-line{display:block}
+/* 6.117.0 — the divider says where it stands while it moves (drag, or ← → / Shift ← →) */
+.st-split-line::before{content:attr(data-pct);position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:11px;line-height:1;font-weight:600;letter-spacing:.02em;color:#fff;background:rgba(0,0,0,.66);padding:4px 7px;border-radius:999px;white-space:nowrap;opacity:0;transition:opacity .15s ease;pointer-events:none}
+#stStage.split.st-adjust .st-split-line::before{opacity:1}
+/* 6.117.0 — the sharp-frame mark at fit (the zoom pill carries it while zoomed) */
+#stHdTag{position:absolute;left:8px;top:8px;z-index:3;display:none;pointer-events:none;font-size:11px;line-height:1;font-weight:700;letter-spacing:.06em;color:#fff;background:rgba(0,0,0,.6);padding:4px 7px;border-radius:999px}
 /* suite navigation (MUST #4/#5) */
 #stJumpBar{position:sticky;top:calc(var(--navH,54px) + env(safe-area-inset-top) + var(--stageH,0px));z-index:5;background:var(--ink);padding:2px 0 4px}
 #stJumpTop{display:flex;gap:6px;align-items:center;margin-top:4px}
@@ -4357,7 +4380,7 @@ html.splashing #splash{display:flex}
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=368bbaac686f"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
-<script src="data/whatsnew.js?v=80bec4723748"></script>
+<script src="data/whatsnew.js?v=4b7d9dfd7d34"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -17021,7 +17044,7 @@ function stCssFilter(p){
   if(p.wht||p.blk) f.push("contrast("+(1+((p.wht||0)-(p.blk||0))/600)+")"); /* Whites/Blacks T1 approx */
   return f.join(" ");
 }
-function stApplyDragFilter(){ var c=$("stCanvas"); if(c) c.style.filter=ST.split.on?"":stCssFilter(stEffT1()); }
+function stApplyDragFilter(){ var c=$("stCanvas"); if(c) c.style.filter=ST.split.on?"":stCssFilter(stEffT1()); if(ST.hi&&ST.hi.on&&ST._hiSync) ST._hiSync(); /* 6.117.0 — a live edit stales the sharp frame the same frame */ }
 /* empty-state guard (MUST #9): first interaction without a photo nudges toward the picker */
 var _stNudgeT=0;
 function stNeedPhotoNudge(){
@@ -17036,6 +17059,7 @@ function stT1Changed(){
   if(!ST.srcBitmap){ stNeedPhotoNudge(); stUiSoon(); return; }
   if(typeof stUndoTick==="function") stUndoTick();
   if(ST.split.on){ /* SHOULD #11: while A|B split is on, settle-path renders both halves */
+    if(ST.hi&&ST.hi.on&&ST._hiSync) ST._hiSync(); /* 6.117.0 — a stale sharp frame hides at once */
     stScheduleSettle(); return;
   }
   /* first write is synchronous (a slider must move the photo within the same frame);
@@ -19124,6 +19148,7 @@ function stProxyPaint(){
   c.style.filter="";
 }
 function stProxySoon(){
+  if(ST.hi&&ST.hi.on&&ST._hiSync) ST._hiSync(); /* 6.117.0 — the sharp frame must not sit over a live proxy */
   if(ST.proxyRaf) return;
   ST.proxyRaf=requestAnimationFrame(stProxyPaint);
 }
@@ -21346,6 +21371,7 @@ function stBuildBuffer(){
   ST.pin=null; var _pb=$("stPin"); if(_pb) _pb.classList.remove("on");
   var bw=Math.max(1,Math.round(gw*s)), bh=Math.max(1,Math.round(gh*s));
   ST.buf=document.createElement("canvas"); ST.buf.width=bw; ST.buf.height=bh;
+  if(typeof stColsFit==="function") stColsFit(); /* 6.117.0 — the stage column takes the width this buffer wants */
   ST.bctx=ST.buf.getContext("2d",{willReadFrequently:true});
   ST.bctx.drawImage(src,0,0,bw,bh);
   ST.px0=ST.bctx.getImageData(0,0,bw,bh);
@@ -25678,7 +25704,24 @@ function cmpFit(boxId, afterId, followIds){
   var iw=im?(im.naturalWidth||0):0, ih=im?(im.naturalHeight||0):0;
   var vh=window.innerHeight||0;
   var w=0;
-  if(iw>0&&ih>0&&vh>0){ var maxH=Math.max(240, vh-CMP_CHROME); w=Math.round(maxH*iw/ih); }
+  if(iw>0&&ih>0&&vh>0){
+    var maxH=Math.max(240, vh-CMP_CHROME);
+    /* 6.117.0 — in the two-pane generation layout the result card is sticky with
+       a stated ceiling (window − header − 24px) and scrolls inside it; the wipe
+       then takes what that ceiling leaves after the card's other content
+       (title · range · labels · buttons · strip), so the whole card stays in
+       view without an inner scrollbar. Measured, not guessed: the card's full
+       content height minus the wipe's own. */
+    var card=box.closest?box.closest(".result-box"):null;
+    if(card){
+      var cs=getComputedStyle(card), cap=parseFloat(cs.maxHeight);
+      if(cs.position==="sticky"&&cap>0){
+        var other=Math.max(0, card.scrollHeight-Math.round(box.getBoundingClientRect().height));
+        maxH=Math.max(240, Math.min(maxH, cap-other-8));
+      }
+    }
+    w=Math.round(maxH*iw/ih);
+  }
   var css=w>0?(w+"px"):"";
   var all=[box].concat((followIds||[]).map(function(id){ return $(id); }));
   all.forEach(function(el){ if(!el) return; el.style.maxWidth=css; el.style.marginLeft=css?"auto":""; el.style.marginRight=css?"auto":""; if(el.tagName==="INPUT") el.style.display=css?"block":""; });
@@ -26285,7 +26328,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   function pg(){ return stActivePage(); }
   var navEl=document.querySelector(".nav");
   function navH(){ return (navEl&&navEl.offsetHeight)||54; }
-  window.stStageSync=function(){ try{ upd(); }catch(e){} };
+  window.stStageSync=function(){ try{ upd(); }catch(e){} try{ stColsFit(); }catch(e2){} };
   function upd(){
     pg().style.setProperty("--navH",navH()+"px");
     var jb=$("stJumpBar"); if(jb) pg().style.setProperty("--jumpH",jb.offsetHeight+"px");
@@ -26494,6 +26537,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     var r=c.getBoundingClientRect(), sr=stg.getBoundingClientRect();
     line.style.left=(r.left-sr.left+r.width*ST.split.pct/100)+"px";
     line.style.top=(r.top-sr.top)+"px"; line.style.height=r.height+"px"; /* v6.25.0 — the toolbar sits below the picture */
+    line.setAttribute("data-pct",(Math.round(ST.split.pct*10)/10)+"%"); /* 6.117.0 — the readout on the line */
   }
   ST._splitLayout=layout;
   sp.textContent="A|B";
@@ -26519,23 +26563,70 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     if(ST.split.on) layout();
   };
   var dragging=false, rafP=false;
+  /* 6.117.0 — PRECISION. The divider used to land on whole percents: nine
+     pixels a step on a 900px picture, so a hairline or a lash edge could not be
+     put exactly under it. It now moves in tenths, the keyboard steps it (← →
+     1%, Shift 0.1%), the line prints its position while it moves, and the
+     sharp frame (below) is redrawn with the divider instead of a settle later. */
+  var adjT=0;
+  function adjustShow(){ stg.classList.add("st-adjust"); clearTimeout(adjT); adjT=setTimeout(function(){ if(!dragging) stg.classList.remove("st-adjust"); },900); }
+  function follow(){ if(!rafP){ rafP=true; requestAnimationFrame(function(){ rafP=false; stRenderSettle(); if(ST.hi&&ST.hi.on&&ST._hiDraw) ST._hiDraw(); }); } }
   stg.addEventListener("pointerdown",function(e){
     if(!ST.split.on) return;
     if(e.target.classList&&e.target.classList.contains("chip")) return;
-    dragging=true;
+    dragging=true; adjustShow();
     try{ stg.setPointerCapture(e.pointerId); }catch(err){}
   });
   stg.addEventListener("pointermove",function(e){
     if(!dragging||!ST.split.on) return;
     var c=$("stCanvas"), r=c.getBoundingClientRect();
     if(r.width<2) return;
-    ST.split.pct=stClamp(Math.round((e.clientX-r.left)/r.width*100),0,100);
-    layout();
-    if(!rafP){ rafP=true; requestAnimationFrame(function(){ rafP=false; stRenderSettle(); }); }
+    ST.split.pct=stClamp(Math.round((e.clientX-r.left)/r.width*1000)/10,0,100);
+    layout(); adjustShow();
+    follow();
   });
-  stg.addEventListener("pointerup",function(){ dragging=false; });
-  stg.addEventListener("pointercancel",function(){ dragging=false; });
+  stg.addEventListener("pointerup",function(){ dragging=false; adjustShow(); });
+  stg.addEventListener("pointercancel",function(){ dragging=false; adjustShow(); });
+  function nudge(d){
+    ST.split.pct=stClamp(Math.round((ST.split.pct+d)*10)/10,0,100);
+    layout(); adjustShow();
+    if(ST.srcBitmap) follow();
+  }
+  document.addEventListener("keydown",function(ev){
+    if(!ST.split.on||ev.ctrlKey||ev.metaKey||ev.altKey) return;
+    if(ev.key!=="ArrowLeft"&&ev.key!=="ArrowRight") return;
+    if(!ST_SUITE_PAGE[curPage]) return;
+    var t=ev.target, tag=(t&&t.tagName)||"";
+    if(/INPUT|TEXTAREA|SELECT/.test(tag)||(t&&t.closest&&t.closest(".cmp"))) return; /* the result wipe has its own arrows */
+    ev.preventDefault();
+    nudge((ev.key==="ArrowRight"?1:-1)*(ev.shiftKey?0.1:1));
+  });
+  ST._splitNudge=nudge;
 })();
+
+/* 6.117.0 — THE STAGE TAKES THE WIDTH THE PICTURE NEEDS. The desktop studio grid
+   gave the live preview a fixed 42% column: a 3:2 photo on a 1440 monitor stood
+   494px wide beside 700px of sliders while the canvas could have been 580px tall.
+   Once a photo is in, the column is sized from the buffer's own aspect and the
+   canvas's stated ceiling (window − 320px, the ≥1024 rule) — as wide as the
+   picture wants at that height — capped at 58% of the block and floored at
+   340px, so a portrait photo hands the width back to the controls and a
+   landscape one fills the stage. 2-up keeps its own CSS columns; under 1024px
+   the inline width is cleared and the phone stack is untouched. */
+var ST_COLS_MIN_R=436; /* 420px of controls + the 16px gap */
+function stColsFit(){
+  var cols=$("stCols"), c=$("stCanvas"); if(!cols||!c) return;
+  var wide=!!(window.matchMedia&&matchMedia("(min-width:1024px)").matches);
+  if(!wide||!ST.buf||!ST.srcBitmap||cols.classList.contains("sbs")){ cols.style.gridTemplateColumns=""; cols.removeAttribute("data-fit-w"); return; }
+  var W=cols.clientWidth, iw=ST.buf.width, ih=ST.buf.height; if(!W||!iw||!ih) return;
+  var maxH=Math.max(240,window.innerHeight-320);
+  var want=Math.round(maxH*iw/ih)+2;                          /* the canvas border */
+  var cap=Math.min(Math.round(W*0.58), W-ST_COLS_MIN_R);
+  var lw=Math.max(340, Math.min(want, cap));
+  if(lw>W-200) lw=Math.max(340, W-200);
+  cols.style.gridTemplateColumns=lw+"px minmax(0,1fr)";
+  cols.setAttribute("data-fit-w",String(lw));
+}
 
 /* ---- preview zoom loupe (§3.1): pinch / double-tap 100% / ctrl-wheel — CSS transform only, the
    settle buffer + toDataURL stay untouched; 100% = one buffer pixel per CSS pixel ---- */
@@ -26676,6 +26767,7 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     var on=!!(ST.sbs&&ST.sbs.on);
     if(stg2) stg2.classList.toggle("sbs",on);
     var cols=$("stCols"); if(cols) cols.classList.toggle("sbs",on); /* desktop: the stage column widens for two panes */
+    stColsFit(); /* 6.117.0 — 2-up keeps the CSS columns; one pane takes the picture's own width */
     cB.style.display=on?"":"none";
     if(on&&ST.srcBitmap){
       if(cB.width!==c.width||cB.height!==c.height){ cB.width=c.width; cB.height=c.height; }
@@ -26701,33 +26793,59 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
   var ST_HI_CAP = window.innerWidth<720 ? 2560 : 4096;
   var hi=document.createElement("canvas"); hi.id="stHiCanvas"; hi.style.display="none"; wrap.appendChild(hi);
   ST.hi={bmp:null,w:0,h:0,key:"",busy:false,want:false,t:0,on:false,wantFull:false};
+  /* 6.117.0 — THE SHARP FRAME AT FIT, AND UNDER THE SPLIT. The frame existed only
+     while zoomed; at fit a 2x screen showed the 1280 buffer through 1800 device
+     pixels — soft, on the very screens retouchers use. Now, wherever the screen
+     can show more than the buffer holds, the same export-path frame is rendered
+     at exactly the picture's device pixels (a smaller frame than the zoom's, so
+     it lands sooner) and drawn over the canvas at fit too; its long edge is part
+     of the key, so zooming in re-renders at the full cap. Under the A|B split the
+     untouched side is drawn from the original at the same detail, clipped at the
+     divider, and follows it as it moves. */
+  function hiDpr(){ return Math.min(2,window.devicePixelRatio||1); }
+  function hiCap(){ return Z.s>1.05 ? ST_HI_CAP : Math.min(ST_HI_CAP, Math.round(Math.max(cssW(),cssH())*hiDpr())); }
+  function hiFitNeed(){ return !!(ST.buf&&c.width*1.25<cssW()*hiDpr()); } /* a quarter more device pixels than the buffer: a real gain, not a 3x phone's 4% */
   function hiSourceInfo(){
     if(!ST.srcBitmap||!ST.fullBitmap||!ST.buf||typeof stExportSource!=="function") return null;
     var src=stExportSource(); if(!src) return null;
     var w=src.width||src.naturalWidth, h=src.height||src.naturalHeight; if(!w||!h) return null;
     if(Math.max(w,h)<=Math.max(ST.buf.width,ST.buf.height)*1.15) return null;   /* nothing sharper to show */
-    var sc=Math.min(1,ST_HI_CAP/Math.max(w,h));
+    var sc=Math.min(1,hiCap()/Math.max(w,h));
     return {src:src, W:Math.max(1,Math.round(w*sc)), H:Math.max(1,Math.round(h*sc))};
   }
   function hiKey(){
-    try{ return JSON.stringify([stEffT1(),stEffT2(),stPipeVals(),stCurveVals(),ST.heals||null,svGet("st_brushMode",null),state.st.geo,ST.srcW,ST.srcH,(state.st.img&&state.st.img.b64||"").length]); }
+    try{ return JSON.stringify([stEffT1(),stEffT2(),stPipeVals(),stCurveVals(),ST.heals||null,svGet("st_brushMode",null),state.st.geo,ST.srcW,ST.srcH,(state.st.img&&state.st.img.b64||"").length,hiCap()]); }
     catch(e){ return "k"+Date.now(); }
   }
-  function hiWanted(){ return !!(ST.srcBitmap&&Z.s>1.05&&!ST.split.on&&!ST.holding&&!ST.showingResult&&!(ST.sbs&&ST.sbs.on)&&!ST.showZones); }
+  function hiWanted(){ return !!(ST.srcBitmap&&!ST.holding&&!ST.showingResult&&!(ST.sbs&&ST.sbs.on)&&!ST.showZones&&(Z.s>1.05||hiFitNeed())); }
   function indSync(){ if(Z.s>1.001) ind.textContent=(Z.indBase||"")+(ST.hi.on?" · HD":""); }
-  function hiHide(){ if(ST.hi.on){ ST.hi.on=false; hi.style.display="none"; indSync(); } }
+  var hdTag=document.createElement("span"); hdTag.id="stHdTag"; hdTag.textContent="HD"; hdTag.setAttribute("role","status"); wrap.appendChild(hdTag);
+  hdTag.title=L9({my:"ပြတ်သားတဲ့ preview — မူရင်းပုံကနေ သင့် screen ရဲ့ pixel အတိုင်း ပြထားတယ်",en:"Sharp preview — rendered from the original at your screen's pixel density",shn:"Preview ၸႅင်ႈလႅင်း — တႅမ်ႈလုၵ်ႉတီႈ မူႇလ ၸွမ်း pixel ၼႃႈၸေႃးသူ",kac:"Preview san ai — nang a screen pixel hte maren shawng na sumla kaw na ka da ai",th:"พรีวิวคมชัด — เรนเดอร์จากต้นฉบับตามความละเอียดพิกเซลของหน้าจอคุณ",zh:"清晰预览——按你屏幕的像素密度从原图渲染",vi:"Xem trước sắc nét — kết xuất từ ảnh gốc theo mật độ điểm ảnh màn hình của bạn",id:"Pratinjau tajam — dirender dari aslinya sesuai kerapatan piksel layar Anda",ms:"Pratonton tajam — dipaparkan daripada asal mengikut ketumpatan piksel skrin anda"});
+  function hdTagSync(){ hdTag.style.display=(ST.hi.on&&Z.s<=1.001)?"":"none"; }
+  function hiHide(){ if(ST.hi.on){ ST.hi.on=false; hi.style.display="none"; indSync(); } hdTagSync(); }
   function hiDraw(){
     if(!hiWanted()||!ST.hi.bmp||ST.hi.key!==hiKey()){ hiHide(); return; }
-    var dpr=Math.min(2,window.devicePixelRatio||1), vw=cssW(), vh=cssH();
+    var dpr=hiDpr(), vw=cssW(), vh=cssH();
     var ow=Math.round(vw*dpr), oh=Math.round(vh*dpr); if(!ow||!oh) return;
     if(hi.width!==ow||hi.height!==oh){ hi.width=ow; hi.height=oh; }
     var k=vw/(c.width||1), fx=ST.hi.w/c.width, fy=ST.hi.h/c.height;
     var sx=(-Z.x)/(Z.s*k)*fx, sy=(-Z.y)/(Z.s*k)*fy, sw=vw/(Z.s*k)*fx, sh=vh/(Z.s*k)*fy;
     var hx=hi.getContext("2d"); hx.imageSmoothingEnabled=true; hx.imageSmoothingQuality="high"; hx.clearRect(0,0,ow,oh);
     try{ hx.drawImage(ST.hi.bmp,sx,sy,sw,sh,0,0,ow,oh); }catch(e){ hiHide(); return; }
+    if(ST.split.on){ /* the untouched side, from the original (or the pin), at the same detail */
+      try{
+        var srcS=(ST.pin&&ST.pin.cv)?ST.pin.cv:stExportSource();
+        var sW=srcS&&(srcS.width||srcS.naturalWidth), sH=srcS&&(srcS.height||srcS.naturalHeight);
+        if(sW&&sH){
+          var kx=sW/ST.hi.w, ky=sH/ST.hi.h, cwp=Math.round(ow*ST.split.pct/100);
+          var sx0=ST.split.swap?cwp:0, sw0=ST.split.swap?ow-cwp:cwp;
+          if(sw0>0){ hx.save(); hx.beginPath(); hx.rect(sx0,0,sw0,oh); hx.clip(); hx.drawImage(srcS,sx*kx,sy*ky,sw*kx,sh*ky,0,0,ow,oh); hx.restore(); }
+        }
+      }catch(e2){}
+    }
     hi.style.width=vw+"px"; hi.style.height=vh+"px";
     hi.style.left=(c.offsetLeft+c.clientLeft)+"px"; hi.style.top=(c.offsetTop+c.clientTop)+"px"; /* over the canvas content, inside its border */
-    hi.style.display=""; ST.hi.on=true; indSync();
+    hi.style.display=""; ST.hi.on=true; indSync(); hdTagSync();
   }
   function hiRequest(){
     var info=hiSourceInfo(); if(!info||!hiWanted()){ hiHide(); return; }
@@ -26770,6 +26888,8 @@ var _stTgt=$("stTarget"); if(_stTgt) _stTgt.appendChild(stTargetChips());
     pin.style.display = ST.srcBitmap ? "" : "none";
   }
   ST.refreshFns.push(extraSync); extraSync();
+  ST.refreshFns.push(stColsFit); stColsFit(); /* 6.117.0 — the stage column follows the photo's aspect */
+  window.addEventListener("resize",function(){ clearTimeout(ST._colsT); ST._colsT=setTimeout(stColsFit,80); });
   /* ---- v6.23.0: PRESS-AND-HOLD ON THE PICTURE = BEFORE PEEK ----
      The thumb-on-the-photo habit every retouching app teaches; the rail's
      Before button and the B key stay. A long press (350ms, no drift over 8px,
@@ -30477,7 +30597,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.116.0";
+var APP_VER="6.117.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
