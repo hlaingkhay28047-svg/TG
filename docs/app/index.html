@@ -877,11 +877,12 @@ img.ld{background:linear-gradient(110deg,var(--panel-2) 40%,#1e2740 50%,var(--pa
    still scrolls the page — the divider drag only needs horizontal moves,
    and the pointer handlers already reset on pointercancel */
 .cmp{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#050b10;touch-action:pan-y pinch-zoom;cursor:ew-resize;user-select:none}
-.cmp img{display:block;width:100%}
+.cmp img{display:block;width:100%;pointer-events:none;-webkit-user-drag:none;user-drag:none} /* 6.116.0 — the pictures never take the pointer: a press that landed on an <img> started the browser's own image drag and cancelled the wipe */
+.cmp:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .cmp-top{position:absolute;top:0;left:0;bottom:0;width:50%;overflow:hidden}
 .cmp-top img{width:auto;max-width:none;height:100%;object-fit:cover;object-position:center}
-.cmp-line{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--gold);pointer-events:none}
-.cmp-line::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:var(--gold) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1408' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 8l-4 4 4 4M16 8l4 4-4 4M4 12h16'/%3E%3C/svg%3E") center/16px 16px no-repeat;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+.cmp-line{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--gold);pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.cmp-line::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:var(--gold) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1408' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 8l-4 4 4 4M16 8l4 4-4 4M4 12h16'/%3E%3C/svg%3E") center/22px 22px no-repeat;box-shadow:0 2px 10px rgba(0,0,0,.45),0 0 0 2px rgba(255,255,255,.55)} /* 6.116.0 — a 44px grip */
 .btn.active{background:var(--gold);border-color:var(--gold);color:#1a1408}
 
 .lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin-top:10px}
@@ -1394,7 +1395,7 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 .st-refx{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-2)}
 .st-refx .ref{width:56px;height:56px;flex:0 0 56px}
 #stTarget .chips{margin-top:var(--sp-2)}
-@media(min-width:900px){.grp-b .st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp-2) var(--sp-4)}}#pgStudio .grp,#pgMeitu .grp,#pgEvoto .grp,#stMuCard,#stEvCard{scroll-margin-top:calc(var(--navH,54px) + 10px + env(safe-area-inset-top) + var(--stageH,0px) + var(--jumpH,92px))}
+@media(min-width:900px){.grp-b .st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp-2) var(--sp-4)}}#pgStudio .grp,#pgMeitu .grp,#pgEvoto .grp,#stMuCard,#stEvCard,#stResultBox{scroll-margin-top:calc(var(--navH,54px) + 10px + env(safe-area-inset-top) + var(--stageH,0px) + var(--jumpH,92px))}
 /* native focus scrolling + scrollIntoView stop clear of the sticky bottom stack (gen bar + tab bar) */
   #pgStudio .grp,#pgMeitu .grp,#pgEvoto .grp,#pgStudio .st-ctl,#pgMeitu .st-ctl,#pgEvoto .st-ctl{scroll-margin-bottom:calc(150px + env(safe-area-inset-bottom))}
 /* single-column: the column wrappers must not become sticky containing blocks —
@@ -1408,7 +1409,11 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
   #stColL #stJumpBar{order:-1} /* suite nav directly under the preview; PHOTO card + recipes scroll below */
   #stJumpBar{position:static}
   #stCanvas{max-height:calc(100vh - 260px)}
-  #stColL #stCanvas{max-height:calc(100vh - 400px)}
+  /* 6.116.0 — in the two-column layout the stage and the jump bar live in the sticky LEFT column,
+     so nothing but the header sits above the right column: a group or the result card scrolled
+     into view lands under the header, not 829px down (--stageH + --jumpH are the phone's sticky stack) */
+  #pgStudio .grp,#pgMeitu .grp,#pgEvoto .grp,#stMuCard,#stEvCard,#stResultBox{scroll-margin-top:calc(var(--navH,54px) + 12px)}
+  #stColL #stCanvas{max-height:calc(100vh - 320px)} /* 6.116.0 — the live preview is the point of the page: 80px taller on a monitor, the PHOTO card and recipes scroll inside the column */
 }
 /* ---- V2 Retouch (pgRetouch hero) ---- */
 .v2-range{width:100%;min-height:44px;accent-color:var(--gold)}
@@ -3460,6 +3465,7 @@ html.splashing #splash{display:flex}
       <div class="cmp-line" id="stCmpLine"></div>
     </div>
     <input type="range" id="stCmpRange" min="0" max="100" value="50" style="width:100%;margin-top:8px;accent-color:var(--gold)">
+    <div class="row" id="stCmpLbls" style="justify-content:space-between"><span class="mut" id="stCmpBeforeLbl"></span><button class="chip" id="stZoomBtn"></button><span class="mut" id="stCmpAfterLbl"></span></div>
     <div class="row" style="margin-top:10px">
       <a class="btn btn-gold grow" id="btnStDl" download="hnk-studio.jpg" style="text-align:center"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-download"/></svg> Download</a>
       <button class="btn" id="btnStToRef"></button>
@@ -3609,7 +3615,7 @@ html.splashing #splash{display:flex}
       <div class="cmp-line" id="rsCmpLine"></div>
     </div>
     <input type="range" id="rsCmpRange" min="0" max="100" value="50" style="width:100%;margin-top:8px;accent-color:var(--gold)">
-    <div class="row" style="justify-content:space-between"><span class="mut" id="rsCmpBeforeLbl"></span><button class="chip" id="rsZoomBtn"></button><span class="mut" id="rsCmpAfterLbl"></span></div>
+    <div class="row" id="rsCmpLbls" style="justify-content:space-between"><span class="mut" id="rsCmpBeforeLbl"></span><button class="chip" id="rsZoomBtn"></button><span class="mut" id="rsCmpAfterLbl"></span></div>
     <div class="row" id="rsRerunRow" style="margin-top:10px;display:none">
       <span class="mut" id="rsRerunLbl"></span>
       <span id="rsRerunChips"></span>
@@ -4350,7 +4356,8 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=880c3f0f1cf1"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=368bbaac686f"></script>
-<script src="data/whatsnew.js?v=b9b5e6a2c78e"></script>
+<script src="data/tutorials.js?v=c0d95d865894"></script>
+<script src="data/whatsnew.js?v=80bec4723748"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -5763,52 +5770,9 @@ function a11yArmStatusRegions(){
    (tools/build_panel_tutorials.js → panel/js/hnk_tutorials.js), so a student
    reads the same lesson in the same words on both surfaces. Every card's
    button opens the page it teaches (data-tutorial-page). */
-var TUT_HERO = {
-  h1:{my:"သင်ခန်းစာများ",en:"Tutorials",shn:"ပပ်ႉသွၼ်",kac:"Sharin laika ni",th:"บทเรียน",zh:"教程",vi:"Hướng dẫn",id:"Tutorial",ms:"Tutorial"},
-  lede:{my:"စက်မှတ်ပုံတင်ခြင်းကနေ စပါ၊ ပြီးရင် AI Tools တွေကို လေ့လာပြီး Photoshop Panel ကို ကွန်ပျူတာတစ်လုံးတည်းမှာ ချိတ်ပါ။ သင်ခန်းစာ အတို ၁၀ ခု — တစ်ခုချင်းက သင်ပေးတဲ့ page ကို ဖွင့်ပေးတယ်။",en:"Start with device registration, then learn the AI Tools and pair the Photoshop Panel on the same Computer. Ten short lessons — each one opens the page it teaches.",shn:"တႄႇတီႈ လူင်းသဵၼ်ႈမၢႆၶိူင်ႈ၊ သေ ႁဵၼ်း AI Tools လႄႈ ၽွမ်ႉ Photoshop Panel ၼိူဝ်ၶွမ်းလုၵ်ႈလဵဝ်။ ပပ်ႉသွၼ်ပွတ်း 10 — ဢၼ်ၼိုင်ႈ ပိုတ်ႇၼႃႈလိၵ်ႈ ဢၼ်မၼ်းသွၼ်။",kac:"Device registration kaw na hpang, dai hpang AI Tools ni sharin la nna Photoshop Panel hpe computer langai sha hta matut u. Sharin laika kadun 10 — langai hpra gaw sharin ai page hpe hpaw ya ai.",th:"เริ่มจากการลงทะเบียนอุปกรณ์ แล้วเรียนรู้ AI Tools และจับคู่ Photoshop Panel บนคอมพิวเตอร์เครื่องเดียวกัน บทเรียนสั้น 10 บท — แต่ละบทเปิดหน้าที่สอนให้",zh:"先注册设备，再学习 AI Tools，并在同一台电脑上配对 Photoshop Panel。10 节短课——每一节都会打开它所讲的页面。",vi:"Bắt đầu bằng đăng ký thiết bị, rồi học AI Tools và ghép Photoshop Panel trên cùng một máy tính. Mười bài ngắn — mỗi bài mở đúng trang nó dạy.",id:"Mulai dari pendaftaran perangkat, lalu pelajari AI Tools dan pasangkan Photoshop Panel di komputer yang sama. Sepuluh pelajaran singkat — masing-masing membuka halaman yang diajarkannya.",ms:"Mulakan dengan pendaftaran peranti, kemudian pelajari AI Tools dan padankan Photoshop Panel pada komputer yang sama. Sepuluh pelajaran ringkas — setiap satu membuka halaman yang diajarnya."}
-};
-var TUTORIALS = [
-  { n:"01", page:"pgDash",
-    t:{my:"Dashboard နဲ့ AI Tools",en:"Dashboard & AI Tools",shn:"Dashboard လႄႈ AI Tools",kac:"Dashboard hte AI Tools",th:"แดชบอร์ดและ AI Tools",zh:"仪表板与 AI Tools",vi:"Bảng điều khiển & AI Tools",id:"Dasbor & AI Tools",ms:"Papan pemuka & AI Tools"},
-    p:{my:"Workflows · Edit · Media Lab ထဲက တစ်ခု ရွေးပါ။ Setup မှာ ကိုယ်ပိုင် provider key ပဲ ထည့်ပါ — HNK က အဲ့ key ကို အကောင့် password အဖြစ် ဘယ်တော့မှ မသိမ်းပါ။",en:"Choose Workflows, Edit or Media Lab. Add only your own provider key in Setup; HNK never stores it as your account password.",shn:"လိူၵ်ႈ Workflows · Edit · Media Lab။ ၼႂ်း Setup သႂ်ႇ provider key ၸဝ်ႈၵဝ်ႇၵူၺ်း — HNK ဢမ်ႇသိမ်းပဵၼ် password ဢၵွင်ႉ။",kac:"Workflows · Edit · Media Lab langai lata u. Setup hta nang a provider key sha bang u — HNK gaw dai hpe account password hku n tawn ai.",th:"เลือก Workflows, Edit หรือ Media Lab ใส่คีย์ผู้ให้บริการของคุณเองใน Setup เท่านั้น HNK ไม่เก็บคีย์นั้นเป็นรหัสผ่านบัญชีของคุณ",zh:"选择 Workflows、Edit 或 Media Lab。在 Setup 中只填写你自己的服务商密钥；HNK 绝不会把它当作账户密码保存。",vi:"Chọn Workflows, Edit hoặc Media Lab. Chỉ thêm khóa nhà cung cấp của riêng bạn trong Setup; HNK không bao giờ lưu nó làm mật khẩu tài khoản.",id:"Pilih Workflows, Edit, atau Media Lab. Masukkan hanya kunci penyedia milikmu sendiri di Setup; HNK tidak pernah menyimpannya sebagai kata sandi akun.",ms:"Pilih Workflows, Edit atau Media Lab. Masukkan hanya kunci penyedia anda sendiri di Setup; HNK tidak pernah menyimpannya sebagai kata laluan akaun."},
-    b:{my:"Dashboard ဖွင့်",en:"Open Dashboard",shn:"ပိုတ်ႇ Dashboard",kac:"Dashboard hpaw",th:"เปิดแดชบอร์ด",zh:"打开仪表板",vi:"Mở bảng điều khiển",id:"Buka dasbor",ms:"Buka papan pemuka"} },
-  { n:"02", page:"pgAccount",
-    t:{my:"ဖုန်း + ကွန်ပျူတာ",en:"Phone + Computer",shn:"ၾူၼ်း + ၶွမ်း",kac:"Phone + Computer",th:"โทรศัพท์ + คอมพิวเตอร์",zh:"手机 + 电脑",vi:"Điện thoại + Máy tính",id:"Ponsel + Komputer",ms:"Telefon + Komputer"},
-    p:{my:"ဖုန်းတစ်လုံး + ကွန်ပျူတာတစ်လုံး သုံးပါ။ ကွန်ပျူတာ slot ကို Web App နဲ့ Photoshop Panel နှစ်ခုလုံး မျှသုံးတယ်။",en:"Use one Phone and one Computer. Your Computer slot is shared by the Web App and Photoshop Panel.",shn:"ၸႂ်ႉၾူၼ်းလုၵ်ႈလဵဝ် + ၶွမ်းလုၵ်ႈလဵဝ်။ slot ၶွမ်း ၸႂ်ႉႁူမ်ႈၵၼ် Web App လႄႈ Photoshop Panel။",kac:"Phone langai hte Computer langai sha lang u. Computer slot hpe Web App hte Photoshop Panel garan lang ai.",th:"ใช้โทรศัพท์หนึ่งเครื่องและคอมพิวเตอร์หนึ่งเครื่อง ช่องคอมพิวเตอร์ของคุณใช้ร่วมกันระหว่าง Web App และ Photoshop Panel",zh:"使用一部手机和一台电脑。你的电脑名额由 Web App 和 Photoshop Panel 共用。",vi:"Dùng một điện thoại và một máy tính. Chỗ máy tính của bạn dùng chung cho Web App và Photoshop Panel.",id:"Gunakan satu ponsel dan satu komputer. Slot komputermu dipakai bersama oleh Web App dan Photoshop Panel.",ms:"Gunakan satu telefon dan satu komputer. Slot komputer anda dikongsi oleh Web App dan Photoshop Panel."},
-    b:{my:"စက်တွေ စစ်",en:"Check devices",shn:"ၵူတ်ႇထတ်းၶိူင်ႈ",kac:"Device ni jep",th:"ตรวจสอบอุปกรณ์",zh:"查看设备",vi:"Kiểm tra thiết bị",id:"Periksa perangkat",ms:"Semak peranti"} },
-  { n:"03", page:"pgHome",
-    t:{my:"Panel တပ်ဆင်ခြင်း",en:"Install the Panel",shn:"သႂ်ႇ Panel",kac:"Panel bang",th:"ติดตั้ง Panel",zh:"安装 Panel",vi:"Cài đặt Panel",id:"Pasang Panel",ms:"Pasang Panel"},
-    p:{my:"Setup ▸ အကောင့် ထဲက Photoshop Panel အုပ်စုကို ဖွင့်ပြီး ခလုတ်ကို နှိပ်ပါ — Panel download လုပ်တဲ့ တစ်နေရာတည်း။ Photoshop မှာ တပ်ပြီး sign in ဝင်ရုံပါပဲ — panel က ဒီကွန်ပျူတာကို သူ့ဘာသာ မှတ်ပုံတင်ပေးတယ်။",en:"Under Setup ▸ Account, open the Photoshop Panel group and press its button — the one place the Panel is downloaded from. Install it in Photoshop, then just sign in — the panel registers this computer by itself.",shn:"ၼႂ်း Setup ▸ ဢၵွင်ႉ ပိုတ်ႇၸုမ်း Photoshop Panel သေ ၼဵၵ်းပုမ်ႇ — တီႈလဵဝ် ဢၼ် download Panel။ သႂ်ႇၼႂ်း Photoshop သေ sign in — panel လူင်းသဵၼ်ႈမၢႆၶွမ်းၼႆႉ ႁင်းၵူၺ်း။",kac:"Setup ▸ Account hta Photoshop Panel hpung hpe hpaw nna button dip u — Panel download shara langai sha. Photoshop hta bang nna sign in sha galaw u — panel gaw ndai computer hpe tinang hkrai registration galaw ai.",th:"ใน Setup ▸ บัญชี เปิดกลุ่ม Photoshop Panel แล้วกดปุ่ม — ที่เดียวที่ดาวน์โหลด Panel ได้ ติดตั้งใน Photoshop แล้วลงชื่อเข้าใช้ — Panel จะลงทะเบียนคอมพิวเตอร์เครื่องนี้เอง",zh:"在 Setup ▸ 账户 中打开 Photoshop Panel 分组并按下按钮——这是下载 Panel 的唯一位置。在 Photoshop 中安装后直接登录——面板会自行注册这台电脑。",vi:"Trong Setup ▸ Tài khoản, mở nhóm Photoshop Panel và bấm nút — nơi duy nhất để tải Panel. Cài vào Photoshop rồi chỉ cần đăng nhập — panel tự đăng ký máy tính này.",id:"Di Setup ▸ Akun, buka grup Photoshop Panel dan tekan tombolnya — satu-satunya tempat mengunduh Panel. Pasang di Photoshop, lalu cukup masuk — panel mendaftarkan komputer ini sendiri.",ms:"Di Setup ▸ Akaun, buka kumpulan Photoshop Panel dan tekan butangnya — satu-satunya tempat Panel dimuat turun. Pasang dalam Photoshop, kemudian log masuk sahaja — panel mendaftarkan komputer ini sendiri."},
-    b:{my:"Setup ဖွင့်",en:"Open Setup",shn:"ပိုတ်ႇ Setup",kac:"Setup hpaw",th:"เปิด Setup",zh:"打开 Setup",vi:"Mở Setup",id:"Buka Setup",ms:"Buka Setup"} },
-  { n:"04", page:"pgCreate",
-    t:{my:"Freeform",en:"Freeform",shn:"Freeform",kac:"Freeform",th:"Freeform",zh:"Freeform",vi:"Freeform",id:"Freeform",ms:"Freeform"},
-    p:{my:"IMAGE 1 ထဲ ဓာတ်ပုံထည့်ပါ — ဖိုင် · paste · web link · Library — ဘာပြောင်းချင်လဲ ရေးပြီး model ကို Auto ထားလို့ရ၊ ရွေးလို့ရ၊ GENERATE နှိပ်ပါ။ ရလဒ်တိုင်း အောက်က strip ထဲ မဖျက်မချင်း ရှိနေတယ်။",en:"Put a photo in IMAGE 1 — a file, a paste, a web link or the Library — write what should change, keep the model on Auto or pick one, then press GENERATE. Every result stays in the strip below until you delete it.",shn:"သႂ်ႇႁၢင်ႈၼႂ်း IMAGE 1 — ၾၢႆႇ · paste · web link · Library — တႅမ်ႈဝႃႈ လူဝ်ႇလႅၵ်ႈသင်၊ model ဝႆႉ Auto ႁိုဝ် လိူၵ်ႈ၊ ၼဵၵ်း GENERATE။ ၽွၼ်းလႆႈ ယူႇၼႂ်း strip တႂ်ႈ တေႃႇထိုင်မွတ်ႇ။",kac:"IMAGE 1 hta sumla bang u — file · paste · web link · Library — hpa galai na hpe ka nna model hpe Auto tawn ai (n rai yang lata) nna GENERATE dip u. Result shagu gaw n shamat shi yang lawu strip hta nga ai.",th:"ใส่รูปใน IMAGE 1 — ไฟล์ วาง ลิงก์เว็บ หรือ Library — เขียนสิ่งที่ต้องการเปลี่ยน ปล่อยโมเดลเป็น Auto หรือเลือกเอง แล้วกด GENERATE ผลลัพธ์ทุกชิ้นอยู่ในแถบด้านล่างจนกว่าคุณจะลบ",zh:"把照片放进 IMAGE 1——文件、粘贴、网页链接或 Library——写下要改的内容，模型保持 Auto 或自选，然后按 GENERATE。每个结果都留在下方的条带里，直到你删除。",vi:"Đặt ảnh vào IMAGE 1 — tệp, dán, liên kết web hoặc Library — viết điều cần thay đổi, để model ở Auto hoặc tự chọn, rồi bấm GENERATE. Mọi kết quả ở lại dải bên dưới cho đến khi bạn xoá.",id:"Masukkan foto ke IMAGE 1 — berkas, tempel, tautan web, atau Library — tulis apa yang harus berubah, biarkan model Auto atau pilih sendiri, lalu tekan GENERATE. Setiap hasil tetap di strip bawah sampai kamu menghapusnya.",ms:"Letakkan foto dalam IMAGE 1 — fail, tampal, pautan web atau Library — tulis apa yang perlu berubah, biarkan model Auto atau pilih sendiri, kemudian tekan GENERATE. Setiap hasil kekal dalam jalur di bawah sehingga anda memadamnya."},
-    b:{my:"Freeform ဖွင့်",en:"Open Freeform",shn:"ပိုတ်ႇ Freeform",kac:"Freeform hpaw",th:"เปิด Freeform",zh:"打开 Freeform",vi:"Mở Freeform",id:"Buka Freeform",ms:"Buka Freeform"} },
-  { n:"05", page:"pgWf",
-    t:{my:"Smart Workflow",en:"Smart Workflow",shn:"Smart Workflow",kac:"Smart Workflow",th:"Smart Workflow",zh:"Smart Workflow",vi:"Smart Workflow",id:"Smart Workflow",ms:"Smart Workflow"},
-    p:{my:"ကတ်တစ်ခု ရွေးပြီး အဆင့် 1-2-3-4 အတိုင်း သွားပါ — ဓာတ်ပုံ · scene · model · generate။ Results မှာ Before/After ပြတယ်၊ ထပ်လုပ်လို့ရတယ်၊ ရလဒ်ကို Edit မှာ ဖွင့်လို့ရတယ်။",en:"Pick a card, then follow steps 1-2-3-4 — photos, scene, model, generate. Results shows Before/After; run it again, or open the result in Edit.",shn:"လိူၵ်ႈၵၢတ်ႉ သေ ႁဵတ်းၸွမ်း 1-2-3-4 — ႁၢင်ႈ · scene · model · generate။ Results ၼႄ Before/After၊ ႁဵတ်းထႅင်ႈ ႁိုဝ် ပိုတ်ႇၽွၼ်းလႆႈ ၼႂ်း Edit။",kac:"Card langai lata nna 1-2-3-4 hkan u — sumla · scene · model · generate. Results hta Before/After mu, bai galaw, n rai yang result hpe Edit hta hpaw.",th:"เลือกการ์ด แล้วทำตามขั้น 1-2-3-4 — รูป ฉาก โมเดล สร้าง Results แสดง Before/After สร้างซ้ำได้ หรือเปิดผลลัพธ์ใน Edit",zh:"选一张卡片，按 1-2-3-4 步骤——照片、场景、模型、生成。Results 显示 Before/After；可以再跑一次，或在 Edit 中打开结果。",vi:"Chọn một thẻ rồi làm theo bước 1-2-3-4 — ảnh, bối cảnh, model, tạo. Results hiện Before/After; chạy lại, hoặc mở kết quả trong Edit.",id:"Pilih kartu, lalu ikuti langkah 1-2-3-4 — foto, adegan, model, generate. Results menampilkan Before/After; jalankan lagi, atau buka hasilnya di Edit.",ms:"Pilih kad, kemudian ikut langkah 1-2-3-4 — foto, adegan, model, jana. Results menunjukkan Before/After; jalankan semula, atau buka hasilnya dalam Edit."},
-    b:{my:"Workflows ဖွင့်",en:"Open Workflows",shn:"ပိုတ်ႇ Workflows",kac:"Workflows hpaw",th:"เปิด Workflows",zh:"打开 Workflows",vi:"Mở Workflows",id:"Buka Workflows",ms:"Buka Workflows"} },
-  { n:"06", page:"pgVideo",
-    t:{my:"Video Lab",en:"Video Lab",shn:"Video Lab",kac:"Video Lab",th:"Video Lab",zh:"Video Lab",vi:"Video Lab",id:"Video Lab",ms:"Video Lab"},
-    p:{my:"Video က ဓာတ်ပုံ + prompt ကနေ clip ထုတ်တယ်၊ V→V က ရှိပြီးသား clip ကို ပြင်တယ်၊ Talking Photo က မျက်နှာကို သင့်အသံနဲ့ စကားပြောခိုင်းတယ်၊ Upscale က clip ကို ကြည်လင်စေတယ်။ take တိုင်း သိမ်းထားတယ် — ဘယ်အချိန်မဆို ပြန် download လုပ်လို့ရတယ်။",en:"Video turns a photo and a prompt into a clip; V→V edits a clip you already have; Talking Photo makes a face speak your recording; Upscale sharpens a clip. Every take is kept — download it again any time.",shn:"Video ဢဝ်ႁၢင်ႈ + prompt ႁဵတ်း clip၊ V→V မႄး clip ဢၼ်မီးယဝ်ႉ၊ Talking Photo ႁႂ်ႈၼႃႈလၢတ်ႈသဵင်ၸဝ်ႈၵဝ်ႇ၊ Upscale ႁႂ်ႈ clip ၸႅင်ႈ။ take ၵူႈဢၼ် သိမ်းဝႆႉ — download ထႅင်ႈလႆႈယူႇတႃႇသေႇ။",kac:"Video gaw sumla + prompt kaw na clip galaw ai, V→V gaw nga sai clip hpe galai ai, Talking Photo gaw myi man hpe na nsen hte shaga shangun ai, Upscale gaw clip hpe san seng shangun ai. Take shagu tawn da ai — galoi mung bai download lu ai.",th:"Video เปลี่ยนรูปกับพรอมต์เป็นคลิป V→V แก้ไขคลิปที่มีอยู่ Talking Photo ให้ใบหน้าพูดตามเสียงที่บันทึก Upscale ทำให้คลิปคมชัด ทุกเทคถูกเก็บไว้ — ดาวน์โหลดซ้ำได้ทุกเมื่อ",zh:"Video 把一张照片和提示词变成短片；V→V 编辑你已有的短片；Talking Photo 让照片里的人说出你的录音；Upscale 让短片更清晰。每个结果都会保存——随时可以再次下载。",vi:"Video biến ảnh và prompt thành clip; V→V chỉnh clip bạn đã có; Talking Photo cho khuôn mặt nói bản ghi âm của bạn; Upscale làm clip sắc nét. Mọi take đều được giữ — tải lại bất cứ lúc nào.",id:"Video mengubah foto dan prompt menjadi klip; V→V menyunting klip yang sudah ada; Talking Photo membuat wajah mengucapkan rekamanmu; Upscale menajamkan klip. Setiap take disimpan — unduh lagi kapan saja.",ms:"Video menukar foto dan prompt menjadi klip; V→V menyunting klip yang sedia ada; Talking Photo membuat wajah menutur rakaman anda; Upscale menajamkan klip. Setiap take disimpan — muat turun semula pada bila-bila masa."},
-    b:{my:"Video ဖွင့်",en:"Open Video",shn:"ပိုတ်ႇ Video",kac:"Video hpaw",th:"เปิด Video",zh:"打开 Video",vi:"Mở Video",id:"Buka Video",ms:"Buka Video"} },
-  { n:"07", page:"pgMeitu",
-    t:{my:"Retouch A / Retouch B",en:"Retouch A / Retouch B",shn:"Retouch A / Retouch B",kac:"Retouch A / Retouch B",th:"Retouch A / Retouch B",zh:"Retouch A / Retouch B",vi:"Retouch A / Retouch B",id:"Retouch A / Retouch B",ms:"Retouch A / Retouch B"},
-    p:{my:"အသားအရေ · မျက်နှာ · မျက်လုံး အတွက် studio suite နှစ်ခု၊ live preview နဲ့။ ဓာတ်ပုံထည့်၊ preset chip ရွေး၊ Before|After ကို ဆွဲကြည့်၊ stage ကို zoom ချဲ့ကြည့်ပြီးမှ apply လုပ်ပါ။",en:"Two studio suites for skin, face and eyes with a live preview. Add a photo, pick a preset chip, drag the Before|After split and zoom into the stage before you apply.",shn:"suite studio သွင်ဢၼ် တႃႇၼင် · ၼႃႈ · တႃ၊ မီး live preview။ သႂ်ႇႁၢင်ႈ၊ လိူၵ်ႈ preset chip၊ လၢၵ်ႈ Before|After၊ zoom stage သေ ၸင်ႇ apply။",kac:"Hpyi · myi man · myi a matu studio suite lahkawng, live preview hte. Sumla bang, preset chip lata, Before|After hpe garawt, stage hpe zoom nna apply galaw u.",th:"ชุดสตูดิโอสองชุดสำหรับผิว ใบหน้า และดวงตา พร้อมพรีวิวสด ใส่รูป เลือกชิปพรีเซ็ต ลากเส้นแบ่ง Before|After และซูมเวทีก่อนกดใช้",zh:"两套用于皮肤、面部和眼睛的工作室套件，带实时预览。放入照片，选一个预设标签，拖动 Before|After 分割线并放大舞台，再应用。",vi:"Hai bộ studio cho da, mặt và mắt với xem trước trực tiếp. Thêm ảnh, chọn một chip preset, kéo vạch chia Before|After và phóng to sân khấu trước khi áp dụng.",id:"Dua paket studio untuk kulit, wajah, dan mata dengan pratinjau langsung. Tambahkan foto, pilih chip preset, geser pembatas Before|After dan perbesar panggung sebelum menerapkan.",ms:"Dua suite studio untuk kulit, wajah dan mata dengan pratonton langsung. Tambah foto, pilih cip pratetap, seret pemisah Before|After dan zum pentas sebelum menggunakannya."},
-    b:{my:"Retouch A ဖွင့်",en:"Open Retouch A",shn:"ပိုတ်ႇ Retouch A",kac:"Retouch A hpaw",th:"เปิด Retouch A",zh:"打开 Retouch A",vi:"Mở Retouch A",id:"Buka Retouch A",ms:"Buka Retouch A"} },
-  { n:"08", page:"pgImagine",
-    t:{my:"Imagine",en:"Imagine",shn:"Imagine",kac:"Imagine",th:"Imagine",zh:"Imagine",vi:"Imagine",id:"Imagine",ms:"Imagine"},
-    p:{my:"တစ်ချက်နှိပ် tool တွေ — အလင်း · portrait scene · ရာသီဥတု · restore · upscale · ဆံပင်နဲ့ မိတ်ကပ် · ကောင်းကင် · ဆိုင်းဘုတ်စာ စတဲ့။ template ရွေး၊ tool က တောင်းရင် brush နဲ့ နေရာ မှတ်၊ generate နှိပ်ပါ။",en:"One-tap tools — lighting, portrait scene, weather, restore, upscale, hair & makeup, sky, text on a sign and more. Pick a template; where a tool asks, mark the region with the brush, then generate.",shn:"tool ၼဵၵ်းပွၵ်ႈလဵဝ် — ၾႆး · portrait scene · ၾိင်ႈၾႃႉ · restore · upscale · ၶူၼ်ႁူဝ်လႄႈ ႁႅင်ႈ · ၾႃႉ · လိၵ်ႈၼိူဝ်ပၢႆႉ။ လိူၵ်ႈ template၊ ပေႃး tool လူဝ်ႇ မၢႆတီႈ ဢဝ် brush၊ generate။",kac:"Kalang dip tool ni — light · portrait scene · weather · restore · upscale · kara hte makeup · lamu · sign ka. Template lata, tool san yang brush hte shara masat, generate dip u.",th:"เครื่องมือกดครั้งเดียว — แสง ฉากพอร์ตเทรต สภาพอากาศ ฟื้นฟู อัปสเกล ผมและแต่งหน้า ท้องฟ้า ข้อความบนป้าย และอื่น ๆ เลือกเทมเพลต ถ้าเครื่องมือขอ ให้ระบายบริเวณด้วยแปรง แล้วสร้าง",zh:"一键工具——光线、人像场景、天气、修复、放大、发型与妆容、天空、招牌文字等。选一个模板；工具需要时用画笔标出区域，然后生成。",vi:"Công cụ một chạm — ánh sáng, bối cảnh chân dung, thời tiết, phục hồi, nâng nét, tóc & trang điểm, bầu trời, chữ trên biển hiệu và hơn thế. Chọn mẫu; nơi công cụ yêu cầu, tô vùng bằng cọ rồi tạo.",id:"Alat sekali sentuh — pencahayaan, adegan potret, cuaca, pemulihan, perbesar, rambut & rias, langit, teks pada papan, dan lainnya. Pilih templat; bila alat meminta, tandai area dengan kuas, lalu generate.",ms:"Alat satu sentuhan — pencahayaan, adegan potret, cuaca, pulih, perbesar, rambut & solekan, langit, teks pada papan tanda dan banyak lagi. Pilih templat; jika alat meminta, tanda kawasan dengan berus, kemudian jana."},
-    b:{my:"Imagine ဖွင့်",en:"Open Imagine",shn:"ပိုတ်ႇ Imagine",kac:"Imagine hpaw",th:"เปิด Imagine",zh:"打开 Imagine",vi:"Mở Imagine",id:"Buka Imagine",ms:"Buka Imagine"} },
-  { n:"09", page:"pgGallery",
-    t:{my:"Gallery နဲ့ History",en:"Gallery & History",shn:"Gallery လႄႈ History",kac:"Gallery hte History",th:"Gallery และ History",zh:"Gallery 与 History",vi:"Gallery & History",id:"Gallery & History",ms:"Gallery & History"},
-    p:{my:"ရလဒ်တိုင်း Library ▸ Gallery ထဲ မဖျက်မချင်း ရှိနေတယ်။ တစ်ခု ရွေးပြီး IMAGE 1 / IMAGE 2 ထဲ ပို့၊ သိမ်း၊ ★ ထား၊ ဖျက်လို့ရတယ်။ page တစ်ခုချင်းရဲ့ strip မှာ အရင် take တွေ ပြတယ်။",en:"Every result is kept in Library ▸ Gallery until you delete it. Pick one to send it to IMAGE 1 or IMAGE 2, save it, ★ keep it or delete it. Each page's strip shows its own earlier takes.",shn:"ၽွၼ်းလႆႈၵူႈဢၼ် ယူႇၼႂ်း Library ▸ Gallery တေႃႇထိုင်မွတ်ႇ။ လိူၵ်ႈသေ သူင်ႇၵႂႃႇ IMAGE 1 / IMAGE 2၊ သိမ်း၊ ★ ဝႆႉ၊ မွတ်ႇ။ strip ၼႃႈလိၵ်ႈၵူႈၼႃႈ ၼႄ take ၵဝ်ႇ။",kac:"Result shagu gaw n shamat shi yang Library ▸ Gallery hta nga ai. Langai lata nna IMAGE 1 / IMAGE 2 de shangun, tawn, ★ hkum, shamat lu ai. Page langai hpra a strip hta shawng na take ni mu.",th:"ผลลัพธ์ทุกชิ้นถูกเก็บใน Library ▸ Gallery จนกว่าคุณจะลบ เลือกชิ้นหนึ่งเพื่อส่งไป IMAGE 1 หรือ IMAGE 2 บันทึก ★ เก็บไว้ หรือลบ แถบของแต่ละหน้าแสดงเทคก่อนหน้าของหน้านั้น",zh:"每个结果都保存在 Library ▸ Gallery 中，直到你删除。选中一个可发送到 IMAGE 1 或 IMAGE 2、保存、★ 收藏或删除。每个页面的条带显示该页面之前的结果。",vi:"Mọi kết quả được giữ trong Library ▸ Gallery cho đến khi bạn xoá. Chọn một để gửi vào IMAGE 1 hoặc IMAGE 2, lưu, ★ giữ hoặc xoá. Dải của mỗi trang hiện các take trước của trang đó.",id:"Setiap hasil disimpan di Library ▸ Gallery sampai kamu menghapusnya. Pilih satu untuk mengirimnya ke IMAGE 1 atau IMAGE 2, menyimpan, ★ menandai, atau menghapus. Strip tiap halaman menampilkan take sebelumnya.",ms:"Setiap hasil disimpan dalam Library ▸ Gallery sehingga anda memadamnya. Pilih satu untuk menghantarnya ke IMAGE 1 atau IMAGE 2, simpan, ★ kekalkan atau padam. Jalur setiap halaman menunjukkan take terdahulu halaman itu."},
-    b:{my:"Gallery ဖွင့်",en:"Open Gallery",shn:"ပိုတ်ႇ Gallery",kac:"Gallery hpaw",th:"เปิด Gallery",zh:"打开 Gallery",vi:"Mở Gallery",id:"Buka Gallery",ms:"Buka Gallery"} },
-  { n:"10", page:"pgHome",
-    t:{my:"ကိုယ်ပိုင် key နဲ့ လက်ကျန်ငွေ",en:"Your key & balance",shn:"key ၸဝ်ႈၵဝ်ႇ လႄႈ ငိုၼ်းၵိုတ်း",kac:"Nang a key hte ngam ai gumhpraw",th:"คีย์และยอดคงเหลือของคุณ",zh:"你的密钥与余额",vi:"Khóa & số dư của bạn",id:"Kunci & saldo milikmu",ms:"Kunci & baki anda"},
-    p:{my:"Setup ▸ RunningHub မှာ ကိုယ်ပိုင် API key ကို တစ်ခါ paste လုပ်ပါ။ Home က COST & BALANCE မှာ run တစ်ခုချင်း ကုန်ကျငွေနဲ့ လက်ကျန်ကို ပြတယ်။ key က အကောင့် password မဟုတ်ဘူး — RunningHub ဆီပဲ ပို့တယ်။",en:"Setup ▸ RunningHub: paste your own API key once. COST & BALANCE on Home shows what each run cost and what is left. The key is never your account password — and it is only sent to RunningHub.",shn:"Setup ▸ RunningHub paste API key ၸဝ်ႈၵဝ်ႇ ပွၵ်ႈလဵဝ်။ COST & BALANCE ၼိူဝ် Home ၼႄ ၵႃႈ run ၵူႈပွၵ်ႈ လႄႈ ငိုၼ်းၵိုတ်း။ key ဢမ်ႇၸႂ်ႈ password ဢၵွင်ႉ — သူင်ႇၸူး RunningHub ၵူၺ်း။",kac:"Setup ▸ RunningHub hta nang a API key hpe kalang paste u. Home na COST & BALANCE hta run langai hpra a manu hte ngam ai hpe mu. Key gaw account password n re — RunningHub de sha shangun ai.",th:"Setup ▸ RunningHub: วางคีย์ API ของคุณเองครั้งเดียว COST & BALANCE บน Home แสดงค่าใช้จ่ายของแต่ละรอบและยอดที่เหลือ คีย์ไม่ใช่รหัสผ่านบัญชีของคุณ — และส่งไปยัง RunningHub เท่านั้น",zh:"Setup ▸ RunningHub：粘贴一次你自己的 API 密钥。首页的 COST & BALANCE 显示每次运行的花费和剩余余额。密钥绝不是你的账户密码——它只会发送给 RunningHub。",vi:"Setup ▸ RunningHub: dán khóa API của riêng bạn một lần. COST & BALANCE trên Home cho biết mỗi lần chạy tốn bao nhiêu và còn lại bao nhiêu. Khóa không bao giờ là mật khẩu tài khoản — và chỉ được gửi tới RunningHub.",id:"Setup ▸ RunningHub: tempel kunci API milikmu sekali. COST & BALANCE di Home menunjukkan biaya tiap proses dan sisa saldo. Kunci itu bukan kata sandi akunmu — dan hanya dikirim ke RunningHub.",ms:"Setup ▸ RunningHub: tampal kunci API anda sendiri sekali. COST & BALANCE di Home menunjukkan kos setiap larian dan baki yang tinggal. Kunci itu bukan kata laluan akaun anda — dan hanya dihantar ke RunningHub."},
-    b:{my:"Setup ဖွင့်",en:"Open Setup",shn:"ပိုတ်ႇ Setup",kac:"Setup hpaw",th:"เปิด Setup",zh:"打开 Setup",vi:"Mở Setup",id:"Buka Setup",ms:"Buka Setup"} }
-];
+var TUT_DATA = window.HNK_TUTORIALS || { hero: {}, list: [] };   /* 6.116.0 — the Tutorials table (TUT_HERO + the ten lessons in nine languages, 19 KB) moved to data/tutorials.js, the shape of data/album.js: the A4 ceiling in verify_app_data_files says move a table out, never raise the number */
+var TUT_HERO = TUT_DATA.hero;
+var TUTORIALS = TUT_DATA.list;
 /* the hero and the ten cards, in the current language; every button carries
    data-tutorial-page and #tutGrid delegates the click (unifiedWire) */
 function renderTutorials(){
@@ -5960,6 +5924,7 @@ function applyLang(){
     var cr=$(id);
     if(cr) cr.setAttribute("aria-label", L9({my:"မူရင်း / ပြီးဆုံး နှိုင်းယှဉ်ရန် ဆွဲပါ",en:"Drag to compare before and after"}));
   });
+  try { cmpEnhanceAll(); } catch(e){}   /* 6.116.0 — once; the flag makes a repeat a no-op */
   try { syncInputLabels(); } catch(e){}
 }
 /* ============================================================
@@ -13973,6 +13938,7 @@ $("btnRsRetry").onclick=async function(){
 
 /* before/after: always-on compare slider, IMAGE 1 vs the selected result */
 function rsCmpLayout(){
+  cmpFit("rsCmp","rsCmpAfter",["rsCmpRange","rsCmpLbls"]);
   var pct=parseInt($("rsCmpRange").value,10);
   $("rsCmpTop").style.width=pct+"%";
   $("rsCmpLine").style.left=pct+"%";
@@ -14023,7 +13989,7 @@ function rsShowResult(){
   var rz=$("rsZoomBtn");
   if(rz && !rz._lzWired){
     rz._lzWired=true;
-    setIcnText(rz,"i-eye",L9({my:"ချဲ့ကြည့်",en:"Zoom",shn:"ယႂ်ႇတူၺ်း",kac:"Kaba yu",th:"ซูม",zh:"放大",vi:"Phóng to",id:"Perbesar",ms:"Zum"}));
+    cmpZoomLabel(rz);
     rz.onclick=function(){
       var o2=state.hist[state.histSel]||state.result; if(!o2) return;
       var b2=state.rsOrig||state.refs[0];
@@ -16572,6 +16538,7 @@ function ptCloseSheet(){
   sheetEl.setAttribute("aria-hidden","true");
 }
 function ptCmpLayout(){
+  cmpFit("ptCmp","ptCmpBefore",["ptCmpRange"]);
   var pct=parseInt($("ptCmpRange").value,10);
   $("ptCmpTop").style.width=pct+"%";
   $("ptCmpLine").style.left=pct+"%";
@@ -25691,8 +25658,65 @@ if($("stZones")) $("stZones").onclick=function(){
   toast(t(ST.showZones?"st_zones_on":"st_zones_off"),"ok");
   stRenderSettle();
 };
+/* ============================================================
+   6.116.0 — THE COMPARE THAT FITS THE SCREEN (owner's photographs, 2026-09-20).
+   The four before/after wipes (.cmp) drew the result at the card's full width:
+   on a monitor the right column is ~900px, so a portrait result stood ~1350px
+   tall — taller than the window. Only a strip of it was visible, the grip
+   (drawn at the line's vertical middle) sat near the bottom edge, and the
+   range under it was below the fold. cmpFit sizes the box from the picture's
+   own ratio so the whole result is on screen: max-width = (viewport height −
+   the card's chrome, 300px) × ratio, centred; the range and the label row follow the
+   same width. Phones are untouched (the column is narrower than that width).
+   cmpEnhance makes the wipe draggable from anywhere on the picture: the
+   pictures no longer take the pointer (a press on an <img> started the
+   browser's own image drag and cancelled the wipe), the box is focusable and
+   ← → nudge it, and a resize re-fits a visible box. */
+var CMP_CHROME = 300;   /* nav + card padding + title + range + labels + buttons + the sticky GENERATE bar the studio pages carry */
+function cmpFit(boxId, afterId, followIds){
+  var box=$(boxId), im=$(afterId); if(!box) return 0;
+  var iw=im?(im.naturalWidth||0):0, ih=im?(im.naturalHeight||0):0;
+  var vh=window.innerHeight||0;
+  var w=0;
+  if(iw>0&&ih>0&&vh>0){ var maxH=Math.max(240, vh-CMP_CHROME); w=Math.round(maxH*iw/ih); }
+  var css=w>0?(w+"px"):"";
+  var all=[box].concat((followIds||[]).map(function(id){ return $(id); }));
+  all.forEach(function(el){ if(!el) return; el.style.maxWidth=css; el.style.marginLeft=css?"auto":""; el.style.marginRight=css?"auto":""; if(el.tagName==="INPUT") el.style.display=css?"block":""; });
+  box.setAttribute("data-fit", css?String(w):"0");
+  return w;
+}
+function cmpEnhance(boxId, rangeId, layoutFn, afterId){
+  var box=$(boxId), rg=$(rangeId); if(!box||!rg||box._cmpEnhanced) return;
+  box._cmpEnhanced=true;
+  Array.prototype.forEach.call(box.querySelectorAll("img"), function(im){ im.draggable=false; });
+  box.setAttribute("tabindex","0");
+  box.setAttribute("aria-label", rg.getAttribute("aria-label")||"");
+  /* a mouse or pen press must not start a native drag or a text selection */
+  box.addEventListener("pointerdown", function(e){ if(e.pointerType!=="touch"){ try{ e.preventDefault(); }catch(_e){} } }, true);
+  box.addEventListener("keydown", function(e){
+    var d=e.key==="ArrowLeft"?-2:e.key==="ArrowRight"?2:e.key==="Home"?-100:e.key==="End"?100:0;
+    if(!d) return;
+    e.preventDefault();
+    rg.value=Math.max(0,Math.min(100,(parseInt(rg.value,10)||0)+d));
+    layoutFn();
+  });
+  var im=$(afterId); if(im) im.addEventListener("load", function(){ if(box.offsetWidth>0) layoutFn(); });
+  window.addEventListener("resize", function(){ if(box.offsetWidth>0) layoutFn(); });
+}
+function cmpLabelPair(beforeId, afterId){
+  setIcnText($(beforeId),"i-caret",L9({my:"◀ မူရင်း",en:"◀ Before",shn:"◀ မူႇလ",kac:"◀ Shawng",th:"◀ ก่อน",zh:"◀ 之前",vi:"◀ Trước",id:"◀ Sebelum",ms:"◀ Sebelum"}),{cls:"ic-s ic-r180"});
+  setIcnText($(afterId),"i-caret",String(L9({my:"ပြီးပြီ ▶",en:"After ▶",shn:"ယဝ်ႉ ▶",kac:"Ngut ▶",th:"หลัง ▶",zh:"之后 ▶",vi:"Sau ▶",id:"Sesudah ▶",ms:"Selepas ▶"})).replace(/\s*▶\s*$/,""),{after:true});
+}
+function cmpZoomLabel(btn){ if(btn) setIcnText(btn,"i-eye",L9({my:"ချဲ့ကြည့်",en:"Zoom",shn:"ယႂ်ႇတူၺ်း",kac:"Kaba yu",th:"ซูม",zh:"放大",vi:"Phóng to",id:"Perbesar",ms:"Zum"})); }
+function cmpEnhanceAll(){
+  cmpEnhance("stCmp","stCmpRange",stCmpLayout,"stCmpAfter");
+  cmpEnhance("rsCmp","rsCmpRange",rsCmpLayout,"rsCmpAfter");
+  cmpEnhance("cmpBox","cmpRange",cmpLayout,"cmpAfter");
+  cmpEnhance("ptCmp","ptCmpRange",ptCmpLayout,"ptCmpBefore");
+}
 /* ---- result compare (.cmp pattern) ---- */
 function stCmpLayout(){
+  cmpFit("stCmp","stCmpAfter",["stCmpRange","stCmpLbls"]);
   var pct=parseInt($("stCmpRange").value,10);
   $("stCmpTop").style.width=pct+"%";
   $("stCmpLine").style.left=pct+"%";
@@ -25716,6 +25740,19 @@ function stShowResult(out){
   var before=ST.orig||state.st.img;
   if(before) $("stCmpBefore").src="data:"+before.mime+";base64,"+before.b64;
   stCmpLayout();
+  /* 6.116.0 — Before · Zoom · After under the wipe, as V2 Retouch has had */
+  cmpLabelPair("stCmpBeforeLbl","stCmpAfterLbl");
+  var sz=$("stZoomBtn");
+  if(sz){
+    cmpZoomLabel(sz);
+    sz.onclick=function(){
+      var o2=ST.stageResult; if(!o2) return;
+      var b2=ST.orig||state.st.img, list=[];
+      if(b2) list.push({src:"data:"+b2.mime+";base64,"+b2.b64, cap:"Before"});
+      list.push({src:"data:"+o2.mime+";base64,"+o2.b64, cap:"After"});
+      lookZoomOpen(list, list.length-1);
+    };
+  }
   /* SHOULD #15: the sticky stage also swaps to the fresh result so photo context is never lost */
   ST.stageResult=out;
   stStageDrawResult();
@@ -26147,6 +26184,7 @@ $("stReset").innerHTML=icn("i-restore")+" "+escH(L9({my:"ပြန်စ",en:"Re
   setTimeout(function(){ ST.undoBase=stFullSnap(); stUndoBtns(); },400);
 })();
 $("stResultH2").textContent=L9({my:"ရလဒ် — မူရင်း vs ပြီးပြီ",en:"Result — Before vs After"});
+cmpLabelPair("stCmpBeforeLbl","stCmpAfterLbl"); cmpZoomLabel($("stZoomBtn"));   /* 6.116.0 — Before · Zoom · After under the wipe (outside the studio lifter's slices) */
 setIcnText($("btnStToRef"),"i-restore",L9({my:"ဆက်ပြင်မယ်",en:"Keep editing"}));
 $("stRecipeNote").textContent=L9({my:"အခုချိန်ညှိထားတာတွေကို recipe အဖြစ်သိမ်းပြီး နောက်ပုံတွေမှာ တစ်ချက်နှိပ် ပြန်သုံးပါ",en:"Save the current adjustments as a recipe and reapply them on the next photo in one tap"});
 $("stSaveRecipe").innerHTML=icn("i-save")+" "+escH(L9({my:"Recipe သိမ်းမယ်",en:"Save recipe"}));
@@ -30439,7 +30477,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.115.0";
+var APP_VER="6.116.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -34904,6 +34942,7 @@ $("btnToRef").onclick=function(){
 
 /* before/after compare: IMAGE 1 vs current result */
 function cmpLayout(){
+  cmpFit("cmpBox","cmpAfter",["cmpRange"]);
   var pct=parseInt($("cmpRange").value,10);
   $("cmpTop").style.width=pct+"%";
   $("cmpLine").style.left=pct+"%";

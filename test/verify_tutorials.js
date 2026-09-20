@@ -48,9 +48,12 @@ function report(name, ok, detail) {
   if (!ok) failures++;
 }
 
-/* the app's tables, evaluated from its own source */
-const dataSrc = APP.slice(APP.indexOf("var TUT_HERO = {"), APP.indexOf("function renderTutorials(){"));
-const DATA = new Function(dataSrc + "; return { HERO: TUT_HERO, TUTORIALS: TUTORIALS };")();
+/* the app's tables — since 6.116.0 a data file (docs/app/data/tutorials.js, window.HNK_TUTORIALS = {hero, list})
+   the shell reads at boot; the shell itself only binds the two names */
+const A = require(path.join(ROOT, "tools", "lib", "app-data.js"));
+const TUT = A.readTutorials();
+const DATA = { HERO: TUT.hero, TUTORIALS: TUT.list };
+const tutTag = A.contentTag("tutorials");
 const nine = (o) => !!o && LANGS.every(l => typeof o[l] === "string" && o[l].trim().length > 0);
 const PAGE_IDS = new Set((APP.match(/id="pg[A-Za-z0-9]+"/g) || []).map(x => x.slice(4, -1)));
 
@@ -65,7 +68,8 @@ const PAGE_IDS = new Set((APP.match(/id="pg[A-Za-z0-9]+"/g) || []).map(x => x.sl
     nine(DATA.HERO.h1) && nine(DATA.HERO.lede) && DATA.HERO.h1.en === "Tutorials" &&
     /function renderTutorials\(\)\{\n\s*var g=\$\("tutGrid"\); if\(!g\) return;/.test(APP) && /h\.textContent=L9\(TUT_HERO\.h1\)/.test(APP) && /l\.textContent=L9\(TUT_HERO\.lede\)/.test(APP) &&
     /b\.setAttribute\("data-tutorial-page",x\.page\); b\.textContent=L9\(x\.b\);/.test(APP) &&
-    /a11yApplyLang\(\);\n\s*renderTutorials\(\);/.test(APP) && APP.indexOf("var TUTORIALS = [") < APP.indexOf("\napplyLang();\n") &&
+    /a11yApplyLang\(\);\n\s*renderTutorials\(\);/.test(APP) && APP.indexOf("var TUT_DATA = window.HNK_TUTORIALS || { hero: {}, list: [] };") < APP.indexOf("\napplyLang();\n") && APP.includes("var TUT_HERO = TUT_DATA.hero;\nvar TUTORIALS = TUT_DATA.list;") &&
+    APP.includes('<script src="data/tutorials.js?v=' + tutTag + '"></script>') && !APP.includes("var TUTORIALS = [") &&
     APP.includes('<section class="tutorial-grid" id="tutGrid" aria-label="Tutorial topics"></section>') && APP.includes('<h1 id="tutH1">Tutorials</h1><p id="tutLede">') &&
     !APP.includes('<article class="tutorial-card">') &&
     /var tg=\$\("tutGrid"\); if\(tg\) tg\.addEventListener\("click",function\(ev\)\{ var b=ev\.target && ev\.target\.closest \? ev\.target\.closest\("\[data-tutorial-page\]"\) : null; if\(b\) switchPage\(b\.getAttribute\("data-tutorial-page"\)\); \}\);/.test(APP) &&

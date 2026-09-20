@@ -643,6 +643,7 @@ function mount(pageKey) {
   if (!page || !dock || !cols) return;
   var mnt = page.querySelector ? page.querySelector(".st-mount") : null;
   if (mnt && cols.parentNode !== mnt) { mnt.appendChild(cols); stRelayoutSoon(cols); }
+  stTwoColBind(); stTwoCol();   /* 6.187.0 — one or two columns, from the block's own width */
   var colR = $("stColR"), keepId = SUITE_CARD[pageId];
   /* the card goes back above the result card. The app inserts it before
      #stResultBox — an id the panel REPLACES with a void element, and
@@ -689,8 +690,68 @@ function stRelayoutSoon(node) {
         node.style.display = "none";
         void node.offsetHeight;
         node.style.display = "";
+        /* 6.187.0 — the flip above clears the two-column display; set it again */
+        stTwoCol();
       } catch (e) { }
     }, 40);
+  } catch (e2) { }
+}
+
+/* 6.187.0 — TWO COLUMNS ON A WIDE PANEL (UI/UX wave B3). The app lays Retouch A / B
+   out in two columns from 1024px (.st-cols: minmax(340px,42%) 1fr — the photo, the
+   jump bar and the recipes on the left, the suite card and GENERATE on the right).
+   The panel could not follow: UXP draws no CSS grid and honours no media query, so
+   a Photoshop panel dragged to 700px stayed a 340px phone column stretched wide.
+   This pass measures the block's own width through the host's ruler (the same
+   ruler the Imagine brush and the card grid use), and from 600px sets the two
+   columns as INLINE styles — flexbox row, the left column max(260px, 42%), a 14px
+   margin between (UXP has no gap), the right column the rest. Under 600px it takes
+   every inline value back and the block is the phone stack it always was. It runs
+   at mount, after the 6.79.0 relayout flip (which resets display), on a rebuild
+   and on every window resize. */
+var ST_TWO_COL_MIN = 600, ST_COL_L_MIN = 260, ST_COL_L_SHARE = 0.42, ST_COL_GUTTER = 14, ST_PAGE_GUTTER = 16;
+function stHostWidth(w) {
+  /* the threshold is the PANEL's width (the host ruler through HNK.panes.host);
+     the block's own width plus the page gutters stands in where there is none */
+  var host = 0;
+  try { var pn = g.HNK && g.HNK.panes; if (pn && typeof pn.host === "function") host = Number(pn.host()) || 0; } catch (e) { host = 0; }
+  return host > 0 ? host : w + ST_PAGE_GUTTER * 2;
+}
+function stBlockWidth(cols) {
+  var w = 0;
+  try { var b = bridge(); if (b && typeof b.stageWidth === "function") w = Number(b.stageWidth(cols)) || 0; } catch (e) { w = 0; }
+  if (!(w > 0)) { try { var r = cols.getBoundingClientRect ? cols.getBoundingClientRect() : null; if (r && r.width > 0) w = r.width; } catch (e2) { } }
+  return w;
+}
+function stTwoCol() {
+  var cols = $("stCols"), L = $("stColL"), R = $("stColR");
+  if (!cols || !L || !R || !cols.style) return 0;
+  var w = stBlockWidth(cols), host = stHostWidth(w);
+  var two = host >= ST_TWO_COL_MIN;
+  if (two) {
+    var lw = Math.max(ST_COL_L_MIN, Math.round(w * ST_COL_L_SHARE));
+    cols.style.display = "flex"; cols.style.flexDirection = "row"; cols.style.alignItems = "flex-start";
+    L.style.flex = "0 0 " + lw + "px"; L.style.width = lw + "px"; L.style.maxWidth = lw + "px";
+    L.style.marginRight = ST_COL_GUTTER + "px"; L.style.boxSizing = "border-box"; L.style.minWidth = "0";
+    R.style.flex = "1 1 auto"; R.style.minWidth = "0"; R.style.width = "";
+  } else {
+    cols.style.display = ""; cols.style.flexDirection = ""; cols.style.alignItems = "";
+    L.style.flex = ""; L.style.width = ""; L.style.maxWidth = ""; L.style.marginRight = ""; L.style.boxSizing = ""; L.style.minWidth = "";
+    R.style.flex = ""; R.style.minWidth = ""; R.style.width = "";
+  }
+  try { cols.setAttribute("data-cols", two ? "2" : "1"); cols.setAttribute("data-width", String(Math.round(w))); cols.setAttribute("data-host", String(Math.round(host))); } catch (e3) { }
+  return two ? 2 : 1;
+}
+var stTwoColBound = false, stTwoColTimer = 0;
+function stTwoColBind() {
+  if (stTwoColBound) return; stTwoColBound = true;
+  try {
+    if (typeof window !== "undefined" && window.addEventListener) {
+      window.addEventListener("resize", function () {
+        try { if (stTwoColTimer) clearTimeout(stTwoColTimer); } catch (e) { }
+        stTwoColTimer = setTimeout(function () { stTwoColTimer = 0; try { stTwoCol(); } catch (e) { } }, 80);
+      });
+    }
   } catch (e2) { }
 }
 
@@ -699,15 +760,34 @@ function stRelayoutSoon(node) {
    result on the page that made it, and it goes home the moment the student
    leaves — Freeform must never open without its result card. */
 var resultHome = null;
+function resultPageOf(box) {
+  /* the card's home is its PAGE, not its immediate parent: on a wide panel the
+     Freeform page keeps it inside a pane that is removed again under 800px, so
+     a parent recorded there would be a detached node (6.187.0) */
+  var p = box.parentNode;
+  while (p && p !== document.body) {
+    if (String(p.className || "").split(/\s+/).indexOf("page") >= 0) return p;
+    p = p.parentNode;
+  }
+  return box.parentNode;
+}
 function takeResultCard(slotId) {
   var box = $("resultBox"), slot = $(slotId);
   if (!box || !slot) return;
-  if (!resultHome) resultHome = box.parentNode;
+  if (!resultHome) resultHome = resultPageOf(box);
   if (box.parentNode !== slot) slot.appendChild(box);
 }
 function giveResultCard() {
   var box = $("resultBox");
-  if (box && resultHome && box.parentNode !== resultHome) resultHome.appendChild(box);
+  if (!box || !resultHome) return;
+  if (!resultHome.parentNode) { var pp = $("pagePrompt"); if (pp) resultHome = pp; }
+  if (box.parentNode === resultHome) return;
+  var inside = false, q = box.parentNode;
+  while (q) { if (q === resultHome) { inside = true; break; } q = q.parentNode; }
+  if (inside && resultHome.getAttribute && resultHome.getAttribute("data-panes") === "2") return;   /* already back in its pane */
+  resultHome.appendChild(box);
+  /* a wide Freeform page re-adopts the returned card into its result pane */
+  try { var pn = g.HNK && g.HNK.panes; if (pn && pn.layout) pn.layout(resultHome); } catch (e) { }
 }
 function unmount() {
   giveResultCard();
@@ -727,6 +807,7 @@ function rebuild() {
   API = null;
   build();
   if (mountedPage) mount(mountedPage === "pageEvoto" ? "evoto" : mountedPage === "pageRetouch" ? "retouch" : "meitu");
+  try { stTwoCol(); } catch (e) { }
 }
 
 var SCREEN = {
@@ -736,7 +817,9 @@ var SCREEN = {
   api: function () { return API; },
   /* the panel's Generate bar asks for the same sentence the web app sends */
   prompt: function () { return API ? API.stComposePrompt() : ""; },
-  renderPicker: renderStPicker
+  renderPicker: renderStPicker,
+  /* 6.187.0 — the two-column pass, callable by the shell's resize sweep and by tests */
+  twoCol: stTwoCol
 };
 
 if (_CJS) module.exports = SCREEN;
