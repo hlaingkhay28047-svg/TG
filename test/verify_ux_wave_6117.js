@@ -75,7 +75,7 @@ function sourcePins() {
     has(APP, "function hiWanted(){ return !!(ST.srcBitmap&&!ST.holding&&!ST.showingResult&&!(ST.sbs&&ST.sbs.on)&&!ST.showZones&&(Z.s>1.05||hiFitNeed())); }") &&
     has(APP, '(state.st.img&&state.st.img.b64||"").length,hiCap()]); }') && has(APP, "var sc=Math.min(1,hiCap()/Math.max(w,h));") &&
     has(APP, "var srcS=(ST.pin&&ST.pin.cv)?ST.pin.cv:stExportSource();") && has(APP, "hx.save(); hx.beginPath(); hx.rect(sx0,0,sw0,oh); hx.clip(); hx.drawImage(srcS,sx*kx,sy*ky,sw*kx,sh*ky,0,0,ow,oh); hx.restore();") &&
-    has(APP, 'var hdTag=document.createElement("span"); hdTag.id="stHdTag"; hdTag.textContent="HD";') && has(APP, 'function hdTagSync(){ hdTag.style.display=(ST.hi.on&&Z.s<=1.001)?"":"none"; }') &&
+    has(APP, 'var hdTag=document.createElement("span"); hdTag.id="stHdTag"; hdTag.textContent="HD";') && has(APP, 'function hdTagSync(){ hdTag.style.display=(ST.hi.on&&Z.s<=1.001)?"inline-block":"none"; }') &&
     has(APP, "#stHdTag{position:absolute;left:8px;top:8px;z-index:3;display:none;pointer-events:none;") &&
     has(APP, 'function stApplyDragFilter(){ var c=$("stCanvas"); if(c) c.style.filter=ST.split.on?"":stCssFilter(stEffT1()); if(ST.hi&&ST.hi.on&&ST._hiSync) ST._hiSync();') &&
     has(APP, "function stProxySoon(){\n  if(ST.hi&&ST.hi.on&&ST._hiSync) ST._hiSync();") &&
@@ -124,7 +124,7 @@ const SNAP = () => {
   const c = document.getElementById("stCanvas"), cols = document.getElementById("stCols"), hiC = document.getElementById("stHiCanvas"), tag = document.getElementById("stHdTag"), line = document.getElementById("stSplitLine");
   return { vw: innerWidth, vh: innerHeight, dpr: devicePixelRatio, W: cols.clientWidth, buf: { w: c.width, h: c.height }, canvas: R(c), clientW: c.clientWidth, cols: cols.style.gridTemplateColumns, fitW: Number(cols.getAttribute("data-fit-w")) || 0,
     L: R(document.getElementById("stColL")), Rc: R(document.getElementById("stColR")), hi: !!ST.hi.on, hiW: ST.hi.w, hiH: ST.hi.h, hiShown: hiC.style.display !== "none", hiCanvas: { w: hiC.width, h: hiC.height },
-    tag: tag.style.display !== "none", tagTitle: tag.title, zoom: ST.ui.zoom.s, split: ST.split.on, pct: ST.split.pct, dataPct: line.getAttribute("data-pct"), adjust: document.getElementById("stStage").classList.contains("st-adjust"), full: !!ST.fullBitmap };
+    tag: getComputedStyle(tag).display !== "none" && tag.getBoundingClientRect().width > 10, tagTitle: tag.title, /* computed, not the inline value — an empty inline value fell back to the sheet's display:none (caught on the 1920 2x after-shot) */ zoom: ST.ui.zoom.s, split: ST.split.on, pct: ST.split.pct, dataPct: line.getAttribute("data-pct"), adjust: document.getElementById("stStage").classList.contains("st-adjust"), full: !!ST.fullBitmap };
 };
 const WAIT = async (pred, ms) => { let t = 0; while (t < ms && !pred()) { await new Promise((r) => setTimeout(r, 100)); t += 100; } return t; };
 function expectFit(s) { /* the rule, recomputed from what the page measured */

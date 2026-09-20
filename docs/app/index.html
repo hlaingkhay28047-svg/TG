@@ -4380,7 +4380,7 @@ html.splashing #splash{display:flex}
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=368bbaac686f"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
-<script src="data/whatsnew.js?v=4b7d9dfd7d34"></script>
+<script src="data/whatsnew.js?v=e6abdb2afa07"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -26821,7 +26821,7 @@ function stColsFit(){
   function indSync(){ if(Z.s>1.001) ind.textContent=(Z.indBase||"")+(ST.hi.on?" · HD":""); }
   var hdTag=document.createElement("span"); hdTag.id="stHdTag"; hdTag.textContent="HD"; hdTag.setAttribute("role","status"); wrap.appendChild(hdTag);
   hdTag.title=L9({my:"ပြတ်သားတဲ့ preview — မူရင်းပုံကနေ သင့် screen ရဲ့ pixel အတိုင်း ပြထားတယ်",en:"Sharp preview — rendered from the original at your screen's pixel density",shn:"Preview ၸႅင်ႈလႅင်း — တႅမ်ႈလုၵ်ႉတီႈ မူႇလ ၸွမ်း pixel ၼႃႈၸေႃးသူ",kac:"Preview san ai — nang a screen pixel hte maren shawng na sumla kaw na ka da ai",th:"พรีวิวคมชัด — เรนเดอร์จากต้นฉบับตามความละเอียดพิกเซลของหน้าจอคุณ",zh:"清晰预览——按你屏幕的像素密度从原图渲染",vi:"Xem trước sắc nét — kết xuất từ ảnh gốc theo mật độ điểm ảnh màn hình của bạn",id:"Pratinjau tajam — dirender dari aslinya sesuai kerapatan piksel layar Anda",ms:"Pratonton tajam — dipaparkan daripada asal mengikut ketumpatan piksel skrin anda"});
-  function hdTagSync(){ hdTag.style.display=(ST.hi.on&&Z.s<=1.001)?"":"none"; }
+  function hdTagSync(){ hdTag.style.display=(ST.hi.on&&Z.s<=1.001)?"inline-block":"none"; } /* an explicit value: the sheet's display:none is the resting state */
   function hiHide(){ if(ST.hi.on){ ST.hi.on=false; hi.style.display="none"; indSync(); } hdTagSync(); }
   function hiDraw(){
     if(!hiWanted()||!ST.hi.bmp||ST.hi.key!==hiKey()){ hiHide(); return; }
