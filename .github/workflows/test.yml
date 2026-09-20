@@ -1104,3 +1104,9 @@ jobs:
       # under 800). R1: the Retouch A/B/V2 result fits the window, the wipe drags from anywhere.
       - name: Verify the wide panel's columns and panes and the result compare that fits the screen
         run: node test/verify_ux_wave_6116.js
+      # 6.117.0 — R2: the live-preview column takes the width the photo needs (aspect-sized, 58% cap),
+      # the sharp frame lands at fit on 2x screens and under the A|B split, the divider moves in
+      # tenths with a readout and the arrow keys. B2: from 1200px a generation page with a result
+      # becomes two panes — controls left, the result sticky on the right; one column without one.
+      - name: Verify the aspect-sized stage, the sharp frame at fit and the two-pane generation pages
+        run: node test/verify_ux_wave_6117.js

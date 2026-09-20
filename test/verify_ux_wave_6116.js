@@ -278,6 +278,7 @@ const APP_RESULTS = async () => {
   const b64 = (du) => du.split(",")[1];
   const R = (el) => { if (!el) return null; const r = el.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) }; };
   const wipe = (box, rg, lb, card) => ({ box: R(box), fit: Number(box.getAttribute("data-fit")), range: R(rg), lbls: R(lb), card: R(card), tab: box.getAttribute("tabindex"),
+    cardPos: getComputedStyle(card).position, cardCap: parseFloat(getComputedStyle(card).maxHeight) || 0, cardSH: card.scrollHeight, cardCH: card.clientHeight, /* 6.117.0 — the sticky two-pane card */
     imgPE: getComputedStyle(box.querySelector("img")).pointerEvents, imgDrag: box.querySelector("img").draggable, handle: getComputedStyle(box.querySelector(".cmp-line"), "::after").width });
   const out = { vw: innerWidth, vh: innerHeight };
   switchPage("pgMeitu"); await new Promise((r) => setTimeout(r, 200));
@@ -318,8 +319,14 @@ async function appWalk(browser) {
     const wantH = vp.h - CMP_CHROME, wantW = Math.round(wantH * 600 / 900);
     const fitted = (s) => s.fit === wantW && near(s.box.w, wantW, 2) && s.box.h <= wantH + 2 && s.box.h >= wantH - 4 && near(s.range.w, s.box.w, 2) && (!s.lbls || near(s.lbls.w, s.box.w, 2)) &&
       near(s.box.x - s.card.x, (s.card.x + s.card.w) - (s.box.x + s.box.w), 3) && s.card.w > s.box.w + 100;
-    report(`C1) ${vp.tag}: the Retouch A, V2 and Freeform wipes of a 600×900 result are (height − 300) tall and 2/3 of that wide, centred in a card wider than that, the range and the label row the same width`,
-      fitted(m.st) && fitted(m.rs) && fitted(m.ff), { st: m.st, rs: m.rs, ff: m.ff, want: { wantW, wantH } });
+    /* 6.117.0 — wave B2 put the Freeform result in a sticky column beside the controls (from 1200px): the wipe
+       takes what the card's own ceiling (window − header − 24px) leaves after the card's other content, measured,
+       so the whole card stays in view and never scrolls inside; Retouch A and V2 keep the (height − 300) fit. */
+    const paneFit = (s) => { const other = s.cardSH - s.box.h, budget = Math.min(wantH, s.cardCap - other - 8), w = Math.round(budget * 600 / 900);
+      return s.cardPos === "sticky" && s.cardCap > 0 && near(s.fit, w, 1) && near(s.box.w, w, 2) && s.cardSH <= s.cardCH + 1 && near(s.range.w, s.box.w, 2) &&
+        near(s.box.x - s.card.x, (s.card.x + s.card.w) - (s.box.x + s.box.w), 3) && s.card.w > s.box.w + 30; };
+    report(`C1) ${vp.tag}: the Retouch A and V2 wipes of a 600×900 result are (height − 300) tall and 2/3 of that wide, centred in a card wider than that, the range and the label row the same width; the Freeform wipe fits its sticky two-pane card (6.117.0) without an inner scroll`,
+      fitted(m.st) && fitted(m.rs) && paneFit(m.ff), { st: m.st, rs: m.rs, ff: m.ff, want: { wantW, wantH } });
     report(`C2) ${vp.tag}: the wipe is a control — the pictures take no pointer and cannot be dragged as images, the grip is 44px, the box is focusable, → → moves 50 → 54 and Home to 0; Retouch A/B's result says Before · Zoom · After`,
       m.st.imgPE === "none" && m.st.imgDrag === false && m.st.handle === "44px" && m.st.tab === "0" && m.st.keyVal === 54 && m.st.topW === "54%" && m.st.homeVal === 0 &&
       m.st.zoom.length > 1 && m.st.bl.length > 1 && m.st.al.length > 1 && m.rs.imgPE === "none" && m.rs.handle === "44px", { st: m.st });
@@ -353,19 +360,24 @@ async function appWalk(browser) {
 function releasePins() {
   const manifest = JSON.parse(read("panel/release-manifest.json"));
   const pv = JSON.parse(read("docs/download/panel-version.json"));
-  report(`D1) ${VER} / panel ${PVER} in lockstep: APP_VER, version.json, sw.js cache, API_VERSION, PANEL_VERSION, manifest, release-manifest (+ artifact file), panel-version.json, the download footer, the landing's badges`,
-    has(APP, `var APP_VER="${VER}";`) && has(read("docs/app/version.json"), `"v":"${VER}"`) && has(read("docs/app/sw.js"), 'var CACHE = "hnk-web-studio-v6-116-0";') &&
-    has(read("server/index.js"), `const API_VERSION = "${VER}";`) && has(MAIN, `const PANEL_VERSION = "${PVER}";`) && has(read("panel/manifest.json"), `"version": "${PVER}"`) &&
-    manifest.version === PVER && manifest.artifact_file === `HNK_Ai_Panel_v${PVER}.ccx` && /^[0-9a-f]{64}$/.test(manifest.sha256) && manifest.bytes > 20000000 &&
-    pv.v === PVER && pv.latest_version === PVER && has(read("docs/download/index.html"), `Web App ${VER} · Panel ${PVER}`) &&
-    has(LANDING, VER) && has(LANDING, PVER) && !has(LANDING, "6.115.0") && !has(LANDING, "6.186.0"), { manifest: manifest.version, pv: pv.v });
+  /* 6.117.0 — this wave shipped as 6.116.0 / 6.187.0; every wave after it moves the pair on. What stays
+     true is the LOCKSTEP: one app version in every app file, one panel version in every panel file, the
+     landing carrying both, and the pair at or past this wave's. */
+  const appV = (APP.match(/var APP_VER="([0-9.]+)";/) || [])[1], panV = (MAIN.match(/const PANEL_VERSION = "([0-9.]+)";/) || [])[1];
+  const ge = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < 3; i++) { if (x[i] !== y[i]) return x[i] > y[i]; } return true; };
+  report(`D1) the release pair is in lockstep (this wave shipped as ${VER} / panel ${PVER}; the pair only moves forward): APP_VER, version.json, sw.js cache, API_VERSION agree; PANEL_VERSION, manifest, release-manifest (+ artifact file), panel-version.json agree; the download footer and the landing carry both`,
+    !!appV && !!panV && ge(appV, VER) && ge(panV, PVER) && has(read("docs/app/version.json"), `"v":"${appV}"`) && has(read("docs/app/sw.js"), 'var CACHE = "hnk-web-studio-v' + appV.replace(/\./g, "-") + '";') &&
+    has(read("server/index.js"), `const API_VERSION = "${appV}";`) && has(read("panel/manifest.json"), `"version": "${panV}"`) &&
+    manifest.version === panV && manifest.artifact_file === `HNK_Ai_Panel_v${panV}.ccx` && /^[0-9a-f]{64}$/.test(manifest.sha256) && manifest.bytes > 20000000 &&
+    pv.v === panV && pv.latest_version === panV && has(read("docs/download/index.html"), `Web App ${appV} · Panel ${panV}`) &&
+    has(LANDING, appV) && has(LANDING, panV) && !has(LANDING, "6.115.0") && !has(LANDING, "6.186.0"), { appV, panV, manifest: manifest.version, pv: pv.v });
   const rows = JSON.parse(WN.replace(/^window\.HNK_WHATS_NEW=/, "").replace(/;\s*$/, ""));
-  const row = rows[0];
-  report(`D2) the What's New strip leads with the ${VER} row — title and story in all nine languages, pointing at Retouch A — and the panel's lifted table carries it`,
+  const row = rows.find((r) => r.v === VER);
+  report(`D2) the What's New strip carries the ${VER} row (it led the strip when this wave shipped) — title and story in all nine languages, pointing at Retouch A — and the panel's lifted table carries it`,
     row && row.v === VER && row.ref === "pgMeitu" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
-  report("D3) CI runs this test (the 258th `node test/` invocation, right after the wave B1 band) and the landing says 258 tests",
+  report("D3) CI runs this test right after the wave B1 band and the landing says how many tests the suite runs (258 when this wave shipped, 259 since 6.117.0 added verify_ux_wave_6117)",
     has(CI, "run: node test/verify_ux_wave_6115.js\n") && has(CI, "run: node test/verify_ux_wave_6116.js") && CI.indexOf("verify_ux_wave_6115") < CI.indexOf("verify_ux_wave_6116") &&
-    (CI.match(/node test\//g) || []).length === 258 && has(LANDING, "258 tests") && !has(LANDING, "257 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 259 && has(LANDING, "259 tests") && !has(LANDING, "257 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 (async () => {
