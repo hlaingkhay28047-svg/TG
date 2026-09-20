@@ -219,14 +219,14 @@ function sourcePins() {
 
   report("A5) the app hero kicker takes the whole banner at .12em and steps down under 390px; .ph-kick and .ph-head are capped at 72% so a headline never runs across the model",
     /\.hero-mini \.kick\{padding:10px 6px 0 0;font-size:\.7rem;letter-spacing:\.12em;max-width:100%\}/.test(APP) &&   /* 6.114.0: .68rem → .7rem, the 11px text floor */
-    /@media \(max-width:389px\)\{\.hero-mini \.kick\{font-size:\.69rem;letter-spacing:\.10em\}\}/.test(APP) &&
+    /@media \(max-width:389px\)\{\.hero-mini \.kick\{font-size:\.69rem;letter-spacing:\.06em\}\}/.test(APP) && /@media \(max-width:339px\)\{\.hero-mini \.kick\{letter-spacing:\.02em\}\}/.test(APP) &&
     /\.page-hero \.ph-kick\{position:relative;z-index:2;max-width:72%;/.test(APP) &&
     /\.page-hero \.ph-head\{position:relative;z-index:2;max-width:72%;/.test(APP), null);
 
   const css = between(APP, "/* ---- IMAGINE_CSS ---- */", "/* ---- /IMAGINE_CSS ---- */");
   report("A6) the Imagine card: a 132px floor (two columns in a narrow Photoshop panel) and a five-line summary ceiling (7.5em at line-height 1.5), relative so the marker can sit in its corner",
     /\.im-card\{flex:1 1 40%;min-width:132px;margin:5px;/.test(css) &&
-    /\.im-card-sum\{position:relative;margin:4px 0 8px;font-size:11\.5px;line-height:1\.5;max-height:7\.5em;overflow:hidden;flex:1 1 auto\}/.test(css), null);
+    /\.im-card-sum\{position:relative;margin:4px 0 8px;font-size:12px;line-height:1\.5;max-height:7\.5em;overflow:hidden;flex:1 1 auto\}/.test(css), null);   /* 6.114.0: 11.5 → 12px, the running-text floor */
 
   report("A7) the panel stylesheet carries the same ceilings - stated as heights, and on the title too - and the same kicker, plus the two rules only this renderer needs: the hub heading's row never wraps, and the summary ceiling is stated against the panel's own 1.7 line (5 × 1.7 = 8.5em) because .mut wins the cascade here",
     /\.wfmini \.s \{ position: relative; display: block; margin-top: 3px; margin-bottom: 3px; height: 5\.85em;/.test(PCSS) &&
@@ -234,13 +234,13 @@ function sourcePins() {
     /\.wfmini \.t \.ell, \.wfmini \.s \.ell, \.im-card-sum \.ell \{ position: absolute; right: 0; bottom: 0; padding-left: 12px;/.test(PCSS) &&
     /#pageAiTools \.hero-mini \.kick \{ position: relative; max-width: 100%; margin: 0 0 1px; padding: 10px 6px 0 0;/.test(PCSS) &&
     /letter-spacing: \.12em; text-transform: uppercase; color: var\(--accent\); line-height: 1\.7;/.test(PCSS) &&
-    /@media \(max-width:389px\)\{ #pageAiTools \.hero-mini \.kick \{ font-size: 9\.6px; letter-spacing: \.10em; \} \}/.test(PCSS) &&
+    /@media \(max-width:389px\)\{ #pageAiTools \.hero-mini \.kick \{ font-size: 11\.04px; letter-spacing: \.06em; \} \}/.test(PCSS) &&   /* 6.114.0: the 11px floor; the one line comes from tracking (.02em under 340) */
     /\.ph-kick \{\n  max-width: 72%;/.test(PCSS) && /\.ph-head \{\n  max-width: 72%;/.test(PCSS) &&
     /#pageImagine \.im-hub h2 \{ flex-wrap: nowrap; align-items: flex-start; \}/.test(PCSS) &&
     /#pageImagine \.im-hub h2 \.ic-s \{ flex: 0 0 auto; margin-top: 2px; \}/.test(PCSS) &&
     /#pageImagine \.im-card-sum \{ line-height: 1\.7; max-height: 8\.5em; \}/.test(PCSS) &&
     PCSS.indexOf(".im-card{flex:1 1 40%;min-width:132px;margin:5px;") > 0 &&
-    PCSS.indexOf(".im-card-sum{position:relative;margin:4px 0 8px;font-size:11.5px;line-height:1.5;max-height:7.5em;") > 0 &&
+    PCSS.indexOf(".im-card-sum{position:relative;margin:4px 0 8px;font-size:12px;line-height:1.5;max-height:7.5em;") > 0 &&
     PCSS.indexOf("#pageImagine .im-card-sum { line-height: 1.7; max-height: 8.5em; }") < PCSS.indexOf("/* ---- IMAGINE_CSS ---- */"), null);
 
   const pHelper = between(PMAIN, "function ellMark(root, sel, lines) {", "\nfunction setIcnText(");
@@ -407,7 +407,7 @@ async function panelWalk(browser) {
   server.close();
   const a = out[400], b = out[320];
   report("C1) the panel's Workflows hero kicker is one line at a 400px panel AND at a 320px one (the step-down rule earns the narrow case)",
-    a.kick.lines === 1 && b.kick.lines === 1 && a.kick.fs === "10.88px" && b.kick.fs === "9.6px", { a: a.kick, b: b.kick });
+    a.kick.lines === 1 && b.kick.lines === 1 && a.kick.fs === "11.2px" && b.kick.fs === "11.04px", { a: a.kick, b: b.kick });   /* 6.114.0: the 11px floor holds at 320 — the one line comes from .02em tracking, not a 9.6px step-down */
   report("C2) three whole lines in the panel too, and the marker is exact: every cut description marked, no uncut one marked, at render and after every group is tapped open",
     Math.abs(a.ceiling - 3) < 0.05 && a.atRender.mismatch === 0 && a.allOpen.mismatch === 0 &&
     b.atRender.mismatch === 0 && b.allOpen.mismatch === 0 && a.tapped >= 8 && a.allOpen.n === 194, { a, b: { tapped: b.tapped, allOpen: b.allOpen } });

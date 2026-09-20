@@ -2212,7 +2212,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 #pageAiTools .hero-mini .kick { position: relative; max-width: 100%; margin: 0 0 1px; padding: 10px 6px 0 0;
   font-size: 11.2px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); line-height: 1.7;
   text-shadow: 0 1px 4px rgba(0, 0, 0, .9), 0 2px 14px rgba(0, 0, 0, .75); }
-@media (max-width:389px){ #pageAiTools .hero-mini .kick { font-size: 11.04px; letter-spacing: .10em; } }
+@media (max-width:389px){ #pageAiTools .hero-mini .kick { font-size: 11.04px; letter-spacing: .06em; } }
+/* 6.114.0 — a 320px panel keeps the 11px floor: tracking tightens to .02em (275px of text in a 286px plate) */
+@media (max-width:339px){ #pageAiTools .hero-mini .kick { letter-spacing: .02em; } }
 /* and one step further down: at 300px — the narrowest this panel can be made, from
    manifest.json's own minimumSize — 9.6px still broke "No Install - Panel Data -
    RunningHub AI" over THREE lines, which pushed the banner from its 126px floor to
