@@ -92,6 +92,8 @@ globalThis.HNK.hlog = function () { return pushLog("INFO", arguments); };
 
 /* ---------------- State ---------------- */
 const state = {
+  /* 6.191.0 — Motion: "full" | "reduced" (Setup ▸ SETTINGS; the app's hnk_ws_motion) */
+  motion: "full",
   /* v6.75.0 — the What's New rows this member has dismissed. The panel has no
      localStorage (UXP), so the strip forgot every dismissal at relaunch and
      the owner's Home opened on "(105)" unread every time. Kept in the settings
@@ -2789,7 +2791,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.190.0";
+const PANEL_VERSION = "6.191.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6390,6 +6392,10 @@ function bindSetup() {
     [["prefsTsizeS", "s"], ["prefsTsizeM", "m"], ["prefsTsizeL2", "l"]].forEach(function (r) {
       const b = $(r[0]); if (b) ffPressable(b, function () { tsizeSetP(r[1]); });
     });
+    /* 6.191.0 — Motion: Full · Reduced */
+    [["prefsMotionFull", "full"], ["prefsMotionReduced", "reduced"]].forEach(function (r) {
+      const b = $(r[0]); if (b) ffPressable(b, function () { motionSetP(r[1]); });
+    });
   });
   /* platforms · share · about */
   safe("setup:about-wire", function () {
@@ -8695,8 +8701,28 @@ const PREFS_L = {
   tsize: { my: "စာလုံး အရွယ်", en: "Text size", shn: "တူဝ်လိၵ်ႈ", kac: "Laika kaba", th: "ขนาดตัวอักษร", zh: "文字大小", vi: "Cỡ chữ", id: "Ukuran teks", ms: "Saiz teks" },
   s: { my: "သေး", en: "Small", shn: "လဵၵ်ႉ", kac: "Kaji", th: "เล็ก", zh: "小", vi: "Nhỏ", id: "Kecil", ms: "Kecil" },
   m: { my: "ပုံမှန်", en: "Normal", shn: "ပၵ်းၵဝ်ႇ", kac: "Pyaw", th: "ปกติ", zh: "标准", vi: "Thường", id: "Normal", ms: "Biasa" },
-  l: { my: "ကြီး", en: "Large", shn: "ယႂ်ႇ", kac: "Kaba", th: "ใหญ่", zh: "大", vi: "Lớn", id: "Besar", ms: "Besar" }
+  l: { my: "ကြီး", en: "Large", shn: "ယႂ်ႇ", kac: "Kaba", th: "ใหญ่", zh: "大", vi: "Lớn", id: "Besar", ms: "Besar" },
+  /* 6.191.0 — Motion, the app's PREFS_W word for word */
+  motion: { my: "လှုပ်ရှားမှု", en: "Motion", shn: "ၵၢၼ်တူင်ႉၼိုင်", kac: "Shamu", th: "การเคลื่อนไหว", zh: "动效", vi: "Chuyển động", id: "Gerakan", ms: "Gerakan" },
+  mFull: { my: "အပြည့်", en: "Full", shn: "တဵမ်", kac: "Hkum", th: "เต็มที่", zh: "完整", vi: "Đầy đủ", id: "Penuh", ms: "Penuh" },
+  mReduced: { my: "လျှော့", en: "Reduced", shn: "ယွမ်း", kac: "Yawm", th: "ลดลง", zh: "减少", vi: "Giảm", id: "Dikurangi", ms: "Dikurangkan" }
 };
+/* 6.191.0 — MOTION (wave E): the one switch is body.motion-reduce (styles.css stills every transition and the Imagine
+   ring; spinFrame leaves the spinner where it is). Persisted in the settings file like text size. */
+function motionReducedP() { return state.motion === "reduced"; }
+function applyMotion() {
+  const b = document.body; if (!b) return;
+  const rest = String(b.className || "").split(/\s+/).filter(function (c) { return c && c !== "motion-reduce"; });
+  if (motionReducedP()) rest.push("motion-reduce");
+  b.className = rest.join(" ");
+}
+function motionSetP(v) {
+  state.motion = v === "reduced" ? "reduced" : "full";
+  applyMotion();
+  try { saveSettings(); } catch (e) { }
+  try { renderPrefsP(); } catch (e) { }
+  return state.motion;
+}
 function tsizeSetP(v) {
   state.tsize = (v === "s" || v === "l") ? v : "m";
   applyTextSize();
@@ -8712,6 +8738,14 @@ function renderPrefsP() {
   [["prefsTsizeS", "s"], ["prefsTsizeM", "m"], ["prefsTsizeL2", "l"]].forEach(function (r) {
     const b = $(r[0]); if (!b) return;
     b.textContent = ff9(PREFS_L[r[1]]); b.className = "chip" + (cur === r[1] ? " on" : "");
+  });
+  /* 6.191.0 — Motion: Full · Reduced */
+  const ml = $("prefsMotionL"); if (ml) ml.textContent = ff9(PREFS_L.motion);
+  const mcur = motionReducedP() ? "reduced" : "full";
+  [["prefsMotionFull", "full", "mFull"], ["prefsMotionReduced", "reduced", "mReduced"]].forEach(function (r) {
+    const b = $(r[0]); if (!b) return;
+    b.textContent = ff9(PREFS_L[r[2]]); b.className = "chip" + (mcur === r[1] ? " on" : "");
+    b.setAttribute("aria-pressed", mcur === r[1] ? "true" : "false");
   });
 }
 /* 6.166.0 — one reader for a UXP entry (read) and a DOM File (arrayBuffer / FileReader): a file dropped onto the
@@ -8939,6 +8973,7 @@ async function vidGenerate() {
   if (btn && btn.classList) btn.classList.add("working");
   const sp = ffSpinEnsure("vidSpin");
   if (sp) sp.className = "spin on";
+  try { pendBoxP("vidSpin", true); } catch (e) { }
   stSet("stVidGen", "");
   const rb = $("btnVidRetry"); if (rb) rb.style.display = "none";
   const cb = $("btnVidCancel");
@@ -8982,6 +9017,7 @@ async function vidGenerate() {
   if (cb) cb.style.display = "none";
   if (btn && btn.classList) btn.classList.remove("working");
   if (sp) sp.className = "spin";
+  try { pendBoxP("vidSpin", false); } catch (e) { }
   const tx = $("vidSpinTxt"); if (tx) tx.textContent = vidRun.base;
 }
 /* the app's Download: the same "hnk-video-<res>-<yyyymmdd>.mp4" name, written
@@ -10551,6 +10587,7 @@ async function saveSettings() {
     const o = {
       rhKey: state.rhKey, lang: state.lang, theme: state.theme, model: state.model,
       tsize: state.tsize || "m",   /* 6.166.0 — text size */
+      motion: state.motion === "reduced" ? "reduced" : "full",   /* 6.191.0 — motion */
       size: state.size, ratio: state.ratio,
       autoPlace: state.autoPlace,
       rt: state.rt, rtStrength: state.rtStrength, page: state.page,
@@ -10587,6 +10624,7 @@ async function loadSettings() {
     if (o && typeof o === "object") {
       if (typeof o.rhKey === "string") state.rhKey = o.rhKey;
       if (o.tsize === "s" || o.tsize === "l") { state.tsize = o.tsize; try { applyTextSize(); } catch (eT) { } }
+      if (o.motion === "reduced") { state.motion = "reduced"; try { applyMotion(); } catch (eM) { } }   /* 6.191.0 */
       /* v6.26.0 — legacy Gemini/OpenAI keys are PURGED, never restored: the
          next saveSettings() writes a file without them (web app 5.50.0 rule). */
       if (typeof o.apiKey === "string" || typeof o.oaiKey === "string") {
@@ -12141,6 +12179,7 @@ function ffRunStopTimers() {
 function ffRunFrame() { spinFrame($("spin"), ffRun.t0); }
 function spinFrame(sp, t0) {
   if (!sp) return;
+  if (motionReducedP()) return;   /* 6.191.0 — reduced motion: the ring and the bar stand still, the seconds text still counts */
   const ring = sp.querySelector(".spin-ring"), bar = sp.querySelector(".spin-bar"), run = sp.querySelector(".spin-bar-in");
   const el = Date.now() - t0;
   if (ring) ring.style.transform = "rotate(" + Math.round((el % 800) / 800 * 360) + "deg)";
@@ -12168,8 +12207,26 @@ function ffEaseInOut(p) {
   }
   return bez(0, 1, t);
 }
+/* 6.191.0 — LOADING (wave E): the app's pendBox. While a job runs and no result is on screen yet, the result card shows
+   as a plain block the height of a picture to come (styles.css .result-box.pending), aria-busy; a card that already holds
+   a result is only marked busy. The spinner line is a live region. */
+const PEND_BOX_P = { spin: "resultBox", vidSpin: "vidResultBox", vuSpin: "vuResultBox", vtSpin: "vtResultBox", tkSpin: "tkResultBox" };
+function pendBoxP(spinId, on) {
+  const box = $(PEND_BOX_P[spinId]); if (!box) return false;
+  const sp = $(spinId); if (sp) { sp.setAttribute("role", "status"); sp.setAttribute("aria-live", "polite"); }
+  const cls = String(box.className || "").split(/\s+/).filter(function (c) { return c && c !== "pending"; });
+  if (on) {
+    if (cls.indexOf("on") < 0) cls.push("pending");
+    box.setAttribute("aria-busy", "true");
+  } else {
+    box.removeAttribute("aria-busy");
+  }
+  box.className = cls.join(" ");
+  return true;
+}
 function ffRunStart(count) {
   ffRun.count = count || 1; ffRun.done = 0; ffRun.t0 = Date.now();
+  try { pendBoxP("spin", true); } catch (e) { }
   ffRun.abort = (typeof AbortController !== "undefined") ? new AbortController() : null;
   const g = $("btnGenerate"); if (g && g.classList) g.classList.add("working");
   const sp = ffSpinEnsure();
@@ -12187,6 +12244,7 @@ function ffRunStart(count) {
 function ffRunEnd() {
   ffRunStopTimers();
   ffRun.abort = null;
+  try { pendBoxP("spin", false); } catch (e) { }
   const g = $("btnGenerate"); if (g && g.classList) g.classList.remove("working");
   const sp = $("spin"); if (sp) sp.className = "spin";
   const sb = $("btnGenStop"); if (sb) sb.style.display = "none";

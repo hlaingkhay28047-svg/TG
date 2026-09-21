@@ -1120,3 +1120,8 @@ jobs:
       # languages, no low-contrast text.
       - name: Verify the landing's tap targets, keyboard rings, heading order and bypass link
         run: node test/verify_ux_wave_6119.js
+      # 6.120.0 — wave E: motion + loading — the Motion setting (Full · Reduced) on the app and the panel, the OS
+      # preference honoured live, the result card on screen as a sized skeleton while a job runs, the boot layout
+      # shift measured at 0 on a phone and a monitor, the landing's language picker reserving its width.
+      - name: Verify the Motion setting, the loading skeleton and the boot layout shift
+        run: node test/verify_ux_wave_6120.js
