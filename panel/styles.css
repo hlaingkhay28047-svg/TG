@@ -1757,6 +1757,16 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .hnk-wf-swatches > section { margin-right: 6px; margin-bottom: 6px; }
 .hnk-wf-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); padding: 0; }
 .hnk-wf-hex { width: 90px; }
+/* 6.124.0 — choice chips (one of a few ways) and quick picks under a text line — Selection Swap & Fill. Margins, never gap. */
+.hnk-wf-field.is-choice { flex-direction: column; align-items: stretch; margin: 8px 0 6px; padding: 9px 11px 10px;
+  border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; background-color: var(--panel-2); }
+.hnk-wf-field.is-choice .hnk-wf-field-l { flex: 0 0 auto; margin-bottom: 6px; font-weight: 700; font-size: 13px; color: var(--text); }
+.hnk-wf-choices { display: flex; flex-direction: row; flex-wrap: wrap; }
+.hnk-wf-choices > button { margin-right: 6px; margin-bottom: 6px; }
+.hnk-wf-choice { min-height: 36px; padding: 6px 12px; }
+.hnk-wf-choice.on { background-color: var(--hnk-gold, #e9b949); border-color: var(--hnk-gold, #e9b949); color: #17130a; font-weight: 700; }
+.hnk-wf-quick { margin-top: 6px; }
+.hnk-wf-quick > button { padding: 4px 9px; font-size: 11px; }
 
 /* ===== v6.47.0 — the member's own profile photo on the ACCOUNT card =====
    The website has let a member save a photo since 5.49.0 and the gate has

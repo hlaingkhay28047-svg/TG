@@ -277,7 +277,7 @@ if (_CATALOG && _CATALOG.categories) {
         }),
         negative: w.negative,
         fields: w.fields || [],
-        region: w.id === "region-edit",
+        region: w.id === "region-edit" || !!w.region,   /* 6.124.0 — Selection Swap & Fill carries the flag on its record */
         hiddenPrompt: w.prompt,
         route: { modelId: "nano-banana-2", auto: true }
       };
@@ -365,6 +365,14 @@ function applyFields(prompt, fields, vals) {
     } else if (f.type === "color") {
       var cv = String(v || f.default || "#123B2F");
       if (f.token) p = p.split(f.token).join(cv + " (" + colourName(cv) + ")");
+    } else if (f.type === "choice") {
+      /* 6.124.0 — one of a few ways: the chosen option's own line lands on the token; an unknown value falls back to the
+         default, then to the first option (the app's applyWfFields, the same effect byte for byte). */
+      var opts = f.options || [], pick = null, oi;
+      for (oi = 0; oi < opts.length; oi++) { if (opts[oi].v === v) { pick = opts[oi]; break; } }
+      if (!pick) { for (oi = 0; oi < opts.length; oi++) { if (opts[oi].v === f.default) { pick = opts[oi]; break; } } }
+      if (!pick) pick = opts[0] || null;
+      if (f.token) p = p.split(f.token).join(pick ? (pick.line || pick.v) : "");
     }
   });
   return p;

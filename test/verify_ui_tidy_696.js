@@ -335,7 +335,7 @@ async function appWalk(browser) {
     b.allOpen.mismatch === 0 && b.filtered.mismatch === 0 &&
     a.tapped >= 8 && a.allOpen.n > 150 && a.allOpen.marked > 20, { a, b: { tapped: b.tapped, allOpen: b.allOpen } });
   report("B3) the ceiling is three whole lines, it rescues descriptions a two-line ceiling would cut, and a clear majority of the 194 end on their own word",
-    Math.abs(a.ceiling - 3) < 0.05 && a.allOpen.n === 197 && a.natWf.n === 197 &&   /* 6.123.0 — 197 cards since the three wave H cards */
+    Math.abs(a.ceiling - 3) < 0.05 && a.allOpen.n === 198 && a.natWf.n === 198 &&   /* 6.123.0 — 197 cards since the three wave H cards; 198 since 6.124.0 added Selection Swap & Fill */
     a.natWf.over < a.natWf.overWas && a.allOpen.n - a.allOpen.cut > a.allOpen.cut,
     { ceiling: a.ceiling, cut: a.allOpen.cut, nat: a.natWf });
   report("B4) the Imagine summary is a five-line ceiling with the same honest marker - it rescues summaries the two-line ceiling cut and most of the 22 end on their own word - the cards keep two to a row at 420px and the page-hero headline stays inside 72% of the banner, with the hub heading's icon on line one",
@@ -410,7 +410,7 @@ async function panelWalk(browser) {
     a.kick.lines === 1 && b.kick.lines === 1 && a.kick.fs === "11.2px" && b.kick.fs === "10px", { a: a.kick, b: b.kick });   /* 6.114.0: 11.2px at 400; 10px at .02em under 340 — the CI runner's wider font wrapped an 11px line in the 286px plate */
   report("C2) three whole lines in the panel too, and the marker is exact: every cut description marked, no uncut one marked, at render and after every group is tapped open",
     Math.abs(a.ceiling - 3) < 0.05 && a.atRender.mismatch === 0 && a.allOpen.mismatch === 0 &&
-    b.atRender.mismatch === 0 && b.allOpen.mismatch === 0 && a.tapped >= 8 && a.allOpen.n === 197, { a, b: { tapped: b.tapped, allOpen: b.allOpen } });
+    b.atRender.mismatch === 0 && b.allOpen.mismatch === 0 && a.tapped >= 8 && a.allOpen.n === 198, { a, b: { tapped: b.tapped, allOpen: b.allOpen } });
   report("C3) the Imagine summary ceiling is five WHOLE lines in the panel — 8.5em against this renderer's own 1.7 line, not the app's 7.5em against a 1.5 it never uses",
     Math.abs(a.imCeiling - 5) < 0.05 && Math.abs(b.imCeiling - 5) < 0.05 && a.imSum.n === 22 && a.imSum.mismatch === 0 && b.imSum.mismatch === 0, { a: { ceil: a.imCeiling, sum: a.imSum }, b: { ceil: b.imCeiling, sum: b.imSum } });
   report("C4) the 132px floor gives a 400px Photoshop panel two Imagine columns (150px gave it one), the page-hero headline stays inside 72%, and the hub heading's wand is on line one",

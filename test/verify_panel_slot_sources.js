@@ -43,7 +43,7 @@ function catalogIds() {
   const cat = JSON.parse(m[1]);
   const out = [];
   cat.categories.forEach(c => c.items.forEach(w => {
-    if ((w.req || []).length) out.push({ id: w.id, title: w.title, n: w.req.length });
+    if ((w.req || []).length) out.push({ id: w.id, title: w.title, n: w.req.length, region: !!w.region });   /* 6.124.0 — the record's region flag */
   }));
   return out;
 }
@@ -144,7 +144,7 @@ function catalogIds() {
              it. (The gap that remains — no way to use Selection Edit on a
              photo that is not open in Photoshop, and no marquee at all in
              the web app — is real, and is its own piece of work.) */
-          if (w.id === "region-edit" && !s.key) { seen.selection++; return; }
+          if ((w.id === "region-edit" || w.region) && !s.key) { seen.selection++; return; }   /* 6.124.0 — Selection Swap & Fill is the second region workflow */
           const miss = ["layer", "file", "paste", "web", "url", "lib"].filter(k => !s[k]);
           if (miss.length) bad.push(w.id + "/" + s.key + ": no " + miss.join("+"));
           if (!s.tile) noTile.push(w.id + "/" + s.key);
