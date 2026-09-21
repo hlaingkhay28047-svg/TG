@@ -243,9 +243,11 @@ async function browserWalk() {
     occs: document.querySelectorAll("#albOccs .alb-occ").length,
     make: !!document.getElementById("albMake")
   }));
-  report("C1) the ALBUM page opens complete on a 430px phone — occasion · size · pages · preview · photos · layout · text · export, the nine occasions and \"Make the whole album\" first of all, one size group chip per group, and the page's true output size stated before a single photo is added",
-    opened.on && opened.cards.length === 8 &&
-    opened.cards.join(",") === "albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albTextCard,albExportCard" &&
+  /* 6.121.0 wave F — two more cards: the design (style · paper · density · cover · story lines) after the
+     layout, and the print check after the export. Ten cards, in this order. */
+  report("C1) the ALBUM page opens complete on a 430px phone — occasion · size · pages · preview · photos · layout · design · text · export · print check, the nine occasions and \"Make the whole album\" first of all, one size group chip per group, and the page's true output size stated before a single photo is added",
+    opened.on && opened.cards.length === 10 &&
+    opened.cards.join(",") === "albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albDesignCard,albTextCard,albExportCard,albCheckCard" &&
     opened.occs === 9 && opened.make &&
     opened.stage && opened.pages === 1 && opened.groups === 6 && opened.free === 4 && opened.sizes >= 4 &&
     /10800/.test(opened.sizeNote) && /300 DPI/.test(opened.sizeNote), opened);
@@ -404,7 +406,7 @@ async function browserWalk() {
     restore.sizeId === "12x36" && restore.customUnit === "in" && restore.customDpi === 600 &&
     restore.cur === 0 && restore.photos <= 6 && restore.texts.indexOf("no-such-role") < 0 &&
     restore.texts.indexOf("title") >= 0 && restore.titleX >= 0 && restore.titleX <= 1 &&
-    restore.tplId === "" && restore.cards === 8, restore);
+    restore.tplId === "" && restore.cards === 10, restore);   /* 6.121.0 — ten cards */
 
   /* C10 — the custom size: the owner's "ကြိုက်သလိုပြောင်းလဲလို့ရတာ", in full. */
   const custom = await page.evaluate(async () => {

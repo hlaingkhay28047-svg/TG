@@ -83,8 +83,12 @@ report("motion stands down under prefers-reduced-motion",
   /prefers-reduced-motion:reduce\)\{\.ava-ring,\.ava-brand,\.aw-en b\{animation:none\}/.test(app));
 report("signed-out state never shows a stale photo",
   /var a = acc\.sess \? accAvaValue\(\) : "";/.test(app));
+/* 6.121.0 — the v4.30 dictionary (ava_* among it) lives in docs/app/data/trmore.js now (shell headroom for the
+   album designer); a key is translated when the shell OR that file carries it in both base languages */
+const TRM = require("../tools/lib/app-data.js").readTrMore();
+const trmHas = (key) => ["v428", "v430", "path"].some((d) => TRM[d] && TRM[d][key] && TRM[d][key].my && TRM[d][key].en);
 for (const key of ["ava_change", "ava_remove", "ava_saved", "ava_removed", "ava_fail", "aw_sub", "aw_back"]) {
-  report("string " + key + " is translated", new RegExp("\\b" + key + ":\\{my:").test(app));
+  report("string " + key + " is translated", new RegExp("\\b" + key + ":\\{my:").test(app) || trmHas(key));
 }
 
 /* ---- B2) the admin can see every member's photo, safely ---- */

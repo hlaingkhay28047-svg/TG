@@ -51,7 +51,9 @@ function report(name, ok, detail) {
 /* ---------------- A. the packs and the shell ---------------- */
 const packs = A.readTrl(), tags = A.trlTags(), CODES = A.TRL_CODES;
 const s0 = APP.indexOf('var LANG = "my";'), s1 = APP.indexOf("function L9(o){", s0);
-const box = { localStorage: { getItem() { return null; } }, window: { HNK_TRL: {}, HNK_TRL_TAGS: tags } };
+/* 6.121.0 — TR_V428 · TR_V430 · TR_PATH read data/trmore.js, so the VM is handed that file too; without it
+   TR would lose 198 keys the packs carry and A1 would blame the packs for the shell's own move */
+const box = { localStorage: { getItem() { return null; } }, window: { HNK_TRL: {}, HNK_TRL_TAGS: tags, HNK_TRMORE: A.readTrMore() } };
 vm.runInNewContext(APP.slice(s0, s1), box);
 const TR = box.TR;
 /* the scan: a pack may carry only keys the nine full sets carry, every value a non-empty string */

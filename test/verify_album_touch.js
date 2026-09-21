@@ -47,8 +47,8 @@ const KEYS = ["alb_touch_note", "alb_sel_none", "alb_sel_photo", "alb_sel_text",
   "alb_move_u", "alb_move_d", "alb_spread_note"];
 const PORT = Number(process.env.PORT || 8931);
 const BASE = "http://127.0.0.1:" + PORT;
-const WEB = "6.120.0";   /* re-pinned with each lockstep bump */
-const PANEL = "6.191.0";
+const WEB = "6.121.0";   /* re-pinned with each lockstep bump */
+const PANEL = "6.192.0";
 /* 6.111.0 — WEB/PANEL are the CURRENT release, which E1 pins in lockstep and
    which every release moves. ALBUM_WAVE is a different fact: the release that
    actually SHIPPED this stage, and therefore the release whose What's New row
@@ -135,7 +135,7 @@ function source() {
 
   report("A11) the two numbers survive a save: normalize reads a photograph's zoom and manual mark and a line's size and rotation, within their own bounds, and an album written before this wave reads back as the page laid it out",
     /zoom: isFinite\(q\.zoom\) \? clamp\(\+q\.zoom, ZOOM_MIN, ZOOM_MAX\) : 1,/.test(MOD) &&
-    /manual: !!q\.manual \}\);/.test(MOD) &&
+    /manual: !!q\.manual,/.test(MOD) && /function normPhoto\(q\)/.test(MOD) &&   /* 6.121.0 — one reader, normPhoto, for a page and the tray; the look follows the mark */
     /size: isFinite\(t\.size\) \? clamp\(\+t\.size, TEXT_MIN, TEXT_MAX\) : 1,/.test(MOD) &&
     /rot: isFinite\(t\.rot\) \? clamp\(\+t\.rot, -180, 180\) : 0,/.test(MOD), null);
 

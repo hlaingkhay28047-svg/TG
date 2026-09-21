@@ -184,8 +184,8 @@ function source() {
   report("A11) the document remembers what wave D added and a saved album from before it still opens — the page's bleed and the stage's view both fall back rather than throwing",
     /return \{ v:4, sizeId:"12x36"/.test(APP) &&
     /view:"page"/.test(APP) &&
-    /bleed:false \}; \}/.test(APP) &&
-    /out\.view = \(d\.view === "spread"\) \? "spread" : "page";/.test(APP) &&
+    /bleed:false, decor:\[\], story:-1 \}; \}/.test(APP) &&   /* 6.121.0 — a page also carries the engine's decor and its story index */
+    /out\.view = \(d\.view === "spread" \|\| d\.view === "book"\) \? d\.view : "page";/.test(APP) &&   /* 6.121.0 — the book is the third view */
     /pg\.bleed = !!p\.bleed;/.test(APP), null);
 }
 

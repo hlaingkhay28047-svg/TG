@@ -230,11 +230,16 @@ report("C7b) the Phone pack is its own nine languages — no line is the Compute
   { sameText, photoshopLines });
 /* The device list badged every other machine with an English string in a nine-language app.
    "Admin reset only" survives exactly once — as the English member of the new key. */
-const badgeLiterals = (APP.match(/"Admin reset only"/g) || []).length;
+/* 6.121.0 — dev_admin_only lives in TR_V430, which left the shell for
+   data/trmore.js; its English member is the one surviving literal. */
+const TRM = require("../tools/lib/app-data.js").readTrMore();
+const badgeEntry = (TRM.v430 && TRM.v430.dev_admin_only) || {};
+const badgeLiterals = (APP.match(/"Admin reset only"/g) || []).length +
+  (badgeEntry.en === "Admin reset only" ? 1 : 0);
 report("C8) the device list's badge is translated — dev_admin_only in all nine languages, and the hardcoded English is gone from the renderer",
   !/textContent = "Admin reset only"/.test(APP) && badgeLiterals === 1 &&
   /locked\.textContent = t\("dev_admin_only"\);/.test(APP) &&
-  LANGS.every(l => new RegExp("dev_admin_only:\\{[^}]*\\b" + l + ":\"").test(APP)), { badgeLiterals });
+  LANGS.every(l => typeof badgeEntry[l] === "string" && badgeEntry[l].length > 0), { badgeLiterals });
 report("C9) the card no longer tells students they cannot do this — for either slot",
   !/Students cannot reset a registered slot/.test(APP) &&
   !/The Phone slot is still reset by an HNK administrator/.test(APP) &&

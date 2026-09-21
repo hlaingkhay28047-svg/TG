@@ -255,10 +255,28 @@ const NEW = Object.keys(SCRIPTS);
   const V61100_KEYS = ["alb_touch_note", "alb_sel_none", "alb_sel_photo", "alb_sel_text",
     "alb_zoom_out", "alb_zoom_in", "alb_rot_l", "alb_rot_r", "alb_reset_one",
     "alb_move_l", "alb_move_r", "alb_move_u", "alb_move_d", "alb_spread_note"];
+  /* 6.121.0 wave F — the album designer's 72 lines (book view, undo, the tray, the six looks, the frame
+     actions, the design card and the print check), on the same terms as every album block above: TR
+     carries real Shan for all of them and the three Tai packs read it through LANG_FB (A2). */
+  const V61210_KEYS = [
+    "alb_book", "alb_book_note", "alb_book_edit", "alb_redesign", "alb_undo", "alb_redo",
+    "alb_nothing_undo", "alb_fx", "alb_fx_none", "alb_fx_bw", "alb_fx_sepia", "alb_fx_warm",
+    "alb_fx_cool", "alb_fx_fade", "alb_replace", "alb_swap_l", "alb_swap_r", "alb_remove",
+    "alb_remove_line", "alb_replaced", "alb_tray_h", "alb_tray_note", "alb_tray_add",
+    "alb_tray_unused", "alb_tray_empty", "alb_tray_added", "alb_tray_removed", "alb_tray_remove_q",
+    "alb_tray_unused_done", "alb_tray_none_unused", "alb_used_on", "alb_tray_x", "alb_placed",
+    "alb_tpl_all", "alb_design_h", "alb_style", "alb_style_editorial", "alb_style_classic",
+    "alb_style_minimal", "alb_style_script", "alb_paper", "alb_paper_white", "alb_paper_cream",
+    "alb_paper_black", "alb_density", "alb_density_airy", "alb_density_balanced",
+    "alb_density_dense", "alb_cover", "alb_relay", "alb_relay_done", "alb_story", "alb_design_page",
+    "alb_design_all", "alb_story_next", "alb_design_clear", "alb_design_note", "alb_design_done",
+    "alb_design_none", "alb_design_opener", "alb_story_of", "alb_check_h", "alb_check_ok",
+    "alb_check_low", "alb_check_soft", "alb_check_empty", "alb_check_edge", "alb_check_dup",
+    "alb_check_gutter", "alb_check_n", "alb_check_note", "alb_make_prog"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {
