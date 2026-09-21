@@ -113,6 +113,17 @@ report("I) the page sends no referrer and its CSP permits only the same-origin a
 const NEW_KEYS = ["pw_title", "pw_link_dead"];
 const TRIMMED = { pw_unreachable: "acc_unreachable" };
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
+/* 6.121.0 — the TR_V428 / TR_V430 / TR_PATH tables left the shell for
+   data/trmore.js (the album designer needed the room under the shell ceiling),
+   so the account strings this page reuses are looked up in that file when the
+   shell no longer carries them. The comparison itself is unchanged. */
+const TRM = require("../tools/lib/app-data.js").readTrMore();
+function trmEntry(key) {
+  for (const d of ["v428", "v430", "path"]) {
+    if (TRM[d] && TRM[d][key]) return Object.assign({}, TRM[d][key]);
+  }
+  return null;
+}
 
 /* v5.41.0 — ACCEPT EITHER QUOTE STYLE. The app's TR table is mostly double
    quoted but not entirely (btn_show is `{ my: 'ပြ', en: 'Show' }`), and a
@@ -137,6 +148,7 @@ for (const { key, langs } of resetKeys) {
   const sourceKey = TRIMMED[key] || key;
   const src =
     entryFrom(APP, new RegExp("\\b" + sourceKey + ":\\s*\\{([^{}]*)\\}")) ||
+    trmEntry(sourceKey) ||
     entryFrom(LANDING, new RegExp('"' + sourceKey.replace(/_/g, "\\.") + '"\\s*:\\s*\\{([^{}]*)\\}'));
   if (!src) { drifted.push({ key, why: "no source entry named " + sourceKey }); continue; }
   /* v5.41.0 — compare the languages BOTH SIDES ACTUALLY CARRY, not a fixed

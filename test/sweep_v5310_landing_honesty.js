@@ -225,6 +225,13 @@ const planFree = [];
   }
   let m2; const re2 = /"?acc_plan_free"?:"((?:[^"\\]|\\.)*)"/g;
   while ((m2 = re2.exec(app + "\n" + PACKS))) planFree.push({ lg: "pack", v: m2[1] });
+  /* 6.121.0 — the v4.30 dictionary that carries the nine core-language entries lives in
+     docs/app/data/trmore.js now (shell headroom for the album designer); scanned there too */
+  const TRM = APPDATA.readTrMore();
+  ["v428", "v430", "path"].forEach(d => {
+    const e = TRM[d] && TRM[d].acc_plan_free;
+    if (e) Object.keys(e).forEach(lg => planFree.push({ lg, v: String(e[lg]) }));
+  });
 }
 const stillFree = planFree.filter(e =>
   APP_FREE_WORDS.some(w => e.v.startsWith(w)) || e.v.includes(" — "));
