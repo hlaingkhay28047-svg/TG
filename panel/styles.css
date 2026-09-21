@@ -3649,6 +3649,22 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .im-th-mk{position:absolute;bottom:2px;left:4px;font-size:11px;font-weight:800;color:#ff6b6b;text-shadow:0 1px 2px #000}
 /* ---- /IMAGINE_CSS ---- */
 
+/* 6.191.0 — MOTION (UI/UX wave E). body.motion-reduce is the Setup ▸ SETTINGS choice (UXP has no prefers-reduced-motion
+   query, so the switch is the panel's only input; the app adds the OS preference). The sheet forbids `*` (UXP-SAFE), so
+   every transition this file declares is stilled by class here; the Imagine ring too. The seconds text keeps counting.
+   OUTSIDE the IMAGINE_CSS block above: build_panel_imagine.js rewrites that block byte for byte from the app. */
+body.motion-reduce, body.motion-reduce .app, body.motion-reduce .tabb, body.motion-reduce .card, body.motion-reduce .btn,
+body.motion-reduce .segb, body.motion-reduce .pbtn, body.motion-reduce .tgl, body.motion-reduce .gen,
+body.motion-reduce .im-card, body.motion-reduce .im-tpl { transition: none; }
+body.motion-reduce .im-spin { animation: none; }
+/* 6.191.0 — LOADING (wave E): the app's .result-box.pending — while a job runs the result card is on screen as a plain
+   block the height of a picture to come, aria-busy (main.js pendBoxP from ffRunStart / the video spinner); the buttons,
+   the chain row and the strip wait for the picture. A card that already holds a picture is busy-only (never pending). */
+.apg .card.result-box.pending { display: block; }
+.apg .result-box.pending .result-img { height: 220px; background-color: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; }
+.apg .result-box.pending .result-img img, .apg .result-box.pending .result-img video { display: none; }
+.apg .result-box.pending .arow, .apg .result-box.pending .subh, .apg .result-box.pending .chainrow, .apg .result-box.pending .mut, .apg .result-box.pending .strip { display: none; }
+
 /* 6.166.0 — Gallery tools · Home recent strip · drop target · text size (flex + margins, no gap, class selectors only) */
 .gal-tools { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; margin: 6px 0 4px; }
 .gal-tools .hnk-input { flex: 1 1 140px; min-width: 120px; margin: 0 6px 6px 0; }
