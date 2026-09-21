@@ -533,6 +533,12 @@ jobs:
       # pictures from the lane, the counts 197 / 204 on every surface, the panel's lifted catalog and its compiler.
       - name: Wave H — the prop, decor-theme and light-gear cards on app and panel
         run: PORT=8931 node test/verify_prop_wave_h.js
+      # 6.124.0 — the owner's ask: replace · add · fill · change whatever sits in the selected area with the object they want.
+      # Selection Swap & Fill beside Selection Edit: a region record with an optional exact-item slot (IMAGE 2), a four-way
+      # MODE choice (a new field type on both surfaces), an OBJECT line with eight quick picks, a SIZE & PLACEMENT line,
+      # MATCH and SHADOW switches; the web marquee and the panel's selection card follow the record's region flag, not one id.
+      - name: Selection Swap & Fill — the region record, the choice field and the counts 198 / 205 on app and panel
+        run: PORT=8931 node test/verify_selection_swap.js
       # 6.76.0 — the Library's scene looks as one-tap presets under every scene / background slot, app and panel alike, one list on both
       - name: Library scene presets in the Smart Workflow wizard
         run: PORT=8931 node test/verify_scene_presets.js

@@ -52,7 +52,7 @@ async function extract() {
         id: w.id, title: w.title || "", summary: String(w.summary || ""),
         explanation: String(w.explanation || ""), prompt: String(w.prompt || ""),
         negative: String(w.negative || ""), req: (w.req || []).map(String), opt: (w.opt || []).map(String),
-        fields: (w.fields || []),
+        fields: (w.fields || []), region: w.region ? true : undefined,   /* 6.124.0 — a region workflow reads the live selection (JSON drops the undefined) */
         badge: String(w.badge || ""), wedGroup: String(w.wedGroup || ""), hasCard: !!w.cardImg
       }))
     }));

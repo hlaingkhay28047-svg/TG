@@ -1171,9 +1171,22 @@ function create(deps) {
       var fl = function (lbl) { return (lbl && (lbl[langCode] || lbl.en)) || ""; };
       state.fieldVals = state.fieldVals || {};
       var fwrap = dom.el(doc, "div", { class: "hnk-wf-fields" });
+      /* 6.124.0 — QUICK PICKS under a text line: one tap fills the line with the chip's English value (the engine reads
+         English best); the chip's label is in the student's language. */
+      var quickChips = function (f, ti) {
+        var qrow = dom.el(doc, "div", { class: "hnk-wf-choices hnk-wf-quick" });
+        (f.chips || []).forEach(function (o) {
+          var qb = dom.el(doc, "button", { class: "hnk-btn hnk-wf-quick-chip", text: fl(o.label) || o.v });
+          qb.setAttribute("data-v", o.v);
+          dom.on(qb, "click", function () { ti.value = o.v; wstate.setField(state, f.key, o.v); });
+          qrow.appendChild(qb);
+        });
+        return qrow;
+      };
       wf.fields.forEach(function (f) {
         if (state.fieldVals[f.key] === undefined) state.fieldVals[f.key] = f.type === "toggle" ? f.default !== false : (f.default || "");
         var row = dom.el(doc, "div", { class: "hnk-wf-field" + (f.type === "text" ? " is-text" : "") });   /* 6.164.0 — a typed line is a column */
+        if (f.type === "choice") row.className += " is-choice";   /* 6.124.0 — a chip row is a column too */
         row.appendChild(dom.el(doc, "span", { class: "hnk-wf-field-l", text: fl(f.label) || f.key }));
         if (f.type === "toggle") {
           var tb = dom.el(doc, "button", { class: "hnk-btn hnk-wf-sw" + (state.fieldVals[f.key] ? " on" : ""), text: state.fieldVals[f.key] ? "ON" : "OFF" });
@@ -1197,6 +1210,8 @@ function create(deps) {
           dom.on(ti, "input", function () { wstate.setField(state, f.key, ti.value); });
           row.appendChild(ti);
           row.appendChild(dom.el(doc, "div", { class: "hnk-wf-field-hint", id: "hnkWfTextHint_" + f.key, text: l9(L_TEXT_HINT) }));
+          if (f.hint) { try { row.lastChild.textContent = fl(f.hint); } catch (eH) { } }   /* 6.124.0 — a field may carry its own hint */
+          if (f.chips && f.chips.length) row.appendChild(quickChips(f, ti));   /* 6.124.0 — quick picks fill the line */
         } else if (f.type === "color") {
           var sww = dom.el(doc, "div", { class: "hnk-wf-swatches" });
           var hexInp = dom.el(doc, "input", { class: "hnk-input hnk-wf-hex" });
@@ -1212,6 +1227,25 @@ function create(deps) {
           });
           sww.appendChild(hexInp);
           row.appendChild(sww);
+        } else if (f.type === "choice") {
+          /* 6.124.0 — ONE OF A FEW WAYS: a row of chips (Replace · Add · Fill · Change on Selection Swap & Fill). The chosen
+             option's own line lands on the tagged prompt line (registry.applyFields) and its hint reads under the row. */
+          var crow = dom.el(doc, "div", { class: "hnk-wf-choices", id: "hnkWfChoice_" + f.key });
+          var chint = dom.el(doc, "div", { class: "hnk-wf-field-hint", id: "hnkWfChoiceHint_" + f.key });
+          if (!(f.options || []).some(function (o) { return o.v === state.fieldVals[f.key]; })) wstate.setField(state, f.key, f.default);
+          var paintChoice = function () {
+            var kids = crow.children || [];
+            for (var ci = 0; ci < kids.length; ci++) kids[ci].className = "hnk-btn hnk-wf-choice" + (kids[ci].getAttribute("data-v") === state.fieldVals[f.key] ? " on" : "");
+            var po = (f.options || []).filter(function (x) { return x.v === state.fieldVals[f.key]; })[0];
+            chint.textContent = (po && po.hint) ? fl(po.hint) : "";
+          };
+          (f.options || []).forEach(function (o) {
+            var cb = dom.el(doc, "button", { class: "hnk-btn hnk-wf-choice", text: fl(o.label) || o.v });
+            cb.setAttribute("data-v", o.v);
+            dom.on(cb, "click", function () { wstate.setField(state, f.key, o.v); paintChoice(); });
+            crow.appendChild(cb);
+          });
+          row.appendChild(crow); row.appendChild(chint); paintChoice();
         }
         fwrap.appendChild(row);
       });

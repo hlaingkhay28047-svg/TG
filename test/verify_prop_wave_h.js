@@ -31,7 +31,7 @@ const APP = read("docs/app/index.html"), LANDING = read("docs/index.html"), CI =
 const PANEL_CAT = read("panel/js/hnk_wf_catalog_data.js"), PANEL_HOME = read("panel/src/ui/screens/home-screen.js");
 const WN = read("docs/app/data/whatsnew.js"), PWN = read("panel/js/hnk_whats_new.js"), MAIN = read("panel/main.js");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.123.1", PVER = "6.194.1";   /* the wave shipped as 6.123.0 / 6.194.0; 6.123.1 (the Imagine wipe hotfix) moved the pair on, and the strip now leads with that row */
+const VER = "6.124.0", PVER = "6.195.0";   /* the wave shipped as 6.123.0 / 6.194.0; every release since (6.123.1, 6.124.0) moves the pair on, and the strip leads with the newest row */
 const IDS = ["prop-insert", "decor-theme-color", "light-gear-remove"];
 
 let failures = 0;
@@ -52,7 +52,7 @@ const at = (id) => W.findIndex(w => w.id === id);
 const PI = byId["prop-insert"], DT = byId["decor-theme-color"], LG = byId["light-gear-remove"];
 report("A1) the three records exist, with the wave's titles, right after Reference Scenes (the two scene cards) and right after Selection Edit (the clean-up card)",
   !!PI && !!DT && !!LG && PI.title === "Furniture & Prop Insert" && DT.title === "Decor Theme Colour" && LG.title === "Remove Light Stands & Gear" &&
-  at("prop-insert") === at("reference-scenes") + 1 && at("decor-theme-color") === at("prop-insert") + 1 && at("light-gear-remove") === at("region-edit") + 1 &&
+  at("prop-insert") === at("reference-scenes") + 1 && at("decor-theme-color") === at("prop-insert") + 1 && at("light-gear-remove") === at("region-edit") + 2 &&   /* 6.124.0 — Selection Swap & Fill sits between Selection Edit and the gear card */
   IDS.every(id => typeof byId[id].visual === "string" && fs.existsSync(path.join(ROOT, "docs", "app", "lib", "ui", byId[id].visual))),
   { pi: at("prop-insert"), rs: at("reference-scenes"), dt: at("decor-theme-color"), lg: at("light-gear-remove"), re: at("region-edit") });
 report("A2) Furniture & Prop Insert takes two required inputs — the subject as IMAGE 1, the furniture photo as IMAGE 2 — and two fields: the SWAP RULE switch (ON by default, with an OFF line that adds beside the subject) and the optional PLACEMENT text filling {{WHERE}}",
@@ -89,7 +89,7 @@ report("A6) every prompt speaks of the crop / composition itself, so the app's g
 
 /* ===================== B) the app's source ===================== */
 report("B1) Background & Scene lists the prop and decor cards right after Reference Scenes and before Couple Compose; Repair & Enhance lists the gear card right after Selection Edit",
-  has(APP, '"scene-fit-pro","studio-look-copy","reference-scenes","prop-insert","decor-theme-color","couple-compose",') && has(APP, 'st(["region-edit","light-gear-remove","upscale",'), null);
+  has(APP, '"scene-fit-pro","studio-look-copy","reference-scenes","prop-insert","decor-theme-color","couple-compose",') && has(APP, 'st(["region-edit","selection-swap","light-gear-remove","upscale",'), null);   /* 6.124.0 — Selection Swap & Fill joined the row */
 const sumGaps = [];
 IDS.forEach(id => {
   const m = APP.match(new RegExp('      "' + id + '":\\{([^\\n]*)\\},\\n'));
@@ -114,13 +114,13 @@ const stepGaps = [];
 });
 report("B3) four guide steps per card in English and in Myanmar — each names IMAGE 1 and ends on GENERATE, the prop guide names IMAGE 2 and the switch", stepGaps.length === 0 && /switch ON to replace/.test(APP) && /switch ON ထားပါ/.test(APP), stepGaps);
 const LANDING_CLAIMS = LANDING.replace(/<!--[\s\S]*?-->/g, "");
-report("B4) the counts moved 194 → 197 Smart Workflows and 201 → 204 One-Tap on the app's meta and statline fallbacks, the landing (ASCII and Myanmar digits, the two counters) and the panel's Home — and the old numbers are gone",
-  (APP.match(/Smart Workflow 197/g) || []).length === 3 && !has(APP, "Smart Workflow 194") && (APP.match(/One-Tap 204/g) || []).length === 3 && !has(APP, "One-Tap 201") &&
-  has(APP, '<b id="stWfCount">197</b>') && has(APP, '<b id="stTapCount">204</b>') &&
-  (LANDING.match(/Smart Workflow 197/g) || []).length >= 30 && !has(LANDING_CLAIMS, "Smart Workflow 194") && (LANDING.match(/One-Tap 204/g) || []).length >= 30 && !has(LANDING_CLAIMS, "One-Tap 201") &&
-  /data-count="wf">197</.test(LANDING) && /data-count="tap">204</.test(LANDING) && has(LANDING, "၁၉၇") && !has(LANDING_CLAIMS, "၁၉၄") &&
-  has(PANEL_HOME, 'stat(204, "One-Tap Workflows");') && W.filter(x => !x.kind).length === 93,
-  { app197: (APP.match(/Smart Workflow 197/g) || []).length, landing197: (LANDING.match(/Smart Workflow 197/g) || []).length, wf: W.length });
+report("B4) the counts moved 194 → 197 → 198 Smart Workflows and 201 → 204 → 205 One-Tap (6.124.0 added Selection Swap & Fill) on the app's meta and statline fallbacks, the landing (ASCII and Myanmar digits, the two counters) and the panel's Home — and the old numbers are gone",
+  (APP.match(/Smart Workflow 198/g) || []).length === 3 && !has(APP, "Smart Workflow 194") && (APP.match(/One-Tap 205/g) || []).length === 3 && !has(APP, "One-Tap 201") &&
+  has(APP, '<b id="stWfCount">198</b>') && has(APP, '<b id="stTapCount">205</b>') &&
+  (LANDING.match(/Smart Workflow 198/g) || []).length >= 30 && !has(LANDING_CLAIMS, "Smart Workflow 194") && (LANDING.match(/One-Tap 205/g) || []).length >= 30 && !has(LANDING_CLAIMS, "One-Tap 201") &&
+  /data-count="wf">198</.test(LANDING) && /data-count="tap">205</.test(LANDING) && has(LANDING, "၁၉၈") && !has(LANDING_CLAIMS, "၁၉၄") &&
+  has(PANEL_HOME, 'stat(205, "One-Tap Workflows");') && W.filter(x => !x.kind).length === 94,
+  { app198: (APP.match(/Smart Workflow 198/g) || []).length, landing198: (LANDING.match(/Smart Workflow 198/g) || []).length, wf: W.length });
 const artGaps = [];
 IDS.forEach(id => {
   const p = path.join(ROOT, "docs", "app", "lib", "wf", "cards5", id + ".jpg");
@@ -137,13 +137,13 @@ const WAVE_V = "6.123.0";
 const row = rows.find(r => r.v === WAVE_V);
 /* the row wears the shipped shape — t a plain title, s the excerpt with its **bold lead** — because renderDashNew
    reads both (a row without s threw "Cannot read properties of undefined (reading 'my')" in the dry run) */
-report("B6) the What's New strip carries the 6.123.0 row — kind wf, opening the prop card — a plain title and a bold-led excerpt in all nine languages, both naming the three cards, and the panel's lifted table carries it (it led the strip when this wave shipped; 6.123.1's row sits above it now)",
-  !!row && row.v === WAVE_V && rows.indexOf(row) <= 1 && row.kind === "wf" && row.ref === "prop-insert" && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
+report("B6) the What's New strip carries the 6.123.0 row — kind wf, opening the prop card — a plain title and a bold-led excerpt in all nine languages, both naming the three cards, and the panel's lifted table carries it (it led the strip when this wave shipped; the 6.123.1 and 6.124.0 rows sit above it now)",
+  !!row && row.v === WAVE_V && rows.indexOf(row) <= 2 && row.kind === "wf" && row.ref === "prop-insert" && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
     [row.t[l], row.s[l]].every(x => /Furniture & Prop Insert/.test(x) && /Decor Theme Colour/.test(x) && /Remove Light Stands & Gear/.test(x))) &&
   has(PWN, '"v":"' + WAVE_V + '"') && has(PWN, '"ref":"prop-insert"'), row && { v: row.v, kind: row.kind, ref: row.ref, at: rows.indexOf(row) });
-report("B7) CI runs this test right after the Reference Scenes check, the suite counts 265 invocations and the landing says 265 tests",
+report("B7) CI runs this test right after the Reference Scenes check, the suite counts 266 invocations and the landing says 266 tests (265 until 6.124.0 added verify_selection_swap)",
   has(CI, "run: PORT=8931 node test/verify_reference_scenes.js\n") && has(CI, "run: PORT=8931 node test/verify_prop_wave_h.js") && CI.indexOf("verify_reference_scenes.js") < CI.indexOf("verify_prop_wave_h.js") &&
-  (CI.match(/node test\//g) || []).length === 265 && has(LANDING, "265 tests") && !has(LANDING, "264 tests") && /data-count="tests">265</.test(LANDING), { steps: (CI.match(/node test\//g) || []).length });
+  (CI.match(/node test\//g) || []).length === 266 && has(LANDING, "266 tests") && !has(LANDING, "264 tests") && /data-count="tests">266</.test(LANDING), { steps: (CI.match(/node test\//g) || []).length });
 
 /* ===================== C) the panel's lifted catalog and its compiler ===================== */
 const cat = JSON.parse(PANEL_CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);
@@ -160,8 +160,8 @@ IDS.forEach(id => {
   LANGS.forEach(l => { const s = cat.i18n && cat.i18n[l] && cat.i18n[l].sum && cat.i18n[l].sum[id]; if (!s || s.length < 10) pGaps.push(id + " no " + l + " summary"); });
 });
 const bgCat = cat.categories.find(c => c.category === "Background & Scene"), rpCat = cat.categories.find(c => c.category === "Repair & Enhance");
-report("C1) the panel's lifted catalog carries the three with the app's prompts, AVOID lists, inputs and fields, nine card lines each, 197 cards in all — the scene pair under Background & Scene, the gear card under Repair & Enhance",
-  pGaps.length === 0 && cat.total === 197 && items.length === 197 && !!bgCat && ["prop-insert", "decor-theme-color"].every(id => bgCat.items.some(x => x.id === id)) && !!rpCat && rpCat.items.some(x => x.id === "light-gear-remove"),
+report("C1) the panel's lifted catalog carries the three with the app's prompts, AVOID lists, inputs and fields, nine card lines each, 198 cards in all — the scene pair under Background & Scene, the gear card under Repair & Enhance",
+  pGaps.length === 0 && cat.total === 198 && items.length === 198 && !!bgCat && ["prop-insert", "decor-theme-color"].every(id => bgCat.items.some(x => x.id === id)) && !!rpCat && rpCat.items.some(x => x.id === "light-gear-remove"),
   { pGaps: pGaps.slice(0, 8), total: cat.total });
 const REG = require("../panel/src/workflows/workflow-registry.js");
 const cOn = REG.compile("prop-insert", { replace: true, where: "" }), cOff = REG.compile("prop-insert", { replace: false, where: "on her left, her hand resting on it" });
@@ -216,7 +216,7 @@ async function releasePins() {
   const manifest = JSON.parse(read("panel/release-manifest.json")), pv = JSON.parse(read("docs/download/panel-version.json"));
   const CLAIMS = LANDING.replace(/\/\*[\s\S]*?\*\//g, "").replace(/<!--[\s\S]*?-->/g, "");
   report(`E1) ${VER} / panel ${PVER} in lockstep: APP_VER, version.json, sw.js cache, API_VERSION, PANEL_VERSION, manifest, release-manifest (+ artifact file, a 64-hex sha and a real size), panel-version.json, the download footer, the landing's badges`,
-    has(APP, `var APP_VER="${VER}";`) && has(read("docs/app/version.json"), `"v":"${VER}"`) && has(read("docs/app/sw.js"), 'var CACHE = "hnk-web-studio-v6-123-1";') &&
+    has(APP, `var APP_VER="${VER}";`) && has(read("docs/app/version.json"), `"v":"${VER}"`) && has(read("docs/app/sw.js"), 'var CACHE = "hnk-web-studio-v6-124-0";') &&
     has(read("server/index.js"), `const API_VERSION = "${VER}";`) && has(MAIN, `const PANEL_VERSION = "${PVER}";`) && has(read("panel/manifest.json"), `"version": "${PVER}"`) &&
     manifest.version === PVER && manifest.artifact_file === `HNK_Ai_Panel_v${PVER}.ccx` && /^[0-9a-f]{64}$/.test(manifest.sha256) && manifest.bytes > 20000000 &&
     pv.v === PVER && pv.latest_version === PVER && has(read("docs/download/index.html"), `Web App ${VER} · Panel ${PVER}`) &&
@@ -226,9 +226,9 @@ async function releasePins() {
   const browser = withPremium(await chromium.launch());
   try {
     const { r, errs } = await appWalk(browser);
-    report("D1) the booted app composes 197 cards: Reference Scenes → Furniture & Prop Insert → Decor Theme Colour → Couple Compose under Background & Scene, Selection Edit → Remove Light Stands & Gear under Repair & Enhance; the three carry their card pictures; the statline says 197 / 204",
-      r.total === 197 && JSON.stringify(r.bgOrder) === JSON.stringify(["reference-scenes", "prop-insert", "decor-theme-color", "couple-compose"]) && JSON.stringify(r.rpOrder.slice(0, 2)) === JSON.stringify(["region-edit", "light-gear-remove"]) &&
-      r.cardImg.every((c, i) => c === "lib/wf/cards5/" + IDS[i] + ".jpg") && r.titles[0] === "Furniture & Prop Insert" && r.wfc === "197" && r.tap === "204", r);
+    report("D1) the booted app composes 198 cards: Reference Scenes → Furniture & Prop Insert → Decor Theme Colour → Couple Compose under Background & Scene, Selection Edit → Selection Swap & Fill → Remove Light Stands & Gear under Repair & Enhance; the three carry their card pictures; the statline says 198 / 205",
+      r.total === 198 && JSON.stringify(r.bgOrder) === JSON.stringify(["reference-scenes", "prop-insert", "decor-theme-color", "couple-compose"]) && JSON.stringify(r.rpOrder.slice(0, 3)) === JSON.stringify(["region-edit", "selection-swap", "light-gear-remove"]) &&
+      r.cardImg.every((c, i) => c === "lib/wf/cards5/" + IDS[i] + ".jpg") && r.titles[0] === "Furniture & Prop Insert" && r.wfc === "198" && r.tap === "205", r);
     report("D2) the wizard's own field maths: switch ON → the SWAP RULE line, no PLACEMENT line, no raw token; switch OFF + a typed place → the OFF line in its place and 'PLACEMENT: on her left, her hand resting on it' (whitespace collapsed); the theme default is White & Gold and a typed theme fills every {{THEME}}; the gear card batches with its AVOID list and no FRAME LOCK",
       /\nSWAP RULE: if IMAGE 1 already holds/.test(r.on) && !/PLACEMENT:/.test(r.on) && !/\{\{/.test(r.on) &&
       /\nSWAP RULE: remove nothing from IMAGE 1/.test(r.off) && !/SWAP RULE: if IMAGE 1/.test(r.off) && /\nPLACEMENT: on her left, her hand resting on it\n/.test(r.off) &&

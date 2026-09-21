@@ -32,7 +32,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>HNK Web Studio — One-Tap AI Studio</title>
 <link rel="canonical" href="https://hnkaistudio.com/app/">
-<meta name="description" content="Browser ထဲမှာ One-Tap 204 + Visual Library 1850 + Smart Workflow 197 + Retouch A Studio 163 · Retouch B Pro 213 — HNK Create Studio Web App">
+<meta name="description" content="Browser ထဲမှာ One-Tap 205 + Visual Library 1850 + Smart Workflow 198 + Retouch A Studio 163 · Retouch B Pro 213 — HNK Create Studio Web App">
 <meta name="theme-color" content="#0b0d14">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="lib/favicon-48.png" sizes="48x48">
@@ -45,14 +45,14 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="HNK Create Studio">
 <meta property="og:title" content="HNK Web Studio — One-Tap AI Studio">
-<meta property="og:description" content="One-Tap 204 · Visual Library 1850 · Smart Workflow 197 · Retouch A Studio 163 · Retouch B Pro 213 — browser ထဲမှာ တိုက်ရိုက် AI ပုံထုတ်၊ install မလို။">
+<meta property="og:description" content="One-Tap 205 · Visual Library 1850 · Smart Workflow 198 · Retouch A Studio 163 · Retouch B Pro 213 — browser ထဲမှာ တိုက်ရိုက် AI ပုံထုတ်၊ install မလို။">
 <meta property="og:url" content="https://hnkaistudio.com/app/">
 <meta property="og:image" content="https://hnkaistudio.com/app/og-app.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="HNK Web Studio — One-Tap AI Studio">
-<meta name="twitter:description" content="One-Tap 204 · Visual Library 1850 · Smart Workflow 197 · Retouch A Studio 163 · Retouch B Pro 213">
+<meta name="twitter:description" content="One-Tap 205 · Visual Library 1850 · Smart Workflow 198 · Retouch A Studio 163 · Retouch B Pro 213">
 <meta name="twitter:image" content="https://hnkaistudio.com/app/og-app.jpg">
 <style>
 :root{
@@ -661,6 +661,13 @@ textarea.wiz-prompt{min-height:220px}
 .wiz-field.is-text .wiz-text{width:100%;min-height:76px;line-height:1.5;resize:vertical}
 .wiz-text-hint{font-size:11px;line-height:1.45;color:var(--muted,#96a0b5)}
 .wiz-swatch{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.35);padding:0;cursor:pointer}
+/* 6.124.0 — choice chips (one of a few ways) and quick picks under a text line — Selection Swap & Fill */
+.wiz-field.is-choice{flex-direction:column;align-items:stretch;gap:6px;margin:8px 0 6px;padding:10px 12px 11px;border:1px solid var(--line,#2a3146);border-left:3px solid var(--gold,#e9b949);border-radius:10px;background:rgba(255,255,255,.03)}
+.wiz-field.is-choice .wfl{min-width:0;font-weight:700;font-size:13px;color:var(--text,#eef1f7)}
+.wiz-choices{display:flex;flex-wrap:wrap;gap:6px}
+.wiz-choice{min-height:38px;padding:6px 13px;cursor:pointer}
+.wiz-quick{margin-top:2px}
+.wiz-quick-chip{min-height:32px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer}
 .wiz-color{width:34px;height:28px;padding:0;border:none;background:none;cursor:pointer}
 .wiz-board{margin-top:14px}
 .wiz-board-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
@@ -2984,9 +2991,9 @@ html.splashing #splash{display:flex}
        written by the same runtime code that populated it in the hero; the
        Visual Library count is now runtime too (stLibCount ← LW.items.length) -->
   <div class="statline dash-stat">
-    <div><b id="stTapCount">204</b><span>One-Tap Workflows</span></div>
+    <div><b id="stTapCount">205</b><span>One-Tap Workflows</span></div>
     <div><b id="stLibCount">1850</b><span>Visual Library</span></div>
-    <div><b id="stWfCount">197</b><span>Smart Workflow</span></div>
+    <div><b id="stWfCount">198</b><span>Smart Workflow</span></div>
     <div><b id="stMeituCount"></b><span>Retouch A Controls</span></div>
     <div><b id="stEvotoCount"></b><span>Retouch B Pro</span></div>
   </div>
@@ -4474,12 +4481,12 @@ html.splashing #splash{display:flex}
 <div class="wiz" id="wizPay" role="dialog" aria-modal="true"><div class="wiz-in" id="wizPayIn"></div></div>
 
 <script src="data/hnkdata.js?v=3b68aeb2725b"></script>
-<script src="data/libwf.js?v=553c00dca365"></script>
+<script src="data/libwf.js?v=b10074566ef8"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=8ae5b031a6e6"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=a8aecb41f255"></script>
-<script src="data/whatsnew.js?v=65c1cd4116bf"></script>
+<script src="data/whatsnew.js?v=dc77bc7a76f1"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -11315,6 +11322,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       "Check the switches — the light on the subject is kept as shot, only the equipment goes",
       "Tap GENERATE — the gear is gone and the backdrop, wall or floor it hid is continued without a seam"
     ],
+    "selection-swap": [
+      "Add your photo as IMAGE 1 — in Photoshop the workflow reads your live rectangular selection instead; on the web you draw the rectangle on the photo on the next step",
+      "Optionally add the exact item as IMAGE 2 — a shop photo of the chair, bouquet or lamp; without it, the OBJECT line names the object",
+      "Tap Start — pick Replace · Add · Fill · Change, name the object (or tap a quick pick), say how big and where, keep the two switches on for a true-to-life result",
+      "Tap GENERATE — only the selected area changes; in Photoshop the result lands as a layer masked to your exact selection"
+    ],
     "couple-compose": [
       "Add the bride's face photo as IMAGE 1 — a clear front view of her face",
       "Add the groom's face photo as IMAGE 2, then the couple photograph whose pose, dress and scene you want as IMAGE 3",
@@ -11508,6 +11521,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       "“Start” နှိပ်ပါ — clean-set prompt ရောက်လာမယ်၊ ဘာမှ ရေးစရာမလို",
       "Switch တွေ စစ်ပါ — subject ပေါ်က အလင်း အတိုင်း ကျန်မယ်၊ ပစ္စည်းပဲ ဖယ်မယ်",
       "GENERATE နှိပ်ပါ — ပစ္စည်းတွေ ပျောက်ပြီး နောက်ခံ · နံရံ · ကြမ်း ချောချော ပြန်ဆက်ပေးမယ်"
+    ],
+    "selection-swap": [
+      "ပုံကို IMAGE 1 မှာ တင်ပါ — Photoshop မှာဆိုရင် Rectangle selection ကို အလိုလို ဖတ်မယ်၊ web မှာ နောက်တစ်ဆင့်မှာ ပုံပေါ် လေးထောင့် ဆွဲပါ",
+      "ပစ္စည်းအတိအကျ ရှိရင် IMAGE 2 မှာ တင်ပါ (မတင်လည်းရ) — ထိုင်ခုံ · ပန်းစည်း · မီးအိမ် ဆိုင်ပုံ၊ မတင်ရင် OBJECT စာကြောင်းက ပြောမယ်",
+      "“Start” နှိပ်ပါ — Replace · Add · Fill · Change ရွေး၊ ပစ္စည်း ရေး (သို့) chip နှိပ်၊ အရွယ် · နေရာ ပြော၊ switch ၂ ခု ဖွင့်ထားရင် တကယ့်ပုံလို ရမယ်",
+      "GENERATE နှိပ်ပါ — ရွေးထားတဲ့နေရာပဲ ပြောင်းမယ်၊ Photoshop မှာ selection အတိုင်း mask ပါတဲ့ layer အဖြစ် ရောက်လာမယ်"
     ],
     "couple-compose": [
       "မိန်းကလေးရဲ့ မျက်နှာပုံကို IMAGE 1 မှာ တင်ပါ — မျက်နှာ ကြည်ကြည်လင်လင် ရှေ့တည့်တည့်",
@@ -11727,9 +11746,29 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       }else if(f.type==="color"){
         var cv=String(v||f.default||"#123B2F");
         if(f.token) p=p.split(f.token).join(cv+" ("+hnkColourName(cv)+")");
+      }else if(f.type==="choice"){
+        /* 6.124.0 — ONE OF A FEW WAYS (Selection Swap & Fill's Replace · Add · Fill · Change): the chosen option's own
+           line lands on the token; an unknown value falls back to the default, then to the first option. The panel's
+           applyFields carries the same branch, byte for byte in effect. */
+        var opts=f.options||[], pick=null, oi;
+        for(oi=0;oi<opts.length;oi++){ if(opts[oi].v===v){ pick=opts[oi]; break; } }
+        if(!pick){ for(oi=0;oi<opts.length;oi++){ if(opts[oi].v===f.default){ pick=opts[oi]; break; } } }
+        if(!pick) pick=opts[0]||null;
+        if(f.token) p=p.split(f.token).join(pick ? (pick.line||pick.v) : "");
       }
     });
     return p;
+  }
+  /* 6.124.0 — QUICK PICKS under a text line: one tap fills the line with the chip's English value (the engine reads
+     English best); the chip's label is in the student's language. */
+  function wizQuickChips(f, ti){
+    var qrow=el("div","wiz-choices wiz-quick");
+    (f.chips||[]).forEach(function(o){
+      var qb=el("button","chip wiz-quick-chip"); qb.type="button"; qb.textContent=L9(o.label||{en:o.v}); qb.setAttribute("data-v",o.v);
+      qb.onclick=function(ev){ ev.preventDefault(); ti.value=o.v; wiz.fieldVals[f.key]=o.v; if(wiz._genReqSync) wiz._genReqSync(); };
+      qrow.appendChild(qb);
+    });
+    return qrow;
   }
   function openWizard(w){
     recentPush(w.id); renderFavRecent();
@@ -11797,7 +11836,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
        Photoshop and masks the result back to it; the web app now does the same by hand — IMAGE 1 is cropped to
        the rectangle the student drew on step 2, the crop alone is sent, and the result is pasted back into the
        untouched full photograph at the same pixels. No rectangle drawn: the whole photo goes, as before. */
-    var rgn=(w.id==="region-edit" && wiz.region && state.refs[0] && state.refs[0].b64) ? wiz.region : null, rgnFull=null;
+    var rgn=((w.id==="region-edit"||w.region) && wiz.region && state.refs[0] && state.refs[0].b64) ? wiz.region : null, rgnFull=null;   /* 6.124.0 — every region workflow (Selection Swap & Fill joined Selection Edit) */
     if(rgn){
       try{ var rgCrop=await wizRegionCrop(state.refs[0], rgn); if(rgCrop){ rgnFull=state.refs[0]; rgn.px=rgCrop.px; state.refs[0]={mime:rgCrop.mime,b64:rgCrop.b64,label:"selection"}; } else rgn=null; }
       catch(eRg){ rgn=null; }
@@ -12075,7 +12114,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
         if(i>0 && isSceneLabel(inp.label)) body.appendChild(wizSceneStrip(inp,i));
       });
       /* 6.93.0 — Selection Edit on the web: the marquee is drawn on the photo here */
-      if(w.id==="region-edit" && state.refs[0] && state.refs[0].b64) body.appendChild(wizRegionPicker(state.refs[0]));
+      if((w.id==="region-edit"||w.region) && state.refs[0] && state.refs[0].b64) body.appendChild(wizRegionPicker(state.refs[0]));   /* 6.124.0 — the record's region flag, not one id */
       if(!wizReqOk()){ var rw=el("div","mut"); setIcnText(rw,"i-warn",t("wiz_reqwarn")); body.appendChild(rw); }
     }
     if (wiz.step===3){
@@ -12119,6 +12158,8 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
             ti.oninput=function(){ wiz.fieldVals[f.key]=ti.value; if(wiz._genReqSync) wiz._genReqSync(); };
             frow.appendChild(ti);
             frow.appendChild(el("div","wiz-text-hint", L9(WIZ_TEXT_HINT)));
+            if(f.hint) frow.lastChild.textContent=L9(f.hint);   /* 6.124.0 — a field may carry its own hint */
+            if(f.chips&&f.chips.length) frow.appendChild(wizQuickChips(f, ti));   /* 6.124.0 — quick picks fill the line */
           }else if(f.type==="color"){
             frow.appendChild(flab);
             var cwrap=el("div","wiz-swatches");
@@ -12133,6 +12174,25 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
             });
             cwrap.appendChild(ci);
             frow.appendChild(cwrap);
+          }else if(f.type==="choice"){
+            /* 6.124.0 — ONE OF A FEW WAYS: a row of chips (Replace · Add · Fill · Change on Selection Swap & Fill). The
+               chosen option's own line lands on the tagged prompt line (applyWfFields) and its hint reads under the row. */
+            frow.className += " is-choice";
+            frow.appendChild(flab);
+            var crow=el("div","wiz-choices"), chint=el("div","wiz-text-hint");
+            var cur=wiz.fieldVals[f.key];
+            if(!(f.options||[]).some(function(o){ return o.v===cur; })) wiz.fieldVals[f.key]=f.default;
+            var paintChoice=function(){
+              [].forEach.call(crow.children,function(c){ c.className="chip wiz-choice"+(c.getAttribute("data-v")===wiz.fieldVals[f.key]?" on":""); });
+              var po=(f.options||[]).filter(function(x){ return x.v===wiz.fieldVals[f.key]; })[0];
+              chint.textContent=(po&&po.hint) ? L9(po.hint) : "";
+            };
+            (f.options||[]).forEach(function(o){
+              var cb=el("button","chip wiz-choice"); cb.type="button"; cb.textContent=L9(o.label||{en:o.v}); cb.setAttribute("data-v",o.v);
+              cb.onclick=function(ev){ ev.preventDefault(); wiz.fieldVals[f.key]=o.v; paintChoice(); };
+              crow.appendChild(cb);
+            });
+            frow.appendChild(crow); frow.appendChild(chint); paintChoice();
           }
           fwrap.appendChild(frow);
         });
@@ -12622,6 +12682,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       "derma-skin":{my:"မျက်နှာရော ကိုယ်လုံးရော — ဆေးခန်းအဆင့် အသားအရေ retouch၊ texture အစစ် မပျက်",en:"Dermatologist-grade skin retouch for face and body — true texture kept",shn:"မူတ်ႉမႃႇၼိူဝ်ႉၼင် ၸၼ်ႉႁၢၼ်ႉယႃ — texture တႄႉမၼ်း ဢမ်ႇလူႉ",kac:"Myi hte hkum ting — tsi rung daram hpyen san ai, texture teng ma ai",th:"รีทัชผิวหน้าและกายระดับคลินิก — คงเท็กซ์เจอร์ผิวจริง",zh:"面部与身体的皮肤科级精修 — 真实肤质纹理保留",vi:"Retouch da mặt và toàn thân chuẩn da liễu — giữ nguyên kết cấu da thật",id:"Retouch kulit wajah dan badan setara dermatolog — tekstur asli terjaga",ms:"Retouch kulit muka dan badan gred dermatologi — tekstur asli kekal"},
       "blue-silk":{my:"ဘယ်ပုံထည့်ထည့် — ပိုးထည်ပန်းချီခန်း series တစ်တွဲတည်း၊ စာသားရော နံရံအရောင်ရော စိတ်ကြိုက်",en:"Any photo joins the same painted-silk boudoir series — your caption, your wall colour",shn:"ၶႅပ်းႁၢင်ႈသင်သႂ်ႇၵေႃႈ — blue silk series မိူၼ်ၵၼ်, လိၵ်ႈလႄႈသီ ၸွမ်းၸႂ်",kac:"Kaning re sumla bang tim — blue silk series bung ai, laika hte nsam na myit hte",th:"ใส่ภาพไหนก็ได้ — ซีรีส์ห้องผ้าไหมวาดเดียวกัน ข้อความและสีผนังเลือกเอง",zh:"任何照片都进入同一绢本画室系列 — 文字与墙色自选",vi:"Ảnh nào cũng vào cùng một bộ ảnh phòng lụa vẽ — chữ và màu tường tự chọn",id:"Foto apa pun masuk seri kamar sutra lukis yang sama — teks dan warna dinding pilihan Anda",ms:"Mana-mana foto masuk siri bilik sutera lukis sama — teks dan warna dinding pilihan anda"},
       "region-edit":{my:"Photoshop မှာ Rectangle select ပေးပြီး စာရိုက် — ရွေးထားတဲ့နေရာပဲ ပြောင်းမယ်၊ ကျန်တာ pixel မလှုပ်",en:"Marquee-select in Photoshop, type the change — only that area changes, outside pixels untouched",shn:"Select ၼႂ်း Photoshop သေ တႅမ်ႈလိၵ်ႈ — လႅၵ်ႈတီႈလိူၵ်ႇဝႆႉၵူၺ်း",kac:"Photoshop kaw select nna ka u — lata da ai shara sha galai na",th:"เลือกพื้นที่ใน Photoshop แล้วพิมพ์ — เปลี่ยนแค่ตรงนั้น นอกนั้นไม่แตะ",zh:"在 Photoshop 框选后输入 — 只改选区内，选区外一像素不动",vi:"Chọn vùng trong Photoshop rồi gõ — chỉ vùng đó đổi, ngoài vùng giữ nguyên",id:"Seleksi di Photoshop lalu ketik — hanya area itu berubah",ms:"Pilih kawasan dalam Photoshop, taip — hanya kawasan itu berubah"},
+      "selection-swap":{my:"Photoshop မှာ Rectangle select ပေးပြီး Replace · Add · Fill · Change ရွေး၊ ပစ္စည်း ရေး (သို့) IMAGE 2 ပေး — ရွေးထားတဲ့နေရာပဲ ပြောင်းမယ်၊ ကျန်တာ pixel မလှုပ်",en:"Marquee-select in Photoshop, pick Replace · Add · Fill · Change and name the object (or give it as IMAGE 2) — only that area changes, outside pixels untouched",shn:"Select ၼႂ်း Photoshop သေ လိူၵ်ႈ Replace · Add · Fill · Change တႅမ်ႈၶူဝ်း (ႁိုဝ် ပၼ် IMAGE 2) — လႅၵ်ႈတီႈလိူၵ်ႈဝႆႉၵူၺ်း",kac:"Photoshop kaw select nna Replace · Add · Fill · Change lata, rai hpe ka u (shing n rai IMAGE 2 jaw) — lata da ai shara sha galai na",th:"เลือกพื้นที่ใน Photoshop เลือก Replace · Add · Fill · Change แล้วพิมพ์ชื่อวัตถุ (หรือให้ IMAGE 2) — เปลี่ยนแค่ตรงนั้น นอกนั้นไม่แตะ",zh:"在 Photoshop 框选后选 Replace · Add · Fill · Change，写下物件（或给 IMAGE 2）— 只改选区内，选区外一像素不动",vi:"Chọn vùng trong Photoshop, chọn Replace · Add · Fill · Change rồi ghi vật (hoặc đưa IMAGE 2) — chỉ vùng đó đổi, ngoài vùng giữ nguyên",id:"Seleksi di Photoshop, pilih Replace · Add · Fill · Change lalu tulis benda (atau beri IMAGE 2) — hanya area itu berubah",ms:"Pilih kawasan dalam Photoshop, pilih Replace · Add · Fill · Change, tulis objek (atau beri IMAGE 2) — hanya kawasan itu berubah"},
       "light-gear-remove":{my:"ဘောင်ထဲ ဝင်နေတဲ့ softbox · light stand · tripod · reflector · ကြိုး · sandbag အားလုံး ဖယ်ပြီး နောက်ခံ ပြန်ဆောက် — subject ပေါ်က အလင်း အတိုင်း ကျန်",en:"Every softbox, light stand, tripod, reflector, cable and sandbag caught in the frame removed and the set behind rebuilt — the light on the subject stays as shot",shn:"ဢဝ် softbox · light stand · tripod · reflector · သၢႆ · sandbag ၼႂ်းၶွပ်ႇ ဢွၵ်ႇ သေ မႄးလင်ၶိုၼ်း — လႅင်းၼိူဝ် subject မိူၼ်ၵဝ်ႇ",kac:"Frame hta shang nga ai softbox · light stand · tripod · reflector · shabrai · sandbag yawng shaw nna hpang bai gaw — subject ntsa nhtoi dai hku nga",th:"ลบ softbox ขาไฟ ขาตั้งกล้อง แผ่นสะท้อน สายไฟ ถุงทรายที่หลุดเข้ากรอบ แล้วสร้างฉากด้านหลังใหม่ — แสงบนตัวแบบคงเดิม",zh:"移除入镜的柔光箱、灯架、三脚架、反光板、线缆、沙袋并重建其后的布景——主体上的光线保持原样",vi:"Xóa mọi softbox, chân đèn, tripod, hắt sáng, dây cáp, bao cát lọt vào khung và dựng lại set phía sau — ánh sáng trên chủ thể giữ nguyên",id:"Semua softbox, light stand, tripod, reflektor, kabel dan sandbag yang masuk frame dihapus dan set di belakangnya dibangun ulang — cahaya pada subjek tetap",ms:"Semua softbox, light stand, tripod, reflektor, kabel dan sandbag yang masuk bingkai dibuang dan set di belakang dibina semula — cahaya pada subjek kekal"},
       "master-pro-retouch":{my:"Studio finish တစ်ခုလုံး တစ်ချက်တည်း — အသား၊ ဆံပင်၊ ဂါဝန်၊ လက်၊ နောက်ခံရှင်းလင်းရေး",en:"The whole studio finish in one tap — skin, hair, gown, hands, set cleanup",shn:"Studio finish တင်းသဵင်ႈ ၼဵၵ်းပွၵ်ႈလဵဝ် — ၽိဝ်ၼိူဝ်ႉ၊ ၶူၼ်ႁူဝ်၊ gown၊ မိုဝ်း၊ ႁဵတ်းပိုၼ်ႉလင်မူတ်းသႂ်",kac:"Studio finish yawng hpe kalang mi hte — hpyi, kara, gown, lata hte shara san seng",th:"งานรีทัชสตูดิโอครบชุดในแตะเดียว — ผิว ผม ชุด มือ และเก็บกวาดฉาก",zh:"一键完成整套影棚精修 — 皮肤、头发、礼服、双手与场景清理",vi:"Trọn bộ hoàn thiện studio trong một chạm — da, tóc, váy, tay và dọn phông",id:"Seluruh finishing studio dalam satu ketuk — kulit, rambut, gaun, tangan, bersihkan set",ms:"Seluruh kemasan studio dalam satu ketikan — kulit, rambut, gaun, tangan, kemas set"},
       "cinematic-poster":{my:"မြင်ကွင်းကို ရုပ်ရှင်ဆန်အောင် — လူတွေက မူရင်းအတိုင်း",en:"Make the scene cinematic — the people stay exactly as they are",shn:"ႁဵတ်းႁႂ်ႈ scene ပဵၼ်ပိူင်ငဝ်းတူင်ႉ — ၵူၼ်း မိူၼ်ၵဝ်ႇ",kac:"Shara hpe cinematic byin hkra galaw — masha ni gaw raw nga",th:"ทำให้ฉากดูเหมือนภาพยนตร์ — ตัวคนยังคงเดิมทุกอย่าง",zh:"让场景充满电影感 — 画面里的人完全不变",vi:"Biến khung cảnh thành điện ảnh — con người giữ nguyên hoàn toàn",id:"Jadikan scene sinematik — orangnya tetap persis sama",ms:"Jadikan scene sinematik — orangnya kekal sama persis"},
@@ -12800,7 +12861,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       })});
     cats.push({ t:"Repair & Enhance", ic:"i-tools",
       desc: L9({"my": "ပုံဟောင်းပြင်၊ ကြည်အောင်လုပ်၊ လူပို/လက်/ခြေ ရှင်း၊ object/ရေ ပြင် — ပြုပြင်ရေးအကုန်", "en": "Restore, upscale, cleanup and object/water edits", "shn": "မႄးၶႅပ်းႁၢင်ႈၵဝ်ႇ၊ upscale၊ cleanup", "kac": "Sumla dingsa hkrak shatai, upscale, cleanup", "th": "ซ่อมภาพเก่า เพิ่มความคม ทำความสะอาด แก้วัตถุ/น้ำ", "zh": "修复老照片、放大、清理与物件/水面编辑", "vi": "Phục hồi, nâng nét, dọn dẹp và chỉnh vật thể/nước", "id": "Restorasi, upscale, pembersihan, edit objek/air", "ms": "Pemulihan, upscale, pembersihan, edit objek/air"}),
-      items: st(["region-edit","light-gear-remove","upscale","object-edit","water-edit","text-logo","film-grade","white-balance-fix","sky-water-enhance","editorial-caption","magazine-cover"]).concat(prs(["restore"])).concat(D.cleanups.map(function(c){
+      items: st(["region-edit","selection-swap","light-gear-remove","upscale","object-edit","water-edit","text-logo","film-grade","white-balance-fix","sky-water-enhance","editorial-caption","magazine-cover"]).concat(prs(["restore"])).concat(D.cleanups.map(function(c){
         var CL_SUM={ people:{my:"နောက်ခံက လူပိုတွေဖယ်ပြီး နောက်ခံ ပြန်ဆောက်",en:"Removes background bystanders, rebuilds the backdrop",shn:"ဢဝ်ၵူၼ်းပႃႈလင်ဢွၵ်ႇ သေ မႄးၵေႃႇလင်ၶိုၼ်း",kac:"Hpang na masha ni shaw kau nna hpang bai gaw",th:"ลบคนแปลกหน้าด้านหลัง แล้วสร้างฉากหลังใหม่",zh:"移除背景路人并重建背景",vi:"Xóa người lạ phía sau, dựng lại nền",id:"Hapus orang di latar, bangun ulang background",ms:"Buang orang di latar, bina semula latar"},
           hands:{my:"လက်/လက်ချောင်း ပုံမမှန်တာ ပြင် — ၅ ချောင်းစီ မှန်အောင်",en:"Fixes hand anatomy — five natural fingers each",shn:"မႄးမိုဝ်း — ၼိဝ်ႉ 5 ဢၼ်မၢၼ်ႇ",kac:"Lata hpe hkrak shatai — layung 5 ding ai",th:"แก้กายวิภาคมือ — นิ้วครบห้าอย่างเป็นธรรมชาติ",zh:"修正手部结构 — 每只手五指自然",vi:"Sửa giải phẫu tay — mỗi bàn năm ngón tự nhiên",id:"Perbaiki anatomi tangan — lima jari alami",ms:"Betulkan anatomi tangan — lima jari semula jadi"},
           legs:{my:"ခြေထောက် ပုံမမှန်/ပိုနေတာ ပြင်",en:"Fixes leg and foot anatomy",shn:"မႄးၶႃ/တိၼ်",kac:"Lagaw hpe hkrak shatai",th:"แก้กายวิภาคขาและเท้า",zh:"修正腿脚结构",vi:"Sửa giải phẫu chân",id:"Perbaiki anatomi kaki",ms:"Betulkan anatomi kaki"},
@@ -30527,7 +30588,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.123.1";
+var APP_VER="6.124.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
