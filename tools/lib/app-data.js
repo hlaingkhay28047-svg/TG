@@ -18,7 +18,8 @@
    docs/app/data/tutorials.js   window.HNK_TUTORIALS=<json>; the Tutorials hero + ten lessons (6.116.0)
    docs/app/data/trmore.js      window.HNK_TRMORE=<json>;   TR_V428 · TR_V430 · TR_PATH, the three
                                                             per-wave dictionaries the shell merges
-                                                            into TR at boot (6.121.0)
+                                                            into TR at boot (6.121.0); TR_X · TR_NEW ·
+                                                            TR_L14 (x · new · l14) followed in 6.122.0
                                                             the app shows (v6.107.0)
    docs/app/data/whats-new-archive.json                    What's New rows older
                                                             than the strip's cut
@@ -51,7 +52,10 @@ const FILES = {
   tutorials: { file: "tutorials.js", global: "HNK_TUTORIALS", head: "window.HNK_TUTORIALS=", tag: "script" },
   /* 6.121.0 — three per-wave TR dictionaries (TR_V428 · TR_V430 · TR_PATH, 105 KB of the shell)
      merged into TR at boot exactly as before. The A4 ceiling stood 440 bytes clear when the
-     Smart Album designer arrived; the note there says move a table out, not raise the number. */
+     Smart Album designer arrived; the note there says move a table out, not raise the number.
+     6.122.0 — the seven-language overlay TR_X, TR_NEW and the seven-language table TR_L14
+     (sections x · new · l14, 99 KB) followed when wave G's shelf + ornaments pushed the shell
+     50 KB over; the same merge lines read them from here. */
   trmore: { file: "trmore.js", global: "HNK_TRMORE", head: "window.HNK_TRMORE=", tag: "script" }
 };
 TRL_CODES.forEach(function (c) {

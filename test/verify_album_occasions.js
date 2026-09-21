@@ -68,6 +68,12 @@ const ALBUM = A.readAlbum();
 const TRL = A.readTrl();
 
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
+/* 6.122.0 — the seven-language rows (TR_L14) live in data/trmore.js, section l14, since wave G's shelf +
+   ornaments pushed the shell over its A4 ceiling; the my/en row still stands in the shell, so a key's
+   "two rows" are one in the shell and one in trmore.js */
+const L14 = A.readTrMore().l14 || {}, L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
+const l14Row = (e) => !!e && L7.every((l) => typeof e[l] === "string" && e[l].length > 0);
+const l14Text = (e) => l14Row(e) ? "{" + L7.map((l) => l + ':"' + e[l] + '"').join(",") + "}\n" : "";
 const READERS = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "ne", "pa", "ta", "te", "ur"];
 const OWNER_ASKED = ["prewed", "solo", "family", "baby", "kid", "newborn", "event"];
 const KEYS = ["alb_occ", "alb_occ_note", "alb_make", "alb_make_hint", "alb_make_busy",
@@ -166,7 +172,7 @@ function tables() {
     occ.map(o => o.id + "=" + o.plan.reduce((a, b) => a + b, 0)));
 
   report("B7) the default occasion is one of the nine, and one album may hold between twelve and two hundred photographs",
-    occ.some(o => o.id === ALBUM.defOcc) && ALBUM.maxAlbum >= 12 && ALBUM.maxAlbum <= 200 && ALBUM.v === 3,
+    occ.some(o => o.id === ALBUM.defOcc) && ALBUM.maxAlbum >= 12 && ALBUM.maxAlbum <= 200 && ALBUM.v === 4,   /* 6.122.0 — v4 carries the ornaments + overlays */
     { defOcc: ALBUM.defOcc, maxAlbum: ALBUM.maxAlbum, v: ALBUM.v });
 
   /* the app writes each key's languages across TWO blocks (my + en in one, the other seven in
@@ -175,7 +181,7 @@ function tables() {
      a regex that stops at the first "}" it meets. */
   function rows(key) {
     const re = new RegExp("[\\n,{]\\s*" + key + ":\\{", "g");
-    let m, out = "";
+    let m, out = l14Text(L14[key]);   /* 6.122.0 — the seven-language row comes from data/trmore.js */
     while ((m = re.exec(APP))) {
       let i = m.index + m[0].length - 1, depth = 0;
       for (; i < APP.length; i++) {
@@ -236,7 +242,7 @@ async function browserWalk() {
   const card = await page.evaluate(() => {
     const chips = [...document.querySelectorAll("#albOccs .alb-occ")];
     return {
-      first: (document.querySelector("#albRoot > section.card") || {}).id,
+      first: (document.querySelector("#albRoot > section.card:nth-of-type(2)") || {}).id,   /* 6.122.0 — the shelf card stands before it */
       chips: chips.length,
       sketches: document.querySelectorAll("#albOccs canvas.alb-plan").length,
       named: chips.every(c => (c.textContent || "").trim().length > 1),
@@ -396,7 +402,7 @@ async function browserWalk() {
              cards: document.querySelectorAll("#albRoot > section.card").length };
   });
   report("C9) an album saved against an occasion this build no longer ships falls back to the default and still draws — the same rule wave A gave sizes and wave B gave pairings",
-    restored.occ === ALBUM.defOcc && restored.on === 1 && restored.cards === 10, restored);   /* 6.121.0 — ten cards */
+    restored.occ === ALBUM.defOcc && restored.on === 1 && restored.cards === 12, restored);   /* 6.122.0 — twelve cards */
 
   /* C10 — the chips must not pull a typeface down. Wave B's whole point.
      A FRESH CONTEXT, not just a fresh page: the walk above saved a forty-photograph album with

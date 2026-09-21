@@ -119,7 +119,7 @@ const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
    shell no longer carries them. The comparison itself is unchanged. */
 const TRM = require("../tools/lib/app-data.js").readTrMore();
 function trmEntry(key) {
-  for (const d of ["v428", "v430", "path"]) {
+  for (const d of ["v428", "v430", "path", "new"]) {   /* 6.122.0 — TR_NEW followed */
     if (TRM[d] && TRM[d][key]) return Object.assign({}, TRM[d][key]);
   }
   return null;

@@ -208,7 +208,7 @@ report("B2) the web app is untouched — the rule set applies to the panel only"
 /* ------------------------------- C. the seam, so a re-lift cannot undo any of it */
 
 const LIFTERS = ["studio_suites", "whats_new", "path_looks", "video_tool_wf", "video_wizard",
-  "video_wf", "talk_models", "video_containers", "finish_engines", "imagine", "tutorials"];
+  "video_wf", "talk_models", "video_containers", "finish_engines", "imagine", "tutorials", "album"];   /* 6.122.0 — the Album lifter */
 const unwired = LIFTERS.filter(function (n) {
   const src = fs.readFileSync(path.join(ROOT, "tools", "build_panel_" + n + ".js"), "utf8");
   return !/uxpSafeCode\(/.test(src) || !/uxp_safe_text/.test(src);

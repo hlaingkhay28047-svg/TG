@@ -195,9 +195,13 @@ function tables() {
   report("B8) fault injection — a pairing that names a font this studio does not ship stops the generator, so a blank line on a printed page cannot reach data/album.js",
     /no-such-font/.test(threw), { threw: threw.slice(0, 200) });
 
-  report("B9) the nine new strings are in the app's two tables in all nine languages, each key at the start of its own line",
+  /* 6.122.0 — the seven-language rows (TR_L14) live in data/trmore.js, section l14, since wave G's
+     shelf + ornaments pushed the shell over its A4 ceiling; the my/en row still stands in the shell */
+  const L14 = A.readTrMore().l14 || {}, L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
+  const l14Row = (e) => !!e && L7.every((l) => typeof e[l] === "string" && e[l].length > 0);
+  report("B9) the nine new strings are in all nine languages — the my/en row in the app's table, each key at the start of its own line, and the seven-language row in data/trmore.js (l14)",
     ["alb_pair", "alb_pair_note", "alb_font", "alb_font_auto", "alb_font_count", "alb_ink", "alb_font_my", "alb_font_busy", "alb_font_fail"]
-      .every(k => (APP.match(new RegExp("[\\n,{]\\s*" + k + ":\\{", "g")) || []).length === 2), null);
+      .every(k => (APP.match(new RegExp("[\\n,{]\\s*" + k + ":\\{", "g")) || []).length === 1 && l14Row(L14[k])), null);
 
   const TRL = A.readTrl();
   const readers = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "ne", "pa", "ta", "te", "ur"];

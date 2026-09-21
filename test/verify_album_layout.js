@@ -83,9 +83,15 @@ function report(name, ok, detail) {
 }
 /* every block in the app that declares this i18n key, whichever of the two
    dictionaries it lives in (one carries {my,en}, the other the seven others) */
+/* 6.122.0 — the seven-language rows (TR_L14) live in data/trmore.js, section l14, since wave G's shelf +
+   ornaments pushed the shell over its A4 ceiling; the my/en row still stands in the shell, so a key's
+   "two rows" are one in the shell and one in trmore.js */
+const L14 = A.readTrMore().l14 || {}, L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
+const l14Row = (e) => !!e && L7.every((l) => typeof e[l] === "string" && e[l].length > 0);
+const l14Text = (e) => l14Row(e) ? "{" + L7.map((l) => l + ':"' + e[l] + '"').join(",") + "}\n" : "";
 function rows(key) {
   const re = new RegExp("[\\n,{]\\s*" + key + ":\\{", "g");
-  return (APP.match(re) || []).length;
+  return (APP.match(re) || []).length + (l14Row(L14[key]) ? 1 : 0);
 }
 /* the ALBUM_CSS block, and the ALBUM module, on their own */
 const CSS = (APP.match(/\/\* ---- ALBUM_CSS[\s\S]*?\/\* ---- \/ALBUM_CSS ---- \*\//) || [""])[0];
@@ -105,7 +111,7 @@ function source() {
     cols.length === 8 &&
     /\.alb-grid\{display:flex;flex-wrap:wrap;align-items:stretch/.test(CSS) &&
     /\.alb-cell\{box-sizing:border-box;display:flex;width:100%/.test(CSS) &&
-    /\.alb-cell>\*\{width:100%/.test(CSS), { cols });
+    /\.alb-cell>button,\.alb-cell>div,\.alb-cell>label,\.alb-cell>span\{width:100%/.test(CSS), { cols });   /* 6.122.0 — typed children; the panel's renderer forbids `*` */
 
   report("A2) NOTHING in the album's stylesheet is a CSS grid or a media query — the Photoshop panel draws no grid and panel/index.html carries no @media rule at all, so either would be tidy on a phone and ragged in Photoshop",
     CSSRULES.indexOf("display:grid") < 0 && CSSRULES.indexOf("grid-template") < 0 &&

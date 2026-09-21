@@ -1131,3 +1131,11 @@ jobs:
       # print check, and the seventy-two lines in nine languages plus the fifteen reader packs.
       - name: Verify the album designer — story lines, the tray, the looks, the book, undo and the print check
         run: PORT=8931 node test/verify_album_designer.js
+      # 6.122.0 — Smart Album wave G: twenty-four PNG ornaments (corners · dividers · frames · botanic · shapes · tape)
+      # and five page overlays (grain · vignette · light leak · dust · paper) drawn by tools/build_album_ornaments.js and
+      # recorded in lib/album/ornaments.json, the projects shelf (up to twenty-four albums, each its own record),
+      # the Photo quality chip (Standard 2,400 · Print 4,000 px), the Album page lifted into the Photoshop panel
+      # (tools/build_panel_album.js → panel/js/hnk_album.js, albumHost in main.js), and the fifty-seven new lines in
+      # nine languages plus the fifteen reader packs.
+      - name: Verify Smart Album wave G — ornaments, overlays, the shelf, the quality chip and the panel's Album page
+        run: PORT=8931 node test/verify_album_wave_g.js

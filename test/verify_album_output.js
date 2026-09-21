@@ -73,6 +73,12 @@ const ALBUM = A.readAlbum();
 const TRL = A.readTrl();
 
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
+/* 6.122.0 — the seven-language rows (TR_L14) live in data/trmore.js, section l14, since wave G's shelf +
+   ornaments pushed the shell over its A4 ceiling; the my/en row still stands in the shell, so a key's
+   "two rows" are one in the shell and one in trmore.js */
+const L14 = A.readTrMore().l14 || {}, L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
+const l14Row = (e) => !!e && L7.every((l) => typeof e[l] === "string" && e[l].length > 0);
+const l14Text = (e) => l14Row(e) ? "{" + L7.map((l) => l + ':"' + e[l] + '"').join(",") + "}\n" : "";
 const READERS = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "ne", "pa", "ta", "te", "ur"];
 const KEYS = ["alb_edge", "alb_edge_note", "alb_spread", "alb_shuffle", "alb_shuffle_done",
               "alb_close_add", "alb_out_pdf", "alb_out_psd", "alb_out_sheet",
@@ -91,7 +97,7 @@ function report(name, ok, detail) {
    dictionaries it lives in (one carries {my,en}, the other the seven others) */
 function rows(key) {
   const re = new RegExp("[\\n,{]\\s*" + key + ":\\{", "g");
-  let m, out = "";
+  let m, out = l14Text(L14[key]);   /* 6.122.0 — the seven-language row comes from data/trmore.js */
   while ((m = re.exec(APP))) {
     let i = m.index + m[0].length - 1, depth = 0;
     for (; i < APP.length; i++) {
@@ -139,8 +145,8 @@ function source() {
     /u8s\("8BIMnorm"\)/.test(APP), null);
 
   report("A6) alb_bleed is still the WORD bleed beside the millimetres, and the new switch is its own key — the first cut of this wave declared alb_bleed twice, and the last declaration in an object literal wins",
-    (APP.match(/\n  alb_bleed:\{/g) || []).length === 2 &&      /* one row per dictionary */
-    (APP.match(/\n  alb_edge:\{/g) || []).length === 2 &&
+    (APP.match(/\n  alb_bleed:\{/g) || []).length === 1 && l14Row(L14.alb_bleed) &&      /* one row per dictionary — the seven-language one in data/trmore.js since 6.122.0 */
+    (APP.match(/\n  alb_edge:\{/g) || []).length === 1 && l14Row(L14.alb_edge) &&
     /alb_bleed:\{my:"အနားပို",en:"bleed"\}/.test(APP) &&
     /parts\.push\(L\("alb_bleed"\) \+ " " \+ D\.bleedMm \+ " mm"\)/.test(APP) &&
     /L\("alb_edge"\)\); bb\.id = "albBleed"/.test(APP),
@@ -184,7 +190,7 @@ function source() {
   report("A11) the document remembers what wave D added and a saved album from before it still opens — the page's bleed and the stage's view both fall back rather than throwing",
     /return \{ v:4, sizeId:"12x36"/.test(APP) &&
     /view:"page"/.test(APP) &&
-    /bleed:false, decor:\[\], story:-1 \}; \}/.test(APP) &&   /* 6.121.0 — a page also carries the engine's decor and its story index */
+    /bleed:false, decor:\[\], story:-1, overlay:null \}; \}/.test(APP) &&   /* 6.121.0 — a page also carries the engine's decor and its story index; 6.122.0 — and its overlay */
     /out\.view = \(d\.view === "spread" \|\| d\.view === "book"\) \? d\.view : "page";/.test(APP) &&   /* 6.121.0 — the book is the third view */
     /pg\.bleed = !!p\.bleed;/.test(APP), null);
 }

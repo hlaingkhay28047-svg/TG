@@ -120,8 +120,11 @@ const stripCode = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "");
     const reads = [...new Set([...m.code.matchAll(/\bt\(\s*"([a-z][a-z0-9_]*)"\s*\)/g)].map(x => x[1]))];
     return { name: m.name, reads: reads.length, missing: reads.filter(k => m.code.indexOf("\"" + k + "\":{") < 0 && !(new RegExp("(?<![\\w$])" + k + "\\s*:\\s*\\{")).test(m.code)) };
   });
-  report("C3) the lifted modules that carry their own dictionary (" + selfDict.map(m => path.basename(m.name)).join(", ") + ") read only keys that dictionary carries — those reads are theirs, not main.js's",
-    selfDict.length === 2 && selfMiss.every(m => m.reads >= 10 && m.missing.length === 0), selfMiss);
+  /* 6.122.0 — the lifted Album module defines a `var t` of its own and so lands in this set, but its words travel as
+     HNK.albumStrings and are read through L() (every alb_* key, checked by verify_album_wave_g); it has no t() reads */
+  const OWN_L = { "panel/js/hnk_album.js": 1 };
+  report("C3) the lifted modules that carry their own dictionary (" + selfDict.map(m => path.basename(m.name)).join(", ") + ") read only keys that dictionary carries — those reads are theirs, not main.js's (the Album module reads its HNK.albumStrings through L())",
+    selfDict.length === 3 && selfMiss.every(m => m.missing.length === 0 && (m.reads >= 10 || OWN_L[m.name])), selfMiss);
 
   /* ---------------- D. the fixes, pinned in source ---------------- */
   const CODE = stripCode(MAIN);
