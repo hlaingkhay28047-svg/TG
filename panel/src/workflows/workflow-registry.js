@@ -369,10 +369,23 @@ function applyFields(prompt, fields, vals) {
   });
   return p;
 }
+/* 6.123.0 — a field the caller did not name compiles at its DEFAULT, the way the
+   app's _wfFieldPrompt / _wfBatchPrompt do (defaults first, the caller's values
+   over them). The wizard always names every field (workflow-state seeds them),
+   so this only changes a compile with no values: a required text field with a
+   default — Decor Theme Colour's THEME "White & Gold" — kept its line instead of
+   losing it, and the panel's one-tap prompt equals the app's batch prompt. */
+function fieldDefaults(fields) {
+  var v = {};
+  (fields || []).forEach(function (f) { v[f.key] = f.type === "toggle" ? f.default !== false : (f.default || ""); });
+  return v;
+}
 function compile(id, fieldVals) {
   var wf = _byId[id];
   if (!wf) return null;
-  var base = (wf.fields && wf.fields.length) ? applyFields(wf.hiddenPrompt, wf.fields, fieldVals) : wf.hiddenPrompt;
+  var vals = fieldDefaults(wf.fields);
+  if (fieldVals) Object.keys(fieldVals).forEach(function (k) { vals[k] = fieldVals[k]; });
+  var base = (wf.fields && wf.fields.length) ? applyFields(wf.hiddenPrompt, wf.fields, vals) : wf.hiddenPrompt;
   var parts = [base];
   var rules = [];
   /* bespoke: the hiddenPrompt is a complete, self-resolving instruction

@@ -438,9 +438,9 @@ function releasePins() {
   const row = rows[0];
   report(`E2) the What's New strip leads with the ${VER} row — a bold lead, title and story in all nine languages, pointing at the Album page — and the panel's lifted table carries it`,
     row && row.v === VER && row.ref === "pgAlbum" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40 && row.s[l].startsWith("**")) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
-  report("E3) CI runs this test (the 264th `node test/` invocation, right after the album designer) and the landing says 264 tests",
+  report("E3) CI runs this test right after the album designer and the landing says how many tests the suite runs (264 when this wave shipped, 265 since 6.123.0 added verify_prop_wave_h)",
     has(CI, "run: PORT=8931 node test/verify_album_designer.js\n") && has(CI, "run: PORT=8931 node test/verify_album_wave_g.js") && CI.indexOf("verify_album_designer") < CI.indexOf("verify_album_wave_g") &&
-    (CI.match(/node test\//g) || []).length === 264 && has(LANDING, "264 tests") && !has(LANDING, "263 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 265 && has(LANDING, "265 tests") && !has(LANDING, "263 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 /* ===================== F) the panel ===================== */

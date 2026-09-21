@@ -55,7 +55,7 @@ report("A3) title, summary and explanation say what moves and what stays; the AV
 
 /* ---- B) the category, the summary row, the guides ---- */
 report("B) Background & Scene lists it right after Studio Look Copy and before Couple Compose",
-  APP.indexOf('"scene-fit-pro","studio-look-copy","reference-scenes","couple-compose",') >= 0, "category line");
+  APP.indexOf('"scene-fit-pro","studio-look-copy","reference-scenes","prop-insert","decor-theme-color","couple-compose",') >= 0, "category line");   /* 6.123.0 — the two wave H scene cards follow it */
 const sumRow = (APP.match(new RegExp('      "' + ID + '":\\{([^\\n]*)\\},\\n')) || [])[1] || "";
 report("B2) the nine-language summary row exists and names IMAGE 1 and IMAGE 2 in English",
   LANGS.every(l => sumRow.indexOf(l + ':"') >= 0) && /IMAGE 2/.test(sumRow) && /IMAGE 1/.test(sumRow), sumRow.slice(0, 120));
@@ -70,10 +70,10 @@ report("C) the card picture exists at the pack's 960x640 and the card is not on 
   !!sz && sz.w === 960 && sz.h === 640 && !new RegExp('NO_CARD_JPG=\\[[^\\]]*"' + ID + '"').test(APP), sz);
 
 /* ---- D) the counts, What's New, CI ---- */
-report("D) the app's meta, the landing and its counter all count 194 Smart Workflows (193 nowhere)",
-  APP.indexOf("Smart Workflow 194") >= 0 && APP.indexOf("Smart Workflow 193") < 0 && (LANDING.match(/Smart Workflow 194/g) || []).length >= 30 && LANDING.indexOf("Smart Workflow 193") < 0 &&
-  /data-count="wf">194</.test(LANDING) && !/data-count="wf">193</.test(LANDING) && lib.workflows.filter(x => !x.kind).length + 0 > 0,
-  { app: APP.indexOf("Smart Workflow 194") >= 0, landing: (LANDING.match(/Smart Workflow 194/g) || []).length });
+report("D) the app's meta, the landing and its counter all count 197 Smart Workflows (193 nowhere; 194 until 6.123.0 added the three wave H cards)",
+  APP.indexOf("Smart Workflow 197") >= 0 && APP.indexOf("Smart Workflow 193") < 0 && (LANDING.match(/Smart Workflow 197/g) || []).length >= 30 && LANDING.indexOf("Smart Workflow 193") < 0 &&
+  /data-count="wf">197</.test(LANDING) && !/data-count="wf">193</.test(LANDING) && lib.workflows.filter(x => !x.kind).length + 0 > 0,
+  { app: APP.indexOf("Smart Workflow 197") >= 0, landing: (LANDING.match(/Smart Workflow 197/g) || []).length });
 /* v6.91.0 — both rows are history in the archive record (docs/app/data/whats-new-archive.json, newest first);
    the panel lifts the live table only, so an archived row rides neither surface */
 const wnArch = require("../tools/lib/app-data.js").readWhatsNewArchive();
