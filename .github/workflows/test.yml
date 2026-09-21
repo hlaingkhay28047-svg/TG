@@ -527,6 +527,12 @@ jobs:
       # 6.32.2 — the Reference Scenes Smart Workflow card: two pictures in, the owner's prompt word for word, the card on both surfaces, Smart Workflow 194
       - name: Run Reference Scenes card check
         run: PORT=8931 node test/verify_reference_scenes.js
+      # 6.123.0 — the owner's video: three Smart Workflow cards — Furniture & Prop Insert (the exact piece from IMAGE 2 into
+      # IMAGE 1, a replace/add switch and an optional placement line), Decor Theme Colour (the set's decoration recoloured
+      # into a typed theme), Remove Light Stands & Gear (a one-tap clean set) — records, nine-language rows, guides, card
+      # pictures from the lane, the counts 197 / 204 on every surface, the panel's lifted catalog and its compiler.
+      - name: Wave H — the prop, decor-theme and light-gear cards on app and panel
+        run: PORT=8931 node test/verify_prop_wave_h.js
       # 6.76.0 — the Library's scene looks as one-tap presets under every scene / background slot, app and panel alike, one list on both
       - name: Library scene presets in the Smart Workflow wizard
         run: PORT=8931 node test/verify_scene_presets.js

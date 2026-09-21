@@ -32,7 +32,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>HNK Web Studio — One-Tap AI Studio</title>
 <link rel="canonical" href="https://hnkaistudio.com/app/">
-<meta name="description" content="Browser ထဲမှာ One-Tap 201 + Visual Library 1850 + Smart Workflow 194 + Retouch A Studio 163 · Retouch B Pro 213 — HNK Create Studio Web App">
+<meta name="description" content="Browser ထဲမှာ One-Tap 204 + Visual Library 1850 + Smart Workflow 197 + Retouch A Studio 163 · Retouch B Pro 213 — HNK Create Studio Web App">
 <meta name="theme-color" content="#0b0d14">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="lib/favicon-48.png" sizes="48x48">
@@ -45,14 +45,14 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="HNK Create Studio">
 <meta property="og:title" content="HNK Web Studio — One-Tap AI Studio">
-<meta property="og:description" content="One-Tap 201 · Visual Library 1850 · Smart Workflow 194 · Retouch A Studio 163 · Retouch B Pro 213 — browser ထဲမှာ တိုက်ရိုက် AI ပုံထုတ်၊ install မလို။">
+<meta property="og:description" content="One-Tap 204 · Visual Library 1850 · Smart Workflow 197 · Retouch A Studio 163 · Retouch B Pro 213 — browser ထဲမှာ တိုက်ရိုက် AI ပုံထုတ်၊ install မလို။">
 <meta property="og:url" content="https://hnkaistudio.com/app/">
 <meta property="og:image" content="https://hnkaistudio.com/app/og-app.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="HNK Web Studio — One-Tap AI Studio">
-<meta name="twitter:description" content="One-Tap 201 · Visual Library 1850 · Smart Workflow 194 · Retouch A Studio 163 · Retouch B Pro 213">
+<meta name="twitter:description" content="One-Tap 204 · Visual Library 1850 · Smart Workflow 197 · Retouch A Studio 163 · Retouch B Pro 213">
 <meta name="twitter:image" content="https://hnkaistudio.com/app/og-app.jpg">
 <style>
 :root{
@@ -2977,9 +2977,9 @@ html.splashing #splash{display:flex}
        written by the same runtime code that populated it in the hero; the
        Visual Library count is now runtime too (stLibCount ← LW.items.length) -->
   <div class="statline dash-stat">
-    <div><b id="stTapCount">201</b><span>One-Tap Workflows</span></div>
+    <div><b id="stTapCount">204</b><span>One-Tap Workflows</span></div>
     <div><b id="stLibCount">1850</b><span>Visual Library</span></div>
-    <div><b id="stWfCount">194</b><span>Smart Workflow</span></div>
+    <div><b id="stWfCount">197</b><span>Smart Workflow</span></div>
     <div><b id="stMeituCount"></b><span>Retouch A Controls</span></div>
     <div><b id="stEvotoCount"></b><span>Retouch B Pro</span></div>
   </div>
@@ -4467,12 +4467,12 @@ html.splashing #splash{display:flex}
 <div class="wiz" id="wizPay" role="dialog" aria-modal="true"><div class="wiz-in" id="wizPayIn"></div></div>
 
 <script src="data/hnkdata.js?v=3b68aeb2725b"></script>
-<script src="data/libwf.js?v=c6f022cf791e"></script>
+<script src="data/libwf.js?v=553c00dca365"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=8ae5b031a6e6"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=a8aecb41f255"></script>
-<script src="data/whatsnew.js?v=67bbb1c1effc"></script>
+<script src="data/whatsnew.js?v=6d756371ddea"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -11290,6 +11290,24 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       "Tap Start — the Reference Scenes prompt loads, word for word as the owner wrote it",
       "Tap GENERATE — IMAGE 2's scene is built around your subject; the subject, frame and composition stay as shot"
     ],
+    "prop-insert": [
+      "Add your photo as IMAGE 1 — the person, pose and frame you want to keep",
+      "Add a picture of the furniture as IMAGE 2 — a chair, stool, side table, pedestal or stand; a shop photo on a plain background works best",
+      "Tap Start — leave the switch ON to replace the plain stand the subject already touches, turn it OFF to add the piece beside them; type where it should go if you like",
+      "Tap GENERATE — the exact piece from IMAGE 2 stands in your photo with matched perspective, light and shadow; person, pose and frame unchanged"
+    ],
+    "decor-theme-color": [
+      "Add the event photograph as IMAGE 1 — the set whose decoration should change colour",
+      "Tap Start — type the theme (White & Gold, Blush & Ivory, Emerald & Gold, Royal Blue & Silver, Burgundy & Brass, or your own two colours)",
+      "Check the switches — every person, outfit, pose and the frame stay exactly as shot",
+      "Tap GENERATE — drapes, flowers, ribbons, balloons, cloths and stage panels come back in the new colours with their shapes and textures kept"
+    ],
+    "light-gear-remove": [
+      "Add the studio photograph as IMAGE 1 — the one with a softbox, stand, tripod or cable caught in the frame",
+      "Tap Start — the clean-set prompt loads; nothing to type",
+      "Check the switches — the light on the subject is kept as shot, only the equipment goes",
+      "Tap GENERATE — the gear is gone and the backdrop, wall or floor it hid is continued without a seam"
+    ],
     "couple-compose": [
       "Add the bride's face photo as IMAGE 1 — a clear front view of her face",
       "Add the groom's face photo as IMAGE 2, then the couple photograph whose pose, dress and scene you want as IMAGE 3",
@@ -11465,6 +11483,24 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       "scene ပုံကို IMAGE 2 မှာ တင်ပါ — subject ကို ထည့်ချင်တဲ့ နေရာ",
       "“Start” နှိပ်ပါ — Reference Scenes prompt (owner ရေးထားတဲ့ စာ အတိအကျ) ရောက်လာမယ်",
       "GENERATE နှိပ်ပါ — IMAGE 2 ရဲ့ scene က ကိုယ့် subject ပတ်လည် ဆောက်လာမယ်၊ subject · frame · composition မပြောင်း"
+    ],
+    "prop-insert": [
+      "ကိုယ့်ပုံကို IMAGE 1 မှာ တင်ပါ — ထားချင်တဲ့ လူ · ပိုစ့် · ဘောင်",
+      "ပရိဘောဂ ပုံကို IMAGE 2 မှာ တင်ပါ — ထိုင်ခုံ · ခုံလုံး · ဘေးစားပွဲ · pedestal · stand၊ နောက်ခံ ရှင်းရှင်း ဆိုင်ပုံ အကောင်းဆုံး",
+      "“Start” နှိပ်ပါ — subject မှီထားတဲ့ stand ကို အစားထိုးချင်ရင် switch ON ထားပါ၊ ဘေးမှာ ထပ်ထည့်ချင်ရင် OFF၊ ဘယ်နေရာထားမလဲ ရေးလို့ရ",
+      "GENERATE နှိပ်ပါ — IMAGE 2 ထဲက ပစ္စည်း အတိအကျ ကိုယ့်ပုံထဲ ရောက်လာမယ်၊ perspective · အလင်း · အရိပ် ကိုက်၊ လူ · ပိုစ့် · ဘောင် မပြောင်း"
+    ],
+    "decor-theme-color": [
+      "ပွဲပုံကို IMAGE 1 မှာ တင်ပါ — အလှဆင် အရောင် ပြောင်းချင်တဲ့ set",
+      "“Start” နှိပ်ပါ — theme ရေးပါ (White & Gold · Blush & Ivory · Emerald & Gold · Royal Blue & Silver · Burgundy & Brass သို့ ကိုယ့်အရောင် ၂ မျိုး)",
+      "Switch တွေ စစ်ပါ — လူ · ဝတ်စုံ · ပိုစ့် · ဘောင် အတိအကျ ကျန်မယ်",
+      "GENERATE နှိပ်ပါ — ကုလားကာ · ပန်း · ဖဲကြိုး · ပူဖောင်း · စားပွဲခင်း · stage တွေ အရောင်အသစ်နဲ့ ပြန်ရမယ်၊ ပုံသဏ္ဌာန် · texture မပြောင်း"
+    ],
+    "light-gear-remove": [
+      "Studio ပုံကို IMAGE 1 မှာ တင်ပါ — softbox · stand · tripod · ကြိုး ဘောင်ထဲ ဝင်နေတဲ့ပုံ",
+      "“Start” နှိပ်ပါ — clean-set prompt ရောက်လာမယ်၊ ဘာမှ ရေးစရာမလို",
+      "Switch တွေ စစ်ပါ — subject ပေါ်က အလင်း အတိုင်း ကျန်မယ်၊ ပစ္စည်းပဲ ဖယ်မယ်",
+      "GENERATE နှိပ်ပါ — ပစ္စည်းတွေ ပျောက်ပြီး နောက်ခံ · နံရံ · ကြမ်း ချောချော ပြန်ဆက်ပေးမယ်"
     ],
     "couple-compose": [
       "မိန်းကလေးရဲ့ မျက်နှာပုံကို IMAGE 1 မှာ တင်ပါ — မျက်နှာ ကြည်ကြည်လင်လင် ရှေ့တည့်တည့်",
@@ -12529,6 +12565,8 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       "outfit-scene-group":{my:"IMAGE 1 dress-code board အတိုင်း အုပ်စုတိုင်း ကိုက်တဲ့ဝတ်စုံ (တူတူ ဘေးချင်း မကပ်)၊ IMAGE 2 scene + အလင်းထဲ ထည့်၊ skin/ဆံပင် retouch — IMAGE 3 ပိုစ့်၊ ဘောင် မပြောင်း",en:"Everyone in the group IMAGE 3 dressed to the dress-code board IMAGE 1 (coordinated, no two identical side by side), set into IMAGE 2's scene and light, skin and hair retouched — poses and frame kept",shn:"ၵူႈၵေႃႉၼႂ်းၸုမ်း ႁၢင်ႈ 3 ၼုင်ႈၶူဝ်းၸွမ်း board ႁၢင်ႈ 1၊ သႂ်ႇၼႂ်းပိုၼ်ႉတီႈလႄႈလႅင်းႁၢင်ႈ 2 — ႁၢင်ႈၸုၵ်း ဢမ်ႇလႅၵ်ႈ",kac:"Sumla 3 na hpung yawng hpe sumla 1 dress-code board hte bu ya, sumla 2 na shara hte nhtoi hta bang — pose n galai",th:"ทุกคนในกลุ่ม IMAGE 3 ใส่ชุดตามบอร์ดเดรสโค้ด IMAGE 1 (เข้าชุดกัน ไม่ซ้ำติดกัน) วางลงในฉากและแสงของ IMAGE 2 รีทัชผิวและผม — ท่าและกรอบคงเดิม",zh:"IMAGE 3 中每个人按 IMAGE 1 着装板穿搭（协调、相邻不重复），置入 IMAGE 2 的场景与光线，修饰皮肤与头发 — 姿势与画框不变",vi:"Mọi người trong nhóm IMAGE 3 mặc theo bảng dress code IMAGE 1 (đồng bộ, không hai bộ giống nhau cạnh nhau), đặt vào bối cảnh và ánh sáng IMAGE 2, retouch da và tóc — dáng và khung giữ nguyên",id:"Semua orang di grup IMAGE 3 berbusana sesuai papan dress code IMAGE 1 (serasi, tak ada dua yang sama berdampingan), di latar dan cahaya IMAGE 2, retouch kulit dan rambut — pose dan bingkai tetap",ms:"Semua orang dalam kumpulan IMAGE 3 berpakaian ikut papan dress code IMAGE 1 (seragam gaya, tiada dua yang sama bersebelahan), dalam latar dan cahaya IMAGE 2, retouch kulit dan rambut — gaya dan bingkai kekal"},
       "couple-compose":{my:"IMAGE 1 က မိန်းကလေးမျက်နှာ၊ IMAGE 2 က ယောက်ျားလေးမျက်နှာကို IMAGE 3 စုံတွဲပုံထဲက မျက်နှာနှစ်ခုနေရာ သဘာဝဆန်ဆန် ထည့်ပေး — ပုံစံ၊ ဝတ်စုံ၊ နောက်ခံ၊ အလင်း မပြောင်း",en:"Sets the bride's face (IMAGE 1) and the groom's face (IMAGE 2) naturally onto the couple in IMAGE 3 — its pose, wardrobe, scene and light kept",shn:"ဢဝ်ၼႃႈၼၢင်း (ႁၢင်ႈ 1) လႄႈ ၼႃႈၸၢႆး (ႁၢင်ႈ 2) သႂ်ႇၼိူဝ်ၵူႈၼႂ်းႁၢင်ႈ 3 — ႁၢင်ႈၸုၵ်း၊ ၶူဝ်း၊ ပိုၼ်ႉလင်၊ လႅင်း ဢမ်ႇလႅၵ်ႈ",kac:"Num sha a myi man (sumla 1) hte la sha a myi man (sumla 2) hpe sumla 3 na hkun kaw sha bang — pose, palawng, nlung, nhtoi n galai",th:"ใส่หน้าฝ่ายหญิง (IMAGE 1) และหน้าฝ่ายชาย (IMAGE 2) ลงบนคู่รักใน IMAGE 3 อย่างเป็นธรรมชาติ — ท่า ชุด ฉาก แสง คงเดิม",zh:"把女方的脸（IMAGE 1）和男方的脸（IMAGE 2）自然地换到 IMAGE 3 的情侣身上 — 姿势、服装、场景、光线保持不变",vi:"Đặt khuôn mặt cô dâu (IMAGE 1) và chú rể (IMAGE 2) lên cặp đôi trong IMAGE 3 một cách tự nhiên — dáng, trang phục, bối cảnh, ánh sáng giữ nguyên",id:"Menempatkan wajah pengantin wanita (IMAGE 1) dan pria (IMAGE 2) secara alami pada pasangan di IMAGE 3 — pose, busana, latar dan cahaya tetap",ms:"Meletakkan wajah pengantin perempuan (IMAGE 1) dan lelaki (IMAGE 2) secara semula jadi pada pasangan dalam IMAGE 3 — gaya, pakaian, latar dan cahaya kekal"},
       "reference-scenes":{my:"IMAGE 2 ရဲ့ scene ကို IMAGE 1 ရဲ့ subject ပတ်လည် ဆောက် — subject · frame · composition အတိုင်း၊ scene က subject ကို လိုက်",en:"The scene of IMAGE 2 built around the subject of IMAGE 1 — subject, frame and composition kept, the scene follows them",shn:"ဢဝ် scene ၶွင် IMAGE 2 သႂ်ႇႁိမ်း subject IMAGE 1 — subject · frame · composition မိူၼ်ၵဝ်ႇ၊ scene ၸွမ်း subject",kac:"IMAGE 2 a scene hpe IMAGE 1 a subject makau bang — subject · frame · composition n galai, scene gaw subject hpang",th:"นำฉากจาก IMAGE 2 มาล้อมตัวแบบใน IMAGE 1 — ตัวแบบ กรอบ และองค์ประกอบคงเดิม ฉากปรับตามตัวแบบ",zh:"把 IMAGE 2 的场景搭在 IMAGE 1 的主体周围——主体、画框与构图不变，场景顺着主体来",vi:"Dựng bối cảnh của IMAGE 2 quanh chủ thể IMAGE 1 — chủ thể, khung hình và bố cục giữ nguyên, bối cảnh theo chủ thể",id:"Bangun scene IMAGE 2 di sekitar subjek IMAGE 1 — subjek, frame dan komposisi tetap, scene mengikuti subjek",ms:"Bina scene IMAGE 2 di sekeliling subjek IMAGE 1 — subjek, bingkai dan komposisi kekal, scene mengikut subjek"},
+      "prop-insert":{my:"IMAGE 2 ထဲက ထိုင်ခုံ · စားပွဲ · stand အတိအကျကို IMAGE 1 ထဲ ထည့် — subject မှီထားတဲ့ stand နေရာ အစားထိုး (သို့) ဘေးမှာ ထား၊ perspective · အလင်း · အရိပ် ကိုက်၊ လူ · ပိုစ့် · ဘောင် မပြောင်း",en:"The exact chair, table or stand from IMAGE 2 set into IMAGE 1 — in place of the stand the subject touches, or beside them — perspective, light and shadow matched; person, pose and frame untouched",shn:"ဢဝ်တင်ႈၼင်ႈ · တူ · stand ၼႂ်း IMAGE 2 သႂ်ႇၼႂ်း IMAGE 1 — ပုတ်ႈတီႈ stand ဢၼ် subject ဢိင် ဢမ်ႇၼၼ် ဝႆႉႁိမ်း၊ perspective · လႅင်း · ငဝ်း မႅၼ်ႈ၊ ၵူၼ်း · pose · ၶွပ်ႇ ဢမ်ႇလႅၵ်ႈ",kac:"IMAGE 2 na dung shara · saboi · stand hpe IMAGE 1 hta bang — subject ang nga ai stand shara galai (rai n rai) makau tawn, perspective · nhtoi · shingma hkrak, masha · pose · frame n galai",th:"นำเก้าอี้ โต๊ะ หรือแท่นจาก IMAGE 2 ใส่ใน IMAGE 1 — แทนที่แท่นที่ตัวแบบสัมผัส หรือวางข้างตัว — มุมมอง แสง เงาเข้ากัน คน ท่า กรอบคงเดิม",zh:"把 IMAGE 2 里的椅子、桌子或台子原样放进 IMAGE 1——替换主体正扶着的台子，或放在身旁——透视、光线、阴影匹配，人物、姿势、画框不变",vi:"Đặt đúng chiếc ghế, bàn hay bục từ IMAGE 2 vào IMAGE 1 — thay chỗ bục chủ thể đang chạm, hoặc bên cạnh — phối cảnh, ánh sáng, bóng khớp; người, dáng và khung giữ nguyên",id:"Kursi, meja atau stand persis dari IMAGE 2 dimasukkan ke IMAGE 1 — menggantikan stand yang disentuh subjek, atau di sampingnya — perspektif, cahaya dan bayangan cocok; orang, pose dan frame tetap",ms:"Kerusi, meja atau stand tepat dari IMAGE 2 dimasukkan ke IMAGE 1 — menggantikan stand yang disentuh subjek, atau di sebelahnya — perspektif, cahaya dan bayang padan; orang, pose dan bingkai kekal"},
+      "decor-theme-color":{my:"Set အလှဆင်ပစ္စည်း အားလုံး — ကုလားကာ · ပန်း · ဖဲကြိုး · ပူဖောင်း · စားပွဲခင်း · stage — ကိုယ်ရိုက်ထည့်တဲ့ အရောင် theme (White & Gold …) ပြောင်း၊ လူ · ဝတ်စုံ · ပိုစ့် · ဘောင် မပြောင်း",en:"Every decoration of the set — drapes, flowers, ribbons, balloons, cloths, stage panels — recoloured into the theme you type (White & Gold…); people, outfits, pose and frame stay as shot",shn:"ၶိူင်ႈႁၢင်ႈ set တင်းမူတ်း — ၽႃႈမၢၼ် · မွၵ်ႇ · သၢႆ · ပူမ်း · ၽႃႈပူၵ်ႉတူ · stage — လႅၵ်ႈသီ theme ဢၼ်ပေႃႉ (White & Gold …)၊ ၵူၼ်း · ၶူဝ်း · pose · ၶွပ်ႇ ဢမ်ႇလႅၵ်ႈ",kac:"Set na shatai rai yawng — hpun · nampan · ribbon · balloon · saboi hpun · stage — nang ka ai nsam theme (White & Gold …) hku galai, masha · palawng · pose · frame n galai",th:"เปลี่ยนสีของตกแต่งทั้งชุด — ผ้าม่าน ดอกไม้ ริบบิ้น ลูกโป่ง ผ้าปู แผงเวที — เป็นธีมที่คุณพิมพ์ (White & Gold …) คน ชุด ท่า กรอบคงเดิม",zh:"整套布景装饰——幔帐、花艺、丝带、气球、桌布、舞台板——换成你输入的主题色（White & Gold…），人物、服装、姿势、画框不变",vi:"Toàn bộ trang trí của set — rèm, hoa, ruy băng, bóng bay, khăn trải, phông sân khấu — đổi sang chủ đề màu bạn gõ (White & Gold…); người, trang phục, dáng và khung giữ nguyên",id:"Seluruh dekorasi set — tirai, bunga, pita, balon, taplak, panel panggung — diwarnai ulang ke tema yang Anda ketik (White & Gold…); orang, busana, pose dan frame tetap",ms:"Seluruh hiasan set — langsir, bunga, riben, belon, alas meja, panel pentas — diwarna semula ke tema yang anda taip (White & Gold…); orang, pakaian, pose dan bingkai kekal"},
       "magazine-cover":{my:"Fashion magazine masthead ခေါင်းစီး ရဲရဲထည့် — အောက်က ဓာတ်ပုံ လုံးဝမပြောင်း",en:"Bold fashion-magazine masthead cover — photo untouched below it",shn:"သႂ်ႇ masthead မဵတ်ႉၸၢႆးၽိုၼ်ဢွၵ်ႇ ႁၢင်ႈလီ — ၶႅပ်းႁၢင်ႈဢမ်ႇလႅၵ်ႈ",kac:"Fashion magazine masthead hpe grai bang — sumla n galai",th:"เพิ่มหัวนิตยสารแฟชั่นตัวหนา — ภาพด้านล่างไม่เปลี่ยน",zh:"添加大胆的时尚杂志刊头 — 下方照片保持不变",vi:"Thêm tiêu đề tạp chí thời trang đậm — ảnh bên dưới không đổi",id:"Tambahkan masthead majalah fashion tebal — foto di bawahnya tetap",ms:"Tambah masthead majalah fesyen tebal — foto di bawahnya kekal"},
       /* v4.92 — these two shipped in v4.88 with their prompts finished but with
          no ST_SUM row, so in a Burmese UI their cards were the only two in the
@@ -12577,6 +12615,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       "derma-skin":{my:"မျက်နှာရော ကိုယ်လုံးရော — ဆေးခန်းအဆင့် အသားအရေ retouch၊ texture အစစ် မပျက်",en:"Dermatologist-grade skin retouch for face and body — true texture kept",shn:"မူတ်ႉမႃႇၼိူဝ်ႉၼင် ၸၼ်ႉႁၢၼ်ႉယႃ — texture တႄႉမၼ်း ဢမ်ႇလူႉ",kac:"Myi hte hkum ting — tsi rung daram hpyen san ai, texture teng ma ai",th:"รีทัชผิวหน้าและกายระดับคลินิก — คงเท็กซ์เจอร์ผิวจริง",zh:"面部与身体的皮肤科级精修 — 真实肤质纹理保留",vi:"Retouch da mặt và toàn thân chuẩn da liễu — giữ nguyên kết cấu da thật",id:"Retouch kulit wajah dan badan setara dermatolog — tekstur asli terjaga",ms:"Retouch kulit muka dan badan gred dermatologi — tekstur asli kekal"},
       "blue-silk":{my:"ဘယ်ပုံထည့်ထည့် — ပိုးထည်ပန်းချီခန်း series တစ်တွဲတည်း၊ စာသားရော နံရံအရောင်ရော စိတ်ကြိုက်",en:"Any photo joins the same painted-silk boudoir series — your caption, your wall colour",shn:"ၶႅပ်းႁၢင်ႈသင်သႂ်ႇၵေႃႈ — blue silk series မိူၼ်ၵၼ်, လိၵ်ႈလႄႈသီ ၸွမ်းၸႂ်",kac:"Kaning re sumla bang tim — blue silk series bung ai, laika hte nsam na myit hte",th:"ใส่ภาพไหนก็ได้ — ซีรีส์ห้องผ้าไหมวาดเดียวกัน ข้อความและสีผนังเลือกเอง",zh:"任何照片都进入同一绢本画室系列 — 文字与墙色自选",vi:"Ảnh nào cũng vào cùng một bộ ảnh phòng lụa vẽ — chữ và màu tường tự chọn",id:"Foto apa pun masuk seri kamar sutra lukis yang sama — teks dan warna dinding pilihan Anda",ms:"Mana-mana foto masuk siri bilik sutera lukis sama — teks dan warna dinding pilihan anda"},
       "region-edit":{my:"Photoshop မှာ Rectangle select ပေးပြီး စာရိုက် — ရွေးထားတဲ့နေရာပဲ ပြောင်းမယ်၊ ကျန်တာ pixel မလှုပ်",en:"Marquee-select in Photoshop, type the change — only that area changes, outside pixels untouched",shn:"Select ၼႂ်း Photoshop သေ တႅမ်ႈလိၵ်ႈ — လႅၵ်ႈတီႈလိူၵ်ႇဝႆႉၵူၺ်း",kac:"Photoshop kaw select nna ka u — lata da ai shara sha galai na",th:"เลือกพื้นที่ใน Photoshop แล้วพิมพ์ — เปลี่ยนแค่ตรงนั้น นอกนั้นไม่แตะ",zh:"在 Photoshop 框选后输入 — 只改选区内，选区外一像素不动",vi:"Chọn vùng trong Photoshop rồi gõ — chỉ vùng đó đổi, ngoài vùng giữ nguyên",id:"Seleksi di Photoshop lalu ketik — hanya area itu berubah",ms:"Pilih kawasan dalam Photoshop, taip — hanya kawasan itu berubah"},
+      "light-gear-remove":{my:"ဘောင်ထဲ ဝင်နေတဲ့ softbox · light stand · tripod · reflector · ကြိုး · sandbag အားလုံး ဖယ်ပြီး နောက်ခံ ပြန်ဆောက် — subject ပေါ်က အလင်း အတိုင်း ကျန်",en:"Every softbox, light stand, tripod, reflector, cable and sandbag caught in the frame removed and the set behind rebuilt — the light on the subject stays as shot",shn:"ဢဝ် softbox · light stand · tripod · reflector · သၢႆ · sandbag ၼႂ်းၶွပ်ႇ ဢွၵ်ႇ သေ မႄးလင်ၶိုၼ်း — လႅင်းၼိူဝ် subject မိူၼ်ၵဝ်ႇ",kac:"Frame hta shang nga ai softbox · light stand · tripod · reflector · shabrai · sandbag yawng shaw nna hpang bai gaw — subject ntsa nhtoi dai hku nga",th:"ลบ softbox ขาไฟ ขาตั้งกล้อง แผ่นสะท้อน สายไฟ ถุงทรายที่หลุดเข้ากรอบ แล้วสร้างฉากด้านหลังใหม่ — แสงบนตัวแบบคงเดิม",zh:"移除入镜的柔光箱、灯架、三脚架、反光板、线缆、沙袋并重建其后的布景——主体上的光线保持原样",vi:"Xóa mọi softbox, chân đèn, tripod, hắt sáng, dây cáp, bao cát lọt vào khung và dựng lại set phía sau — ánh sáng trên chủ thể giữ nguyên",id:"Semua softbox, light stand, tripod, reflektor, kabel dan sandbag yang masuk frame dihapus dan set di belakangnya dibangun ulang — cahaya pada subjek tetap",ms:"Semua softbox, light stand, tripod, reflektor, kabel dan sandbag yang masuk bingkai dibuang dan set di belakang dibina semula — cahaya pada subjek kekal"},
       "master-pro-retouch":{my:"Studio finish တစ်ခုလုံး တစ်ချက်တည်း — အသား၊ ဆံပင်၊ ဂါဝန်၊ လက်၊ နောက်ခံရှင်းလင်းရေး",en:"The whole studio finish in one tap — skin, hair, gown, hands, set cleanup",shn:"Studio finish တင်းသဵင်ႈ ၼဵၵ်းပွၵ်ႈလဵဝ် — ၽိဝ်ၼိူဝ်ႉ၊ ၶူၼ်ႁူဝ်၊ gown၊ မိုဝ်း၊ ႁဵတ်းပိုၼ်ႉလင်မူတ်းသႂ်",kac:"Studio finish yawng hpe kalang mi hte — hpyi, kara, gown, lata hte shara san seng",th:"งานรีทัชสตูดิโอครบชุดในแตะเดียว — ผิว ผม ชุด มือ และเก็บกวาดฉาก",zh:"一键完成整套影棚精修 — 皮肤、头发、礼服、双手与场景清理",vi:"Trọn bộ hoàn thiện studio trong một chạm — da, tóc, váy, tay và dọn phông",id:"Seluruh finishing studio dalam satu ketuk — kulit, rambut, gaun, tangan, bersihkan set",ms:"Seluruh kemasan studio dalam satu ketikan — kulit, rambut, gaun, tangan, kemas set"},
       "cinematic-poster":{my:"မြင်ကွင်းကို ရုပ်ရှင်ဆန်အောင် — လူတွေက မူရင်းအတိုင်း",en:"Make the scene cinematic — the people stay exactly as they are",shn:"ႁဵတ်းႁႂ်ႈ scene ပဵၼ်ပိူင်ငဝ်းတူင်ႉ — ၵူၼ်း မိူၼ်ၵဝ်ႇ",kac:"Shara hpe cinematic byin hkra galaw — masha ni gaw raw nga",th:"ทำให้ฉากดูเหมือนภาพยนตร์ — ตัวคนยังคงเดิมทุกอย่าง",zh:"让场景充满电影感 — 画面里的人完全不变",vi:"Biến khung cảnh thành điện ảnh — con người giữ nguyên hoàn toàn",id:"Jadikan scene sinematik — orangnya tetap persis sama",ms:"Jadikan scene sinematik — orangnya kekal sama persis"},
       "silhouette-romance":{my:"နောက်ခံနံရံမှာ အချစ်ရဲ့ရိပ်လှလှ ထည့် — subject မထိ",en:"Adds a romantic partner shadow on the backdrop — subject untouched",shn:"သႂ်ႇငဝ်ႈရိပ်ၵေႃႉႁၵ်ႉၼိူဝ်ၽၢၼ်ႇ — subject ဢမ်ႇတိူဝ်ႉ",kac:"Hpang de kaw manam a hkum shada bang — subject n hkrit",th:"เพิ่มเงาคู่รักโรแมนติกบนฉากหลัง — ไม่แตะต้องตัวแบบ",zh:"在背景墙上添加浪漫的伴侣剪影 — 不改动主体",vi:"Thêm bóng người yêu lãng mạn trên phông nền — giữ nguyên chủ thể",id:"Tambahkan bayangan romantis pasangan di latar — subjek tak tersentuh",ms:"Tambah bayang romantis pasangan di latar — subjek tidak disentuh"},
@@ -12651,7 +12690,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       items: st(["subject-face","retouch","master-pro-retouch","derma-skin"]).concat(prs(["roFaceRep","roFaceSwap","evoto","meitu","roMkCopy"])) });
     cats.push({ t:"Background & Scene", ic:"i-frame",
       desc: L9({"my": "နောက်ခံပြောင်း၊ scene ထဲ လူထည့်၊ လူအစားထိုး — အလင်း/perspective အလိုအလျောက်ကိုက်", "en": "Backgrounds, scene transfer and subject replacement with matched light", "shn": "လႅၵ်ႈပိုၼ်ႉလင်၊ သႂ်ႇၵူၼ်းၼႂ်း scene — လႅင်းမႅၼ်ႈလီ", "kac": "Hpang galai, scene hta masha bang — nhtoi hkrak ai", "th": "เปลี่ยนฉากหลัง ย้ายคนเข้าฉาก แทนที่คน — แสงเข้ากันอัตโนมัติ", "zh": "换背景、场景移植与人物替换 — 光线自动匹配", "vi": "Đổi nền, chuyển cảnh, thay chủ thể — ánh sáng tự khớp", "id": "Ganti background, transfer scene, ganti subjek — cahaya otomatis cocok", "ms": "Tukar latar, pindah scene, ganti subjek — cahaya padan automatik"}),
-      items: st(["bg-replace","reference-transfer","master-bgfg-replace","kitsune-nine-tail","mermaid-transform","fairy-wings","full-look-transfer","regency-birthday","dress-reference","scene-fit-pro","studio-look-copy","reference-scenes","couple-compose","outfit-scene-solo","outfit-scene-couple","outfit-scene-family","outfit-scene-group","silhouette-romance","cinematic-poster"]).concat(prs(["repSolo","repCouple","repFamily","roBgRep","roBgSwap","fgbglc","roSubSwap","roMatch"])) });
+      items: st(["bg-replace","reference-transfer","master-bgfg-replace","kitsune-nine-tail","mermaid-transform","fairy-wings","full-look-transfer","regency-birthday","dress-reference","scene-fit-pro","studio-look-copy","reference-scenes","prop-insert","decor-theme-color","couple-compose","outfit-scene-solo","outfit-scene-couple","outfit-scene-family","outfit-scene-group","silhouette-romance","cinematic-poster"]).concat(prs(["repSolo","repCouple","repFamily","roBgRep","roBgSwap","fgbglc","roSubSwap","roMatch"])) });
     /* v5.91.0 — LOOK SETS. Thirteen complete studio sets the owner sent as
        reference shoots: for each one the backdrop colour and texture, the light,
        the grade and the wardrobe are FIXED, so a hundred photographs run through
@@ -12754,7 +12793,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       })});
     cats.push({ t:"Repair & Enhance", ic:"i-tools",
       desc: L9({"my": "ပုံဟောင်းပြင်၊ ကြည်အောင်လုပ်၊ လူပို/လက်/ခြေ ရှင်း၊ object/ရေ ပြင် — ပြုပြင်ရေးအကုန်", "en": "Restore, upscale, cleanup and object/water edits", "shn": "မႄးၶႅပ်းႁၢင်ႈၵဝ်ႇ၊ upscale၊ cleanup", "kac": "Sumla dingsa hkrak shatai, upscale, cleanup", "th": "ซ่อมภาพเก่า เพิ่มความคม ทำความสะอาด แก้วัตถุ/น้ำ", "zh": "修复老照片、放大、清理与物件/水面编辑", "vi": "Phục hồi, nâng nét, dọn dẹp và chỉnh vật thể/nước", "id": "Restorasi, upscale, pembersihan, edit objek/air", "ms": "Pemulihan, upscale, pembersihan, edit objek/air"}),
-      items: st(["region-edit","upscale","object-edit","water-edit","text-logo","film-grade","white-balance-fix","sky-water-enhance","editorial-caption","magazine-cover"]).concat(prs(["restore"])).concat(D.cleanups.map(function(c){
+      items: st(["region-edit","light-gear-remove","upscale","object-edit","water-edit","text-logo","film-grade","white-balance-fix","sky-water-enhance","editorial-caption","magazine-cover"]).concat(prs(["restore"])).concat(D.cleanups.map(function(c){
         var CL_SUM={ people:{my:"နောက်ခံက လူပိုတွေဖယ်ပြီး နောက်ခံ ပြန်ဆောက်",en:"Removes background bystanders, rebuilds the backdrop",shn:"ဢဝ်ၵူၼ်းပႃႈလင်ဢွၵ်ႇ သေ မႄးၵေႃႇလင်ၶိုၼ်း",kac:"Hpang na masha ni shaw kau nna hpang bai gaw",th:"ลบคนแปลกหน้าด้านหลัง แล้วสร้างฉากหลังใหม่",zh:"移除背景路人并重建背景",vi:"Xóa người lạ phía sau, dựng lại nền",id:"Hapus orang di latar, bangun ulang background",ms:"Buang orang di latar, bina semula latar"},
           hands:{my:"လက်/လက်ချောင်း ပုံမမှန်တာ ပြင် — ၅ ချောင်းစီ မှန်အောင်",en:"Fixes hand anatomy — five natural fingers each",shn:"မႄးမိုဝ်း — ၼိဝ်ႉ 5 ဢၼ်မၢၼ်ႇ",kac:"Lata hpe hkrak shatai — layung 5 ding ai",th:"แก้กายวิภาคมือ — นิ้วครบห้าอย่างเป็นธรรมชาติ",zh:"修正手部结构 — 每只手五指自然",vi:"Sửa giải phẫu tay — mỗi bàn năm ngón tự nhiên",id:"Perbaiki anatomi tangan — lima jari alami",ms:"Betulkan anatomi tangan — lima jari semula jadi"},
           legs:{my:"ခြေထောက် ပုံမမှန်/ပိုနေတာ ပြင်",en:"Fixes leg and foot anatomy",shn:"မႄးၶႃ/တိၼ်",kac:"Lagaw hpe hkrak shatai",th:"แก้กายวิภาคขาและเท้า",zh:"修正腿脚结构",vi:"Sửa giải phẫu chân",id:"Perbaiki anatomi kaki",ms:"Betulkan anatomi kaki"},
@@ -30481,7 +30520,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.122.0";
+var APP_VER="6.123.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
