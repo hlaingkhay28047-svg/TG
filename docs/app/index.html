@@ -1741,6 +1741,7 @@ svg.ic-s,svg.ic-m,svg.ic-h2,svg.ic-tab,svg.ic-xl,svg.ic-car{
    waiting is still reported, it just does not move. */
 html.motion-reduce *,html.motion-reduce *::before,html.motion-reduce *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 html.motion-reduce video.ph-motion,html.motion-reduce .dash-greet video.greet-motion{display:none}
+html.motion-reduce .toast{transition:none!important}   /* the toast snaps rather than runs a .01ms transition — the v4.28 sweep (11b) pins it fully off under reduced motion */
 /* 6.120.0 — LOADING (wave E). While a job runs the result card is already on screen as a skeleton the size of the picture to
    come (--pend-ar = the picked ratio; 3/4 for pictures, 16/9 · 9/16 for video), aria-busy, so nothing jumps when it lands. */
 .result-box.pending{display:block}
