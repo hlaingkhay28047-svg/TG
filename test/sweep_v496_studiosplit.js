@@ -48,7 +48,9 @@ function report(name, ok, detail) {
 }
 
 const APP = path.join(__dirname, "..", "docs", "app");
-const src = fs.readFileSync(path.join(APP, "index.html"), "utf8");
+/* 6.122.0 — the ph_meitu / ph_evoto hero strings of the fourteen non-base languages live in data/trmore.js
+   since 6.121.0 (the v4.28 / v4.30 / Path dictionaries left the shell for headroom); J2 reads them there too. */
+const src = fs.readFileSync(path.join(APP, "index.html"), "utf8") + "\n" + require("../tools/lib/app-data.js").trMoreText();
 
 /* Measured on the build this release replaced, at 360/390/412. Stated as the
    thing to beat rather than as a vague "smaller".
@@ -257,8 +259,10 @@ report("A2) both sit in the Edit group, beside the other photo pages",
   const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
   const miss = ["ph_meitu", "ph_evoto"].map(k => {
     const found = new Set();
-    (src.match(new RegExp(k + ":\\{[^}]*\\}", "g")) || []).forEach(b => {
-      (b.match(/([a-z]{2,3}):/g) || []).forEach(m => found.add(m.slice(0, -1)));
+    /* the shell writes the record as an object literal (ph_meitu:{my:"…"}), data/trmore.js as JSON
+       ("ph_meitu":{"shn":"…"}) — one scan reads both spellings */
+    (src.match(new RegExp('"?' + k + '"?:\\{[^}]*\\}', "g")) || []).forEach(b => {
+      (b.match(/"?([a-z]{2,3})"?:/g) || []).forEach(m => found.add(m.replace(/["':]/g, "")));
     });
     return { key: k, missing: LANGS.filter(l => !found.has(l)) };
   }).filter(x => x.missing.length);

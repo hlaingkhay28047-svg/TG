@@ -308,7 +308,7 @@ const READ_CARD = () => {
 
     /* walk every page so the art, the pickers and the self-test all build */
     const PAGES = ["aitools", "wf", "prompt", "imagine", "retouch", "path", "create",
-      "video", "vidup", "v2v", "talk", "presets", "gallery", "setup"];
+      "video", "vidup", "v2v", "talk", "presets", "gallery", "album", "setup"];   /* 6.122.0 — the Album page joined */
     for (const key of PAGES) {
       await page.evaluate(k => { try { switchPage(k); } catch (e) { } }, key);
       await page.waitForTimeout(320);
@@ -323,7 +323,7 @@ const READ_CARD = () => {
       });
       return out;
     }, ASSET_HOST);
-    report("A7) and still none after all fourteen pages have been opened",
+    report("A7) and still none after all fifteen pages have been opened",
       after.length === 0, after.length + " remote: " + after.slice(0, 4).join(" | "));
 
     report("A8) the loader really did fetch the licensed host's art (it is not simply drawing nothing)",

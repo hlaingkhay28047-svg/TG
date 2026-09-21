@@ -2791,7 +2791,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.192.0";
+const PANEL_VERSION = "6.193.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -4356,6 +4356,7 @@ const PAGE_HERO_HEADS = {
     vi: "Biến mọi khung cảnh bạn tưởng tượng thành hiện thực — <em>theo cách của bạn</em>", id: "Wujudkan setiap adegan yang Anda bayangkan — <em>dengan cara Anda</em>",
     ms: "Hidupkan setiap adegan yang anda bayangkan — <em>mengikut cara anda</em>" },
   phImagine: {"my": "ပုံထည့် · template ရွေး · <em>တစ်ချက်နှိပ်</em> — prompt မလို", "en": "Add a photo · pick a template · <em>one tap</em> — no prompt", "shn": "သႂ်ႇၶႅပ်း · လိူၵ်ႈ template · <em>ၼဵၵ်းပွၵ်ႈလဵဝ်</em>", "kac": "Sumla bang · template lata · <em>kalang dip</em>", "th": "เพิ่มรูป · เลือกเทมเพลต · <em>แตะครั้งเดียว</em> — ไม่ต้องพรอมต์", "zh": "添加照片 · 选择模板 · <em>一键</em>——无需提示词", "vi": "Thêm ảnh · chọn mẫu · <em>một chạm</em> — không cần prompt", "id": "Tambah foto · pilih templat · <em>sekali ketuk</em> — tanpa prompt", "ms": "Tambah foto · pilih templat · <em>sekali ketik</em> — tanpa prompt"},
+  phAlbum: {"my": "ပုံ ၁–၆ ပုံ ထည့် · အရွယ်ရွေး · <em>စာမျက်နှာ ထွက်</em>", "en": "One to six photos · pick the size · <em>a finished page</em>", "shn": "ၶႅပ်း 1–6 · လိူၵ်ႈၶႃႈလူင် · <em>ဢွၵ်ႇၼႃႈလိၵ်ႈ</em>", "kac": "Sumla 1–6 · kaba lata · <em>laika man pru</em>", "th": "รูป 1–6 ใบ · เลือกขนาด · <em>ได้หน้าอัลบั้ม</em>", "zh": "1–6 张照片 · 选择尺寸 · <em>成品页面</em>", "vi": "1–6 ảnh · chọn khổ · <em>một trang hoàn chỉnh</em>", "id": "1–6 foto · pilih ukuran · <em>halaman jadi</em>", "ms": "1–6 foto · pilih saiz · <em>halaman siap</em>"},   /* 6.122.0 wave G — the app's ph_album */
   phMeitu: { my: "Retouch A ပုံစံ ၁၆၃ မျိုး — <em>Live Preview</em> နဲ့ တစ်ချက်ချင်း မြင်ရမယ်", en: "163 Retouch A controls, every one of them on <em>live preview</em>",
     shn: "Retouch A 163 ဢၼ် — ပႃး <em>live preview</em> ၵူႈဢၼ်", kac: "Retouch A 163 hpe — yawng <em>live preview</em> hte",
     th: "ปรับแต่ง Retouch A 163 รายการ พร้อม<em>พรีวิวสด</em>ทุกตัว", zh: "163 项 Retouch A 调整，每一项都有<em>实时预览</em>",
@@ -12835,6 +12836,222 @@ function imagineEnter() {
 /* a language change repaints the page the way the app's reload would */
 REFRESHERS.push(function () { try { if (imagineReady) imagineEnter(); } catch (e) { } });
 
+/* ================= ALBUM PAGE (6.122.0 wave G — the app's pgAlbum) =================
+   The page is DRAWN by js/hnk_album.js, the app's own ALBUM module lifted verbatim
+   (tools/build_panel_album.js); this is the panel's side of its host contract — what the
+   web app hands it, done the Photoshop way: the app's alb_* words in nine languages
+   (lifted beside the module as HNK.albumStrings), the Layer · File photo sheet where the
+   phone has a file input (every photograph downscaled to the album's own Photo quality —
+   Standard 2,400 · Print 4,000 px on the long edge, the same rule as the app's host),
+   the panel's confirm dialog, album records as JSON files in an album/ folder under the
+   plugin's data folder (an album carries its photographs; the settings file is not the
+   place and the storage shim's 4 MB cap is not the size), the panel's gallery store,
+   Export = a save dialog for the JPG / PDF / PSD bytes, and "Open in Photoshop" = the
+   layered PSD written to the data folder and opened as a document. */
+let albumReady = false;
+const ALBUM_DIR = "album";
+function albumFileName(key) { return String(key || "").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 80) + ".json"; }
+/* the data folder — a test may hand in a fake host (HNK.__uxpForTests), as the gallery and takes stores accept */
+function albumFs() {
+  try { const h = globalThis.HNK && globalThis.HNK.__uxpForTests; if (h && h.storage) return h.storage.localFileSystem; } catch (e) { }
+  return fsp;
+}
+async function albumFolder(create) {
+  const root = await albumFs().getDataFolder();
+  try { const e = await root.getEntry(ALBUM_DIR); if (e && e.isFolder) return e; } catch (e) { }
+  if (!create || !root || typeof root.createFolder !== "function") return null;   /* a host with no sub-folders keeps no album records */
+  return await root.createFolder(ALBUM_DIR);
+}
+async function albumStore(key, val) {
+  try {
+    if (val === null || val === undefined) return albumRemove(key);
+    const dir = await albumFolder(true);
+    if (!dir) return false;
+    const f = await dir.createFile(albumFileName(key), { overwrite: true });
+    await f.write(JSON.stringify(val), { format: formats.utf8 });
+    return true;
+  } catch (e) { herr("album:store", e); return false; }
+}
+async function albumRestore(key) {
+  try {
+    const dir = await albumFolder(false);
+    if (!dir) return null;
+    const f = await dir.getEntry(albumFileName(key));
+    if (!f || typeof f.read !== "function") return null;
+    const txt = String(await f.read({ format: formats.utf8 }) || "");
+    return txt ? JSON.parse(txt) : null;
+  } catch (e) { return null; }
+}
+async function albumRemove(key) {
+  try {
+    const dir = await albumFolder(false);
+    if (!dir) return false;
+    const f = await dir.getEntry(albumFileName(key));
+    if (f && typeof f.delete === "function") await f.delete();
+    return true;
+  } catch (e) { return false; }
+}
+/* the album's Photo quality decides the long edge, exactly as the app's readFiles does */
+function albumDownscale(dataUrl, maxPx) {
+  return new Promise(function (resolve) {
+    try {
+      const im = new Image();
+      im.onload = function () {
+        try {
+          const w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+          const k = Math.min(1, maxPx / Math.max(w, h, 1));
+          if (!(w > 0 && h > 0) || k >= 1) { resolve(dataUrl); return; }
+          const c = document.createElement("canvas");
+          c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+          const x = c.getContext("2d"); x.drawImage(im, 0, 0, c.width, c.height);
+          resolve(c.toDataURL("image/jpeg", 0.9) || dataUrl);
+        } catch (e) { resolve(dataUrl); }
+      };
+      im.onerror = function () { resolve(dataUrl); };
+      im.src = dataUrl;
+    } catch (e) { resolve(dataUrl); }
+  });
+}
+/* the module sets its own pick mode (page · album · pool · replace) before it asks, so the
+   sheet only has to hand the photographs back through ALBUM.accept */
+function albumPick() {
+  const al = globalThis.HNK && globalThis.HNK.album;
+  if (!al) return;
+  const maxPx = (typeof al.photoMax === "function") ? al.photoMax() : 2400;
+  const accept = async function (urls) {
+    const out = [];
+    for (let i = 0; i < urls.length; i++) { try { out.push(await albumDownscale(urls[i], maxPx)); } catch (e) { } }
+    if (out.length) al.accept(out);
+  };
+  photoSheet(ff9(FF_L.where), {
+    onLayer: async function () {
+      const e = await layerPhotoCapture();
+      if (e && e._url) { await accept([e._url]); setStatus(t("st_photo_layer_added"), "ok"); }
+    },
+    onFile: async function () {
+      try {
+        const picked = await fsp.getFileForOpening({ allowMultiple: true, types: REF_LIB_TYPES });
+        const arr = picked ? (Array.isArray(picked) ? picked : [picked]) : [];
+        const urls = [];
+        for (let i = 0; i < arr.length; i++) {
+          try {
+            const e = await refCaptureEntry(arr[i]);
+            if (e && e.b64) urls.push("data:" + (e.mime || "image/jpeg") + ";base64," + e.b64);
+          } catch (e) { setStatus(friendlyErr(e), "err"); }
+        }
+        await accept(urls);
+      } catch (e) { setStatus(friendlyErr(e), "err"); }
+    }
+  });
+}
+function albumBytes(bytes) {
+  const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+}
+async function albumSaveBytes(bytes, name, mime) {
+  const ext = (String(name || "").match(/\.([a-z0-9]+)$/i) || [])[1] || (mime === "application/pdf" ? "pdf" : mime === "image/jpeg" ? "jpg" : "bin");
+  const f = await fsp.getFileForSaving(String(name || "hnk-album." + ext), { types: [ext] });
+  if (!f) return false;
+  await f.write(albumBytes(bytes), { format: formats.binary });
+  return true;
+}
+async function albumOpenInPs(bytes) {
+  const folder = await albumFs().getDataFolder();
+  const file = await folder.createFile("hnk_album.psd", { overwrite: true });
+  await file.write(albumBytes(bytes), { format: formats.binary });
+  await psCore.executeAsModal(async function () { await app.open(file); }, { commandName: "HNK Open Album Page" });
+  return true;
+}
+function albumHost() {
+  return {
+    t: function (k) { const S = globalThis.HNK && globalThis.HNK.albumStrings; const m = S && S[k]; return m ? (ff9(m) || k) : k; },
+    pick9: function (m) { return ff9(m); },
+    pickFiles: function () { albumPick(); },
+    /* the module's own onclick opens the sheet; nothing overlays the button here (the app's
+       nativePick does, for the phone's picker), so this hook has nothing to add */
+    wirePick: function () { },
+    confirm: function (msg) { return setupConfirm(msg); },
+    store: function (key, val) { return albumStore(key, val); },
+    restore: function (key) { return albumRestore(key); },
+    remove: function (key) { return albumRemove(key); },
+    saveGallery: async function (dataUrl) {
+      const m = /^data:([^;]+);base64,(.*)$/.exec(dataUrl || "");
+      const gs = globalThis.HNK && globalThis.HNK.galleryStore;
+      if (!m || !gs) return false;
+      return !!(await gs.save(m[2], m[1] === "image/jpeg" ? "jpg" : "png", "album"));
+    },
+    exportFile: function (bytes, name, mime) { return albumSaveBytes(bytes, name, mime).catch(function (e) { setStatus(friendlyErr(e), "err"); return false; }); },
+    exportOut: function (dataUrl, name) {
+      const m = /^data:([^;]+);base64,(.*)$/.exec(dataUrl || "");
+      if (!m) return Promise.resolve(false);
+      return albumSaveBytes(b64ToBuf(m[2]), name, m[1]).catch(function (e) { setStatus(friendlyErr(e), "err"); return false; });
+    },
+    openInPs: function (bytes) { return albumOpenInPs(bytes); },
+    stageWidth: function (el) { return imagineHost().stageWidth(el); },
+    asset: function (kind, file) { return "icons/album/" + kind + "/" + file; },
+    toast: function (msg, kind) { setStatus(msg, kind === "ok" ? "ok" : kind === "err" ? "err" : ""); }
+  };
+}
+/* THE MODULE'S NATIVE <select>s (the custom size's unit, the text card's fonts) are the one control the
+   web app's shell dresses for it: a document-wide observer there wraps every select in an .hsl picker
+   (button + value label, the select parked as the value store). A native select never opens in
+   Photoshop (6.148.0 photographs), so the panel does the same for the module's root, with its own
+   .hsl markup — the document-level hsl-btn listener (bindHslPickers) opens the <dialog> list and fires
+   the select's own change, so the module's handlers run untouched. Re-applied on every render, since
+   render() rebuilds the cards. */
+function albumHslLabel(sel, val) {
+  const o = sel.options && sel.options[sel.selectedIndex];
+  val.textContent = o ? String(o.textContent || "") : "";
+}
+function albumHslWrap(sel) {
+  if (!sel || sel.__hsl || !sel.parentNode) return;
+  const wrap = document.createElement("div");
+  wrap.className = "hsl hsl-for-" + (sel.id || "anon");
+  const btn = document.createElement("div");
+  btn.className = "hsl-btn"; btn.setAttribute("role", "button"); btn.setAttribute("tabindex", "0");
+  const lab = document.createElement("span"); lab.className = "hsl-lab";
+  const val = document.createElement("span"); val.className = "hsl-val";
+  lab.appendChild(val); btn.appendChild(lab);
+  const caret = document.createElement("img"); caret.className = "hsl-caret"; caret.src = "icons/ui/hsl-caret-gold.png"; caret.alt = "";
+  btn.appendChild(caret);
+  sel.parentNode.insertBefore(wrap, sel);
+  wrap.appendChild(btn); wrap.appendChild(sel);
+  sel.tabIndex = -1; sel.setAttribute("aria-hidden", "true");
+  sel.__hsl = { wrap: wrap, btn: btn, val: val };
+  albumHslLabel(sel, val);
+  sel.addEventListener("change", function () { albumHslLabel(sel, val); });
+  try { new MutationObserver(function () { albumHslLabel(sel, val); }).observe(sel, { childList: true, subtree: true, attributes: true }); } catch (e) { }
+}
+let albumHslObs = null;
+function albumHslify(root) {
+  if (!root) return;
+  const scan = function () { try { root.querySelectorAll("select").forEach(albumHslWrap); } catch (e) { } };
+  scan();
+  if (albumHslObs || typeof MutationObserver !== "function") return;
+  let queued = false;
+  albumHslObs = new MutationObserver(function () {
+    if (queued) return; queued = true;
+    setTimeout(function () { queued = false; scan(); }, 0);
+  });
+  albumHslObs.observe(root, { childList: true, subtree: true });
+}
+function albumEnter() {
+  const al = globalThis.HNK && globalThis.HNK.album;
+  if (!al) return;
+  const head = $("phAlbum"), m = PAGE_HERO_HEADS.phAlbum;
+  if (head && m) paintHeroHead(head, m[state.lang] || m[LANG_FB[state.lang]] || m.en);
+  if (!albumReady) { al.init(albumHost(), $("albRoot")); albumReady = true; }
+  else al.onEnter();
+  /* 6.122.0 — the module's init() draws only when its root "is visible" (getClientRects, the 6.75.0
+     Imagine rule), and this renderer answers that with an empty list for every element. The page is
+     being entered, so it is drawn: if init declined, draw now. The module stays byte-identical to the app's. */
+  try { if (typeof al.drawn === "function" && !al.drawn()) al.onEnter(); }
+  catch (eDraw) { hwarn("album:draw", eDraw); }
+  albumHslify($("albRoot"));
+}
+/* a language change repaints the page the way the app's reload would */
+REFRESHERS.push(function () { try { if (albumReady) albumEnter(); } catch (e) { } });
+
 /* ================= FREEFORM PAGE (v6.51.0 — the app's pgCreate) =================
    The GENERATE card: the app's 49 RunningHub image models behind the brand
    picker, the visual ratio rail, Advanced count/size, the add-on summary and
@@ -13867,7 +14084,10 @@ const PAGES = [
   /* the app's Library holds Reference and Gallery; the panel's own generation
      history is that gallery of results. Its select / zip / delete actions
      follow in the next wave — the shape of the navigation is the app's now. */
-  { key: "gallery", page: "pageGallery", group: "lib",   sub: "Gallery",   ic: "i-gallery" }
+  { key: "gallery", page: "pageGallery", group: "lib",   sub: "Gallery",   ic: "i-gallery" },
+  /* 6.122.0 wave G — the app's pgAlbum (Library ▸ Album): the album designer, drawn by the app's own ALBUM
+     module (js/hnk_album.js, lifted by tools/build_panel_album.js) over the panel's host adapter below */
+  { key: "album",   page: "pageAlbum",   group: "lib",   sub: "Album",     ic: "i-frame" }
 ];
 function pageEntry(key) {
   for (let i = 0; i < PAGES.length; i++) if (PAGES[i].key === key) return PAGES[i];
@@ -14062,6 +14282,7 @@ function switchPage(key) {
     } catch (e) { }
   }
   if (key === "imagine") { try { imagineEnter(); } catch (e) { hwarn("imagine:", e); } }   /* 6.29.0 wave — paints the hub / tool view on entry */
+  if (key === "album") { try { albumEnter(); } catch (e) { hwarn("album:", e); } }   /* 6.122.0 wave G — the album designer on entry */
   /* v6.75.0 — a page switch is a cheap moment to re-ask for pictures a dead line took (throttled inside) */
   try { const ra = globalThis.HNK && globalThis.HNK.remoteArt; if (ra && ra.retryFailed) ra.retryFailed(false); } catch (e) { }
   /* v6.51.0 — Setup repaints its readiness rows and the data-store line on entry, like the app's showPage */

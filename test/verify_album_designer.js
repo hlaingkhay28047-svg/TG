@@ -102,8 +102,8 @@ function sourcePins() {
     /if \(k === "Delete" \|\| k === "Backspace"\)\{ if \(selObj\(\)\)\{ ev\.preventDefault\(\); removeSelected\(\); \} return; \}/.test(MOD) &&
     /document\.addEventListener\("keydown", onKey, false\); KEYS_BOUND = true;/.test(MOD), null);
 
-  report("A5) the page is ten cards in one order — occasion · size · pages · stage · photos · layout · design · text · export · print check — and the stage's third view is the book",
-    /ROOT\.appendChild\(layoutCard\(\)\);\n\s*ROOT\.appendChild\(designCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(textCard\(\)\);\n\s*ROOT\.appendChild\(exportCard\(\)\);\n\s*ROOT\.appendChild\(checkCard\(\)\);/.test(MOD) &&
+  report("A5) the page is twelve cards in one order — shelf · occasion · size · pages · stage · photos · layout · design · ornaments · text · export · print check (6.122.0 wave G set the shelf first and the ornaments after the design) — and the stage's third view is the book",
+    /ROOT\.appendChild\(layoutCard\(\)\);\n\s*ROOT\.appendChild\(designCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(ornCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(textCard\(\)\);\n\s*ROOT\.appendChild\(exportCard\(\)\);\n\s*ROOT\.appendChild\(checkCard\(\)\);/.test(MOD) &&
     /out\.view = \(d\.view === "spread" \|\| d\.view === "book"\) \? d\.view : "page";/.test(MOD) &&
     (MOD.match(/if \(DOC\.view !== "page"\) return;/g) || []).length === 3 && /function bookView\(\)/.test(MOD) && /function drawBook\(px\)/.test(MOD), null);
 
@@ -261,8 +261,8 @@ async function walk(browser) {
     swatches: [...document.querySelectorAll("#albPapers .alb-swatch")].map((s) => s.style.backgroundColor),
     check: (document.getElementById("albCheckOk") || {}).textContent || "", checkRows: document.querySelectorAll("#albChecks .alb-checkrow").length
   }));
-  report("C1) on a 390px phone the empty album shows the ten cards in order, Page · Spread · Book and two disabled history buttons under the stage, an empty tray with its two buttons, the design card's style · paper · density rails (4 · 3 · 3, the paper chips wearing their swatches) and six verbs, and a print check that passes an album with one empty page and no words",
-    c1.cards.join(",") === "albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albDesignCard,albTextCard,albExportCard,albCheckCard" &&
+  report("C1) on a 390px phone the empty album shows the twelve cards in order (the shelf first, the ornaments after the design — 6.122.0), Page · Spread · Book and two disabled history buttons under the stage, an empty tray with its two buttons, the design card's style · paper · density rails (4 · 3 · 3, the paper chips wearing their swatches) and six verbs, and a print check that passes an album with one empty page and no words",
+    c1.cards.join(",") === "albShelfCard,albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albDesignCard,albOrnCard,albTextCard,albExportCard,albCheckCard" &&
     c1.views.join() === "albSpread,albBook,albGuides" && c1.hist.join() === "albUndo:true,albRedo:true" && c1.trayEmpty && c1.trayOps.join() === "albTrayAdd,albTrayUnused" &&
     c1.design.length === 0 && c1.styleChips === 4 && c1.paperChips === 3 && c1.densChips === 3 && c1.swatches.length === 3 && c1.checkRows === 1 && c1.check === "", c1);
 
@@ -477,11 +477,15 @@ async function walk(browser) {
 /* ===================== D) the languages ===================== */
 function languages() {
   const missing = [];
+  /* 6.122.0 — the seven-language rows (TR_L14) live in data/trmore.js, section l14, since wave G's
+     shelf + ornaments pushed the shell over its A4 ceiling; the my/en row still stands in the shell */
+  const L14 = A.readTrMore().l14 || {}, L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
+  const l14Row = (e) => !!e && L7.every((l) => typeof e[l] === "string" && e[l].length > 0);
   for (const k of KEYS) {
-    const base = new RegExp("[\\n,{]\\s*" + k + ':\\{my:"'), l9 = new RegExp("[\\n,{]\\s*" + k + ':\\{shn:"');
-    if (!base.test(APP) || !l9.test(APP)) missing.push(k);
+    const base = new RegExp("[\\n,{]\\s*" + k + ':\\{my:"');
+    if (!base.test(APP) || !l14Row(L14[k])) missing.push(k);
   }
-  report("D1) the designer's " + KEYS.length + " lines are in the studio's nine languages — the my/en row and the seven-language row each in the house's one-line shape — and every one is used by the module or the tables",
+  report("D1) the designer's " + KEYS.length + " lines are in the studio's nine languages — the my/en row in the house's one-line shape and the seven-language row in data/trmore.js (l14) — and every one is used by the module or the tables",
     missing.length === 0 && KEYS.every((k) => MOD.indexOf('"' + k + '"') > 0 || MOD.indexOf('"' + k.replace(/_(none|bw|sepia|warm|cool|fade|editorial|classic|minimal|script|white|cream|black|airy|balanced|dense|low|soft|empty|edge|dup|gutter)$/, "_")) > 0 || /^alb_(fx|style|paper|density|check)_/.test(k)), { missing });
   const packs = {};
   for (const c of PACKS) {
@@ -496,7 +500,7 @@ function languages() {
     if (want !== got) ph.push(c + ":" + k);
   }));
   report("D2) the fifteen reader packs (bn gu hi ja km kn ko lo ml mr ne pa ta te ur) carry all " + KEYS.length + " lines with the same placeholders as the English, and the three Tai packs are registered on the sweep's terms (V61210_KEYS)",
-    short.length === 0 && ph.length === 0 && /const V61210_KEYS = \[/.test(SWEEP) && (SWEEP.match(/\.\.\.V61210_KEYS\]/g) || []).length === 3, { short: short.slice(0, 6), ph: ph.slice(0, 6) });
+    short.length === 0 && ph.length === 0 && /const V61210_KEYS = \[/.test(SWEEP) && (SWEEP.match(/\.\.\.V61210_KEYS[,\]]/g) || []).length === 3,   /* 6.122.0 — wave G's list follows it in the same three rows */ { short: short.slice(0, 6), ph: ph.slice(0, 6) });
 }
 
 /* ===================== E) release ===================== */
@@ -504,19 +508,24 @@ function releasePins() {
   const LANDING_CLAIMS = LANDING.replace(/\/\*[\s\S]*?\*\//g, "");
   const manifest = JSON.parse(read("panel/release-manifest.json"));
   const pv = JSON.parse(read("docs/download/panel-version.json"));
-  report(`E1) ${VER} / panel ${PVER} in lockstep: APP_VER, version.json, sw.js cache, API_VERSION, PANEL_VERSION, manifest, release-manifest (+ artifact file), panel-version.json, the download footer, the landing's badges`,
-    has(APP, `var APP_VER="${VER}";`) && has(read("docs/app/version.json"), `"v":"${VER}"`) && has(read("docs/app/sw.js"), 'var CACHE = "hnk-web-studio-v6-121-0";') &&
-    has(read("server/index.js"), `const API_VERSION = "${VER}";`) && has(MAIN, `const PANEL_VERSION = "${PVER}";`) && has(read("panel/manifest.json"), `"version": "${PVER}"`) &&
-    manifest.version === PVER && manifest.artifact_file === `HNK_Ai_Panel_v${PVER}.ccx` && /^[0-9a-f]{64}$/.test(manifest.sha256) && manifest.bytes > 20000000 &&
-    pv.v === PVER && pv.latest_version === PVER && has(read("docs/download/index.html"), `Web App ${VER} · Panel ${PVER}`) &&
-    has(LANDING, VER) && has(LANDING, PVER) && !has(LANDING_CLAIMS, "6.120.0") && !has(LANDING_CLAIMS, "6.191.0"), { manifest: manifest.version, pv: pv.v });
+  /* 6.122.0 — this wave shipped as 6.121.0 / 6.192.0; every wave after it moves the pair on. What stays
+     true is the LOCKSTEP: one app version in every app file, one panel version in every panel file, the
+     landing carrying both, and the pair at or past this wave's. */
+  const appV = (APP.match(/var APP_VER="([0-9.]+)";/) || [])[1], panV = (MAIN.match(/const PANEL_VERSION = "([0-9.]+)";/) || [])[1];
+  const ge = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < 3; i++) { if (x[i] !== y[i]) return x[i] > y[i]; } return true; };
+  report(`E1) the release pair is in lockstep (this wave shipped as ${VER} / panel ${PVER}; the pair only moves forward): APP_VER, version.json, sw.js cache, API_VERSION agree; PANEL_VERSION, manifest, release-manifest (+ artifact file), panel-version.json agree; the download footer and the landing carry both`,
+    !!appV && !!panV && ge(appV, VER) && ge(panV, PVER) && has(read("docs/app/version.json"), `"v":"${appV}"`) && has(read("docs/app/sw.js"), 'var CACHE = "hnk-web-studio-v' + appV.replace(/\./g, "-") + '";') &&
+    has(read("server/index.js"), `const API_VERSION = "${appV}";`) && has(read("panel/manifest.json"), `"version": "${panV}"`) &&
+    manifest.version === panV && manifest.artifact_file === `HNK_Ai_Panel_v${panV}.ccx` && /^[0-9a-f]{64}$/.test(manifest.sha256) && manifest.bytes > 20000000 &&
+    pv.v === panV && pv.latest_version === panV && has(read("docs/download/index.html"), `Web App ${appV} · Panel ${panV}`) &&
+    has(LANDING, appV) && has(LANDING, panV) && !has(LANDING_CLAIMS, "6.120.0") && !has(LANDING_CLAIMS, "6.191.0"), { appV, panV, manifest: manifest.version, pv: pv.v });
   const rows = JSON.parse(WN.replace(/^window\.HNK_WHATS_NEW=/, "").replace(/;\s*$/, ""));
-  const row = rows[0];
-  report(`E2) the What's New strip leads with the ${VER} row — a bold lead, title and story in all nine languages, pointing at the Album page — and the panel's lifted table carries it`,
+  const row = rows.find((r) => r.v === VER);
+  report(`E2) the What's New strip carries the ${VER} row (it led the strip when this wave shipped) — a bold lead, title and story in all nine languages, pointing at the Album page — and the panel's lifted table carries it`,
     row && row.v === VER && row.ref === "pgAlbum" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40 && row.s[l].startsWith("**")) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
-  report("E3) CI runs this test (the 263rd `node test/` invocation, right after the wave E step) and the landing says 263 tests",
+  report("E3) CI runs this test right after the wave E step and the landing says how many tests the suite runs (263 when this wave shipped, 264 since 6.122.0 added verify_album_wave_g)",
     has(CI, "run: node test/verify_ux_wave_6120.js\n") && has(CI, "run: PORT=8931 node test/verify_album_designer.js") && CI.indexOf("verify_ux_wave_6120") < CI.indexOf("verify_album_designer") &&
-    (CI.match(/node test\//g) || []).length === 263 && has(LANDING, "263 tests") && !has(LANDING, "262 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 264 && has(LANDING, "264 tests") && !has(LANDING, "262 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 (async () => {

@@ -48,6 +48,9 @@ const FONTS = require("./build_album_fonts.js");
    nine languages, that the design engine sets on the pages after the opener. In their own
    file because they are prose, not geometry, and read best kept apart from the shapes. */
 const { STORIES } = require("./lib/album_stories.js");
+/* 6.122.0 wave G — the ornament and overlay catalogue (the PNG masks themselves are drawn by
+   tools/build_album_ornaments.js and pinned by docs/app/lib/album/ornaments.json) */
+const ORN = require("./lib/album_ornaments.js");
 
 /* The gap between two neighbouring photos, as a fraction of the safe area.
    One constant for every layout: a page whose gaps differ cell by cell reads
@@ -528,7 +531,7 @@ const OCCASIONS = [
 const TYPE = FONTS.dataTables();
 
 const DATA = {
-  v: 3,
+  v: 4,
   bleedMm: 3,
   gutterMm: 5,
   gapFrac: G,
@@ -557,7 +560,16 @@ const DATA = {
   fx: ["", "bw", "sepia", "warm", "cool", "fade"],
   /* the three papers a page may be printed on — white, the cream the reference album
      designer sets its spreads on, and black for a dark book */
-  papers: ["#ffffff", "#f6f1e7", "#141416"]
+  papers: ["#ffffff", "#f6f1e7", "#141416"],
+  /* wave G — twenty-four ornaments in six families (alpha masks the module tints), five page
+     overlays with the blend each is laid on with and the three strengths the chips offer, and
+     the five tints an ornament may wear */
+  orn: ORN.catalogue().orn,
+  ornFamilies: ORN.catalogue().ornFamilies,
+  ovl: ORN.catalogue().ovl,
+  ovlAmounts: ORN.catalogue().ovlAmounts,
+  tints: ORN.catalogue().tints,
+  ornDir: "lib/album/"
 };
 
 /* ---- checks the generator runs on itself ------------------------------- */
@@ -706,6 +718,30 @@ function check() {
   if (DATA.fx[0] !== "" || new Set(DATA.fx).size !== DATA.fx.length) throw new Error("the effect row must open with none and repeat nothing");
   DATA.papers.forEach(function (c) { if (!HEX.test(c)) throw new Error("paper " + c + " is not a six-digit hex colour"); });
   if (DATA.papers[0] !== "#ffffff") throw new Error("the first paper must be white — the paper every album before wave F was printed on");
+  /* ---- wave G: the ornaments and overlays ----------------------------------- */
+  const ornIds = {}, famSeen = {};
+  const LIBDIR = path.join(__dirname, "..", "docs", "app", "lib", "album");
+  const REC = JSON.parse(fs.readFileSync(path.join(LIBDIR, "ornaments.json"), "utf8"));
+  if (DATA.orn.length !== 24) throw new Error("the catalogue carries " + DATA.orn.length + " ornaments, not twenty-four");
+  DATA.orn.forEach(function (o) {
+    if (!/^[a-z][0-9]$/.test(o.id) || ornIds[o.id]) throw new Error("ornament id " + o.id + " is malformed or repeated");
+    ornIds[o.id] = true;
+    if (DATA.ornFamilies.indexOf(o.fam) < 0) throw new Error("ornament " + o.id + " names an unknown family " + o.fam);
+    famSeen[o.fam] = (famSeen[o.fam] || 0) + 1;
+    if (!(o.ar > 0) || !(o.def && o.def.w > 0 && o.def.w <= 1 && o.def.x >= 0 && o.def.x <= 1 && o.def.y >= 0 && o.def.y <= 1)) throw new Error("ornament " + o.id + ": bad aspect or default place");
+    if (!fs.existsSync(path.join(LIBDIR, "orn", o.id + ".png"))) throw new Error("ornament " + o.id + " has no mask under docs/app/lib/album/orn");
+    if (!REC.files["orn/" + o.id + ".png"]) throw new Error("ornament " + o.id + " is not in ornaments.json");
+  });
+  DATA.ornFamilies.forEach(function (f) { if (famSeen[f] !== 4) throw new Error("family " + f + " carries " + (famSeen[f] || 0) + " ornaments, not four"); });
+  const ovlIds = {};
+  DATA.ovl.forEach(function (o) {
+    if (ovlIds[o.id]) throw new Error("overlay " + o.id + " repeated"); ovlIds[o.id] = true;
+    if (["multiply", "screen", "overlay"].indexOf(o.blend) < 0) throw new Error("overlay " + o.id + " names a blend the module does not draw");
+    DATA.ovlAmounts.forEach(function (a) { if (!(o.amounts[a] > 0 && o.amounts[a] <= 1)) throw new Error("overlay " + o.id + " amount " + a + " out of range"); });
+    if (!fs.existsSync(path.join(LIBDIR, "ovl", o.id + ".png"))) throw new Error("overlay " + o.id + " has no texture under docs/app/lib/album/ovl");
+  });
+  Object.keys(DATA.tints).forEach(function (k) { if (!HEX.test(DATA.tints[k])) throw new Error("tint " + k + " is not a six-digit hex colour"); });
+  if (DATA.tints.gold !== "#b08d57") throw new Error("the gold tint must be the studio's gold");
 }
 
 function round(o) {

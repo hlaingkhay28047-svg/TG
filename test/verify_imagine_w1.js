@@ -38,7 +38,9 @@ report("A1) the page is registered after Freeform and the Edit roster carries it
   /pages:\["pgCreate","pgImagine","pgMeitu","pgEvoto","pgRetouch","pgPath"\]/.test(APP) &&
   /<div class="page" id="pgImagine">/.test(APP) && /<div id="imRoot"><\/div>/.test(APP) &&
   /<input type="file" id="imFile" accept="image\/\*" multiple/.test(APP) && /id="phImagine"/.test(APP) &&
-  /\["phImagine","ph_imagine"\]/.test(APP) && (APP.match(/\n  ph_imagine:\{/g) || []).length === 2, null);
+  /\["phImagine","ph_imagine"\]/.test(APP) && (APP.match(/\n  ph_imagine:\{/g) || []).length === 1 &&
+  /* 6.122.0 — the seven-language row lives in data/trmore.js (l14) since wave G moved TR_L14 out of the shell */
+  (() => { const e = (require("../tools/lib/app-data.js").readTrMore().l14 || {}).ph_imagine; return !!e && ["shn", "kac", "th", "zh", "vi", "id", "ms"].every((l) => typeof e[l] === "string" && e[l].length > 0); })(), null);
 report("A2) twenty-two tools, 284 templates, every string in the studio's nine languages, the prompt frame present",
   DATA.tools.length === 22 && DATA.tools.every(t => COUNTS[t.id] === t.presets.length && all9(t.name) && all9(t.sum) && /\{P\}/.test(t.basePrompt) && t.presets.every(p => all9(p.name) && p.p.length > 20)) &&
   DATA.tools.reduce((n, t) => n + t.presets.length, 0) === 284 && Object.keys(DATA.ui).length >= 30 && Object.keys(DATA.ui).every(k => all9(DATA.ui[k])) &&

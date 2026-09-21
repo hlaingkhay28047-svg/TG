@@ -72,6 +72,13 @@ const PANEL_ONLY = {
      the page carries nothing the app does not. */
   path: [],
   home: [], wf: [], edit: [], lib: [], video: [],
+  /* 6.122.0 — the Album page is the same module on both surfaces, and the one line the panel
+     draws that the app does not is the export card's "Open in Photoshop" button: the module
+     draws it only for a host that can open a document (H.openInPs), which a browser cannot.
+     The Burmese label, as the walk reads both surfaces in Burmese. */
+  album: [
+    "Photoshop ထဲ ဖွင့်"
+  ],
   setup: []
 };
 /* Strings the APP shows that the panel draws instead of writing: the app's
@@ -80,7 +87,7 @@ const PANEL_ONLY = {
    text node. Nothing a student sees differs. */
 const APP_ONLY = {
   vidup: ["HD"], v2v: [], talk: [], gallery: [], create: [], path: [],
-  home: [], wf: [], lib: [],
+  home: [], wf: [], lib: [], album: [],
   /* the app's Size tile is an inline <svg> with the letters HD drawn inside
      it, which counts as text here; the panel's tile is that same picture as a
      file, so it carries no text node. Nothing a student sees differs. */
@@ -163,6 +170,9 @@ const PAGES = [
      hub must read identically: kick, headline, intro, four cards, the coming-waves line. */
   { key: "imagine", panelKey: "imagine", appKey: "pgImagine", panelRoot: "#pageImagine", appRoot: "#pgImagine", label: "Imagine" },
   { key: "lib", panelKey: "presets", appKey: "pgLib", panelRoot: "#pagePresets", appRoot: "#pgLib", label: "Library" },
+  /* 6.122.0 wave G — the Album page is ONE module on both surfaces too (js/hnk_album.js is the app's ALBUM block,
+     lifted; its words ride along as HNK.albumStrings), so the shelf, the twelve cards and every chip must read identically. */
+  { key: "album", panelKey: "album", appKey: "pgAlbum", panelRoot: "#pageAlbum", appRoot: "#pgAlbum", label: "Album" },
   { key: "video", panelKey: "video", appKey: "pgVideo", panelRoot: "#pageVideo", appRoot: "#pgVideo", label: "Video" },
   { key: "setup", panelKey: "setup", appKey: "pgHome", panelRoot: "#pageSetup", appRoot: "#pgHome", label: "Setup" }
 ];

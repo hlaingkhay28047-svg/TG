@@ -47,8 +47,8 @@ const KEYS = ["alb_touch_note", "alb_sel_none", "alb_sel_photo", "alb_sel_text",
   "alb_move_u", "alb_move_d", "alb_spread_note"];
 const PORT = Number(process.env.PORT || 8931);
 const BASE = "http://127.0.0.1:" + PORT;
-const WEB = "6.121.0";   /* re-pinned with each lockstep bump */
-const PANEL = "6.192.0";
+const WEB = "6.122.0";   /* re-pinned with each lockstep bump */
+const PANEL = "6.193.0";
 /* 6.111.0 — WEB/PANEL are the CURRENT release, which E1 pins in lockstep and
    which every release moves. ALBUM_WAVE is a different fact: the release that
    actually SHIPPED this stage, and therefore the release whose What's New row
@@ -64,9 +64,15 @@ function report(name, ok, detail) {
   console.log((ok ? "PASS" : "FAIL") + " — " + name + (ok ? "" : "  :: " + JSON.stringify(detail).slice(0, 900)));
   if (!ok) failures++;
 }
+/* 6.122.0 — the seven-language rows (TR_L14) live in data/trmore.js, section l14, since wave G's shelf +
+   ornaments pushed the shell over its A4 ceiling; the my/en row still stands in the shell, so a key's
+   "two rows" are one in the shell and one in trmore.js */
+const L14 = A.readTrMore().l14 || {}, L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
+const l14Row = (e) => !!e && L7.every((l) => typeof e[l] === "string" && e[l].length > 0);
+const l14Text = (e) => l14Row(e) ? "{" + L7.map((l) => l + ':"' + e[l] + '"').join(",") + "}\n" : "";
 function rows(key) {
   const re = new RegExp("[\\n,{]\\s*" + key + ":\\{", "g");
-  return (APP.match(re) || []).length;
+  return (APP.match(re) || []).length + (l14Row(L14[key]) ? 1 : 0);
 }
 const CSS = (APP.match(/\/\* ---- ALBUM_CSS[\s\S]*?\/\* ---- \/ALBUM_CSS ---- \*\//) || [""])[0];
 const MOD = (APP.match(/var ALBUM = \(function\(\)\{[\s\S]*?\n\}\)\(\);/) || [""])[0];

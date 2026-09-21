@@ -3688,3 +3688,210 @@ body.tsize-s .btn, body.tsize-s .chip, body.tsize-s .hnk-btn, body.tsize-s .hnk-
 body.tsize-s .card h2, body.tsize-s .sec-h2 { font-size: 11px; }
 body.tsize-s .mut, body.tsize-s .hnk-field-label, body.tsize-s .lbl { font-size: 9.5px; }
 body.tsize-s .sub, body.tsize-s .btn-sm { font-size: 9px; }
+
+/* ---- ALBUM_CSS (6.102.0 wave A; rebuilt 6.107.0 wave E) — the album page.
+
+   FLEX AND PERCENTAGES ONLY, AND NOT ONE BREAKPOINT.
+
+   The owner photographed this page on a computer and asked for it tidy and
+   professional on a phone, a computer AND in the Photoshop panel. Three things
+   that renderer cannot do decided the whole shape of this block: it draws no CSS
+   grid, panel/index.html carries no @media rule at all (so a breakpoint written
+   here would simply never fire there), and it reads every getBoundingClientRect
+   as zero. A stylesheet therefore cannot be asked how wide the album is.
+
+   So the MODULE measures the width itself — albWidth(), over the 6.79.0 ruler
+   race — and writes the column count onto each rail as .alb-c2 … .alb-c9. Every
+   rail is then even columns BY CONSTRUCTION: one cell width, one chip height per
+   row, the same class doing the same thing on a 340px panel, a 430px phone and a
+   1280px monitor. What the owner photographed — nine occasion chips in a 4/4/1
+   grid of three different heights, four page buttons 160 · 85 · 111 · 132px wide,
+   five export buttons in a ragged block — cannot happen inside a cell. ---- */
+
+/* ONE RAIL. The cell carries the gutter; the control fills the cell. align-items:stretch
+   is what makes a two-line label and a one-line label the same height in one row. */
+#phAlbum em{white-space:nowrap}
+.alb-grid{display:flex;flex-wrap:wrap;align-items:stretch;margin:0 -4px 8px}
+.alb-cell{box-sizing:border-box;display:flex;width:100%;padding:0 4px;margin:0 0 8px}
+/* 6.122.0 — typed children, never `*`: the panel's renderer forbids the star selector and this block is lifted into it */
+.alb-cell>button,.alb-cell>div,.alb-cell>label,.alb-cell>span{width:100%;box-sizing:border-box;margin:0;justify-content:center;text-align:center}
+.alb-cell>.chip{white-space:normal;line-height:1.3;padding:7px 9px}
+.alb-c2 .alb-cell{width:50%}
+.alb-c3 .alb-cell{width:33.3333%}
+.alb-c4 .alb-cell{width:25%}
+.alb-c5 .alb-cell{width:20%}
+.alb-c6 .alb-cell{width:16.6666%}
+.alb-c7 .alb-cell{width:14.2857%}
+.alb-c8 .alb-cell{width:12.5%}
+.alb-c9 .alb-cell{width:11.1111%}
+
+/* the page rail: the one row that stays a scrolling strip, because pages are ordered */
+.alb-rail{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;margin:0 -4px 8px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.alb-pagecell{position:relative;flex:0 0 auto;margin:0 4px;border:1px solid var(--line-soft);border-radius:10px;background:var(--panel-2);padding:4px;cursor:pointer}
+.alb-pagecell.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.alb-thumb{display:block;width:96px;height:auto;max-width:96px;background:#fff;border-radius:6px}
+.alb-pagenum{display:block;text-align:center;font-size:11px;font-weight:700;color:var(--mut);margin-top:3px}
+.alb-pagex{position:absolute;top:-6px;right:-6px;width:22px;height:22px;line-height:20px;text-align:center;border-radius:50%;border:1px solid var(--line-soft);background:var(--panel);color:var(--text);font-size:12px;padding:0;cursor:pointer}
+
+.alb-stage{border:1px solid var(--line-soft);border-radius:12px;background:#0b0f14;padding:8px;margin-bottom:8px;overflow:hidden;text-align:center}
+.alb-canvas{display:block;width:100%;height:auto;max-width:100%;border-radius:6px;background:#fff}
+/* 6.110.0 — THE STAGE TAKES THE GESTURE. Without touch-action:none a drag inside a
+   photograph is read by the browser as a page scroll and a pinch as a page zoom, so the
+   crop never moves: the first pointermove is the last one this canvas ever sees. */
+.alb-canvas{touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
+.alb-canvas.dragging{cursor:grabbing}
+.alb-selbar{display:flex;flex-wrap:wrap;align-items:center;margin:0 0 6px}
+.alb-selbar > div,
+.alb-selbar > span,
+.alb-selbar > img,
+.alb-selbar > p,
+.alb-selbar > label,
+.alb-selbar > select,
+.alb-selbar > input,
+.alb-selbar > textarea,
+.alb-selbar > video,
+.alb-selbar > b,
+.alb-selbar > em,
+.alb-selbar > i,
+.alb-selbar > h2,
+.alb-selbar > section { margin-right: 6px; margin-bottom: 6px; }
+.alb-selname{font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--gold-1,#e6c07a)}
+.alb-selnone{font-size:12px;color:var(--muted,#9aa0a6)}
+
+.alb-strip{display:flex;flex-wrap:wrap;margin:0 -4px 8px}
+.alb-tile{position:relative;flex:0 0 auto;width:78px;height:78px;margin:4px;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;background:var(--panel-2)}
+.alb-tileimg{display:block;width:100%;height:100%;max-width:100%}
+.alb-tilex{position:absolute;top:2px;right:2px;width:20px;height:20px;line-height:18px;text-align:center;border-radius:50%;border:1px solid var(--line-soft);background:rgba(0,0,0,.66);color:#fff;font-size:11px;padding:0;cursor:pointer}
+.alb-tilemv{position:absolute;bottom:2px;left:2px;width:20px;height:20px;line-height:18px;text-align:center;border-radius:50%;border:1px solid var(--line-soft);background:rgba(0,0,0,.66);color:#fff;font-size:13px;padding:0;cursor:pointer}
+
+/* the two drawn chips. Both canvases are cut at twice the size they are shown at, so a
+   cell 140px wide on a monitor gets a crisp sketch instead of a blown-up 44px one. */
+.alb-tpl{flex-direction:column;padding:6px 5px}
+.alb-tpl > div,
+.alb-tpl > span,
+.alb-tpl > img,
+.alb-tpl > p,
+.alb-tpl > label,
+.alb-tpl > select,
+.alb-tpl > input,
+.alb-tpl > textarea,
+.alb-tpl > video,
+.alb-tpl > b,
+.alb-tpl > em,
+.alb-tpl > i,
+.alb-tpl > h2,
+.alb-tpl > section { margin-bottom: 4px; }
+.alb-sketch{display:block;width:100%;max-width:92px;height:auto;border-radius:3px;border:1px solid var(--line-soft)}
+/* 6.122.0 — the panel's own .chip is display:flex;flex-direction:row and, on the same specificity, out-ordered the
+   lifted column rule in the Photoshop panel: sketch and name sat side by side and the long Burmese names ran
+   9px past the page edge at 320px (verify_panel_narrow_fit B1). An id-anchored selector wins on every surface;
+   the name may never be wider than its chip. */
+#albOccs .alb-occ{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:8px 5px;white-space:normal;line-height:1.28}
+#albOccs .alb-occ > div,
+#albOccs .alb-occ > span,
+#albOccs .alb-occ > img,
+#albOccs .alb-occ > p,
+#albOccs .alb-occ > label,
+#albOccs .alb-occ > select,
+#albOccs .alb-occ > input,
+#albOccs .alb-occ > textarea,
+#albOccs .alb-occ > video,
+#albOccs .alb-occ > b,
+#albOccs .alb-occ > em,
+#albOccs .alb-occ > i,
+#albOccs .alb-occ > h2,
+#albOccs .alb-occ > section { margin-bottom: 5px; }
+.alb-plan{display:block;width:100%;max-width:104px;height:auto;border-radius:4px}
+.alb-occname{display:block;font-size:12px;font-weight:700;text-align:center;max-width:100%}
+
+/* THE SIZE, SAID ONCE AND SAID LOUD. It used to be a grey run-on line of seven
+   fields; a student had to read to the end of it to learn what they were making. */
+.alb-value{display:block;font-size:21px;font-weight:800;color:var(--accent);line-height:1.2;margin:0 0 2px}
+.alb-sub{display:block;font-size:var(--fs-xs);color:var(--mut);line-height:1.5;margin:0 0 10px}
+.alb-warn{display:block;font-size:var(--fs-xs);font-weight:700;color:#ffb3a7;line-height:1.5;margin:0 0 8px}
+
+/* the free size: a number you type and a rail you drag, for width and for height */
+.alb-dim{display:flex;flex-wrap:wrap;align-items:center;margin:0 0 8px}
+.alb-dimlab{flex:0 0 auto;width:52px;font-size:var(--fs-xs);font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.alb-num{flex:0 0 auto;width:88px;padding:6px 8px;margin:0 8px 0 0;text-align:center}
+.alb-rng{flex:1 1 130px;min-width:110px;display:block;box-sizing:border-box;margin:0;min-height:44px;accent-color:var(--accent)}
+.alb-opts{display:flex;flex-wrap:wrap;align-items:center;margin:0 -4px 6px}
+.alb-opts>select,.alb-opts>input,.alb-opts>label,.alb-opts>div,.alb-opts>button,.alb-opts>span{margin:0 4px 6px}
+.alb-sel{width:92px;padding:6px 8px}
+.alb-dpi{width:84px;padding:6px 8px;text-align:center}
+
+/* the words. The role name became a caption ABOVE the field, so the field, the face
+   and the six inks get the whole row instead of 92px of it. */
+.alb-textrow{display:block;margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid var(--line-soft)}
+/* on a monitor the caption goes back beside the field — the module measures the width and
+   puts this class on the card, because the panel honours no @media rule. Seven roles at
+   94 px a row is 660 px of screen for a label that fits in the margin. */
+.alb-lab-side .alb-textrow{display:flex;align-items:flex-start}
+.alb-lab-side .alb-rolelab{flex:0 0 auto;width:124px;margin:13px 8px 0 0}
+.alb-lab-side .alb-field{flex:1 1 auto;min-width:0}
+.alb-textrow.last{border-bottom:0;padding-bottom:0}
+.alb-rolelab{display:block;font-size:var(--fs-xs);font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin:0 0 5px}
+.alb-field{display:flex;flex-wrap:wrap;align-items:center;margin:0 -3px}
+.alb-field>.inp{flex:1 1 200px;min-width:120px;margin:0 3px 6px}
+/* the face picker is drawn as a .hsl wrapper around a parked <select> (the 6.78.0 rule:
+   Photoshop never opens a native select), so the WRAPPER is the flex child and the width
+   belongs on it. 118 px is what lets the picker and the six inks share one line inside a
+   280 px field on a 340 px panel — measured, not guessed. */
+.alb-field>.hsl{flex:0 0 auto;width:118px;margin:0 3px 6px}
+.alb-fontsel{width:100%}
+.alb-inks{flex:0 0 auto;display:flex;flex-wrap:nowrap;align-items:center;margin:0 3px 6px}
+/* 6.114.0 — the swatch stays a 22px disc, the button is 40px: a 9px transparent border
+   carries the hit area, the colour is clipped to the padding box (the inline
+   background shorthand would reset the clip, hence !important), and the negative
+   margins keep the row exactly where it was (25px per swatch, 22px tall). */
+.alb-ink{width:40px;height:40px;padding:0;margin:-9px -6px -9px -9px;border-radius:50%;border:9px solid transparent;background-clip:padding-box !important;box-shadow:inset 0 0 0 1px var(--line-soft);cursor:pointer}
+.alb-ink:last-child{margin-right:-9px}
+.alb-ink.on{box-shadow:inset 0 0 0 2px var(--accent)}
+
+/* 6.121.0 wave F — THE ALBUM DESIGNER. The book view (facing pairs, a label bar with three
+   small buttons under each page), the tray (a tile with its usage badge), the look chips, the
+   paper swatches, the progress bar Make the album shows, and the print check's rows. Flex and
+   percentages only, as everything above: the Photoshop panel this page is written to be lifted
+   into draws no grid and honours no @media rule. */
+.alb-book{display:block;margin:0 0 4px}
+.alb-bookrow{display:flex;flex-wrap:nowrap;justify-content:center;align-items:flex-start;margin:0 0 12px}
+.alb-bookpage{flex:0 0 auto;margin:0 6px;cursor:pointer}
+.alb-bookpage.blank{visibility:hidden}
+.alb-bookcv{display:block;width:100%;height:auto;max-width:100%;border-radius:4px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.45)}
+.alb-bookpage.on .alb-bookcv{box-shadow:0 0 0 2px var(--accent),0 1px 6px rgba(0,0,0,.45)}
+.alb-booklab{display:flex;align-items:center;justify-content:space-between;margin:5px 0 0}
+.alb-booknum{font-size:11px;font-weight:700;color:var(--mut)}
+.alb-bookops{display:flex;align-items:center}
+.alb-bookbtn{min-width:40px;height:40px;line-height:38px;padding:0 8px;margin-left:4px;border-radius:7px;border:1px solid var(--line-soft);background:var(--panel);color:var(--text);font-size:12px;cursor:pointer}
+.alb-tray{margin-top:2px}
+.alb-traytile{cursor:pointer}
+.alb-traytile.unused .alb-tileimg{opacity:.5}
+.alb-badge{position:absolute;bottom:2px;right:2px;min-width:20px;height:20px;line-height:20px;text-align:center;border-radius:10px;background:var(--accent);color:#1b1b1f;font-size:11px;font-weight:800;padding:0 5px}
+.alb-badge.zero{background:rgba(0,0,0,.66);color:#fff}
+.alb-trayempty{width:100%;margin:4px}
+.alb-fx{font-size:12px}
+.alb-paperchip{display:flex;align-items:center;justify-content:center}
+.alb-swatch{display:inline-block;flex:0 0 auto;width:14px;height:14px;margin-right:6px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line-soft)}
+.alb-prog{margin:10px 0 0}
+.alb-progbar{display:block;height:6px;width:0;border-radius:3px;background:var(--accent);transition:width .2s}
+.alb-proglab{margin:5px 0 0;font-size:12px;color:var(--mut)}
+.alb-checks{display:block;margin:0 0 8px}
+.alb-checkrow{display:block;width:100%;min-height:44px;text-align:left;padding:10px 12px;margin:0 0 6px;border-radius:8px;border:1px solid var(--line-soft);background:var(--panel-2);color:var(--text);font-size:12px;line-height:1.4;cursor:pointer}
+.alb-checkrow.low,.alb-checkrow.empty{border-color:#b04a4a}
+.alb-checkrow.soft,.alb-checkrow.edge,.alb-checkrow.dup,.alb-checkrow.gutter{border-color:#8a7124}
+.alb-checkok{color:#8fd19e;font-weight:700;font-size:13px;margin:0 0 8px}
+/* 6.122.0 wave G — THE SHELF, THE ORNAMENT TILES, THE TINT CHIPS. A shelf tile is a small poster:
+   the opener drawn small over a paper-coloured box, the album's name, its counts; the open one
+   wears the gold ring the book view's open page wears. An ornament tile is its mask drawn white
+   on the chip — the same file the page tints. Flex and percentages, as everything above. */
+.alb-shelf{margin-top:2px}
+.alb-shelftile{width:124px;height:auto;padding:0 0 6px;text-align:center;cursor:pointer}
+.alb-shelftile.on{box-shadow:0 0 0 2px var(--accent)}
+.alb-shelfpic{display:flex;align-items:center;justify-content:center;width:100%;height:80px;background:#f6f1e7;overflow:hidden}
+.alb-shelfpic .alb-tileimg{width:100%;height:100%}
+.alb-shelfname{display:block;margin:6px 6px 0;font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alb-shelfmeta{display:block;margin:2px 6px 0;font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alb-orntile{display:flex;align-items:center;justify-content:center;min-height:56px;padding:6px}
+.alb-ornimg{display:block;max-width:100%;max-height:44px;width:auto;height:auto}
+.alb-tintchip{display:flex;align-items:center;justify-content:center}
+/* ---- /ALBUM_CSS ---- */

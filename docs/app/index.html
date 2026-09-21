@@ -2361,7 +2361,8 @@ body.wall #wallRetry.on{display:block}
 #phAlbum em{white-space:nowrap}
 .alb-grid{display:flex;flex-wrap:wrap;align-items:stretch;margin:0 -4px 8px}
 .alb-cell{box-sizing:border-box;display:flex;width:100%;padding:0 4px;margin:0 0 8px}
-.alb-cell>*{width:100%;box-sizing:border-box;margin:0;justify-content:center;text-align:center}
+/* 6.122.0 — typed children, never `*`: the panel's renderer forbids the star selector and this block is lifted into it */
+.alb-cell>button,.alb-cell>div,.alb-cell>label,.alb-cell>span{width:100%;box-sizing:border-box;margin:0;justify-content:center;text-align:center}
 .alb-cell>.chip{white-space:normal;line-height:1.3;padding:7px 9px}
 .alb-c2 .alb-cell{width:50%}
 .alb-c3 .alb-cell{width:33.3333%}
@@ -2401,9 +2402,13 @@ body.wall #wallRetry.on{display:block}
    cell 140px wide on a monitor gets a crisp sketch instead of a blown-up 44px one. */
 .alb-tpl{flex-direction:column;gap:4px;padding:6px 5px}
 .alb-sketch{display:block;width:100%;max-width:92px;height:auto;border-radius:3px;border:1px solid var(--line-soft)}
-.alb-occ{flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;padding:8px 5px;white-space:normal;line-height:1.28}
+/* 6.122.0 — the panel's own .chip is display:flex;flex-direction:row and, on the same specificity, out-ordered the
+   lifted column rule in the Photoshop panel: sketch and name sat side by side and the long Burmese names ran
+   9px past the page edge at 320px (verify_panel_narrow_fit B1). An id-anchored selector wins on every surface;
+   the name may never be wider than its chip. */
+#albOccs .alb-occ{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;padding:8px 5px;white-space:normal;line-height:1.28}
 .alb-plan{display:block;width:100%;max-width:104px;height:auto;border-radius:4px}
-.alb-occname{display:block;font-size:12px;font-weight:700;text-align:center}
+.alb-occname{display:block;font-size:12px;font-weight:700;text-align:center;max-width:100%}
 
 /* THE SIZE, SAID ONCE AND SAID LOUD. It used to be a grey run-on line of seven
    fields; a student had to read to the end of it to learn what they were making. */
@@ -2417,7 +2422,7 @@ body.wall #wallRetry.on{display:block}
 .alb-num{flex:0 0 auto;width:88px;padding:6px 8px;margin:0 8px 0 0;text-align:center}
 .alb-rng{flex:1 1 130px;min-width:110px;display:block;box-sizing:border-box;margin:0;min-height:44px;accent-color:var(--gold)}
 .alb-opts{display:flex;flex-wrap:wrap;align-items:center;margin:0 -4px 6px}
-.alb-opts>*{margin:0 4px 6px}
+.alb-opts>select,.alb-opts>input,.alb-opts>label,.alb-opts>div,.alb-opts>button,.alb-opts>span{margin:0 4px 6px}
 .alb-sel{width:92px;padding:6px 8px}
 .alb-dpi{width:84px;padding:6px 8px;text-align:center}
 
@@ -2481,6 +2486,20 @@ body.wall #wallRetry.on{display:block}
 .alb-checkrow.low,.alb-checkrow.empty{border-color:#b04a4a}
 .alb-checkrow.soft,.alb-checkrow.edge,.alb-checkrow.dup,.alb-checkrow.gutter{border-color:#8a7124}
 .alb-checkok{color:#8fd19e;font-weight:700;font-size:13px;margin:0 0 8px}
+/* 6.122.0 wave G — THE SHELF, THE ORNAMENT TILES, THE TINT CHIPS. A shelf tile is a small poster:
+   the opener drawn small over a paper-coloured box, the album's name, its counts; the open one
+   wears the gold ring the book view's open page wears. An ornament tile is its mask drawn white
+   on the chip — the same file the page tints. Flex and percentages, as everything above. */
+.alb-shelf{margin-top:2px}
+.alb-shelftile{width:124px;height:auto;padding:0 0 6px;text-align:center;cursor:pointer}
+.alb-shelftile.on{box-shadow:0 0 0 2px var(--gold)}
+.alb-shelfpic{display:flex;align-items:center;justify-content:center;width:100%;height:80px;background:#f6f1e7;overflow:hidden}
+.alb-shelfpic .alb-tileimg{width:100%;height:100%}
+.alb-shelfname{display:block;margin:6px 6px 0;font-size:12px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alb-shelfmeta{display:block;margin:2px 6px 0;font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alb-orntile{display:flex;align-items:center;justify-content:center;min-height:56px;padding:6px}
+.alb-ornimg{display:block;max-width:100%;max-height:44px;width:auto;height:auto}
+.alb-tintchip{display:flex;align-items:center;justify-content:center}
 /* ---- /ALBUM_CSS ---- */
 </style>
 
@@ -4450,10 +4469,10 @@ html.splashing #splash{display:flex}
 <script src="data/hnkdata.js?v=3b68aeb2725b"></script>
 <script src="data/libwf.js?v=c6f022cf791e"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
-<script src="data/album.js?v=4bd00cab32d2"></script>
+<script src="data/album.js?v=8ae5b031a6e6"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
-<script src="data/trmore.js?v=e4a107733524"></script>
-<script src="data/whatsnew.js?v=1e36f5347136"></script>
+<script src="data/trmore.js?v=a8aecb41f255"></script>
+<script src="data/whatsnew.js?v=67bbb1c1effc"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -4464,7 +4483,7 @@ html.splashing #splash{display:flex}
    synchronous way to add a script while the document is still being parsed;
    the address is built from this fixed list and a two-or-three-letter code,
    never from the link's text. tools/build_app_data.js writes the tags. */
-window.HNK_TRL_TAGS={"bn":"02f3661ab926","gu":"745d20fcd59c","hi":"88ca9e7dd994","ja":"eb0842fe820b","km":"364566f9739a","kn":"507a1e6713d5","ko":"a1331b33a135","lo":"0ef26ef66c98","ml":"4f82e0e5fd31","mr":"a332e5b1c884","ne":"e56d1db6c0fd","pa":"b203ae4cf124","ta":"ff15ecdc0fca","te":"51556d9a6e10","ur":"ba5e4b04bcaa","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
+window.HNK_TRL_TAGS={"bn":"e4584861b774","gu":"284e1f16d944","hi":"77e4b2f3da5e","ja":"dc627187f7d8","km":"2f8a96f41f8a","kn":"3be9178c6826","ko":"144834849ef2","lo":"aa239458b8c8","ml":"611c661cf718","mr":"c78e3dfd557b","ne":"338a13f245c1","pa":"9bb680b9c4d7","ta":"39e017d6420e","te":"c5d0e8542791","ur":"fd7ba9adecf5","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
 (function(){
   var T=window.HNK_TRL_TAGS, has=function(k){ return Object.prototype.hasOwnProperty.call(T,k); };
   var BASE=/^(my|en|shn|kac|th|zh|vi|id|ms)$/, u="", code="";
@@ -5202,8 +5221,8 @@ var TR = {
   wiz_ready: { my: 'အားလုံး အသင့်ဖြစ်ပြီ ✓', en: 'Everything is ready ✓' },
   unit: { my: ' ခု', en: '' }
 };
-var TR_X = {"hero_h1": {"shn": "One-Tap ၶွင် Photoshop panel ႁွတ်ႈမႃး ၼႂ်း browser ယဝ်ႉ", "kac": "Photoshop panel a One-Tap ni gaw browser hta du sai", "th": "One-Tap จากแผง Photoshop มาอยู่ในเบราว์เซอร์แล้ว", "zh": "Photoshop 面板的 One-Tap 功能，现已进入浏览器", "vi": "One-Tap của bảng Photoshop nay đã có trên trình duyệt", "id": "One-Tap dari panel Photoshop kini hadir di browser", "ms": "One-Tap panel Photoshop kini di pelayar anda"}, "hero_lede": {"shn": "ၶေႃႈမုၼ်း prompt တႄႉတႄႉ ၶွင် plugin — Preset · Wedding · Lighting · Retouch A · Retouch B တင်းသဵင်ႈ", "kac": "Plugin a prompt data teng — Preset · Wedding · Lighting · Retouch A · Retouch B yawng nga ai", "th": "ข้อมูล prompt จริงของปลั๊กอิน — Preset · Wedding Suite · Lighting · Retouch A Studio · Retouch B Pro ครบทั้งหมด", "zh": "插件的真实 prompt 数据直接移植到网页 — Preset·婚纱套件·灯光·Retouch A·Retouch B，一应俱全", "vi": "Dữ liệu prompt thật của plugin — Preset · Wedding Suite · Lighting · Retouch A Studio · Retouch B Pro, đầy đủ tất cả", "id": "Data prompt asli dari plugin — Preset · Wedding Suite · Lighting · Retouch A Studio · Retouch B Pro, semuanya", "ms": "Data prompt sebenar plugin — Preset · Wedding Suite · Lighting · Retouch A Studio · Retouch B Pro, semuanya"}, "key_note": {"shn": "Key တင်းသဵင်ႈ သိမ်းဝႆႉၼႂ်း localStorage ၶွင် browser ၼႆႉၵူၺ်း၊ သူင်ႇၵမ်းသိုဝ်ႈထိုင် AI provider ဢၼ်ၸဝ်ႈၵဝ်ႇလိူၵ်ႈဝႆႉၵူၺ်း — ဢမ်ႇလတ်းၽၢၼ်ႇ HNK server လႂ်သေဢၼ်။", "kac": "Key ni gaw ndai browser a localStorage hta sha rawng nga nna, nang lata ai AI provider de sha ding hkra shagun ai — HNK server langai mi hku mung n lai ai.", "th": "คีย์ถูกเก็บไว้ในเครื่องและส่งไปยังผู้ให้บริการ AI ที่คุณเลือกเท่านั้น — ไม่เคยผ่านเซิร์ฟเวอร์ของ HNK", "zh": "密钥仅保存在本地，并且只会发送给你选择的 AI 服务商——绝不会经过 HNK 的服务器。", "vi": "Khóa chỉ được lưu trên thiết bị của bạn và chỉ được gửi đến nhà cung cấp AI mà bạn chọn — không bao giờ đi qua máy chủ HNK.", "id": "Kunci disimpan secara lokal dan hanya dikirim ke penyedia AI yang Anda pilih — tidak pernah melalui server HNK.", "ms": "Kunci disimpan secara setempat dan hanya dihantar kepada penyedia AI yang anda pilih — tidak pernah melalui pelayan HNK."}, "btn_show": {"shn": "ၼႄ", "kac": "Madun", "th": "แสดง", "zh": "显示", "vi": "Hiện", "id": "Lihat", "ms": "Papar"}, "btn_savekey": {"shn": "သိမ်း + ၸၢမ်း", "kac": "Da nna chyam u", "th": "บันทึก + ทดสอบ", "zh": "保存并测试", "vi": "Lưu + Kiểm tra", "id": "Simpan + Uji", "ms": "Simpan + Uji"}, "refs_h2": {"shn": "ၶႅပ်းႁၢင်ႈ (IMAGE 1 = တူဝ်ထိင်)", "kac": "Sumla ni (IMAGE 1 = madung)", "th": "รูปภาพ (IMAGE 1 = บุคคลหลัก)", "zh": "图片（IMAGE 1 = 主体）", "vi": "Ảnh (IMAGE 1 = chủ thể chính)", "id": "Gambar (IMAGE 1 = subjek utama)", "ms": "Imej (IMAGE 1 = subjek utama)"}, "refs_note": {"shn": "One-Tap ၵမ်ႈၼမ် လူဝ်ႇ IMAGE 1 · preset reference လူဝ်ႇ IMAGE 2 ထႅင်ႈ", "kac": "One-Tap law malawng gaw IMAGE 1 ra ai · reference preset ni gaw IMAGE 2 mung ra ai", "th": "One-Tap ส่วนใหญ่ต้องมี IMAGE 1 · พรีเซ็ตอ้างอิงต้องมี IMAGE 2 ด้วย", "zh": "多数 One-Tap 需要 IMAGE 1 · 参考类预设还需要 IMAGE 2", "vi": "Hầu hết One-Tap cần IMAGE 1 · preset tham chiếu cần thêm IMAGE 2", "id": "Sebagian besar One-Tap butuh IMAGE 1 · preset referensi juga butuh IMAGE 2", "ms": "Kebanyakan One-Tap perlukan IMAGE 1 · preset rujukan perlukan IMAGE 2 juga"}, "lib_search_ph": {"shn": "သွၵ်ႈႁႃ — wedding, child, lighting…", "kac": "Tam u — wedding, child, lighting…", "th": "ค้นหา — wedding, child, lighting…", "zh": "搜索 — wedding、child、lighting…", "vi": "Tìm — wedding, child, lighting…", "id": "Cari — wedding, child, lighting…", "ms": "Cari — wedding, child, lighting…"}, "lib_all": {"shn": "တင်းသဵင်ႈ", "kac": "Yawng", "th": "ทั้งหมด", "zh": "全部", "vi": "Tất cả", "id": "Semua", "ms": "Semua"}, "lib_more": {"shn": "ၼႄထႅင်ႈ", "kac": "Grau madun", "th": "ดูเพิ่ม", "zh": "加载更多", "vi": "Xem thêm", "id": "Muat lagi", "ms": "Muat lagi"}, "lib_img1": {"shn": "ႁဵတ်း IMAGE 1", "kac": "IMAGE 1 hku lang", "th": "ใช้เป็น IMAGE 1", "zh": "设为 IMAGE 1", "vi": "Dùng làm IMAGE 1", "id": "Jadikan IMAGE 1", "ms": "Jadikan IMAGE 1"}, "lib_img2": {"shn": "ႁဵတ်း IMAGE 2 (Reference)", "kac": "IMAGE 2 (Reference) hku lang", "th": "ใช้เป็น IMAGE 2 (อ้างอิง)", "zh": "设为 IMAGE 2（参考）", "vi": "Dùng làm IMAGE 2 (tham chiếu)", "id": "Jadikan IMAGE 2 (Referensi)", "ms": "Jadikan IMAGE 2 (Rujukan)"}, "addons_h2": {"shn": "Add-ons (သႂ်ႇၸွမ်း Generate ၵူႈပွၵ်ႈ)", "kac": "Add-ons (Generate shagu hte lawm ai)", "th": "Add-ons (ผสมทุกครั้งที่ Generate)", "zh": "附加项（每次生成时自动混入）", "vi": "Add-ons (trộn vào mỗi lần Generate)", "id": "Add-ons (dicampur setiap Generate)", "ms": "Add-ons (dicampur setiap Generate)"}, "sub_chains": {"shn": "Style Chains — လိူၵ်ႈဝႆႉၸိူဝ်းၼၼ်ႉ blend", "kac": "Style Chains — lata da ai ni blend", "th": "Style Chains — ผสมทุกอันที่เลือก", "zh": "风格链 — 选中的全部融合", "vi": "Style Chains — hòa trộn mọi lựa chọn", "id": "Style Chains — padukan semua pilihan", "ms": "Style Chains — gabung semua pilihan"}, "sub_cleanup": {"shn": "Cleanup — ႁဵတ်းၸွမ်း Generate ၵူႈပွၵ်ႈ", "kac": "Cleanup — Generate shagu hte galaw ai", "th": "Cleanup — ทำงานพร้อม Generate ทุกครั้ง", "zh": "清理 — 每次生成时执行", "vi": "Cleanup — chạy cùng mỗi lần Generate", "id": "Cleanup — jalan bersama setiap Generate", "ms": "Cleanup — berjalan dengan setiap Generate"}, "sub_mix": {"shn": "Replace Mix — လူဝ်ႇ IMAGE 2", "kac": "Replace Mix — IMAGE 2 ra ai", "th": "Replace Mix — ต้องมี IMAGE 2", "zh": "选择性替换 — 需要 IMAGE 2", "vi": "Replace Mix — cần IMAGE 2", "id": "Replace Mix — perlu IMAGE 2", "ms": "Replace Mix — perlukan IMAGE 2"}, "prompt_ph": {"shn": "ၼဵၵ်း One-Tap သေ prompt တေမႃးတီႈၼႆႈ — တႅမ်ႈႁင်းၵူၺ်းၵေႃႈလႆႈ…", "kac": "One-Tap dip yang prompt ndai kaw du na — nang nan ka mung mai ai…", "th": "แตะ One-Tap แล้ว prompt จะมาที่นี่ — พิมพ์เองก็ได้…", "zh": "点按任意 One-Tap，prompt 会出现在这里 — 也可以自己输入…", "vi": "Chạm One-Tap và prompt sẽ hiện ở đây — hoặc tự viết…", "id": "Ketuk One-Tap dan prompt muncul di sini — atau tulis sendiri…", "ms": "Ketik One-Tap dan prompt muncul di sini — atau tulis sendiri…"}, "ph_head": {"shn": "🕘 Prompt မိုၼ်း — ⭐ သိမ်းဝႆႉတႃႇသေႇ", "kac": "🕘 Prompt labau — ⭐ galoi da", "th": "🕘 ประวัติ Prompt — ⭐ เก็บถาวร", "zh": "🕘 Prompt 历史 — ⭐ 永久收藏", "vi": "🕘 Lịch sử prompt — ⭐ lưu vĩnh viễn", "id": "🕘 Riwayat prompt — ⭐ simpan permanen", "ms": "🕘 Sejarah prompt — ⭐ simpan kekal"}, "result_h2": {"shn": "ၽွၼ်းလႆႈ", "kac": "Lachyum", "th": "ผลลัพธ์", "zh": "结果", "vi": "Kết quả", "id": "Hasil", "ms": "Hasil"}, "to_ref": {"shn": "↺ ႁဵတ်း IMAGE 1", "kac": "↺ IMAGE 1 hku lang", "th": "↺ ใช้เป็น IMAGE 1", "zh": "↺ 设为 IMAGE 1", "vi": "↺ Dùng làm IMAGE 1", "id": "↺ Jadikan IMAGE 1", "ms": "↺ Jadikan IMAGE 1"}, "spin_gen": {"shn": "တိုၵ်ႉႁဵတ်းယူႇ — ပႂ်ႉ 20-60 ဝိၼၢထီး…", "kac": "Galaw nga ai — 20-60 second la u…", "th": "กำลังสร้าง — รอ 20-60 วินาที…", "zh": "正在生成 — 请等待 20-60 秒…", "vi": "Đang tạo — chờ 20-60 giây…", "id": "Sedang membuat — tunggu 20-60 detik…", "ms": "Sedang menjana — tunggu 20-60 saat…"}, "spin_tr": {"shn": "ပိၼ်ႇ prompt ပဵၼ် English…", "kac": "Prompt hpe English de gale nga…", "th": "กำลังแปล prompt เป็นภาษาอังกฤษ…", "zh": "正在把 prompt 翻译成英文…", "vi": "Đang dịch prompt sang tiếng Anh…", "id": "Menerjemahkan prompt ke Inggris…", "ms": "Menterjemah prompt ke Inggeris…"}, "st_done": {"shn": "ယဝ်ႉယဝ်ႈ ✓", "kac": "Ngut sai ✓", "th": "เสร็จแล้ว ✓", "zh": "完成 ✓", "vi": "Xong ✓", "id": "Selesai ✓", "ms": "Siap ✓"}, "st_needkey": {"shn": "သႂ်ႇ API key ဢွၼ်တၢင်း", "kac": "API key shawng bang u", "th": "กรุณาใส่ API key ก่อน", "zh": "请先填写 API key", "vi": "Hãy thêm API key trước", "id": "Masukkan API key dulu", "ms": "Masukkan API key dahulu"}, "st_needany": {"shn": "သႂ်ႇ prompt ဢမ်ႇၼၼ် ၶႅပ်းႁၢင်ႈ", "kac": "Prompt (sh) sumla langai bang u", "th": "ใส่ prompt หรือรูปภาพก่อน", "zh": "请先添加 prompt 或图片", "vi": "Thêm prompt hoặc ảnh trước", "id": "Tambahkan prompt atau gambar dulu", "ms": "Tambah prompt atau imej dahulu"}, "tap_ready": {"shn": "Prompt ႁွတ်ႈယဝ်ႉ ✓ — ၼဵၵ်း Generate လႆႈယဝ်ႉ", "kac": "Prompt du sai ✓ — Generate dip mai sai", "th": "Prompt พร้อมแล้ว ✓ — กด Generate ได้เลย", "zh": "Prompt 已就绪 ✓ — 可以点击生成了", "vi": "Prompt đã sẵn sàng ✓ — bấm Generate được rồi", "id": "Prompt siap ✓ — silakan tekan Generate", "ms": "Prompt sedia ✓ — sila tekan Generate"}, "gal_note": {"shn": "ၽွၼ်းလႆႈတင်းသဵင်ႈ သိမ်းဝႆႉတီႈၼႆႈ (ၼႂ်းၶိူင်ႈၼႆႉၵူၺ်း) — reload ၵေႃႈ ဢမ်ႇႁၢႆ", "kac": "Lachyum yawng ndai kaw da ai (ndai jak hta sha) — reload tim n mat ai", "th": "ผลลัพธ์ทุกภาพถูกเก็บที่นี่อัตโนมัติ (ในเครื่องนี้) — รีโหลดก็ไม่หาย", "zh": "所有生成结果自动保存在这里（仅本设备）— 刷新也不会丢失", "vi": "Mọi kết quả tự lưu ở đây (chỉ trên máy này) — tải lại vẫn còn", "id": "Semua hasil tersimpan otomatis di sini (di perangkat ini) — reload tidak hilang", "ms": "Semua hasil disimpan automatik di sini (pada peranti ini) — reload tidak hilang"}, "gal_empty": {"shn": "ပႆႇမီးၽွၼ်းလႆႈ — Generate ယဝ်ႉ တေမႃးၼႄတီႈၼႆႈ", "kac": "Lachyum rai n nga shi ai — Generate ngut yang ndai kaw du na", "th": "ยังไม่มีผลลัพธ์ — หลัง Generate จะมาแสดงที่นี่", "zh": "暂无结果 — 生成后会显示在这里", "vi": "Chưa có kết quả — sau khi Generate sẽ hiện ở đây", "id": "Belum ada hasil — setelah Generate akan muncul di sini", "ms": "Belum ada hasil — selepas Generate akan muncul di sini"}, "gal_del": {"shn": "🗑 မွတ်ႇ", "kac": "🗑 Shamat", "th": "🗑 ลบ", "zh": "🗑 删除", "vi": "🗑 Xóa", "id": "🗑 Hapus", "ms": "🗑 Padam"}, "wiz_start": {"shn": "တႄႇ →", "kac": "Hpang →", "th": "เริ่ม →", "zh": "开始 →", "vi": "Bắt đầu →", "id": "Mulai →", "ms": "Mula →"}, "wiz_next": {"shn": "သိုပ်ႇ →", "kac": "Matut →", "th": "ถัดไป →", "zh": "下一步 →", "vi": "Tiếp →", "id": "Lanjut →", "ms": "Seterusnya →"}, "wiz_back": {"shn": "← ဝၢႆႇလင်", "kac": "← Nhtang", "th": "← ย้อนกลับ", "zh": "← 返回", "vi": "← Quay lại", "id": "← Kembali", "ms": "← Kembali"}, "wiz_req": {"shn": "လူဝ်ႇတႄႉတႄႉ", "kac": "Ra nan ra ai", "th": "จำเป็น", "zh": "必需", "vi": "Bắt buộc", "id": "Wajib", "ms": "Wajib"}, "wiz_opt": {"shn": "Optional — ဢမ်ႇသႂ်ႇၵေႃႈလႆႈ", "kac": "Optional — n bang tim mai ai", "th": "ไม่บังคับ", "zh": "可选", "vi": "Tùy chọn", "id": "Opsional", "ms": "Pilihan"}, "wiz_pick": {"shn": "📁 လိူၵ်ႈ", "kac": "📁 Lata", "th": "📁 เลือก", "zh": "📁 选择", "vi": "📁 Chọn", "id": "📁 Pilih", "ms": "📁 Pilih"}, "wiz_clear": {"shn": "✕ မွတ်ႇ", "kac": "✕ Shamat", "th": "✕ ลบ", "zh": "✕ 清除", "vi": "✕ Xóa", "id": "✕ Hapus", "ms": "✕ Padam"}, "wiz_imgnote": {"shn": "သႂ်ႇၶႅပ်းႁၢင်ႈတွၼ်ႈတႃႇ workflow ၼႆႉ — လိူၵ်ႈဝႆႉတီႈ Library ၵေႃႈလႆႈ", "kac": "Ndai workflow a matu sumla bang u — Library kaw lata da yang mung mai ai", "th": "เพิ่มรูปสำหรับเวิร์กโฟลว์นี้ — เลือกจาก Library ไว้ก่อนก็ได้", "zh": "为此工作流添加图片 — 也可提前在图库中选好", "vi": "Thêm ảnh cho workflow này — có thể chọn sẵn từ Library", "id": "Tambahkan gambar untuk workflow ini — bisa pilih dulu dari Library", "ms": "Tambah imej untuk aliran kerja ini — boleh pilih dahulu dari Library"}, "wiz_reqwarn": {"shn": "⚠ ၶႅပ်းႁၢင်ႈ ဢၼ်လူဝ်ႇ ပႆႇတဵမ် — သိုပ်ႇဢမ်ႇလႆႈ", "kac": "⚠ Ra ai sumla n hpring shi — matut n mai ai", "th": "⚠ รูปที่จำเป็นยังไม่ครบ — ไปต่อไม่ได้", "zh": "⚠ 必需图片未补齐 — 无法继续", "vi": "⚠ Thiếu ảnh bắt buộc — chưa thể tiếp tục", "id": "⚠ Gambar wajib belum lengkap — belum bisa lanjut", "ms": "⚠ Imej wajib belum lengkap — tidak boleh teruskan"}, "wiz_promptnote": {"shn": "Prompt ၶွင် workflow သႂ်ႇဝႆႉယဝ်ႉ — ၶႂ်ႈထႅမ်သင် တႅမ်ႈလႆႈတီႈၼိူဝ်", "kac": "Workflow a prompt bang da sai — ra ai hpe ntsa kaw ka bang u", "th": "Prompt ของเวิร์กโฟลว์ถูกใส่ไว้แล้ว — เพิ่มรายละเอียดที่ต้องการด้านบนได้", "zh": "工作流的受保护 prompt 已填好 — 想补充什么写在最上方即可", "vi": "Prompt của workflow đã điền sẵn — thêm chi tiết bạn muốn ở đầu", "id": "Prompt workflow sudah terisi — tambahkan detail di bagian atas", "ms": "Prompt aliran kerja sudah diisi — tambah butiran di bahagian atas"}, "wiz_ready": {"shn": "ႁၢင်ႈႁႅၼ်းယဝ်ႉ ✓", "kac": "Yawng jin sai ✓", "th": "พร้อมแล้ว ✓", "zh": "一切就绪 ✓", "vi": "Mọi thứ đã sẵn sàng ✓", "id": "Semua siap ✓", "ms": "Semua sedia ✓"}, "unit": {"shn": "", "kac": "", "th": "", "zh": " 个", "vi": "", "id": "", "ms": ""}, "onetap_note": {"shn": "— panel data တႄႉ", "kac": "— panel data teng", "th": "— ข้อมูลจริงจากแผง", "zh": "— 面板真实数据", "vi": "— dữ liệu thật của bảng", "id": "— data asli panel", "ms": "— data sebenar panel"}};
-var TR_NEW = {"banner_key": {"my": "🔑 API key မထည့်ရသေးပါ — ဒီမှာနှိပ်ပြီး Setup မှာ ထည့်ပါ (တစ်ခါထည့်ရုံပဲ)", "en": "🔑 No API key yet — tap here to add it in Setup (one time only)", "shn": "🔑 ပႆႇသႂ်ႇ API key — ၼဵၵ်းတီႈၼႆႈသေ သႂ်ႇတီႈ Setup", "kac": "🔑 API key rai n bang shi — ndai dip nna Setup hta bang u", "th": "🔑 ยังไม่มี API key — แตะที่นี่เพื่อใส่ใน Setup (ครั้งเดียว)", "zh": "🔑 尚未填写 API key — 点此前往 Setup 填写（仅需一次）", "vi": "🔑 Chưa có API key — chạm vào đây để thêm trong Setup (chỉ một lần)", "id": "🔑 Belum ada API key — ketuk di sini untuk mengisi di Setup (sekali saja)", "ms": "🔑 Belum ada API key — ketik di sini untuk isi di Setup (sekali sahaja)"}, "share_h2": {"my": "မိတ်ဆွေတွေကို ဝေမျှရန်", "en": "Share with friends", "shn": "ၽႄႈပၼ်ဢူၺ်းၵေႃႉ", "kac": "Manang ni hpe garan u", "th": "แชร์ให้เพื่อน", "zh": "分享给朋友", "vi": "Chia sẻ với bạn bè", "id": "Bagikan ke teman", "ms": "Kongsi dengan rakan"}, "share_p": {"my": "Link ကို Messenger / Telegram / Viber ဘယ်မှာပို့ပို့ — HNK logo နဲ့ preview card လှလှလေး ပေါ်ပြီး နှိပ်လိုက်တာနဲ့ ဒီ app ထဲ တန်းရောက်မယ်။", "en": "Paste the link anywhere — Messenger, Telegram, Viber — a beautiful HNK preview card appears, and one tap opens this app.", "shn": "သူင်ႇ link တီႈလႂ်ၵေႃႈလႆႈ — preview card ႁၢင်ႈလီ တေဢွၵ်ႇမႃး၊ ၼဵၵ်းၺႃး ၶဝ်ႈ app ၵမ်းလဵဝ်", "kac": "Link hpe gara kaw tim shagun u — preview card tsawm ai pru na, dip yang app hta shang na", "th": "วางลิงก์ที่ไหนก็ได้ — จะขึ้นการ์ดพรีวิวสวย ๆ แตะแล้วเข้าแอปทันที", "zh": "把链接粘贴到任何地方 — 会显示精美的预览卡片，点一下即可打开应用", "vi": "Dán link ở bất cứ đâu — thẻ xem trước đẹp sẽ hiện ra, chạm là mở app", "id": "Tempel tautan di mana saja — kartu pratinjau cantik muncul, sekali ketuk langsung buka", "ms": "Tampal pautan di mana-mana — kad pratonton cantik muncul, satu ketikan terus buka"}, "share_btn": {"my": "📤 Share Link", "en": "📤 Share Link", "shn": "📤 ၽႄႈ Link", "kac": "📤 Link garan", "th": "📤 แชร์ลิงก์", "zh": "📤 分享链接", "vi": "📤 Chia sẻ link", "id": "📤 Bagikan tautan", "ms": "📤 Kongsi pautan"}, "copy_btn": {"my": "🔗 Link ကူးယူ", "en": "🔗 Copy Link", "shn": "🔗 ၶူတ်ႉ Link", "kac": "🔗 Link copy", "th": "🔗 คัดลอกลิงก์", "zh": "🔗 复制链接", "vi": "🔗 Sao chép link", "id": "🔗 Salin tautan", "ms": "🔗 Salin pautan"}, "st_key_saved": {"my": "Key သိမ်းထားပြီးသား ✓", "en": "Key already saved ✓", "shn": "သိမ်းဝႆႉ Key ယဝ်ႉ ✓", "kac": "Key da nga sai ✓", "th": "บันทึกคีย์ไว้แล้ว ✓", "zh": "密钥已保存 ✓", "vi": "Khóa đã được lưu ✓", "id": "Key sudah tersimpan ✓", "ms": "Key sudah disimpan ✓"}, "st_key_checking": {"my": "စစ်နေသည်…", "en": "Checking…", "shn": "တိုၵ်ႉတွပ်ႇထၢမ်ယူႇ…", "kac": "Yu chyam nga ai…", "th": "กำลังตรวจสอบ…", "zh": "正在检查…", "vi": "Đang kiểm tra…", "id": "Memeriksa…", "ms": "Menyemak…"}, "st_key_valid": {"my": "Key မှန်ပါတယ် — သိမ်းပြီး ✓", "en": "Key is valid — saved ✓", "shn": "Key ၸိုဝ်ႈလီ — သိမ်းယဝ်ႉ ✓", "kac": "Key teng ai — da sai ✓", "th": "คีย์ถูกต้อง — บันทึกแล้ว ✓", "zh": "密钥有效 — 已保存 ✓", "vi": "Khóa hợp lệ — đã lưu ✓", "id": "Key valid — tersimpan ✓", "ms": "Key sah — disimpan ✓"}, "st_key_invalid": {"my": "Key မမှန်ပါ — ပြန်စစ်ပါ", "en": "Key invalid — please recheck", "shn": "Key ဢမ်ႇၸႂ်ႈ — ၶိုၼ်းတွပ်ႇထၢမ်တူၺ်း", "kac": "Key n teng ai — bai yu chyam u", "th": "คีย์ไม่ถูกต้อง — กรุณาตรวจสอบอีกครั้ง", "zh": "密钥无效 — 请重新检查", "vi": "Khóa không hợp lệ — vui lòng kiểm tra lại", "id": "Key tidak valid — periksa lagi", "ms": "Key tidak sah — sila semak semula"}, "st_key_savedstatus": {"my": "သိမ်းပြီး (status {S})", "en": "Saved (status {S})", "shn": "သိမ်းယဝ်ႉ (status {S})", "kac": "Da sai (status {S})", "th": "บันทึกแล้ว (status {S})", "zh": "已保存 (status {S})", "vi": "Đã lưu (status {S})", "id": "Tersimpan (status {S})", "ms": "Disimpan (status {S})"}, "st_key_noconn": {"my": "ချိတ်ဆက်မရ — internet စစ်ပါ", "en": "Couldn't connect — check your internet", "shn": "ၽိတ်းၽၢတ်ႇဢမ်ႇလႆႈ — တွပ်ႇထၢမ် internet တူၺ်း", "kac": "N grau connect — internet yu chyam u", "th": "เชื่อมต่อไม่ได้ — ตรวจสอบอินเทอร์เน็ต", "zh": "无法连接 — 请检查网络", "vi": "Không thể kết nối — kiểm tra internet", "id": "Tidak dapat terhubung — periksa internet Anda", "ms": "Tidak dapat berhubung — semak internet anda"}, "st_share_copied": {"my": "Link ကူးပြီး ✓ — ကြိုက်တဲ့နေရာ paste လုပ်ပို့ပါ", "en": "Link copied ✓ — paste it wherever you like", "shn": "ၶူတ်ႉ Link ယဝ်ႉ ✓ — paste တီႈလႂ်ၵေႃႈလႆႈ", "kac": "Link copy sai ✓ — gara kaw mi paste bang u", "th": "คัดลอกลิงก์แล้ว ✓ — วางที่ไหนก็ได้ตามใจ", "zh": "链接已复制 ✓ — 可粘贴到任何地方", "vi": "Đã sao chép link ✓ — dán ở bất cứ đâu bạn muốn", "id": "Tautan disalin ✓ — tempel di mana saja", "ms": "Pautan disalin ✓ — tampal di mana-mana"}};
+var TR_X = (window.HNK_TRMORE || {}).x || {};   /* 6.122.0 — the seven-language overlay of the base keys lives in data/trmore.js (42 keys); merged into TR below exactly as before */
+var TR_NEW = (window.HNK_TRMORE || {})["new"] || {};   /* 6.122.0 — the TR_NEW dictionary lives in data/trmore.js (12 keys) */
 Object.keys(TR_X).forEach(function(k){ if(TR[k]) Object.keys(TR_X[k]).forEach(function(l){ TR[k][l]=TR_X[k][l]; }); });
 Object.keys(TR_NEW).forEach(function(k){ TR[k]=TR_NEW[k]; });
 var TR_MORE={"lb_src": {"my": "Ref ပုံ", "en": "SOURCE", "shn": "Ref ႁၢင်ႈ", "kac": "Source", "th": "ต้นทาง", "zh": "来源", "vi": "NGUỒN", "id": "SUMBER", "ms": "SUMBER"}, "lb_res": {"my": "ရလဒ်", "en": "RESULT", "shn": "ၽွၼ်းလႆႈ", "kac": "Lachyum", "th": "ผลลัพธ์", "zh": "结果", "vi": "KẾT QUẢ", "id": "HASIL", "ms": "HASIL"}, "lb_before": {"my": "မူရင်း", "en": "BEFORE", "shn": "မိူဝ်ႈဢွၼ်", "kac": "Shawng", "th": "ก่อน", "zh": "之前", "vi": "TRƯỚC", "id": "SEBELUM", "ms": "SEBELUM"}, "lb_after": {"my": "ပြင်ပြီး", "en": "AFTER", "shn": "ဝၢႆးလင်", "kac": "Hpang", "th": "หลัง", "zh": "之后", "vi": "SAU", "id": "SESUDAH", "ms": "SELEPAS"}, "wf_note": {"my": "Card နှိပ်ရင် wizard ပွင့်မယ် — Guide → Images → Generate · သင် setup လုပ်ထားတဲ့ AI engine (RunningHub Enterprise) နဲ့ အလုပ်လုပ်တယ်", "en": "Tap any card to open its wizard — Guide → Images → Generate · runs on your configured AI engines (RunningHub Enterprise)"}, "sb_note": {"my": "IMAGE 2 (scene ဓာတ်ပုံ) ကို AI နဲ့ ခွဲခြမ်းပြီး scene prompt အသေးစိတ် ထုတ်ယူတယ် — ရွေးထားတဲ့ အပိုင်းတွေကိုပဲ ဖော်ပြမယ်", "en": "Analyzes IMAGE 2 (a scene photo) with AI and extracts a detailed scene prompt — only the ticked aspects are described"}, "sb_btn": {"my": "🪄 Scene ထုတ်ယူ → Prompt", "en": "🪄 Extract Scene → Prompt"}, "rt_strength": {"my": "အားပြင်း:", "en": "Strength:"}, "rt_note": {"my": "Chip တွေက toggle — ဖွင့်ထားသမျှ Generate မှာ Retouch block အဖြစ် ပေါင်းသွားမယ် (Add-ons summary မှာ ပြ)", "en": "Chips are toggles — everything enabled blends into Generate as a retouch block (shown in the Add-ons summary)"}, "addon_on": {"my": "ဖွင့်ထား: {B} — Generate မှာ အလိုအလျောက် ပေါင်းမယ်", "en": "Active: {B} — blends automatically into Generate"}, "addon_off": {"my": "ဘာမှ မဖွင့်ရသေး — မဖွင့်လည်း ရတယ်", "en": "Nothing enabled — that’s fine too"}, "retry": {"my": "🔄 ပြန်စမ်းမယ်", "en": "🔄 Retry"}, "chain_h": {"my": "➡ ရလဒ်ကို ဆက်ပြင်မယ်", "en": "➡ Continue editing this result"}, "opt_flash": {"my": "Flash (မြန်)", "en": "Flash (fast)"}, "opt_pro": {"my": "Pro (အရည်အသွေး)", "en": "Pro (quality)"}, "plat_h2": {"my": "ဘယ်စက်မှာမဆို သုံးလို့ရတယ်", "en": "Works on every device"}, "plat_p1": {"my": "Chrome နဲ့ဖွင့် → menu (⋮) → “Add to Home screen” / “Install app” → app icon နဲ့ တစ်ချက်နှိပ်ဖွင့်လို့ရပြီ။", "en": "Open in Chrome → menu (⋮) → “Add to Home screen” / “Install app” → launch from an app icon."}, "plat_p2": {"my": "Safari နဲ့ဖွင့် → Share (⬆︎) ခလုတ် → “Add to Home Screen” → home screen မှာ HNK icon ပေါ်လာမယ်။", "en": "Open in Safari → Share (⬆︎) → “Add to Home Screen” → the HNK icon appears on your home screen."}, "plat_p3": {"my": "Chrome / Edge မှာ address bar ညာဘက်က install (⊕) icon နှိပ်ရင် desktop app လို သီးသန့် window နဲ့ ပွင့်မယ်။", "en": "In Chrome / Edge, click the install (⊕) icon in the address bar to run it as a desktop app."}, "plat_p4": {"my": "CCX ဖိုင် download → double-click → Creative Cloud က install ပေးမယ် → Photoshop ထဲ Plugins → HNK Ai Panel။ RunningHub Enterprise engine · Layer တိုက်ရိုက်ထည့် · Retouch slider 50 အပြည့် — panel မှာသာ ရတယ်။", "en": "Download the CCX → double-click → Creative Cloud installs it → Photoshop → Plugins → HNK Ai Panel. RunningHub Enterprise engine · direct layer placement · full 50-slider retouch — panel only."}, "plat_ps": {"my": "🎨 Photoshop (Windows / Mac) — အင်္ဂါရပ် အပြည့်ဆုံး", "en": "🎨 Photoshop (Windows / Mac) — fullest feature set"}, "site_link": {"my": "Website ကြည့်ရန်", "en": "View website"}, "onb_h": {"my": "👋 HNK Web Studio မှ ကြိုဆိုပါတယ်", "en": "👋 Welcome to HNK Web Studio"}, "onb_1": {"my": "အပေါ်ဘား ညာဘက်က gear ခလုတ်ကို နှိပ်ပြီး Setup မှာ RunningHub Enterprise key ထည့်ပါ — တစ်ခါထည့်ရုံပဲ", "en": "Tap the gear button in the top bar to open Setup and add your RunningHub Enterprise key — one time only"}, "onb_2": {"my": "Library ဒါမှမဟုတ် ဖုန်းထဲက ကိုယ့်ပုံကို IMAGE 1 အဖြစ် ရွေးပါ", "en": "Pick your photo as IMAGE 1 — from the Library or your phone"}, "onb_3": {"my": "Workflow ထဲက ကြိုက်တဲ့ card နှိပ်ပြီး wizard အတိုင်း Generate — ပြီးပြီ!", "en": "Tap any Workflow card and follow the wizard to Generate — done!"}, "onb_key": {"my": "🔑 Key အရင်ထည့်မယ်", "en": "🔑 Add key first"}, "onb_skip": {"my": "စကြည့်မယ် →", "en": "Explore first →"}};
@@ -5394,6 +5413,64 @@ var TR_PH={
   alb_check_soft:{my:"စာမျက်နှာ {P} · ပုံ {N} — {D} ppi၊ အနည်းငယ် ဝါး",en:"Page {P} · photo {N} prints at {D} ppi — a little soft"},
   alb_check_empty:{my:"စာမျက်နှာ {P} က အလွတ်",en:"Page {P} is empty"},
   alb_check_edge:{my:"စာမျက်နှာ {P} · စာကြောင်းတစ်ကြောင်း ဖြတ်မျဉ်းပေါ် ရောက်နေ",en:"Page {P} · a line sits on the trim"},
+  /* 6.122.0 wave G — the album's shelf, photo quality, the ornaments and their tints, the overlays, the Photoshop door */
+  alb_shelf_h:{my:"Album များ",en:"Albums"},
+  alb_shelf_new:{my:"Album အသစ်",en:"New album"},
+  alb_shelf_dup:{my:"ပုံတူကူး",en:"Duplicate"},
+  alb_shelf_ren:{my:"နာမည်ပြောင်း",en:"Rename"},
+  alb_shelf_del:{my:"ဖျက်",en:"Delete"},
+  alb_shelf_del_q:{my:"“{A}” ကို ဖျက်မလား? စာမျက်နှာတွေ၊ ပုံတွေ အကုန် ပါသွားမယ်။",en:"Delete “{A}”? Its pages and photos go with it."},
+  alb_shelf_meta:{my:"စာမျက်နှာ {P} · ပုံ {N}",en:"{P} pages · {N} photos"},
+  alb_shelf_untitled:{my:"Album {N}",en:"Album {N}"},
+  alb_shelf_opened:{my:"“{A}” ကို ဖွင့်ပြီ",en:"Opened “{A}”"},
+  alb_shelf_note:{my:"Album တိုင်း ဒီစက်ထဲမှာ သိမ်းထားမယ် — ဖျက်မှ ပျောက်မယ် · တစ်ခုကို နှိပ်ရင် ဖွင့်မယ်",en:"Every album stays on this device until you delete it — tap one to open it"},
+  alb_shelf_save:{my:"နာမည် သိမ်း",en:"Save name"},
+  alb_shelf_name:{my:"Album နာမည်",en:"Album name"},
+  alb_shelf_renamed:{my:"နာမည် သိမ်းပြီ",en:"Name saved"},
+  alb_shelf_made:{my:"Album အသစ် — အရွယ်နဲ့ ဒီဇိုင်း ရွေးချယ်မှုတွေ ယူလာပြီ",en:"New album — the size and the design choices carried over"},
+  alb_shelf_deleted:{my:"Album ဖျက်ပြီ",en:"Album deleted"},
+  alb_shelf_full:{my:"Album {N} ခုအထိ သိမ်းလို့ရတယ် — နေရာလွတ်ဖို့ တစ်ခု ဖျက်ပါ",en:"The shelf holds {N} albums — delete one to make room"},
+  alb_qual_h:{my:"ပုံ အရည်အသွေး",en:"Photo quality"},
+  alb_qual_std:{my:"ပုံမှန် · {N} px",en:"Standard · {N} px"},
+  alb_qual_print:{my:"ပရင့် · {N} px",en:"Print · {N} px"},
+  alb_qual_note:{my:"ပရင့် က အရှည်ဘက် {N} px သိမ်းမယ် — spread ကျယ်ကျယ်မှာ ပိုကြည် · သိမ်းတာ ပိုကြီး · အခုမှ ထည့်မယ့် ပုံတွေအတွက်",en:"Print keeps {N} px on the long edge — sharper on a wide spread, larger to store; applies to photos added from now on"},
+  alb_orn_h:{my:"အလှဆင် ပစ္စည်းများ",en:"Ornaments"},
+  alb_orn_all:{my:"အားလုံး",en:"All"},
+  alb_orn_fam_corner:{my:"ထောင့်",en:"Corner"},
+  alb_orn_fam_divider:{my:"ခွဲမျဉ်း",en:"Divider"},
+  alb_orn_fam_frame:{my:"ဘောင်",en:"Frame"},
+  alb_orn_fam_botanic:{my:"အပင် အရွက်",en:"Botanical"},
+  alb_orn_fam_shape:{my:"ပုံသဏ္ဌာန်",en:"Shape"},
+  alb_orn_fam_tape:{my:"တိပ် · တံဆိပ်",en:"Tape & label"},
+  alb_orn_note:{my:"တစ်ခုကို နှိပ်ရင် ဒီစာမျက်နှာပေါ် ရောက်မယ် — ဆွဲရွှေ့ · ချုံ့ချဲ့ (ပင့်/scroll) · လှည့် · အရောင်ပြောင်း",en:"Tap one to put it on this page — then drag it, pinch or scroll to size it, turn it, tint it"},
+  alb_orn_added:{my:"{N} ထည့်ပြီ — နေရာသို့ ဆွဲရွှေ့ပါ",en:"{N} added — drag it into place"},
+  alb_orn_full:{my:"စာမျက်နှာတစ်ခုမှာ အလှဆင် {N} ခုအထိ",en:"A page holds {N} ornaments"},
+  alb_sel_orn:{my:"အလှဆင် · {N}",en:"Ornament · {N}"},
+  alb_tint:{my:"အရောင်",en:"Tint"},
+  alb_tint_gold:{my:"ရွှေ",en:"Gold"},
+  alb_tint_white:{my:"အဖြူ",en:"White"},
+  alb_tint_ink:{my:"မင်",en:"Ink"},
+  alb_tint_rose:{my:"နှင်းဆီ",en:"Rose"},
+  alb_tint_sage:{my:"စိမ်းနု",en:"Sage"},
+  alb_flip:{my:"ကြေးမုံပြန်",en:"Mirror"},
+  alb_dup:{my:"ပုံတူ",en:"Duplicate"},
+  alb_remove_orn:{my:"ဒီအလှဆင်ကို ဖယ်",en:"Remove this ornament"},
+  alb_ovl_h:{my:"Overlay",en:"Overlay"},
+  alb_ovl_none:{my:"မရှိ",en:"None"},
+  alb_ovl_grain:{my:"အမှုန်",en:"Grain"},
+  alb_ovl_vignette:{my:"အနားမှောင်",en:"Vignette"},
+  alb_ovl_leak:{my:"အလင်းယို",en:"Light leak"},
+  alb_ovl_dust:{my:"ဖုန်",en:"Dust"},
+  alb_ovl_paper:{my:"စက္ကူ",en:"Paper"},
+  alb_ovl_light:{my:"အပါး",en:"Light"},
+  alb_ovl_medium:{my:"အလယ်အလတ်",en:"Medium"},
+  alb_ovl_strong:{my:"အပြင်း",en:"Strong"},
+  alb_ovl_all:{my:"စာမျက်နှာတိုင်း ဒီ overlay ပဲ",en:"Same overlay on every page"},
+  alb_ovl_all_done:{my:"စာမျက်နှာ {P} ခုမှာ overlay ထားပြီ",en:"Overlay set on {P} pages"},
+  alb_ovl_note:{my:"စာမျက်နှာတစ်ခုလုံးပေါ် texture — JPEG · PDF · PSD (ထိပ်ဆုံး layer အဖြစ်) ထဲ ပါမယ်",en:"A texture over the whole page — in the JPEG, the PDF and the PSD (as its own top layer)"},
+  alb_open_ps:{my:"Photoshop ထဲ ဖွင့်",en:"Open in Photoshop"},
+  alb_open_ps_done:{my:"Photoshop ထဲ ဖွင့်ပြီ — ပုံတိုင်း၊ စာကြောင်းတိုင်း ကိုယ့် layer နဲ့",en:"Opened in Photoshop — every photo and line on its own layer"},
+  alb_open_ps_fail:{my:"Photoshop ထဲ ဖွင့်လို့ မရပါ",en:"Could not open it in Photoshop"},
   alb_check_dup:{my:"စာမျက်နှာ {P} · ပုံ {N} က စာမျက်နှာ {Q} မှာလည်း ရှိ",en:"Page {P} · photo {N} is also on page {Q}"},
   alb_check_gutter:{my:"စာမျက်နှာ {P} · ပုံ {N} — လူက စာအုပ်ချုပ်ရာနေရာမှာ ရောက်နေ",en:"Page {P} · photo {N} — the subject sits in the binding"},
   alb_check_n:{my:"ကြည့်ရမယ့်အချက် {N} ချက် — ပထမ ၁၂ ချက် ပြထား",en:"{N} things to look at — the first twelve are listed"},
@@ -5407,195 +5484,7 @@ Object.keys(TR_PH).forEach(function(k){ TR[k]=TR_PH[k]; });
 /* v4.28: complete the last 14 my/en-only TR keys in all 7 secondary languages
    (merged per-language on top of the existing my/en entries — TR missing-key
    count is now 0 for every language). shn/kac flagged for native review. */
-var TR_L14={
-  wiz_generate:{shn:"⚡ GENERATE",kac:"⚡ GENERATE",th:"⚡ GENERATE",zh:"⚡ GENERATE",vi:"⚡ GENERATE",id:"⚡ GENERATE",ms:"⚡ GENERATE"},
-  lb_remove_image:{shn:"ဢဝ်ၶႅပ်းႁၢင်ႈဢွၵ်ႇ",kac:"Sumla shamat kau",th:"ลบรูปภาพ",zh:"移除图片",vi:"Xóa ảnh",id:"Hapus gambar",ms:"Buang imej"},
-  lb_close:{shn:"ပိၵ်ႉ",kac:"Pat u",th:"ปิด",zh:"关闭",vi:"Đóng",id:"Tutup",ms:"Tutup"},
-  lib_all_sets:{shn:"ၸုမ်ႇတင်းသဵင်ႈ",kac:"Ahpung yawng",th:"ทุกชุด",zh:"全部系列",vi:"Tất cả bộ",id:"Semua set",ms:"Semua set"},
-  lb_favorite:{shn:"ဢၼ်လႆႈၸႂ်",kac:"Ra sharawng ai",th:"รายการโปรด",zh:"收藏",vi:"Yêu thích",id:"Favorit",ms:"Kegemaran"},
-  btn_cancel:{shn:"✕ ၵိုတ်း",kac:"✕ Hkring",th:"✕ ยกเลิก",zh:"✕ 取消",vi:"✕ Hủy",id:"✕ Batal",ms:"✕ Batal"},
-  ph_create:{shn:'ႁဵတ်းႁႂ်ႈမူႇၶႅပ်းဢၼ်ၼႂ်းၸႂ်ၸဝ်ႈၵဝ်ႇ ပဵၼ်တႄႉမႃး — <em>ၸွမ်းၸႂ်ၸဝ်ႈၵဝ်ႇ</em>',kac:'Na myit hta mu ai lam shagu hpe asak jaw u — <em>na a lam hku</em>',th:'เนรมิตทุกฉากที่คุณจินตนาการ — <em>ในแบบของคุณ</em>',zh:'把你想象的每个场景变为现实 — <em>随心所欲</em>',vi:'Biến mọi khung cảnh bạn tưởng tượng thành hiện thực — <em>theo cách của bạn</em>',id:'Wujudkan setiap adegan yang Anda bayangkan — <em>dengan cara Anda</em>',ms:'Hidupkan setiap adegan yang anda bayangkan — <em>mengikut cara anda</em>'},
-  ph_studio:{shn:'ၸုမ်ႇ Retouch A × Retouch B တဵမ်ထူၼ်ႈ ပႃး <em>live preview</em> ၵမ်းလဵဝ်',kac:'Retouch A × Retouch B suite hkum ai hte <em>live preview</em> lawan wan',th:'ครบชุด Retouch A × Retouch B พร้อม<em>พรีวิวสด</em>ทันใจ',zh:'完整的 Retouch A × Retouch B 套件，<em>实时预览</em>即时呈现',vi:'Trọn bộ Retouch A × Retouch B với <em>xem trước trực tiếp</em> tức thì',id:'Suite lengkap Retouch A × Retouch B dengan <em>pratinjau langsung</em> instan',ms:'Suite penuh Retouch A × Retouch B dengan <em>pratonton langsung</em> serta-merta'},
-  ph_meitu:{shn:'Retouch A 163 ဢၼ် — ပႃး <em>live preview</em> ၵူႈဢၼ်',kac:'Retouch A 163 hpe — yawng <em>live preview</em> hte',th:'ปรับแต่ง Retouch A 163 รายการ พร้อม<em>พรีวิวสด</em>ทุกตัว',zh:'163 项 Retouch A 调整，每一项都有<em>实时预览</em>',vi:'163 tùy chỉnh Retouch A, tất cả đều có <em>xem trước trực tiếp</em>',id:'163 kontrol Retouch A, semuanya dengan <em>pratinjau langsung</em>',ms:'163 kawalan Retouch A, semuanya dengan <em>pratonton langsung</em>'},
-  ph_evoto:{shn:'Retouch B Pro 213 ဢၼ် — ၽိဝ်ၼိူဝ်ႉလႄႈ ဢၼ်လႅင်း <em>ဢၼ်လဵၵ်ႉ</em>',kac:'Retouch B Pro 213 hpe — hpyi hte htoi <em>ginsup</em> galaw',th:'Retouch B Pro 213 รายการ ปรับผิวและแสง<em>อย่างละเอียด</em>',zh:'213 项 Retouch B Pro 控制，肤质与光线<em>精细</em>调校',vi:'213 tùy chỉnh Retouch B Pro cho da và ánh sáng, <em>chi tiết</em>',id:'213 kontrol Retouch B Pro untuk kulit dan cahaya, <em>terperinci</em>',ms:'213 kawalan Retouch B Pro untuk kulit dan cahaya, <em>terperinci</em>'},
-  ph_retouch:{shn:'မႄးၶႅပ်းႁၢင်ႈႁႂ်ႈႁၢင်ႈလီ သေ <em>တိုၵ်ႉပဵၼ်သၽႃႇဝ</em>',kac:'<em>Sha-sha re nga ai</em> tsawm htap ai retouch',th:'รีทัชไร้ที่ติแต่<em>ยังดูเป็นธรรมชาติ</em>',zh:'无瑕精修，<em>依然自然</em>',vi:'Chỉnh sửa hoàn hảo mà <em>vẫn tự nhiên</em>',id:'Retouch sempurna yang <em>tetap alami</em>',ms:'Sentuhan sempurna yang <em>kekal semula jadi</em>'},
-  ph_t2i:{shn:'လိၵ်ႈထႅဝ်လဵဝ် လႅၵ်ႈပဵၼ် <em>ၶႅပ်းႁၢင်ႈၸၼ်ႉၶိုၵ်ႉ</em>',kac:'Laika hteng langai sha <em>professional sumla</em> byin wa ai',th:'ข้อความบรรทัดเดียวกลายเป็น<em>ภาพระดับมืออาชีพ</em>',zh:'一行文字变成<em>专业级图像</em>',vi:'Một dòng chữ trở thành <em>bức ảnh chuyên nghiệp</em>',id:'Satu baris teks menjadi <em>gambar profesional</em>',ms:'Satu baris teks menjadi <em>imej profesional</em>'},
-  ph_video:{shn:'ၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇ တူင်ႉၼိုင် <em>မီးသၢႆၸႂ်မႃး</em>',kac:'Na a sumla ni shamu shamawt hte <em>asak rawng wa</em> ai',th:'ภาพถ่ายของคุณ<em>มีชีวิต</em>ด้วยการเคลื่อนไหว',zh:'让你的照片在动态中<em>活起来</em>',vi:'Ảnh của bạn <em>sống động</em> trong chuyển động',id:'Foto Anda <em>menjadi hidup</em> dalam gerakan',ms:'Foto anda <em>hidup</em> dalam gerakan'},
-  ph_videoup:{shn:'ယုၵ်ႉၼမ်ႉၸၼ်ႉဝီးတီးဢူဝ်း <em>သွင်ပုၼ်ႈ</em> — ၸႅင်ႈလိူဝ် သႅၼ်ႈလိူဝ်',kac:'Video a atsam hpe <em>lahkawng lang</em> jat u — grau san, grau seng ai',th:'ยกระดับคุณภาพวิดีโอ<em>สองเท่า</em> — คมชัดยิ่งขึ้น',zh:'视频画质<em>翻倍</em> — 更锐利、更干净',vi:'<em>Nhân đôi</em> chất lượng video — sắc nét hơn, sạch hơn',id:'<em>Gandakan</em> kualitas video — lebih tajam, lebih bersih',ms:'<em>Gandakan</em> kualiti video — lebih tajam, lebih bersih'},
-  ph_v2v:{shn:'<em>တူဝ်ၸဝ်ႈၵဝ်ႇ</em> ၼႂ်းဝီးတီးဢူဝ်း — ၵႄႇမရႃႇလႄႈႁွင်ႈလင် ဢမ်ႇလႅၵ်ႈ',kac:'Video hta <em>nang a masha</em> — camera hte shara n galai ai',th:'<em>ตัวละครของคุณ</em>ในคลิป — กล้องและฉากคงเดิม',zh:'片中换成<em>你的角色</em> — 镜头与场景不变',vi:'<em>Nhân vật của bạn</em> trong clip — máy quay và bối cảnh giữ nguyên',id:'<em>Karakter Anda</em> di dalam klip — kamera dan latar tetap',ms:'<em>Watak anda</em> dalam klip — kamera dan latar kekal'},
-  ph_talk:{shn:'ၶႅပ်းႁၢင်ႈ 1 + သဵင် 1 — <em>ငဝ်းလၢတ်ႈၵႂၢမ်း</em>',kac:'Sumla 1 hte nsen 1 — <em>ga shaga ai video</em>',th:'รูปหนึ่งใบ เสียงหนึ่งไฟล์ — <em>วิดีโอที่พูดได้</em>',zh:'一张照片 + 一段声音 — <em>会说话的视频</em>',vi:'Một ảnh, một đoạn ghi âm — <em>video biết nói</em>',id:'Satu foto, satu rekaman — <em>video yang berbicara</em>',ms:'Satu foto, satu rakaman — <em>video yang bercakap</em>'},
-  ph_lib:{shn:'Look 1850 မဵဝ်း လိူၵ်ႈဝႆႉပၼ် — <em>လိူၵ်ႈဢၼ်ၼိုင်ႈ</em> သေ တႄႇလႆႈၵမ်းလဵဝ်',kac:'Lata da ai look 1850 — <em>langai lata la</em> nna kalang ta hpang u',th:'1850 ลุคคัดสรร — <em>เลือกหนึ่ง</em>แล้วเริ่มได้ทันที',zh:'1850 款精选风格 — <em>选一款</em>立即开始',vi:'1850 phong cách tuyển chọn — <em>chọn một</em> và bắt đầu ngay',id:'1850 gaya pilihan — <em>pilih satu</em> dan mulai seketika',ms:'1850 gaya pilihan — <em>pilih satu</em> dan mula serta-merta'},
-  ph_gallery:{shn:'ၵူႈဢၼ်ဢၼ်ၸဝ်ႈၵဝ်ႇသၢင်ႈ <em>သိမ်းဝႆႉတီႈၼႆႈ</em>',kac:'Na galaw da ai shagu, <em>ndai kaw makoi da ai</em>',th:'ทุกผลงานที่คุณสร้าง <em>บันทึกไว้ที่นี่</em>',zh:'你的每一件作品，<em>都保存在这里</em>',vi:'Mọi tác phẩm bạn tạo, <em>được lưu ngay tại đây</em>',id:'Setiap karya yang Anda buat, <em>tersimpan di sini</em>',ms:'Setiap hasil ciptaan anda, <em>disimpan di sini</em>'},
-  ph_album:{shn:'ၶႅပ်း 1–6 · လိူၵ်ႈၶႃႈလူင် · <em>ဢွၵ်ႇၼႃႈလိၵ်ႈ</em>',kac:'Sumla 1–6 · kaba lata · <em>laika man pru</em>',th:'รูป 1–6 ใบ · เลือกขนาด · <em>ได้หน้าอัลบั้ม</em>',zh:'1–6 张照片 · 选择尺寸 · <em>成品页面</em>',vi:'1–6 ảnh · chọn khổ · <em>một trang hoàn chỉnh</em>',id:'1–6 foto · pilih ukuran · <em>halaman jadi</em>',ms:'1–6 foto · pilih saiz · <em>halaman siap</em>'},
-  /* 6.102.0 wave A — the ALBUM page */
-  alb_size_h:{shn:"ၶႃႈလူင်",kac:"Kaba",th:"ขนาดหน้า",zh:"页面尺寸",vi:"Khổ trang",id:"Ukuran halaman",ms:"Saiz halaman"},
-  alb_pages_h:{shn:"ၼႃႈလိၵ်ႈ",kac:"Laika man",th:"หน้า",zh:"页面",vi:"Trang",id:"Halaman",ms:"Halaman"},
-  alb_stage_h:{shn:"တူၺ်းၸၢမ်း",kac:"Yu yu",th:"ตัวอย่าง",zh:"预览",vi:"Xem trước",id:"Pratinjau",ms:"Pratonton"},
-  alb_photos_h:{shn:"ၶႅပ်းႁၢင်ႈ",kac:"Sumla",th:"รูปภาพ",zh:"照片",vi:"Ảnh",id:"Foto",ms:"Foto"},
-  alb_layout_h:{shn:"ပိူင်ႁၢင်ႈ",kac:"Shara",th:"เลย์เอาต์",zh:"版式",vi:"Bố cục",id:"Tata letak",ms:"Susun atur"},
-  alb_text_h:{shn:"လိၵ်ႈ",kac:"Laika",th:"ข้อความ",zh:"文字",vi:"Chữ",id:"Teks",ms:"Teks"},
-  alb_export_h:{shn:"ဢွၵ်ႇ",kac:"Shapraw",th:"ส่งออก",zh:"导出",vi:"Xuất",id:"Ekspor",ms:"Eksport"},
-  alb_auto:{shn:"ႁင်းၵူၺ်း",kac:"Hkrai",th:"อัตโนมัติ",zh:"自动",vi:"Tự động",id:"Otomatis",ms:"Auto"},
-  alb_guides:{shn:"သဵၼ်ႈၸီႉ",kac:"Lam madun",th:"เส้นไกด์",zh:"参考线",vi:"Đường dẫn",id:"Panduan",ms:"Panduan"},
-  alb_guides_note:{shn:"သဵၼ်ႈလႅင်ပဵၼ်တီႈတတ်း · သဵၼ်ႈၶဵဝ်ပဵၼ်တီႈယဵပ်ႇ — ဢမ်ႇပႃးၼႂ်းၾၢႆႇဢွၵ်ႇ",kac:"Ahkyeng gaw kahtam na shara · alit gaw laika gyit na shara — shapraw ai kaw n lawm ai",th:"เส้นแดงคือส่วนที่ถูกเจียน · เส้นน้ำเงินคือสันหนังสือ — ไม่อยู่ในไฟล์ที่ส่งออก",zh:"红线是裁切掉的部分 · 蓝线是装订位置 — 导出文件中都不包含",vi:"Đỏ là phần bị xén · xanh là gáy sách — cả hai đều không có trong tệp xuất",id:"Merah adalah bagian yang dipotong · biru adalah jilidan — keduanya tidak ada di berkas ekspor",ms:"Merah ialah bahagian yang dipotong · biru ialah jilid — kedua-duanya tiada dalam fail eksport"},
-  /* 6.110.0 wave A */
-  alb_touch_note:{shn:"ဢဝ်မိုဝ်း (ဢမ်ႇၼၼ်) mouse လၢၵ်ႈၶႅပ်းႁၢင်ႈ · သွင်ၼိဝ်ႉ (ဢမ်ႇၼၼ်) wheel ႁဵတ်းလဵၵ်ႉယႂ်ႇ · လိၵ်ႈၵေႃႈ လၢၵ်ႈ လႄႈ ဝိင်ႈလႆႈ",kac:"Sumla hpe lata (sh'ning) mouse hte gang nna shara jahkrat u · lata lahkawng (sh'ning) wheel hte kaji kaba galaw u · laika mung gang, kaba jahkrat, gayin lu ai",th:"ลากรูปด้วยนิ้วหรือเมาส์เพื่อจัดตำแหน่ง · หุบนิ้วหรือใช้ล้อเมาส์เพื่อซูม · ข้อความก็ลาก ย่อขยาย และหมุนได้เช่นกัน",zh:"用手指或鼠标拖动照片来定位 · 双指或滚轮缩放 · 文字同样可以拖动、缩放和旋转",vi:"Kéo ảnh bằng ngón tay hoặc chuột để đặt vị trí · chụm hai ngón hoặc lăn chuột để phóng to · chữ cũng kéo, phóng và xoay được",id:"Seret foto dengan jari atau tetikus untuk menempatkannya · cubit atau putar roda tetikus untuk memperbesar · teks juga bisa diseret, diubah ukurannya dan diputar",ms:"Seret foto dengan jari atau tetikus untuk meletakkannya · cubit atau guna roda tetikus untuk zum · teks juga boleh diseret, diubah saiz dan diputar"},
-  alb_sel_none:{shn:"ပႆႇလိူၵ်ႈသင် — ဢဝ်မိုဝ်းတႅပ်းၶႅပ်းႁၢင်ႈ ဢမ်ႇၼၼ် လိၵ်ႈ",kac:"Kaga n lata shi ai — sumla sh'ning laika langai hpe hkra u",th:"ยังไม่ได้เลือกอะไร — แตะรูปหรือข้อความ",zh:"尚未选择 — 请点一张照片或一行文字",vi:"Chưa chọn gì — hãy chạm vào một ảnh hoặc một dòng chữ",id:"Belum ada yang dipilih — ketuk sebuah foto atau baris teks",ms:"Belum ada yang dipilih — ketik sekeping foto atau satu baris teks"},
-  alb_sel_photo:{shn:"ၶႅပ်းႁၢင်ႈ {N}",kac:"Sumla {N}",th:"รูปที่ {N}",zh:"照片 {N}",vi:"Ảnh {N}",id:"Foto {N}",ms:"Foto {N}"},
-  alb_sel_text:{shn:"လိၵ်ႈ · {R}",kac:"Laika · {R}",th:"ข้อความ · {R}",zh:"文字 · {R}",vi:"Chữ · {R}",id:"Teks · {R}",ms:"Teks · {R}"},
-  alb_zoom_out:{shn:"ႁဵတ်းလဵၵ်ႉ",kac:"Kaji galaw",th:"ย่อ",zh:"缩小",vi:"Thu nhỏ",id:"Perkecil",ms:"Kecilkan"},
-  alb_zoom_in:{shn:"ႁဵတ်းယႂ်ႇ",kac:"Kaba galaw",th:"ขยาย",zh:"放大",vi:"Phóng to",id:"Perbesar",ms:"Besarkan"},
-  alb_rot_l:{shn:"ဝိင်ႈၸၢႆႉ",kac:"Pai de gayin",th:"หมุนซ้าย",zh:"向左旋转",vi:"Xoay trái",id:"Putar kiri",ms:"Putar kiri"},
-  alb_rot_r:{shn:"ဝိင်ႈၶႂႃ",kac:"Hkra de gayin",th:"หมุนขวา",zh:"向右旋转",vi:"Xoay phải",id:"Putar kanan",ms:"Putar kanan"},
-  alb_reset_one:{shn:"ႁဵတ်းၶိုၼ်းၸိူင်ႉၵဝ်ႇ",kac:"Moi hku bai tawn",th:"คืนค่าเดิม",zh:"恢复原样",vi:"Đặt lại như cũ",id:"Kembalikan semula",ms:"Kembalikan semula"},
-  alb_move_l:{shn:"ၸူးၸၢႆႉ",kac:"Pai de",th:"เลื่อนซ้าย",zh:"左移",vi:"Sang trái",id:"Geser kiri",ms:"Alih kiri"},
-  alb_move_r:{shn:"ၸူးၶႂႃ",kac:"Hkra de",th:"เลื่อนขวา",zh:"右移",vi:"Sang phải",id:"Geser kanan",ms:"Alih kanan"},
-  alb_move_u:{shn:"ၸူးၼိူဝ်",kac:"Ntsa de",th:"เลื่อนขึ้น",zh:"上移",vi:"Lên trên",id:"Geser naik",ms:"Alih ke atas"},
-  alb_move_d:{shn:"ၸူးတႂ်ႈ",kac:"Npu de",th:"เลื่อนลง",zh:"下移",vi:"Xuống dưới",id:"Geser turun",ms:"Alih ke bawah"},
-  alb_spread_note:{shn:"မိူဝ်ႈတူၺ်းသွင်ၼႃႈ ႁဵတ်းၶိုၼ်းဢမ်ႇလႆႈ — လႅၵ်ႈၸူးၼႃႈလဵဝ်",kac:"Laika shara lahkawng yu ai ten hta galai n lu ai — laika shara langai de bai galai u",th:"ปรับไม่ได้ขณะดูสองหน้า — สลับกลับไปดูหน้าเดียว",zh:"同时显示两页时无法调整 — 请切回单页",vi:"Không chỉnh được khi đang xem hai trang — hãy chuyển về một trang",id:"Tidak bisa diatur saat dua halaman ditampilkan — kembalilah ke satu halaman",ms:"Tidak boleh dilaraskan semasa dua halaman dipaparkan — kembali ke satu halaman"},
-  alb_bleed:{shn:"ၶၢင်ႈလိူဝ်",kac:"Makau",th:"เผื่อตัด",zh:"出血",vi:"tràn lề",id:"bleed",ms:"bleed"},
-  alb_gutter:{shn:"တီႈယဵပ်ႇ",kac:"Gyit shara",th:"สันใน",zh:"订口",vi:"gáy",id:"jilid",ms:"jilid"},
-  alb_width:{shn:"ၵႂၢင်ႈ",kac:"Galu",th:"กว้าง",zh:"宽",vi:"Rộng",id:"Lebar",ms:"Lebar"},
-  alb_height:{shn:"သုင်",kac:"Tsaw",th:"สูง",zh:"高",vi:"Cao",id:"Tinggi",ms:"Tinggi"},
-  alb_page_add:{shn:"သႂ်ႇၼႃႈလိၵ်ႈ",kac:"Laika man bang",th:"เพิ่มหน้า",zh:"添加页面",vi:"Thêm trang",id:"Tambah halaman",ms:"Tambah halaman"},
-  alb_page_dup:{shn:"ၵွပ်ႇ",kac:"Shatsawm",th:"ทำสำเนา",zh:"复制",vi:"Nhân bản",id:"Duplikat",ms:"Salin"},
-  alb_page_del:{shn:"ထွၼ်ၼႃႈလိၵ်ႈ",kac:"Ndai laika man kabai",th:"ลบหน้านี้",zh:"删除此页",vi:"Xoá trang này",id:"Hapus halaman ini",ms:"Padam halaman ini"},
-  alb_page_gone:{shn:"ထွၼ်ယဝ်ႉ",kac:"Kabai sai",th:"ลบหน้าแล้ว",zh:"页面已删除",vi:"Đã xoá trang",id:"Halaman dihapus",ms:"Halaman dipadam"},
-  alb_photo_add:{shn:"သႂ်ႇၶႅပ်း",kac:"Sumla bang",th:"เพิ่มรูป",zh:"添加照片",vi:"Thêm ảnh",id:"Tambah foto",ms:"Tambah foto"},
-  alb_photo_full:{shn:"ၼိုင်ႈၼႃႈ 6 ၶႅပ်းၵူၺ်း — သႂ်ႇၼႃႈမႂ်ႇ",kac:"Laika man langai hta sumla 6 sha — laika man kaga bang u",th:"หน้าละ 6 รูปเท่านั้น — เพิ่มหน้าใหม่",zh:"每页最多 6 张 — 请添加新页面",vi:"Mỗi trang tối đa 6 ảnh — thêm trang mới",id:"Enam foto per halaman — tambah halaman lagi",ms:"Enam foto sehalaman — tambah halaman lain"},
-  alb_photo_some:{shn:"သႂ်ႇလႆႈၵႃႈႁိုဝ် သႂ်ႇၵႂႃႇ",kac:"Shang ai daram sha bang sai",th:"เพิ่มเท่าที่ใส่ได้",zh:"只添加了放得下的部分",vi:"Chỉ thêm được số ảnh vừa chỗ",id:"Hanya yang muat yang ditambahkan",ms:"Hanya yang muat ditambah"},
-  alb_layout_none:{shn:"သႂ်ႇၶႅပ်းယဝ်ႉ ပိူင်ႁၢင်ႈတေဢွၵ်ႇမႃး",kac:"Sumla bang yang shara ni pru wa na re",th:"เพิ่มรูปแล้วเลย์เอาต์จะปรากฏ",zh:"添加照片后版式就会出现",vi:"Thêm ảnh thì bố cục sẽ hiện ra",id:"Tambahkan foto, tata letaknya akan muncul",ms:"Tambah foto dan susun atur akan muncul"},
-  alb_text_note:{shn:"ပွႆႇပဝ်ႇဝႆႉ ဢမ်ႇပႃး",kac:"Ahkying da yang n lawm ai",th:"เว้นว่างไว้ก็จะไม่พิมพ์",zh:"留空则不会印出",vi:"Để trống thì không in",id:"Baris kosong tidak dicetak",ms:"Baris kosong tidak dicetak"},
-  alb_export_note:{shn:"ၶႃႈလူင်တေဢွၵ်ႇ",kac:"Shapraw na kaba",th:"ขนาดที่จะได้",zh:"导出尺寸",vi:"Trang này sẽ xuất ở",id:"Halaman ini akan keluar pada",ms:"Halaman ini akan keluar pada"},
-  alb_export_jpg:{shn:"ဢွၵ်ႇ JPG",kac:"JPG shapraw",th:"ส่งออก JPG",zh:"导出 JPG",vi:"Xuất JPG",id:"Ekspor JPG",ms:"Eksport JPG"},
-  alb_export_gal:{shn:"သိမ်းသႂ်ႇ Gallery",kac:"Gallery de makoi",th:"บันทึกลงแกลเลอรี",zh:"保存到图库",vi:"Lưu vào Thư viện",id:"Simpan ke Galeri",ms:"Simpan ke Galeri"},
-  alb_export_all:{shn:"ဢွၵ်ႇတင်းသဵင်ႈ",kac:"Laika man yawng shapraw",th:"ส่งออกทุกหน้า",zh:"导出全部页面",vi:"Xuất mọi trang",id:"Ekspor semua halaman",ms:"Eksport semua halaman"},
-  alb_export_busy:{shn:"တိုၵ်ႉဢွၵ်ႇ…",kac:"Galaw nga ai…",th:"กำลังสร้างไฟล์…",zh:"正在生成文件…",vi:"Đang tạo tệp…",id:"Membuat berkas…",ms:"Membuat fail…"},
-  alb_export_done:{shn:"ဢွၵ်ႇယဝ်ႉ",kac:"Shapraw sai",th:"ส่งออกแล้ว",zh:"已导出",vi:"Đã xuất",id:"Diekspor",ms:"Dieksport"},
-  alb_export_saved:{shn:"သိမ်းသႂ်ႇယဝ်ႉ",kac:"Gallery de makoi sai",th:"บันทึกลงแกลเลอรีแล้ว",zh:"已保存到图库",vi:"Đã lưu vào Thư viện",id:"Tersimpan di Galeri",ms:"Disimpan ke Galeri"},
-  alb_export_fail:{shn:"ဢွၵ်ႇဢမ်ႇလႆႈ — တူၺ်းၶႅပ်းယႂ်ႇပူၼ်ႉ",kac:"N shapraw lu ai — sumla kaba ai kun yu u",th:"สร้างไฟล์ไม่ได้ — ตรวจว่ารูปใหญ่เกินไปหรือไม่",zh:"无法生成文件 — 请检查照片是否过大",vi:"Không tạo được tệp — kiểm tra xem ảnh có quá lớn không",id:"Berkas tidak bisa dibuat — periksa apakah fotonya sangat besar",ms:"Fail tidak dapat dibuat — periksa sama ada foto terlalu besar"},
-  /* 6.104.0 wave B — the ALBUM page's type */
-  alb_pair:{shn:"တွင်ႈလိၵ်ႈ ၶူႈ",kac:"Laika hkum matut",th:"คู่ฟอนต์",zh:"字体搭配",vi:"Cặp phông chữ",id:"Pasangan font",ms:"Pasangan fon"},
-  alb_pair_note:{shn:"ႁူဝ်ၶေႃႈလႄႈ တူဝ်လိၵ်ႈ သွင်ဢၼ် ဢိုတ်းၵမ်းလဵဝ်",kac:"Baw hte laika hkum lahkawng hpe kalang mi lata la",th:"แตะครั้งเดียวได้ทั้งฟอนต์หัวเรื่องและฟอนต์เนื้อความ",zh:"一次点选同时决定标题与内文字体",vi:"Một chạm chọn cả phông tiêu đề và phông nội dung",id:"Sekali ketuk menetapkan font judul dan font isi",ms:"Satu ketik menetapkan fon tajuk dan fon isi"},
-  alb_font:{shn:"တူဝ်လိၵ်ႈ",kac:"Laika hkum",th:"ฟอนต์",zh:"字体",vi:"Phông chữ",id:"Font",ms:"Fon"},
-  alb_font_auto:{shn:"ႁင်းၵူၺ်း",kac:"Hkrai hkrai",th:"อัตโนมัติ",zh:"自动",vi:"Tự động",id:"Otomatis",ms:"Automatik"},
-  alb_font_count:{shn:"တူဝ်လိၵ်ႈ {N} မဵဝ်း · ၶူႈ {P} မဵဝ်း",kac:"Laika hkum {N} · matut {P}",th:"{N} ฟอนต์ · {P} คู่",zh:"{N} 款字体 · {P} 组搭配",vi:"{N} phông · {P} cặp",id:"{N} font · {P} pasangan",ms:"{N} fon · {P} pasangan"},
-  alb_ink:{shn:"သီလိၵ်ႈ",kac:"Laika ahkyeng",th:"สีตัวอักษร",zh:"文字颜色",vi:"Màu chữ",id:"Warna tinta",ms:"Warna dakwat"},
-  alb_font_my:{shn:"လိၵ်ႈမၢၼ်ႈ ဢွၵ်ႇမႃးတီႈ တူဝ်လိၵ်ႈမၢၼ်ႈ တႃႇသေႇ",kac:"Myen laika gaw Myen laika hkum kaw na shagu pru wa ai",th:"ตัวอักษรพม่ามาจากฟอนต์พม่าเสมอ",zh:"缅文始终由缅文字体呈现",vi:"Chữ Miến luôn được lấy từ phông chữ Miến",id:"Huruf Burma selalu berasal dari font Burma",ms:"Huruf Burma sentiasa datang daripada fon Burma"},
-  alb_font_busy:{shn:"ပိုတ်ႇတူဝ်လိၵ်ႈဝႆႉ…",kac:"Laika hkum hpaw nga ai…",th:"กำลังโหลดฟอนต์…",zh:"正在载入字体…",vi:"Đang tải phông chữ…",id:"Memuat font…",ms:"Memuatkan fon…"},
-  alb_font_fail:{shn:"ပိုတ်ႇတူဝ်လိၵ်ႈဢမ်ႇလႆႈ — တႅမ်ႈၼႂ်းတူဝ်လိၵ်ႈသၢႆႈ",kac:"Laika hkum n hpaw lu — shingdu laika hkum hte ka ai",th:"โหลดฟอนต์นั้นไม่ได้ — จะวาดด้วยฟอนต์สำรอง",zh:"该字体未能载入 — 改用后备字体绘制",vi:"Không tải được phông đó — trang được vẽ bằng phông dự phòng",id:"Font itu gagal dimuat — halaman digambar dengan font cadangan",ms:"Fon itu gagal dimuatkan — halaman dilukis dengan fon sandaran"},
-  /* 6.105.0 wave C — the ALBUM page's occasions */
-  alb_occ:{shn:"မဵဝ်းပွႆး",kac:"Poi amyu",th:"ประเภทงาน",zh:"场合类型",vi:"Loại dịp",id:"Jenis acara",ms:"Jenis majlis"},
-  alb_occ_note:{shn:"လိူၵ်ႈပွႆးဢၼ်ၼိုင်ႈ တူဝ်လိၵ်ႈ ၶႃႈလူင် လႄႈ သီလိၵ်ႈ သၢမ်ဢၼ် လႅၵ်ႈၽွမ်ႉၵၼ်",kac:"Poi langai lata yang laika hkum, kaba hte laika ahkyeng masum hpe rau jaw ai",th:"เลือกงานหนึ่งอย่าง ฟอนต์ ขนาด และสีตัวอักษรจะถูกตั้งพร้อมกัน",zh:"选一个场合，字体、尺寸和文字颜色一次设定",vi:"Chọn một dịp là đặt xong phông chữ, khổ và màu mực",id:"Pilih satu acara — font, ukuran dan warna tinta tertata sekaligus",ms:"Pilih satu majlis — fon, saiz dan warna dakwat ditetapkan serentak"},
-  alb_make:{shn:"ႁဵတ်းပပ်ႉႁၢင်ႈတင်းပပ်ႉ",kac:"Sumla laika buk yawng galaw",th:"สร้างอัลบั้มทั้งเล่ม",zh:"制作整本相册",vi:"Làm cả cuốn album",id:"Buat seluruh album",ms:"Buat seluruh album"},
-  alb_make_hint:{shn:"လိူၵ်ႈၶႅပ်းလႆႈထိုင် {N} ၶႅပ်း ၵမ်းလဵဝ် — ၽႄၼႃႈလိၵ်ႈပၼ်ႁင်းၵူၺ်း",kac:"Kalang mi hta sumla {N} du hkra lata la — shara shara de garan ya na",th:"เลือกรูปได้ถึง {N} รูปในครั้งเดียว — สตูดิโอจะแบ่งเป็นหน้าให้",zh:"一次最多选 {N} 张照片 — 工作室会自动分页",vi:"Chọn tối đa {N} ảnh một lần — studio sẽ chia thành trang",id:"Pilih hingga {N} foto sekaligus — studio membaginya menjadi halaman",ms:"Pilih sehingga {N} foto sekali gus — studio membahagikannya kepada halaman"},
-  alb_make_busy:{shn:"တိုၵ်ႉလူၶႅပ်း {N} ၶႅပ်း…",kac:"Sumla {N} hti nga ai…",th:"กำลังอ่านรูป {N} รูป…",zh:"正在读取 {N} 张照片…",vi:"Đang đọc {N} ảnh…",id:"Membaca {N} foto…",ms:"Membaca {N} foto…"},
-  alb_make_done:{shn:"ၶႅပ်း {N} · ၼႃႈလိၵ်ႈ {P}",kac:"Sumla {N} · shara {P}",th:"{N} รูป · {P} หน้า",zh:"{N} 张照片 · {P} 页",vi:"{N} ảnh · {P} trang",id:"{N} foto · {P} halaman",ms:"{N} foto · {P} halaman"},
-  alb_make_cap:{shn:"ဢဝ်ၶႅပ်း {N} ၶႅပ်းၵူၺ်း — ဢၼ်လိူဝ်ၼၼ်ႉ သႂ်ႇပပ်ႉတၢင်ႇဢၼ်",kac:"Sumla {N} sha la ai — ngam ai ni hpe laika buk kaga de bang u",th:"รับเพียง {N} รูป — ที่เหลือใส่ในอัลบั้มอื่น",zh:"只取了 {N} 张 — 其余请放进别的相册",vi:"Chỉ lấy {N} ảnh — số còn lại hãy để sang album khác",id:"Hanya {N} foto yang diambil — sisanya taruh di album lain",ms:"Hanya {N} foto diambil — selebihnya letak dalam album lain"},
-  alb_edge:{shn:"ႁၢင်ႈထိုင်ႁိမ်း",kac:"Sumla ni makau du hkra",th:"ภาพชนขอบ",zh:"照片出血到边",vi:"Ảnh tràn ra mép",id:"Foto sampai tepi",ms:"Foto hingga ke tepi"},
-  /* 6.107.0 wave E */
-  alb_size_preset:{shn:"ၶႅပ်းလူင်ႇ တမ်းဝႆႉ",kac:"Hkyen da ai kaba",th:"ขนาดสำเร็จรูป",zh:"预设尺寸",vi:"Kích thước có sẵn",id:"Ukuran siap pakai",ms:"Saiz sedia ada"},
-  alb_size_own:{shn:"ၶႅပ်းလူင်ႇ ႁင်းၵူၺ်း",kac:"Nang nan a kaba",th:"ขนาดของคุณเอง",zh:"自定尺寸",vi:"Kích thước của bạn",id:"Ukuran Anda sendiri",ms:"Saiz anda sendiri"},
-  alb_size_own_note:{shn:"ပေႃႉသႂ်ႇ ဢမ်ႇၼၼ် လၢၵ်ႈ။ ၾၢႆႇၼိုင်ႈ ၼမ်သုတ်း {N} px။",kac:"Ka-ang u, n rai yang gang u. Maga langai hta grau law ai {N} px.",th:"พิมพ์หรือลากก็ได้ ด้านหนึ่งไม่เกิน {N} px",zh:"输入或拖动皆可，单边最多 {N} px。",id:"Ketik atau geser. Maksimal {N} px per sisi.",vi:"Gõ hoặc kéo. Mỗi cạnh tối đa {N} px.",ms:"Taip atau seret. Maksimum {N} px sesisi."},
-  alb_size_big:{shn:"{W} × {H} px ပဵၼ် megapixel {M} — ၾူၼ်း memory ဢမ်ႇၵုမ်ႇ တေဢွၵ်ႇဢမ်ႇလႆႈ။",kac:"{W} × {H} px gaw megapixel {M} re. Mahkrun hta memory n law yang n pru na.",th:"{W} × {H} px คือ {M} เมกะพิกเซล — โทรศัพท์อาจหน่วยความจำไม่พอ",zh:"{W} × {H} px 约 {M} 百万像素 — 手机可能内存不足。",vi:"{W} × {H} px là {M} megapixel — điện thoại có thể hết bộ nhớ.",id:"{W} × {H} px adalah {M} megapiksel — memori ponsel bisa habis.",ms:"{W} × {H} px ialah {M} megapiksel — memori telefon mungkin tidak cukup."},
-  alb_size_max:{shn:"ၼႃႈလိၵ်ႈ ၾၢႆႇၼိုင်ႈ ၼမ်သုတ်း {N} px ၵူၺ်း။",kac:"Laika shara langai hta {N} px sha lu ai.",th:"หน้าหนึ่งด้านได้ไม่เกิน {N} px",zh:"页面单边最多 {N} px。",vi:"Mỗi cạnh trang tối đa {N} px.",id:"Satu sisi halaman maksimal {N} px.",ms:"Satu sisi halaman maksimum {N} px."},
-  alb_swap:{shn:"⇄ ပိၼ်ႇ",kac:"⇄ Galai",th:"⇄ สลับด้าน",zh:"⇄ 转向",vi:"⇄ Xoay",id:"⇄ Putar",ms:"⇄ Putar"},
-  alb_lock:{shn:"သၢႆငၢႆ ၵိုမ်း",kac:"Shingdu jahkrat",th:"คงสัดส่วน",zh:"保持比例",vi:"Giữ tỉ lệ",id:"Kunci rasio",ms:"Kekalkan nisbah"},
-  alb_layout_pick:{shn:"ႁၢင်ႈ {N} ႁၢင်ႈ တႃႇတမ်းဝၢင်း",kac:"Sumla {N} a matu tawn ladat",th:"เลย์เอาต์สำหรับภาพ {N} รูป",zh:"{N} 张照片的版面",vi:"Bố cục cho {N} ảnh",id:"Tata letak untuk {N} foto",ms:"Susun atur untuk {N} foto"},
-  alb_layout_of:{shn:"ႁၢင်ႈ {N} ႁၢင်ႈ",kac:"Sumla {N}",th:"ภาพ {N} รูป",zh:"{N} 张照片",vi:"{N} ảnh",id:"{N} foto",ms:"{N} foto"},
-  alb_layout_yours:{shn:"လိူၵ်ႈႁင်းၵူၺ်း",kac:"Nang hkyen da ai",th:"คุณเลือกเอง",zh:"你选的",vi:"Bạn chọn",id:"Pilihan Anda",ms:"Pilihan anda"},
-  alb_out_this:{shn:"ၼႃႈလိၵ်ႈဢၼ်ၼႆႉ",kac:"Ndai laika shara",th:"หน้านี้",zh:"本页",vi:"Trang này",id:"Halaman ini",ms:"Halaman ini"},
-  alb_out_album:{shn:"ပပ်ႉႁၢင်ႈ တင်းပပ်ႉ · ၼႃႈလိၵ်ႈ {N}",kac:"Album ting · laika shara {N}",th:"ทั้งอัลบั้ม · {N} หน้า",zh:"整本相册 · {N} 页",vi:"Cả album · {N} trang",id:"Seluruh album · {N} halaman",ms:"Seluruh album · {N} halaman"},
-  alb_edge_note:{shn:"သဵၼ်ႈတတ်းတေတတ်းၽၢၼ်ႇႁၢင်ႈ။ တူဝ်လိၵ်ႈယူႇၼႂ်း။",kac:"Kahtam ai lam gaw sumla hpe kahtam na. Laika ni gaw shingkang kata nga na.",th:"รอยตัดจะผ่านภาพ ตัวอักษรอยู่ด้านใน",zh:"裁切线会切进照片，文字留在内侧",vi:"Đường cắt đi xuyên qua ảnh. Chữ vẫn nằm bên trong.",id:"Garis potong memotong foto. Teks tetap di dalam.",ms:"Garis potong memotong foto. Teks kekal di dalam."},
-  alb_spread:{shn:"သွင်ၼႃႈ",kac:"Laika shara lahkawng",th:"หน้าคู่",zh:"跨页",vi:"Trang đôi",id:"Halaman ganda",ms:"Halaman berkembar"},
-  alb_shuffle:{shn:"ဢႃႈႁၢင်ႈမႂ်ႇ",kac:"Sumla ni hpe gayau",th:"สลับภาพใหม่",zh:"重新洗牌照片",vi:"Xáo lại ảnh",id:"Acak ulang foto",ms:"Kocok semula foto"},
-  alb_shuffle_done:{shn:"ႁၢင်ႈ {N} ၶႅပ်း ဝႄႈမႂ်ႇယဝ်ႉ",kac:"Sumla {N} hpe bai garan ya sai",th:"แจกภาพใหม่ {N} รูป",zh:"已重新分配 {N} 张照片",vi:"Đã chia lại {N} ảnh",id:"{N} foto dibagi ulang",ms:"{N} foto diagih semula"},
-  alb_close_add:{shn:"ၼႃႈသုတ်း",kac:"Hpang jahtum laika shara",th:"หน้าปิดท้าย",zh:"结尾页",vi:"Trang kết",id:"Halaman penutup",ms:"Halaman penutup"},
-  alb_out_pdf:{shn:"PDF ပွတ်ႈ · တင်းပပ်ႉ",kac:"PDF lakhak · laika buk yawng",th:"PDF สำหรับพิมพ์ · ทั้งอัลบั้ม",zh:"印刷 PDF · 整本相册",vi:"PDF in · cả album",id:"PDF cetak · seluruh album",ms:"PDF cetak · seluruh album"},
-  alb_out_psd:{shn:"PSD မီးသၢၼ် · ၼႃႈၼႆႉ",kac:"PSD lakhap · ndai laika shara",th:"PSD แบบเลเยอร์ · หน้านี้",zh:"分层 PSD · 本页",vi:"PSD nhiều lớp · trang này",id:"PSD berlapis · halaman ini",ms:"PSD berlapis · halaman ini"},
-  alb_out_sheet:{shn:"ၸေႈ {W} × {H} mm · မီးႁိမ်းလိူဝ်လႄႈ သဵၼ်ႈတတ်း · {N} ၼႃႈ · PSD မွၵ်ႈ {M} MB",kac:"Laika {W} × {H} mm · makau jaw hte kahtam lam rawng · {N} shara · PSD {M} MB ram",th:"แผ่น {W} × {H} มม. มีระยะตัดตกและเส้นตัด · {N} หน้า · PSD ราว {M} MB",zh:"幅面 {W} × {H} 毫米，含出血与裁切线 · {N} 页 · PSD 约 {M} MB",vi:"Khổ {W} × {H} mm có tràn lề và dấu cắt · {N} trang · PSD khoảng {M} MB",id:"Lembar {W} × {H} mm dengan bleed dan tanda potong · {N} halaman · PSD sekitar {M} MB",ms:"Helaian {W} × {H} mm dengan bleed dan tanda potong · {N} halaman · PSD kira-kira {M} MB"},
-  alb_psd_big:{shn:"ၼႃႈၼႆႉ တေပဵၼ်ၾၢႆႇ မွၵ်ႈ {N} MB။ သိုပ်ႇႁဲႈ။",kac:"Ndai laika shara gaw {N} MB ram na re. Matut na i?",th:"หน้านี้จะได้ไฟล์ราว {N} MB ทำต่อไหม",zh:"本页将生成约 {N} MB 的文件，继续吗？",vi:"Trang này tạo tệp khoảng {N} MB. Tiếp tục?",id:"Halaman ini menghasilkan berkas sekitar {N} MB. Lanjutkan?",ms:"Halaman ini menghasilkan fail kira-kira {N} MB. Teruskan?"},
-  alb_psd_no:{shn:"ယႂ်ႇပူၼ်ႉတီႈၼႆႈ ({N} MB မွၵ်ႈ)။ ၸႂ်ႉ PDF ပွတ်ႈ။",kac:"Ndai kaw lakhap rawng ai file gaw kaba wa sai ({N} MB ram). PDF lakhak hpe jashawn u.",th:"ใหญ่เกินกว่าจะทำไฟล์เลเยอร์ที่นี่ (ราว {N} MB) ใช้ PDF สำหรับพิมพ์แทน",zh:"在这里做分层文件太大了（约 {N} MB），请用印刷 PDF。",vi:"Quá lớn để làm tệp nhiều lớp ở đây (khoảng {N} MB). Hãy dùng PDF in.",id:"Terlalu besar untuk berkas berlapis di sini (sekitar {N} MB). Pakai PDF cetak.",ms:"Terlalu besar untuk fail berlapis di sini (kira-kira {N} MB). Guna PDF cetak."},
-  alb_pdf_done:{shn:"{N} ၼႃႈ · {M} MB သိမ်းယဝ်ႉ",kac:"{N} shara · {M} MB mahkawng sai",th:"{N} หน้า · {M} MB บันทึกแล้ว",zh:"{N} 页 · 已保存 {M} MB",vi:"{N} trang · đã lưu {M} MB",id:"{N} halaman · {M} MB tersimpan",ms:"{N} halaman · {M} MB disimpan"},
-  alb_make_replace:{shn:"ပပ်ႉႁၢင်ႈဢၼ်မီးယူႇ တေလႅၵ်ႈပဵၼ်ဢၼ်မႂ်ႇ — ႁဵတ်းထႅင်ႈႁိုဝ်?",kac:"Ya nga ai laika buk hpe galai kau na — matut na i?",th:"อัลบั้มที่มีอยู่จะถูกแทนที่ ดำเนินการต่อหรือไม่?",zh:"现有相册会被替换，是否继续？",vi:"Album hiện tại sẽ bị thay thế. Tiếp tục?",id:"Album yang ada akan diganti. Lanjutkan?",ms:"Album sedia ada akan diganti. Teruskan?"},
-  alb_make_none:{shn:"လူၶႅပ်းသေဢၼ်ဢမ်ႇလႆႈ",kac:"Sumla langai mung hti n lu ai",th:"อ่านรูปไม่ได้สักรูป",zh:"没有一张照片能读取",vi:"Không đọc được ảnh nào",id:"Tidak ada foto yang bisa dibaca",ms:"Tiada foto yang dapat dibaca"},
-  /* 6.121.0 wave F — the album designer */
-  alb_book:{shn:"ပပ်ႉ",kac:"Laika buk",th:"หนังสือ",zh:"整本",vi:"Cả sách",id:"Buku",ms:"Buku"},
-  alb_book_note:{shn:"ပပ်ႉတင်းပပ်ႉ — ၼဵၵ်းၼႃႈလိၵ်ႈ တေပိုတ်ႇ · ✎ မႄး · ✦ ႁၢင်ႈမႂ်ႇ · ✕ ထွၼ်",kac:"Laika buk hkum — laika shara hpe dip yang hpaw · ✎ galai · ✦ bai hkyen · ✕ kabai",th:"ทั้งเล่ม — แตะหน้าเพื่อเปิด · ✎ แก้ · ✦ จัดใหม่ · ✕ ลบ",zh:"整本相册 — 点一页即打开 · ✎ 编辑 · ✦ 重新设计 · ✕ 删除",vi:"Cả cuốn sách — chạm một trang để mở · ✎ sửa · ✦ thiết kế lại · ✕ xoá",id:"Seluruh buku — ketuk halaman untuk membukanya · ✎ ubah · ✦ desain ulang · ✕ hapus",ms:"Seluruh buku — ketik halaman untuk membukanya · ✎ ubah · ✦ reka semula · ✕ padam"},
-  alb_book_edit:{shn:"မႄး",kac:"Galai",th:"แก้ไข",zh:"编辑",vi:"Sửa",id:"Ubah",ms:"Ubah"},
-  alb_redesign:{shn:"ႁၢင်ႈမႂ်ႇ",kac:"Bai hkyen",th:"จัดใหม่",zh:"重新设计",vi:"Thiết kế lại",id:"Desain ulang",ms:"Reka semula"},
-  alb_undo:{shn:"ၶိုၼ်းလင်",kac:"Bai nhtang",th:"เลิกทำ",zh:"撤销",vi:"Hoàn tác",id:"Urungkan",ms:"Buat asal"},
-  alb_redo:{shn:"ႁဵတ်းၶိုၼ်း",kac:"Bai galaw",th:"ทำซ้ำ",zh:"重做",vi:"Làm lại",id:"Ulangi",ms:"Buat semula"},
-  alb_nothing_undo:{shn:"ဢမ်ႇမီးသင်တေၶိုၼ်းလင်",kac:"Bai nhtang na n nga shi ai",th:"ยังไม่มีอะไรให้เลิกทำ",zh:"还没有可撤销的操作",vi:"Chưa có gì để hoàn tác",id:"Belum ada yang bisa diurungkan",ms:"Belum ada yang boleh dibuat asal"},
-  alb_fx:{shn:"ႁၢင်ႈၽၢင်",kac:"Sumla hpyaw",th:"โทนภาพ",zh:"色调",vi:"TÔNG MÀU",id:"TAMPILAN",ms:"RUPA"},
-  alb_fx_none:{shn:"သီၵူႈ",kac:"Nsam",th:"สีจริง",zh:"彩色",vi:"Màu gốc",id:"Warna",ms:"Warna"},
-  alb_fx_bw:{shn:"လမ်ၶၢဝ်",kac:"Chyang hpraw",th:"ขาวดำ",zh:"黑白",vi:"Đen trắng",id:"Hitam putih",ms:"Hitam putih"},
-  alb_fx_sepia:{shn:"သီလိူင်ၵဝ်ႇ",kac:"Sepia",th:"ซีเปีย",zh:"棕褐",vi:"Nâu cổ",id:"Sepia",ms:"Sepia"},
-  alb_fx_warm:{shn:"ဢုၼ်ႇ",kac:"Lum",th:"โทนอุ่น",zh:"暖色",vi:"Ấm",id:"Hangat",ms:"Hangat"},
-  alb_fx_cool:{shn:"ၵတ်း",kac:"Katsi",th:"โทนเย็น",zh:"冷色",vi:"Lạnh",id:"Sejuk",ms:"Sejuk"},
-  alb_fx_fade:{shn:"မွင်",kac:"Myit",th:"จางซีด",zh:"褪色",vi:"Nhạt",id:"Pudar",ms:"Pudar"},
-  alb_replace:{shn:"လႅၵ်ႈၶႅပ်း…",kac:"Galai…",th:"แทนที่…",zh:"替换…",vi:"Thay ảnh…",id:"Ganti…",ms:"Ganti…"},
-  alb_swap_l:{shn:"‹ လႅၵ်ႈတီႈ",kac:"‹ Shara galai",th:"‹ สลับ",zh:"‹ 交换",vi:"‹ Đổi chỗ",id:"‹ Tukar",ms:"‹ Tukar"},
-  alb_swap_r:{shn:"လႅၵ်ႈတီႈ ›",kac:"Shara galai ›",th:"สลับ ›",zh:"交换 ›",vi:"Đổi chỗ ›",id:"Tukar ›",ms:"Tukar ›"},
-  alb_remove:{shn:"ထွၼ်ဢွၵ်ႇၼႃႈ",kac:"Laika shara kaw na shaw",th:"เอาออกจากหน้า",zh:"从页面移出",vi:"Bỏ khỏi trang",id:"Lepas dari halaman",ms:"Keluarkan dari halaman"},
-  alb_remove_line:{shn:"ထွၼ်ထႅဝ်ၼႆႉ",kac:"Ndai ga hkrang shaw",th:"ลบบรรทัดนี้",zh:"删除这行文字",vi:"Xoá dòng này",id:"Hapus baris ini",ms:"Buang baris ini"},
-  alb_replaced:{shn:"လႅၵ်ႈယဝ်ႉ",kac:"Galai sai",th:"แทนที่แล้ว",zh:"已替换",vi:"Đã thay",id:"Sudah diganti",ms:"Sudah diganti"},
-  alb_tray_h:{shn:"ၶႅပ်းၼႂ်းပပ်ႉ",kac:"Laika buk sumla ni",th:"รูปในอัลบั้ม",zh:"相册照片",vi:"ẢNH TRONG ALBUM",id:"FOTO ALBUM",ms:"FOTO ALBUM"},
-  alb_tray_note:{shn:"ၶႅပ်းၵူႈၶႅပ်းၼႂ်းပပ်ႉ လႄႈ မၢႆၼႃႈဢၼ်ၸႂ်ႉ။ ၼဵၵ်းၶႅပ်း တေသႂ်ႇၼႃႈၼႆႉ (ဢမ်ႇၼၼ်) ၶွပ်ႇဢၼ်လိူၵ်ႈဝႆႉ · ✕ ထွၼ်ဢွၵ်ႇၵူႈၼႃႈ",kac:"Laika buk hta sumla yawng, lang ai laika shara hpe hti ai nambat hte. Dip yang ndai laika shara de (sh'ning) lata da ai gawng de bang · ✕ laika shara yawng kaw na shaw",th:"รูปทุกใบในอัลบั้ม พร้อมจำนวนหน้าที่ใช้ แตะเพื่อวางลงหน้านี้ — หรือลงกรอบที่เลือก · ✕ เอาออกจากทุกหน้า",zh:"相册里的每张照片，附使用它的页数。点一张放到本页 — 或放进选中的框 · ✕ 从所有页移出",vi:"Mọi ảnh trong album, kèm số trang đang dùng nó. Chạm để đặt vào trang này — hoặc vào khung đang chọn · ✕ bỏ khỏi mọi trang",id:"Semua foto dalam album, dengan jumlah halaman yang memakainya. Ketuk untuk menaruhnya di halaman ini — atau ke bingkai yang dipilih · ✕ melepasnya dari semua halaman",ms:"Semua foto dalam album, dengan bilangan halaman yang menggunakannya. Ketik untuk meletakkannya di halaman ini — atau ke bingkai yang dipilih · ✕ mengeluarkannya dari semua halaman"},
-  alb_tray_add:{shn:"သႂ်ႇၼႂ်းပပ်ႉ",kac:"Laika buk de bang",th:"เพิ่มลงอัลบั้ม",zh:"加入相册",vi:"Thêm vào album",id:"Tambah ke album",ms:"Tambah ke album"},
-  alb_tray_unused:{shn:"ထွၼ်ဢၼ်ဢမ်ႇၸႂ်ႉ",kac:"N lang ai shaw",th:"ลบรูปที่ไม่ใช้",zh:"移除未用",vi:"Bỏ ảnh chưa dùng",id:"Hapus yang tak terpakai",ms:"Buang yang tak diguna"},
-  alb_tray_empty:{shn:"ၼႂ်းပပ်ႉ ပႆႇမီးၶႅပ်း — သႂ်ႇၶႅပ်း ဢမ်ႇၼၼ် ႁဵတ်းပပ်ႉတင်းပပ်ႉ တၢင်းၼိူဝ်",kac:"Laika buk hta sumla n nga shi ai — bang u, sh'ning lahta na laika buk hkum galaw u",th:"ยังไม่มีรูปในอัลบั้ม — เพิ่มรูป หรือสร้างทั้งอัลบั้มด้านบน",zh:"相册里还没有照片 — 添加几张，或在上方一键制作整本",vi:"Chưa có ảnh trong album — thêm vài ảnh, hoặc làm cả album ở trên",id:"Belum ada foto di album — tambahkan, atau buat seluruh album di atas",ms:"Belum ada foto dalam album — tambah, atau buat seluruh album di atas"},
-  alb_tray_added:{shn:"သႂ်ႇၶႅပ်း {N} ၼႂ်းပပ်ႉယဝ်ႉ",kac:"Sumla {N} laika buk de bang sai",th:"เพิ่ม {N} รูปลงอัลบั้มแล้ว",zh:"已加入 {N} 张照片",vi:"Đã thêm {N} ảnh vào album",id:"{N} foto ditambahkan ke album",ms:"{N} foto ditambah ke album"},
-  alb_tray_removed:{shn:"ထွၼ်ဢွၵ်ႇၵူႈၼႃႈယဝ်ႉ",kac:"Laika shara yawng kaw na shaw sai",th:"เอาออกจากทุกหน้าแล้ว",zh:"已从所有页移出",vi:"Đã bỏ khỏi mọi trang",id:"Dilepas dari semua halaman",ms:"Dikeluarkan dari semua halaman"},
-  alb_tray_remove_q:{shn:"ၶႅပ်းၼႆႉ မီးၼိူဝ်ၼႃႈ {N} — ထွၼ်ဢွၵ်ႇတင်းမူတ်းႁိုဝ်?",kac:"Ndai sumla laika shara {N} hta nga ai — yawng kaw na shaw na i?",th:"รูปนี้อยู่บน {N} หน้า — เอาออกจากทั้งหมดไหม?",zh:"这张照片在 {N} 页上 — 全部移出？",vi:"Ảnh này đang ở {N} trang — bỏ khỏi tất cả?",id:"Foto ini ada di {N} halaman — lepas dari semuanya?",ms:"Foto ini ada di {N} halaman — keluarkan dari semuanya?"},
-  alb_tray_unused_done:{shn:"ထွၼ်ၶႅပ်းဢမ်ႇၸႂ်ႉ {N} ယဝ်ႉ",kac:"N lang ai sumla {N} shaw sai",th:"ลบรูปที่ไม่ใช้ {N} รูปแล้ว",zh:"已移除 {N} 张未用照片",vi:"Đã bỏ {N} ảnh chưa dùng",id:"{N} foto tak terpakai dihapus",ms:"{N} foto tak diguna dibuang"},
-  alb_tray_none_unused:{shn:"ၶႅပ်းၵူႈၶႅပ်း မီးၼိူဝ်ၼႃႈယဝ်ႉ",kac:"Sumla yawng laika shara hta nga ai",th:"ทุกรูปอยู่บนหน้าแล้ว",zh:"每张照片都已在页面上",vi:"Ảnh nào cũng đã có trên trang",id:"Semua foto sudah di halaman",ms:"Semua foto sudah ada di halaman"},
-  alb_used_on:{shn:"ၼိူဝ်ၼႃႈ {N}",kac:"Laika shara {N} hta",th:"อยู่บน {N} หน้า",zh:"在 {N} 页上",vi:"Trên {N} trang",id:"Di {N} halaman",ms:"Di {N} halaman"},
-  alb_tray_x:{shn:"ထွၼ်ဢွၵ်ႇၵူႈၼႃႈ",kac:"Laika shara yawng kaw na shaw",th:"เอาออกจากทุกหน้า",zh:"从所有页移出",vi:"Bỏ khỏi mọi trang",id:"Lepas dari semua halaman",ms:"Keluarkan dari semua halaman"},
-  alb_placed:{shn:"သႂ်ႇၼႃႈ {P} ယဝ်ႉ",kac:"Laika shara {P} hta tawn sai",th:"วางบนหน้า {P} แล้ว",zh:"已放到第 {P} 页",vi:"Đã đặt vào trang {P}",id:"Ditaruh di halaman {P}",ms:"Diletakkan di halaman {P}"},
-  alb_tpl_all:{shn:"တင်းမူတ်း",kac:"Yawng",th:"ทั้งหมด",zh:"全部",vi:"Tất cả",id:"Semua",ms:"Semua"},
-  alb_design_h:{shn:"ႁၢင်ႈၾၢင်",kac:"Hkyen lajang",th:"ดีไซน์",zh:"设计",vi:"THIẾT KẾ",id:"DESAIN",ms:"REKAAN"},
-  alb_style:{shn:"လွၵ်း",kac:"Style",th:"สไตล์",zh:"风格",vi:"PHONG CÁCH",id:"GAYA",ms:"GAYA"},
-  alb_style_editorial:{shn:"မႅၵ်ႇၸိၼ်း",kac:"Laika buk",th:"นิตยสาร",zh:"杂志",vi:"Tạp chí",id:"Majalah",ms:"Majalah"},
-  alb_style_classic:{shn:"ပိုၼ်ႉထၢၼ်",kac:"Moi ai",th:"คลาสสิก",zh:"经典",vi:"Cổ điển",id:"Klasik",ms:"Klasik"},
-  alb_style_minimal:{shn:"ငၢႆႈ",kac:"Hkrak sha",th:"มินิมอล",zh:"极简",vi:"Tối giản",id:"Minimal",ms:"Minimal"},
-  alb_style_script:{shn:"လိၵ်ႈမိုဝ်း",kac:"Lata ka",th:"ลายมือ",zh:"手写体",vi:"Chữ viết tay",id:"Tulisan tangan",ms:"Tulisan tangan"},
-  alb_paper:{shn:"ၸေႈ",kac:"Mai",th:"กระดาษ",zh:"纸色",vi:"GIẤY",id:"KERTAS",ms:"KERTAS"},
-  alb_paper_white:{shn:"ၶၢဝ်",kac:"Hpraw",th:"ขาว",zh:"白",vi:"Trắng",id:"Putih",ms:"Putih"},
-  alb_paper_cream:{shn:"သီၼမ်ႉၼူမ်း",kac:"Cream",th:"ครีม",zh:"米色",vi:"Kem",id:"Krem",ms:"Krim"},
-  alb_paper_black:{shn:"လမ်",kac:"Chyang",th:"ดำ",zh:"黑",vi:"Đen",id:"Hitam",ms:"Hitam"},
-  alb_density:{shn:"တဵမ်ၵႃႈႁိုဝ်",kac:"Kade hpring",th:"ความแน่นหน้า",zh:"版面密度",vi:"ĐỘ ĐẦY TRANG",id:"KEPADATAN",ms:"KEPADATAN"},
-  alb_density_airy:{shn:"ဝၢင်ႇ",kac:"Hkrak",th:"โปร่ง",zh:"疏朗",vi:"Thoáng",id:"Lega",ms:"Lapang"},
-  alb_density_balanced:{shn:"မႅၼ်ႈ",kac:"Maren",th:"สมดุล",zh:"均衡",vi:"Cân bằng",id:"Seimbang",ms:"Seimbang"},
-  alb_density_dense:{shn:"ၼႅၼ်ႈ",kac:"Hpring",th:"แน่น",zh:"紧密",vi:"Dày",id:"Padat",ms:"Padat"},
-  alb_cover:{shn:"ၼႃႈပပ်ႉ",kac:"Laika buk man",th:"หน้าปก",zh:"封面",vi:"Bìa",id:"Sampul",ms:"Kulit"},
-  alb_relay:{shn:"ႁၢင်ႈၼႃႈလိၵ်ႈၶိုၼ်း",kac:"Laika shara ni bai lajang",th:"จัดหน้าใหม่",zh:"重新排页",vi:"Sắp lại các trang",id:"Susun ulang halaman",ms:"Susun semula halaman"},
-  alb_relay_done:{shn:"ႁၢင်ႈၼႃႈ {P} ၶိုၼ်းယဝ်ႉ",kac:"Laika shara {P} bai lajang sai",th:"จัด {P} หน้าใหม่แล้ว",zh:"已重排 {P} 页",vi:"Đã sắp lại {P} trang",id:"{P} halaman disusun ulang",ms:"{P} halaman disusun semula"},
-  alb_story:{shn:"ထႅဝ်လိၵ်ႈ",kac:"Maumwi ga hkrang",th:"ข้อความเรื่องราว",zh:"故事文案",vi:"DÒNG CHUYỆN",id:"BARIS CERITA",ms:"BARIS CERITA"},
-  alb_design_page:{shn:"ႁၢင်ႈၼႃႈၼႆႉ",kac:"Ndai laika shara hkyen",th:"ดีไซน์หน้านี้",zh:"设计本页",vi:"Thiết kế trang này",id:"Desain halaman ini",ms:"Reka halaman ini"},
-  alb_design_all:{shn:"ႁၢင်ႈၵူႈၼႃႈ",kac:"Laika shara yawng hkyen",th:"ดีไซน์ทุกหน้า",zh:"设计所有页",vi:"Thiết kế mọi trang",id:"Desain semua halaman",ms:"Reka semua halaman"},
-  alb_story_next:{shn:"ထႅဝ်လိၵ်ႈတၢင်းၼႃႈ",kac:"Hpang na ga hkrang",th:"ข้อความถัดไป",zh:"下一组文案",vi:"Dòng chuyện kế",id:"Baris cerita berikutnya",ms:"Baris cerita seterusnya"},
-  alb_design_clear:{shn:"ထွၼ်ႁၢင်ႈၾၢင်",kac:"Hkyen ai shaw",th:"ล้างดีไซน์",zh:"清除设计",vi:"Xoá thiết kế",id:"Hapus desain",ms:"Buang rekaan"},
-  alb_design_note:{shn:"ႁူဝ်ၶေႃႈ လႄႈ ထႅဝ်လိၵ်ႈၶွင်ပွႆး တႅမ်ႈၶၢင်ႈၶႅပ်း ၼႂ်းၽႃႇသႃႇသူ — လၢၵ်ႈ တႅမ်ႈၶိုၼ်း လႅၵ်ႈသီလႆႈ၊ ထႅဝ်ဢၼ်သူတႅမ်ႈ ဢမ်ႇလႅၵ်ႈသေပွၵ်ႈ",kac:"Poi a baw hte ga hkrang langai, na ga hte sumla makau kaw ka da ai — gang, bai ka, nsam galai lu ai; na ka ai ga hkrang hpe n galai ai",th:"หัวเรื่องและข้อความของโอกาสนั้น จัดวางข้างรูปในภาษาของคุณ — ลาก พิมพ์ใหม่ หรือเปลี่ยนสีได้ บรรทัดที่คุณพิมพ์เองจะไม่ถูกแทนที่",zh:"与场合相配的标题和一行文案，以你的语言排在照片旁 — 可拖动、改写或换色；你自己输入的文字永不被替换",vi:"Tiêu đề và một dòng lời của dịp này, đặt cạnh ảnh bằng ngôn ngữ của bạn — kéo, gõ lại hoặc đổi màu tuỳ ý; dòng bạn tự gõ không bao giờ bị thay",id:"Judul dan satu baris teks sesuai acara, ditata di samping foto dalam bahasa Anda — seret, ketik ulang atau ganti warnanya; baris yang Anda ketik tidak pernah diganti",ms:"Tajuk dan sebaris teks acara itu, disusun di sisi foto dalam bahasa anda — seret, taip semula atau tukar warna; baris yang anda taip tidak pernah diganti"},
-  alb_design_done:{shn:"ႁၢင်ႈၼႃႈ {P} ယဝ်ႉ",kac:"Laika shara {P} hkyen sai",th:"ดีไซน์ {P} หน้าแล้ว",zh:"已设计 {P} 页",vi:"Đã thiết kế {P} trang",id:"{P} halaman didesain",ms:"{P} halaman direka"},
-  alb_design_none:{shn:"သႂ်ႇၶႅပ်းၼိူဝ်ၼႃႈဢွၼ်တၢင်း",kac:"Laika shara hta sumla shawng bang u",th:"วางรูปบนหน้าก่อน",zh:"请先在页面放上照片",vi:"Đặt ảnh lên trang trước",id:"Taruh foto di halaman dulu",ms:"Letak foto di halaman dulu"},
-  alb_design_opener:{shn:"ၼႃႈႁႅၵ်ႈ ဝႆႉၶေႃႈပွႆး — ပိုတ်ႇၼႃႈပပ်ႉ တႃႇႁၢင်ႈ",kac:"Hpang shawng laika shara poi a ga hpe tawn ai — hkyen na matu Laika buk man hpaw u",th:"หน้าเปิดใช้ข้อความของโอกาส — เปิด หน้าปก เพื่อดีไซน์",zh:"开篇页保留场合文字 — 开启封面即可设计",vi:"Trang mở giữ lời của dịp — bật Bìa để thiết kế",id:"Halaman pembuka memakai kata acara — nyalakan Sampul untuk mendesainnya",ms:"Halaman pembuka mengekalkan kata acara — hidupkan Kulit untuk mereka"},
-  alb_story_of:{shn:"ထႅဝ် {A} / {B}",kac:"Ga hkrang {A} / {B}",th:"เรื่อง {A} จาก {B}",zh:"文案 {A} / {B}",vi:"Chuyện {A} / {B}",id:"Cerita {A} dari {B}",ms:"Cerita {A} dari {B}"},
-  alb_check_h:{shn:"ၵူတ်ႇထတ်းပရိၼ်ႉ",kac:"Print hti",th:"ตรวจก่อนพิมพ์",zh:"印前检查",vi:"KIỂM TRA IN",id:"CEK CETAK",ms:"SEMAK CETAK"},
-  alb_check_ok:{shn:"ၵူႈၼႃႈ ပူၼ်ႉ — ပရိၼ်ႉၸႅင်ႈ၊ ဢမ်ႇမီးသင်ၼိူဝ်ႁိမ်း၊ ၶႅပ်းဢမ်ႇသွၼ်ႉ",kac:"Laika shara yawng lai ai — print yang san, kadin hta hpa n nga, sumla lahkawng lang n nga",th:"ทุกหน้าผ่าน — คมพอสำหรับพิมพ์ ไม่มีอะไรบนเส้นตัด ไม่มีรูปซ้ำ",zh:"所有页通过 — 清晰可印、裁切线上无内容、没有重复照片",vi:"Mọi trang đạt — đủ nét để in, không gì trên mép cắt, không ảnh lặp",id:"Semua halaman lolos — cukup tajam untuk dicetak, tak ada apa pun di garis potong, tak ada foto ganda",ms:"Semua halaman lulus — cukup tajam untuk dicetak, tiada apa pun di garis potong, tiada foto berulang"},
-  alb_check_low:{shn:"ၼႃႈ {P} · ၶႅပ်း {N} — {D} ppi၊ မွင်ႁႅင်းတႃႇတၢင်းယႂ်ႇၼႆႉ",kac:"Laika shara {P} · sumla {N} — {D} ppi, ndai kaba hta grai n san ai",th:"หน้า {P} · รูป {N} พิมพ์ที่ {D} ppi — เบลอเกินไปสำหรับขนาดนี้",zh:"第 {P} 页 · 照片 {N} 打印仅 {D} ppi — 对这个尺寸太模糊",vi:"Trang {P} · ảnh {N} in ở {D} ppi — quá mờ cho khổ này",id:"Halaman {P} · foto {N} tercetak {D} ppi — terlalu buram untuk ukuran ini",ms:"Halaman {P} · foto {N} dicetak {D} ppi — terlalu kabur untuk saiz ini"},
-  alb_check_soft:{shn:"ၼႃႈ {P} · ၶႅပ်း {N} — {D} ppi၊ မွင်ဢိတ်းၼိုင်ႈ",kac:"Laika shara {P} · sumla {N} — {D} ppi, kachyi mi n san ai",th:"หน้า {P} · รูป {N} พิมพ์ที่ {D} ppi — เบลอเล็กน้อย",zh:"第 {P} 页 · 照片 {N} 打印 {D} ppi — 略微偏软",vi:"Trang {P} · ảnh {N} in ở {D} ppi — hơi mờ",id:"Halaman {P} · foto {N} tercetak {D} ppi — sedikit buram",ms:"Halaman {P} · foto {N} dicetak {D} ppi — sedikit kabur"},
-  alb_check_empty:{shn:"ၼႃႈ {P} ပဝ်ႇ",kac:"Laika shara {P} hpa n nga",th:"หน้า {P} ว่างเปล่า",zh:"第 {P} 页是空的",vi:"Trang {P} đang trống",id:"Halaman {P} kosong",ms:"Halaman {P} kosong"},
-  alb_check_edge:{shn:"ၼႃႈ {P} · ထႅဝ်လိၵ်ႈ ယူႇၼိူဝ်ႁိမ်းတႅပ်း",kac:"Laika shara {P} · ga hkrang langai kadin hta nga ai",th:"หน้า {P} · มีข้อความอยู่บนเส้นตัด",zh:"第 {P} 页 · 有一行文字压在裁切线上",vi:"Trang {P} · một dòng chữ nằm trên mép cắt",id:"Halaman {P} · sebaris teks di garis potong",ms:"Halaman {P} · sebaris teks di garis potong"},
-  alb_check_dup:{shn:"ၼႃႈ {P} · ၶႅပ်း {N} မီးၼိူဝ်ၼႃႈ {Q} ၵေႃႈ",kac:"Laika shara {P} · sumla {N} laika shara {Q} hta mung nga ai",th:"หน้า {P} · รูป {N} อยู่บนหน้า {Q} ด้วย",zh:"第 {P} 页 · 照片 {N} 也在第 {Q} 页",vi:"Trang {P} · ảnh {N} cũng có ở trang {Q}",id:"Halaman {P} · foto {N} juga ada di halaman {Q}",ms:"Halaman {P} · foto {N} juga ada di halaman {Q}"},
-  alb_check_gutter:{shn:"ၼႃႈ {P} · ၶႅပ်း {N} — ၵူၼ်းယူႇတီႈသၼ်ပပ်ႉ",kac:"Laika shara {P} · sumla {N} — masha laika buk chyip ai kaw nga ai",th:"หน้า {P} · รูป {N} — ตัวแบบอยู่ตรงสันหนังสือ",zh:"第 {P} 页 · 照片 {N} — 主体落在装订处",vi:"Trang {P} · ảnh {N} — chủ thể nằm ở gáy sách",id:"Halaman {P} · foto {N} — subjek berada di lipatan jilid",ms:"Halaman {P} · foto {N} — subjek berada di lipatan jilid"},
-  alb_check_n:{shn:"{N} လွင်ႈတေတူၺ်း — ၼႄ 12 ဢၼ်ဢွၼ်တၢင်း",kac:"Yu ra ai {N} — shawng 12 madun ai",th:"{N} จุดที่ต้องดู — แสดง 12 รายการแรก",zh:"{N} 处需查看 — 已列出前十二处",vi:"{N} điểm cần xem — hiện mười hai điểm đầu",id:"{N} hal perlu dilihat — dua belas pertama ditampilkan",ms:"{N} perkara perlu dilihat — dua belas pertama disenaraikan"},
-  alb_check_note:{shn:"ၼဵၵ်းထႅဝ် တေပိုတ်ႇၼႃႈၼၼ်ႉ · {S} ppi ၶိုၼ်ႈၼိူဝ် ၸႅင်ႈ၊ တႂ်ႈ {L} မွင်တီႈတၢင်းယႂ်ႇၼႆႉ",kac:"Ga hkrang hpe dip yang dai laika shara hpaw · {S} ppi hte lahta san ai; {L} npu ndai kaba hta n san ai",th:"แตะบรรทัดเพื่อเปิดหน้านั้น · {S} ppi ขึ้นไปพิมพ์คม ต่ำกว่า {L} จะเบลอที่ขนาดนี้",zh:"点一行即打开该页 · {S} ppi 及以上清晰；低于 {L} 在此尺寸偏软",vi:"Chạm một dòng để mở trang đó · từ {S} ppi in nét; dưới {L} là mờ ở khổ này",id:"Ketuk baris untuk membuka halaman itu · {S} ppi ke atas tajam; di bawah {L} buram pada ukuran ini",ms:"Ketik baris untuk membuka halaman itu · {S} ppi ke atas tajam; bawah {L} kabur pada saiz ini"},
-  alb_make_prog:{shn:"တိုၵ်ႉလူၶႅပ်း {A} / {B}…",kac:"Sumla {A} / {B} hti nga ai…",th:"กำลังอ่านรูป {A} จาก {B}…",zh:"正在读取第 {A} / {B} 张…",vi:"Đang đọc ảnh {A} / {B}…",id:"Membaca foto {A} dari {B}…",ms:"Membaca foto {A} dari {B}…"},
-  ph_path:{shn:'Look ဢၼ်လဵဝ် ၸႂ်ႉတင်းမူႇၶႅပ်းႁၢင်ႈ — <em>ၵမ်းလဵဝ်တင်းသဵင်ႈ</em>',kac:'Look langai sha, na a sumla yawng hta — <em>kalang ta yawng</em>',th:'ลุคเดียว ใช้กับทั้งอัลบั้ม — <em>พร้อมกันทั้งหมด</em>',zh:'一个风格，套用整本相册 — <em>一次全部完成</em>',vi:'Một look, áp cho cả album — <em>tất cả cùng lúc</em>',id:'Satu look untuk seluruh album — <em>sekaligus</em>',ms:'Satu look untuk seluruh album — <em>serentak</em>'},
-  ph_imagine:{shn:'သႂ်ႇၶႅပ်း · လိူၵ်ႈ template · <em>ၼဵၵ်းပွၵ်ႈလဵဝ်</em>',kac:'Sumla bang · template lata · <em>kalang dip</em>',th:'เพิ่มรูป · เลือกเทมเพลต · <em>แตะครั้งเดียว</em> — ไม่ต้องพรอมต์',zh:'添加照片 · 选择模板 · <em>一键</em>——无需提示词',vi:'Thêm ảnh · chọn mẫu · <em>một chạm</em> — không cần prompt',id:'Tambah foto · pilih templat · <em>sekali ketuk</em> — tanpa prompt',ms:'Tambah foto · pilih templat · <em>sekali ketik</em> — tanpa prompt'},
-  ph_home:{shn:'Setup ပွၵ်ႈလဵဝ် — <em>ၶႂ်ႈၸႂ်ႉမိူဝ်ႈလႂ်ၵေႃႈ ႁၢင်ႈႁႅၼ်းဝႆႉယဝ်ႉ</em>',kac:'Kalang sha setup galaw u — <em>galoi raitim hkyen da sai</em>',th:'ตั้งค่าครั้งเดียว — <em>พร้อมใช้ทุกเมื่อ</em>',zh:'设置一次 — <em>随时待命</em>',vi:'Thiết lập một lần — <em>sẵn sàng bất cứ lúc nào</em>',id:'Atur sekali — <em>siap kapan saja</em>',ms:'Sedia sekali sahaja — <em>sedia bila-bila masa</em>'}
-};
+var TR_L14 = (window.HNK_TRMORE || {}).l14 || {};   /* 6.122.0 — the seven-language table (shn · kac · th · zh · vi · id · ms) lives in data/trmore.js (238 keys); merged into TR below exactly as before */
 Object.keys(TR_L14).forEach(function(k){ var t7=TR_L14[k]; TR[k]=TR[k]||{}; Object.keys(t7).forEach(function(lg){ TR[k][lg]=t7[lg]; }); });
 /* v4.28 keys — strings introduced by this wave ship all 9 languages from day
    one (no new my/en-only debt). shn/kac flagged for native review post-merge. */
@@ -30592,7 +30481,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.121.0";
+var APP_VER="6.122.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -32060,7 +31949,7 @@ var ALBUM_DATA = window.HNK_ALBUM;
 var ALBUM = (function(){
   "use strict";
   var D = ALBUM_DATA;
-  var H = null, ROOT = null, MOUNTED = false;
+  var H = null, ROOT = null, MOUNTED = false, DRAWN = false;
   var MAXP = 6;                       /* the owner asked for one to six; the templates stop there */
   var DOC_KEY = "hnk_album_doc_v1";   /* the durable album, in the host's own store */
   var THUMB_W = 96;                   /* the page rail's thumbnails */
@@ -32087,6 +31976,43 @@ var ALBUM = (function(){
   var HIST_MAX = 40;                    /* undo steps kept; each one is the album with its photographs interned */
   var HIST = [], REDO = [], CUR_SNAP = null, UNDOING = false, TEXT_COMMIT = null, SRC_POOL = [];
   var TPL_FILTER = "";                  /* the layout rail's family filter — a view preference, not part of the album */
+  /* ======================= 6.122.0 WAVE G ======================= */
+  /* THE ORNAMENTS AND OVERLAYS. Twenty-four alpha masks in six families (data/album.js `orn`,
+     drawn by tools/build_album_ornaments.js) that a page wears tinted — gold, white, ink, rose,
+     sage — and five page textures laid over everything with their own blend. An ornament is a
+     decor entry of kind "orn" with a centre, a width (fractions of the safe area; the height
+     follows the mask's own aspect), a turn, a tint and a flip; the overlay is one field on the
+     page. Both are selectable on the stage like a photograph or a line. */
+  var ORN = D.orn || [], ORN_FAMS = D.ornFamilies || [], OVL = D.ovl || [];
+  var OVL_AMTS = D.ovlAmounts || ["light", "medium", "strong"];
+  var TINTS = D.tints || { gold: GOLD }, TINT_NAMES = ["gold", "white", "ink", "rose", "sage"];
+  var ORN_FAM = "";                     /* the family the ornament card is filtered to; "" is every family */
+  var ORN_W_MIN = 0.03, ORN_W_MAX = 1.5, DECOR_MAX = 32;
+  /* THE PHOTO QUALITY. The host stores every photograph at this many pixels on its long edge:
+     Standard is the 2,400 every album before this wave used; Print keeps 4,000, which is what a
+     36-inch spread needs to clear 100 ppi. It applies to photographs added from now on. */
+  var PHOTO_MAX = { std: 2400, print: 4000 }, QUALITY_KEY = "hnk_album_quality_v1", QUALITY = "std";
+  /* THE SHELF. Several albums in the store, each under its own key, one index record naming
+     them; the album saved before this wave becomes the shelf's first entry on the first open. */
+  var SHELF_KEY = "hnk_album_shelf_v1", SHELF = null, SHELF_MAX = 24, SHELF_NAME_MAX = 40;
+  var THUMB_T = null, THUMB_PX = 160;
+  function ornById(id){ var i; for (i=0;i<ORN.length;i++) if (ORN[i].id === id) return ORN[i]; return null; }
+  function ovlById(id){ var i; for (i=0;i<OVL.length;i++) if (OVL[i].id === id) return OVL[i]; return null; }
+  function tintHex(t){ if (t && /^#[0-9a-fA-F]{6}$/.test(t)) return t; return TINTS[t] || TINTS.gold || GOLD; }
+  /* the number an ornament carries within its family — "Corner 3" — and the family's word */
+  function ornLabel(id){
+    var o = ornById(id); if (!o) return id;
+    var n = 0, i; for (i=0;i<ORN.length;i++){ if (ORN[i].fam === o.fam) n++; if (ORN[i].id === id) break; }
+    return L("alb_orn_fam_" + o.fam) + " " + n;
+  }
+  /* where the masks and textures live: the Photoshop panel keeps them under icons/album/, the
+     app beside its other art; a host that answers assetSrc decides */
+  function assetSrc(kind, file){
+    if (H && typeof H.asset === "function"){ try { var a = H.asset(kind, file); if (a) return a; } catch(e){} }
+    return (D.ornDir || "lib/album/") + kind + "/" + file;
+  }
+  function ornSrc(id){ return assetSrc("orn", id + ".png"); }
+  function ovlSrc(id){ return assetSrc("ovl", id + ".png"); }
 
   /* ======================= THE MATHS (pure, Node-testable) ======================= */
 
@@ -32350,7 +32276,7 @@ var ALBUM = (function(){
   /* 6.121.0 — decor is what the design engine draws that is not a photograph or a line of type
      (a hairline rule, a scrim under an overlaid headline); story is which of the occasion's
      headline sets this page opens on, -1 until the engine has set one */
-  function blankPage(){ return { photos:[], texts:[], tplId:"", auto:true, bleed:false, decor:[], story:-1 }; }
+  function blankPage(){ return { photos:[], texts:[], tplId:"", auto:true, bleed:false, decor:[], story:-1, overlay:null }; }
   function curSize(){
     if (DOC.sizeId === "custom"){
       var c = DOC.custom || {};
@@ -32374,11 +32300,150 @@ var ALBUM = (function(){
   }
   function saveNow(){
     if (!H || typeof H.store !== "function" || !DOC) return;
-    try { H.store(DOC_KEY, DOC); } catch(e){}
+    try {
+      if (SHELF && SHELF.cur){ H.store(docKey(SHELF.cur), DOC); shelfTouch(); saveShelf(); thumbSoon(); }
+      else H.store(DOC_KEY, DOC);
+    } catch(e){}
   }
+  /* ---- the shelf (6.122.0 wave G) ---- */
+  function docKey(id){ return DOC_KEY + ":" + id; }
+  function newId(){ return "a" + Date.now().toString(36) + Math.floor(Math.random()*46656).toString(36); }
+  function shelfBlank(){ return { v:1, cur:"", items:[] }; }
+  function shelfEntry(id, name){ return { id:id, name:name || "", occ:"", sizeId:"", pages:1, photos:0, updated:Date.now(), thumb:"" }; }
+  function shelfItem(id){ var i; if (!SHELF) return null; for (i=0;i<SHELF.items.length;i++) if (SHELF.items[i].id === id) return SHELF.items[i]; return null; }
+  function shelfIndex(it){ return SHELF ? SHELF.items.indexOf(it) : -1; }
+  function albumName(it){ return (it && it.name) ? it.name : L("alb_shelf_untitled").replace("{N}", String(shelfIndex(it)+1)); }
+  function normShelf(sh){
+    var out = shelfBlank(), i, list = (sh && sh.items && sh.items.length) ? sh.items : [];
+    for (i=0;i<list.length && out.items.length<SHELF_MAX;i++){
+      var it = list[i]; if (!it || typeof it.id !== "string" || !/^[a-z0-9]{3,24}$/.test(it.id)) continue;
+      out.items.push({ id:it.id, name:String(it.name||"").slice(0, SHELF_NAME_MAX), occ:String(it.occ||""), sizeId:String(it.sizeId||""),
+                       pages:Math.max(1, it.pages|0), photos:Math.max(0, it.photos|0), updated:+it.updated||0,
+                       thumb:(typeof it.thumb === "string" && /^data:image\//.test(it.thumb)) ? it.thumb : "" });
+    }
+    out.cur = (sh && typeof sh.cur === "string") ? sh.cur : "";
+    return out;
+  }
+  function saveShelf(){ if (!H || typeof H.store !== "function" || !SHELF) return; try { H.store(SHELF_KEY, SHELF); } catch(e){} }
+  /* the open album's facts on its shelf entry — read by the tiles, never by the album itself */
+  function shelfTouch(){
+    var it = shelfItem(SHELF.cur); if (!it || !DOC) return;
+    var n = 0, i; for (i=0;i<DOC.pages.length;i++) n += DOC.pages[i].photos.length;
+    it.pages = DOC.pages.length; it.photos = n; it.occ = DOC.occ; it.sizeId = DOC.sizeId; it.updated = Date.now();
+  }
+  function thumbSoon(){ if (THUMB_T) return; THUMB_T = setTimeout(function(){ THUMB_T = null; makeThumb(); }, 1500); }
+  /* the entry's picture is the opener, drawn small — a page of the shelf, not a page of the album */
+  function makeThumb(){
+    if (!DOC || !SHELF || typeof document === "undefined") return Promise.resolve(false);
+    var it = shelfItem(SHELF.cur), sz = curSize(), px = pagePx(sz); if (!it || !px) return Promise.resolve(false);
+    var cv = document.createElement("canvas");
+    return drawPage(cv, DOC.pages[0], 0, { scale: THUMB_PX / px.w, guides: false }).then(function(ok){
+      var url = null; if (ok){ try { url = cv.toDataURL("image/jpeg", 0.6); } catch(e){ url = null; } }
+      cv.width = cv.height = 1;
+      if (url && url !== it.thumb){ it.thumb = url; saveShelf(); paintShelf(); }
+      return !!url;
+    }).catch(function(){ return false; });
+  }
+  function loadQuality(){
+    if (!H || typeof H.restore !== "function") return Promise.resolve(QUALITY);
+    return Promise.resolve().then(function(){ return H.restore(QUALITY_KEY); }).then(function(q){
+      if (q === "print" || q === "std") QUALITY = q; return QUALITY;
+    }).catch(function(){ return QUALITY; });
+  }
+  function setQuality(q){
+    if (q !== "print" && q !== "std") return false;
+    QUALITY = q;
+    if (H && typeof H.store === "function"){ try { H.store(QUALITY_KEY, q); } catch(e){} }
+    render();
+    return true;
+  }
+  /* the shelf comes up first; the album it names is the one loaded. An index that never existed
+     is built around the album saved under the old single key, which keeps its place. */
   function loadDoc(){
-    if (!H || typeof H.restore !== "function") return Promise.resolve(null);
-    return Promise.resolve().then(function(){ return H.restore(DOC_KEY); }).catch(function(){ return null; });
+    if (!H || typeof H.restore !== "function"){ SHELF = shelfBlank(); SHELF.items.push(shelfEntry(newId())); SHELF.cur = SHELF.items[0].id; return Promise.resolve(null); }
+    return Promise.resolve().then(function(){ return H.restore(SHELF_KEY); }).then(function(sh){
+      if (sh && sh.items && sh.items.length){
+        SHELF = normShelf(sh);
+        var it = shelfItem(SHELF.cur) || SHELF.items[0]; SHELF.cur = it.id;
+        return Promise.resolve().then(function(){ return H.restore(docKey(it.id)); }).catch(function(){ return null; });
+      }
+      return Promise.resolve().then(function(){ return H.restore(DOC_KEY); }).catch(function(){ return null; }).then(function(old){
+        SHELF = shelfBlank();
+        var id = newId(), it = shelfEntry(id);
+        if (old && old.pages && old.pages.length){
+          it.pages = old.pages.length; it.occ = old.occ || ""; it.sizeId = old.sizeId || "";
+          try { H.store(docKey(id), old); } catch(e){}
+        }
+        SHELF.items.push(it); SHELF.cur = id; saveShelf();
+        return old || null;
+      });
+    }).catch(function(){
+      if (!SHELF){ SHELF = shelfBlank(); SHELF.items.push(shelfEntry(newId())); SHELF.cur = SHELF.items[0].id; }
+      return null;
+    });
+  }
+  function freshHistory(){ SEL = null; HIST = []; REDO = []; CUR_SNAP = null; commit(); }
+  function openAlbum(id){
+    var it = shelfItem(id); if (!it || id === SHELF.cur) return Promise.resolve(false);
+    saveNow();
+    SHELF.cur = id; saveShelf();
+    return Promise.resolve().then(function(){ return H.restore(docKey(id)); }).catch(function(){ return null; }).then(function(saved){
+      DOC = (saved && saved.pages && saved.pages.length) ? normalize(saved) : blankDoc();
+      freshHistory(); render();
+      H.toast(L("alb_shelf_opened").replace("{A}", albumName(it)), "ok");
+      return true;
+    });
+  }
+  function shelfRoom(){
+    if (SHELF.items.length < SHELF_MAX) return true;
+    H.toast(L("alb_shelf_full").replace("{N}", String(SHELF_MAX)), ""); return false;
+  }
+  /* a new album keeps the choices that are about the studio rather than the pictures */
+  function newAlbum(){
+    if (!shelfRoom()) return false;
+    saveNow();
+    var id = newId(), it = shelfEntry(id); it.occ = DOC.occ; it.sizeId = DOC.sizeId;
+    SHELF.items.push(it); SHELF.cur = id;
+    var d = blankDoc();
+    d.occ = DOC.occ; d.sizeId = DOC.sizeId; d.custom = DOC.custom; d.customGroup = DOC.customGroup; d.pair = DOC.pair;
+    d.style = DOC.style; d.paper = DOC.paper; d.density = DOC.density; d.guides = DOC.guides;
+    DOC = d; freshHistory(); saveNow(); render();
+    H.toast(L("alb_shelf_made"), "ok");
+    return true;
+  }
+  function duplicateAlbum(){
+    if (!shelfRoom()) return false;
+    saveNow();
+    var cur = shelfItem(SHELF.cur), id = newId(), it = shelfEntry(id, (albumName(cur) + " 2").slice(0, SHELF_NAME_MAX));
+    it.occ = DOC.occ; it.sizeId = DOC.sizeId; it.pages = DOC.pages.length; it.photos = (cur && cur.photos) || 0; it.thumb = (cur && cur.thumb) || "";
+    SHELF.items.push(it); SHELF.cur = id;
+    DOC = normalize(JSON.parse(JSON.stringify(DOC)));
+    freshHistory(); saveNow(); render();
+    H.toast(L("alb_shelf_made"), "ok");
+    return true;
+  }
+  function renameAlbum(name){
+    var it = shelfItem(SHELF.cur); if (!it) return false;
+    it.name = String(name || "").replace(/\s+/g, " ").trim().slice(0, SHELF_NAME_MAX);
+    saveShelf(); paintShelf();
+    return true;
+  }
+  function deleteAlbum(){
+    var it = shelfItem(SHELF.cur); if (!it) return Promise.resolve(false);
+    return askP(L("alb_shelf_del_q").replace("{A}", albumName(it))).then(function(ok){
+      if (!ok) return false;
+      var at = SHELF.items.indexOf(it); SHELF.items.splice(at, 1);
+      try { if (H && typeof H.remove === "function") H.remove(docKey(it.id)); else if (H && typeof H.store === "function") H.store(docKey(it.id), null); } catch(e){}
+      if (!SHELF.items.length) SHELF.items.push(shelfEntry(newId()));
+      var next = SHELF.items[Math.min(Math.max(0, at), SHELF.items.length-1)];
+      SHELF.cur = next.id; saveShelf();
+      return Promise.resolve().then(function(){ return H.restore(docKey(next.id)); }).catch(function(){ return null; }).then(function(saved){
+        DOC = (saved && saved.pages && saved.pages.length) ? normalize(saved) : blankDoc();
+        freshHistory(); saveNow(); render();
+        H.toast(L("alb_shelf_deleted"), "ok");
+        return true;
+      });
+    });
   }
 
   /* ======================= DRAWING ======================= */
@@ -32454,11 +32519,100 @@ var ALBUM = (function(){
   /* THE DECOR (6.121.0). A rule is a hairline the width the design gave it; a scrim is the soft
      dark gradient laid over the foot of a photograph so white type reads on it. Both are
      fractions of the safe area like everything else, so they follow the size. */
+  /* ---- 6.122.0 wave G: the ornaments and the overlay ---- */
+  /* the rectangle an ornament fills, in the safe area's fractions: the width is stored, the
+     height follows the mask's own aspect through the page's, so the drawing is never squashed */
+  function ornBox(d, safe){
+    var o = ornById(d.id), ar = (o && o.ar) || 1;
+    var w = clamp(+d.w || 0.1, ORN_W_MIN, ORN_W_MAX);
+    var h = w * (safe.w / safe.h) / ar;
+    return { x: +d.x || 0, y: +d.y || 0, w: w, h: h, rot: (+d.rot || 0) * Math.PI/180, flip: !!d.flip };
+  }
+  /* a tinted copy of a mask at the size it is about to be drawn: the mask is white on
+     transparent, so a source-in fill paints exactly its shape and nothing else */
+  function tintMask(im, w, h, hex){
+    var cw = Math.max(1, Math.min(4096, Math.round(w))), ch = Math.max(1, Math.min(4096, Math.round(h)));
+    var c = document.createElement("canvas"); c.width = cw; c.height = ch;
+    var x = c.getContext("2d"); if (!x) return null;
+    x.drawImage(im, 0, 0, cw, ch);
+    x.globalCompositeOperation = "source-in";
+    x.fillStyle = hex; x.fillRect(0, 0, cw, ch);
+    return c;
+  }
+  function drawOrn(x, d, safe, scale, m){
+    var im = IMGS[ornSrc(d.id)]; if (!im) return;
+    var b = ornBox(d, safe);
+    var W = b.w*safe.w*scale, Hh = b.h*safe.h*scale;
+    if (!(W > 0.5 && Hh > 0.5)) return;
+    var cx = (safe.x + m)*scale + safe.w*scale*b.x, cy = (safe.y + m)*scale + safe.h*scale*b.y;
+    var tinted = tintMask(im, W, Hh, tintHex(d.tint)); if (!tinted) return;
+    x.save();
+    x.translate(cx, cy);
+    if (b.rot) x.rotate(b.rot);
+    if (b.flip) x.scale(-1, 1);
+    x.drawImage(tinted, -W/2, -Hh/2, W, Hh);
+    x.restore();
+  }
+  /* the page under its texture, laid on with the overlay's own blend where the renderer has
+     it. A renderer that does not know the operation leaves it at source-over — read back here
+     — and gets a lighter plain wash rather than a grey slab over the pictures. */
+  function drawOverlay(x, pg, safe, scale, m){
+    var ov = pg && pg.overlay; if (!ov || !ov.id) return;
+    var spec = ovlById(ov.id); if (!spec) return;
+    var im = IMGS[ovlSrc(ov.id)]; if (!im) return;
+    var amt = spec.amounts[ov.amount] || spec.amounts.medium || 0.5;
+    var W = (safe.page.w + 2*m)*scale, Hh = (safe.page.h + 2*m)*scale;
+    x.save();
+    try { x.globalCompositeOperation = spec.blend; } catch(e){}
+    if (x.globalCompositeOperation !== spec.blend){ x.globalCompositeOperation = "source-over"; amt = amt * 0.4; }
+    x.globalAlpha = amt;
+    x.drawImage(im, 0, 0, W, Hh);
+    x.restore();
+  }
+  /* every picture a page's decor needs, in the cache before the page is drawn */
+  function decorImgs(pg){
+    var list = [], i, dc = (pg && pg.decor) || [];
+    for (i=0;i<dc.length;i++) if (dc[i] && dc[i].kind === "orn" && ornById(dc[i].id)) list.push(imgFor(ornSrc(dc[i].id)));
+    if (pg && pg.overlay && pg.overlay.id && ovlById(pg.overlay.id)) list.push(imgFor(ovlSrc(pg.overlay.id)));
+    return Promise.all(list);
+  }
+  /* the photographs into their cells — the one loop the stage, the rail, the export and the
+     PSD's flattened overlay layer all draw with */
+  function paintCells(x, rects, photos, ims, scale, m){
+    var i;
+    for (i=0;i<rects.length;i++){
+      var r = rects[i], im = ims[i], ph = photos[i];
+      var dx = (r.x+m)*scale, dy = (r.y+m)*scale, dw = r.w*scale, dh = r.h*scale;
+      if (!im || !ph){
+        /* an empty cell is an empty cell — a light frame, never a broken picture */
+        x.fillStyle = "#f2f2f4"; x.fillRect(dx,dy,dw,dh);
+        continue;
+      }
+      var a = ph.anchor || { x:0.5, y:0.5 };
+      var fit = coverFit(im.naturalWidth||im.width, im.naturalHeight||im.height, r.w, r.h, a.x, a.y, ph.zoom);
+      if (!fit) continue;
+      drawPhotoFx(x, im, fit, dx, dy, dw, dh, ph.fx);
+    }
+  }
+  /* the whole page in one synchronous pass over the cache — for the PSD's overlay layer, which
+     is painted inside a layer loop that cannot wait */
+  function paintPageSync(x, pg, idx, safe, scale, m){
+    var W = (safe.page.w + 2*m)*scale, Hh = (safe.page.h + 2*m)*scale;
+    x.fillStyle = (DOC && DOC.paper) || "#ffffff"; x.fillRect(0, 0, W, Hh);
+    var lay = layoutRect(safe, pg), tpl = pageTpl(pg, idx), rects = cellRects(tpl, lay);
+    var photos = pg.photos.slice(0, rects.length), ims = [], i;
+    for (i=0;i<photos.length;i++) ims.push(IMGS[photos[i].src] || null);
+    paintCells(x, rects, photos, ims, scale, m);
+    drawDecor(x, pg, safe, scale, m);
+    drawTexts(x, pg, safe, scale, m);
+    drawOverlay(x, pg, safe, scale, m);
+  }
   function drawDecor(x, pg, safe, scale, m){
     m = m || 0;
     var list = (pg && pg.decor) || [], i;
     for (i=0;i<list.length;i++){
       var d = list[i]; if (!d) continue;
+      if (d.kind === "orn"){ drawOrn(x, d, safe, scale, m); continue; }     /* 6.122.0 */
       var X = (safe.x+m)*scale + safe.w*scale*d.x, Y = (safe.y+m)*scale + safe.h*scale*d.y;
       var W = safe.w*scale*d.w, Hh = safe.h*scale*(d.h||0);
       x.save();
@@ -32499,22 +32653,12 @@ var ALBUM = (function(){
     return fontsReady(pg).then(function(){
       return Promise.all(photos.map(function(ph){ return imgFor(ph.src); }));
     }).then(function(ims){
-      var i;
-      for (i=0;i<rects.length;i++){
-        var r = rects[i], im = ims[i], ph = photos[i];
-        var dx = (r.x+m)*scale, dy = (r.y+m)*scale, dw = r.w*scale, dh = r.h*scale;
-        if (!im || !ph){
-          /* an empty cell is an empty cell — a light frame, never a broken picture */
-          x.fillStyle = "#f2f2f4"; x.fillRect(dx,dy,dw,dh);
-          continue;
-        }
-        var a = ph.anchor || { x:0.5, y:0.5 };
-        var fit = coverFit(im.naturalWidth||im.width, im.naturalHeight||im.height, r.w, r.h, a.x, a.y, ph.zoom);
-        if (!fit) continue;
-        drawPhotoFx(x, im, fit, dx, dy, dw, dh, ph.fx);
-      }
+      return decorImgs(pg).then(function(){ return ims; });   /* 6.122.0 — the ornaments and the overlay too */
+    }).then(function(ims){
+      paintCells(x, rects, photos, ims, scale, m);
       drawDecor(x, pg, safe, scale, m);       /* 6.121.0 — rules and scrims under the type */
       drawTexts(x, pg, safe, scale, m);
+      drawOverlay(x, pg, safe, scale, m);     /* 6.122.0 — the texture over the whole page */
       if (opt.guides) drawGuides(x, safe, scale, m);
       /* 6.110.0 — the marquee is the LAST thing drawn and it is drawn only when the stage asks
          for it. Every export path (the page JPEG, the whole-album PDF, the layered PSD, the page
@@ -32764,7 +32908,7 @@ var ALBUM = (function(){
      Photoshop panel reads no pointer events worth trusting, a student may be on a laptop
      trackpad, and a hand that shakes should still be able to nudge a crop one step at a time. */
 
-  var SEL = null;                 /* {kind:"photo"|"text", i:index} on the page being looked at */
+  var SEL = null;                 /* {kind:"photo"|"text"|"decor", i:index} on the page being looked at (6.122.0: decor = an ornament) */
   var SELBOX = null;              /* the rail under the stage, refilled in place — never a render */
   var VIEW = { scale:1, safe:null, cells:[], spread:false };   /* what the stage was last drawn with */
   var PTRS = {}, DRAG = null, PINCH = null;
@@ -32788,6 +32932,11 @@ var ALBUM = (function(){
       var ph = pg.photos[SEL.i];
       if (!ph || SEL.i >= Math.min(pg.photos.length, curCells().length)) { SEL = null; return null; }
       return ph;
+    }
+    if (SEL.kind === "decor"){
+      var dd = (pg.decor || [])[SEL.i];
+      if (!dd || dd.kind !== "orn" || !ornById(dd.id)) { SEL = null; return null; }
+      return dd;
     }
     var tx = pg.texts[SEL.i];
     if (!tx || !tx.text || !roleById(tx.role)) { SEL = null; return null; }
@@ -32816,6 +32965,15 @@ var ALBUM = (function(){
         x.lineTo(c[i][0], c[i][1] + c[i][3]*tick);
         x.stroke();
       }
+    } else if (sel.kind === "decor"){
+      var od = (pg.decor || [])[sel.i]; if (!od || od.kind !== "orn") { x.restore(); return; }
+      var ob = ornBox(od, safe), oW = ob.w*safe.w*scale, oH = ob.h*safe.h*scale, opad = Math.max(4, Math.min(oW, oH)*0.06);
+      x.translate((safe.x + m)*scale + safe.w*scale*ob.x, (safe.y + m)*scale + safe.h*scale*ob.y);
+      if (ob.rot) x.rotate(ob.rot);
+      x.setLineDash([Math.max(5,8*scale*2), Math.max(3,5*scale*2)]);
+      x.strokeRect(-oW/2-opad, -oH/2-opad, oW+2*opad, oH+2*opad);
+      x.setLineDash([]);
+      x.beginPath(); x.arc(oW/2+opad, oH/2+opad, Math.max(3, 5*scale*2), 0, Math.PI*2); x.stroke();
     } else {
       var tx = (pg.texts || [])[sel.i]; if (!tx) { x.restore(); return; }
       var role = roleById(tx.role); if (!role) { x.restore(); return; }
@@ -32850,6 +33008,24 @@ var ALBUM = (function(){
     }
     return -1;
   }
+  /* WHICH ORNAMENT A FINGER LANDED ON — topmost first, the point carried into the ornament's own
+     turned frame; a small pad so a thin divider can be picked up at all */
+  function hitOrn(pg, safe, px, py){
+    var list = (pg && pg.decor) || [], i;
+    for (i=list.length-1;i>=0;i--){
+      var d = list[i]; if (!d || d.kind !== "orn" || !ornById(d.id)) continue;
+      var b = ornBox(d, safe), W = b.w*safe.w, Hh = b.h*safe.h;
+      var dx = px - (safe.x + safe.w*b.x), dy = py - (safe.y + safe.h*b.y);
+      if (b.rot){
+        var c = Math.cos(-b.rot), sn = Math.sin(-b.rot);
+        var rx = dx*c - dy*sn, ry = dx*sn + dy*c;
+        dx = rx; dy = ry;
+      }
+      var pad = Math.max(safe.w*0.012, Math.min(W, Hh)*0.15);
+      if (Math.abs(dx) <= W/2 + pad && Math.abs(dy) <= Hh/2 + pad) return i;
+    }
+    return -1;
+  }
   /* which filled cell holds this point */
   function hitCell(cells, n, px, py){
     var i;
@@ -32870,6 +33046,8 @@ var ALBUM = (function(){
        the whole of the rule. */
     var t = hitText(x, pg, safe, 1, px, py);
     if (t >= 0) return { kind:"text", i:t };
+    var od = hitOrn(pg, safe, px, py);                   /* 6.122.0 — an ornament sits over the photographs */
+    if (od >= 0) return { kind:"decor", i:od };
     var c = hitCell(VIEW.cells, pg.photos.length, px, py);
     if (c >= 0) return { kind:"photo", i:c };
     return null;
@@ -32885,6 +33063,11 @@ var ALBUM = (function(){
       return panFit(o, cell, dxPage, dyPage);
     }
     var safe = VIEW.safe || safeArea(curSize()); if (!safe) return false;
+    if (SEL.kind === "decor"){                            /* 6.122.0 — an ornament may sit off the safe area, on the bleed */
+      o.x = clamp((+o.x || 0) + dxPage/safe.w, -0.3, 1.3);
+      o.y = clamp((+o.y || 0) + dyPage/safe.h, -0.3, 1.3);
+      return true;
+    }
     o.x = clamp(((o.x==null)?0.5:o.x) + dxPage/safe.w, 0, 1);
     o.y = clamp(((o.y==null)?0.92:o.y) + dyPage/safe.h, 0, 1);
     return true;
@@ -32896,6 +33079,7 @@ var ALBUM = (function(){
       var cell = selCell(); if (!cell) return false;
       return zoomFit(o, cell, (+o.zoom || 1) * f, atx, aty);
     }
+    if (SEL.kind === "decor"){ o.w = clamp((+o.w || 0.1) * f, ORN_W_MIN, ORN_W_MAX); return true; }
     o.size = clamp((+o.size || 1) * f, TEXT_MIN, TEXT_MAX);
     return true;
   }
@@ -32905,13 +33089,14 @@ var ALBUM = (function(){
       var cell = selCell(); if (!cell) return false;
       return zoomFit(o, cell, z, atx, aty);
     }
+    if (SEL.kind === "decor"){ o.w = clamp(z, ORN_W_MIN, ORN_W_MAX); return true; }
     o.size = clamp(z, TEXT_MIN, TEXT_MAX);
     return true;
   }
   /* only a line turns: a photograph that turns inside a rectangular cell shows the paper at its
      corners, which is the one thing a cover crop exists to prevent */
   function rotSel(deg){
-    var o = selObj(); if (!o || SEL.kind !== "text") return false;
+    var o = selObj(); if (!o || SEL.kind === "photo") return false;   /* 6.122.0 — an ornament turns like a line */
     var r = ((+o.rot || 0) + deg) % 360;
     if (r > 180) r -= 360; if (r < -180) r += 360;
     o.rot = r;
@@ -32926,6 +33111,10 @@ var ALBUM = (function(){
       var cell = selCell();
       o.zoom = 1; o.manual = false;
       o.anchor = cell ? anchorFor(o.subject, o.w, o.h, cell.w, cell.h) : { x:0.5, y:0.5 };
+      return true;
+    }
+    if (SEL.kind === "decor"){                            /* 6.122.0 — back to the catalogue's size, upright, unflipped */
+      var od = ornById(o.id); o.rot = 0; o.flip = false; if (od) o.w = od.def.w;
       return true;
     }
     o.size = 1; o.rot = 0; o.x = 0.5; o.y = (o.role === "title") ? 0.12 : 0.92;
@@ -32961,8 +33150,8 @@ var ALBUM = (function(){
     var o = selObj(); if (!o) { PINCH = null; return; }
     var g = pinchOf(ids);
     PINCH = { d0: g.d || 1, a0: g.a, x: g.x, y: g.y,
-              z0: (SEL.kind === "photo") ? (+o.zoom || 1) : (+o.size || 1),
-              r0: (SEL.kind === "text") ? (+o.rot || 0) : 0 };
+              z0: (SEL.kind === "photo") ? (+o.zoom || 1) : (SEL.kind === "decor") ? (+o.w || 0.1) : (+o.size || 1),
+              r0: (SEL.kind === "photo") ? 0 : (+o.rot || 0) };
   }
   function applyPinch(){
     var ids = ptrIds(); if (ids.length < 2 || !PINCH) return;
@@ -32975,7 +33164,7 @@ var ALBUM = (function(){
       aty = clamp((g.y - cell.y)/cell.h, 0, 1);
     }
     scaleSelTo(PINCH.z0 * (g.d / (PINCH.d0 || 1)), atx, aty);
-    if (SEL.kind === "text"){
+    if (SEL.kind !== "photo"){
       var d = g.a - PINCH.a0;
       if (d > 180) d -= 360; if (d < -180) d += 360;
       o.rot = PINCH.r0 + d;
@@ -33096,12 +33285,14 @@ var ALBUM = (function(){
       box.appendChild(bar);
       return;
     }
-    var isPhoto = (SEL.kind === "photo");
+    var isPhoto = (SEL.kind === "photo"), isOrn = (SEL.kind === "decor");
     var name = isPhoto
       ? L("alb_sel_photo").replace("{N}", String(SEL.i+1))
+      : isOrn ? L("alb_sel_orn").replace("{N}", ornLabel(o.id))
       : L("alb_sel_text").replace("{R}", pick9((roleById(o.role) || {}).label || {}));
     var reads = isPhoto
       ? "×" + (Math.round((+o.zoom || 1)*100)/100)
+      : isOrn ? Math.round((+o.w || 0.1)*100) + "% · " + Math.round(+o.rot || 0) + "°"
       : "×" + (Math.round((+o.size || 1)*100)/100) + " · " + Math.round(+o.rot || 0) + "°";
     bar.appendChild(E("span","alb-selname", name + " · " + reads));
     box.appendChild(bar);
@@ -33156,11 +33347,81 @@ var ALBUM = (function(){
       var rm = selBtn(L("alb_remove"), L("alb_remove"), function(){ removeSelected(); }); rm.id = "albSelRemove";
       var arow = grid("btn", [rp, sl, sr, rm], albWidth()); arow.id = "albSelActs";
       box.appendChild(arow);
+    } else if (isOrn){
+      /* 6.122.0 — the ornament's tint, and what to do with it: mirror it, another copy beside
+         it, or off the page */
+      var tc = [], ti;
+      for (ti=0; ti<TINT_NAMES.length; ti++){
+        (function(tn){
+          var b = chip("", (o.tint || "gold") === tn, function(){ setTint(tn); });
+          b.id = "albTint_" + tn; b.className += " alb-tintchip";
+          var sw = E("span","alb-swatch"); sw.style.backgroundColor = tintHex(tn); b.appendChild(sw);
+          b.appendChild(E("span", null, L("alb_tint_" + tn)));
+          tc.push(b);
+        })(TINT_NAMES[ti]);
+      }
+      box.appendChild(subh(L("alb_tint")));
+      var trow = grid("size", tc, albWidth()); trow.id = "albSelTints";
+      box.appendChild(trow);
+      var fl = selBtn(L("alb_flip"), L("alb_flip"), function(){ flipSel(); }); fl.id = "albSelFlip";
+      var du = selBtn(L("alb_dup"), L("alb_dup"), function(){ dupSel(); }); du.id = "albSelDup";
+      var ro = selBtn(L("alb_remove_orn"), L("alb_remove_orn"), function(){ removeSelected(); }); ro.id = "albSelRemove";
+      var arow3 = grid("btn", [fl, du, ro], albWidth()); arow3.id = "albSelActs";
+      box.appendChild(arow3);
     } else {
       var rml = selBtn(L("alb_remove_line"), L("alb_remove_line"), function(){ removeSelected(); }); rml.id = "albSelRemove";
       var arow2 = grid("btn", [rml], albWidth()); arow2.id = "albSelActs";
       box.appendChild(arow2);
     }
+  }
+  /* ---- the ornament's own moves (6.122.0 wave G) ---- */
+  function setTint(t){
+    var o = selObj(); if (!o || SEL.kind !== "decor") return false;
+    o.tint = (TINT_NAMES.indexOf(t) >= 0 || /^#[0-9a-fA-F]{6}$/.test(t)) ? t : "gold";
+    touchChanged(false);
+    return true;
+  }
+  function flipSel(){
+    var o = selObj(); if (!o || SEL.kind !== "decor") return false;
+    o.flip = !o.flip; touchChanged(false); return true;
+  }
+  function dupSel(){
+    var o = selObj(); if (!o || SEL.kind !== "decor") return false;
+    var pg = curPage(); if ((pg.decor || []).length >= DECOR_MAX){ H.toast(L("alb_orn_full").replace("{N}", String(DECOR_MAX)), ""); return false; }
+    var c = { kind:"orn", id:o.id, x:clamp((+o.x||0) + 0.05, -0.3, 1.3), y:clamp((+o.y||0) + 0.05, -0.3, 1.3), w:+o.w||0.1, rot:+o.rot||0, tint:o.tint||"gold", flip:!!o.flip, auto:false };
+    pg.decor.push(c);
+    SEL = { kind:"decor", i: pg.decor.length-1 };
+    onDocChange(false);
+    return true;
+  }
+  /* a new ornament lands where its family belongs — a corner in the corner, a frame around the
+     page, a divider across the middle — selected and ready to be moved */
+  function addOrnament(id){
+    var o = ornById(id); if (!o || !DOC) return false;
+    var pg = curPage();
+    if (DOC.view !== "page"){ DOC.view = "page"; }
+    if (!pg.decor) pg.decor = [];
+    if (pg.decor.length >= DECOR_MAX){ H.toast(L("alb_orn_full").replace("{N}", String(DECOR_MAX)), ""); return false; }
+    pg.decor.push({ kind:"orn", id:id, x:o.def.x, y:o.def.y, w:o.def.w, rot:o.def.rot||0, tint:"gold", flip:false, auto:false });
+    SEL = { kind:"decor", i: pg.decor.length-1 };
+    onDocChange(false);
+    H.toast(L("alb_orn_added").replace("{N}", ornLabel(id)), "ok");
+    return true;
+  }
+  function setOverlay(id, amount){
+    var pg = curPage(); if (!pg) return false;
+    if (!id || !ovlById(id)){ pg.overlay = null; onDocChange(false); return true; }
+    var amt = (OVL_AMTS.indexOf(amount) >= 0) ? amount : ((pg.overlay && pg.overlay.amount) || "medium");
+    pg.overlay = { id:id, amount:amt };
+    onDocChange(false);
+    return true;
+  }
+  /* the same overlay on every page of the album */
+  function overlayAll(){
+    var pg = curPage(), i, n = 0; if (!pg) return 0;
+    for (i=0;i<DOC.pages.length;i++){ DOC.pages[i].overlay = pg.overlay ? { id:pg.overlay.id, amount:pg.overlay.amount } : null; n++; }
+    onDocChange(false);
+    return n;
   }
   /* the two history buttons follow the history without a render */
   function syncUndoBtns(){
@@ -33289,9 +33550,14 @@ var ALBUM = (function(){
      event, which is the only place both routes pass through. */
   var PICK_MODE = "page";
 
-  function ask(msg){
-    if (H && typeof H.confirm === "function"){ try { return !!H.confirm(msg); } catch(e){ return true; } }
-    return true;   /* a host with no way to ask is a host that already asked */
+  /* 6.122.0 — the question is asked as a promise: the browser's confirm answers at once, the
+     Photoshop panel's own dialog answers when it is closed, and the code after it waits either way */
+  function askP(msg){
+    if (H && typeof H.confirm === "function"){
+      try { return Promise.resolve(H.confirm(msg)).then(function(v){ return !!v; }).catch(function(){ return true; }); }
+      catch(e){ return Promise.resolve(true); }
+    }
+    return Promise.resolve(true);   /* a host with no way to ask is a host that already asked */
   }
   function hasWork(){
     var i;
@@ -33340,9 +33606,13 @@ var ALBUM = (function(){
      layout through the same auto-flow one page uses. This REPLACES what is on screen, so it
      asks first whenever there is anything to lose. */
   function makeAlbum(srcs){
-    var all = srcs || [], list = all.slice(0, MAXA), over = all.length - list.length;
+    var all = srcs || [], list = all.slice(0, MAXA);
     if (!list.length) return Promise.resolve(0);
-    if (hasWork() && !ask(L("alb_make_replace"))) return Promise.resolve(0);
+    if (hasWork()) return askP(L("alb_make_replace")).then(function(ok){ return ok ? makeAlbumGo(all) : 0; });
+    return makeAlbumGo(all);
+  }
+  function makeAlbumGo(all){
+    var list = all.slice(0, MAXA), over = all.length - list.length;
     var o = curOcc(), photos = [], step = 0;
     H.toast(L("alb_make_busy").replace("{N}", String(list.length)), "");
     return list.reduce(function(chain, src){
@@ -33921,9 +34191,11 @@ var ALBUM = (function(){
         var x = E("button","alb-tilex","\u2715"); x.type = "button"; x.id = "albTrayX_" + idx; x.title = L("alb_tray_x");
         x.onclick = function(ev){
           ev.stopPropagation();
-          if (n && !ask(L("alb_tray_remove_q").replace("{N}", String(n)))) return;
-          removeEverywhere(ph.src);
-          H.toast(L("alb_tray_removed"), "ok");
+          (n ? askP(L("alb_tray_remove_q").replace("{N}", String(n))) : Promise.resolve(true)).then(function(ok){
+            if (!ok) return;
+            removeEverywhere(ph.src);
+            H.toast(L("alb_tray_removed"), "ok");
+          });
         };
         t.appendChild(x);
         t.onclick = function(){ placeFromTray(idx); };
@@ -33944,6 +34216,138 @@ var ALBUM = (function(){
     card.appendChild(trow);
     var tn = E("p","mut", L("alb_tray_note")); tn.id = "albTrayNote";
     card.appendChild(tn);
+    /* 6.122.0 wave G — how many pixels each photograph is kept at */
+    card.appendChild(subh(L("alb_qual_h")));
+    var qs = chip(L("alb_qual_std").replace("{N}", String(PHOTO_MAX.std)), QUALITY === "std", function(){ setQuality("std"); });
+    qs.id = "albQual_std";
+    var qp = chip(L("alb_qual_print").replace("{N}", String(PHOTO_MAX.print)), QUALITY === "print", function(){ setQuality("print"); });
+    qp.id = "albQual_print";
+    var qrow = grid("size", [qs, qp], albWidth()); qrow.id = "albQuality";
+    card.appendChild(qrow);
+    var qn = E("p","mut", L("alb_qual_note").replace("{N}", String(PHOTO_MAX.print))); qn.id = "albQualNote";
+    card.appendChild(qn);
+    return card;
+  }
+  /* ======================= THE SHELF (6.122.0, wave G) =======================
+
+     An album designer keeps projects, and a studio has several on the go: the wedding being
+     laid out, the newborn session waiting for its last pictures, the graduation from last month
+     a customer wants one more copy of. Every album is its own record in the store; the shelf is
+     the strip of them across the top of the page, the open one ringed in gold, each with the
+     opener drawn small, its name and its counts. */
+  function shelfCard(){
+    var card = E("section","card"); card.id = "albShelfCard";
+    card.appendChild(E("h2", null, L("alb_shelf_h") + " \u00b7 " + (SHELF ? SHELF.items.length : 0) + " / " + SHELF_MAX));
+    var strip = E("div","alb-strip alb-shelf"); strip.id = "albShelf";
+    card.appendChild(strip);
+    var w = albWidth();
+    var nw = E("button","btn btn-gold","+ " + L("alb_shelf_new")); nw.id = "albShelfNew"; nw.onclick = function(){ newAlbum(); };
+    var dp = E("button","btn", L("alb_shelf_dup")); dp.id = "albShelfDup"; dp.onclick = function(){ duplicateAlbum(); };
+    var rn = E("button","btn", L("alb_shelf_ren")); rn.id = "albShelfRen";
+    rn.onclick = function(){
+      var row = document.getElementById("albShelfNameRow"); if (!row) return;
+      var open = (row.style.display === "none");
+      row.style.display = open ? "" : "none";
+      if (open){ var inp = document.getElementById("albShelfName"); if (inp){ try { inp.focus(); inp.select(); } catch(e){} } }
+    };
+    var dl = E("button","btn", L("alb_shelf_del")); dl.id = "albShelfDel"; dl.onclick = function(){ deleteAlbum(); };
+    var ops = grid("btn", [nw, dp, rn, dl], w); ops.id = "albShelfOps";
+    card.appendChild(ops);
+    var nrow = E("div","row"); nrow.id = "albShelfNameRow"; nrow.style.display = "none";
+    var inp = document.createElement("input"); inp.type = "text"; inp.className = "inp grow"; inp.id = "albShelfName";
+    inp.maxLength = SHELF_NAME_MAX; inp.placeholder = L("alb_shelf_name"); inp.setAttribute("aria-label", L("alb_shelf_name"));
+    inp.value = (SHELF && shelfItem(SHELF.cur) && shelfItem(SHELF.cur).name) || "";
+    var sv = E("button","btn btn-gold", L("alb_shelf_save")); sv.id = "albShelfSave"; sv.type = "button";
+    sv.onclick = function(){ renameAlbum(inp.value); nrow.style.display = "none"; H.toast(L("alb_shelf_renamed"), "ok"); };
+    inp.onkeydown = function(ev){ if (ev.key === "Enter"){ ev.preventDefault(); sv.onclick(); } };
+    nrow.appendChild(inp); nrow.appendChild(sv);
+    card.appendChild(nrow);
+    var note = E("p","mut", L("alb_shelf_note")); note.id = "albShelfNote";
+    card.appendChild(note);
+    paintShelf(strip);
+    return card;
+  }
+  /* the tiles, refilled in place when a name or a picture changes — never a render */
+  function paintShelf(strip){
+    strip = strip || ((typeof document !== "undefined") && document.getElementById("albShelf"));
+    if (!strip || !SHELF) return;
+    strip.innerHTML = "";
+    var i;
+    for (i=0;i<SHELF.items.length;i++){
+      (function(it){
+        var on = (it.id === SHELF.cur);
+        var t = E("div","alb-tile alb-shelftile" + (on ? " on" : "")); t.id = "albShelf_" + it.id;
+        t.setAttribute("role","button"); t.tabIndex = 0; t.setAttribute("aria-pressed", on ? "true" : "false");
+        var pic = E("div","alb-shelfpic");
+        if (it.thumb){ var im = document.createElement("img"); im.className = "alb-tileimg"; im.alt = ""; im.src = it.thumb; pic.appendChild(im); }
+        t.appendChild(pic);
+        t.appendChild(E("span","alb-shelfname", albumName(it)));
+        t.appendChild(E("span","alb-shelfmeta", L("alb_shelf_meta").replace("{P}", String(it.pages||1)).replace("{N}", String(it.photos||0))));
+        t.onclick = function(){ openAlbum(it.id); };
+        t.onkeydown = function(ev){ if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); openAlbum(it.id); } };
+        strip.appendChild(t);
+      })(SHELF.items[i]);
+    }
+  }
+  /* ======================= THE ORNAMENTS (6.122.0, wave G) =======================
+
+     The reference program drops clip-art on a page from a side panel. Here: six families of
+     four, each a mask the page tints, filtered by family, one tap to place; and under them the
+     five overlays, a texture over the whole page at one of three strengths, with a button that
+     lays the same one on every page. */
+  function ornCard(){
+    var card = E("section","card"); card.id = "albOrnCard";
+    card.appendChild(E("h2", null, L("alb_orn_h")));
+    var w = albWidth(), pg = curPage(), i;
+    var fams = [chip(L("alb_orn_all"), !ORN_FAM, function(){ ORN_FAM = ""; render(); })];
+    fams[0].id = "albOrnFam_all";
+    for (i=0;i<ORN_FAMS.length;i++){
+      (function(f){
+        var b = chip(L("alb_orn_fam_" + f), ORN_FAM === f, function(){ ORN_FAM = (ORN_FAM === f) ? "" : f; render(); });
+        b.id = "albOrnFam_" + f; fams.push(b);
+      })(ORN_FAMS[i]);
+    }
+    var frow = grid("size", fams, w); frow.id = "albOrnFams"; card.appendChild(frow);
+    var tiles = [];
+    for (i=0;i<ORN.length;i++){
+      (function(o){
+        if (ORN_FAM && o.fam !== ORN_FAM) return;
+        var b = E("button","chip alb-orntile",""); b.id = "albOrn_" + o.id; b.type = "button";
+        b.title = ornLabel(o.id); b.setAttribute("aria-label", ornLabel(o.id));
+        var im = document.createElement("img"); im.className = "alb-ornimg"; im.alt = ""; im.src = ornSrc(o.id);
+        b.appendChild(im);
+        b.onclick = function(){ addOrnament(o.id); };
+        tiles.push(b);
+      })(ORN[i]);
+    }
+    var trow = grid("tpl", tiles, w); trow.id = "albOrns"; card.appendChild(trow);
+    card.appendChild(E("p","mut", L("alb_orn_note")));
+    /* the overlays */
+    card.appendChild(subh(L("alb_ovl_h")));
+    var cur = (pg.overlay && pg.overlay.id) || "";
+    var oc = [chip(L("alb_ovl_none"), !cur, function(){ setOverlay("", ""); })];
+    oc[0].id = "albOvl_none";
+    for (i=0;i<OVL.length;i++){
+      (function(ov){
+        var b = chip(L("alb_ovl_" + ov.id), cur === ov.id, function(){ setOverlay(ov.id, pg.overlay && pg.overlay.amount); });
+        b.id = "albOvl_" + ov.id; oc.push(b);
+      })(OVL[i]);
+    }
+    var orow = grid("size", oc, w); orow.id = "albOvls"; card.appendChild(orow);
+    if (cur){
+      var ac = [];
+      for (i=0;i<OVL_AMTS.length;i++){
+        (function(a){
+          var b = chip(L("alb_ovl_" + a), (pg.overlay.amount || "medium") === a, function(){ setOverlay(cur, a); });
+          b.id = "albOvlAmt_" + a; ac.push(b);
+        })(OVL_AMTS[i]);
+      }
+      var arow = grid("size", ac, w); arow.id = "albOvlAmts"; card.appendChild(arow);
+    }
+    var all = E("button","btn", L("alb_ovl_all")); all.id = "albOvlAll";
+    all.onclick = function(){ var n = overlayAll(); H.toast(L("alb_ovl_all_done").replace("{P}", String(n)), "ok"); };
+    var alrow = grid("btn", [all], w); alrow.id = "albOvlOps"; card.appendChild(alrow);
+    card.appendChild(E("p","mut", L("alb_ovl_note")));
     return card;
   }
 
@@ -34304,6 +34708,14 @@ var ALBUM = (function(){
     all.onclick = function(){ exportAll(); };
     var many = grid("btn", [pdf, all], w); many.id = "albOutAll";
     card.appendChild(many);
+    /* 6.122.0 — a host that can open a document (the Photoshop panel) gets the door; the web
+       app, which cannot, never draws it */
+    if (H && typeof H.openInPs === "function"){
+      var ops = E("button","btn btn-gold", L("alb_open_ps")); ops.id = "albOpenPs";
+      ops.onclick = function(){ openInPs(); };
+      var prow = grid("btn", [ops], w); prow.id = "albOutPs";
+      card.appendChild(prow);
+    }
 
     var sheet = E("p","mut"); sheet.id = "albOutNote";
     var dpi = px.dpi || 300, bmm = D.bleedMm, mm = 25.4/dpi;
@@ -34355,17 +34767,38 @@ var ALBUM = (function(){
     if (!px) return Promise.resolve(false);
     var mb = Math.max(1, Math.round(psdEstimate(curPage(), DOC.cur)/1048576));
     if (mb > PSD_HARD_MB){ H.toast(L("alb_psd_no").replace("{N}", String(mb)), "err"); return Promise.resolve(false); }
-    if (mb > PSD_SOFT_MB && !ask(L("alb_psd_big").replace("{N}", String(mb)))) return Promise.resolve(false);
+    var go = (mb > PSD_SOFT_MB) ? askP(L("alb_psd_big").replace("{N}", String(mb))) : Promise.resolve(true);
+    return go.then(function(ok){
+      if (!ok) return false;
+      H.toast(L("alb_export_busy"), "");
+      return psdOfPage(DOC.cur).then(function(bytes){
+        if (!bytes || !bytes.length){ H.toast(L("alb_export_fail"), "err"); return false; }
+        var name = "hnk-album-" + (DOC.cur+1) + "-" + curSize().id + ".psd";
+        return Promise.resolve(sendFile(bytes, name, "image/vnd.adobe.photoshop")).then(function(){
+          H.toast(L("alb_pdf_done").replace("{N}", "1")
+                                   .replace("{M}", String(Math.max(1, Math.round(bytes.length/1048576)))), "ok");
+          return true;
+        });
+      });
+    }).catch(function(){ H.toast(L("alb_export_fail"), "err"); return false; });
+  }
+  /* 6.122.0 — THE PAGE, OPEN IN PHOTOSHOP. The same layered file the PSD button writes, handed
+     to a host that can open it as a document; only a host that can offers the button. */
+  function openInPs(){
+    if (!H || typeof H.openInPs !== "function") return Promise.resolve(false);
+    var sz = curSize(), px = pagePx(sz);
+    if (!px) return Promise.resolve(false);
+    var mb = Math.max(1, Math.round(psdEstimate(curPage(), DOC.cur)/1048576));
+    if (mb > PSD_HARD_MB){ H.toast(L("alb_psd_no").replace("{N}", String(mb)), "err"); return Promise.resolve(false); }
     H.toast(L("alb_export_busy"), "");
     return psdOfPage(DOC.cur).then(function(bytes){
       if (!bytes || !bytes.length){ H.toast(L("alb_export_fail"), "err"); return false; }
       var name = "hnk-album-" + (DOC.cur+1) + "-" + curSize().id + ".psd";
-      return Promise.resolve(sendFile(bytes, name, "image/vnd.adobe.photoshop")).then(function(){
-        H.toast(L("alb_pdf_done").replace("{N}", "1")
-                                 .replace("{M}", String(Math.max(1, Math.round(bytes.length/1048576)))), "ok");
-        return true;
+      return Promise.resolve(H.openInPs(bytes, name)).then(function(ok){
+        H.toast(ok ? L("alb_open_ps_done") : L("alb_open_ps_fail"), ok ? "ok" : "err");
+        return !!ok;
       });
-    }).catch(function(){ H.toast(L("alb_export_fail"), "err"); return false; });
+    }).catch(function(){ H.toast(L("alb_open_ps_fail"), "err"); return false; });
   }
   /* A print file is tens of megabytes, and a data: URL of one is a string the phone has to hold
      twice. A host that can take the bytes themselves is given them; anything else still gets the
@@ -34547,7 +34980,9 @@ var ALBUM = (function(){
      the arrows nudge it. One listener, bound at init. */
   var KEYS_BOUND = false;
   function albumOn(){
-    var pg = (typeof document !== "undefined") && document.getElementById("pgAlbum");
+    if (typeof document === "undefined") return false;
+    /* the app's page is #pgAlbum, the Photoshop panel's #pageAlbum (6.122.0) */
+    var pg = document.getElementById("pgAlbum") || document.getElementById("pageAlbum");
     return !!(pg && pg.classList && pg.classList.contains("on"));
   }
   function onKey(ev){
@@ -34571,6 +35006,7 @@ var ALBUM = (function(){
   var SELPAGE = -1;
   function render(){
     if (!ROOT) return;
+    DRAWN = true;
     /* 6.110.0 — the selection belongs to the page it was made on. Turning to page 4 with
        "photo 2" still selected would hand the arrows a different photograph. */
     if (SELPAGE !== DOC.cur){ SEL = null; SELPAGE = DOC.cur; }
@@ -34578,6 +35014,7 @@ var ALBUM = (function(){
        would let a card built before the stage canvas exists disagree with the one after it. */
     BUCKET = widthBucket(albWidth());
     ROOT.innerHTML = "";
+    ROOT.appendChild(shelfCard());           /* 6.122.0 wave G */
     ROOT.appendChild(occasionCard());
     ROOT.appendChild(sizeCard());
     ROOT.appendChild(pagesCard());
@@ -34585,6 +35022,7 @@ var ALBUM = (function(){
     ROOT.appendChild(photosCard());
     ROOT.appendChild(layoutCard());
     ROOT.appendChild(designCard());          /* 6.121.0 wave F */
+    ROOT.appendChild(ornCard());             /* 6.122.0 wave G */
     ROOT.appendChild(textCard());
     ROOT.appendChild(exportCard());
     ROOT.appendChild(checkCard());           /* 6.121.0 wave F */
@@ -34937,7 +35375,7 @@ var ALBUM = (function(){
     for (i=0;i<pg.texts.length;i++) if (pg.texts[i].text) have[pg.texts[i].role] = true;
     var out = composeBlock(region, story, DOC.style, { paper: DOC.paper, ink: (o && o.ink) || INKS[0], safe: safe, skip: have });
     pg.texts = pg.texts.concat(out.texts).slice(0, D.roles.length);
-    pg.decor = (pg.decor || []).concat(out.decor).slice(0, 12);
+    pg.decor = (pg.decor || []).concat(out.decor).slice(0, DECOR_MAX);   /* 6.122.0 — the student's ornaments stay */
     return true;
   }
   /* THE COVER. The opener's photograph runs off the paper (the full-bleed layout, bleed on) and
@@ -35147,7 +35585,9 @@ var ALBUM = (function(){
   function removeSelected(){
     var o = selObj(); if (!o) return false;
     var pg = curPage();
-    if (SEL.kind === "photo") pg.photos.splice(SEL.i, 1); else pg.texts.splice(SEL.i, 1);
+    if (SEL.kind === "photo") pg.photos.splice(SEL.i, 1);
+    else if (SEL.kind === "decor") pg.decor.splice(SEL.i, 1);       /* 6.122.0 */
+    else pg.texts.splice(SEL.i, 1);
     SEL = null;
     onDocChange(false);
     return true;
@@ -35272,7 +35712,9 @@ var ALBUM = (function(){
 
     obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
     obj(2, "<< /Type /Pages /Count " + n + " /Kids [" + kids.join(" ") + "] >>");
-    obj(3, "<< /Producer (HNK Create Studio " + pdfText(APP_VER) + ") /Creator (HNK Create Studio) /Title (" + pdfText(title || "HNK album") + ") >>");
+    /* 6.122.0 — the same block runs inside the Photoshop panel, which has no APP_VER; each surface names its own release */
+    var ver = (typeof APP_VER === "string") ? APP_VER : ((typeof PANEL_VERSION === "string") ? PANEL_VERSION : "");
+    obj(3, "<< /Producer (HNK Create Studio " + pdfText(ver) + ") /Creator (HNK Create Studio) /Title (" + pdfText(title || "HNK album") + ") >>");
 
     for (i=0;i<n;i++){
       var P = 4 + i*3, C = 5 + i*3, X = 6 + i*3, sh = shots[i];
@@ -35448,6 +35890,7 @@ var ALBUM = (function(){
     var texts = pg.texts || [];
     for (i=0;i<texts.length;i++){
       (function(tx, at){
+        /* placeholder kept in order: the type layers come next */
         if (!tx || !tx.text) return;
         var role = null, k;
         for (k=0;k<D.roles.length;k++) if (D.roles[k].id === tx.role) role = D.roles[k];
@@ -35463,6 +35906,12 @@ var ALBUM = (function(){
           drawTexts(x, { texts: [tx] }, safe, 1, 0);
         } });
       })(texts[i], i);
+    }
+    /* 6.122.0 — THE OVERLAY. A texture needs the page beneath it to blend with, so its layer is
+       the finished page with the texture on: switch it off in Photoshop and the clean layers
+       below are there to work on. It is the top layer and it is named for what it is. */
+    if (pg.overlay && pg.overlay.id && ovlById(pg.overlay.id)){
+      out.push({ name: "Overlay (flat)", rect: { l:0, t:0, r:W, b:Hh }, paint: function(x){ paintPageSync(x, pg, idx, safe, 1, 0); } });
     }
     return out;
   }
@@ -35484,7 +35933,8 @@ var ALBUM = (function(){
     /* the same gate drawPage uses: no layer is painted before its face and its photograph are in */
     return fontsReady(pg).then(function(){
       return Promise.all((pg.photos||[]).map(function(p){ return imgFor(p.src); }));
-    }).then(function(){ return psdBuild(pg, idx, px); });
+    }).then(function(){ return decorImgs(pg); })                 /* 6.122.0 — the ornaments' masks and the texture */
+      .then(function(){ return psdBuild(pg, idx, px); });
   }
   function psdBuild(pg, idx, px){
     var list = pageLayers(pg, idx);
@@ -35551,6 +36001,12 @@ var ALBUM = (function(){
 
   /* ======================= THE PUBLIC FACE ======================= */
 
+  /* 6.122.0 — IS THE PAGE ON SCREEN? Imagine's rule (getClientRects, and "yes" where a renderer cannot
+     say): the app boots this module with #pgAlbum hidden, and a render there would fetch every
+     ornament mask — 48 requests, 1.2 MB — on a boot that opened the Smart Workflow page. Hidden, the
+     page is drawn on entry (switchPage → onEnter); nothing of it is fetched before it is opened. */
+  function visible(){ try{ return !!(ROOT && ROOT.getClientRects && ROOT.getClientRects().length); }catch(e){ return true; } }
+
   var API = {
     init: function(host, root){
       H = host; ROOT = root;
@@ -35566,14 +36022,16 @@ var ALBUM = (function(){
       if (!KEYS_BOUND && typeof document !== "undefined" && typeof document.addEventListener === "function"){
         try { document.addEventListener("keydown", onKey, false); KEYS_BOUND = true; } catch(e2){}
       }
-      render();                       /* an empty album is on screen before the store answers */
-      loadDoc().then(function(saved){
-        if (saved && saved.pages && saved.pages.length){ DOC = normalize(saved); render(); }
+      if (visible()) render();        /* an empty album is on screen before the store answers — when the page is */
+      loadQuality().then(function(){ return loadDoc(); }).then(function(saved){
+        if (saved && saved.pages && saved.pages.length) DOC = normalize(saved);
+        if (DRAWN || visible()) render();   /* 6.122.0 — the shelf and the quality chips are known now; a page never drawn waits for its entry */
         /* 6.121.0 — the first undo step is the album as it was opened, never the empty one before it */
         HIST = []; REDO = []; CUR_SNAP = null; commit();
       });
     },
     onEnter: function(){ if (MOUNTED) { render(); } },
+    drawn: function(){ return DRAWN; },
     /* the host hands picked files in as data URLs — into the open page, or, when the student
        pressed "Make the album", into a whole new album laid out by the occasion */
     accept: function(urls, mode){
@@ -35601,8 +36059,26 @@ var ALBUM = (function(){
     place: function(i){ return placeFromTray(i); },
     removeSelected: function(){ return removeSelected(); },
     swap: function(dir){ return swapSel(dir); },
+    /* 6.122.0 wave G — the ornaments, the overlay, the shelf, the quality and the Photoshop door */
+    photoMax: function(){ return PHOTO_MAX[QUALITY] || PHOTO_MAX.std; },
+    quality: function(q){ if (q) setQuality(q); return QUALITY; },
+    addOrnament: function(id){ return addOrnament(id); },
+    setTint: function(t){ return setTint(t); },
+    flip: function(){ return flipSel(); },
+    duplicate: function(){ return dupSel(); },
+    setOverlay: function(id, amount){ return setOverlay(id, amount); },
+    overlayAll: function(){ return overlayAll(); },
+    albums: function(){ return SHELF ? { cur: SHELF.cur, items: SHELF.items.map(function(it){ return { id: it.id, name: albumName(it), pages: it.pages, photos: it.photos, thumb: !!it.thumb }; }) } : null; },
+    openAlbum: function(id){ return openAlbum(id); },
+    newAlbum: function(){ return newAlbum(); },
+    duplicateAlbum: function(){ return duplicateAlbum(); },
+    renameAlbum: function(n){ return renameAlbum(n); },
+    deleteAlbum: function(){ return deleteAlbum(); },
+    openInPs: function(){ return openInPs(); },
     /* what the tests drive: the maths, with nothing of the browser in it */
-    math: { pagePx: pagePx, safeArea: safeArea, cellRect: cellRect, cellRects: cellRects,
+    math: { ornBox: ornBox, ornById: ornById, ovlById: ovlById, tintHex: tintHex, hitOrn: hitOrn, normShelf: normShelf,
+            ORN: ORN, OVL: OVL, TINTS: TINTS, PHOTO_MAX: PHOTO_MAX, DECOR_MAX: DECOR_MAX, ORN_W_MIN: ORN_W_MIN, ORN_W_MAX: ORN_W_MAX,
+            pagePx: pagePx, safeArea: safeArea, cellRect: cellRect, cellRects: cellRects,
             coverFit: coverFit, subjectAnchor: subjectAnchor, anchorFor: anchorFor,
             tplScore: tplScore, autoTemplate: autoTemplate, tplsFor: tplsFor, tplById: tplById,
             sizeById: sizeById, mmPx: mmPx, planPages: planPages, occById: occById,
@@ -35713,13 +36189,25 @@ var ALBUM = (function(){
       /* 6.121.0 — the design's marks on a page; anything malformed is simply not a mark */
       pg.story = isFinite(p.story) ? Math.max(-1, p.story|0) : -1;
       var dc = (p.decor && p.decor.length) ? p.decor : [], di;
-      for (di=0; di<dc.length && pg.decor.length<12; di++){
+      for (di=0; di<dc.length && pg.decor.length<DECOR_MAX; di++){
         var dm = dc[di];
-        if (!dm || (dm.kind !== "rule" && dm.kind !== "scrim")) continue;
+        if (!dm) continue;
+        /* 6.122.0 — an ornament: a known mask, a place, a width, a turn, a tint, a flip */
+        if (dm.kind === "orn"){
+          if (!ornById(dm.id) || !(isFinite(dm.x) && isFinite(dm.y) && isFinite(dm.w))) continue;
+          pg.decor.push({ kind:"orn", id:dm.id, x:clamp(+dm.x,-0.3,1.3), y:clamp(+dm.y,-0.3,1.3), w:clamp(+dm.w, ORN_W_MIN, ORN_W_MAX),
+                          rot: isFinite(dm.rot) ? clamp(+dm.rot,-180,180) : 0,
+                          tint: (TINT_NAMES.indexOf(dm.tint) >= 0 || /^#[0-9a-fA-F]{6}$/.test(dm.tint||"")) ? dm.tint : "gold",
+                          flip: !!dm.flip, auto:false });
+          continue;
+        }
+        if (dm.kind !== "rule" && dm.kind !== "scrim") continue;
         if (!(isFinite(dm.x) && isFinite(dm.y) && isFinite(dm.w))) continue;
         pg.decor.push({ kind:dm.kind, x:clamp(+dm.x,-0.2,1.2), y:clamp(+dm.y,-0.2,1.2), w:clamp(+dm.w,0,1.4), h:isFinite(dm.h)?clamp(+dm.h,0,1.4):0,
                         color:(typeof dm.color === "string" && /^#[0-9a-fA-F]{6}$/.test(dm.color)) ? dm.color : GOLD, auto:!!dm.auto });
       }
+      /* 6.122.0 — the overlay: a known texture at a known strength, or none */
+      pg.overlay = (p.overlay && ovlById(p.overlay.id)) ? { id: p.overlay.id, amount: (OVL_AMTS.indexOf(p.overlay.amount) >= 0) ? p.overlay.amount : "medium" } : null;
       var ph = (p.photos && p.photos.length) ? p.photos : [];
       for (k=0;k<ph.length && pg.photos.length<MAXP;k++){
         var q = ph[k];
@@ -35777,7 +36265,10 @@ var ALBUM = (function(){
       var rd=new FileReader();
       /* 2400px on the long edge: enough that a full-bleed 12×36 at 300 DPI still resolves, small
          enough that six of them fit in one album record without choking the store */
-      rd.onload=function(){ downscale(String(rd.result), function(du){ if(du) out[i]=du; else toast(unreadableImgMsg(),"err"); one(); }, 2400); };
+      /* 6.122.0 wave G — the album's own Photo quality chip decides the long edge: Standard is
+         the 2,400 above, Print keeps 4,000 */
+      var maxPx = (typeof ALBUM !== "undefined" && ALBUM && typeof ALBUM.photoMax === "function") ? ALBUM.photoMax() : 2400;
+      rd.onload=function(){ downscale(String(rd.result), function(du){ if(du) out[i]=du; else toast(unreadableImgMsg(),"err"); one(); }, maxPx); };
       rd.onerror=function(){ one(); };
       rd.readAsDataURL(f);
     });
@@ -35794,6 +36285,8 @@ var ALBUM = (function(){
     confirm: function(msg){ return confirm(msg); },
     store: function(key, val){ try { kvSet(key, val); } catch(e){} },
     restore: function(key){ return kvGet(key).catch(function(){ return null; }); },
+    /* 6.122.0 — a deleted album's record leaves the store rather than lingering as null */
+    remove: function(key){ try { kvSet(key, null); } catch(e){} },
     saveGallery: function(dataUrl, name){
       var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl||"");
       if(!m) return Promise.resolve(false);
