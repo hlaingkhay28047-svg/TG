@@ -100,6 +100,39 @@ var IMAGINE = (function(){
     var cols=imHubCols(vw);
     return Math.max(60, (alone+12-cols*10)/cols-2);
   }
+  /* 6.123.1 — A MOUSE PRESS ON A PICTURE MUST NOT START THE BROWSER'S OWN DRAG. The owner's computer: the hub card's
+     line moved one step and stopped. Measured with a real mouse: pointerdown, one pointermove, then a dragstart and
+     a pointercancel — Chrome had begun dragging the <img> itself and took the pointer away, the defect the Retouch
+     wipe fixed in 6.116.0 (cmpEnhance). Three guards, because one renderer honours one and another honours the next:
+     the pictures declare draggable=false, dragstart is refused, and a mouse or pen press is cancelled at pointerdown
+     (a finger is not — touch-action already says pan-y, and a cancelled touch would lose the scroll). */
+  function imNoNativeDrag(box){
+    Array.prototype.forEach.call(box.querySelectorAll("img"), function(im){ im.draggable=false; });
+    box.ondragstart=function(ev){ if(ev && ev.preventDefault) ev.preventDefault(); return false; };
+  }
+  function imMousePress(ev){
+    var t=ev && ev.pointerType; if(t===undefined) t=(ev && /^mouse/.test(ev.type||"")) ? "mouse" : "touch";
+    if(t!=="touch" && ev.cancelable!==false && ev.preventDefault) ev.preventDefault();
+  }
+  /* 6.123.1 — THE PICTURE FITS THE WINDOW. On a monitor the stage column is ~60% of the page, and a 2:3 photograph
+     drawn at that width runs 1,200px tall: the owner's photograph showed the picture alone past the fold, Apply and the
+     templates somewhere below it. As Retouch's cmpFit (6.116.0): the picture box is capped so its height fits the window
+     minus the card's chrome (IM_CHROME), the stage column shrinks to the box and the templates take the room. A phone
+     (one column under 700px) and a host with no window height (Photoshop reads 0) keep the fluid width. */
+  var IM_CHROME=300, fitT=null;
+  function imFit(){
+    var wrap=refs.fitWrap, img=refs.fitImg, col=refs.stageCol; if(!wrap || !img) return;
+    var iw=img.naturalWidth||0, ih=img.naturalHeight||0; if(!(iw>0 && ih>0)) return;
+    var vh=(typeof window!=="undefined" && window.innerHeight)||0, vw=imViewportW();
+    if(!(vh>0) || !(vw>=700)){ wrap.style.maxWidth=""; if(col) col.style.flex=""; return; }
+    var w=Math.round(Math.max(320, vh-IM_CHROME)*iw/ih);
+    var colsW=0; try{ if(refs.cols){ var cr=refs.cols.getBoundingClientRect(); colsW=cr?cr.width:0; } }catch(e){ colsW=0; }
+    if(!(colsW>0)) colsW=vw-40;
+    var cap=Math.max(340, Math.round(colsW*0.6)); if(w>cap) w=cap;
+    wrap.style.maxWidth=w+"px";
+    if(col) col.style.flex="0 1 "+(w+36)+"px";   /* the card's padding and border around the box (measured 34px at 1440) */
+  }
+  function imFitSoon(){ clearTimeout(fitT); fitT=setTimeout(imFit, 80); }
   /* a horizontal slider: absolute through the rect, else relative to where the drag began */
   function imDragX(el, ev, startPct, downX){
     var c=imPt(ev), r=imRect(el);
@@ -223,7 +256,8 @@ var IMAGINE = (function(){
     setTimeout(rngSync,0); setTimeout(rngSync,300); hubSyncs.push(rngSync);
     var drag=null;
     var at=function(ev){ var v=imDragX(art, ev, drag ? drag.p : split, drag ? drag.x : 0); if(v===null) return; setHub(v); };
-    var down=function(ev){ if(ev.button && ev.button!==0) return; drag={ x:(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, t:Date.now(), moved:false, p:(S.hubSplit && typeof S.hubSplit[tool.id]==="number") ? S.hubSplit[tool.id] : split }; c.classList.add("lift"); if(ev.pointerId!=null && art.setPointerCapture){ try{ art.setPointerCapture(ev.pointerId); }catch(e){} } };
+    imNoNativeDrag(art);   /* 6.123.1 — the two pictures never start the browser's own drag */
+    var down=function(ev){ if(ev.button && ev.button!==0) return; imMousePress(ev); drag={ x:(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, t:Date.now(), moved:false, p:(S.hubSplit && typeof S.hubSplit[tool.id]==="number") ? S.hubSplit[tool.id] : split }; c.classList.add("lift"); if(ev.pointerId!=null && art.setPointerCapture){ try{ art.setPointerCapture(ev.pointerId); }catch(e){} } };
     var move=function(ev){ if(!drag) return; var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX; if(!drag.moved && Math.abs(cx-drag.x)<6) return; drag.moved=true; at(ev); if(ev.cancelable) ev.preventDefault(); };
     var up=function(ev){ if(!drag) return; var d=drag; drag=null; setTimeout(function(){ c.classList.remove("lift"); },220); if(!d.moved && Date.now()-d.t<600){ ev.stopPropagation(); go(); } };
     if(window.PointerEvent){ art.onpointerdown=down; art.onpointermove=move; art.onpointerup=up; art.onpointercancel=function(){ drag=null; c.classList.remove("lift"); }; }
@@ -260,7 +294,7 @@ var IMAGINE = (function(){
     try{ var railOn=rail.querySelector(".chip.on"); if(railOn && railOn.offsetLeft>60) rail.scrollLeft=railOn.offsetLeft-12; }catch(e){}
     var cols = el("div","im-cols"); root.appendChild(cols);
     var left = el("div","im-col im-col-stage"), right = el("div","im-col im-col-set");
-    cols.appendChild(left); cols.appendChild(right);
+    cols.appendChild(left); cols.appendChild(right); refs.cols=cols; refs.stageCol=left;   /* 6.123.1 — imFit sizes the column to the picture */
     renderStage(tool, left); renderSettings(tool, right);
   }
   function renderStage(tool, host){
@@ -338,6 +372,8 @@ var IMAGINE = (function(){
     var wrap = el("div","im-cmpwrap");
     var cmp = el("div","im-cmp"); wrap.appendChild(cmp); refs.cmp=cmp;
     var base = el("img","im-base"); base.alt=""; base.src = cur.out ? cur.out.dataUrl : cur.dataUrl; cmp.appendChild(base);
+    refs.fitWrap=wrap; refs.fitImg=base;   /* 6.123.1 — the box fits the window once the picture's size is known */
+    base.onload=function(){ if(refs.syncW) refs.syncW(); imFit(); }; setTimeout(imFit,0);
     if(cur.out){
       /* the ORIGINAL rides on top, clipped to the left of the line; the result is the whole picture beneath */
       var top = el("div","im-cmp-top"); top.style.width=S.split+"%"; cmp.appendChild(top); refs.top=top;
@@ -347,18 +383,20 @@ var IMAGINE = (function(){
       cmp.appendChild(el("span","im-lb l", t("before"))); cmp.appendChild(el("span","im-lb r", t("after")));
       if(cur.out.size) cmp.appendChild(el("span","im-badge", String(cur.out.size).toUpperCase()));
       var syncW=function(){ if(refs.orig) refs.orig.style.width=cmpBefW(S.split); };
-      base.onload=syncW; setTimeout(syncW,0); refs.syncW=syncW;
+      setTimeout(syncW,0); refs.syncW=syncW;   /* 6.123.1 — base.onload above runs syncW, then imFit */
       var rng = el("input","im-range"); rng.type="range"; rng.min="0"; rng.max="100"; rng.value=String(S.split); rng.id="imSplit";
       rng.setAttribute("aria-label", t("before")+" / "+t("after"));
       rng.oninput=function(){ setSplit(parseInt(this.value,10)); }; rng.onchange=rng.oninput;
       wrap.appendChild(rng); refs.rng=rng;
       var drag=null;
       var at=function(ev){ var v=imDragX(cmp, ev, drag ? drag.p : S.split, drag ? drag.x : 0); if(v===null) return; setSplit(Math.round(v)); };
-      cmp.onpointerdown=function(ev){ drag={ x:imPt(ev)[0], p:S.split }; at(ev); }; cmp.onpointermove=function(ev){ if(drag) at(ev); };
-      cmp.onpointerup=cmp.onpointercancel=cmp.onpointerleave=function(){ drag=null; };
+      imNoNativeDrag(cmp);   /* 6.123.1 */
+      cmp.onpointerdown=function(ev){ if(ev.button && ev.button!==0) return; imMousePress(ev); drag={ x:imPt(ev)[0], p:S.split }; at(ev); if(ev.pointerId!=null && cmp.setPointerCapture){ try{ cmp.setPointerCapture(ev.pointerId); }catch(e){} } }; cmp.onpointermove=function(ev){ if(drag) at(ev); };
+      cmp.onpointerup=cmp.onpointercancel=function(){ drag=null; };
     }
     if(cur.status==="busy"){
-      var ov = el("div","im-busy"); ov.appendChild(el("span","im-spin")); var bt=el("span","im-busy-t", t("working",{s:cur.sec||0})); ov.appendChild(bt); cmp.appendChild(ov); refs.busyT=bt;
+      /* 6.123.1 — spinner and words on one readable pill, over the dimmed picture */
+      var ov = el("div","im-busy"); var pill=el("div","im-busy-pill"); pill.appendChild(el("span","im-spin")); var bt=el("span","im-busy-t", t("working",{s:cur.sec||0})); pill.appendChild(bt); ov.appendChild(pill); cmp.appendChild(ov); refs.busyT=bt;
     }
     return wrap;
   }
@@ -498,7 +536,8 @@ var IMAGINE = (function(){
       if(nw>0 && nh>0) cv.__imAspect=nw/nh;
       if(!w||!h){ if(!(nw>0 && nh>0)) return; var sc=Math.min(1, 1600/nw); w=Math.round(nw*sc); h=Math.round(nh*sc); }
       if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } var x=cv.getContext("2d"); x.clearRect(0,0,w,h); paintStrokes(x, p.strokes||[], w, h, 0.55); };
-    im.onload=redraw; setTimeout(redraw,0); refs.markRedraw=redraw;
+    refs.fitWrap=box; refs.fitImg=im;   /* 6.123.1 — the brush stage fits the window as the compare does */
+    im.onload=function(){ redraw(); imFit(); }; setTimeout(redraw,0); setTimeout(imFit,0); refs.markRedraw=redraw;
     if(live){
       var cur=null;
       var at=function(ev){ return imNorm(cv, ev); };
@@ -672,7 +711,7 @@ var IMAGINE = (function(){
     H=host; root=rootEl; load();
     /* drawn on entry (switchPage → onEnter) when the page is hidden at boot — nothing of this page is fetched before it is opened */
     if(visible()) render();
-    try{ window.addEventListener("resize", function(){ for(var i=0;i<hubSyncs.length;i++) hubSyncs[i](); if(refs.syncW) refs.syncW(); }); }catch(e){}
+    try{ window.addEventListener("resize", function(){ for(var i=0;i<hubSyncs.length;i++) hubSyncs[i](); if(refs.syncW) refs.syncW(); imFitSoon(); }); }catch(e){}
   }
   function onEnter(){ render(); }
   function drawn(){ return !!(root && root.firstChild); }
