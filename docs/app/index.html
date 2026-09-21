@@ -1747,7 +1747,7 @@ html.motion-reduce .toast{transition:none!important}   /* the toast snaps rather
 .result-box.pending{display:block}
 .result-box.pending>*{display:none}
 .result-box.pending>h2,.result-box.pending>.result-img{display:block}
-.result-box.pending .result-img{position:relative;aspect-ratio:var(--pend-ar,3/4);background:linear-gradient(110deg,var(--panel-2) 40%,#1e2740 50%,var(--panel-2) 60%);background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+.result-box.pending .result-img{position:relative;aspect-ratio:var(--pend-ar,3/4);background:linear-gradient(110deg,var(--panel-2) 40%,#1e2740 50%,var(--panel-2) 60%);background-size:200% 100%;animation:pendsheen 1.4s linear infinite}@keyframes pendsheen{to{background-position:-200% 0}} /* its own keyframe: the v4.28 sweep proves the `shimmer` keyframe reachable only through img.ld */
 .result-box.pending .result-img>*{position:absolute;inset:0;width:100%;height:100%;visibility:hidden}
 
 /* ==== v4.99 — Retouch A / Retouch B ergonomics, measured on a 390x844 touch phone ====
