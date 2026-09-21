@@ -1,0 +1,82 @@
+{
+ "note": "Wave H (6.123.0) card art — three Smart Workflow cards from the owner's video, on the brand model (tools/art_ref/model2, refs x2). Each card's picture is ONE real pass of the card's own shipped prompt (defaults applied, AVOID appended) over generated inputs: prop-insert = pi-result over pi-subject (IMAGE 1, refsFrom) + pi-prop (IMAGE 2, baseFrom), the two inputs inset by finish_h.py; decor-theme-color and light-gear-remove = split before | after cards from <x>-before and <x>-after. Never a real person's likeness.",
+ "jobs": [
+  {
+   "name": "pi-subject",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": null,
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the two reference photographs show ONE woman, the HNK model — keep her EXACT face in every detail: a slim oval face that narrows to a small, softly pointed chin; large, round-leaning almond eyes set a touch wide, with a deep double eyelid crease, a light warm-brown iris and long heavy lashes under a soft winged liner; straight brows with a low gentle arch, darker and fuller than average; a small nose, narrow at the bridge, neat and rounded at the tip; FULL lips with a distinctly fuller lower lip, a sharply drawn cupid's bow and a deep rose-red lip colour; high rounded cheekbones with a warm pink blush; fair porcelain skin, early twenties. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. IGNORE in the references and copy NONE of it: the silver headdress, the silver earrings, the embroidered collar, her clothing and the sky behind her — only the face. Create a full-length studio photograph of the HNK model from the references (the same face, fair luminous porcelain skin, long dark hair worn loose, soft natural glam, early twenties, slim, elegant), standing in a warm peach-cream photo studio with a plain seamless peach backdrop and a matte peach floor, wearing a white lace long-sleeve top and a long dark maroon silk skirt, her body turned slightly to her right, smiling gently at the camera, her LEFT hand resting flat on top of a plain white rectangular display box (a simple matte white cube about hip height, no decoration) that stands beside her on her left; soft even studio light from the front-left, a gentle floor shadow, 50mm lens at chest height, HORIZONTAL 3:2 framing with the woman and the white box together in the right two thirds and open studio room on the left, photoreal, no text, no captions, no watermark, no logo."
+  },
+  {
+   "name": "pi-prop",
+   "apiPath": "alibaba/wan-2.7/text-to-image-pro",
+   "base": null,
+   "ratio": "3:2",
+   "resolution": "2k",
+   "prompt": "A clean product photograph of ONE piece of furniture with no people: an ornate white-painted carved wooden side table in a vintage French style — a round top with a scalloped edge, four slender turned cabriole legs joined by a lower ring shelf, delicate hand-carved leaf motifs on the apron, a soft ivory-white lacquer finish — photographed straight on at table height against a plain light-grey seamless background on a plain grey floor, soft even shadowless studio light, sharp, centred, horizontal 3:2 framing, photoreal, no text, no captions, no watermark, no logo."
+  },
+  {
+   "name": "pi-result",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refsFrom": [
+    "pi-subject"
+   ],
+   "baseFrom": "pi-prop",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "Place the exact piece of furniture shown in IMAGE 2 into the photograph in IMAGE 1 — a chair, stool, bench, sofa, side table, pedestal, plinth or stand — so it reads as if it stood in that studio when the shutter fired.\n\nINPUT ROLES:\n- IMAGE 1 is the ONLY edit target and the ONLY person in the result. The person — face, hair, skin, outfit, hands, pose and expression — the camera angle, the crop, the subject's size and position in the frame, the frame ratio, the backdrop, the floor and the light all come from IMAGE 1 and never change.\n- IMAGE 2 is a PRODUCT REFERENCE ONLY: take from it the piece itself — its exact shape, proportions, legs, carving, upholstery, material, colour and finish — and nothing else. Its background, its floor, its shadows, any person, text, logo or watermark on it never enter the result. Never return IMAGE 2 itself.\n\nSWAP RULE: if IMAGE 1 already holds a plain stand, box, table, stool or chair that the subject touches, leans on or sits on, the IMAGE 2 piece takes its exact place and footprint — the same spot on the floor, the same height at the point of contact — and the hand, arm or body contact is kept, so the subject now rests on the new piece exactly as they rested on the old one. If there is no such object, add the piece beside the subject in the open floor space nearest their hand or hip.\n\nFIT: draw the piece at IMAGE 1's camera height and viewing angle, in true perspective with the floor, at a believable real-world size against the subject's height, with true ground contact, a real contact shadow that follows IMAGE 1's light direction, and IMAGE 1's light and colour falling on it. Where the piece passes behind the subject, the subject stays in front with clean edges. Rebuild whatever a removed stand hid — floor, backdrop — so nothing else in the frame looks touched.\n\nRESULT: the same photograph as IMAGE 1 with one change only — the furniture. No re-crop, no zoom, no re-pose, no second person, no text.\n\nAVOID: changed face, changed identity, changed pose, re-posed, changed hands, changed outfit, changed backdrop, changed floor, re-cropped, reframed, zoomed, changed aspect ratio, moved subject, rescaled subject, a second person, IMAGE 2's background, IMAGE 2's floor, IMAGE 2 returned as the result, a different chair or table than IMAGE 2, redesigned furniture, wrong scale, floating furniture, missing contact shadow, furniture covering the face, hand floating above the surface, watermark, text, logo, signature."
+  },
+  {
+   "name": "dt-before",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": null,
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the two reference photographs show ONE woman, the HNK model — keep her EXACT face in every detail: a slim oval face that narrows to a small, softly pointed chin; large, round-leaning almond eyes set a touch wide, with a deep double eyelid crease, a light warm-brown iris and long heavy lashes under a soft winged liner; straight brows with a low gentle arch, darker and fuller than average; a small nose, narrow at the bridge, neat and rounded at the tip; FULL lips with a distinctly fuller lower lip, a sharply drawn cupid's bow and a deep rose-red lip colour; high rounded cheekbones with a warm pink blush; fair porcelain skin, early twenties. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. IGNORE in the references and copy NONE of it: the silver headdress, the silver earrings, the embroidered collar, her clothing and the sky behind her — only the face. Create a wedding-studio photograph of the HNK model from the references as a bride (the same face, fair luminous porcelain skin, long dark hair in a low bun with a small white flower, soft natural glam, early twenties), standing at the centre of a richly decorated wedding stage: deep RED velvet drapes and a red backdrop panel behind her, tall arrangements of red and burgundy roses in gold-coloured urns on both sides, red satin ribbons and bows on white chairs in the foreground corners, a red carpet, warm gold ornamental frames; she wears a white lace bridal gown with a long train and holds a bouquet of red roses, standing straight and smiling softly at the camera, full length; soft warm even studio light, 35mm lens at chest height, HORIZONTAL 3:2 framing with the whole stage visible around her, photoreal, no text, no captions, no watermark, no logo."
+  },
+  {
+   "name": "dt-after",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "dt-before",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "Recolour the DECORATION of the event set in IMAGE 1 into one new colour theme.\nTHEME: White & Gold — read these words as the palette of the whole set. Where the theme names two colours, the first is the main colour of the large surfaces (drapes, backdrop panels, table cloths, carpets, stage walls) and the second is the accent colour of the details (trims, ribbons, ornament highlights, small props, flower accents); where it names one colour, use light and deep versions of it for surfaces and accents.\nWHAT CHANGES — every decorative element of the venue or studio set: backdrop drapes and curtains, stage panels and arches, flower arrangements and garlands, ribbons and bows, balloons, table cloths and runners, chair covers and sashes, carpets, cushions, lanterns, candles, vases, painted set walls, decorative props and any printed backdrop graphics. Metallic ornaments (gold, silver, brass) keep their metal unless the theme names a different metal. Every element keeps its exact shape, texture, weave, sheen, shadows and highlights — only its colour changes, as if the decorator had bought the same items in the new colours.\nWHAT NEVER CHANGES: every person — face, skin, hair, hands, pose, expression, outfit, jewellery and accessories keep their exact colours and detail; the number of people; the camera angle, the crop, the frame ratio and the composition; the light direction and exposure; any sign, banner or printed text keeps its letters exactly (recolour its background if it belongs to the set, never rewrite it).\nRESULT: the same photograph, taken at the same event, decorated in the new theme instead.\n\nAVOID: changed face, changed skin tone, changed hair, changed outfit colour, changed dress, re-posed, a person removed or added, re-cropped, reframed, zoomed, changed aspect ratio, new decoration items, removed decoration, changed flower species or shape, rewritten text, misspelled sign, changed light direction, over-saturated, colour bleeding onto skin, colour bleeding onto clothes, plastic textures, watermark, text, logo."
+  },
+  {
+   "name": "lg-before",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/model2/front.jpg",
+    "tools/art_ref/model2/threequarter.jpg"
+   ],
+   "base": null,
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the two reference photographs show ONE woman, the HNK model — keep her EXACT face in every detail: a slim oval face that narrows to a small, softly pointed chin; large, round-leaning almond eyes set a touch wide, with a deep double eyelid crease, a light warm-brown iris and long heavy lashes under a soft winged liner; straight brows with a low gentle arch, darker and fuller than average; a small nose, narrow at the bridge, neat and rounded at the tip; FULL lips with a distinctly fuller lower lip, a sharply drawn cupid's bow and a deep rose-red lip colour; high rounded cheekbones with a warm pink blush; fair porcelain skin, early twenties. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. IGNORE in the references and copy NONE of it: the silver headdress, the silver earrings, the embroidered collar, her clothing and the sky behind her — only the face. Create a behind-the-scenes photograph of the HNK model from the references (the same face, fair luminous porcelain skin, long dark wavy hair, soft natural glam, early twenties) posing for a portrait in a working photo studio: she stands at the centre in a pale blue satin slip dress in front of a plain warm-grey seamless backdrop, lit beautifully from her left by a large soft light; the shot is framed WIDE so that the studio equipment is clearly in the picture — on the left a large black softbox on a tall light stand pointing at her, on the right a silver reflector on a stand and a camera tripod, black power cables and a sandbag on the floor in the foreground, a backdrop stand with clips at the top edge; the woman herself is lit like a finished portrait (soft key light from the left, a gentle rim on her hair, clean shadow on the backdrop), 35mm lens at chest height, HORIZONTAL 3:2 framing, photoreal, no text, no captions, no watermark, no logo."
+  },
+  {
+   "name": "lg-after",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "baseFrom": "lg-before",
+   "ratio": "3:2",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "Remove every piece of photography equipment visible in IMAGE 1 and rebuild what stood behind it, so the photograph looks as if the set had been cleared before the shutter fired.\nWHAT GOES: softboxes, octaboxes, umbrellas, beauty dishes, strip lights, LED panels and their glow at the frame edge, flash heads, light stands and C-stands, booms and boom arms, tripods, reflectors and their holders, flags, diffusion frames, sandbags, clamps, cables and power strips on the floor, backdrop stands and clips, the raw edge of a backdrop roll, monitors, laptops and camera bags — anything a studio crew would carry out.\nWHAT STAYS: the light itself. Every highlight, shadow, catchlight, rim, gradient and colour on the subject and on the set is the record of those lights and stays exactly as photographed — remove the equipment, never its effect. Every person — face, skin, hair, hands, pose, expression and outfit — the props that belong to the picture (chairs, tables, flowers, decor), the backdrop, the floor, the camera angle, the crop, the frame ratio and the composition never change.\nREBUILD: where equipment is removed, continue the backdrop, wall, floor, drapes or scenery that it hid with matching texture, perspective, grain and light, so no seam, blur or smear marks the spot.\nRESULT: the same photograph with a clean set.\n\nAVOID: changed face, changed pose, changed outfit, re-cropped, reframed, zoomed, changed aspect ratio, changed lighting on the subject, flattened light, removed shadows, removed catchlights, softbox left in frame, light stand left in frame, tripod left in frame, cable left on the floor, glow at the frame edge, blurred patch, smeared backdrop, seam, removed prop, removed person, watermark, text, logo."
+  }
+ ]
+}
