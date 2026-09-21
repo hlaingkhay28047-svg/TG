@@ -73,7 +73,7 @@ report("A2) five fields in order — mode (a CHOICE: tag MODE:, token {{MODE}}, 
   shadow.type === "toggle" && shadow.tag === "SHADOW:" && shadow.default === true && /^SHADOW: draw no new shadow or reflection for the object/.test(shadow.off) && nine(shadow.label),
   R && { keys: R.fields.map(f => f.key + ":" + f.type), chips: what && what.chips && what.chips.length });
 report("A3) the prompt: the selected-area frame first, then the MODE · OBJECT · SIZE & PLACEMENT lines each holding its token once, THE NEW OBJECT rule (IMAGE 2 exact item, never returned; else the OBJECT line; neither → FILL), the MATCH and SHADOW lines the switches govern, PRESERVE, EDGE RULE and the same-photograph close; the AVOID list names the old object left behind, the object removed, IMAGE 2 returned, a missing contact shadow, a seam",
-  !!R && /^You are editing the user's SELECTED AREA of a photograph \(in Photoshop this is the exact rectangle they selected; on the web it is the rectangle drawn on the photo, or the whole photo when none was drawn\)\./.test(R.prompt) &&
+  !!R && /^You are editing the user's SELECTED AREA of a photograph \(the rectangle selected in Photoshop or drawn on the web; the whole photo when none was drawn\)\. Make ONLY the change the MODE line asks/.test(R.prompt) && R.prompt.length + 12 + R.negative.length + 148 + 138 + 60 <= 3000 &&   /* the longest MODE line, a 140-char OBJECT and a 120-char SIZE line still fit Qwen Image 3's 3,000 cap with the AVOID list */
   has(R.prompt, "\nMODE: {{MODE}}\nOBJECT: {{WHAT}}\nSIZE & PLACEMENT: {{SIZE}}\nTHE NEW OBJECT: when IMAGE 2 is given, it is the exact item shown in IMAGE 2") &&
   ["{{MODE}}", "{{WHAT}}", "{{SIZE}}"].every(t => R.prompt.split(t).length === 2) && has(R.prompt, "never IMAGE 2 returned as the result") && has(R.prompt, "With no IMAGE 2 and no OBJECT line, act as MODE FILL") &&
   /\nMATCH: draw the object at the photograph's camera height and viewing angle, in true perspective/.test(R.prompt) && /\nSHADOW: the object casts the shadow such an object would cast in this light/.test(R.prompt) &&
@@ -162,14 +162,16 @@ const VALS = {
   change: { mode: "change", what: "the same chair in white leather", size: "", match: true, shadow: true }
 };
 const C = {}; Object.keys(VALS).forEach(k => { const c = REG.compile(ID, VALS[k]); C[k] = c && c.prompt; });
-report("C3) the registry: the record is a region workflow with one optional input; the compiler resolves the fields — default → the REPLACE line, no OBJECT or SIZE line, the MATCH and SHADOW lines, no raw token; fill + an object → the FILL line and 'OBJECT: the cable on the floor'; add + a padded object + a place + both switches off → the ADD line, whitespace collapsed, the SIZE line, both OFF lines; an unknown mode falls back to REPLACE; change → the CHANGE line",
+/* the 3,000-character cap of Qwen Image 3 / 3 Pro: the longest MODE line, a 140-char OBJECT and a 120-char SIZE line, with the AVOID list the run appends */
+const WORST = REG.compile(ID, { mode: "change", what: "x".repeat(140), size: "y".repeat(120) }).prompt.length + 12 + R.negative.length;
+report("C3) the registry: the record is a region workflow with one optional input; the compiler resolves the fields — default → the REPLACE line, no OBJECT or SIZE line, the MATCH and SHADOW lines, no raw token; fill + an object → the FILL line and 'OBJECT: the cable on the floor'; add + a padded object + a place + both switches off → the ADD line, whitespace collapsed, the SIZE line, both OFF lines; an unknown mode falls back to REPLACE; change → the CHANGE line; the worst case with the AVOID list fits the 3,000-character cap",
   !!wf && wf.region === true && REG.get("region-edit").region === true && wf.optionalInputs.length === 1 && wf.requiredInputs.length === 1 && wf.fields.length === 5 &&
   /\nMODE: REPLACE — remove whatever occupies the selected area/.test(C.def) && !/\nOBJECT:/.test(C.def) && !/\nSIZE & PLACEMENT:/.test(C.def) && /\nMATCH: draw the object at the photograph's camera height/.test(C.def) && /\nSHADOW: the object casts the shadow/.test(C.def) && !/\{\{/.test(C.def) &&
   /\nMODE: FILL — remove what occupies the selected area/.test(C.fill) && /\nOBJECT: the cable on the floor\n/.test(C.fill) &&
   /\nMODE: ADD — keep everything already inside the selected area/.test(C.add) && /\nOBJECT: a bouquet of white roses\n/.test(C.add) && /\nSIZE & PLACEMENT: small, on the left\n/.test(C.add) &&
   /\nMATCH: the object's size, angle and place follow the SIZE & PLACEMENT line/.test(C.add) && !/MATCH: draw the object/.test(C.add) && /\nSHADOW: draw no new shadow or reflection/.test(C.add) && !/SHADOW: the object casts/.test(C.add) &&
-  /\nMODE: REPLACE — /.test(C.bogus) && !/\nOBJECT:/.test(C.bogus) && /\nMODE: CHANGE — keep the object that occupies the selected area exactly where it is/.test(C.change) && /\nOBJECT: the same chair in white leather\n/.test(C.change) && !/\nSIZE & PLACEMENT:/.test(C.change),
-  { def: C.def && (C.def.match(/MODE:[^\n]*/) || [])[0], add: C.add && (C.add.match(/OBJECT:[^\n]*/) || [])[0] });
+  /\nMODE: REPLACE — /.test(C.bogus) && !/\nOBJECT:/.test(C.bogus) && /\nMODE: CHANGE — keep the object that occupies the selected area exactly where it is/.test(C.change) && /\nOBJECT: the same chair in white leather\n/.test(C.change) && !/\nSIZE & PLACEMENT:/.test(C.change) && WORST <= 3000,
+  { def: C.def && (C.def.match(/MODE:[^\n]*/) || [])[0], add: C.add && (C.add.match(/OBJECT:[^\n]*/) || [])[0], worst: WORST });
 
 /* ===================== D) the app, booted ===================== */
 async function appWalk(browser) {
@@ -267,7 +269,7 @@ async function panelWalk(browser) {
       o.taValue = ta && ta.value; o.taMax = ta && ta.getAttribute("maxlength");
       o.switches = root.querySelectorAll(".hnk-wf-sw").length; o.switchesOn = root.querySelectorAll(".hnk-wf-sw.on").length;
       /* the compiler reads the state the chips wrote */
-      const st = HNK.aiToolsApp.workflowScreen().state ? HNK.aiToolsApp.workflowScreen().state() : null;
+      const st = HNK.aiToolsApp.workflowScreen().getState();
       o.fieldVals = st && st.fieldVals;
       const compiled = HNK.workflowRegistry.compile(id, st && st.fieldVals);
       o.mode = compiled && (compiled.prompt.match(/\nMODE:[^\n]*/) || [""])[0].slice(0, 30); o.object = compiled && (compiled.prompt.match(/\nOBJECT:[^\n]*/) || [""])[0];
@@ -301,14 +303,14 @@ async function releasePins() {
       JSON.stringify(r.chips) === JSON.stringify(["Replace*", "Add", "Fill (remove)", "Change"]) && r.hint0 === mode.options[0].hint.en &&
       JSON.stringify(r.chipsAfter) === JSON.stringify(["replace", "add", "fill*", "change"]) && r.hint1 === mode.options[2].hint.en &&
       r.whatHint === what.hint.en && r.quickN === 8 && r.quick0 === what.chips[0].label.en && r.taValue === what.chips[1].v && r.taMax === 140 && r.sizeHint === size.hint.en &&
-      r.toggles === 2 && r.togglesOn && /\nMODE: FILL — /.test(r.livePrompt) && has(r.livePrompt, "\nOBJECT: " + what.chips[1].v + "\n"), r && { slots: r.slots, rows: r.rows, chips: r.chips, after: r.chipsAfter, quick: r.quickN, ta: r.taValue });
+      r.toggles === 2 && r.togglesOn && /\nMODE: FILL — /.test(r.livePrompt) && has(r.livePrompt, "\nOBJECT: " + what.chips[1].v + "\n"), r && { wizOpen: r.wizOpen, wizImg: r.wizImg, picker: r.picker, slots: r.slots, rows: r.rows, chips: r.chips, hint0: r.hint0 === mode.options[0].hint.en, after: r.chipsAfter, hint1: r.hint1 === mode.options[2].hint.en, whatHint: r.whatHint === what.hint.en, quick: r.quickN, quick0: r.quick0, ta: r.taValue, taMax: r.taMax, sizeHint: r.sizeHint === size.hint.en, toggles: r.toggles, on: r.togglesOn, live: r.livePrompt && r.livePrompt.slice(0, 40) });
     report("D4) no page error in the web app while all of that ran", errs.length === 0, errs);
     const p = await panelWalk(browser);
     const o = p.out || {};
-    report("D5) the panel's workflow page: the Selection card stands where the required photo would (the flag), the optional IMAGE 2 slot has its source buttons, the choice row is a column of four chips with Replace lit and its hint, a tap on Fill moves the light and the hint and the compiler's MODE line, the OBJECT line carries its own hint and eight quick picks (a tap fills the line and the OBJECT line, 140 chars), two switches ON",
-      !!p.out && o.selCard && o.optSlot && JSON.stringify(o.chips) === JSON.stringify(["replace*", "add", "fill", "change"]) && JSON.stringify(o.chipText) === JSON.stringify(["Replace", "Add", "Fill (remove)", "Change"]) &&
-      o.hint0 === mode.options[0].hint.en && o.column === "column" && JSON.stringify(o.chipsAfter) === JSON.stringify(["replace", "add", "fill*", "change"]) && o.hint1 === mode.options[2].hint.en &&
-      o.whatHint === what.hint.en && o.quickN === 8 && o.taValue === what.chips[1].v && o.taMax === "140" && o.switches === 2 && o.switchesOn === 2 &&
+    report("D5) the panel's workflow page: the Selection card stands where the required photo would (the flag), the optional IMAGE 2 slot has its source buttons, the choice row is a column of four chips (Burmese labels — the panel's own language) with Replace lit and its hint, a tap on Fill moves the light and the hint and the compiler's MODE line, the OBJECT line carries its own hint and eight quick picks (a tap fills the line and the OBJECT line, 140 chars), two switches ON",
+      !!p.out && o.selCard && o.optSlot && JSON.stringify(o.chips) === JSON.stringify(["replace*", "add", "fill", "change"]) && JSON.stringify(o.chipText) === JSON.stringify(mode.options.map(x => x.label.my)) &&   /* the panel boots in Burmese */
+      o.hint0 === mode.options[0].hint.my && o.column === "column" && JSON.stringify(o.chipsAfter) === JSON.stringify(["replace", "add", "fill*", "change"]) && o.hint1 === mode.options[2].hint.my &&
+      o.whatHint === what.hint.my && o.quickN === 8 && o.taValue === what.chips[1].v && o.taMax === "140" && o.switches === 2 && o.switchesOn === 2 &&
       o.fieldVals && o.fieldVals.mode === "fill" && o.fieldVals.what === what.chips[1].v && /^\nMODE: FILL — /.test(o.mode) && o.object === "\nOBJECT: " + what.chips[1].v,
       Object.assign({ errs: p.errs }, o));
     report("D6) no page error in the panel while all of that ran", p.errs.length === 0, p.errs);

@@ -137,8 +137,8 @@ const WAVE_V = "6.123.0";
 const row = rows.find(r => r.v === WAVE_V);
 /* the row wears the shipped shape — t a plain title, s the excerpt with its **bold lead** — because renderDashNew
    reads both (a row without s threw "Cannot read properties of undefined (reading 'my')" in the dry run) */
-report("B6) the What's New strip carries the 6.123.0 row — kind wf, opening the prop card — a plain title and a bold-led excerpt in all nine languages, both naming the three cards, and the panel's lifted table carries it (it led the strip when this wave shipped; 6.123.1's row sits above it now)",
-  !!row && row.v === WAVE_V && rows.indexOf(row) <= 1 && row.kind === "wf" && row.ref === "prop-insert" && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
+report("B6) the What's New strip carries the 6.123.0 row — kind wf, opening the prop card — a plain title and a bold-led excerpt in all nine languages, both naming the three cards, and the panel's lifted table carries it (it led the strip when this wave shipped; the 6.123.1 and 6.124.0 rows sit above it now)",
+  !!row && row.v === WAVE_V && rows.indexOf(row) <= 2 && row.kind === "wf" && row.ref === "prop-insert" && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
     [row.t[l], row.s[l]].every(x => /Furniture & Prop Insert/.test(x) && /Decor Theme Colour/.test(x) && /Remove Light Stands & Gear/.test(x))) &&
   has(PWN, '"v":"' + WAVE_V + '"') && has(PWN, '"ref":"prop-insert"'), row && { v: row.v, kind: row.kind, ref: row.ref, at: rows.indexOf(row) });
 report("B7) CI runs this test right after the Reference Scenes check, the suite counts 266 invocations and the landing says 266 tests (265 until 6.124.0 added verify_selection_swap)",

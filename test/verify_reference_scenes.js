@@ -95,8 +95,8 @@ const bgCat = cat.categories.find(c => c.items.some(x => x.id === ID));
 const HOUSE = /^(REAL PHOTOGRAPH:|SKIN TONE TRUTH:)/;
 const REC = w ? w.prompt : PROMPT;   /* 6.32.3 — the record's whole prompt (sentence + roles); the house lines follow THAT */
 const houseOnly = extra => { const ls = extra.split("\n"); return ls[0] === "" && ls.length >= 2 && ls.slice(1).every(l => HOUSE.test(l)) && !/FRAME LOCK|TASK GUARD|\{\{|EXTRA REQUEST/.test(extra); };
-report("E) the panel's lifted catalog carries the record in Background & Scene with the same two inputs, the record's prompt (the owner's sentence + the roles) with only the house lines after it, and counts 197 items (194 until 6.123.0 added the three wave H cards)",
-  !!pi && typeof pi.prompt === "string" && pi.prompt.indexOf(REC) === 0 && houseOnly(pi.prompt.slice(REC.length)) && Array.isArray(pi.req) && pi.req.length === 2 && !!bgCat && /Background/.test(bgCat.category || bgCat.t || "") && items.length === 197,
+report("E) the panel's lifted catalog carries the record in Background & Scene with the same two inputs, the record's prompt (the owner's sentence + the roles) with only the house lines after it, and counts 198 items (194 until 6.123.0 added the three wave H cards, 197 until 6.124.0 added Selection Swap & Fill)",
+  !!pi && typeof pi.prompt === "string" && pi.prompt.indexOf(REC) === 0 && houseOnly(pi.prompt.slice(REC.length)) && Array.isArray(pi.req) && pi.req.length === 2 && !!bgCat && /Background/.test(bgCat.category || bgCat.t || "") && items.length === 198,
   { found: !!pi, head: pi && pi.prompt.slice(0, 120), tail: pi && pi.prompt.slice(REC.length, REC.length + 60), n: items.length, cat: bgCat && (bgCat.category || bgCat.t) });
 
 /* ---- F) the page ---- */
