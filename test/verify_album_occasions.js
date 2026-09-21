@@ -396,7 +396,7 @@ async function browserWalk() {
              cards: document.querySelectorAll("#albRoot > section.card").length };
   });
   report("C9) an album saved against an occasion this build no longer ships falls back to the default and still draws — the same rule wave A gave sizes and wave B gave pairings",
-    restored.occ === ALBUM.defOcc && restored.on === 1 && restored.cards === 8, restored);
+    restored.occ === ALBUM.defOcc && restored.on === 1 && restored.cards === 10, restored);   /* 6.121.0 — ten cards */
 
   /* C10 — the chips must not pull a typeface down. Wave B's whole point.
      A FRESH CONTEXT, not just a fresh page: the walk above saved a forty-photograph album with
@@ -449,7 +449,7 @@ function release() {
 
   report("D3) the album module reaches every occasion through the data table — the page can only offer what data/album.js ships",
     /function occById\(id\)/.test(APP) && /function curOcc\(\)/.test(APP) &&
-    /function planPages\(count, plan\)/.test(APP) && /function makeAlbum\(srcs\)/.test(APP) &&
+    /function planPages\(count, plan, density\)/.test(APP) && /function makeAlbum\(srcs\)/.test(APP) &&   /* 6.121.0 — the plan takes the album's density */
     /function setOccasion\(id\)/.test(APP) && /function openerTexts\(o\)/.test(APP) &&
     occasionIdInCode().length === 0, occasionIdInCode());
 

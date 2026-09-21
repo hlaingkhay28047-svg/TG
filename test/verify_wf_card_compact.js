@@ -571,7 +571,7 @@ async function panelWalk() {
 /* ============================ G. the release ============================== */
 function releasePins() {
   console.log("\n--- G. the release carries it ---");
-  const VER = "6.120.0", PVER = "6.191.0";
+  const VER = "6.121.0", PVER = "6.192.0";
   const vj = JSON.parse(fs.readFileSync(path.join(ROOT, "docs", "app", "version.json"), "utf8"));
   const rm = JSON.parse(fs.readFileSync(path.join(PANEL_DIR, "release-manifest.json"), "utf8"));
   const pv = JSON.parse(fs.readFileSync(path.join(ROOT, "docs", "download", "panel-version.json"), "utf8"));

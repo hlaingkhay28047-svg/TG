@@ -16,6 +16,9 @@
                                                             only the chosen one
    docs/app/data/whatsnew.js    window.HNK_WHATS_NEW=<json>; the What's New strip
    docs/app/data/tutorials.js   window.HNK_TUTORIALS=<json>; the Tutorials hero + ten lessons (6.116.0)
+   docs/app/data/trmore.js      window.HNK_TRMORE=<json>;   TR_V428 · TR_V430 · TR_PATH, the three
+                                                            per-wave dictionaries the shell merges
+                                                            into TR at boot (6.121.0)
                                                             the app shows (v6.107.0)
    docs/app/data/whats-new-archive.json                    What's New rows older
                                                             than the strip's cut
@@ -45,7 +48,11 @@ const FILES = {
   /* 6.116.0 — the Tutorials table (TUT_HERO + the ten lessons in nine languages). The A4
      ceiling ran out again by 4.8 KB when the compare-fit and the panes arrived; the note
      there says move a table out, not raise the number. 19 KB of the shell. */
-  tutorials: { file: "tutorials.js", global: "HNK_TUTORIALS", head: "window.HNK_TUTORIALS=", tag: "script" }
+  tutorials: { file: "tutorials.js", global: "HNK_TUTORIALS", head: "window.HNK_TUTORIALS=", tag: "script" },
+  /* 6.121.0 — three per-wave TR dictionaries (TR_V428 · TR_V430 · TR_PATH, 105 KB of the shell)
+     merged into TR at boot exactly as before. The A4 ceiling stood 440 bytes clear when the
+     Smart Album designer arrived; the note there says move a table out, not raise the number. */
+  trmore: { file: "trmore.js", global: "HNK_TRMORE", head: "window.HNK_TRMORE=", tag: "script" }
 };
 TRL_CODES.forEach(function (c) {
   FILES["trl-" + c] = { file: "trl-" + c + ".js", global: "HNK_TRL", code: c, head: "window.HNK_TRL=window.HNK_TRL||{};window.HNK_TRL." + c + "=", tag: "loader" };
@@ -71,12 +78,14 @@ function imagineText() { return jsonText("imagine"); }
 function albumText() { return jsonText("album"); }
 function whatsNewText() { return jsonText("whatsnew"); }
 function tutorialsText() { return jsonText("tutorials"); }
+function trMoreText() { return jsonText("trmore"); }
 function readLibWf() { return JSON.parse(libWfText()); }
 function readHnkData() { return JSON.parse(hnkDataText()); }
 function readImagine() { return JSON.parse(imagineText()); }
 function readAlbum() { return JSON.parse(albumText()); }
 function readWhatsNew() { return JSON.parse(whatsNewText()); }
 function readTutorials() { return JSON.parse(tutorialsText()); }
+function readTrMore() { return JSON.parse(trMoreText()); }
 function readTrlPack(code) {
   if (TRL_CODES.indexOf(code) < 0) throw new Error("no native pack for " + code);
   return JSON.parse(jsonText("trl-" + code));
@@ -102,5 +111,5 @@ function trlTags() {
 /* the table the shell's loader carries, as the shell prints it */
 function trlTagsLine() { return "window.HNK_TRL_TAGS=" + JSON.stringify(trlTags()) + ";"; }
 
-module.exports = { ROOT, DATA_DIR, FILES, TRL_CODES, wrapperText, jsonText, libWfText, hnkDataText, imagineText, albumText, whatsNewText, tutorialsText,
-  readLibWf, readHnkData, readImagine, readAlbum, readWhatsNew, readTutorials, readTrlPack, readTrl, readWhatsNewArchive, contentTag, trlTags, trlTagsLine };
+module.exports = { ROOT, DATA_DIR, FILES, TRL_CODES, wrapperText, jsonText, libWfText, hnkDataText, imagineText, albumText, whatsNewText, tutorialsText, trMoreText,
+  readLibWf, readHnkData, readImagine, readAlbum, readWhatsNew, readTutorials, readTrMore, readTrlPack, readTrl, readWhatsNewArchive, contentTag, trlTags, trlTagsLine };

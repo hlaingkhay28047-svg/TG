@@ -44,6 +44,10 @@ const OUT = path.join(ROOT, "docs", "app", "data", "album.js");
    for the app to offer a face whose woff2 is not on disk (dataTables() verifies the
    record against the folder before it hands anything back). */
 const FONTS = require("./build_album_fonts.js");
+/* 6.121.0 wave F — the story lines: four headline sets and two body sentences an occasion, in
+   nine languages, that the design engine sets on the pages after the opener. In their own
+   file because they are prose, not geometry, and read best kept apart from the shapes. */
+const { STORIES } = require("./lib/album_stories.js");
 
 /* The gap between two neighbouring photos, as a fraction of the safe area.
    One constant for every layout: a page whose gaps differ cell by cell reads
@@ -545,7 +549,15 @@ const DATA = {
   /* wave C */
   occasions: OCCASIONS,
   defOcc: "wedding",
-  maxAlbum: 40
+  maxAlbum: 40,
+  /* wave F */
+  stories: STORIES,
+  /* the six looks a photograph may wear inside its frame; the module maps each to a filter
+     and to the same arithmetic over pixels where the renderer has no filter of its own */
+  fx: ["", "bw", "sepia", "warm", "cool", "fade"],
+  /* the three papers a page may be printed on — white, the cream the reference album
+     designer sets its spreads on, and black for a dark book */
+  papers: ["#ffffff", "#f6f1e7", "#141416"]
 };
 
 /* ---- checks the generator runs on itself ------------------------------- */
@@ -679,6 +691,21 @@ function check() {
   ["prewed", "solo", "family", "baby", "kid", "newborn", "event"].forEach(function (id) {
     if (!occIds[id]) throw new Error("the owner asked for " + id + " and no occasion carries that id");
   });
+  /* ---- wave F: the story lines ------------------------------------------- */
+  DATA.occasions.forEach(function (o) {
+    const st = DATA.stories[o.id];
+    if (!st) throw new Error("occasion " + o.id + " has no story lines");
+    if (!(st.lines && st.lines.length >= 4)) throw new Error("occasion " + o.id + ": fewer than four headline sets");
+    st.lines.forEach(function (ln, i) { nine(ln.k, o.id + " story " + i + " kicker"); nine(ln.h, o.id + " story " + i + " headline"); });
+    if (!(st.body && st.body.length >= 2)) throw new Error("occasion " + o.id + ": fewer than two body lines");
+    st.body.forEach(function (b, i) { nine(b, o.id + " body " + i); });
+  });
+  Object.keys(DATA.stories).forEach(function (id) {
+    if (!DATA.occasions.some(function (o) { return o.id === id; })) throw new Error("stories name " + id + ", which is not an occasion");
+  });
+  if (DATA.fx[0] !== "" || new Set(DATA.fx).size !== DATA.fx.length) throw new Error("the effect row must open with none and repeat nothing");
+  DATA.papers.forEach(function (c) { if (!HEX.test(c)) throw new Error("paper " + c + " is not a six-digit hex colour"); });
+  if (DATA.papers[0] !== "#ffffff") throw new Error("the first paper must be white — the paper every album before wave F was printed on");
 }
 
 function round(o) {
