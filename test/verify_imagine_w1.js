@@ -127,6 +127,10 @@ report("A12) every Imagine prompt ends with the no-studio-gear rule (the shared 
   /No light stands, softboxes, reflectors, lamps or any studio equipment may appear/.test(DATA.tools.find(t => t.id === "lighting").basePrompt) &&
   /AVOID\.test\(|frame\.avoid/.test(mod), { avoid: DATA.frame.avoid.slice(-120) });
 report("A9) CI runs this test", /PORT=8931 node test\/verify_imagine_w1\.js/.test(CI), null);
+const CSSA = lifter.between(APP, lifter.C0, lifter.C1, "css");
+report("A10a) 6.123.1 — the desktop tidy lives in the lifted module and CSS: imFit caps the picture box from the window height (IM_CHROME 300) and sizes the stage column, the busy sign is an .im-busy-pill (15px, 24px spinner), pictures declare draggable=false and a mouse press is cancelled at pointerdown",
+  /var IM_CHROME=300, fitT=null;/.test(mod) && /function imFit\(\)\{/.test(mod) && /col\.style\.flex="0 1 "\+\(w\+36\)\+"px"/.test(mod) && /var pill=el\("div","im-busy-pill"\)/.test(mod) && /function imNoNativeDrag\(box\)\{/.test(mod) && /function imMousePress\(ev\)\{/.test(mod) &&
+  /\.im-busy-pill\{display:flex;align-items:center;padding:12px 20px;border-radius:999px;background:rgba\(11,13,20,\.9\)[^}]*font-size:15px/.test(CSSA) && /\.im-busy-pill \.im-spin\{width:24px;height:24px;flex:none\}/.test(CSSA) && /\.im-cmpwrap,\.im-markbox\{margin-left:auto;margin-right:auto\}/.test(CSSA), null);
 report("A10) the module is ES5 and UXP-safe (no arrow functions / template literals / let / const, no CSS grid, no inline svg of its own)",
   !/=>/.test(mod) && !/`/.test(mod) && !/\b(let|const)\s/.test(mod) && !/innerHTML\s*=/.test(mod) &&
   !/display:\s*grid/.test(lifter.between(APP, lifter.C0, lifter.C1, "css")) && !/\bgap:/.test(lifter.between(APP, lifter.C0, lifter.C1, "css")), null);
@@ -204,6 +208,38 @@ const MOCK = `(function(){
     hubCmp.shape.every(x => x.base && x.top && x.knob && x.labels === 2 && x.w0 === "50%") && hubCmp.afterDrag.w === "72%" && hubCmp.afterDrag.line === "72%" && hubCmp.afterDrag.split === 72 && hubCmp.afterDrag.stillHub && hubCmp.kept === "72%", hubCmp);
   report("B2c) the card lifts under a finger (lift class on pointerdown, gone after release; hover transitions transform), a plain tap on the picture opens that tool, and the hero carries its motion clip under its ?v= URL",
     hubCmp.lifted && hubCmp.unlifted && hubCmp.opened === "portrait" && hubCmp.hover && hubCmp.motion.listed && hubCmp.motion.video && /banner-imagine\.(mp4|webm)\?v=\d+$/.test(hubCmp.motion.videoSrc), { lifted: hubCmp.lifted, unlifted: hubCmp.unlifted, opened: hubCmp.opened, hover: hubCmp.hover, motion: hubCmp.motion });
+  /* 6.123.1 — THE OWNER'S COMPUTER. The synthetic PointerEvents above are touch events dispatched by hand; a real
+     MOUSE goes through the browser's own input pipeline, and there the 6.123.0 hub card failed: pointerdown, one
+     pointermove, then Chrome's `dragstart` on the <img> and a `pointercancel` — the line moved one step and stopped
+     (measured: 50 → 54%). page.mouse is that pipeline. The line must reach the far end, no native drag may begin,
+     the pictures declare draggable=false, and the tap-to-open path still works with a mouse. */
+  const mouseDrag = await (async () => {
+    /* a real mouse hits whatever is on top: this page never seeded hnk_ws_onboarded, so the first-run onboarding dialog (#onb) still
+       covers the hub — the synthetic events above went straight to the card underneath it. Close it as a student would (Skip). */
+    await page.evaluate(() => { const o = document.getElementById("onb"); if (o && /\bon\b/.test(o.className)) document.getElementById("onbSkip").click(); });
+    await page.waitForFunction(() => !/\bon\b/.test(document.getElementById("onb").className), null, { timeout: 5000 });
+    /* the hub has just been re-rendered by goHub(): its compare boxes have no height until their pictures lay out (a few hundred ms) — wait for a box, not a clock */
+    await page.waitForFunction((n) => { const a = document.querySelectorAll("#pgImagine .im-card .im-hubcmp")[n]; return !!a && a.getBoundingClientRect().height > 50; }, 0, { timeout: 8000 });
+    const art = page.locator("#pgImagine .im-card .im-hubcmp").first();
+    await art.scrollIntoViewIfNeeded(); await page.waitForTimeout(150);
+    const box = await art.boundingBox();
+    await page.evaluate(() => { window.__mev = []; const a = document.querySelector("#pgImagine .im-card .im-hubcmp"); ["dragstart", "pointercancel", "pointerdown", "pointerup"].forEach((k) => a.addEventListener(k, () => window.__mev.push(k))); });
+    const y = box.y + box.height * 0.5, x0 = box.x + box.width * 0.5, x1 = box.x + box.width * 0.86;
+    await page.mouse.move(x0, y); await page.mouse.down();
+    for (let i = 1; i <= 8; i++) { await page.mouse.move(x0 + (x1 - x0) * i / 8, y); await page.waitForTimeout(15); }
+    await page.mouse.up(); await page.waitForTimeout(250);
+    const dragged = await page.evaluate(() => ({ split: IMAGINE.hubSplit().lighting, w: document.querySelector("#pgImagine .im-card .im-cmp-top").style.width, tool: IMAGINE.state.tool, ev: window.__mev.slice(),
+      draggable: [...document.querySelectorAll("#pgImagine .im-card .im-hubcmp img")].every((i) => i.draggable === false) }));
+    /* a plain mouse click on the second card's picture opens its tool */
+    await page.waitForFunction((n) => { const a = document.querySelectorAll("#pgImagine .im-card .im-hubcmp")[n]; return !!a && a.getBoundingClientRect().height > 50; }, 1, { timeout: 8000 });
+    const art2 = page.locator("#pgImagine .im-card .im-hubcmp").nth(1); await art2.scrollIntoViewIfNeeded(); await page.waitForTimeout(100); const b2 = await art2.boundingBox();
+    await page.mouse.click(b2.x + b2.width * 0.5, b2.y + b2.height * 0.5); await page.waitForTimeout(250);
+    const opened = await page.evaluate(() => IMAGINE.state.tool);
+    await page.evaluate(() => { IMAGINE.goHub(); }); await page.waitForTimeout(200);
+    return Object.assign(dragged, { opened });
+  })();
+  report("B2d) a REAL mouse drag (page.mouse, the browser's input pipeline — the owner's computer) moves the line from 50% to the far end (>= 80%), no native image drag starts and the pointer is never cancelled, every compare picture is draggable=false, the hub stays open, and a plain mouse click on a card still opens its tool",
+    mouseDrag.split >= 80 && mouseDrag.w === mouseDrag.split + "%" && mouseDrag.tool === null && mouseDrag.ev.indexOf("dragstart") < 0 && mouseDrag.ev.indexOf("pointercancel") < 0 && mouseDrag.ev.indexOf("pointerup") >= 0 && mouseDrag.draggable && mouseDrag.opened === "portrait", mouseDrag);
   /* open each tool: tile count, back to hub */
   const tools = await page.evaluate(async () => {
     const out = {};
@@ -363,6 +399,45 @@ const MOCK = `(function(){
   report("B15) the hub, the headline and the cards read in each of the nine languages", badLang.length === 0, badLang.map(l => langs[l]));
   await page.evaluate(() => { localStorage.setItem("hnk_ws_lang", "my"); });
   report("B16) no page error during any of it", errs.length === 0, errs.slice(0, 3));
+  /* 6.123.1 — THE OWNER'S MONITOR ("Imagine မှာ နဲနဲ ညှိပေးပါ ui ux ကို"). At 1440×900 the stage column was ~60% of the page and a
+     2:3 photograph drawn at that width ran 1,200px tall: the picture alone past the fold, Apply and the templates under it, and the
+     busy sign a 13px line over it. Now the picture box is capped so its height fits the window minus the card's chrome (imFit,
+     IM_CHROME 300, as Retouch's cmpFit), the stage column follows the box, the templates take the room, and the busy sign is a
+     15px pill with a 24px spinner on a dark disc. A phone keeps the fluid, column-wide picture. */
+  const dp = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const derrs = []; dp.on("pageerror", e => derrs.push(String(e).slice(0, 240)));
+  await dp.addInitScript(MOCK); await dp.addInitScript(() => { try { localStorage.setItem("hnk_ws_onboarded", "1"); } catch (e) {} });
+  await dp.goto(`http://127.0.0.1:${PORT}/index.html?page=pgImagine`, { waitUntil: "load" }); await dp.waitForTimeout(900);
+  const desk = await dp.evaluate(async () => {
+    const c = document.createElement("canvas"); c.width = 400; c.height = 600; const x = c.getContext("2d"); x.fillStyle = "#7a5a2a"; x.fillRect(0, 0, 400, 600); x.fillStyle = "#e9c46a"; x.fillRect(100, 150, 200, 200);
+    state.rhKey = "rh-test-key-value-placeholder"; IMAGINE.openTool("lighting");
+    IMAGINE.addPhotos([{ dataUrl: c.toDataURL("image/png"), name: "tall.png" }]);
+    await new Promise(r => setTimeout(r, 500));
+    const R = (sel) => document.querySelector(sel).getBoundingClientRect();
+    const wrap = R(".im-cmpwrap"), cmp = R(".im-cmp"), col = R(".im-col-stage"), set = R(".im-col-set");
+    const tiles = [...document.querySelectorAll("#imTpls .im-tpl")].slice(0, 5).map(t => Math.round(t.getBoundingClientRect().top));
+    const fit = { vh: innerHeight, cmpH: cmp.height, cmpW: cmp.width, maxW: document.querySelector(".im-cmpwrap").style.maxWidth, colFlex: document.querySelector(".im-col-stage").style.flex,
+      centred: Math.abs((wrap.left - col.left) - (col.right - wrap.right)) <= 3, colW: col.width, setW: set.width, perRow: tiles.filter(t => t === tiles[0]).length };
+    /* a hanging request → the busy pill over the dimmed picture */
+    window.__hang = true; window.__reqs = [];
+    document.querySelector('#imTpls .im-tpl[data-preset="goldRim"]').click(); await new Promise(r => setTimeout(r, 60));
+    document.getElementById("imApply").click(); await new Promise(r => setTimeout(r, 300));
+    const pill = document.querySelector(".im-busy .im-busy-pill"), ps = pill && getComputedStyle(pill), sp = pill && pill.querySelector(".im-spin"), pr = pill && pill.getBoundingClientRect(), cr = R(".im-cmp");
+    const alpha = ps ? parseFloat((ps.backgroundColor.match(/rgba?\([^)]*,\s*([\d.]+)\)/) || [0, "1"])[1]) : 0;
+    const busy = { pill: !!pill, fs: ps && parseFloat(ps.fontSize), spin: sp ? sp.getBoundingClientRect().width : 0, alpha, words: pill && pill.textContent.trim(),
+      inside: !!pr && pr.left >= cr.left && pr.right <= cr.right && pr.top >= cr.top && pr.bottom <= cr.bottom, centred: !!pr && Math.abs((pr.left + pr.width / 2) - (cr.left + cr.width / 2)) <= 3 && Math.abs((pr.top + pr.height / 2) - (cr.top + cr.height / 2)) <= 3, busyState: IMAGINE.state.busy };
+    document.getElementById("imStop").click(); const t0 = Date.now(); while (Date.now() - t0 < 3000 && IMAGINE.state.busy) await new Promise(r => setTimeout(r, 30)); window.__hang = false;
+    return { fit, busy };
+  });
+  report("B17) on a 1440×900 monitor the tool-view picture fits the window: its box is at most window height − 300 tall (and at least 320), centred in a stage column that shrinks to it, the settings column is the wider one with four template tiles to a row",
+    desk.fit.cmpH <= desk.fit.vh - 300 + 2 && desk.fit.cmpH >= 320 && /^\d+px$/.test(desk.fit.maxW) && /^0 1 \d+px$/.test(desk.fit.colFlex) && desk.fit.centred && desk.fit.setW > desk.fit.colW && desk.fit.perRow === 4, desk.fit);
+  report("B18) while a job runs the busy sign is a readable pill inside the picture: spinner + words on one disc, 15px or larger, a 24px spinner, a background at least 0.85 opaque, centred on the picture; Stop still ends it",
+    desk.busy.pill && desk.busy.busyState && desk.busy.fs >= 15 && desk.busy.spin >= 24 && desk.busy.alpha >= 0.85 && /\S/.test(desk.busy.words || "") && desk.busy.inside && desk.busy.centred, desk.busy);
+  await dp.setViewportSize({ width: 430, height: 900 }); await dp.waitForTimeout(400);
+  const phoneFit = await dp.evaluate(() => ({ maxW: document.querySelector(".im-cmpwrap").style.maxWidth, colFlex: document.querySelector(".im-col-stage").style.flex, cmpW: document.querySelector(".im-cmp").getBoundingClientRect().width, cardW: document.querySelector(".im-stage").getBoundingClientRect().width }));
+  report("B19) the same page narrowed to a phone drops the cap again: no max-width, no fixed column, the picture as wide as its card allows", phoneFit.maxW === "" && phoneFit.colFlex === "" && phoneFit.cmpW >= phoneFit.cardW - 40, phoneFit);
+  report("B20) no page error on the monitor walk", derrs.length === 0, derrs.slice(0, 3));
+  await dp.close();
 
   /* ---------------- C) the panel boots the same module ---------------- */
   const PANEL = path.join(ROOT, "panel");

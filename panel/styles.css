@@ -3623,6 +3623,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .im-field>.mut{display:block;margin-bottom:4px}
 .im-field select.inp{width:100%}
 @media (min-width:1100px){.im-tpl{width:23%}}
+/* 6.123.1 — the picture fits the window on a monitor: imFit caps the picture box from the window height and the stage
+   column follows the box (Retouch's cmpFit, 6.116.0); the box sits centred in whatever room is left */
+.im-cmpwrap,.im-markbox{margin-left:auto;margin-right:auto}
+/* 6.123.1 — the busy sign is a pill a student reads from across the desk: 15px on a dark bordered disc with a 24px
+   spinner (an 18px ring and inherited 13px text sat unreadable over a 1,200px photograph on the owner's monitor) */
+.im-busy-pill{display:flex;align-items:center;padding:12px 20px;border-radius:999px;background:rgba(11,13,20,.9);border:1px solid rgba(217,164,65,.5);box-shadow:0 10px 30px rgba(0,0,0,.55);font-size:15px;line-height:1.3;white-space:nowrap;max-width:92%;box-sizing:border-box}
+.im-busy-pill .im-spin{width:24px;height:24px;flex:none}
 /* 6.31.0 — the Reference Card: a dashed empty slot until a picture is dropped in; then the picture with remove (✕) and replace (↻)
    (6.32.0: these rules moved inside the markers — the panel lifter copies only what lies between them) */
 .im-tpl.im-ref .im-tpl-im{border:1.5px dashed rgba(233,196,106,.55);border-radius:8px 8px 0 0;background:rgba(233,196,106,.06);box-sizing:border-box}
