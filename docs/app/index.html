@@ -4523,10 +4523,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=b10074566ef8"></script>
 <script src="data/imagine.js?v=22984cce5630"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=c2db16472ad0"></script>
+<script src="data/album-module.js?v=f921f9f59fd4"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=93c41c48a96e"></script>
-<script src="data/whatsnew.js?v=036fe21687a8"></script>
+<script src="data/whatsnew.js?v=5819dd1eb859"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -8194,30 +8194,122 @@ function rhFitByBlocks(promptText, maxLen){
   var out=blocks.map(function(b){ return b.lines.join("\n"); }).join("\n")+tail;
   return { text: out, dropped: dropped };
 }
+/* 6.126.0 — THE LOCKS AND THE AVOID SURVIVE THE CUT.
+   Measured on the shipped catalog before this change: of the 434 workflow ×
+   cap cases the models actually cut, 65 lost a LOCK line and 406 lost the
+   AVOID list whole. master-bgfg-replace at 800 arrived with all five of its
+   locks gone — POSE, PROPORTION, SKIN, LIGHTING, FRAME — which are the lines
+   that keep the student's subject the same person; and a prompt with fewer
+   than three labelled blocks never reached rhFitByBlocks at all, so the
+   plain character cut took the locks and the AVOID with it. A capped model
+   was being told what to make and never told what to keep.
+   So the cut now works on four parts, not two:
+     the task's opening   — cut clean, always first, always the source's own
+                            first line (forty wedding cards are worded with
+                            their lock FIRST, so the first line is never
+                            lifted out of the task),
+     the LOCK lines       — whole, in source order, up to 45% of the room,
+                            lifted out of the body so no cut can reach them,
+     the TASK GUARD       — whole whenever it fits, as before,
+     the AVOID list       — whole when it fits, otherwise COMPACT: the lead
+                            "AVOID: " and as many whole comma-separated items
+                            as the room holds, closed with a full stop. The
+                            items are already written worst-first, so one item
+                            is worth sending: Outfit Set Sheet at 800 has room
+                            for exactly its first, and hearing "not a different
+                            outfit in a callout" beats hearing nothing. Where
+                            the guard alone has eaten the cap (three cards at
+                            800 leave 6–20 characters) no AVOID is sent.
+   A prompt with no guard takes the same four-part treatment — that is the
+   case this fix is named for. A freeform prompt with no locks and no AVOID
+   still takes exactly the character cut it took before. */
+var RH_LOCK_LINE = /^[A-Z][A-Za-z0-9 ,&'\/()—-]{0,60}\bLOCKS?\b[^\n:]{0,40}:/;
+function rhLockSplit(body){
+  var lines=String(body||"").split("\n"), locks=[], rest=[];
+  for(var i=0;i<lines.length;i++){
+    if(i>0 && RH_LOCK_LINE.test(lines[i])) locks.push(lines[i]); else rest.push(lines[i]);
+  }
+  return { locks: locks, rest: rest.join("\n").replace(/\s+$/,"") };
+}
+function rhKeepWhole(lines, budget){
+  var out=[], used=0;
+  for(var i=0;i<lines.length;i++){
+    var add=lines[i].length+1;
+    if(used+add>budget) break;
+    used+=add; out.push(lines[i]);
+  }
+  /* 6.126.0 — a single lock can be longer than the whole budget (the studio's
+     five-lock composites run 300–700 characters a line). Then its OPENING
+     arrives, cut clean at a sentence: "POSE LOCK: keep the subject's pose
+     unchanged." is an instruction the model can follow, and nothing is not. */
+  if(!out.length && lines.length && budget>80){
+    var one=rhCutClean(lines[0], budget-1);
+    if(one) out.push(one);
+  }
+  return out;
+}
+/* the whole list when it fits; otherwise its opening items, whole */
+function rhAvoidFit(avoid, room){
+  var s=String(avoid||"");
+  if(!s || !(room>0)) return "";
+  if(s.length<=room) return s;
+  var k=s.indexOf("AVOID:");
+  if(k<0) return "";
+  var lead=s.slice(0,k+6)+" ";
+  var items=s.slice(k+6).replace(/^\s+/,"").replace(/\s*\.\s*$/,"").split(/,\s*/);
+  var keep=[], used=lead.length+1;   /* +1 for the closing full stop */
+  for(var i=0;i<items.length;i++){
+    if(!items[i]) continue;
+    var add=(keep.length?2:0)+items[i].length;
+    if(used+add>room) break;
+    used+=add; keep.push(items[i]);
+  }
+  if(!keep.length) return "";
+  return lead+keep.join(", ")+".";
+}
 function rhTruncatePrompt(promptText, maxLen){
   var s=String(promptText||"");
   if(!maxLen || s.length<=maxLen) return s;
   /* whole blocks first; only what will not fit even then meets the cut */
   s = rhFitByBlocks(s, maxLen).text;
   if(s.length<=maxLen) return s;
-  var gi=s.indexOf("TASK GUARD:");
-  if(gi<0) return rhCutClean(s, maxLen);
-  var body=s.slice(0,gi).replace(/\s+$/,""), tail=s.slice(gi), avoid="";
-  var ai=tail.indexOf("\n\nAVOID:");
-  if(ai>=0){ avoid=tail.slice(ai); tail=tail.slice(0,ai); }
-  var guard=tail.replace(/\s+$/,"");
-  var room=maxLen-guard.length-2, head;
-  if(room<=0){
-    /* the guard alone is bigger than the cap. Only here is it cut, and the
-       task still keeps two fifths of the room, so both halves arrive as
-       their own opening sentences rather than one arriving as nothing. */
-    head=rhCutClean(body, Math.floor(maxLen*0.4));
-    return (head?head+"\n\n":"")+rhCutClean(guard, maxLen-(head?head.length+2:0));
+  var gi=s.indexOf("TASK GUARD:"), body=s, guard="", avoid="", ai;
+  if(gi>=0){
+    body=s.slice(0,gi); var tail=s.slice(gi);
+    ai=tail.indexOf("\n\nAVOID:");
+    if(ai>=0){ avoid=tail.slice(ai); tail=tail.slice(0,ai); }
+    guard=tail.replace(/\s+$/,"");
+  } else {
+    ai=s.indexOf("\n\nAVOID:");
+    if(ai>=0){ avoid=s.slice(ai); body=s.slice(0,ai); }
   }
-  head=rhCutClean(body, room);
-  var out=(head?head+"\n\n":"")+guard;
-  if(avoid && out.length+avoid.length<=maxLen) out+=avoid;
-  return out;
+  body=body.replace(/\s+$/,"");
+  if(guard){
+    var room0=maxLen-guard.length-2;
+    if(room0<=0){
+      /* the guard alone is bigger than the cap. Only here is it cut, and the
+         task still keeps two fifths of the room, so both halves arrive as
+         their own opening sentences rather than one arriving as nothing. */
+      var h0=rhCutClean(body, Math.floor(maxLen*0.4));
+      return (h0?h0+"\n\n":"")+rhCutClean(guard, maxLen-(h0?h0.length+2:0));
+    }
+  }
+  var room=guard?maxLen-guard.length-2:maxLen;
+  var sp=rhLockSplit(body);
+  var lockBytes=0, i;
+  for(i=0;i<sp.locks.length;i++) lockBytes+=sp.locks[i].length+1;
+  var lockRoom=Math.min(lockBytes, Math.floor(room*0.45));
+  var kept=rhKeepWhole(sp.locks, lockRoom);
+  var lockText=kept.length?"\n"+kept.join("\n"):"";
+  /* a quarter of the room for the AVOID, and never less than 120 characters
+     while the room is comfortable — a hundred and twenty is two or three real
+     items, and it costs the task one sentence. Where the guard alone has
+     eaten the cap there is nothing to reserve and the AVOID is left out. */
+  var avoidRoom=avoid?Math.min(avoid.length, Math.max(room>400?120:0, Math.floor(room*0.25))):0;
+  var head=rhCutClean(sp.rest, room-lockText.length-avoidRoom);
+  var out=(head+lockText).replace(/^\n/,"");
+  if(guard) out=(out?out+"\n\n":"")+guard;
+  return out+rhAvoidFit(avoid, maxLen-out.length);
 }
 /* v4.58 — the request body is built by its own function so the price quote
    can be taken against the EXACT payload the submit would send. A quote for a
@@ -30777,7 +30869,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.125.0";
+var APP_VER="6.126.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

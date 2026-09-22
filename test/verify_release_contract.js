@@ -187,6 +187,14 @@ check("the app release is at least 5.2.0", versionAtLeast(appVersion, "5.2.0"), 
 check("APP_VER and version.json stay in lockstep", appVersion === versionJson.v, `${appVersion} vs ${versionJson.v}`);
 check("the API identifies the same patch release as the web app", apiVersion === appVersion, `${apiVersion} vs ${appVersion}`);
 check("the service-worker shell cache follows the app release", cacheVersion === appVersion, `${cacheVersion} vs ${appVersion}`);
+/* 6.126.0 — the Album module stamps its own release into every library file a student
+   exports (hnkAlbumLib.v), and the panel carries a lifted copy of it. 6.125.0 shipped
+   with the stamp left a release behind, so the pair is pinned to APP_VER here rather
+   than found by one browser test. */
+const albumMark = (read("docs/app/data/album-module.js").match(/var APP_MARK = "([\d.]+)"/) || [])[1] || "";
+const panelAlbumMark = (read("panel/js/hnk_album.js").match(/var APP_MARK = "([\d.]+)"/) || [])[1] || "";
+check("the Album module's exported-file stamp follows the app release, on both surfaces",
+  albumMark === appVersion && panelAlbumMark === appVersion, `${albumMark} / ${panelAlbumMark} vs ${appVersion}`);
 check("both deploy lanes attest API version and the exact applied schema",
   [productionDeploy, stagingDeploy].every(source =>
     source.includes("/api/health") && source.includes("sha256sum server/sql/schema.sql") &&

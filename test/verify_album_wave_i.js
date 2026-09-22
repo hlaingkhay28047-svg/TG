@@ -53,7 +53,7 @@ const WI = require(path.join(ROOT, "tools", "lib", "album_wave_i.js"));
 const GEN = require(path.join(ROOT, "tools", "build_album_data.js"));
 /* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 ceiling) */
 const MOD = read("docs/app/data/album-module.js");
-const VER = "6.125.0", PVER = "6.196.0";
+const VER = "6.126.0", PVER = "6.197.0";
 const L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
 const PACKS = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "ne", "pa", "ta", "te", "ur"];
 /* every line this wave added, as the module asks for it */
@@ -308,7 +308,7 @@ async function walk() {
     });
     report("B10) every sheet leaves as one ZIP the browser wrote itself, and the library saves to one file another computer reads back",
       b10.zip && b10.zip.sig === "4034b50" && b10.zip.eocd === "6054b50" && b10.zip.count === 3 && b10.zip.size > 10000 &&
-      b10.json && b10.json.items === 3 && b10.json.records === 3 && b10.json.v === "6.125.0" &&
+      b10.json && b10.json.items === 3 && b10.json.records === 3 && b10.json.v === VER &&
       b10.round && b10.round.n > 0 && b10.round.after > b10.round.before, b10);
 
     const b11 = await page.evaluate(async () => {
@@ -397,17 +397,21 @@ function release() {
   const manifest = JSON.parse(read("panel/release-manifest.json"));
   const pv = JSON.parse(read("docs/download/panel-version.json"));
   const ver = JSON.parse(read("docs/app/version.json"));
-  report("E1) the lockstep pins name 6.125.0 / panel 6.196.0 on every surface",
-    has(APP, 'var APP_VER="' + VER + '"') && ver.v === VER && has(read("docs/app/sw.js"), "hnk-web-studio-v6-125-0") &&
+  report(`E1) the lockstep pins name ${VER} / panel ${PVER} on every surface`,
+    has(APP, 'var APP_VER="' + VER + '"') && ver.v === VER && has(read("docs/app/sw.js"), "hnk-web-studio-v" + VER.replace(/\./g, "-")) &&
     has(read("server/index.js"), 'const API_VERSION = "' + VER + '"') && has(MAIN, 'const PANEL_VERSION = "' + PVER + '"') &&
     JSON.parse(read("panel/manifest.json")).version === PVER && manifest.version === PVER &&
     manifest.artifact_file === "HNK_Ai_Panel_v" + PVER + ".ccx" && pv.v === PVER && pv.latest_version === PVER,
     { app: ver.v, panel: manifest.version });
 
   const wn = JSON.parse(read("docs/app/data/whatsnew.js").replace(/^window\.HNK_WHATS_NEW=/, "").replace(/;\s*$/, ""));
-  const row = wn[0];
-  report("E2) the What's New card leads with this release, in all nine languages, and points at the Album page",
-    row && row.v === VER && row.ref === "pgAlbum" &&
+  /* 6.126.0 — the wave shipped as 6.125.0 and led the strip that day; every release
+     since adds a row above it, so the row is found by its own version and the window
+     widens by one rather than the row being re-dated */
+  const WAVE_V = "6.125.0";
+  const row = wn.find((r) => r.v === WAVE_V);
+  report(`E2) the What's New strip carries the ${WAVE_V} row, in all nine languages, pointing at the Album page (it led the strip when this wave shipped; the 6.126.0 row sits above it now)`,
+    !!row && wn.indexOf(row) <= 1 && row.ref === "pgAlbum" &&
     ["my", "en"].concat(L7).every((l) => typeof row.t[l] === "string" && row.t[l].length > 10 && typeof row.s[l] === "string" && row.s[l].length > 80),
     { v: row && row.v, ref: row && row.ref });
 

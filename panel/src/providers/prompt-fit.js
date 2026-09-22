@@ -74,30 +74,96 @@
     }
     return { text: blocks.map(function (b) { return b.lines.join("\n"); }).join("\n") + tail, dropped: dropped };
   }
+  /* v6.197.0 — the locks and the AVOID survive the cut, byte-identical to the
+     app's rhTruncatePrompt (docs/app/index.html). Measured before the change:
+     of the 434 workflow × cap cases the models cut, 65 lost a LOCK line and
+     406 lost the AVOID list whole, and a prompt with fewer than three
+     labelled blocks never reached fitByBlocks at all. The LOCK lines are now
+     lifted out of the body so no character cut can reach them, and an AVOID
+     that will not fit whole arrives compact — its lead and as many whole
+     items as the room holds. */
+  var LOCK_LINE = /^[A-Z][A-Za-z0-9 ,&'\/()—-]{0,60}\bLOCKS?\b[^\n:]{0,40}:/;
+  function lockSplit(body) {
+    var lines = String(body || "").split("\n"), locks = [], rest = [];
+    for (var i = 0; i < lines.length; i++) {
+      if (i > 0 && LOCK_LINE.test(lines[i])) locks.push(lines[i]); else rest.push(lines[i]);
+    }
+    return { locks: locks, rest: rest.join("\n").replace(/\s+$/, "") };
+  }
+  function keepWhole(lines, budget) {
+    var out = [], used = 0;
+    for (var i = 0; i < lines.length; i++) {
+      var add = lines[i].length + 1;
+      if (used + add > budget) break;
+      used += add; out.push(lines[i]);
+    }
+    /* a single lock can be longer than the whole budget; then its OPENING
+       arrives, cut clean at a sentence, because a cut lock is an instruction
+       and nothing is not */
+    if (!out.length && lines.length && budget > 80) {
+      var one = cutClean(lines[0], budget - 1);
+      if (one) out.push(one);
+    }
+    return out;
+  }
+  function avoidFit(avoid, room) {
+    var s = String(avoid || "");
+    if (!s || !(room > 0)) return "";
+    if (s.length <= room) return s;
+    var k = s.indexOf("AVOID:");
+    if (k < 0) return "";
+    var lead = s.slice(0, k + 6) + " ";
+    var items = s.slice(k + 6).replace(/^\s+/, "").replace(/\s*\.\s*$/, "").split(/,\s*/);
+    var keep = [], used = lead.length + 1;
+    for (var i = 0; i < items.length; i++) {
+      if (!items[i]) continue;
+      var add = (keep.length ? 2 : 0) + items[i].length;
+      if (used + add > room) break;
+      used += add; keep.push(items[i]);
+    }
+    if (!keep.length) return "";
+    return lead + keep.join(", ") + ".";
+  }
   function fit(promptText, maxLen) {
     var s = String(promptText || "");
     if (!maxLen || s.length <= maxLen) return s;
     s = fitByBlocks(s, maxLen).text;
     if (s.length <= maxLen) return s;
-    var gi = s.indexOf("TASK GUARD:");
-    if (gi < 0) return cutClean(s, maxLen);
-    var body = s.slice(0, gi).replace(/\s+$/, ""), tail = s.slice(gi), avoid = "";
-    var ai = tail.indexOf("\n\nAVOID:");
-    if (ai >= 0) { avoid = tail.slice(ai); tail = tail.slice(0, ai); }
-    var guard = tail.replace(/\s+$/, "");
-    var room = maxLen - guard.length - 2, head;
-    if (room <= 0) {
-      /* the guard alone is bigger than the cap. Only here is it cut, and the
-         task still keeps two fifths of the room, so both halves arrive as
-         their own opening sentences rather than one arriving as nothing. */
-      head = cutClean(body, Math.floor(maxLen * 0.4));
-      return (head ? head + "\n\n" : "") + cutClean(guard, maxLen - (head ? head.length + 2 : 0));
+    var gi = s.indexOf("TASK GUARD:"), body = s, guard = "", avoid = "", ai;
+    if (gi >= 0) {
+      body = s.slice(0, gi); var tail = s.slice(gi);
+      ai = tail.indexOf("\n\nAVOID:");
+      if (ai >= 0) { avoid = tail.slice(ai); tail = tail.slice(0, ai); }
+      guard = tail.replace(/\s+$/, "");
+    } else {
+      ai = s.indexOf("\n\nAVOID:");
+      if (ai >= 0) { avoid = s.slice(ai); body = s.slice(0, ai); }
     }
-    head = cutClean(body, room);
-    var out = (head ? head + "\n\n" : "") + guard;
-    if (avoid && out.length + avoid.length <= maxLen) out += avoid;
-    return out;
+    body = body.replace(/\s+$/, "");
+    if (guard) {
+      var room0 = maxLen - guard.length - 2;
+      if (room0 <= 0) {
+        /* the guard alone is bigger than the cap. Only here is it cut, and the
+           task still keeps two fifths of the room, so both halves arrive as
+           their own opening sentences rather than one arriving as nothing. */
+        var h0 = cutClean(body, Math.floor(maxLen * 0.4));
+        return (h0 ? h0 + "\n\n" : "") + cutClean(guard, maxLen - (h0 ? h0.length + 2 : 0));
+      }
+    }
+    var room = guard ? maxLen - guard.length - 2 : maxLen;
+    var sp = lockSplit(body), lockBytes = 0, i;
+    for (i = 0; i < sp.locks.length; i++) lockBytes += sp.locks[i].length + 1;
+    var lockRoom = Math.min(lockBytes, Math.floor(room * 0.45));
+    var kept = keepWhole(sp.locks, lockRoom);
+    var lockText = kept.length ? "\n" + kept.join("\n") : "";
+    /* a quarter of the room for the AVOID, never less than 120 characters
+       while the room is comfortable — the app's own reserve */
+    var avoidRoom = avoid ? Math.min(avoid.length, Math.max(room > 400 ? 120 : 0, Math.floor(room * 0.25))) : 0;
+    var head = cutClean(sp.rest, room - lockText.length - avoidRoom);
+    var out = (head + lockText).replace(/^\n/, "");
+    if (guard) out = (out ? out + "\n\n" : "") + guard;
+    return out + avoidFit(avoid, maxLen - out.length);
   }
   global.HNK = global.HNK || {};
-  global.HNK.promptFit = { fit: fit, cutClean: cutClean, fitByBlocks: fitByBlocks };
+  global.HNK.promptFit = { fit: fit, cutClean: cutClean, fitByBlocks: fitByBlocks, avoidFit: avoidFit, lockSplit: lockSplit };
 })(typeof globalThis !== "undefined" ? globalThis : this);
