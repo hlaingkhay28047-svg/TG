@@ -77,6 +77,22 @@ const badPlace = wfSkin.filter(w => {
 report("B2) the AGE LOCK is its own line and never the first, so the 800-character cut keeps it whole",
   badPlace.length === 0, badPlace.map(w => w.id));
 
+/* ── B3) the three age items LEAD the AVOID list ─────────────────────────────
+   The first version of this release appended them, and appending lost them:
+   rhAvoidFit sends the lead "AVOID: " and as many WHOLE opening items as the
+   room holds, so an item written last is the first thing a capped model never
+   hears. Measured on the shipped caps, sixteen of the 158 cut cases carried
+   neither the AGE LOCK line nor one of these items; leading the list took that
+   to two — and those two are cards whose TASK GUARD alone fills the 800 cap,
+   the class verify_prompt_fit A2b/A3 records. The list is written worst-first;
+   for a skin job "older-looking face" IS the worst, so this is also its place. */
+const notLeading = wfSkin.filter(w => {
+  const parts = (w.negative || "").split(",").map(x => x.trim().toLowerCase());
+  return AVOID_ITEMS.some((x, i) => parts[i] !== x);
+}).map(w => w.id);
+report("B3) the three age items open every guarded AVOID list, so a capped model hears them first",
+  notLeading.length === 0, notLeading);
+
 /* ── C) the two Imagine skin tools carry it too ──────────────────────────── */
 /* named, not inferred: these are the two Imagine tools whose job is the skin.
    Face Clarity's prompt never says "retouch" — it asks for texture back after a
@@ -96,6 +112,15 @@ const gearLast = IM.filter(t => (t.avoid || "").indexOf("NO STUDIO GEAR") >= 0)
   .filter(t => AVOID_ITEMS.some(x => (t.avoid || "").indexOf(x) > (t.avoid || "").indexOf("NO STUDIO GEAR")));
 report("C2) the new AVOID items sit before the studio-gear sentence, which stays last",
   gearLast.length === 0, gearLast.map(t => t.id));
+
+/* ── C3) the Imagine lists lead with them too ────────────────────────────── */
+const imNotLeading = imSkin.filter(t => {
+  const k = (t.avoid || "").indexOf("AVOID:");
+  const parts = (t.avoid || "").slice(k + 6).split(",").map(x => x.trim().toLowerCase());
+  return AVOID_ITEMS.some((x, i) => parts[i] !== x);
+}).map(t => t.id);
+report("C3) the two Imagine lists open with the three age items as well",
+  imNotLeading.length === 0, imNotLeading);
 
 /* ── D) AI Retouch keeps its own 6.118.0 rule — this release did not touch it ── */
 const ret = WF.find(w => w.id === "retouch");
