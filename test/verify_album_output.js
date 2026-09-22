@@ -63,7 +63,13 @@ const { withPremium } = require("./_seed_premium.js");
 
 const ROOT = path.join(__dirname, "..");
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
-const APP = read("docs/app/index.html");
+/* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 raw
+   ceiling), and the shell loads it by <script src> beside the other data files. The two files
+   are what the app ships, so this check reads them as one source; the split itself is pinned
+   by verify_app_data_files (A2 · D2) and verify_album_pages (A4). */
+const ALBMOD = read("docs/app/data/album-module.js");
+const APP = read("docs/app/index.html") + "\n" + ALBMOD;
+
 const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const MANIFEST = JSON.parse(read("panel/release-manifest.json"));
@@ -121,8 +127,9 @@ function source() {
     /var m = opt\.bleed \? safe\.bleed : 0;/.test(APP) &&
     /Math\.round\(\(safe\.page\.w \+ 2\*m\)\*scale\)/.test(APP) &&
     /Math\.round\(\(safe\.page\.h \+ 2\*m\)\*scale\)/.test(APP) &&
-    /var lay = layoutRect\(safe, pg\);/.test(APP) &&
-    /var tpl = pageTpl\(pg, idx\), rects = cellRects\(tpl, lay\);/.test(APP) &&
+    /* 6.125.0 — the three reads are one declaration since wave I; the rectangle is still the
+       only thing the cells are laid over, which is what this check is for. */
+    /var lay = layoutRect\(safe, pg\), tpl = pageTpl\(pg, idx\), rects = cellRects\(tpl, lay\);/.test(APP) &&
     /var dx = \(r\.x\+m\)\*scale, dy = \(r\.y\+m\)\*scale/.test(APP) &&
     /drawTexts\(x, pg, safe, scale, m\);/.test(APP), { found: dp.length });
 
@@ -188,10 +195,10 @@ function source() {
     /L\("alb_out_sheet"\)/.test(APP) && /psdEstimate\(curPage\(\), DOC\.cur\)/.test(APP), null);
 
   report("A11) the document remembers what wave D added and a saved album from before it still opens — the page's bleed and the stage's view both fall back rather than throwing",
-    /return \{ v:4, sizeId:"12x36"/.test(APP) &&
+    /return \{ v:5, sizeId:"12x36"/.test(APP) &&   /* 6.125.0 wave I — the blank document is v5 */
     /view:"page"/.test(APP) &&
-    /bleed:false, decor:\[\], story:-1, overlay:null \}; \}/.test(APP) &&   /* 6.121.0 — a page also carries the engine's decor and its story index; 6.122.0 — and its overlay */
-    /out\.view = \(d\.view === "spread" \|\| d\.view === "book"\) \? d\.view : "page";/.test(APP) &&   /* 6.121.0 — the book is the third view */
+    /bleed:false, decor:\[\], story:-1, overlay:null, lib:"", bg:null \}; \}/.test(APP) &&   /* 6.121.0 — a page also carries the engine's decor and its story index; 6.122.0 — and its overlay; 6.125.0 — and its template and sheet background */
+    /out\.view = \(d\.view === "spread" \|\| d\.view === "book" \|\| d\.view === "3d"\) \? d\.view : "page";/.test(APP) &&   /* 6.121.0 — the book is the third view; 6.125.0 — the mockup the fourth */
     /pg\.bleed = !!p\.bleed;/.test(APP), null);
 }
 
@@ -340,7 +347,7 @@ async function browserWalk() {
              texts: ALBUM.doc().pages[0].texts.length, v: ALBUM.doc().v };
   });
   report("C1) the walk is set up on a real album page — the size the student picked, three photographs measured in, two lines of type, and the document at wave D's own version",
-    set.size === "story" && set.photos === 3 && set.texts === 2 && set.v === 4, set);
+    set.size === "story" && set.photos === 3 && set.texts === 2 && set.v === 5, set);   /* 6.125.0 wave I raised the document to v5 */
 
   const ui = await page.evaluate(() => ({
     edge: (document.getElementById("albBleed") || {}).textContent || "",

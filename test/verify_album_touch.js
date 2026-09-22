@@ -47,8 +47,8 @@ const KEYS = ["alb_touch_note", "alb_sel_none", "alb_sel_photo", "alb_sel_text",
   "alb_move_u", "alb_move_d", "alb_spread_note"];
 const PORT = Number(process.env.PORT || 8931);
 const BASE = "http://127.0.0.1:" + PORT;
-const WEB = "6.124.0";   /* re-pinned with each lockstep bump */
-const PANEL = "6.195.0";
+const WEB = "6.125.0";   /* re-pinned with each lockstep bump */
+const PANEL = "6.196.0";
 /* 6.111.0 — WEB/PANEL are the CURRENT release, which E1 pins in lockstep and
    which every release moves. ALBUM_WAVE is a different fact: the release that
    actually SHIPPED this stage, and therefore the release whose What's New row
@@ -75,7 +75,8 @@ function rows(key) {
   return (APP.match(re) || []).length + (l14Row(L14[key]) ? 1 : 0);
 }
 const CSS = (APP.match(/\/\* ---- ALBUM_CSS[\s\S]*?\/\* ---- \/ALBUM_CSS ---- \*\//) || [""])[0];
-const MOD = (APP.match(/var ALBUM = \(function\(\)\{[\s\S]*?\n\}\)\(\);/) || [""])[0];
+/* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 ceiling) */
+const MOD = read("docs/app/data/album-module.js");
 
 /* ======================= A — what the source must say ======================= */
 function source() {

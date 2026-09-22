@@ -1151,3 +1151,12 @@ jobs:
       # nine languages plus the fifteen reader packs.
       - name: Verify Smart Album wave G — ornaments, overlays, the shelf, the quality chip and the panel's Album page
         run: PORT=8931 node test/verify_album_wave_g.js
+      # 6.125.0 — Smart Album wave I: the template library (one PSD, a whole folder, or a library file read into
+      # frames, text slots and a picture; groups, orientation / photo-count / star filters, search, trash, export
+      # and import of the library itself), the one-dialog album build from the studio's own templates with the
+      # couple, the date and the venue typed once, the four standee print sizes with twelve ready designs, the
+      # mockup view (the open book on a table, the standee on its stand), the sheet background with its tint, the
+      # date blocks, monograms and the studio logo, twelve text styles, the folder / ZIP export, and the one
+      # hundred and forty-six new lines in nine languages plus the fifteen reader packs.
+      - name: Verify Smart Album wave I — the template library, the build, the standees, the mockup and the marks
+        run: PORT=8931 node test/verify_album_wave_i.js

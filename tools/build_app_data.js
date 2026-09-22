@@ -22,7 +22,8 @@ const before = html;
 
 for (const key of Object.keys(A.FILES)) {
   const spec = A.FILES[key];
-  JSON.parse(A.jsonText(key));
+  if (spec.kind === "module") A.moduleText(key);            /* 6.125.0 — code, checked by its markers */
+  else JSON.parse(A.jsonText(key));
   if (spec.tag !== "script") continue;
   const tag = A.contentTag(key);
   const re = new RegExp('<script src="data/' + spec.file.replace(/\./g, "\\.") + '\\?v=[0-9a-f]+"><\\/script>');

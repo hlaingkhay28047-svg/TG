@@ -48,7 +48,8 @@ const PWN = read("panel/js/hnk_whats_new.js");
 const SWEEP = read("test/sweep_v477_upgrades.js");
 const A = require(path.join(ROOT, "tools", "lib", "app-data.js"));
 const ALBUM = A.readAlbum();
-const MOD = (APP.match(/var ALBUM = \(function\(\)\{[\s\S]*?\n\}\)\(\);/) || [""])[0];
+/* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 ceiling) */
+const MOD = read("docs/app/data/album-module.js");
 const CSS = (APP.match(/\/\* ---- ALBUM_CSS[\s\S]*?\/\* ---- \/ALBUM_CSS ---- \*\//) || [""])[0];
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const PACKS = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "ne", "pa", "ta", "te", "ur"];
@@ -102,9 +103,9 @@ function sourcePins() {
     /if \(k === "Delete" \|\| k === "Backspace"\)\{ if \(selObj\(\)\)\{ ev\.preventDefault\(\); removeSelected\(\); \} return; \}/.test(MOD) &&
     /document\.addEventListener\("keydown", onKey, false\); KEYS_BOUND = true;/.test(MOD), null);
 
-  report("A5) the page is twelve cards in one order — shelf · occasion · size · pages · stage · photos · layout · design · ornaments · text · export · print check (6.122.0 wave G set the shelf first and the ornaments after the design) — and the stage's third view is the book",
-    /ROOT\.appendChild\(layoutCard\(\)\);\n\s*ROOT\.appendChild\(designCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(ornCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(textCard\(\)\);\n\s*ROOT\.appendChild\(exportCard\(\)\);\n\s*ROOT\.appendChild\(checkCard\(\)\);/.test(MOD) &&
-    /out\.view = \(d\.view === "spread" \|\| d\.view === "book"\) \? d\.view : "page";/.test(MOD) &&
+  report("A5) the page is thirteen cards in one order — shelf · occasion · size · pages · stage · photos · layout · templates · design · ornaments · text · export · print check (6.122.0 wave G set the shelf first and the ornaments after the design; 6.125.0 wave I put the template library after the layouts, where a student picks a ready page) — and the stage's third view is the book",
+    /ROOT\.appendChild\(layoutCard\(\)\);\n\s*ROOT\.appendChild\(libCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(designCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(ornCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(textCard\(\)\);\n\s*ROOT\.appendChild\(exportCard\(\)\);\n\s*ROOT\.appendChild\(checkCard\(\)\);/.test(MOD) &&
+    /out\.view = \(d\.view === "spread" \|\| d\.view === "book" \|\| d\.view === "3d"\) \? d\.view : "page";/.test(MOD) &&   /* 6.125.0 wave I added the mockup as a fourth view */
     (MOD.match(/if \(DOC\.view !== "page"\) return;/g) || []).length === 3 && /function bookView\(\)/.test(MOD) && /function drawBook\(px\)/.test(MOD), null);
 
   report("A6) the tray: every door a photograph comes in by puts it in the pool (a page, the tray's own button, a replace, Make the album), a saved album's pool is filled from its pages, and the four accept modes are page · album · pool · replace",
@@ -261,9 +262,9 @@ async function walk(browser) {
     swatches: [...document.querySelectorAll("#albPapers .alb-swatch")].map((s) => s.style.backgroundColor),
     check: (document.getElementById("albCheckOk") || {}).textContent || "", checkRows: document.querySelectorAll("#albChecks .alb-checkrow").length
   }));
-  report("C1) on a 390px phone the empty album shows the twelve cards in order (the shelf first, the ornaments after the design — 6.122.0), Page · Spread · Book and two disabled history buttons under the stage, an empty tray with its two buttons, the design card's style · paper · density rails (4 · 3 · 3, the paper chips wearing their swatches) and six verbs, and a print check that passes an album with one empty page and no words",
-    c1.cards.join(",") === "albShelfCard,albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albDesignCard,albOrnCard,albTextCard,albExportCard,albCheckCard" &&
-    c1.views.join() === "albSpread,albBook,albGuides" && c1.hist.join() === "albUndo:true,albRedo:true" && c1.trayEmpty && c1.trayOps.join() === "albTrayAdd,albTrayUnused" &&
+  report("C1) on a 390px phone the empty album shows the thirteen cards in order (the shelf first, the templates after the layouts — 6.125.0, the ornaments after the design — 6.122.0), Page · Spread · Book · Mockup and two disabled history buttons under the stage, an empty tray with its two buttons, the design card's style · paper · density rails (4 · 3 · 3, the paper chips wearing their swatches) and six verbs, and a print check that passes an album with one empty page and no words",
+    c1.cards.join(",") === "albShelfCard,albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albLibCard,albDesignCard,albOrnCard,albTextCard,albExportCard,albCheckCard" &&
+    c1.views.join() === "albSpread,albBook,alb3d,albGuides" &&   /* 6.125.0 wave I added the mockup (3D) button beside Spread and Book */ c1.hist.join() === "albUndo:true,albRedo:true" && c1.trayEmpty && c1.trayOps.join() === "albTrayAdd,albTrayUnused" &&
     c1.design.length === 0 && c1.styleChips === 4 && c1.paperChips === 3 && c1.densChips === 3 && c1.swatches.length === 3 && c1.checkRows === 1 && c1.check === "", c1);
 
   /* C2 — Make the album: designed pages, the tray, the badges, the progress bar gone */
@@ -523,9 +524,9 @@ function releasePins() {
   const row = rows.find((r) => r.v === VER);
   report(`E2) the What's New strip carries the ${VER} row (it led the strip when this wave shipped) — a bold lead, title and story in all nine languages, pointing at the Album page — and the panel's lifted table carries it`,
     row && row.v === VER && row.ref === "pgAlbum" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40 && row.s[l].startsWith("**")) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
-  report("E3) CI runs this test right after the wave E step and the landing says how many tests the suite runs (263 when this wave shipped, 264 since 6.122.0 added verify_album_wave_g, 265 since 6.123.0 added verify_prop_wave_h, 266 since 6.124.0 added verify_selection_swap)",
+  report("E3) CI runs this test right after the wave E step and the landing says how many tests the suite runs (263 when this wave shipped, 264 since 6.122.0 added verify_album_wave_g, 265 since 6.123.0 added verify_prop_wave_h, 266 since 6.124.0 added verify_selection_swap, 267 since 6.125.0 added verify_album_wave_i)",
     has(CI, "run: node test/verify_ux_wave_6120.js\n") && has(CI, "run: PORT=8931 node test/verify_album_designer.js") && CI.indexOf("verify_ux_wave_6120") < CI.indexOf("verify_album_designer") &&
-    (CI.match(/node test\//g) || []).length === 266 && has(LANDING, "266 tests") && !has(LANDING, "262 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 267 && has(LANDING, "267 tests") && !has(LANDING, "262 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 (async () => {

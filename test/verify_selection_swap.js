@@ -12,7 +12,7 @@
  * prompt's roles and rules, the AVOID list), the nine-language card line and the two four-step guides, the app's region flow
  * and the panel's registry following the record's region flag instead of one id, the choice field's maths on both surfaces
  * (byte-identical prompts for the same values), the wizard's chips and quick picks and the panel's, the card picture, the
- * counts 197 → 198 and 204 → 205 on every surface, the What's New row, the CI step and the 6.124.0 / 6.195.0 lockstep.
+ * counts 197 → 198 and 204 → 205 on every surface, the What's New row, the CI step and the lockstep pair of the day (6.124.0 / 6.195.0 when this wave shipped).
  * Usage: PORT=8931 node test/verify_selection_swap.js   (serve docs/app first) */
 "use strict";
 const fs = require("fs");
@@ -35,7 +35,7 @@ const WN = read("docs/app/data/whatsnew.js"), PWN = read("panel/js/hnk_whats_new
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.124.0", PVER = "6.195.0";
+const VER = "6.125.0", PVER = "6.196.0";
 const ID = "selection-swap", TITLE = "Selection Swap & Fill";
 
 let failures = 0;
@@ -119,14 +119,17 @@ const artGaps = [];
 })();
 report("B4) the card picture exists at the pack's 960x640, is a photograph, and is not on the no-picture list", artGaps.length === 0, artGaps);
 const rows = JSON.parse(WN.replace(/^window\.HNK_WHATS_NEW=/, "").replace(/;\s*$/, ""));
-const row = rows.find(r => r.v === VER);
-report("B5) the What's New strip leads with the 6.124.0 row — kind wf, opening this card — a plain title and a bold-led excerpt in all nine languages, both naming the card, the excerpt naming the four modes; the panel's lifted table carries it",
-  !!row && rows.indexOf(row) === 0 && row.kind === "wf" && row.ref === ID && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
+/* 6.125.0 — the lockstep pair moves on with every release, so the wave's own row is found by
+   the version it shipped under, not by today's VER */
+const WAVE_V = "6.124.0";
+const row = rows.find(r => r.v === WAVE_V);
+report("B5) the What's New strip carries the 6.124.0 row — kind wf, opening this card — a plain title and a bold-led excerpt in all nine languages, both naming the card, the excerpt naming the four modes; the panel's lifted table carries it (it led the strip when this wave shipped; the 6.125.0 row sits above it now)",
+  !!row && rows.indexOf(row) <= 1 && row.kind === "wf" && row.ref === ID && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
     /Selection Swap & Fill/.test(row.t[l]) && /Replace · Add · Fill · Change/.test(row.s[l]) && /IMAGE 2/.test(row.s[l])) &&
-  has(PWN, '"v":"' + VER + '"') && has(PWN, '"ref":"' + ID + '"'), row && { v: row.v, kind: row.kind, ref: row.ref, at: rows.indexOf(row) });
-report("B6) CI runs this test right after the wave H check, the suite counts 266 invocations and the landing says 266 tests",
+  has(PWN, '"v":"' + WAVE_V + '"') && has(PWN, '"ref":"' + ID + '"'), row && { v: row.v, kind: row.kind, ref: row.ref, at: rows.indexOf(row) });
+report("B6) CI runs this test right after the wave H check, the suite counts 267 invocations and the landing says 267 tests (266 until 6.125.0 added verify_album_wave_i)",
   /run: PORT=8931 node test\/verify_prop_wave_h\.js\n(?:\s*#[^\n]*\n)*\s*- name: [^\n]*\n\s*run: PORT=8931 node test\/verify_selection_swap\.js/.test(CI) &&
-  (CI.match(/node test\//g) || []).length === 266 && has(LANDING, "266 tests") && !has(LANDING, "265 tests") && /data-count="tests">266</.test(LANDING), { steps: (CI.match(/node test\//g) || []).length });
+  (CI.match(/node test\//g) || []).length === 267 && has(LANDING, "267 tests") && !has(LANDING, "265 tests") && /data-count="tests">267</.test(LANDING), { steps: (CI.match(/node test\//g) || []).length });
 
 /* ===================== C) the panel ===================== */
 report("C1) the lifter carries the record's region flag into the panel's catalog, the registry's region flag reads the id OR the flag, its applyFields resolves a choice the way the app does, the screen draws the choice row (chips, hint) and the quick picks, and the new CSS uses margins, never gap",
@@ -282,7 +285,7 @@ async function panelWalk(browser) {
 async function releasePins() {
   const manifest = JSON.parse(read("panel/release-manifest.json")), pv = JSON.parse(read("docs/download/panel-version.json"));
   report(`E1) ${VER} / panel ${PVER} in lockstep: APP_VER, version.json, sw.js cache, API_VERSION, PANEL_VERSION, manifest, release-manifest (+ artifact file, a 64-hex sha and a real size), panel-version.json, the download footer, the landing's badges`,
-    has(APP, `var APP_VER="${VER}";`) && has(read("docs/app/version.json"), `"v":"${VER}"`) && has(read("docs/app/sw.js"), 'var CACHE = "hnk-web-studio-v6-124-0";') &&
+    has(APP, `var APP_VER="${VER}";`) && has(read("docs/app/version.json"), `"v":"${VER}"`) && has(read("docs/app/sw.js"), `var CACHE = "hnk-web-studio-v${VER.replace(/\./g, "-")}";`) &&
     has(read("server/index.js"), `const API_VERSION = "${VER}";`) && has(MAIN, `const PANEL_VERSION = "${PVER}";`) && has(read("panel/manifest.json"), `"version": "${PVER}"`) &&
     manifest.version === PVER && manifest.artifact_file === `HNK_Ai_Panel_v${PVER}.ccx` && /^[0-9a-f]{64}$/.test(manifest.sha256) && manifest.bytes > 20000000 &&
     pv.v === PVER && pv.latest_version === PVER && has(read("docs/download/index.html"), `Web App ${VER} · Panel ${PVER}`) &&

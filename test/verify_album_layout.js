@@ -99,7 +99,8 @@ const CSS = (APP.match(/\/\* ---- ALBUM_CSS[\s\S]*?\/\* ---- \/ALBUM_CSS ---- \*
    length that the Photoshop panel honours no @media rule, and a scan for "@media" that
    reads the explanation finds the word it was written to forbid. */
 const CSSRULES = CSS.replace(/\/\*[\s\S]*?\*\//g, "");
-const MOD = (APP.match(/var ALBUM = \(function\(\)\{[\s\S]*?\n\}\)\(\);/) || [""])[0];
+/* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 ceiling) */
+const MOD = read("docs/app/data/album-module.js");
 
 /* ======================= A — what the source must say ======================= */
 function source() {
@@ -344,8 +345,10 @@ async function walkWidth(browser, label, width) {
     return { one: w("albOutOne"), all: w("albOutAll"), pages: w("albPageOps"),
              subs: [...document.querySelectorAll("#albExportCard .subh")].map(p => (p.textContent || "").trim()) };
   });
-  report("C5/" + label + " — the five export buttons are two named groups (what this page makes, what the whole album makes) and every button inside a group is one width",
-    groups.subs.length === 2 && groups.subs.every(t => t.length > 0) &&
+  /* 6.125.0 — the card names a third group first: the file type, its quality and the three switches.
+     The five buttons and their two groups are unchanged. */
+  report("C5/" + label + " — the five export buttons are two named groups (what this page makes, what the whole album makes) under the file-type group, and every button inside a group is one width",
+    groups.subs.length === 3 && groups.subs.every(t => t.length > 0) &&
     groups.one.length === 3 && groups.all.length === 2 && groups.pages.length === 4 &&
     new Set(groups.one).size === 1 && new Set(groups.all).size === 1 && new Set(groups.pages).size === 1,
     groups);

@@ -31,7 +31,7 @@ const APP = read("docs/app/index.html"), LANDING = read("docs/index.html"), CI =
 const PANEL_CAT = read("panel/js/hnk_wf_catalog_data.js"), PANEL_HOME = read("panel/src/ui/screens/home-screen.js");
 const WN = read("docs/app/data/whatsnew.js"), PWN = read("panel/js/hnk_whats_new.js"), MAIN = read("panel/main.js");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.124.0", PVER = "6.195.0";   /* the wave shipped as 6.123.0 / 6.194.0; every release since (6.123.1, 6.124.0) moves the pair on, and the strip leads with the newest row */
+const VER = "6.125.0", PVER = "6.196.0";   /* the wave shipped as 6.123.0 / 6.194.0; every release since (6.123.1, 6.124.0, 6.125.0) moves the pair on, and the strip leads with the newest row */
 const IDS = ["prop-insert", "decor-theme-color", "light-gear-remove"];
 
 let failures = 0;
@@ -137,13 +137,13 @@ const WAVE_V = "6.123.0";
 const row = rows.find(r => r.v === WAVE_V);
 /* the row wears the shipped shape — t a plain title, s the excerpt with its **bold lead** — because renderDashNew
    reads both (a row without s threw "Cannot read properties of undefined (reading 'my')" in the dry run) */
-report("B6) the What's New strip carries the 6.123.0 row — kind wf, opening the prop card — a plain title and a bold-led excerpt in all nine languages, both naming the three cards, and the panel's lifted table carries it (it led the strip when this wave shipped; the 6.123.1 and 6.124.0 rows sit above it now)",
-  !!row && row.v === WAVE_V && rows.indexOf(row) <= 2 && row.kind === "wf" && row.ref === "prop-insert" && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
+report("B6) the What's New strip carries the 6.123.0 row — kind wf, opening the prop card — a plain title and a bold-led excerpt in all nine languages, both naming the three cards, and the panel's lifted table carries it (it led the strip when this wave shipped; the 6.123.1, 6.124.0 and 6.125.0 rows sit above it now)",
+  !!row && row.v === WAVE_V && rows.indexOf(row) <= 3 && row.kind === "wf" && row.ref === "prop-insert" && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
     [row.t[l], row.s[l]].every(x => /Furniture & Prop Insert/.test(x) && /Decor Theme Colour/.test(x) && /Remove Light Stands & Gear/.test(x))) &&
   has(PWN, '"v":"' + WAVE_V + '"') && has(PWN, '"ref":"prop-insert"'), row && { v: row.v, kind: row.kind, ref: row.ref, at: rows.indexOf(row) });
-report("B7) CI runs this test right after the Reference Scenes check, the suite counts 266 invocations and the landing says 266 tests (265 until 6.124.0 added verify_selection_swap)",
+report("B7) CI runs this test right after the Reference Scenes check, the suite counts 267 invocations and the landing says 267 tests (265 until 6.124.0 added verify_selection_swap, 266 until 6.125.0 added verify_album_wave_i)",
   has(CI, "run: PORT=8931 node test/verify_reference_scenes.js\n") && has(CI, "run: PORT=8931 node test/verify_prop_wave_h.js") && CI.indexOf("verify_reference_scenes.js") < CI.indexOf("verify_prop_wave_h.js") &&
-  (CI.match(/node test\//g) || []).length === 266 && has(LANDING, "266 tests") && !has(LANDING, "264 tests") && /data-count="tests">266</.test(LANDING), { steps: (CI.match(/node test\//g) || []).length });
+  (CI.match(/node test\//g) || []).length === 267 && has(LANDING, "267 tests") && !has(LANDING, "264 tests") && /data-count="tests">267</.test(LANDING), { steps: (CI.match(/node test\//g) || []).length });
 
 /* ===================== C) the panel's lifted catalog and its compiler ===================== */
 const cat = JSON.parse(PANEL_CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);
@@ -216,7 +216,7 @@ async function releasePins() {
   const manifest = JSON.parse(read("panel/release-manifest.json")), pv = JSON.parse(read("docs/download/panel-version.json"));
   const CLAIMS = LANDING.replace(/\/\*[\s\S]*?\*\//g, "").replace(/<!--[\s\S]*?-->/g, "");
   report(`E1) ${VER} / panel ${PVER} in lockstep: APP_VER, version.json, sw.js cache, API_VERSION, PANEL_VERSION, manifest, release-manifest (+ artifact file, a 64-hex sha and a real size), panel-version.json, the download footer, the landing's badges`,
-    has(APP, `var APP_VER="${VER}";`) && has(read("docs/app/version.json"), `"v":"${VER}"`) && has(read("docs/app/sw.js"), 'var CACHE = "hnk-web-studio-v6-124-0";') &&
+    has(APP, `var APP_VER="${VER}";`) && has(read("docs/app/version.json"), `"v":"${VER}"`) && has(read("docs/app/sw.js"), `var CACHE = "hnk-web-studio-v${VER.replace(/\./g, "-")}";`) &&
     has(read("server/index.js"), `const API_VERSION = "${VER}";`) && has(MAIN, `const PANEL_VERSION = "${PVER}";`) && has(read("panel/manifest.json"), `"version": "${PVER}"`) &&
     manifest.version === PVER && manifest.artifact_file === `HNK_Ai_Panel_v${PVER}.ccx` && /^[0-9a-f]{64}$/.test(manifest.sha256) && manifest.bytes > 20000000 &&
     pv.v === PVER && pv.latest_version === PVER && has(read("docs/download/index.html"), `Web App ${VER} · Panel ${PVER}`) &&

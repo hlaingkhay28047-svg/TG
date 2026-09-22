@@ -58,7 +58,13 @@ const { withPremium } = require("./_seed_premium.js");
 
 const ROOT = path.join(__dirname, "..");
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
-const APP = read("docs/app/index.html");
+/* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 raw
+   ceiling), and the shell loads it by <script src> beside the other data files. The two files
+   are what the app ships, so this check reads them as one source; the split itself is pinned
+   by verify_app_data_files (A2 · D2) and verify_album_pages (A4). */
+const ALBMOD = read("docs/app/data/album-module.js");
+const APP = read("docs/app/index.html") + "\n" + ALBMOD;
+
 const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const MANIFEST = JSON.parse(read("panel/release-manifest.json"));
@@ -172,7 +178,7 @@ function tables() {
     occ.map(o => o.id + "=" + o.plan.reduce((a, b) => a + b, 0)));
 
   report("B7) the default occasion is one of the nine, and one album may hold between twelve and two hundred photographs",
-    occ.some(o => o.id === ALBUM.defOcc) && ALBUM.maxAlbum >= 12 && ALBUM.maxAlbum <= 200 && ALBUM.v === 4,   /* 6.122.0 — v4 carries the ornaments + overlays */
+    occ.some(o => o.id === ALBUM.defOcc) && ALBUM.maxAlbum >= 12 && ALBUM.maxAlbum <= 200 && ALBUM.v >= 4,   /* 6.122.0 — v4 carries the ornaments + overlays; 6.125.0 wave I raised it to v5 with the standees, marks, text styles and the template library */
     { defOcc: ALBUM.defOcc, maxAlbum: ALBUM.maxAlbum, v: ALBUM.v });
 
   /* the app writes each key's languages across TWO blocks (my + en in one, the other seven in
@@ -402,7 +408,7 @@ async function browserWalk() {
              cards: document.querySelectorAll("#albRoot > section.card").length };
   });
   report("C9) an album saved against an occasion this build no longer ships falls back to the default and still draws — the same rule wave A gave sizes and wave B gave pairings",
-    restored.occ === ALBUM.defOcc && restored.on === 1 && restored.cards === 12, restored);   /* 6.122.0 — twelve cards */
+    restored.occ === ALBUM.defOcc && restored.on === 1 && restored.cards === 13, restored);   /* 6.122.0 — twelve cards; 6.125.0 wave I added the template library */
 
   /* C10 — the chips must not pull a typeface down. Wave B's whole point.
      A FRESH CONTEXT, not just a fresh page: the walk above saved a forty-photograph album with

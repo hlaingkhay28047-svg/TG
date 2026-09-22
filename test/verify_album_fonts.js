@@ -59,7 +59,13 @@ const { withPremium } = require("./_seed_premium.js");
 
 const ROOT = path.join(__dirname, "..");
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
-const APP = read("docs/app/index.html");
+/* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 raw
+   ceiling), and the shell loads it by <script src> beside the other data files. The two files
+   are what the app ships, so this check reads them as one source; the split itself is pinned
+   by verify_app_data_files (A2 · D2) and verify_album_pages (A4). */
+const ALBMOD = read("docs/app/data/album-module.js");
+const APP = read("docs/app/index.html") + "\n" + ALBMOD;
+
 const SW = read("docs/app/sw.js");
 const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
@@ -281,8 +287,14 @@ async function browserWalk() {
     return { text: (ALBUM.doc().pages[0].texts[0] || {}).text, focus: document.activeElement && document.activeElement.id };
   });
   const afterLatin = got.slice();
-  report("C3) an all-Latin title fetches the picked family and nothing else — the fallbacks are not downloaded for a line that will never need them",
-    afterLatin.length === 1 && /^playfair-latin-700/.test(afterLatin[0]) && latin.text === "Ko Ko and Ma Ma",
+  /* 6.125.0 — selecting a line also opens wave I's twelve text styles, and each chip is set in
+     the face it offers, so the rail's own three families come down beside the line's. What this
+     check exists for is unchanged and still has its teeth: no script FALLBACK is fetched for a
+     line that will never need one — every file pulled is a Latin face, and the Burmese and Thai
+     ones stay on the server until C4's mixed line asks for them. */
+  report("C3) an all-Latin title fetches its own family and the three the style rail previews — and no script fallback: nothing Burmese or Thai is downloaded for a line that will never need it",
+    afterLatin.length === 3 && /^playfair-latin-700/.test(afterLatin[0]) &&
+    afterLatin.every((f) => /-latin-/.test(f)) && latin.text === "Ko Ko and Ma Ma",
     { afterLatin, latin });
 
   /* C4 — THE BURMESE RULE, on one line. */
@@ -419,7 +431,7 @@ function release() {
     /f\.css \+ '";font-style:normal/.test(APP) && /function ensureFaces\(\)/.test(APP) &&
     /function fontForText\(tx\)/.test(APP) && /function weightFor\(font, role\)/.test(APP) &&
     /function fontsReady\(pg\)/.test(APP) &&
-    /return fontsReady\(pg\)\.then\(function\(\)\{/.test(APP), null);
+    /return libLoad\(pg\.lib\)\.then\(function\(\)\{ return fontsReady\(pg\); \}\)\.then\(function\(\)\{/.test(APP), null);   /* 6.125.0 — the page's template is fetched first, then its faces */
 }
 
 (async () => {

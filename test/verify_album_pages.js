@@ -40,6 +40,9 @@ const { withPremium } = require("./_seed_premium.js");   /* the app walls a sign
 const ROOT = path.join(__dirname, "..");
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
 const APP = read("docs/app/index.html");
+/* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 ceiling) */
+const ALBMOD = read("docs/app/data/album-module.js");
+
 const APPDATA = read("tools/lib/app-data.js");
 const GEN = read("tools/build_album_data.js");
 const CI = read(".github/workflows/test.yml");
@@ -82,8 +85,9 @@ function sourcePins() {
     /pages:\["pgLib","pgGallery","pgAlbum"\]/.test(APP), null);
 
   /* A4 — one module, a host adapter, and the enter hook beside Imagine's. */
-  report("A4) the page is drawn by one lifted-shaped module (ALBUM_MODULE) over a host adapter (ALBUM_HOST), and switchPage re-renders it on entry",
-    /\/\* ---- ALBUM_MODULE ---- \*\//.test(APP) && /\/\* ---- \/ALBUM_MODULE ---- \*\//.test(APP) &&
+  report("A4) the page is drawn by one lifted-shaped module (ALBUM_MODULE, in data/album-module.js under its content tag since 6.125.0) over a host adapter (ALBUM_HOST) in the shell, and switchPage re-renders it on entry",
+    /\/\* ---- ALBUM_MODULE ---- \*\//.test(ALBMOD) && /\/\* ---- \/ALBUM_MODULE ---- \*\//.test(ALBMOD) &&
+    /<script src="data\/album-module\.js\?v=[0-9a-f]{12}"><\/script>/.test(APP) &&
     /\/\* ---- ALBUM_HOST ---- \*\//.test(APP) &&
     /if\(id==="pgAlbum" && typeof albumOnEnter==="function"\)/.test(APP), null);
 
@@ -91,7 +95,7 @@ function sourcePins() {
   report("A5) the album is kept in the kv store (IndexedDB), never localStorage — an album carries its own photographs and the 5 MB localStorage ceiling could not hold one",
     /store: function\(key, val\)\{ try \{ kvSet\(key, val\); \}/.test(APP) &&
     /restore: function\(key\)\{ return kvGet\(key\)/.test(APP) &&
-    /var DOC_KEY = "hnk_album_doc_v1"/.test(APP), null);
+    /var DOC_KEY = "hnk_album_doc_v1"/.test(ALBMOD), null);
 
   /* A6 — UXP-safe by construction, because Wave D lifts this block into the panel. */
   report("A6) the CSS block is UXP-safe — flex and margin only, no CSS grid and no object-fit, so Wave D can lift it into the Photoshop panel unchanged",
@@ -105,12 +109,12 @@ function sourcePins() {
 
   /* A7 — the phone's own picker, re-laid every render (the 6.23.1 Redmi rule). */
   report("A7) the add-photos button carries the phone's own file input, re-laid on EVERY render — the module rebuilds its cards on each change, so a one-shot wire at boot would last exactly one render",
-    /if \(H && typeof H\.wirePick === "function"\)/.test(APP) &&
+    /if \(H && typeof H\.wirePick === "function"\)/.test(ALBMOD) &&
     /* 6.105.0 — the wire now carries a `before` hook too: one mirror input serves both the
        photo button and "Make the whole album", and the overlay swallows the button's own
        click, so the mode has to travel with the wire. */
     /wirePick: function\(btn, before\)\{ nativePick\(btn, "albFile", before\); \}/.test(APP) &&
-    /H\.wirePick\(add, function\(\)\{ PICK_MODE = "page"; \}\)/.test(APP), null);
+    /H\.wirePick\(add, function\(\)\{ PICK_MODE = "page"; \}\)/.test(ALBMOD), null);
 
   /* A8 — the student's own language, everywhere, including the hero. */
   const keys = ["alb_size_h","alb_pages_h","alb_stage_h","alb_photos_h","alb_layout_h","alb_text_h","alb_export_h",
@@ -250,10 +254,10 @@ async function browserWalk() {
      layout, and the print check after the export. 6.122.0 wave G — the projects shelf first of all and the
      ornaments card after the design. Twelve cards, in this order. */
   report("C1) the ALBUM page opens complete on a 430px phone — occasion · size · pages · preview · photos · layout · design · text · export · print check, the nine occasions and \"Make the whole album\" first of all, one size group chip per group, and the page's true output size stated before a single photo is added",
-    opened.on && opened.cards.length === 12 &&
-    opened.cards.join(",") === "albShelfCard,albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albDesignCard,albOrnCard,albTextCard,albExportCard,albCheckCard" &&
+    opened.on && opened.cards.length === 13 &&   /* 6.125.0 wave I added the template library */
+    opened.cards.join(",") === "albShelfCard,albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albLibCard,albDesignCard,albOrnCard,albTextCard,albExportCard,albCheckCard" &&
     opened.occs === 9 && opened.make &&
-    opened.stage && opened.pages === 1 && opened.groups === 6 && opened.free === 4 && opened.sizes >= 4 &&
+    opened.stage && opened.pages === 1 && opened.groups === 7 && opened.free === 4 && opened.sizes >= 4 &&   /* 6.125.0 — the standees are the seventh size group */
     /10800/.test(opened.sizeNote) && /300 DPI/.test(opened.sizeNote), opened);
 
   /* C2 — photos in, measured once, and the layout chosen for their shapes. */
@@ -410,7 +414,7 @@ async function browserWalk() {
     restore.sizeId === "12x36" && restore.customUnit === "in" && restore.customDpi === 600 &&
     restore.cur === 0 && restore.photos <= 6 && restore.texts.indexOf("no-such-role") < 0 &&
     restore.texts.indexOf("title") >= 0 && restore.titleX >= 0 && restore.titleX <= 1 &&
-    restore.tplId === "" && restore.cards === 12, restore);   /* 6.122.0 — twelve cards */
+    restore.tplId === "" && restore.cards === 13, restore);   /* 6.122.0 — twelve cards; 6.125.0 wave I added the template library */
 
   /* C10 — the custom size: the owner's "ကြိုက်သလိုပြောင်းလဲလို့ရတာ", in full. */
   const custom = await page.evaluate(async () => {

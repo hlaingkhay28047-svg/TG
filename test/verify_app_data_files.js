@@ -103,7 +103,7 @@ const rawBytes = Buffer.byteLength(APP, "utf8"), gzBytes = zlib.gzipSync(Buffer.
    6.121.0 did it a fifth time: the Smart Album designer arrived with 440 bytes to spare, so
    TR_V428, TR_V430 and TR_PATH (three per-wave dictionaries, 105 KB, merged into TR at boot
    exactly as before) left for data/trmore.js. The number stays. */
-report("A4) the shell stays under its ceilings — 3.20 MB raw, 1.1 MB gzipped (5.8 MB / 1.58 MB before the data left; 3.78 MB / 1.16 MB before the packs and the Imagine tables followed in 6.92.0; 3.30 MB raw until the Album page's type in 6.104.0; 3.35 MB until 6.106.0 wrote a PDF and a PSD writer into the album module; 3.40 MB until 6.107.0 rebuilt the Album page's layout and then moved the 186 KB What's New strip out to data/whatsnew.js rather than raise the number a fourth time)",
+report("A4) the shell stays under its ceilings — 3.20 MB raw, 1.1 MB gzipped (5.8 MB / 1.58 MB before the data left; 3.78 MB / 1.16 MB before the packs and the Imagine tables followed in 6.92.0; 3.30 MB raw until the Album page's type in 6.104.0; 3.35 MB until 6.106.0 wrote a PDF and a PSD writer into the album module; 3.40 MB until 6.107.0 rebuilt the Album page's layout and then moved the 186 KB What's New strip out to data/whatsnew.js rather than raise the number a fourth time; 3.35 MB again when wave I grew the Album page in 6.125.0, and the 376 KB album module left for data/album-module.js rather than raise it a fifth)",
   rawBytes <= 3200000 && gzBytes <= 1100000, { rawBytes, gzBytes });
 const before = APP;
 const run = spawnSync(process.execPath, [path.join(ROOT, "tools", "build_app_data.js")], { encoding: "utf8" });
@@ -230,18 +230,23 @@ report("B1) sw.js declares DATA_CACHE (hnk-data-v1), matches /data/<name>.js, ro
   /* 6.102.0 — four files: the ALBUM page's sizes, layout templates and text roles joined
      the three in data/album.js, under a content tag like the rest.
      6.107.0 — five: the What's New strip followed them into data/whatsnew.js. */
-  const tagAlb = A.contentTag("album"), tagWn = A.contentTag("whatsnew"), tagTut = A.contentTag("tutorials"), tagTrm = A.contentTag("trmore");
+  const tagAlb = A.contentTag("album"), tagWn = A.contentTag("whatsnew"), tagTut = A.contentTag("tutorials"), tagTrm = A.contentTag("trmore"), tagAlbMod = A.contentTag("albummod");
   /* 6.116.0 — six: the Tutorials table (TUT_HERO + the ten lessons) followed into data/tutorials.js
      when the A4 raw ceiling ran out by 4.8 KB — the answer the note above prescribes. */
   /* 6.121.0 — seven: TR_V428 · TR_V430 · TR_PATH (105 KB, merged into TR at boot as before) followed into
-     data/trmore.js when the Smart Album designer arrived with 440 bytes of the A4 ceiling left. */
-  report("D2) the shell asked for each of the seven data files exactly once, under its content tag, and for no language pack",
+     data/trmore.js when the Smart Album designer arrived with 440 bytes of the A4 ceiling left.
+     6.125.0 — eight: the whole Album module (the page's code, 376 KB) followed into data/album-module.js
+     when wave I took the shell 149 KB past the A4 raw ceiling. It is code, not a table, so the registry
+     carries it as kind "module" and it loads from the head block right after data/album.js — one classic
+     script of its own, after the tables it reads. */
+  report("D2) the shell asked for each of the eight data files exactly once, under its content tag, and for no language pack",
     reqs.filter((u) => u === "/data/libwf.js?v=" + tagLib).length === 1 && reqs.filter((u) => u === "/data/hnkdata.js?v=" + tagData).length === 1 &&
     reqs.filter((u) => u === "/data/imagine.js?v=" + tagIm).length === 1 &&
     reqs.filter((u) => u === "/data/album.js?v=" + tagAlb).length === 1 &&
     reqs.filter((u) => u === "/data/tutorials.js?v=" + tagTut).length === 1 &&
     reqs.filter((u) => u === "/data/whatsnew.js?v=" + tagWn).length === 1 &&
-    reqs.filter((u) => u === "/data/trmore.js?v=" + tagTrm).length === 1 && reqs.length === 7, { reqs });
+    reqs.filter((u) => u === "/data/trmore.js?v=" + tagTrm).length === 1 &&
+    reqs.filter((u) => u === "/data/album-module.js?v=" + tagAlbMod).length === 1 && reqs.length === 8, { reqs });
 
   /* ---------------- E. release pins ---------------- */
   /* v6.107.0 — the row is read from the table the shell now loads, and rendered in the
