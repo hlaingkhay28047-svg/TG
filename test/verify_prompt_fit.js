@@ -85,7 +85,11 @@ function report(name, ok, detail) {
            must still hold: the task's own first line always opens the prompt,
            every line that arrives is a WHOLE line from the source except at
            most the final one, and that final one stops at a word boundary. */
-        const head = out.split("\n\nTASK GUARD:")[0];
+        /* the portion before the guard AND before the AVOID — a prompt with no
+           TASK GUARD (retouch, pr-meitu, pr-evoto …) kept its AVOID in this
+           slice and the AVOID line is not a body line */
+        const outNoAvoid = out.indexOf("\n\nAVOID:") >= 0 ? out.slice(0, out.indexOf("\n\nAVOID:")) : out;
+        const head = outNoAvoid.split("\n\nTASK GUARD:")[0];
         const srcLines = new Set(body.split("\n"));
         const outLines = head.split("\n");
         /* the first source line may itself be longer than the whole cap, in
@@ -94,34 +98,101 @@ function report(name, ok, detail) {
         const firstSrc = body.split("\n")[0];
         if (outLines[0] !== firstSrc && !firstSrc.startsWith(outLines[0]))
           why.push("does not open with the task's first line");
-        outLines.slice(0, -1).forEach(l => {
-          if (!srcLines.has(l)) why.push("a line arrived cut: …" + l.slice(-40));
+        /* 6.126.0 — the LOCK lines are lifted out of the body and re-joined
+           AFTER the task's opening, so the one line the character cut may have
+           shortened is no longer the last: it is the last line of the task
+           portion, with whole lock lines behind it. And a lock longer than its
+           whole budget arrives as its own opening. So at most TWO lines may be
+           short of their source — each must be that source line's opening and
+           stop between words — and every other line arrives whole. */
+        const shortened = outLines.filter(l => l && !srcLines.has(l));
+        if (shortened.length > 2) why.push(shortened.length + " lines arrived cut");
+        shortened.forEach(l => {
+          const src = body.split("\n").find(x => x.startsWith(l));
+          if (!src) why.push("a line is not the opening of any source line: …" + l.slice(-40));
+          else if (l.length < src.length && !/[\s,;:—–-]/.test(src.charAt(l.length)))
+            why.push("mid-word cut: …" + l.slice(-40));
         });
-        const last = outLines[outLines.length - 1];
-        if (last && !srcLines.has(last)) {
-          /* the one line the character cut may have shortened — it must be the
-             opening of some source line, and must stop between words */
-          const src = body.split("\n").find(l => l.startsWith(last));
-          if (!src) why.push("final line is not the opening of any source line");
-          else if (last.length < src.length && !/[\s,;:—–-]/.test(src.charAt(last.length)))
-            why.push("mid-word cut: …" + last.slice(-40));
-        }
         if (guard) {
           if (out.indexOf("TASK GUARD:") < 0) why.push("guard gone");
           /* the guard is cut only when it alone exceeds the cap */
           if (guard.length + 2 < cap && out.indexOf(guard) < 0) why.push("guard fits but arrives cut");
         }
-        if (out.indexOf("AVOID:") >= 0 && (!out.endsWith(avoid) || (guard && out.indexOf(guard) < 0))) why.push("AVOID present without the whole guard/whole AVOID");
+        /* 6.126.0 — an AVOID that will not fit whole arrives COMPACT, so the
+           old "must end with the whole list" is now "whole, or the lead plus
+           whole items of it, and never after a guard that went missing" */
+        if (out.indexOf("AVOID:") >= 0) {
+          if (guard && out.indexOf(guard) < 0) why.push("AVOID present without the whole guard");
+          const got = out.slice(out.indexOf("\n\nAVOID:"));
+          if (got !== avoid) {
+            const srcItems = avoid.slice(avoid.indexOf("AVOID:") + 6).replace(/^\s+/, "").replace(/\s*\.\s*$/, "").split(/,\s*/);
+            const gotItems = got.slice(got.indexOf("AVOID:") + 6).replace(/^\s+/, "").replace(/\s*\.\s*$/, "").split(/,\s*/);
+            if (!gotItems.length) why.push("compact AVOID with no item");
+            gotItems.forEach((it, k) => { if (it !== srcItems[k]) why.push("compact AVOID invented or reordered an item: " + it.slice(0, 40)); });
+          }
+        }
         if (why.length) bad.push({ id: w.id, cap: cap, why: why.slice(0, 3) });
       });
     });
     return { caps, n: items.length, checked, bad, mismatch };
   });
-  report("A) every workflow that any shipped model caps arrives within the cap, opening with its task, guard whole when it fits, AVOID only whole, no line cut mid-word",
+  report("A) every workflow that any shipped model caps arrives within the cap, opening with its task, guard whole when it fits, AVOID whole or compact from its own items, and at most two lines short of their source — each at a word boundary",
     A.bad.length === 0, A.bad.slice(0, 6));
   console.log("      (" + A.n + " workflows × caps " + A.caps.join("/") + " → " + A.checked + " cut cases checked)");
   report("C) the panel's prompt-fit.js cuts byte-for-byte as the app's rhTruncatePrompt, on every one of those cases",
     A.mismatch.length === 0, A.mismatch.slice(0, 8));
+
+  /* ---------- A2 + A3: what 6.126.0 added — the locks and the AVOID ---------- */
+  /* Measured on this catalog BEFORE the change: of the 434 workflow × cap
+     cases the models cut, 65 lost a LOCK line and 406 lost the AVOID list
+     whole. master-bgfg-replace at 800 arrived with all five of its locks
+     gone — POSE, PROPORTION, SKIN, LIGHTING, FRAME — the lines that keep the
+     student's subject the same person; and a prompt with fewer than three
+     labelled blocks never reached rhFitByBlocks, so the plain character cut
+     took the locks and the AVOID with it. Both are pinned here. */
+  const L = await page.evaluate(() => {
+    const caps = Array.from(new Set(RH_MODELS.map(m => m.promptMax).filter(c => c && c < 20000))).sort((a, b) => a - b);
+    const items = (window.HNK_WF_CATALOG || []).flatMap(c => c.items);
+    const RE = /^[A-Z][A-Za-z0-9 ,&'\/()—-]{0,60}\bLOCKS?\b[^\n:]{0,40}:/;
+    const noLock = [], strayLock = [], noAvoid = [];
+    let withLocks = 0, whole = 0, compact = 0;
+    items.forEach(w => {
+      const p = window._wfBatchPrompt(w.id) || "";
+      const gI = p.indexOf("TASK GUARD:"), aI = p.indexOf("\n\nAVOID:");
+      const end = gI >= 0 ? gI : (aI >= 0 ? aI : p.length);
+      const bodyLines = p.slice(0, end).replace(/\s+$/, "").split("\n");
+      /* lifted locks are the ones after the first line; the comparison set is
+         EVERY lock-shaped body line, because the forty wedding cards open with
+         their own WEDDING LOCK and that line stays in the task */
+      const srcLocks = bodyLines.filter((l, i) => i > 0 && RE.test(l));
+      const allLockLines = bodyLines.filter(l => RE.test(l));
+      const avoid = aI >= 0 ? p.slice(aI) : "";
+      caps.forEach(cap => {
+        if (p.length <= cap) return;
+        const out = rhTruncatePrompt(p, cap);
+        if (srcLocks.length) {
+          withLocks++;
+          const gotLocks = out.split("\n").filter(l => RE.test(l));
+          if (!gotLocks.length) noLock.push(w.id + "@" + cap + " had " + srcLocks.length);
+          gotLocks.forEach(g => { if (!allLockLines.some(sl => sl === g || sl.startsWith(g))) strayLock.push(w.id + "@" + cap + " :: " + g.slice(0, 40)); });
+        }
+        if (avoid) {
+          if (out.indexOf("AVOID:") < 0) noAvoid.push({ id: w.id, cap: cap, left: cap - out.length });
+          else if (out.endsWith(avoid)) whole++; else compact++;
+        }
+      });
+    });
+    return { withLocks, noLock, strayLock, noAvoid, whole, compact };
+  });
+  report("A2) a prompt whose body carries LOCK lines never arrives without one — the locks are lifted past the character cut, and every lock that arrives is a source lock whole or that lock's own opening",
+    L.noLock.length === 0 && L.strayLock.length === 0, { noLock: L.noLock.slice(0, 6), stray: L.strayLock.slice(0, 4) });
+  console.log("      (" + L.withLocks + " cut cases carry locks; before 6.126.0, 65 cases lost one and master-bgfg-replace@800 lost all five)");
+  /* the three that carry none are the cards whose TASK GUARD alone all but
+     fills the 800 cap — 6, 15 and 20 characters left after the guard */
+  report("A3) the AVOID arrives on every capped run but the three whose guard alone leaves under 25 characters: whole when it fits, otherwise compact — its own lead and its own opening items, in order",
+    L.noAvoid.length <= 3 && L.noAvoid.every(r => r.cap === 800 && r.left < 25),
+    L.noAvoid);
+  console.log("      (" + L.whole + " whole + " + L.compact + " compact of " + (L.whole + L.compact + L.noAvoid.length) + "; before 6.126.0 only 28 of 434 carried an AVOID at all)");
 
   /* ---------- B: the Studio composer at 800 ---------- */
   const B = await page.evaluate(() => {
