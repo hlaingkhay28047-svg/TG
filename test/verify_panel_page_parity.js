@@ -145,7 +145,13 @@ const REWRITE = [
         web app, the panel's names the panel. Both are pinned hard elsewhere —
         verify_unified_routes.js and verify_release_contract.js fail on a stale
         one — so here only the SHAPE has to match. */
-  [/^v\d+\.\d+\.\d+$/, "vX.Y.Z"]
+  [/^v\d+\.\d+\.\d+$/, "vX.Y.Z"],
+  /* 4. 6.125.0 — where a whole album lands when it is exported. It is one
+        control on both surfaces, reading the host: a browser can only hand
+        over a single file, so the app's chip says ZIP; a Photoshop panel has
+        a folder to write into (host.saveMany), so the panel's says folder.
+        Both sides lose the noun, so a missing chip still fails. */
+  [/^(ZIP \u1010\u1005\u103a\u1016\u102d\u102f\u1004\u103a\u1010\u100a\u103a\u1038|\u1016\u102d\u102f\u101c\u103a\u1012\u102b\u1010\u1005\u103a\u1001\u102f\u1011\u1032)$/, "ALBUM EXPORT DESTINATION"]
 ];
 
 const PAGES = [
@@ -328,7 +334,16 @@ function rewrite(list) {
       /* v6.95.0 — a line named in APP_ONLY is app-only in whatever form it is
          read: the notify switch is a chip that opens ON, so its label is
          dropped from the app's selection list exactly as from its words. */
-      const sd = stateDiff({ ph: aState.ph, sel: dropOnce(aState.sel, APP_ONLY[p.key] || []) }, bState);
+      /* 6.125.0 — the selections go through the same rewrite as the words, so a line the two
+         hosts must word differently is compared as one token here too. One of them also states
+         the same fact the opposite way round: the album's export destination. A browser can only
+         hand over a single file, so the app's chip reads ZIP and is ON; a Photoshop panel can
+         write a folder, so its chip reads folder and is OFF for that very same EXPORT.zip — the
+         two are one setting, and the chip's presence on both sides is proved by the word list
+         below. Only its on/off is dropped, and only for this one line. */
+      const INVERTED = ["ALBUM EXPORT DESTINATION"];
+      const sd = stateDiff({ ph: aState.ph, sel: dropOnce(rewrite(dropOnce(aState.sel, APP_ONLY[p.key] || [])), INVERTED) },
+                           { ph: bState.ph, sel: dropOnce(rewrite(bState.sel || []), INVERTED) });
       report(`${p.label} opens on the web app's own choices — ${aState.ph.length} placeholder(s), ${aState.sel.length} selection(s)`,
         sd.length === 0, sd.slice(0, 4).join(" | "));
 

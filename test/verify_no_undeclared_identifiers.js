@@ -106,10 +106,17 @@ const brief = (r) => ({ n: r.findings.length, first: r.findings.slice(0, 20).map
   const rIdx = F.scanScript(read("panel/src/index.js"), { kind: "cjs", globals: U(F.ECMA, F.NODE) });
   report("B2) the panel's CommonJS entry (panel/src/index.js) over the Node globals: clean", !rIdx.parseError && rIdx.findings.length === 0, brief(rIdx));
 
-  const appBlocks = F.inlineScripts(APP).map(b => ({ name: "docs/app/index.html", code: b.code, line: b.line }));
+  /* 6.125.0 — the shell also loads its own data files by <script src="data/…?v=…">, and one of them
+     (data/album-module.js) declares the Album page's module. They are classic scripts on the same
+     page, so they join the scope exactly as the panel's do in B1 — more code read, not less. */
+  /* a real file name only — the pack loader writes a src it builds from a variable, and that
+     string is not a file on disk */
+  const appSrcs = [...APP.matchAll(/<script\s+src="(data\/[a-z0-9_-]+\.js)(?:\?v=[0-9a-f]+)?"/g)].map((m) => m[1]);
+  const appDataFiles = appSrcs.map((s) => ({ name: "docs/app/" + s, code: read("docs/app/" + s) }));
+  const appBlocks = appDataFiles.concat(F.inlineScripts(APP).map(b => ({ name: "docs/app/index.html", code: b.code, line: b.line })));
   const rApp = F.scanSurface(appBlocks, { globals: U(F.ECMA, F.BROWSER) });
   const bigApp = Math.max(...appBlocks.map(b => b.code.length));
-  report("B3) the web app — every inline <script> block of docs/app/index.html (" + appBlocks.length + " blocks, the studio itself among them) as one page scope: clean",
+  report("B3) the web app — every data file the shell loads by src (" + appDataFiles.length + ", the Album module among them) and every inline <script> block of docs/app/index.html (" + (appBlocks.length - appDataFiles.length) + " blocks, the studio itself among them) as one page scope: clean",
     appBlocks.length >= 4 && bigApp > 1000000 && rApp.parseErrors.length === 0 && rApp.findings.length === 0, { blocks: appBlocks.map(b => [b.line, b.code.length]), ...brief(rApp) });
 
   const rSw = F.scanScript(read("docs/app/sw.js"), { kind: "script", globals: U(F.ECMA, F.WORKER) });

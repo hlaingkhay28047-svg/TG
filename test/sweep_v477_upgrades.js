@@ -288,10 +288,43 @@ const NEW = Object.keys(SCRIPTS);
     "alb_ovl_none", "alb_ovl_grain", "alb_ovl_vignette", "alb_ovl_leak", "alb_ovl_dust",
     "alb_ovl_paper", "alb_ovl_light", "alb_ovl_medium", "alb_ovl_strong", "alb_ovl_all",
     "alb_ovl_all_done", "alb_ovl_note", "alb_open_ps", "alb_open_ps_done", "alb_open_ps_fail"];
+  /* 6.125.0 wave I — the template library, the standees, the mockup, the sheet background, the marks,
+     the logo and the build dialog: 146 lines, on the same terms as every album block above. TR carries
+     real Shan for all of them and the three Tai packs read it through LANG_FB (A2). */
+  const V61250_KEYS = [
+    "alb_3d", "alb_3d_angle", "alb_3d_next", "alb_3d_note", "alb_3d_prev", "alb_3d_standee_note",
+    "alb_ai_check", "alb_ai_faces", "alb_ai_gather", "alb_ai_h", "alb_ai_lay", "alb_ai_n_check",
+    "alb_ai_n_faces", "alb_ai_n_gather", "alb_ai_n_kept", "alb_ai_n_lay", "alb_ai_n_paired",
+    "alb_ai_n_pick", "alb_ai_n_plan", "alb_ai_order", "alb_ai_pick", "alb_ai_plan", "alb_bg_all",
+    "alb_bg_all_done", "alb_bg_amt", "alb_bg_blur", "alb_bg_bright", "alb_bg_h", "alb_bg_m_bottom",
+    "alb_bg_m_full", "alb_bg_m_top", "alb_bg_none", "alb_bg_note", "alb_bg_sat", "alb_bg_tint",
+    "alb_bg_zoom", "alb_build", "alb_build_close", "alb_build_done", "alb_build_go", "alb_build_h",
+    "alb_build_m_group", "alb_build_m_order", "alb_build_m_random", "alb_build_max",
+    "alb_build_method", "alb_build_min", "alb_build_none", "alb_build_note", "alb_build_order",
+    "alb_build_outside", "alb_build_pair", "alb_build_sheets", "alb_build_studio", "alb_date_warn",
+    "alb_exp_folder", "alb_exp_format", "alb_exp_note", "alb_exp_number", "alb_exp_quality",
+    "alb_exp_split", "alb_exp_zip", "alb_export_files", "alb_export_many_done", "alb_export_prog",
+    "alb_fix_sheet", "alb_fixed_n", "alb_fixed_none", "alb_info_applied", "alb_info_apply",
+    "alb_info_bride", "alb_info_date", "alb_info_groom", "alb_info_venue", "alb_issues_n",
+    "alb_issues_none", "alb_lib_all", "alb_lib_any_n", "alb_lib_applied", "alb_lib_assign",
+    "alb_lib_assigned", "alb_lib_busy", "alb_lib_clear", "alb_lib_delete", "alb_lib_delete_q",
+    "alb_lib_deleted", "alb_lib_dismiss", "alb_lib_done", "alb_lib_empty", "alb_lib_export",
+    "alb_lib_exported", "alb_lib_from", "alb_lib_full", "alb_lib_h", "alb_lib_import",
+    "alb_lib_import_dir", "alb_lib_import_json", "alb_lib_json_bad", "alb_lib_json_done",
+    "alb_lib_more", "alb_lib_none", "alb_lib_none_export", "alb_lib_note", "alb_lib_or_land",
+    "alb_lib_or_port", "alb_lib_or_sq", "alb_lib_page", "alb_lib_restore", "alb_lib_restored",
+    "alb_lib_row", "alb_lib_sd", "alb_lib_sd_size", "alb_lib_search", "alb_lib_select",
+    "alb_lib_selected", "alb_lib_star", "alb_lib_starred", "alb_lib_step_layer",
+    "alb_lib_step_layers", "alb_lib_step_read", "alb_lib_step_save", "alb_lib_to_trash",
+    "alb_lib_trash", "alb_lib_trash_empty", "alb_lib_trashed", "alb_lib_ungrouped",
+    "alb_lib_unselect", "alb_lib_untitled", "alb_lib_why_big", "alb_lib_why_read", "alb_logo",
+    "alb_logo_add", "alb_logo_all", "alb_logo_all_done", "alb_logo_change", "alb_logo_none",
+    "alb_logo_note", "alb_logo_pick", "alb_logo_remove", "alb_logo_set", "alb_mark_date",
+    "alb_mark_mono", "alb_mark_note", "alb_sheet_of", "alb_ts_h", "alb_zip_done"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS, ...V61250_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS, ...V61250_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS, ...V61250_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {

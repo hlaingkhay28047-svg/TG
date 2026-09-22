@@ -2791,7 +2791,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.195.0";
+const PANEL_VERSION = "6.196.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -12962,6 +12962,34 @@ async function albumOpenInPs(bytes) {
   await psCore.executeAsModal(async function () { await app.open(file); }, { commandName: "HNK Open Album Page" });
   return true;
 }
+/* 6.125.0 wave I — a picked entry as the module wants it: name, size, path, and the bytes on demand */
+async function albumEntry(e, dir) {
+  let size = 0;
+  try { if (typeof e.getMetadata === "function") { const md = await e.getMetadata(); size = (md && md.size) | 0; } } catch (eM) { }
+  return { name: e.name, size: size, path: (dir ? dir + "/" : "") + e.name, read: function () { return e.read({ format: formats.binary }); } };
+}
+async function albumEntries(p) {
+  try {
+    const picked = await p; const arr = picked ? (Array.isArray(picked) ? picked : [picked]) : [], out = [];
+    for (let i = 0; i < arr.length; i++) if (arr[i]) out.push(await albumEntry(arr[i], ""));
+    return out;
+  } catch (e) { setStatus(friendlyErr(e), "err"); return []; }
+}
+async function albumFolderEntries() {
+  try {
+    const folder = await fsp.getFolder(); if (!folder) return [];
+    const ents = await folder.getEntries(), out = [];
+    for (let i = 0; i < ents.length; i++) { const e = ents[i]; if (e && e.isFile && /\.psd$/i.test(e.name || "")) out.push(await albumEntry(e, folder.name || "")); }
+    return out;
+  } catch (e) { setStatus(friendlyErr(e), "err"); return []; }
+}
+async function albumSaveMany(files) {
+  try {
+    const folder = await fsp.getFolder(); if (!folder) return 0; let n = 0;
+    for (let i = 0; i < files.length; i++) { const f = await folder.createFile(files[i].name, { overwrite: true }); await f.write(albumBytes(files[i].bytes), { format: formats.binary }); n++; }
+    return n;
+  } catch (e) { setStatus(friendlyErr(e), "err"); return 0; }
+}
 function albumHost() {
   return {
     t: function (k) { const S = globalThis.HNK && globalThis.HNK.albumStrings; const m = S && S[k]; return m ? (ff9(m) || k) : k; },
@@ -12987,6 +13015,13 @@ function albumHost() {
       return albumSaveBytes(b64ToBuf(m[2]), name, m[1]).catch(function (e) { setStatus(friendlyErr(e), "err"); return false; });
     },
     openInPs: function (bytes) { return albumOpenInPs(bytes); },
+    /* 6.125.0 wave I — the template library's doors, the Photoshop way: the file dialog for one or several .psd, the
+       folder dialog for a whole set, the file dialog for a library JSON — each entry reads its own bytes when the
+       module asks — and a folder to save many files into where the web app would zip them */
+    pickPsd: function (cb) { albumEntries(fsp.getFileForOpening({ allowMultiple: true, types: ["psd"] })).then(cb); },
+    pickPsdFolder: function (cb) { albumFolderEntries().then(cb); },
+    pickJson: function (cb) { albumEntries(fsp.getFileForOpening({ allowMultiple: false, types: ["json"] })).then(cb); },
+    saveMany: function (files) { return albumSaveMany(files); },
     stageWidth: function (el) { return imagineHost().stageWidth(el); },
     asset: function (kind, file) { return "icons/album/" + kind + "/" + file; },
     toast: function (msg, kind) { setStatus(msg, kind === "ok" ? "ok" : kind === "err" ? "err" : ""); }

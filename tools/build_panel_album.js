@@ -4,7 +4,7 @@
    web app — the Album page (6.102.0 wave A … 6.122.0 wave G) is ONE module that runs on both
    surfaces, exactly as Imagine is (tools/build_panel_imagine.js, whose shape this file keeps).
 
-   The app's index.html carries the module between two comment markers, ALBUM_MODULE and
+   docs/app/data/album-module.js carries the module between two comment markers, ALBUM_MODULE and
    /ALBUM_MODULE (the ALBUM UI: the shelf, the occasion · size · pages · stage · photos · layout ·
    design · ornaments · text · export · print-check cards, the design engine, the JPG / PDF / PSD
    writers), reading its tables from data/album.js (window.HNK_ALBUM) and its words from the host
@@ -78,8 +78,11 @@ function writeIfChanged(file, content) {
 function build(opts) {
   DRY = !!(opts && opts.dry);
   const app = fs.readFileSync(APP, "utf8");
+  /* 6.125.0 — the module left the shell for docs/app/data/album-module.js (the A4 ceiling);
+     its two markers travelled with it, so this lift is the same text it always was. */
+  const modFile = require("./lib/app-data.js").wrapperText("albummod");
   const DATA_LINE = "var ALBUM_DATA = window.HNK_ALBUM;";
-  const mod0 = between(app, M0, M1, "module");
+  const mod0 = between(modFile, M0, M1, "module");
   if (mod0.split(DATA_LINE).length !== 2) throw new Error("build_panel_album: the ALBUM module must read its tables with exactly one `" + DATA_LINE + "`");
   const mod = mod0.replace(DATA_LINE, "var ALBUM_DATA = " + A.albumText() + ";");
   const S = strings(app);

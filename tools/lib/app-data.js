@@ -56,7 +56,13 @@ const FILES = {
      6.122.0 — the seven-language overlay TR_X, TR_NEW and the seven-language table TR_L14
      (sections x · new · l14, 99 KB) followed when wave G's shelf + ornaments pushed the shell
      50 KB over; the same merge lines read them from here. */
-  trmore: { file: "trmore.js", global: "HNK_TRMORE", head: "window.HNK_TRMORE=", tag: "script" }
+  trmore: { file: "trmore.js", global: "HNK_TRMORE", head: "window.HNK_TRMORE=", tag: "script" },
+  /* 6.125.0 — NOT a table: the Album page's own module. Wave I's library, PSD reader, build dialog,
+     standees, mockup, sheet background, marks and logo put the shell 149 KB over its A4 ceiling and
+     every table that could leave it already had. The module is code, so it carries no assignment
+     head and no JSON — it is validated by the two markers the panel lifter reads, and the shell
+     loads it with a <script src> at exactly the point in the document where it used to sit. */
+  albummod: { file: "album-module.js", global: "ALBUM", kind: "module", marks: ["/* ---- ALBUM_MODULE ---- */", "/* ---- /ALBUM_MODULE ---- */"], tag: "script" }
 };
 TRL_CODES.forEach(function (c) {
   FILES["trl-" + c] = { file: "trl-" + c + ".js", global: "HNK_TRL", code: c, head: "window.HNK_TRL=window.HNK_TRL||{};window.HNK_TRL." + c + "=", tag: "loader" };
@@ -70,12 +76,22 @@ function wrapperText(key) {
 /* the verbatim JSON between the assignment head and the trailing ";\n" */
 function jsonText(key) {
   const spec = FILES[key];
+  if (spec && spec.kind === "module") throw new Error("docs/app/data/" + spec.file + " is a module, not a table — read it with moduleText()");
   const text = wrapperText(key);
   if (text.indexOf(spec.head) !== 0 || text.slice(-2) !== ";\n") {
     throw new Error("docs/app/data/" + spec.file + " is not a single " + spec.head + "<json>; assignment");
   }
   return text.slice(spec.head.length, -2);
 }
+/* 6.125.0 — the Album module's own text, between (and including) its two markers */
+function moduleText(key) {
+  const spec = FILES[key];
+  if (!spec || spec.kind !== "module") throw new Error("no module named " + key);
+  const text = wrapperText(key), a = text.indexOf(spec.marks[0]), b = text.indexOf(spec.marks[1]);
+  if (a < 0 || b < a) throw new Error("docs/app/data/" + spec.file + " has lost its " + spec.marks[0] + " markers");
+  return text.slice(a, b + spec.marks[1].length);
+}
+function albumModuleText() { return moduleText("albummod"); }
 function libWfText() { return jsonText("libwf"); }
 function hnkDataText() { return jsonText("hnkdata"); }
 function imagineText() { return jsonText("imagine"); }
@@ -115,5 +131,5 @@ function trlTags() {
 /* the table the shell's loader carries, as the shell prints it */
 function trlTagsLine() { return "window.HNK_TRL_TAGS=" + JSON.stringify(trlTags()) + ";"; }
 
-module.exports = { ROOT, DATA_DIR, FILES, TRL_CODES, wrapperText, jsonText, libWfText, hnkDataText, imagineText, albumText, whatsNewText, tutorialsText, trMoreText,
+module.exports = { ROOT, DATA_DIR, FILES, TRL_CODES, wrapperText, jsonText, moduleText, albumModuleText, libWfText, hnkDataText, imagineText, albumText, whatsNewText, tutorialsText, trMoreText,
   readLibWf, readHnkData, readImagine, readAlbum, readWhatsNew, readTutorials, readTrMore, readTrlPack, readTrl, readWhatsNewArchive, contentTag, trlTags, trlTagsLine };

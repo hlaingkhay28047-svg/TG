@@ -51,6 +51,10 @@ const { STORIES } = require("./lib/album_stories.js");
 /* 6.122.0 wave G — the ornament and overlay catalogue (the PNG masks themselves are drawn by
    tools/build_album_ornaments.js and pinned by docs/app/lib/album/ornaments.json) */
 const ORN = require("./lib/album_ornaments.js");
+/* 6.125.0 wave I — the standee sizes and designs, the marks, the text styles and the template
+   library's groups and limits (the owner's SS Album recordings), in their own file for the same
+   reason the stories are: they are tables, and they read best kept apart from the shapes. */
+const WI = require("./lib/album_wave_i.js");
 
 /* The gap between two neighbouring photos, as a fraction of the safe area.
    One constant for every layout: a page whose gaps differ cell by cell reads
@@ -372,7 +376,7 @@ const SIZES = [
   pxSize("p45", "social", 2048, 2560),
   pxSize("story", "social", 1440, 2560),
   pxSize("wide", "social", 2560, 1440)
-];
+].concat(WI.STANDEE_SIZES);   /* 6.125.0 wave I — the four standee sheets, in cm at 150 dpi */
 
 const SIZE_GROUPS = [
   { id: "spread", label: { my: "ကျယ်ပြန့် (flush-mount)", en: "Panoramic spread", shn: "ၵႂၢင်ႈ", kac: "Galu ai", th: "สเปรดพาโนรามา", zh: "全景跨页", vi: "Trang đôi toàn cảnh", id: "Bentang panorama", ms: "Bentang panorama" } },
@@ -380,6 +384,7 @@ const SIZE_GROUPS = [
   { id: "portrait", label: { my: "ဒေါင်လိုက်", en: "Upright", shn: "တင်ႈ", kac: "Tsap ai", th: "แนวตั้ง", zh: "竖版", vi: "Dọc", id: "Tegak", ms: "Tegak" } },
   { id: "landscape", label: { my: "အလျားလိုက်", en: "Landscape", shn: "ၼွၼ်း", kac: "Galeng ai", th: "แนวนอน", zh: "横版", vi: "Ngang", id: "Mendatar", ms: "Mendatar" } },
   { id: "paper", label: { my: "စက္ကူ (A4 · A3)", en: "Paper (A4 · A3)", shn: "ၸေႈ (A4 · A3)", kac: "Laika (A4 · A3)", th: "กระดาษ (A4 · A3)", zh: "纸张 (A4 · A3)", vi: "Giấy (A4 · A3)", id: "Kertas (A4 · A3)", ms: "Kertas (A4 · A3)" } },
+  WI.STANDEE_GROUP,   /* 6.125.0 wave I — the upright standee, before the screen sizes */
   { id: "social", label: { my: "ဖုန်း / social", en: "Screen & social", shn: "ၾူၼ်း", kac: "Screen", th: "หน้าจอ / โซเชียล", zh: "屏幕 / 社交", vi: "Màn hình / mạng xã hội", id: "Layar / sosial", ms: "Skrin / sosial" } },
   { id: "custom", label: { my: "ကိုယ်ပိုင်", en: "Custom", shn: "ႁင်းၵူၺ်း", kac: "Tinang", th: "กำหนดเอง", zh: "自定义", vi: "Tùy chỉnh", id: "Khusus", ms: "Tersuai" } }
 ];
@@ -531,7 +536,7 @@ const OCCASIONS = [
 const TYPE = FONTS.dataTables();
 
 const DATA = {
-  v: 4,
+  v: 5,
   bleedMm: 3,
   gutterMm: 5,
   gapFrac: G,
@@ -569,7 +574,15 @@ const DATA = {
   ovl: ORN.catalogue().ovl,
   ovlAmounts: ORN.catalogue().ovlAmounts,
   tints: ORN.catalogue().tints,
-  ornDir: "lib/album/"
+  ornDir: "lib/album/",
+  /* wave I — the template library: twelve standee designs and the words they set, the two mark
+     families (date blocks · monograms), twelve text styles, the default groups and the limits */
+  standees: WI.STANDEES,
+  standeeWords: WI.STANDEE_WORDS,
+  marks: WI.MARKS,
+  textStyles: WI.TEXT_STYLES,
+  libGroups: WI.LIB_GROUPS,
+  lib: WI.LIB
 };
 
 /* ---- checks the generator runs on itself ------------------------------- */
@@ -742,6 +755,63 @@ function check() {
   });
   Object.keys(DATA.tints).forEach(function (k) { if (!HEX.test(DATA.tints[k])) throw new Error("tint " + k + " is not a six-digit hex colour"); });
   if (DATA.tints.gold !== "#b08d57") throw new Error("the gold tint must be the studio's gold");
+  /* ---- wave I: the standees, the marks, the text styles, the library ------- */
+  const sdIds = {};
+  if (DATA.standees.length !== 12) throw new Error("twelve standee designs, not " + DATA.standees.length);
+  DATA.standees.forEach(function (d) {
+    if (!/^sd_[a-z0-9]+$/.test(d.id) || sdIds[d.id]) throw new Error("standee id " + d.id + " is malformed or repeated");
+    sdIds[d.id] = true;
+    if (d.cells.length !== d.n || d.n < 1 || d.n > WI.LIB.maxPhotos) throw new Error(d.id + ": n=" + d.n + " but " + d.cells.length + " cells");
+    if (["editorial", "classic", "minimal", "script"].indexOf(d.look) < 0) throw new Error(d.id + ": unknown look " + d.look);
+    d.cells.concat(d.texts).forEach(function (c, i) {
+      ["x", "y", "w", "h"].forEach(function (k) { if (typeof c[k] !== "number" || !isFinite(c[k])) throw new Error(d.id + " box " + i + ": " + k + " is not a number"); });
+      if (c.w <= 0 || c.h <= 0 || c.x < -1e-9 || c.y < -1e-9 || c.x + c.w > 1 + 1e-9 || c.y + c.h > 1 + 1e-9) throw new Error(d.id + " box " + i + ": outside the safe area");
+    });
+    /* no two frames overlap and no slot sits on a frame: a standee is read from across a room */
+    d.cells.forEach(function (a, i) { d.cells.forEach(function (b, j) {
+      if (i < j && a.x < b.x + b.w - 1e-9 && a.x + a.w > b.x + 1e-9 && a.y < b.y + b.h - 1e-9 && a.y + a.h > b.y + 1e-9) throw new Error(d.id + ": frames " + i + " and " + j + " overlap");
+    }); });
+    if (!d.texts.some(function (t) { return t.role === "names"; })) throw new Error(d.id + ": a standee always carries the couple's names");
+    d.texts.forEach(function (t) {
+      if (!ROLES.some(function (r) { return r.id === t.role; })) throw new Error(d.id + ": unknown text role " + t.role);
+      if (t.word && !DATA.standeeWords[t.word]) throw new Error(d.id + ": names a word " + t.word + " the table does not carry");
+      d.cells.forEach(function (c, i) { if (t.x < c.x + c.w - 1e-9 && t.x + t.w > c.x + 1e-9 && t.y < c.y + c.h - 1e-9 && t.y + t.h > c.y + 1e-9) throw new Error(d.id + ": slot " + t.role + " sits on frame " + i); });
+    });
+  });
+  Object.keys(DATA.standeeWords).forEach(function (k) { nine(DATA.standeeWords[k], "standee word " + k); });
+  ["welcome", "save", "ourday", "playing", "and"].forEach(function (k) { if (!DATA.standeeWords[k]) throw new Error("standee words lack " + k); });
+  ["date", "mono"].forEach(function (f) {
+    if (!(DATA.marks[f] && DATA.marks[f].length === 8)) throw new Error("mark family " + f + " must offer eight styles");
+    if (new Set(DATA.marks[f]).size !== 8) throw new Error("mark family " + f + " repeats a style");
+  });
+  if (DATA.textStyles.length !== 12) throw new Error("twelve text styles, not " + DATA.textStyles.length);
+  const tsIds = {};
+  DATA.textStyles.forEach(function (t) {
+    if (tsIds[t.id]) throw new Error("text style " + t.id + " repeated"); tsIds[t.id] = true;
+    if (!ROLES.some(function (r) { return r.id === t.role; })) throw new Error("text style " + t.id + ": unknown role " + t.role);
+    if (!fontIds[t.font]) throw new Error("text style " + t.id + ": " + t.font + " is not a face this studio ships");
+    if (!(t.size >= 0.4 && t.size <= 3)) throw new Error("text style " + t.id + ": size outside the line's own bounds");
+  });
+  const grpIds = {};
+  DATA.libGroups.forEach(function (g) {
+    if (grpIds[g.id]) throw new Error("library group " + g.id + " repeated"); grpIds[g.id] = true;
+    if (g.occ) { if (!occIds[g.occ]) throw new Error("library group " + g.id + " names occasion " + g.occ + ", which is not one"); }
+    else nine(g.label, "library group " + g.id);
+  });
+  if (!grpIds.standee) throw new Error("the library must offer a Standee group");
+  /* 6.125.0 — every group carries the words an imported file's own name is read against, and every
+     one of them compiles: the module reads these instead of naming a group in its code. */
+  DATA.libGroups.forEach(function (g) {
+    if (typeof g.match !== "string" || g.match.length < 3) throw new Error("library group " + g.id + " has no name-words");
+    try { new RegExp(g.match, "i"); } catch (e) { throw new Error("library group " + g.id + " name-words do not compile: " + e.message); }
+  });
+  if (!(DATA.lib.max >= 100 && DATA.lib.max <= 2000)) throw new Error("lib.max " + DATA.lib.max + " is outside what one store can carry");
+  if (!(DATA.lib.preview >= 800 && DATA.lib.preview <= 4000 && DATA.lib.thumb >= 160 && DATA.lib.thumb < DATA.lib.preview)) throw new Error("lib preview/thumb sizes are out of order");
+  if (!(DATA.lib.maxPhotos >= 6 && DATA.lib.maxPhotos <= 12)) throw new Error("lib.maxPhotos " + DATA.lib.maxPhotos);
+  if (!(DATA.lib.photoWords.length >= 6 && DATA.lib.textWords.length >= 4)) throw new Error("the PSD reader needs its layer-name words");
+  DATA.sizes.filter(function (s) { return s.group === "standee"; }).forEach(function (s) {
+    if (s.unit !== "cm" || s.dpi !== 150 || !(s.h > s.w)) throw new Error("standee size " + s.id + " must be an upright cm sheet at 150 dpi");
+  });
 }
 
 function round(o) {

@@ -3829,7 +3829,7 @@ body.tsize-s .sub, body.tsize-s .btn-sm { font-size: 9px; }
 
 /* the free size: a number you type and a rail you drag, for width and for height */
 .alb-dim{display:flex;flex-wrap:wrap;align-items:center;margin:0 0 8px}
-.alb-dimlab{flex:0 0 auto;width:52px;font-size:var(--fs-xs);font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.alb-dimlab{flex:0 0 auto;min-width:52px;font-size:var(--fs-xs);font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}   /* 6.125.0 — the label keeps the 52px column but grows for a long word (Burmese QUALITY is 76px) instead of being cut */
 .alb-num{flex:0 0 auto;width:88px;padding:6px 8px;margin:0 8px 0 0;text-align:center}
 .alb-rng{flex:1 1 130px;min-width:110px;display:block;box-sizing:border-box;margin:0;min-height:44px;accent-color:var(--accent)}
 .alb-opts{display:flex;flex-wrap:wrap;align-items:center;margin:0 -4px 6px}
@@ -3911,4 +3911,39 @@ body.tsize-s .sub, body.tsize-s .btn-sm { font-size: 9px; }
 .alb-orntile{display:flex;align-items:center;justify-content:center;min-height:56px;padding:6px}
 .alb-ornimg{display:block;max-width:100%;max-height:44px;width:auto;height:auto}
 .alb-tintchip{display:flex;align-items:center;justify-content:center}
+/* 6.125.0 wave I — THE TEMPLATE LIBRARY, THE BUILD, THE AI LOG, THE MARKS, THE 3D MOCKUP, THE EXPORT CHOICES. A library
+   tile is a poster the height of a standee, its count badge under the picture, a star and a tick on the picture; the
+   build and the log are boxes inside the card; the mockup's canvas is the stage's own. Flex and percentages only, as above. */
+.alb-libtiles{margin-top:2px}
+.alb-libtile{width:104px;height:auto;min-height:150px;padding:0 0 4px;text-align:center;cursor:pointer;background:#0f1319}
+.alb-libtile.on{box-shadow:0 0 0 2px var(--accent)}
+.alb-libtile.picked{box-shadow:0 0 0 2px #8fd19e}
+.alb-libimg{display:block;width:100%;height:118px;max-width:100%;background:#1a1f27}
+.alb-libname{display:block;margin:4px 4px 0;height:30px;font-size:11px;font-weight:700;line-height:1.35;color:var(--text);white-space:normal;overflow-wrap:anywhere;word-break:break-word;overflow:hidden}   /* 6.125.0 — a template's own name wraps to two lines in the tile rather than being cut at the edge; the height is fixed so a row of tiles stays one height */
+/* 6.125.0 — a template's star and its tick are the studio's 40px reach, like every other control:
+   the button is the full 40 and carries no frame, and the disc a finger aims at is drawn inside it. */
+.alb-libstar{left:0;right:auto;bottom:38px;width:40px;height:40px;line-height:40px;border:0;background:none;color:#9aa0a6;font-size:17px}
+.alb-libstar.on{color:#e6c07a}
+.alb-libck{top:0;right:0;width:40px;height:40px;line-height:40px;border:0;background:none;font-size:15px}
+.alb-libdot{display:inline-block;width:24px;height:24px;line-height:22px;text-align:center;border-radius:50%;border:1px solid var(--line-soft);background:rgba(0,0,0,.66)}
+.alb-libtile .alb-badge{bottom:auto;top:96px;right:2px}
+.alb-libprog,.alb-libsum,.alb-buildbox,.alb-aibox{display:block;margin:0 0 10px;padding:10px 12px;border-radius:10px;border:1px solid var(--line-soft);background:var(--panel-2)}
+.alb-ailog{display:block;margin:6px 0 0}
+.alb-ailine{display:block;margin:0 0 4px;font-size:12px;line-height:1.45;color:var(--mut)}
+.alb-ai-ok{color:#8fd19e}
+.alb-ai-run{color:var(--gold-1,#e6c07a)}
+.alb-ai-warn{color:#ffb3a7}
+.alb-info{flex:1 1 140px;min-width:120px;padding:7px 9px}
+.alb-issues{display:flex;flex-wrap:wrap;align-items:center;margin:0 0 8px}
+.alb-sheetlab{font-size:12px;font-weight:700;color:var(--mut);margin:0 10px 6px 0}
+.alb-issuechip{display:inline-block;font-size:12px;font-weight:700;color:#ffb3a7;margin:0 10px 6px 0}
+.alb-issueok{display:inline-block;font-size:12px;font-weight:700;color:#8fd19e;margin:0 0 6px}
+.alb-fixbtn{min-height:40px;padding:0 12px;margin:0 0 6px}
+.alb-canvas3d{cursor:default;background:#0b0e13}
+.alb-marktile{display:flex;align-items:center;justify-content:center;min-height:56px;padding:6px}
+.alb-markimg{display:block;max-width:100%;max-height:60px;width:auto;height:auto}
+.alb-logopv{display:block;max-width:160px;max-height:80px;width:auto;height:auto;margin:0 0 8px;padding:6px;border-radius:8px;background:#fff}
+.alb-tschip{font-size:13px}
+.alb-bgstrip .chip{margin:4px}
+.alb-bgtile.on{box-shadow:0 0 0 2px var(--accent)}
 /* ---- /ALBUM_CSS ---- */

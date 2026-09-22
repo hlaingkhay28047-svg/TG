@@ -59,7 +59,8 @@ const ORNLIB = require(path.join(ROOT, "tools", "lib", "album_ornaments.js"));
 const BUILDER = require(path.join(ROOT, "tools", "build_album_ornaments.js"));
 const LIFTER = require(path.join(ROOT, "tools", "build_panel_album.js"));
 const RECORD = JSON.parse(read("docs/app/lib/album/ornaments.json"));
-const MOD = (APP.match(/var ALBUM = \(function\(\)\{[\s\S]*?\n\}\)\(\);/) || [""])[0];
+/* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 ceiling) */
+const MOD = read("docs/app/data/album-module.js");
 const CSS = (APP.match(/\/\* ---- ALBUM_CSS[\s\S]*?\/\* ---- \/ALBUM_CSS ---- \*\//) || [""])[0];
 const CSS_DECL = CSS.replace(/\/\*[\s\S]*?\*\//g, "");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
@@ -79,7 +80,8 @@ const KEYS = ["alb_shelf_h", "alb_shelf_new", "alb_shelf_dup", "alb_shelf_ren", 
   "alb_ovl_all_done", "alb_ovl_note", "alb_open_ps", "alb_open_ps_done", "alb_open_ps_fail"];
 /* the my/en rows live in the shell's TR_PH table (evaluated — the values carry quotes and <em>) */
 const TRPH = (() => { const i = APP.indexOf("\nvar TR_PH={"), j = APP.indexOf("\n};", i); return new Function("return " + APP.slice(i + 1, j + 3).replace(/^var TR_PH=/, "").replace(/;$/, ""))(); })();
-const CARDS = "albShelfCard,albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albDesignCard,albOrnCard,albTextCard,albExportCard,albCheckCard";
+/* 6.125.0 wave I added the template library as the eighth card, after the layouts */
+const CARDS = "albShelfCard,albOccCard,albSizeCard,albPagesCard,albStageCard,albPhotosCard,albLayoutCard,albLibCard,albDesignCard,albOrnCard,albTextCard,albExportCard,albCheckCard";
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
 
 let failures = 0;
@@ -91,8 +93,10 @@ function report(name, ok, detail) {
 /* ===================== A) the source ===================== */
 function sourcePins() {
   const fams = ALBUM.ornFamilies.map((f) => (typeof f === "string" ? f : f.id));
-  report("A1) data/album.js is v4 and carries the wave: twenty-four ornaments in six families (corner · divider · frame · botanic · shape · tape), each with an aspect and a default box; five overlays at three strengths; five tints; the art folder",
-    ALBUM.v === 4 && ALBUM.orn.length === 24 && fams.join() === "corner,divider,frame,botanic,shape,tape" &&
+  /* 6.125.0 wave I raised the table to v5 (the standee sizes, marks, text styles and the template
+     library joined it); everything this wave pinned is still there, so the check reads "at least v4". */
+  report("A1) data/album.js is v4 or newer and carries the wave: twenty-four ornaments in six families (corner · divider · frame · botanic · shape · tape), each with an aspect and a default box; five overlays at three strengths; five tints; the art folder",
+    ALBUM.v >= 4 && ALBUM.orn.length === 24 && fams.join() === "corner,divider,frame,botanic,shape,tape" &&
     ALBUM.orn.every((o) => o.id && fams.indexOf(o.fam) >= 0 && o.ar > 0 && o.def && o.def.w > 0 && !!RECORD.files["orn/" + o.id + ".png"]) &&
     ALBUM.ovl.map((o) => o.id).join() === "grain,vignette,leak,dust,paper" && ALBUM.ovl.every((o) => !!RECORD.files["ovl/" + o.id + ".png"]) &&
     ALBUM.ovlAmounts.join() === "light,medium,strong" && Object.keys(ALBUM.tints).join() === "gold,white,ink,rose,sage" && ALBUM.ornDir === "lib/album/" &&
@@ -116,7 +120,7 @@ function sourcePins() {
     typeof BUILDER.RECIPES === "string" && typeof BUILDER.TEXTURES === "string" && recipeMiss.length === 0 && textureMiss.length === 0 &&
     /ornaments\.json$/.test(BUILDER.RECORD) && has(read("tools/build_album_ornaments.js"), '"--check"'), { recipeMiss, textureMiss });
 
-  report("A4) the module: assetSrc asks the host first, ornBox is a fraction box (0.03–1.5 wide, height from the safe area's ratio and the mask's aspect), hitOrn walks the decor from the top, the shelf normaliser and its keys, the quality table, the confirm promise, the overlay layer in the PSD, a page's overlay field, and the twelve cards in order",
+  report("A4) the module: assetSrc asks the host first, ornBox is a fraction box (0.03–1.5 wide, height from the safe area's ratio and the mask's aspect), hitOrn walks the decor from the top, the shelf normaliser and its keys, the quality table, the confirm promise, the overlay layer in the PSD, a page's overlay field, and the thirteen cards in order (the template library joined them in 6.125.0)",
     /function assetSrc\(kind, file\)\{[\s\S]{0,60}typeof H\.asset === "function"/.test(MOD) &&
     /var ORN_W_MIN = 0\.03, ORN_W_MAX = 1\.5/.test(MOD) && /function ornBox\(d, safe\)\{/.test(MOD) && /var h = w \* \(safe\.w \/ safe\.h\) \/ ar;/.test(MOD) &&
     /function hitOrn\(pg, safe, px, py\)\{/.test(MOD) && /for \(i=list\.length-1;i>=0;i--\)\{/.test(MOD) &&
@@ -124,8 +128,8 @@ function sourcePins() {
     /var PHOTO_MAX = \{ std: 2400, print: 4000 \}, QUALITY_KEY = "hnk_album_quality_v1", QUALITY = "std";/.test(MOD) &&
     /return Promise\.resolve\(H\.confirm\(msg\)\)\.then\(function\(v\)\{ return !!v; \}\)/.test(MOD) &&
     /name: "Overlay \(flat\)"/.test(MOD) && /paintPageSync\(x, pg, idx, safe, 1, 0\)/.test(MOD) &&
-    /bleed:false, decor:\[\], story:-1, overlay:null \}; \}/.test(MOD) &&
-    /ROOT\.appendChild\(shelfCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(occasionCard\(\)\);\n\s*ROOT\.appendChild\(sizeCard\(\)\);\n\s*ROOT\.appendChild\(pagesCard\(\)\);\n\s*ROOT\.appendChild\(stageCard\(\)\);\n\s*ROOT\.appendChild\(photosCard\(\)\);\n\s*ROOT\.appendChild\(layoutCard\(\)\);\n\s*ROOT\.appendChild\(designCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(ornCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(textCard\(\)\);\n\s*ROOT\.appendChild\(exportCard\(\)\);\n\s*ROOT\.appendChild\(checkCard\(\)\);/.test(MOD) &&
+    /bleed:false, decor:\[\], story:-1, overlay:null, lib:"", bg:null \}; \}/.test(MOD) &&   /* 6.125.0 wave I gave a page its template and its sheet background */
+    /ROOT\.appendChild\(shelfCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(occasionCard\(\)\);\n\s*ROOT\.appendChild\(sizeCard\(\)\);\n\s*ROOT\.appendChild\(pagesCard\(\)\);\n\s*ROOT\.appendChild\(stageCard\(\)\);\n\s*ROOT\.appendChild\(photosCard\(\)\);\n\s*ROOT\.appendChild\(layoutCard\(\)\);\n\s*ROOT\.appendChild\(libCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(designCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(ornCard\(\)\);[^\n]*\n\s*ROOT\.appendChild\(textCard\(\)\);\n\s*ROOT\.appendChild\(exportCard\(\)\);\n\s*ROOT\.appendChild\(checkCard\(\)\);/.test(MOD) &&
     /if \(H && typeof H\.openInPs === "function"\)\{/.test(MOD) && /ops\.id = "albOpenPs"/.test(MOD) &&
     /var ver = \(typeof APP_VER === "string"\) \? APP_VER : \(\(typeof PANEL_VERSION === "string"\) \? PANEL_VERSION : ""\);/.test(MOD) &&
     /ALBUM\.photoMax\(\) : 2400;/.test(APP) && /remove: function\(key\)\{ try \{ kvSet\(key, null\); \} catch\(e\)\{\} \}/.test(APP), null);
@@ -262,7 +266,7 @@ async function walk(browser) {
     ovl: [...document.querySelectorAll("#albOvls .chip")].map((c) => c.id), amts: document.querySelectorAll("#albOvlAmts .chip").length, all: !!document.getElementById("albOvlAll"),
     openPs: !!document.getElementById("albOpenPs"), max: ALBUM.photoMax(), q: ALBUM.quality(), albums: ALBUM.albums().items.length
   }));
-  report("C1) the empty page on a 390px phone: the twelve cards in order (the shelf first, the ornaments after the design), one album on the shelf with its four buttons, Standard chosen at 2,400 px, seven family chips over twenty-four ornament tiles drawn from lib/album/orn, six overlay chips (the three strengths appear once an overlay is chosen) and Apply to every page, and no Open in Photoshop door in a browser",
+  report("C1) the empty page on a 390px phone: the thirteen cards in order (the shelf first, the templates after the layouts, the ornaments after the design), one album on the shelf with its four buttons, Standard chosen at 2,400 px, seven family chips over twenty-four ornament tiles drawn from lib/album/orn, six overlay chips (the three strengths appear once an overlay is chosen) and Apply to every page, and no Open in Photoshop door in a browser",
     c1.cards.join() === CARDS && c1.tiles === 1 && c1.ops.length === 0 && c1.qual.join() === "albQual_std*,albQual_print" && c1.fams === 7 && c1.orn === 24 &&
     c1.ornSrc === "lib/album/orn/c1.png" && c1.ovl.join() === "albOvl_none,albOvl_grain,albOvl_vignette,albOvl_leak,albOvl_dust,albOvl_paper" && c1.amts === 0 && c1.all &&
     !c1.openPs && c1.max === 2400 && c1.q === "std" && c1.albums === 1, c1);
@@ -419,8 +423,8 @@ function languages() {
     const want = (TRPH[k].en.match(/\{[A-Z]\}/g) || []).sort().join(), got = (v.match(/\{[A-Z]\}/g) || []).sort().join();
     if (want !== got) ph.push(c + ":" + k);
   }));
-  report("D2) the fifteen reader packs carry all fifty-seven with the English placeholders intact, and the sweep registers the wave (V61220_KEYS) in its three pending rows",
-    short.length === 0 && ph.length === 0 && /const V61220_KEYS = \[/.test(SWEEP) && (SWEEP.match(/\.\.\.V61220_KEYS\]/g) || []).length === 3, { short: short.slice(0, 6), ph: ph.slice(0, 6) });
+  report("D2) the fifteen reader packs carry all fifty-seven with the English placeholders intact, and the sweep registers the wave (V61220_KEYS) in its three pending rows (a later wave may spread its own keys in beside it)",
+    short.length === 0 && ph.length === 0 && /const V61220_KEYS = \[/.test(SWEEP) && (SWEEP.match(/\.\.\.V61220_KEYS[,\]]/g) || []).length === 3, { short: short.slice(0, 6), ph: ph.slice(0, 6) });
 }
 
 /* ===================== E) release ===================== */
@@ -443,9 +447,9 @@ function releasePins() {
   const row = rows.find((r) => r.v === VER);
   report(`E2) the What's New strip carries the ${VER} row (it led the strip when this wave shipped) — a bold lead, title and story in all nine languages, pointing at the Album page — and the panel's lifted table carries it`,
     row && row.v === VER && row.ref === "pgAlbum" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40 && row.s[l].startsWith("**")) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
-  report("E3) CI runs this test right after the album designer and the landing says how many tests the suite runs (264 when this wave shipped, 265 since 6.123.0 added verify_prop_wave_h, 266 since 6.124.0 added verify_selection_swap)",
+  report("E3) CI runs this test right after the album designer and the landing says how many tests the suite runs (264 when this wave shipped, 265 since 6.123.0 added verify_prop_wave_h, 266 since 6.124.0 added verify_selection_swap, 267 since 6.125.0 added verify_album_wave_i)",
     has(CI, "run: PORT=8931 node test/verify_album_designer.js\n") && has(CI, "run: PORT=8931 node test/verify_album_wave_g.js") && CI.indexOf("verify_album_designer") < CI.indexOf("verify_album_wave_g") &&
-    (CI.match(/node test\//g) || []).length === 266 && has(LANDING, "266 tests") && !has(LANDING, "263 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 267 && has(LANDING, "267 tests") && !has(LANDING, "263 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 /* ===================== F) the panel ===================== */
@@ -488,7 +492,7 @@ async function panelWalk(browser) {
     };
   });
   const appHeadText = (TRPH.ph_album.my || "").replace(/<\/?em>/g, "");
-  report("F1) in the panel the Album page opens under Library ▸ Album with the app's kicker and Burmese headline, the same twelve cards, the shelf's heading and the Open in Photoshop door from HNK.albumStrings, twenty-four ornament tiles from icons/album/orn, and the module's native selects dressed as .hsl pickers (the unit picker reads \"in\")",
+  report("F1) in the panel the Album page opens under Library ▸ Album with the app's kicker and Burmese headline, the same thirteen cards, the shelf's heading and the Open in Photoshop door from HNK.albumStrings, twenty-four ornament tiles from icons/album/orn, and the module's native selects dressed as .hsl pickers (the unit picker reads \"in\")",
     /\bon\b/.test(f1.on) && f1.cards.join() === CARDS && f1.kick === "Album Pages" && f1.head === appHeadText &&
     typeof f1.shelfH === "string" && f1.shelfH.indexOf(f1.shelfWord) === 0 && f1.openPs === f1.openWord && f1.orn === 24 && f1.ornSrc === "icons/album/orn/c1.png" &&
     f1.hslN >= 1 && f1.unitWrapped && f1.unitLabel === "in" && f1.subtab.indexOf("Album") >= 0, f1);
@@ -521,7 +525,7 @@ async function panelWalk(browser) {
     cards: document.querySelectorAll("#albRoot > section.card").length, scrollW: document.documentElement.scrollWidth, rootW: document.getElementById("albRoot").getBoundingClientRect().width
   }));
   report("F3) a relaunch over the same data folder brings the album back — its name, its two photographs, the ornament and Print quality — and at 320px the page holds its width with no horizontal scroll",
-    f3.name === "Panel Kyaw" && f3.photos === 2 && f3.decor === 1 && f3.q === "print" && f3.photoMax === 4000 && f3.cards === 12 && f3.scrollW <= 320 && f3.rootW > 200, f3);
+    f3.name === "Panel Kyaw" && f3.photos === 2 && f3.decor === 1 && f3.q === "print" && f3.photoMax === 4000 && f3.cards === 13 && f3.scrollW <= 320 && f3.rootW > 200, f3);
   await p2.context().close();
   report("F4) no panel error on either width", errs.length === 0, errs.slice(0, 5));
   server.close();
