@@ -279,6 +279,11 @@ jobs:
       # it.
       - name: Verify what a capped model receives, and what OFF means
         run: PORT=8931 node test/verify_prompt_fit.js
+      # 6.127.0 — 6.118.0 fixed the ageing face on ONE card. This holds the line
+      # for the other thirty-two: a card that finishes skin states its direction,
+      # or this step is red.
+      - name: Verify every skin card states that a retouch only reduces
+        run: node test/verify_skin_age_guard.js
 
       # v5.93.0 — Wave 11 begins at the door. Every state the account server
       # can report is read from server/lib/auth.js and pushed through both
