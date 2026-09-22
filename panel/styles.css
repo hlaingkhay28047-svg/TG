@@ -3920,9 +3920,12 @@ body.tsize-s .sub, body.tsize-s .btn-sm { font-size: 9px; }
 .alb-libtile.picked{box-shadow:0 0 0 2px #8fd19e}
 .alb-libimg{display:block;width:100%;height:118px;max-width:100%;background:#1a1f27}
 .alb-libname{display:block;margin:4px 4px 0;height:30px;font-size:11px;font-weight:700;line-height:1.35;color:var(--text);white-space:normal;overflow-wrap:anywhere;word-break:break-word;overflow:hidden}   /* 6.125.0 — a template's own name wraps to two lines in the tile rather than being cut at the edge; the height is fixed so a row of tiles stays one height */
-.alb-libstar{left:auto;right:2px;bottom:26px;color:#9aa0a6}
+/* 6.125.0 — a template's star and its tick are the studio's 40px reach, like every other control:
+   the button is the full 40 and carries no frame, and the disc a finger aims at is drawn inside it. */
+.alb-libstar{left:0;right:auto;bottom:38px;width:40px;height:40px;line-height:40px;border:0;background:none;color:#9aa0a6;font-size:17px}
 .alb-libstar.on{color:#e6c07a}
-.alb-libck{width:24px;height:24px;line-height:22px;font-size:13px}
+.alb-libck{top:0;right:0;width:40px;height:40px;line-height:40px;border:0;background:none;font-size:15px}
+.alb-libdot{display:inline-block;width:24px;height:24px;line-height:22px;text-align:center;border-radius:50%;border:1px solid var(--line-soft);background:rgba(0,0,0,.66)}
 .alb-libtile .alb-badge{bottom:auto;top:96px;right:2px}
 .alb-libprog,.alb-libsum,.alb-buildbox,.alb-aibox{display:block;margin:0 0 10px;padding:10px 12px;border-radius:10px;border:1px solid var(--line-soft);background:var(--panel-2)}
 .alb-ailog{display:block;margin:6px 0 0}

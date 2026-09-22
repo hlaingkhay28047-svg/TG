@@ -167,7 +167,7 @@ function sourcePins() {
     /if \(VID_SEND_FRAME\[row\[1\]\]\) b\.style\.display = VIDEO_OK \? "" : "none";/.test(PMAIN) && /if \(VID_SEND_FRAME\[r\[1\]\] && !VIDEO_OK\) return;/.test(PMAIN) &&
     /g\.HNK\.homeRecent = \{ list: homeRecentListP, open: homeRecentOpen, title: function \(\) \{ return ff9\(GAL_L\.recent\); \} \};/.test(PMAIN) && /function homeRecentOpen\(name\) \{ GAL\.pick = name; switchPage\("gallery"\);/.test(PMAIN) &&
     /id: "hnkDashRecent"/.test(PHOME) && /hr\.list\(6\)/.test(PHOME) && /hr\.open\(/.test(PHOME) &&
-    ["ဗီဒီယို ပြီးရင် အသိပေးမယ် — ဖွင့်ထား", "ဗီဒီယို ပြီးရင် အသိပေးမယ် — ပိတ်ထား", "ဒီ browser မှာ notification မရပါ"].every(s => PARITY.indexOf(s) > 0) && /sel: dropOnce\(aState\.sel, APP_ONLY\[p\.key\] \|\| \[\]\)/.test(PARITY), null);
+    ["ဗီဒီယို ပြီးရင် အသိပေးမယ် — ဖွင့်ထား", "ဗီဒီယို ပြီးရင် အသိပေးမယ် — ပိတ်ထား", "ဒီ browser မှာ notification မရပါ"].every(s => PARITY.indexOf(s) > 0) && /sel: dropOnce\(rewrite\(dropOnce\(aState\.sel, APP_ONLY\[p\.key\] \|\| \[\]\)\)/.test(PARITY)   /* 6.125.0 — the album export chip is worded for its host, so the walk rewrites the selection list too; the app-only notify lines are still dropped from it */, null);
 }
 
 /* ================= B) the app, on a phone ================= */

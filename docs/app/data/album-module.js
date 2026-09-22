@@ -4477,10 +4477,12 @@ var ALBUM = (function(){
         var im = document.createElement("img"); im.className = "alb-tileimg alb-libimg"; im.alt = ""; libThumb(it, im); t.appendChild(im);
         t.appendChild(E("span","alb-badge", String(it.n)));
         var nm = E("span","alb-libname", it.name || L("alb_lib_untitled")); t.appendChild(nm);
-        var star = E("button","alb-tilemv alb-libstar" + (it.star ? " on" : ""), "★"); star.type = "button"; star.id = "albLibStar_" + it.id; star.title = L("alb_lib_star");
+        var star = E("button","alb-tilemv alb-libstar" + (it.star ? " on" : ""), ""); star.type = "button"; star.id = "albLibStar_" + it.id; star.title = L("alb_lib_star");
+        star.appendChild(E("span","alb-libdot", "\u2605"));   /* 6.125.0 — the disc is the mark, the button is the 40px reach around it */
         star.onclick = function(ev){ ev.stopPropagation(); libToggleStar(it.id); };
         t.appendChild(star);
-        var ck = E("button","alb-tilex alb-libck", LIBV.sel[it.id] ? "✓" : ""); ck.type = "button"; ck.id = "albLibCk_" + it.id; ck.title = L("alb_lib_select");
+        var ck = E("button","alb-tilex alb-libck", ""); ck.type = "button"; ck.id = "albLibCk_" + it.id; ck.title = L("alb_lib_select");
+        ck.appendChild(E("span","alb-libdot", LIBV.sel[it.id] ? "\u2713" : ""));   /* 6.125.0 — same: a 24px disc inside a 40px reach */
         ck.onclick = function(ev){ ev.stopPropagation(); LIBV.sel[it.id] = !LIBV.sel[it.id]; fillLibTiles(); };
         t.appendChild(ck);
         t.onclick = function(){ if (LIBV.trash){ LIBV.sel[it.id] = !LIBV.sel[it.id]; fillLibTiles(); return; } applyLib(it.id); };
