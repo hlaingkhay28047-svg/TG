@@ -353,7 +353,7 @@ select.inp{padding:9px 10px}
 .nw-x{flex:0 0 auto;min-width:40px;min-height:40px;background:none;border:1px solid var(--line-soft);border-radius:9px;color:var(--muted);font-size:13px}
 /* the card ribbon. Sits opposite .wf-need (top-left) so neither covers the
    other, and above the ★/batch corner buttons in z-order but not over them. */
-.wf-new{position:absolute;top:8px;right:8px;z-index:3;pointer-events:none;background:var(--gold);color:#1a1408;border-radius:999px;padding:2px 8px;font-size:9.5px;font-weight:900;letter-spacing:.06em}
+.wf-new{position:absolute;top:8px;right:8px;z-index:3;pointer-events:none;background:var(--gold);color:#1a1408;border-radius:999px;padding:2px 7px;font-size:11px;font-weight:900;letter-spacing:.04em}
 .wfmini.is-new{border-color:var(--gold)}
 /* the tab dot. A dot, not a number: the count is on Home, and a numeral this
    small is unreadable on a phone bar that is already 10.5px. */
@@ -4520,13 +4520,13 @@ html.splashing #splash{display:flex}
 <div class="wiz" id="wizPay" role="dialog" aria-modal="true"><div class="wiz-in" id="wizPayIn"></div></div>
 
 <script src="data/hnkdata.js?v=3b68aeb2725b"></script>
-<script src="data/libwf.js?v=b10074566ef8"></script>
-<script src="data/imagine.js?v=22984cce5630"></script>
+<script src="data/libwf.js?v=b084a7f5e537"></script>
+<script src="data/imagine.js?v=4a636fb6eeaa"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=f921f9f59fd4"></script>
+<script src="data/album-module.js?v=1fd71ed29938"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=93c41c48a96e"></script>
-<script src="data/whatsnew.js?v=5819dd1eb859"></script>
+<script src="data/whatsnew.js?v=70cc055ed62c"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -30869,7 +30869,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.126.0";
+var APP_VER="6.127.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

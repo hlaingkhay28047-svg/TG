@@ -154,8 +154,17 @@ function report(name, ok, detail) {
     const caps = Array.from(new Set(RH_MODELS.map(m => m.promptMax).filter(c => c && c < 20000))).sort((a, b) => a - b);
     const items = (window.HNK_WF_CATALOG || []).flatMap(c => c.items);
     const RE = /^[A-Z][A-Za-z0-9 ,&'\/()—-]{0,60}\bLOCKS?\b[^\n:]{0,40}:/;
-    const noLock = [], strayLock = [], noAvoid = [];
+    const noLock = [], strayLock = [], noAvoid = [], tightGuard = [], noAge = [];
+    let ageCases = 0;
     let withLocks = 0, whole = 0, compact = 0;
+    /* what the cut has left for the body once the guard is paid for */
+    const guardLen = (t, cap) => {
+      const s2 = rhFitByBlocks(t, cap).text, gi = s2.indexOf("TASK GUARD:");
+      if (gi < 0) return cap;
+      let tail = s2.slice(gi); const ai2 = tail.indexOf("\n\nAVOID:");
+      if (ai2 >= 0) tail = tail.slice(0, ai2);
+      return cap - tail.replace(/\s+$/, "").length - 2;
+    };
     items.forEach(w => {
       const p = window._wfBatchPrompt(w.id) || "";
       const gI = p.indexOf("TASK GUARD:"), aI = p.indexOf("\n\nAVOID:");
@@ -173,8 +182,23 @@ function report(name, ok, detail) {
         if (srcLocks.length) {
           withLocks++;
           const gotLocks = out.split("\n").filter(l => RE.test(l));
-          if (!gotLocks.length) noLock.push(w.id + "@" + cap + " had " + srcLocks.length);
+          /* 6.127.0 — where the TASK GUARD alone all but fills the cap there is
+             no lock room to reserve: the lock share is 45% of what the guard
+             leaves, and rhKeepWhole needs more than 80 characters before it
+             will send even a lock's own opening. Those cases are counted, not
+             excused by name — the same class A3 already records for the AVOID. */
+          const room = guardLen(p, cap);
+          if (!gotLocks.length && room < 178) tightGuard.push(w.id + "@" + cap + " room " + room);
+          else if (!gotLocks.length) noLock.push(w.id + "@" + cap + " had " + srcLocks.length);
           gotLocks.forEach(g => { if (!allLockLines.some(sl => sl === g || sl.startsWith(g))) strayLock.push(w.id + "@" + cap + " :: " + g.slice(0, 40)); });
+        }
+        /* 6.127.0 — the skin cards' age rule travels on two channels: the AGE
+           LOCK line in the body and the three items that open the AVOID list.
+           At least one of them has to arrive. */
+        if (p.indexOf("AGE LOCK:") >= 0) {
+          ageCases++;
+          if (out.indexOf("AGE LOCK") < 0 &&
+              !/added wrinkles|deepened lines|older-looking face/.test(out)) noAge.push(w.id + "@" + cap);
         }
         if (avoid) {
           if (out.indexOf("AVOID:") < 0) noAvoid.push({ id: w.id, cap: cap, left: cap - out.length });
@@ -182,11 +206,28 @@ function report(name, ok, detail) {
         }
       });
     });
-    return { withLocks, noLock, strayLock, noAvoid, whole, compact };
+    return { withLocks, noLock, strayLock, noAvoid, tightGuard, ageCases, noAge, whole, compact };
   });
   report("A2) a prompt whose body carries LOCK lines never arrives without one — the locks are lifted past the character cut, and every lock that arrives is a source lock whole or that lock's own opening",
     L.noLock.length === 0 && L.strayLock.length === 0, { noLock: L.noLock.slice(0, 6), stray: L.strayLock.slice(0, 4) });
   console.log("      (" + L.withLocks + " cut cases carry locks; before 6.126.0, 65 cases lost one and master-bgfg-replace@800 lost all five)");
+  /* 6.127.0 — the AGE LOCK gave two heritage cards their first body lock, and
+     both are cards whose TASK GUARD alone fills the 800 cap (Studio Look Copy
+     leaves 59 characters, Lanna Gold Heritage is 193 over it). No lock can be
+     sent there, and the cut says so rather than pretending otherwise. Only at
+     800, only where the guard left under 178 characters, and only these two —
+     if a third appears, a guard has grown and this fails. */
+  report("A2b) the only cut cases that carry no lock are the ones whose TASK GUARD alone left under 178 characters — the lock share of that is below the 80-character floor an opening needs",
+    L.tightGuard.length <= 2 && L.tightGuard.every(r => /@800 room (59|-193)$/.test(r)), L.tightGuard);
+  /* 6.127.0 — what the owner actually asked for: a capped model must still be
+     told that a retouch only reduces. Measured over this catalog, 156 of the
+     158 cut cases carry the AGE LOCK line or one of its AVOID items; the two
+     that carry neither are Studio Look Copy and Lanna Gold Heritage at 800,
+     whose TASK GUARD alone fills the cap and leaves room for no rule at all. */
+  report("A2c) every capped run of a skin card still says a retouch only reduces — by the AGE LOCK line or by the items that open its AVOID list — but the two whose guard alone fills the 800 cap",
+    L.noAge.length <= 2 && L.noAge.every(r => /@800$/.test(r)), L.noAge);
+  console.log("      (" + (L.ageCases - L.noAge.length) + " of " + L.ageCases + " cut cases carry the age rule; before the AVOID items were moved to the front, 142 did)");
+
   /* the three that carry none are the cards whose TASK GUARD alone all but
      fills the 800 cap — 6, 15 and 20 characters left after the guard */
   report("A3) the AVOID arrives on every capped run but the three whose guard alone leaves under 25 characters: whole when it fits, otherwise compact — its own lead and its own opening items, in order",

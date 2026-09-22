@@ -53,7 +53,7 @@ const WI = require(path.join(ROOT, "tools", "lib", "album_wave_i.js"));
 const GEN = require(path.join(ROOT, "tools", "build_album_data.js"));
 /* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 ceiling) */
 const MOD = read("docs/app/data/album-module.js");
-const VER = "6.126.0", PVER = "6.197.0";
+const VER = "6.127.0", PVER = "6.198.0";
 const L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
 const PACKS = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "ne", "pa", "ta", "te", "ur"];
 /* every line this wave added, as the module asks for it */
@@ -405,19 +405,19 @@ function release() {
     { app: ver.v, panel: manifest.version });
 
   const wn = JSON.parse(read("docs/app/data/whatsnew.js").replace(/^window\.HNK_WHATS_NEW=/, "").replace(/;\s*$/, ""));
-  /* 6.126.0 — the wave shipped as 6.125.0 and led the strip that day; every release
+  /* 6.127.0 — the wave shipped as 6.125.0 and led the strip that day; every release
      since adds a row above it, so the row is found by its own version and the window
      widens by one rather than the row being re-dated */
   const WAVE_V = "6.125.0";
   const row = wn.find((r) => r.v === WAVE_V);
-  report(`E2) the What's New strip carries the ${WAVE_V} row, in all nine languages, pointing at the Album page (it led the strip when this wave shipped; the 6.126.0 row sits above it now)`,
-    !!row && wn.indexOf(row) <= 1 && row.ref === "pgAlbum" &&
+  report(`E2) the What's New strip carries the ${WAVE_V} row, in all nine languages, pointing at the Album page (it led the strip when this wave shipped; the 6.126.0 and 6.127.0 rows sit above it now)`,
+    !!row && wn.indexOf(row) <= 2 && row.ref === "pgAlbum" &&
     ["my", "en"].concat(L7).every((l) => typeof row.t[l] === "string" && row.t[l].length > 10 && typeof row.s[l] === "string" && row.s[l].length > 80),
     { v: row && row.v, ref: row && row.ref });
 
   const steps = (CI.match(/node test\/[a-zA-Z0-9_]+\.js/g) || []).length;
-  report("E3) the sweep runs this test as its 267th step, and the landing says 267 tests",
-    has(CI, "node test/verify_album_wave_i.js") && steps === 267 && has(LANDING, "267 tests") && !/\b266 tests\b/.test(LANDING),
+  report("E3) the sweep runs this test and the landing says how many tests it runs (267 when this wave shipped, 268 since 6.127.0 added verify_skin_age_guard)",
+    has(CI, "node test/verify_album_wave_i.js") && steps === 268 && has(LANDING, "268 tests") && !/\b266 tests\b/.test(LANDING),
     { steps });
 }
 
