@@ -35,7 +35,7 @@ const WN = read("docs/app/data/whatsnew.js"), PWN = read("panel/js/hnk_whats_new
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.128.0", PVER = "6.199.0";
+const VER = "6.129.0", PVER = "6.200.0";
 const ID = "selection-swap", TITLE = "Selection Swap & Fill";
 
 let failures = 0;
@@ -124,12 +124,12 @@ const rows = JSON.parse(WN.replace(/^window\.HNK_WHATS_NEW=/, "").replace(/;\s*$
 const WAVE_V = "6.124.0";
 const row = rows.find(r => r.v === WAVE_V);
 report("B5) the What's New strip carries the 6.124.0 row — kind wf, opening this card — a plain title and a bold-led excerpt in all nine languages, both naming the card, the excerpt naming the four modes; the panel's lifted table carries it (it led the strip when this wave shipped; the 6.125.0 row sits above it now)",
-  !!row && rows.indexOf(row) <= 5 &&   /* 6.128.0 — one more release above it */ row.kind === "wf" && row.ref === ID && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
+  !!row && rows.indexOf(row) <= 6 &&   /* 6.129.0 — one more release above it */ row.kind === "wf" && row.ref === ID && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
     /Selection Swap & Fill/.test(row.t[l]) && /Replace · Add · Fill · Change/.test(row.s[l]) && /IMAGE 2/.test(row.s[l])) &&
   has(PWN, '"v":"' + WAVE_V + '"') && has(PWN, '"ref":"' + ID + '"'), row && { v: row.v, kind: row.kind, ref: row.ref, at: rows.indexOf(row) });
-report("B6) CI runs this test right after the wave H check, the suite counts 270 invocations and the landing says 270 tests (266 until 6.125.0 added verify_album_wave_i, 267 until 6.127.0 added verify_skin_age_guard, 268 until 6.127.1 added verify_panel_v2_layer, 269 until 6.128.0 added verify_gen_loading_billing)",
+report("B6) CI runs this test right after the wave H check, the suite counts 271 invocations and the landing says 271 tests (266 until 6.125.0 added verify_album_wave_i, 267 until 6.127.0 added verify_skin_age_guard, 268 until 6.127.1 added verify_panel_v2_layer, 269 until 6.128.0 added verify_gen_loading_billing, 270 until 6.129.0 added verify_scene_frame_6129)",
   /run: PORT=8931 node test\/verify_prop_wave_h\.js\n(?:\s*#[^\n]*\n)*\s*- name: [^\n]*\n\s*run: PORT=8931 node test\/verify_selection_swap\.js/.test(CI) &&
-  (CI.match(/node test\//g) || []).length === 270 && has(LANDING, "270 tests") && !has(LANDING, "265 tests") && /data-count="tests">270</.test(LANDING), { steps: (CI.match(/node test\//g) || []).length });
+  (CI.match(/node test\//g) || []).length === 271 && has(LANDING, "271 tests") && !has(LANDING, "265 tests") && /data-count="tests">271</.test(LANDING), { steps: (CI.match(/node test\//g) || []).length });
 
 /* ===================== C) the panel ===================== */
 report("C1) the lifter carries the record's region flag into the panel's catalog, the registry's region flag reads the id OR the flag, its applyFields resolves a choice the way the app does, the screen draws the choice row (chips, hint) and the quick picks, and the new CSS uses margins, never gap",

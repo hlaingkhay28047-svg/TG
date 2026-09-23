@@ -218,7 +218,13 @@ function report(name, ok, detail) {
      800, only where the guard left under 178 characters, and only these two —
      if a third appears, a guard has grown and this fails. */
   report("A2b) the only cut cases that carry no lock are the ones whose TASK GUARD alone left under 178 characters — the lock share of that is below the 80-character floor an opening needs",
-    L.tightGuard.length <= 2 && L.tightGuard.every(r => /@800 room (59|-193)$/.test(r)), L.tightGuard);
+    /* 6.129.0 — Couple Compose joins the two. Its own body carried no LOCK line
+       at all until this release, so it was never a case of "locks in the source,
+       none in the cut"; now it carries the frame-extent and colour-separation
+       locks like every other Background & Scene card, and its TASK GUARD is
+       1,057 characters against an 800 cap, so the cut has 259 characters less
+       than nothing to give them. The rule is unchanged and all three satisfy it. */
+    L.tightGuard.length <= 3 && L.tightGuard.every(r => /@800 room (59|-259|-193)$/.test(r)), L.tightGuard);
   /* 6.127.0 — what the owner actually asked for: a capped model must still be
      told that a retouch only reduces. Measured over this catalog, 156 of the
      158 cut cases carry the AGE LOCK line or one of its AVOID items; the two

@@ -4525,10 +4525,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=b084a7f5e537"></script>
 <script src="data/imagine.js?v=4a636fb6eeaa"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=83f0f52dfd4f"></script>
+<script src="data/album-module.js?v=58190753abaa"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=93c41c48a96e"></script>
-<script src="data/whatsnew.js?v=741ce61b5aef"></script>
+<script src="data/whatsnew.js?v=ce8fa2b15116"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -13290,6 +13290,148 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
         w.prompt=w.prompt+"\n"+TONE_LINE;
         w.fields=(w.fields||[]).concat([{ key:"skintone", type:"toggle", tag:TONE_TAG,
           "default":true, label:TONE_LABEL }]);
+      });
+    });
+    /* 6.129.0 — THE BACKGROUND CHANGES, THE PHOTOGRAPH DOES NOT.
+       The owner photographed BG Replace in Photoshop: a studio frame cropped
+       below the gown's hem came back full length — the train IMAGE 1's edge
+       had cut off was invented and laid across the floor, the woman sat
+       smaller inside the frame, and the new amber backdrop's colour was
+       washed over her arms and her face.
+       Measuring all twenty-nine Background & Scene cards through this
+       composed catalog said why. Twenty-six of them DO state a frame rule,
+       and every one of those rules is about the CAMERA: "keep the
+       composition", "the crop comes from IMAGE 1", "do not re-pose,
+       re-angle, zoom or recrop". None of them states the thing the owner
+       actually lost — how much of the BODY is visible. A model told to keep
+       the composition while it builds a whole new garden will widen to a
+       full-length shot and still believe it kept the composition; only eight
+       of the twenty-nine ever said otherwise. Colour was half-covered too:
+       SKIN TONE TRUTH (v5.74.0) guards the skin's own colour, and nothing
+       guarded the rest of her — hair, gown, jewellery — or named the failure
+       as the scene's grade painted over the subject.
+       So two lock lines that say exactly those two things, and the three
+       controls the owner asked for: which side gives way (the person, the
+       scene, or a professional balance between them), a skin-finish pass and
+       a whole-frame balance, each a switch. Written once here rather than
+       into twenty-nine prompts by hand, so the Photoshop panel — generated
+       from this same catalog — carries the identical lines, the identical
+       switches and the identical defaults. The two locks also go to Studio
+       Scenes and Studio Relight, which put the same real person under the
+       same new light; the three controls stay on Background & Scene, which
+       is the group that was asked for. */
+    var SCENE_LOCK_GROUPS=["Background & Scene","Studio Scenes","Studio Relight"];
+    var SCENE_CTRL_GROUP="Background & Scene";
+    /* These lines are appended to twenty-nine cards, and IMAGE 1 is NOT the
+       subject photograph on all of them: Couple Compose and the four Outfit &
+       Scene cards edit IMAGE 3, and IMAGE 1 there is a face or an outfit
+       reference. So the locks name "the photograph you are editing", which
+       every card's own INPUT ROLES and TASK GUARD already identify. */
+    var EXTENT_TAG="FRAME EXTENT LOCK:";
+    var EXTENT_LINE=EXTENT_TAG+" the finished frame shows exactly as much of the person as"+
+      " the photograph you are editing already shows — a close-up stays a close-up, a"+
+      " half-body stays a half-body, a full-length stays full-length. Whatever that"+
+      " photograph's edge cut off — a hand, a foot, a hem, a gown's train, a chair —"+
+      " stays cut off at the same place, and the person is never made larger or smaller"+
+      " inside the frame to make room for the new scene: build the scene around the body"+
+      " you were given, never pull back, zoom out or extend the canvas.";
+    var SEP_TAG="COLOUR SEPARATION LOCK:";
+    var SEP_LINE=SEP_TAG+" the scene's colour never washes over the person. Their white"+
+      " balance and exposure stay exactly as they were photographed, and skin, hair, outfit"+
+      " and jewellery all keep the colour they had. Seat them in the scene with light"+
+      " DIRECTION, falloff and contact shadow, and at most a faint ambient bounce at the"+
+      " very edge of the body — never an amber, gold, teal or any other tint laid across"+
+      " the face, arms, hands or clothes.";
+    var MATCH_TAG="LIGHT MATCH LOCK:";
+    var MATCH_LINE=MATCH_TAG+" {{MATCH}}";
+    var MATCH_LABEL={my:"အလင်း ကိုက်ညှိမှု", en:"Light match", shn:"Light match", kac:"Light match",
+      th:"การเข้าคู่ของแสง", zh:"光线匹配", vi:"Khớp ánh sáng", id:"Pencocokan cahaya", ms:"Padanan cahaya"};
+    var MATCH_OPTS=[
+      { v:"balance",
+        line:"the person and the scene meet in the middle — regrade the new background most"+
+          " of the way toward the subject photograph's own light and white balance, and give"+
+          " the person only the scene's light direction and its contact shadow. Neither side is"+
+          " forced onto the other,"+
+          " and the finished frame reads as one exposure.",
+        label:{my:"Professional ဟန်ချက်", en:"Professional balance", shn:"Professional balance",
+          kac:"Professional balance", th:"สมดุลมืออาชีพ", zh:"专业平衡",
+          vi:"Cân bằng chuyên nghiệp", id:"Keseimbangan profesional", ms:"Keseimbangan profesional"} },
+      { v:"subject",
+        line:"the person follows the scene — relight the person to sit under the scene's key"+
+          " light: its direction, its height, its softness, its falloff and the contact shadow it"+
+          " would cast. Their own colour and exposure still come from the photograph you are"+
+          " editing.",
+        label:{my:"လူက scene ကို လိုက်", en:"Subject follows scene", shn:"Subject follows scene",
+          kac:"Subject follows scene", th:"คนตามฉาก", zh:"人物跟随场景",
+          vi:"Người theo cảnh", id:"Subjek mengikuti scene", ms:"Subjek ikut scene"} },
+      { v:"scene",
+        line:"the scene follows the person — regrade and relight the new background to match"+
+          " the subject photograph's own light direction, contrast and white balance. The"+
+          " person is not touched at all.",
+        label:{my:"Scene က လူကို လိုက်", en:"Scene follows subject", shn:"Scene follows subject",
+          kac:"Scene follows subject", th:"ฉากตามคน", zh:"场景跟随人物",
+          vi:"Cảnh theo người", id:"Scene mengikuti subjek", ms:"Scene ikut subjek"} }
+    ];
+    var SMOOTH_TAG="SKIN FINISH:";
+    var SMOOTH_LINE=SMOOTH_TAG+" give the person a light skin-finish pass while you work —"+
+      " even out blotches, redness and shine only, at most a gentle reduction. Pores, fine hair,"+
+      " moles, freckles, the face's own shape and the person's own age all stay exactly as"+
+      " photographed; this is never a new face.";
+    var SMOOTH_LABEL={my:"အသားအရေ ချောမွေ့", en:"Skin smooth", shn:"Skin smooth", kac:"Skin smooth",
+      th:"ผิวเนียน", zh:"磨皮", vi:"Làm mịn da", id:"Haluskan kulit", ms:"Haluskan kulit"};
+    var SMOOTH_OFF=SMOOTH_TAG+" no skin-finish pass at all — the person's skin is left exactly"+
+      " as it was photographed, with every blotch, shine, line and mark still there.";
+    var BAL_TAG="FRAME BALANCE:";
+    var BAL_LINE=BAL_TAG+" finish the whole frame the way a professional would grade it —"+
+      " exposure, contrast and white balance consistent across person and scene, blacks not"+
+      " crushed, highlights not blown, one believable colour temperature for the picture. This"+
+      " never overrides COLOUR SEPARATION LOCK: the person's own colour still comes from IMAGE 1.";
+    var BAL_LABEL={my:"အလင်း/အရောင် ဟန်ချက်", en:"Balance", shn:"Balance", kac:"Balance",
+      th:"สมดุล", zh:"平衡", vi:"Cân bằng", id:"Keseimbangan", ms:"Keseimbangan"};
+    var BAL_OFF=BAL_TAG+" no whole-frame grade — leave the exposure, the contrast and the white"+
+      " balance of the person and of the scene exactly as each one came in.";
+    var SCENE_NEG="a half-body photograph returned as a full-length shot, a wider or a tighter"+
+      " frame than the photograph being edited, a hand, a foot, a hem or a train invented"+
+      " beyond that photograph's edge, the person made larger or smaller inside the frame,"+
+      " the scene's colour cast laid over the skin, the hair or the clothes";
+    /* 6.129.0 — a line added AFTER a card's TASK GUARD becomes part of the
+       guard, and rhTruncatePrompt treats the guard as one indivisible block:
+       Studio Look Copy's guard alone went 1,509 characters past its 800 cap
+       and every lock in the body was cut with it (verify_prompt_fit A2b).
+       These lines go in front of the guard, where rhLockSplit can lift them
+       out whole, and at the end only when a card has no guard at all. */
+    function sceneAdd(p, line){
+      var gi = p.indexOf("\nTASK GUARD:");
+      return gi < 0 ? (p + "\n" + line) : (p.slice(0, gi) + "\n" + line + p.slice(gi));
+    }
+    cats.forEach(function(c){
+      if(SCENE_LOCK_GROUPS.indexOf(c.t)<0) return;
+      var ctrl=(c.t===SCENE_CTRL_GROUP);
+      c.items.forEach(function(w){
+        if(!w.prompt) return;
+        if(w.prompt.indexOf(EXTENT_TAG)<0) w.prompt=sceneAdd(w.prompt, EXTENT_LINE);
+        if(w.prompt.indexOf(SEP_TAG)<0) w.prompt=sceneAdd(w.prompt, SEP_LINE);
+        if(w.negative && w.negative.indexOf("full-length shot")<0)
+          w.negative=String(w.negative).replace(/\s*\.?\s*$/,"")+", "+SCENE_NEG;
+        if(!ctrl) return;
+        var have={}; (w.fields||[]).forEach(function(f){ have[f.key]=1; });
+        var add=[];
+        if(!have.matchmode && w.prompt.indexOf(MATCH_TAG)<0){
+          w.prompt=sceneAdd(w.prompt, MATCH_LINE);
+          add.push({ key:"matchmode", type:"choice", tag:MATCH_TAG, token:"{{MATCH}}",
+            "default":"balance", options:MATCH_OPTS, label:MATCH_LABEL });
+        }
+        if(!have.skinsmooth && w.prompt.indexOf(SMOOTH_TAG)<0){
+          w.prompt=sceneAdd(w.prompt, SMOOTH_LINE);
+          add.push({ key:"skinsmooth", type:"toggle", tag:SMOOTH_TAG, off:SMOOTH_OFF,
+            "default":false, label:SMOOTH_LABEL });
+        }
+        if(!have.framebal && w.prompt.indexOf(BAL_TAG)<0){
+          w.prompt=sceneAdd(w.prompt, BAL_LINE);
+          add.push({ key:"framebal", type:"toggle", tag:BAL_TAG, off:BAL_OFF,
+            "default":true, label:BAL_LABEL });
+        }
+        if(add.length) w.fields=(w.fields||[]).concat(add);
       });
     });
     cats.forEach(function(c){
@@ -30893,7 +31035,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.128.0";
+var APP_VER="6.129.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

@@ -116,9 +116,20 @@ report("D2) replaced under its own name: LIB_ART_REV carries a revision above 1,
 /* ---- E) the panel carries it ---- */
 const cat = JSON.parse(PANEL_CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);
 const items = [].concat.apply([], cat.categories.map(c => c.items));
+/* 6.129.0 — the app's Background & Scene post-pass inserts its house lines (the two
+   locks, and on Background & Scene the light-match line and the two switch lines) in
+   FRONT of a card's TASK GUARD, because a line added after the guard becomes part of
+   it and the 800-character cut treats the guard as indivisible. So the lifted prompt
+   is no longer the record with a tail: the record's own text is compared with those
+   house lines set aside. */
+const HOUSE_6129 = /^(FRAME EXTENT LOCK|COLOUR SEPARATION LOCK|LIGHT MATCH LOCK|SKIN FINISH|FRAME BALANCE):/;
+const unhouse = p => String(p).split("\n").filter(l => !HOUSE_6129.test(l)).join("\n");
+const SCENE_AVOID = "a half-body photograph returned as a full-length shot";
 const pit = items.find(i => i.id === ID);
-report("E) the panel's lifted catalog carries the record with the same prompt, AVOID list and three inputs",
-  !!pit && !!w && pit.prompt.indexOf(P) === 0 && pit.negative === N && pit.req.length === 3 && pit.req[2] === REQ3(w), { found: !!pit });
+report("E) the panel's lifted catalog carries the record with the same prompt, the 6.129.0 house lines, an AVOID list that opens with the app's own and names the new frame item, and three inputs",
+  !!pit && !!w && unhouse(pit.prompt).indexOf(P) === 0 && unhouse(pit.prompt) !== pit.prompt &&
+  pit.negative.indexOf(String(N).replace(/\s*\.?\s*$/, "")) === 0 && pit.negative.indexOf(SCENE_AVOID) >= 0 &&
+  pit.req.length === 3 && pit.req[2] === REQ3(w), { found: !!pit });
 function REQ3(x) { return x.req[2]; }
 
 /* ---- F) What's New ---- */
