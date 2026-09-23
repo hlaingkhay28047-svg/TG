@@ -143,7 +143,7 @@ report("E2) the panel carries the three AVOID items too, and no 'keep … fine l
   !/keep (every )?(real )?pores?,? fine lines?/i.test(PANEL), null);
 
 /* ── F) release pins ─────────────────────────────────────────────────────── */
-const VER = "6.127.0", PVER = "6.198.0";
+const VER = "6.127.1", PVER = "6.198.1";
 report(`F) ${VER} / panel ${PVER} in lockstep on the app, the API, the panel and the download footer`,
   R("docs/app/index.html").indexOf(`var APP_VER="${VER}";`) >= 0 &&
   R("docs/app/version.json").indexOf(`"v":"${VER}"`) >= 0 &&
@@ -153,10 +153,14 @@ report(`F) ${VER} / panel ${PVER} in lockstep on the app, the API, the panel and
 
 const wn = data("docs/app/data/whatsnew.js");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-report("F2) the What's New strip leads with this release, in all nine languages, with a bold-led excerpt",
-  wn[0] && wn[0].v === VER && wn[0].kind === "wf" &&
-  LANGS.every(l => wn[0].t[l] && wn[0].s[l] && !wn[0].t[l].startsWith("**") && wn[0].s[l].startsWith("**")),
-  { v: wn[0] && wn[0].v, ref: wn[0] && wn[0].ref });
+/* 6.127.1 — this wave shipped as 6.127.0 and led the strip that day; the
+   6.127.1 row sits above it now, so the row is found rather than read at 0. */
+const WAVE_V = "6.127.0";
+const wnRow = wn.find(r => r.v === WAVE_V);
+report(`F2) the What's New strip carries the ${WAVE_V} row, in all nine languages, with a bold-led excerpt (it led the strip when this wave shipped)`,
+  !!wnRow && wn.indexOf(wnRow) <= 1 && wnRow.kind === "wf" &&
+  LANGS.every(l => wnRow.t[l] && wnRow.s[l] && !wnRow.t[l].startsWith("**") && wnRow.s[l].startsWith("**")),
+  { at: wnRow ? wn.indexOf(wnRow) : -1, head: wn[0] && wn[0].v });
 
 report("F3) CI runs this test",
   R(".github/workflows/test.yml").indexOf("node test/verify_skin_age_guard.js") >= 0, null);

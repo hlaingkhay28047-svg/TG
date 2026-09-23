@@ -2791,7 +2791,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.198.0";
+const PANEL_VERSION = "6.198.1";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -11180,6 +11180,10 @@ function renderRefs() {
      status line said so, and the card still read "Add a photo" until the
      page was left and re-entered. Only clearPhoto remembered the picker. */
   try { const sc = globalThis.HNK && globalThis.HNK.studioScreen; if (sc && typeof sc.renderPicker === "function") sc.renderPicker(); } catch (e) { }
+  /* 6.198.1 — and V2 Retouch, which draws through the app's own #rsPicker and
+     was left out of the 6.164.0 fix above: the layer was captured, the status
+     line said so, and that card too still read "Add a photo". */
+  try { const sc = globalThis.HNK && globalThis.HNK.studioScreen; if (sc && typeof sc.renderRs === "function") sc.renderRs(); } catch (e) { }
   ["refStrip", "vidRefStrip"].forEach(function (hostId) {
     const host = $(hostId);
     if (!host) return;
