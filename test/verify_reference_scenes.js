@@ -92,9 +92,15 @@ const items = [].concat.apply([], cat.categories.map(c => c.items)), pi = items.
 const bgCat = cat.categories.find(c => c.items.some(x => x.id === ID));
 /* the lifted catalog carries the COMPOSED prompt — the owner's sentence first, then only the two house lines every Background & Scene card
    gets (REAL PHOTOGRAPH, SKIN TONE TRUTH); no FRAME LOCK (the sentence already speaks of composition), no guard, no token */
-const HOUSE = /^(REAL PHOTOGRAPH:|SKIN TONE TRUTH:)/;
+/* 6.129.0 — the house lines every Background & Scene card now gets. The two of
+   v5.74.0 are joined by the frame-extent and colour-separation locks and by the
+   three controls the owner asked for (Light match · Skin smooth · Balance), all
+   written once in the app's catalog post-pass, never into this record by hand.
+   The raw record may therefore carry the match line's {{MATCH}} token; the
+   prompt the engine is actually sent never does — the wizard resolves it. */
+const HOUSE = /^(REAL PHOTOGRAPH:|SKIN TONE TRUTH:|FRAME EXTENT LOCK:|COLOUR SEPARATION LOCK:|LIGHT MATCH LOCK:|SKIN FINISH:|FRAME BALANCE:)/;
 const REC = w ? w.prompt : PROMPT;   /* 6.32.3 — the record's whole prompt (sentence + roles); the house lines follow THAT */
-const houseOnly = extra => { const ls = extra.split("\n"); return ls[0] === "" && ls.length >= 2 && ls.slice(1).every(l => HOUSE.test(l)) && !/FRAME LOCK|TASK GUARD|\{\{|EXTRA REQUEST/.test(extra); };
+const houseOnly = extra => { const ls = extra.split("\n"); return ls[0] === "" && ls.length >= 2 && ls.slice(1).every(l => HOUSE.test(l)) && !/\bFRAME LOCK\b|TASK GUARD|EXTRA REQUEST/.test(extra) && (extra.match(/\{\{/g) || []).length <= 1; };
 report("E) the panel's lifted catalog carries the record in Background & Scene with the same two inputs, the record's prompt (the owner's sentence + the roles) with only the house lines after it, and counts 198 items (194 until 6.123.0 added the three wave H cards, 197 until 6.124.0 added Selection Swap & Fill)",
   !!pi && typeof pi.prompt === "string" && pi.prompt.indexOf(REC) === 0 && houseOnly(pi.prompt.slice(REC.length)) && Array.isArray(pi.req) && pi.req.length === 2 && !!bgCat && /Background/.test(bgCat.category || bgCat.t || "") && items.length === 198,
   { found: !!pi, head: pi && pi.prompt.slice(0, 120), tail: pi && pi.prompt.slice(REC.length, REC.length + 60), n: items.length, cat: bgCat && (bgCat.category || bgCat.t) });
@@ -114,12 +120,16 @@ report("E) the panel's lifted catalog carries the record in Background & Scene w
       const bg = cats[0], ids = bg ? bg.items.map(i => i.id) : [];
       const composed = window._wfBatchPrompt ? window._wfBatchPrompt(id) : null;
       const item = bg ? bg.items.filter(i => i.id === id)[0] : null;
-      return { rec: !!rec, cats: cats.map(c => c.t), after: ids.indexOf(id) === ids.indexOf("studio-look-copy") + 1, composed, itemPrompt: item && item.prompt, summary: item && item.summary, req: item && item.req };
+      return { rec: !!rec, cats: cats.map(c => c.t), after: ids.indexOf(id) === ids.indexOf("studio-look-copy") + 1, composed, itemPrompt: item && item.prompt, summary: item && item.summary, req: item && item.req, negative: item && item.negative };
     }, ID);
     /* the page's item prompt = the owner's sentence + the two house lines; the batch prompt the engine receives = that + the AVOID list, as on every card */
     const itemOk = typeof live.itemPrompt === "string" && live.itemPrompt.indexOf(REC) === 0 && houseOnly(live.itemPrompt.slice(REC.length));
-    report("F) on the page the record is in Background & Scene right after Studio Look Copy; its prompt opens with the owner's sentence exactly, then the input roles, followed only by the two house lines every card gets (REAL PHOTOGRAPH, SKIN TONE TRUTH) — no FRAME LOCK (the prompt already speaks of crop and framing), no token, nothing else; the batch prompt the engine receives is that plus the AVOID list; the panel's lifted item is the same prompt",
-      live.rec && live.cats.length === 1 && /Background/.test(live.cats[0]) && live.after && itemOk && live.composed === live.itemPrompt + "\n\nAVOID: " + w.negative + "." && (!pi || pi.prompt === live.itemPrompt) &&
+    report("F) on the page the record is in Background & Scene right after Studio Look Copy; its prompt opens with the owner's sentence exactly, then the input roles, followed only by the house lines every Background & Scene card gets (REAL PHOTOGRAPH, SKIN TONE TRUTH and, since 6.129.0, the frame-extent and colour-separation locks with the three controls) — never the generic FRAME LOCK, since the prompt already speaks of crop and framing; the batch prompt the engine receives is that with the match line resolved, no token left, plus the AVOID list that now names the full-length and colour-cast failures; the panel's lifted item is the same prompt",
+      live.rec && live.cats.length === 1 && /Background/.test(live.cats[0]) && live.after && itemOk &&
+      /* the batch prompt is the item's prompt with the match line resolved — no token survives — plus the item's own AVOID list, which now names the two failures this release closed */
+      !/\{\{/.test(String(live.composed || "")) && String(live.composed || "").indexOf(REC) === 0 &&
+      String(live.composed || "").indexOf("\n\nAVOID: " + live.negative + ".") === String(live.composed || "").length - ("\n\nAVOID: " + live.negative + ".").length &&
+      /a half-body photograph returned as a full-length shot/.test(String(live.negative || "")) && (!pi || pi.prompt === live.itemPrompt) &&
       typeof live.summary === "string" && live.summary.length > 10 && live.req && live.req.length === 2,
       { cats: live.cats, after: live.after, item: live.itemPrompt && live.itemPrompt.slice(0, 130), tail: live.itemPrompt && live.itemPrompt.slice(REC.length, REC.length + 40), avoid: live.composed && live.composed.slice(-60), panelSame: !!pi && pi.prompt === live.itemPrompt });
     report("F2) no page error", errs.length === 0, errs);

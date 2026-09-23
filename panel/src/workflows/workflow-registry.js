@@ -67,6 +67,21 @@ var WORKFLOWS = [
     requiredInputs: [{ key: "subject", label: "Your Photo (Subject)", role: "subject" }],
     optionalInputs: [{ key: "background", label: "New Background (optional)", role: "background" }],
     negative: "duplicate people, extra people, extra limbs, broken or extra fingers, distorted face, unwanted face replacement, plastic or waxy skin, over-smoothing, excessive blur, unwanted logos, unwanted text, watermarks, floating feet, incorrect contact shadows, mismatched perspective, background colour cast on skin, keeping people from the reference image, changed pose, re-posed subject, different camera angle, changed camera distance or height, recropped image, reframed shot, zoomed in, zoomed out, shifted subject position in frame, altered composition",
+    /* 6.129.0 — THE CCX WAS SENDING ITS OWN, OLDER PROMPT.
+       The owner photographed BG Replace inside Photoshop, not in the browser,
+       and the two surfaces were not sending the same instruction. The catalog
+       merge below only adopts the app's prompt for a card the panel does NOT
+       define itself, or for one marked appPrompt (6.189.0). These three define
+       themselves and were never marked, so the CCX kept the prompt written for
+       them years of releases ago: BG Replace 1,750 characters against the app's
+       3,595, Reference Transfer 933 against 4,008 — and NO AVOID list at all —
+       Master BG FG Replace 5,649 against 7,954. Every rule the app has added
+       since, up to and including this release's two locks, stopped at the
+       browser. Marked appPrompt, all three now take the app's prompt, its AVOID
+       list and its fields verbatim, with their own inputs and their own Auto
+       route unchanged. The hiddenPrompt below stays as the offline fallback for
+       a build with no lifted catalog. */
+    appPrompt: true,
     hiddenPrompt: "Replace only the background behind the subject; keep the subject's pose, edges, identity and composition unchanged. Relight the subject to match the new background's light direction, softness and colour temperature, and colour-grade the subject into the new scene's white balance — do not leave the original lighting untouched if it no longer matches the new environment. Match perspective, scale and camera height to the new background; add believable ground-contact shadows and correct depth-of-field falloff so the subject sits naturally in the scene rather than looking pasted on or cut out. Blend edges and hair seamlessly, with no visible cutout halo or edge fringing.\nSubject lock: keep the exact same person and facial identity; preserve face geometry, eyes, eyelids, eyebrows, nose, lips and mouth shape, jawline and chin; preserve the expression and gaze; keep natural skin character and apparent age; keep the hair, body proportions, pose, hands and legs; keep the clothing and accessories; keep the camera angle, subject scale, placement, crop and frame composition. COMPOSITION LOCK: do not re-pose, re-angle the camera, zoom, recrop or reinterpret the shot in any way — the subject's exact position, scale and pose within the frame must match the source photo pixel-for-pixel wherever this task does not explicitly require a change.",
     route: { modelId: "nano-banana-2", auto: true }
   },
@@ -81,6 +96,21 @@ var WORKFLOWS = [
       { key: "scene", label: "Reference Scene", role: "background" }
     ],
     optionalInputs: [{ key: "style", label: "Style Reference (optional)", role: "style" }],
+    /* 6.129.0 — THE CCX WAS SENDING ITS OWN, OLDER PROMPT.
+       The owner photographed BG Replace inside Photoshop, not in the browser,
+       and the two surfaces were not sending the same instruction. The catalog
+       merge below only adopts the app's prompt for a card the panel does NOT
+       define itself, or for one marked appPrompt (6.189.0). These three define
+       themselves and were never marked, so the CCX kept the prompt written for
+       them years of releases ago: BG Replace 1,750 characters against the app's
+       3,595, Reference Transfer 933 against 4,008 — and NO AVOID list at all —
+       Master BG FG Replace 5,649 against 7,954. Every rule the app has added
+       since, up to and including this release's two locks, stopped at the
+       browser. Marked appPrompt, all three now take the app's prompt, its AVOID
+       list and its fields verbatim, with their own inputs and their own Auto
+       route unchanged. The hiddenPrompt below stays as the offline fallback for
+       a build with no lifted catalog. */
+    appPrompt: true,
     hiddenPrompt: "Transfer the reference scene onto the original subject.",
     route: { modelId: "nano-banana-2", auto: true }
   },
@@ -97,6 +127,21 @@ var WORKFLOWS = [
     optionalInputs: [],
     bespoke: true,
     negative: "change identity, different person, beautified facial structure, changed eyes, changed nose, changed lips, changed jaw, changed expression, changed age, changed ethnicity, changed hairstyle, changed outfit, changed body shape, changed body proportions, changed pose, copying IMAGE 2 person's pose, copying IMAGE 2 person's skin, copying IMAGE 2 person's face, copying IMAGE 2 person's clothes, replaced IMAGE 1 skin tone, relit face, over-retouched skin, plastic skin, wax skin, excessive smoothing, skin color contamination, distorted anatomy, malformed hands, extra fingers, missing fingers, duplicate limbs, extra arms, extra legs, duplicate subject, ghost person, residual person from IMAGE 2, floating body, incorrect ground contact, perspective mismatch, unrealistic scale, stretched body, oversized head, undersized head, cutout edges, halo, blurry hair edges, random objects, unwanted text, unwanted logo, watermark, scene redesign, background replacement beyond removal and reconstruction of the original IMAGE 2 person",
+    /* 6.129.0 — THE CCX WAS SENDING ITS OWN, OLDER PROMPT.
+       The owner photographed BG Replace inside Photoshop, not in the browser,
+       and the two surfaces were not sending the same instruction. The catalog
+       merge below only adopts the app's prompt for a card the panel does NOT
+       define itself, or for one marked appPrompt (6.189.0). These three define
+       themselves and were never marked, so the CCX kept the prompt written for
+       them years of releases ago: BG Replace 1,750 characters against the app's
+       3,595, Reference Transfer 933 against 4,008 — and NO AVOID list at all —
+       Master BG FG Replace 5,649 against 7,954. Every rule the app has added
+       since, up to and including this release's two locks, stopped at the
+       browser. Marked appPrompt, all three now take the app's prompt, its AVOID
+       list and its fields verbatim, with their own inputs and their own Auto
+       route unchanged. The hiddenPrompt below stays as the offline fallback for
+       a build with no lifted catalog. */
+    appPrompt: true,
     hiddenPrompt: "Use the exact original subject from IMAGE 1. Completely remove the person or people appearing in IMAGE 2, reconstruct the hidden background and foreground naturally after the removal, then place the exact subject from IMAGE 1 into the exact location the removed person occupied in IMAGE 2. The final result must look like the IMAGE 1 subject was genuinely photographed inside the IMAGE 2 environment.\nIDENTITY LOCK (highest priority, IMAGE 1 wins any conflict): preserve the exact facial identity, face shape, eyes, eyelids, eyebrows, eye spacing, nose, nostril shape, lips, mouth shape, cheeks, jawline, chin, forehead, ears, skin character, natural pores, skin texture, skin tone, skin undertone, age appearance, ethnicity, expression and gaze direction from IMAGE 1. Do not redesign, reinterpret, beautify, regenerate, reshape or replace the subject. Preserve the exact hairstyle (shape, length, hairline, volume, direction, loose strands), the exact body (proportions, shoulder shape, arm proportions, hand structure, fingers, waist, hips, legs, feet) and the exact outfit (clothing, fabric, embroidery, patterns, accessories, jewelry, shoes, veil, headwear) — no wardrobe redesign.\nPOSE LOCK: keep the IMAGE 1 subject's pose unchanged — head angle, neck angle, shoulder direction, torso rotation, arm position, hand position, finger arrangement, hip direction, leg position, feet position, sitting/standing/kneeling configuration and body gesture all stay exactly as in IMAGE 1. Do not copy the IMAGE 2 person's pose. The IMAGE 2 person is used only as a target location / environmental occupancy reference, never as an identity or pose source.\nPROPORTION LOCK: preserve IMAGE 1's natural body ratio, head-to-body ratio, face-to-body ratio and anatomical scale. Never stretch, squash, widen, slim, shorten or enlarge the head or body — only uniform resizing and repositioning is allowed to fit the target location in IMAGE 2, no non-proportional transformation.\nSKIN LOCK: use IMAGE 1 as the exclusive source for skin tone, undertone, pores, micro texture, retouch level, softness and luminosity. Do not copy the IMAGE 2 person's skin color or processing, and do not let IMAGE 2's environment color excessively contaminate the subject's skin — no orange/green/blue/magenta cast, no gray skin, no artificial whitening, no plastic skin.\nLIGHTING LOCK: keep IMAGE 1's facial lighting, skin highlight structure, shadow structure, light direction, softness, contrast, exposure, white balance, highlight roll-off and skin luminosity as the primary lighting on the subject. IMAGE 2 lighting may only inform subtle, physically believable environmental integration — never replace or destroy IMAGE 1's original facial light pattern.\nPERSON REMOVAL: remove the original person or people from IMAGE 2 completely — face, hair, body, arms, hands, legs, clothing, shoes, and any shadows or reflections belonging uniquely to them. Leave no ghost body, duplicate limbs, leftover clothing, skin fragments, silhouette, halo or old shadow artifacts. Reconstruct every area that was hidden behind the removed person so it matches IMAGE 2 naturally.\nSCENE PURITY: preserve all non-human scene information from IMAGE 2 — background, foreground, architecture, furniture, landscape, vegetation, floor, walls, sky, water, props, decorations, environmental objects, depth, perspective, camera viewpoint, lens feeling, depth of field, bokeh, scene color, atmosphere and mood. Do not redesign the background or remove objects unless they physically conflict with the new subject's placement.\nPLACEMENT: use the removed IMAGE 2 person only to estimate target position, ground location, scene depth, occupancy zone and interaction plane — never their face, body, clothing, pose, skin or identity. Place the IMAGE 1 subject naturally inside that zone while keeping the IMAGE 1 pose intact, with correct ground/chair/sofa/floor contact, scale, depth and perspective — no floating, no sinking, no disconnected feet, no impossible body contact.\nSHADOW & EDGE INTEGRATION: add or reconstruct only the environmental contact information needed for realism — contact shadows, foot shadows, chair shadows, subtle ambient occlusion, and reflections if physically required — matching IMAGE 2's geometry while staying consistent with the preserved IMAGE 1 subject lighting; do not repaint or significantly relight the subject. Create professional masking around hair, veil, fingers, transparent fabric, lace and jewelry edges — no cutout look, no hard halo, no blurry edges, no missing hair, no excessive edge glow.\nDEPTH & OCCLUSION: respect IMAGE 2's scene depth — foreground objects that naturally belong in front of the target position must occlude the inserted subject correctly, and objects the subject should appear behind must stay in front, preserving correct front/back relationships, perspective and focus transition.\nQUALITY: keep the subject highly realistic and photographic — natural facial detail, natural skin texture, realistic hair, clothing, hands, anatomy and scene texture, high-frequency detail. No AI illustration look, no CGI look, no wax skin, no fake HDR, no oversharpening.\nFINAL COMMAND: remove the person from IMAGE 2 first, reconstruct the empty scene naturally, then insert the exact original subject from IMAGE 1 into that person's location — identity, face, pose, body proportions, hair, outfit, skin and subject lighting unchanged. Use IMAGE 2 only for scene, camera viewpoint, perspective, depth, environment and target position. Create a seamless, photorealistic, physically believable final photograph with zero visible AI or compositing artifacts.",
     route: { modelId: "nano-banana-2", auto: true }
   },

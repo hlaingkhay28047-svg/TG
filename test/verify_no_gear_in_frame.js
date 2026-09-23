@@ -89,15 +89,26 @@ report("D) GENERIC_NEG names a lamp or light panel in frame, and the relight car
 /* ---- E) the panel: the lifted catalog carries the same twelve prompts, and its own designer says the same ---- */
 const cat = JSON.parse(PANEL_CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);
 const items = [].concat.apply([], cat.categories.map(c => c.items));
+/* 6.129.0 — the app's Background & Scene post-pass inserts its house lines (the two
+   locks, and on Background & Scene the light-match line and the two switch lines) in
+   FRONT of a card's TASK GUARD, because a line added after the guard becomes part of
+   it and the 800-character cut treats the guard as indivisible. So the lifted prompt
+   is no longer the record with a tail: the record's own text is compared with those
+   house lines set aside. */
+const HOUSE_6129 = /^(FRAME EXTENT LOCK|COLOUR SEPARATION LOCK|LIGHT MATCH LOCK|SKIN FINISH|FRAME BALANCE):/;
+const unhouse = p => String(p).split("\n").filter(l => !HOUSE_6129.test(l)).join("\n");
+const SCENE_AVOID = "a half-body photograph returned as a full-length shot";
 const drift = [];
 L.forEach(l => {
   const it = items.find(i => i.id === "lg-" + l.key);
   if (!it) { drift.push("lg-" + l.key + " missing on the panel"); return; }
   /* the app appends its SKIN TONE TRUTH clause to every tone-group card at build time; the lifted copy carries it too */
-  if (it.prompt.indexOf(l.text + "\n" + GUARD) !== 0) drift.push("lg-" + l.key + " prompt differs");
-  if (it.negative !== NEG) drift.push("lg-" + l.key + " negative differs");
+  if (unhouse(it.prompt).indexOf(l.text + "\n" + GUARD) !== 0) drift.push("lg-" + l.key + " prompt differs");
+  if (it.negative.indexOf(String(NEG).replace(/\s*\.?\s*$/, "")) !== 0) drift.push("lg-" + l.key + " negative differs");
+  if (it.negative.indexOf(SCENE_AVOID) < 0) drift.push("lg-" + l.key + " missing the 6.129.0 frame AVOID");
+  if (unhouse(it.prompt) === it.prompt) drift.push("lg-" + l.key + " missing the 6.129.0 locks");
 });
-report("E) the panel's lifted catalog opens each of the twelve relight prompts with the app's text and guard, and carries the same AVOID list",
+report("E) the panel's lifted catalog opens each of the twelve relight prompts with the app's text and guard, carries the two 6.129.0 locks, and opens its AVOID list with the app's own",
   drift.length === 0, drift.slice(0, 6));
 /* v6.161.0 — the panel's own Lighting designer was the old Freeform relight card, whose stage
    never existed in the panel's markup after 6.51.0 (the pages are the app's own); it left

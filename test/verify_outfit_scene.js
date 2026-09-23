@@ -183,18 +183,29 @@ report("E) the wizard owns a multi-file board input, a composeBoard that lays tw
   /* ---- I) the panel carries the same records ---- */
   const cat = JSON.parse(PANEL_CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);
   const items = [].concat.apply([], cat.categories.map(c => c.items));
+  /* 6.129.0 — the app's Background & Scene post-pass inserts five house lines (two
+     locks, the resolved light-match line and the two switch lines) in FRONT of a
+     card's TASK GUARD, because a line added after the guard becomes part of it and
+     the 800-character cut treats the guard as indivisible. So the lifted prompt is
+     no longer the record with a tail: the record's own text is compared with those
+     house lines set aside. */
+  const HOUSE_6129 = /^(FRAME EXTENT LOCK|COLOUR SEPARATION LOCK|LIGHT MATCH LOCK|SKIN FINISH|FRAME BALANCE):/;
+  const unhouse = p => String(p).split("\n").filter(l => !HOUSE_6129.test(l)).join("\n");
+  const SCENE_AVOID = "a half-body photograph returned as a full-length shot";
   const pGaps = [];
   IDS.forEach(id => {
     const it = items.find(x => x.id === id);
     if (!it) { pGaps.push(id + " missing"); return; }
     /* the app appends its SKIN TONE TRUTH switch to every Background & Scene card at build time; the lifted copy carries it too */
-    if (it.prompt.indexOf(W[id].prompt) !== 0) pGaps.push(id + " prompt differs");
-    if (it.negative.indexOf(W[id].negative) !== 0) pGaps.push(id + " negative differs");
+    if (unhouse(it.prompt).indexOf(W[id].prompt) !== 0) pGaps.push(id + " prompt differs");
+    if (it.negative.indexOf(String(W[id].negative).replace(/\s*\.?\s*$/, "")) !== 0) pGaps.push(id + " negative differs");
+    if (it.negative.indexOf(SCENE_AVOID) < 0) pGaps.push(id + " missing the 6.129.0 frame AVOID");
+    if (unhouse(it.prompt) === it.prompt) pGaps.push(id + " missing the 6.129.0 house lines");
     if (it.req.length !== 3 || it.req[2] !== W[id].req[2]) pGaps.push(id + " inputs differ");
     /* the board is the web wizard's own convenience — the panel's student supplies the one board picture the label asks for */
   });
   const bgCat = cat.categories.find(c => c.category === "Background & Scene" || c.t === "Background & Scene");
-  report("I) the panel's lifted catalog carries all four in Background & Scene with the app's prompts, AVOID lists and inputs",
+  report("I) the panel's lifted catalog carries all four in Background & Scene with the app's prompts, AVOID lists (including the 6.129.0 frame item) and inputs",
     pGaps.length === 0 && !!bgCat && IDS.every(id => bgCat.items.some(x => x.id === id)) && items.length === 198,
     { pGaps, total: items.length, bg: !!bgCat });
 

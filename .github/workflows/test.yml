@@ -298,6 +298,15 @@ jobs:
       - name: Verify every generate shows it is working and moves the balance
         run: PORT=8931 node test/verify_gen_loading_billing.js
 
+      # 6.129.0 — the owner photographed BG Replace returning a full-length shot
+      # from a half-body frame, with the backdrop's amber washed over the skin.
+      # Twenty-six of the twenty-nine Background & Scene cards state a frame rule
+      # and all of them are about the camera; only eight ever said how much of the
+      # body stays visible. This step holds the two new locks, the three controls
+      # and the three CCX cards that were sending their own older prompt.
+      - name: Verify the background changes and the photograph does not
+        run: PORT=8931 node test/verify_scene_frame_6129.js
+
       # v5.93.0 — Wave 11 begins at the door. Every state the account server
       # can report is read from server/lib/auth.js and pushed through both
       # sign-in surfaces: none may reach a student as "can't reach the account
