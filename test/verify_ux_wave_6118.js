@@ -285,7 +285,7 @@ function releasePins() {
     row && row.v === VER && row.ref === "pgHome" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40 && row.s[l].startsWith("**")) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
   report("E3) CI runs this test right after the R2 + B2 step and the landing says how many tests the suite runs (260 when this wave shipped, 261 since 6.119.0 added verify_ux_wave_6119, 262 since 6.120.0 added verify_ux_wave_6120, 263 since 6.121.0 added verify_album_designer)",
     has(CI, "run: node test/verify_ux_wave_6117.js\n") && has(CI, "run: node test/verify_ux_wave_6118.js") && CI.indexOf("verify_ux_wave_6117") < CI.indexOf("verify_ux_wave_6118") &&
-    (CI.match(/node test\//g) || []).length === 269 && has(LANDING, "269 tests") && !has(LANDING, "259 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 270 && has(LANDING, "270 tests") && !has(LANDING, "259 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 /* ---- F) the AI Retouch photograph (owner, 2026-09-20): "wrinkles came out and the face looks older" ----

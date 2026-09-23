@@ -3712,6 +3712,7 @@ html.splashing #splash{display:flex}
           <pre id="v2PromptPreview" class="mut" style="white-space:pre-wrap;font-size:var(--fs-2xs);max-height:180px;overflow:auto"></pre>
         </div>
       </div>
+      <div id="v2RunCard">
       <div class="row" style="margin-top:10px">
         <button class="btn btn-gold grow gen" id="btnV2Start"></button>
         <button class="btn" id="btnV2Batch"></button>
@@ -3723,6 +3724,7 @@ html.splashing #splash{display:flex}
       <div class="status" id="stV2Gen"></div>
       <div class="mut" id="v2Log" style="font-family:ui-monospace,monospace;font-size:var(--fs-2xs);max-height:110px;overflow-y:auto;white-space:pre-wrap"></div>
       <button class="btn" id="btnV2Retry" style="display:none;margin-top:8px"></button>
+      </div>
     </div>
   </section>
 
@@ -4523,10 +4525,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=b084a7f5e537"></script>
 <script src="data/imagine.js?v=4a636fb6eeaa"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=1029f6241e87"></script>
+<script src="data/album-module.js?v=83f0f52dfd4f"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=93c41c48a96e"></script>
-<script src="data/whatsnew.js?v=ba187fa5fbd2"></script>
+<script src="data/whatsnew.js?v=741ce61b5aef"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -8870,6 +8872,7 @@ async function rhPollTracked(apiKey, taskId, meta, onTick, timeoutMs, signal){
 function rhBookSpend(taskId, meta, finalJson){
   var u=rhUsageOf(finalJson);
   spendAdd(taskId, meta, u);
+  balAfterSpend();
   if(!u.has) return;
   if(typeof toast!=="function") return;
   var cur=(spendLoad().cur||RH_LAST_CUR||"");
@@ -8878,6 +8881,27 @@ function rhBookSpend(taskId, meta, finalJson){
   if(u.coins>0) bits.push(Math.round(u.coins)+" RH");
   if(!bits.length) return;
   toast(t("cost_ran").replace("{C}", bits.join(" · ")));
+}
+/* 6.128.0 — AND THE BALANCE MOVES WITH IT. The toast named what the run cost
+   from the first, but the number beside it on the Cost & balance card was
+   whatever the last read said: the card only re-read on a saved key, on a cold
+   boot older than an hour, and on the button. A student who ran ten jobs still
+   saw the balance from before the first one. Now every booked run schedules one
+   quiet re-read.
+   Debounced, because a Path batch books a row per photo and RunningHub must not
+   be asked twenty times for one answer; delayed, because the charge lands on
+   their side a moment after the task reports SUCCESS; quiet, because a balance
+   read that fails in the background must not put a red line under a generate
+   that worked. */
+var BAL_AFTER_MS=6000, balAfterT=null;
+function balAfterSpend(){
+  if(!state.rhKey) return false;
+  if(balAfterT){ clearTimeout(balAfterT); balAfterT=null; }
+  balAfterT=setTimeout(function(){
+    balAfterT=null;
+    try{ if(typeof moneyRefresh==="function") moneyRefresh(true); }catch(e){}
+  }, BAL_AFTER_MS);
+  return true;
 }
 /* Two decimals is right for a month's total and wrong for one run: a lot of
    these endpoints charge fractions of a cent, and 0.0125 rounded to "0.01"
@@ -28138,10 +28162,10 @@ function renderSpendProv(r){
 
 /* Read the balance + queue. Never throws at the caller: a studio must keep
    working when this is blocked, and the ledger is independent of it. */
-async function moneyRefresh(){
-  var st=$("stMoney");
+async function moneyRefresh(quiet){
+  var st=quiet?null:$("stMoney");
   if(!state.rhKey){ if(st){ st.textContent=t("money_nokey"); st.className="status err"; } return false; }
-  var btn=$("btnMoneyRefresh"); if(btn) btn.disabled=true;
+  var btn=quiet?null:$("btnMoneyRefresh"); if(btn) btn.disabled=true;
   if(st){ st.textContent=""; st.className="status"; }
   var ok=false;
   /* v6.69.0 — the queue is asked on its own, before the balance can end the
@@ -30869,7 +30893,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.127.1";
+var APP_VER="6.128.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -31130,7 +31154,12 @@ function renderPrefs(){
    screen yet, the card shows as a skeleton the size of the picture to come (aria-busy); a card that already holds a result
    is only marked busy. The spinner lines are live regions, so a screen reader hears the elapsed seconds too. Retouch A/B
    keep their compare stage — busy only, no skeleton. */
-var PEND_BOX={spin:["resultBox",1],vidSpin:["vidResultBox",1],vuSpin:["vuResultBox",1],vtSpin:["vtResultBox",1],tkSpin:["tkResultBox",1],t2iSpin:["t2iResultBox",1],stSpin:["stResultBox",0],rsSpin:["rsResultBox",0]};
+/* 6.128.0 — the two batch runners join the contract. Path and the V2 batch
+   were the only generate controls outside it: they draw a progress bar and a
+   log, so they get no skeleton, but until now their spinner was not a live
+   region and their card never read busy — a screen reader heard nothing at
+   all while a batch of forty photos ran. */
+var PEND_BOX={spin:["resultBox",1],vidSpin:["vidResultBox",1],vuSpin:["vuResultBox",1],vtSpin:["vtResultBox",1],tkSpin:["tkResultBox",1],t2iSpin:["t2iResultBox",1],stSpin:["stResultBox",0],rsSpin:["rsResultBox",0],ptSpin:["ptRunCard",0],v2Spin:["v2RunCard",0]};
 function pendRatio(spinId){
   var v="", el=null;
   if(spinId==="spin") el=$("selRatio"); else if(spinId==="t2iSpin") el=$("selT2IRatio"); else if(spinId==="vidSpin") el=$("selVidAspect");

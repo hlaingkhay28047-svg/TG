@@ -235,7 +235,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.198.1</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.199.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.png" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -1011,7 +1011,9 @@
           </div>
         </div>
         <div role="button" tabindex="0" id="btnVuRun" class="btn btn-gold gen"><div class="btn-in"><img class="ic-s" src="icons/ui/i-rocket-ink.png" alt="">UPSCALE VIDEO</div></div>
-        <div class="spin" id="vuSpin"></div>
+        <!-- 6.199.0 — no spinner line here: this page writes "Working · <stage> · <N>s"
+             into the status line below, and that is the live region pendBoxP marks.
+             The empty .spin div that used to sit here was driven by nothing. -->
         <div class="status" id="stVuGen"></div>
       </div>
 
@@ -1126,7 +1128,7 @@
         </div>
         <div class="mut" id="vtNeedNote" style="margin-top:6px"></div>
         <div role="button" tabindex="0" id="btnVtRun" class="btn btn-gold gen"><div class="btn-in"><img class="ic-s" src="icons/ui/i-clapper-ink.png" alt="">RUN VIDEO TOOL</div></div>
-        <div class="spin" id="vtSpin"></div>
+        <!-- 6.199.0 — same as Video Upscale: the status line below is the live region. -->
         <div class="status" id="stVtGen"></div>
       </div>
 
@@ -1612,7 +1614,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.198.1</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.199.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>

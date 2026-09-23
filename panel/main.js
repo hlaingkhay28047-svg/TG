@@ -2791,7 +2791,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.198.1";
+const PANEL_VERSION = "6.199.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5076,6 +5076,7 @@ function fmtMoney(v, cur) {
 function rhBookSpend(taskId, meta, finalJson) {
   const u = rhUsageOf(finalJson);
   spendAdd(taskId, meta, u);
+  balAfterSpend();
   if (!u.has) return;
   const cur = spendLoad().cur || state.rhLastCur || "";
   const bits = [];
@@ -5093,6 +5094,22 @@ function rhBookUsage(usage, meta) {
   }
 }
 
+/* 6.199.0 — the app's balAfterSpend, same seconds and the same reasons: the
+   balance the card shows must move when a run spends, debounced so a batch asks
+   once, delayed because the charge lands a moment after SUCCESS, and quiet
+   because a background read that fails must not put a red line under a
+   generate that worked. */
+const BAL_AFTER_MS = 6000;
+let balAfterT = null;
+function balAfterSpend() {
+  if (!state.rhKey) return false;
+  if (balAfterT) { clearTimeout(balAfterT); balAfterT = null; }
+  balAfterT = setTimeout(function () {
+    balAfterT = null;
+    try { moneyRefresh(true); } catch (e) { }
+  }, BAL_AFTER_MS);
+  return true;
+}
 /* ---------------- COST & BALANCE (the app's cardMoney) ---------------- */
 function balLoad() { return (state.rhBal && typeof state.rhBal === "object") ? state.rhBal : null; }
 function balSave(b) { state.rhBal = b; saveSettings(); homeRefresh(); }
@@ -5194,12 +5211,12 @@ function renderSpend() {
   }
   if (r.rows.length > SHOW) runs.appendChild(sEl("p", "mut", sl("money_more").replace("{N}", String(r.rows.length - SHOW))));
 }
-async function moneyRefresh() {
+async function moneyRefresh(quiet) {
   const key = (state.rhKey || "").trim();
-  if (!key) { stSet("stMoney", sl("money_nokey"), "err"); return false; }
-  const btn = $("btnMoneyRefresh");
+  if (!key) { if (!quiet) stSet("stMoney", sl("money_nokey"), "err"); return false; }
+  const btn = quiet ? null : $("btnMoneyRefresh");
   btnOff(btn, true);
-  stSet("stMoney", "");
+  if (!quiet) stSet("stMoney", "");
   let ok = false;
   /* v6.69.0 — the queue is asked on its own, BEFORE the balance can end the
      attempt. It answers a different endpoint and it names the key's type,
@@ -5215,7 +5232,7 @@ async function moneyRefresh() {
     const bits = [rhWhy(e)];
     if (q && q.keyType) bits.push("key " + q.keyType);
     else if (qWhy) bits.push("queue: " + qWhy);
-    stSet("stMoney", sl("money_fail") + " \u00b7 " + bits.filter(Boolean).join(" \u00b7 "), "err");
+    if (!quiet) stSet("stMoney", sl("money_fail") + " \u00b7 " + bits.filter(Boolean).join(" \u00b7 "), "err");
   }
   btnOff(btn, false);
   renderSpend();
@@ -8457,6 +8474,7 @@ async function vtRun() {
       optVals[sel.getAttribute("data-key")] = sel.value;
   });
   VT.busy = true; VT.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderVt();
+  try { pendBoxP("vtSpin", true); } catch (e) { }
   try {
     const ref = VT.video._url || await fileToDataUrl(VT.video);
     /* v6.4.0 — and the reference photograph, when the tool takes one. This
@@ -8464,7 +8482,9 @@ async function vtRun() {
        image failed on this surface with the endpoint's own error. */
     const imgs = (d.imageParam && VT.img) ? [VT.img._url || await fileToDataUrl(VT.img)] : [];
     if (d.imageParam && d.imageReq && !imgs.length) {
-      setStatus(ff9(VT_L.needImg), "err"); VT.busy = false; renderVt(); return;
+      setStatus(ff9(VT_L.needImg), "err"); VT.busy = false; renderVt();
+      try { pendBoxP("vtSpin", false); } catch (e2) { }
+      return;
     }
     const res = await V.runTool(videoEnv(), d, ref, imgs, promptText, optVals, function (stage, info) {
       VT.rows = [{ label: "Working", level: "pend",
@@ -8491,6 +8511,7 @@ async function vtRun() {
     setStatus(friendlyErr(e), "err");
   }
   VT.busy = false; renderVt();
+  try { pendBoxP("vtSpin", false); } catch (e) { }
 }
 
 
@@ -8612,6 +8633,7 @@ async function tkRun() {
   if (!TK.out) { setStatus("Choose a save folder first", "err"); return; }
   const promptText = ($("tkPrompt") && $("tkPrompt").value || "").trim();
   TK.busy = true; TK.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderTk();
+  try { pendBoxP("tkSpin", true); } catch (e) { }
   try {
     const imgRef = TK.img._url || await fileToDataUrl(TK.img);
     const audRef = TK.aud._url || await fileToDataUrl(TK.aud);
@@ -8634,6 +8656,7 @@ async function tkRun() {
     setStatus(friendlyErr(e), "err");
   }
   TK.busy = false; renderTk();
+  try { pendBoxP("tkSpin", false); } catch (e) { }
 }
 function bindTalk() {
   tkFillModels();
@@ -9396,6 +9419,7 @@ async function vuRun() {
   if (!VU.video) { setStatus("Pick a video first", "err"); return; }
   if (!VU.out) { setStatus("Choose a save folder first", "err"); return; }
   VU.busy = true; VU.rows = [{ label: "Working", level: "pend", detail: "uploading" }]; renderVu();
+  try { pendBoxP("vuSpin", true); } catch (e) { }
   try {
     const ref = VU.video._url || await fileToDataUrl(VU.video);   /* 6.165.0 — a clip sent on from a result box carries its bytes */
     const res = await V.upscale(videoEnv(), ref, ($("vuRes") && $("vuRes").value) || "1080p",
@@ -9418,6 +9442,7 @@ async function vuRun() {
     setStatus(friendlyErr(e), "err");
   }
   VU.busy = false; renderVu();
+  try { pendBoxP("vuSpin", false); } catch (e) { }
 }
 /* ============================================================
    GALLERY — everything the panel has made (v6.52.0)
@@ -12214,11 +12239,19 @@ function ffEaseInOut(p) {
 }
 /* 6.191.0 — LOADING (wave E): the app's pendBox. While a job runs and no result is on screen yet, the result card shows
    as a plain block the height of a picture to come (styles.css .result-box.pending), aria-busy; a card that already holds
-   a result is only marked busy. The spinner line is a live region. */
+   a result is only marked busy. The spinner line is a live region.
+   6.199.0 — and it is now called for all five. The table named Video Upscale, Video Tools and Talking Photo from the
+   first, but nothing ever called pendBoxP for them: those three drew their own "Working · <stage> · <N>s" row and left
+   the result card unmarked, while the same three pages in the web app went to a skeleton. The three runs now open and
+   close the card the way Freeform and Video always did. */
 const PEND_BOX_P = { spin: "resultBox", vidSpin: "vidResultBox", vuSpin: "vuResultBox", vtSpin: "vtResultBox", tkSpin: "tkResultBox" };
+/* 6.199.0 — where a page has no spinner line of its own, its status line is the
+   thing that carries "Working \u00b7 <stage> \u00b7 <N>s", so that is the live region. */
+const PEND_SAY_P = { spin: "stGen", vidSpin: "stVidGen", vuSpin: "stVuGen", vtSpin: "stVtGen", tkSpin: "stTkGen" };
 function pendBoxP(spinId, on) {
   const box = $(PEND_BOX_P[spinId]); if (!box) return false;
-  const sp = $(spinId); if (sp) { sp.setAttribute("role", "status"); sp.setAttribute("aria-live", "polite"); }
+  const sp = $(spinId) || $(PEND_SAY_P[spinId]);
+  if (sp) { sp.setAttribute("role", "status"); sp.setAttribute("aria-live", "polite"); }
   const cls = String(box.className || "").split(/\s+/).filter(function (c) { return c && c !== "pending"; });
   if (on) {
     if (cls.indexOf("on") < 0) cls.push("pending");

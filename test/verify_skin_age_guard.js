@@ -143,7 +143,7 @@ report("E2) the panel carries the three AVOID items too, and no 'keep … fine l
   !/keep (every )?(real )?pores?,? fine lines?/i.test(PANEL), null);
 
 /* ── F) release pins ─────────────────────────────────────────────────────── */
-const VER = "6.127.1", PVER = "6.198.1";
+const VER = "6.128.0", PVER = "6.199.0";
 report(`F) ${VER} / panel ${PVER} in lockstep on the app, the API, the panel and the download footer`,
   R("docs/app/index.html").indexOf(`var APP_VER="${VER}";`) >= 0 &&
   R("docs/app/version.json").indexOf(`"v":"${VER}"`) >= 0 &&
@@ -158,7 +158,7 @@ const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const WAVE_V = "6.127.0";
 const wnRow = wn.find(r => r.v === WAVE_V);
 report(`F2) the What's New strip carries the ${WAVE_V} row, in all nine languages, with a bold-led excerpt (it led the strip when this wave shipped)`,
-  !!wnRow && wn.indexOf(wnRow) <= 1 && wnRow.kind === "wf" &&
+  !!wnRow && wn.indexOf(wnRow) <= 2 && wnRow.kind === "wf" &&
   LANGS.every(l => wnRow.t[l] && wnRow.s[l] && !wnRow.t[l].startsWith("**") && wnRow.s[l].startsWith("**")),
   { at: wnRow ? wn.indexOf(wnRow) : -1, head: wn[0] && wn[0].v });
 
