@@ -236,3 +236,36 @@ td.cell-time{white-space:nowrap}
   background:var(--surface-2,rgba(255,255,255,.04));color:inherit}
 .record-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 @media (max-width:640px){.pick-col{width:30px}}
+
+/* ===== 6.130.0 — admin wave A ==============================================
+   Three things the console never had, measured absent before they were built:
+   a loading state (0 skeleton rules and 0 aria-busy anywhere), a way to take
+   a list out of the browser, and a card that says what is actually live. */
+
+/* The head of a section may now carry two buttons; on a phone they wrap under
+   the heading rather than squeezing it. */
+.head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* Loading. A skeleton row stands in for the real row so the table keeps its
+   height and nothing jumps when the answer lands. The shimmer is the only
+   animation, and prefers-reduced-motion stops it. */
+.skel-cell{display:block;height:12px;border-radius:99px;
+  background:linear-gradient(90deg,rgba(148,162,183,.13) 0%,rgba(148,162,183,.26) 40%,rgba(148,162,183,.13) 80%);
+  background-size:280% 100%;animation:skelSweep 1.25s linear infinite}
+.skel-cell.wide{width:78%}.skel-cell.mid{width:56%}.skel-cell.narrow{width:34%}
+.skel-row td{padding-top:19px;padding-bottom:19px}
+.skel-card{display:grid;gap:10px;padding:16px;border-top:1px solid var(--line)}
+@keyframes skelSweep{from{background-position:180% 0}to{background-position:-80% 0}}
+[aria-busy="true"]{cursor:progress}
+@media(prefers-reduced-motion:reduce){.skel-cell{animation:none}}
+
+/* The release card: one row per surface, the version large, the verdict beside
+   it. A mismatch is amber, not red — it usually means a deploy is still
+   running, and the teacher should look rather than panic. */
+.rel-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px;border-radius:12px;background:var(--panel2)}
+.rel-row>div{min-width:0}
+.rel-row b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.rel-row small{display:block;color:var(--muted);font-size:.74rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rel-row .status-pill{flex:0 0 auto}

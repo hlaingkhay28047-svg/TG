@@ -50,7 +50,7 @@ const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const PWN = read("panel/js/hnk_whats_new.js");
 const PORT = process.env.PORT || "8931";
-const VER = "6.129.0", PVER = "6.200.0";
+const VER = "6.130.0", PVER = "6.201.0";
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
@@ -262,7 +262,7 @@ function releasePins() {
   report("D3) CI runs this test right after the V2 layer check, and the suite counts 271 invocations",
     has(CI, "run: PORT=8931 node test/verify_gen_loading_billing.js") &&
     CI.indexOf("verify_panel_v2_layer.js") < CI.indexOf("verify_gen_loading_billing.js") &&
-    (CI.match(/node test\//g) || []).length === 271 && has(LANDING, "271 tests"),
+    (CI.match(/node test\//g) || []).length === 272 && has(LANDING, "272 tests"),
     { steps: (CI.match(/node test\//g) || []).length });
 }
 

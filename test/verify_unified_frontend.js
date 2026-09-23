@@ -177,8 +177,18 @@ check("admin markup has search, filters, student detail dialog and live feedback
 check("admin payment surfaces are fully retired from markup, script and styles",
   !/payment/i.test(admin) && !/payment/i.test(adminHtml) && !/payment/i.test(adminCss) &&
   !/\/rest\/v1\/payment_requests|supabase\.co\/rest/i.test(admin));
-check("no orphaned proof-Blob or VIP-grant machinery survives the payment removal",
-  !/createObjectURL|revokeObjectURL|apiBlob/.test(admin) &&
+/* 6.130.0 — the blanket ban on object URLs was written to prove the payment-proof
+   viewer was gone: it pulled a proof image through apiBlob and showed it from a
+   Blob URL. Wave A's CSV export needs exactly one object URL, so the rule now
+   names where the only one may live — created and revoked inside downloadCsv —
+   and still forbids everything the original did: apiBlob, and the words proof
+   and grant anywhere in the console's markup or stylesheet. */
+check("no orphaned proof-Blob or VIP-grant machinery survives the payment removal, and the console's one object URL is the CSV export's, revoked after use",
+  !/apiBlob/.test(admin) &&
+  (admin.match(/createObjectURL/g) || []).length === 1 &&
+  (admin.match(/revokeObjectURL/g) || []).length === 1 &&
+  /function downloadCsv\(name, body\) \{\s*const url = URL\.createObjectURL\(new Blob\(\[body\], \{ type: "text\/csv;charset=utf-8" \}\)\);/.test(admin) &&
+  /URL\.revokeObjectURL\(url\)/.test(admin) &&
   !/proof/i.test(adminHtml) && !/grant/i.test(adminHtml) && !/proof|grant-card/i.test(adminCss));
 check("admin mutation retries retain a browser-generated idempotency key until success",
   /crypto\.randomUUID\(\)/.test(admin) &&

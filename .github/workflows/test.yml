@@ -306,6 +306,8 @@ jobs:
       # and the three CCX cards that were sending their own older prompt.
       - name: Verify the background changes and the photograph does not
         run: PORT=8931 node test/verify_scene_frame_6129.js
+      - name: Verify the admin console loads, exports and says what is live
+        run: PORT=8931 node test/verify_admin_wave_6130.js
 
       # v5.93.0 — Wave 11 begins at the door. Every state the account server
       # can report is read from server/lib/auth.js and pushed through both

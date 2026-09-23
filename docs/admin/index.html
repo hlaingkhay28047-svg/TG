@@ -30,7 +30,7 @@
        may keep the assets cached, and a stale admin.js binding against changed
        markup throws before the boot code runs, wedging the tab on the
        "Checking admin access" gate. -->
-  <link rel="stylesheet" href="admin.css?v=0cbf81b83beb">
+  <link rel="stylesheet" href="admin.css?v=45932b68d591">
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to admin content</a>
@@ -112,12 +112,13 @@
             <section class="surface"><div class="surface-head"><div><p class="eyebrow" data-i18n="ov.recentEyebrow">RECENT ACCESS</p><h3 data-i18n="ov.latest">Latest logins</h3></div><button class="text-button" type="button" data-go="history" data-i18n="ov.viewAll">View all</button></div><div class="table-wrap latest-table"><table><thead><tr><th data-i18n="th.student">Student</th><th data-i18n="th.device">Device</th><th data-i18n="th.time">Time</th><th data-i18n="th.result">Result</th></tr></thead><tbody id="latestLogins"></tbody></table></div><div class="history-cards" id="latestCards"></div><p class="empty" id="latestEmpty" hidden data-i18n="ov.noLogins">No recent logins.</p></section>
             <section class="surface attention"><p class="eyebrow" data-i18n="ov.quickEyebrow">QUICK REVIEW</p><h3 data-i18n="ov.attention">Needs attention</h3><div class="attention-list" id="attentionList"></div><button class="button primary full" type="button" data-go="students" data-filter-status="pending" data-i18n="ov.reviewPending">Review pending students</button></section>
             <section class="surface" id="visitsCard" hidden><div class="surface-head"><div><p class="eyebrow" data-i18n="ov.visitsEyebrow">WEBSITE VISITORS · 30 DAYS</p><h3 data-i18n="ov.visitsHead">Landing traffic</h3></div></div><div class="attention-list" id="visitsSummary"></div><figure class="chart" id="visitsChart"></figure><h3 class="visits-sub" data-i18n="ov.rooms">Most-entered rooms</h3><div class="attention-list" id="visitsPages"></div><p class="empty" id="visitsEmpty" hidden data-i18n="ov.noVisits">No visits recorded yet.</p></section>
+            <section class="surface" id="releaseCard"><div class="surface-head"><div><p class="eyebrow" data-i18n="ov.relEyebrow">WHAT IS LIVE RIGHT NOW</p><h3 data-i18n="ov.relHead">Release</h3></div><button class="text-button" id="reloadRelease" type="button" data-i18n="ov.relRefresh">Check again</button></div><div class="attention-list" id="releaseRows"></div><p class="empty" id="releaseEmpty" hidden data-i18n="ov.relEmpty">Could not read the live release.</p></section>
             <section class="surface" id="growthCard" hidden><div class="surface-head"><div><p class="eyebrow" data-i18n="ov.growthEyebrow">NEW STUDENTS · 30 DAYS</p><h3 data-i18n="ov.growthHead">Signups</h3></div></div><div class="attention-list" id="growthSummary"></div><figure class="chart" id="growthChart"></figure><p class="empty" id="growthEmpty" hidden data-i18n="ov.noGrowth">No signups in this window.</p></section>
           </div>
         </section>
 
         <section class="panel" id="panel-students" aria-labelledby="studentsHeading">
-          <div class="section-head"><div><p class="eyebrow" data-i18n="st.eyebrow">STUDENT MANAGEMENT</p><h2 id="studentsHeading" data-i18n="st.head">Accounts and licenses</h2><p data-i18n="st.sub">Search, review and apply audited account actions.</p></div><button class="button" id="reloadStudents" type="button" data-i18n="st.refresh">Refresh list</button></div>
+          <div class="section-head"><div><p class="eyebrow" data-i18n="st.eyebrow">STUDENT MANAGEMENT</p><h2 id="studentsHeading" data-i18n="st.head">Accounts and licenses</h2><p data-i18n="st.sub">Search, review and apply audited account actions.</p></div><div class="head-actions"><button class="button" id="exportStudents" type="button" data-i18n="st.export">Export CSV</button><button class="button" id="reloadStudents" type="button" data-i18n="st.refresh">Refresh list</button></div></div>
           <form class="filter-bar" id="studentFilters" role="search">
             <label class="search-field"><span class="sr-only" data-i18n="st.searchLabel">Search students</span><span aria-hidden="true">⌕</span><input id="studentSearch" type="search" placeholder="Search name or email" data-i18n-ph="ph.searchStudents" autocomplete="off"></label>
             <label><span class="sr-only" data-i18n="st.statusLabel">Account status</span><select id="studentStatus"><option value="" data-i18n="st.allStates">All account states</option><option value="pending" data-i18n="s.pending">Pending</option><option value="active" data-i18n="s.active">Active</option><option value="suspended" data-i18n="s.suspended">Suspended</option><option value="expired" data-i18n="s.expired">Expired</option><option value="banned" data-i18n="s.banned">Banned</option><option value="rejected" data-i18n="s.rejected">Rejected</option></select></label>
@@ -134,7 +135,7 @@
         </section>
 
         <section class="panel" id="panel-history" aria-labelledby="historyHeading">
-          <div class="section-head"><div><p class="eyebrow" data-i18n="hi.eyebrow">AUDIT TRAIL</p><h2 id="historyHeading" data-i18n="hi.head">Login, device, download and admin activity</h2><p data-i18n="hi.sub">Server-side events are searchable and never editable here.</p></div><button class="button" id="reloadHistory" type="button" data-i18n="hi.refresh">Refresh history</button></div>
+          <div class="section-head"><div><p class="eyebrow" data-i18n="hi.eyebrow">AUDIT TRAIL</p><h2 id="historyHeading" data-i18n="hi.head">Login, device, download and admin activity</h2><p data-i18n="hi.sub">Server-side events are searchable and never editable here.</p></div><div class="head-actions"><button class="button" id="exportHistory" type="button" data-i18n="hi.export">Export CSV</button><button class="button" id="reloadHistory" type="button" data-i18n="hi.refresh">Refresh history</button></div></div>
           <form class="filter-bar" id="historyFilters" role="search">
             <label class="search-field"><span class="sr-only" data-i18n="hi.searchLabel">Search activity</span><span aria-hidden="true">⌕</span><input id="historySearch" type="search" placeholder="Student, email, device or action" data-i18n-ph="ph.searchActivity" autocomplete="off"></label>
             <label><span class="sr-only" data-i18n="hi.typeLabel">Activity type</span><select id="historyType"><option value="" data-i18n="hi.all">All activity</option><option value="login" data-i18n="hi.logins">Logins</option><option value="failed_login" data-i18n="hi.failed">Failed logins</option><option value="device" data-i18n="th.devices">Devices</option><option value="download" data-i18n="hi.downloads">CCX downloads</option><option value="license" data-i18n="hi.licenses">License changes</option><option value="account" data-i18n="hi.accounts">Account actions</option><option value="admin" data-i18n="hi.admins">Admin actions</option></select></label>
@@ -182,6 +183,6 @@
   <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow" data-i18n="cf.eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle" data-i18n="cf.title">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel" data-i18n="cf.cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm" data-i18n="cf.confirm">Confirm</button></div></form></dialog>
 
   <div class="toast" id="liveStatus" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script src="admin.js?v=9530647f5247" defer></script>
+  <script src="admin.js?v=98d110057882" defer></script>
 </body>
 </html>
