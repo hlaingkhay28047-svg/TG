@@ -4641,7 +4641,7 @@ var ALBUM = (function(){
       return Promise.resolve(sendFile(bytes, "hnk-album-library.json", "application/json")).then(function(){ H.toast(L("alb_lib_exported").replace("{N}", String(out.records.length)).replace("{M}", String(Math.max(1, Math.round(bytes.length/1048576)))), "ok"); return true; });
     }).catch(function(){ H.toast(L("alb_export_fail"), "err"); return false; });
   }
-  var APP_MARK = "6.127.0";
+  var APP_MARK = "6.127.1";
   function utf8Bytes(s){
     var out = [], i, c;
     for (i=0;i<s.length;i++){

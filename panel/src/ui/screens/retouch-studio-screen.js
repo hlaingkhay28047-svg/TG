@@ -491,7 +491,44 @@ function renderStPicker() {
   host.appendChild(d);
   var tg = $("stTarget"); if (tg) tg.style.display = ref ? "" : "none";
 }
-function renderRefs() { renderStPicker(); if (API && API.renderRsPicker) { try { API.renderRsPicker(); } catch (e) { } } }
+/* 6.198.1 — V2 RETOUCH PAINTS ITS CAPTURED LAYER TOO. 6.164.0 taught the
+   repaint about Retouch A/B's #stPicker after the owner found a captured
+   layer that the card never showed; V2 Retouch draws through the app's own
+   #rsPicker and was left out of that fix, so the same defect survived there:
+   the sheet opened, the layer was captured, the status line said so, and the
+   card still read "Add a photo" until the page was left and re-entered.
+   Everything that fills the slot ends at renderRefs, so the V2 card and its
+   hero are repainted here, and the card is given the same two things the
+   A/B card has — the layer's name under the picture and a ↻ that reads the
+   active layer again. */
+function renderRsCard() {
+  if (!API) return;
+  try { if (API.renderRsPicker) API.renderRsPicker(); } catch (e) { }
+  try { if (API.renderV2Hero) API.renderV2Hero(); } catch (e) { }
+  decorateRs();
+}
+/* the app's picker draws the picture, the ✕ and the "Before" tag; Photoshop's
+   layer is a source the web app does not have, so the panel adds its two
+   marks after that paint rather than forking the app's renderer. */
+function decorateRs() {
+  var host = $("rsPicker"); if (!host || !host.querySelector) return;
+  var box = host.querySelector(".ref.filled"); if (!box) return;
+  if (box.querySelector(".x.re")) return;          /* already decorated */
+  var st = hstate(), ref = st.refs && st.refs[0];
+  if (!ref || !/^Layer:/.test(String(ref.label || ""))) return;
+  var re = el("button", "x re");
+  re.innerHTML = '<img class="ic-s" alt="" src="icons/ui/i-reset-muted.png">';
+  var reL = L9({ my: "Layer ကို ပြန်ယူမယ်", en: "Capture the layer again" });
+  re.setAttribute("aria-label", reL); re.title = reL;
+  re.onclick = function (ev) {
+    ev.stopPropagation();
+    var b = bridge(); if (b && b.pickLayer) b.pickLayer();
+  };
+  box.appendChild(re);
+  box.appendChild(el("span", "tag src", "Layer · " +
+    String(ref.label).replace(/^Layer:\s*/, "").replace(/\.(jpe?g|png)$/i, "")));
+}
+function renderRefs() { renderStPicker(); renderRsCard(); }
 
 /* The app asks ST.srcBitmap "is there a photo?" — for the generate bar's
    label, the add-a-photo nudge and every control that needs pixels. The panel
@@ -633,8 +670,7 @@ function mount(pageKey) {
   if (pageKey === "retouch") {
     mountedPage = "pageRetouch";
     takeResultCard("rsResultSlot");
-    try { if (API.renderRsPicker) API.renderRsPicker(); } catch (e) { }
-    try { if (API.renderV2Hero) API.renderV2Hero(); } catch (e) { }
+    renderRsCard();
     retint(doc());
     return;
   }
@@ -818,6 +854,8 @@ var SCREEN = {
   /* the panel's Generate bar asks for the same sentence the web app sends */
   prompt: function () { return API ? API.stComposePrompt() : ""; },
   renderPicker: renderStPicker,
+  /* 6.198.1 — the V2 Retouch card, repainted by every route that fills the slot */
+  renderRs: renderRsCard,
   /* 6.187.0 — the two-column pass, callable by the shell's resize sweep and by tests */
   twoCol: stTwoCol
 };

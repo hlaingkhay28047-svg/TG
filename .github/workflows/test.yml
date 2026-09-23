@@ -284,6 +284,12 @@ jobs:
       # or this step is red.
       - name: Verify every skin card states that a retouch only reduces
         run: node test/verify_skin_age_guard.js
+      # 6.127.1 — the panel's V2 Retouch could take the Active layer, but the
+      # card it draws through never repainted, so it still read "Add a photo".
+      # 6.164.0 taught renderRefs() the A/B picker and missed this one; this
+      # step keeps both cards named there.
+      - name: Verify V2 Retouch shows the layer it just captured
+        run: PORT=8931 node test/verify_panel_v2_layer.js
 
       # v5.93.0 — Wave 11 begins at the door. Every state the account server
       # can report is read from server/lib/auth.js and pushed through both
