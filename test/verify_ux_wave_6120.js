@@ -79,7 +79,10 @@ function sourcePins() {
   report("A2) the loading skeleton: .result-box.pending shows the card with only its heading and a shimmering picture box in the picked ratio (--pend-ar, 3/4 default); the spinner class drives it through pendBox for the six generation pages (busy-only on Retouch A/B); the spinner lines are live regions; the two-pane desktop layout counts a pending card like a finished one",
     has(APP, ".result-box.pending{display:block}") && has(APP, ".result-box.pending>*{display:none}") && has(APP, ".result-box.pending>h2,.result-box.pending>.result-img{display:block}") &&
     has(APP, ".result-box.pending .result-img{position:relative;aspect-ratio:var(--pend-ar,3/4);background:") &&
-    has(APP, 'var PEND_BOX={spin:["resultBox",1],vidSpin:["vidResultBox",1],vuSpin:["vuResultBox",1],vtSpin:["vtResultBox",1],tkSpin:["tkResultBox",1],t2iSpin:["t2iResultBox",1],stSpin:["stResultBox",0],rsSpin:["rsResultBox",0]};') &&
+    /* 6.128.0 — the table this wave wrote held the eight generate controls of the
+       day; Path and the V2 batch joined it then, without a skeleton, so the pin
+       names all ten rather than freezing the wave's own eight. */
+    has(APP, 'var PEND_BOX={spin:["resultBox",1],vidSpin:["vidResultBox",1],vuSpin:["vuResultBox",1],vtSpin:["vtResultBox",1],tkSpin:["tkResultBox",1],t2iSpin:["t2iResultBox",1],stSpin:["stResultBox",0],rsSpin:["rsResultBox",0],ptSpin:["ptRunCard",0],v2Spin:["v2RunCard",0]};') &&
     has(APP, 'sp.setAttribute("role","status"); sp.setAttribute("aria-live","polite");') && has(APP, 'new MutationObserver(function(){ var now=/\\bon\\b/.test(sp.className); if(now!==last){ last=now; pendBox(id, now); } }).observe(sp,{attributes:true,attributeFilter:["class"]});') &&
     (APP.match(/:has\(>\.result-box\.on,>\.result-box\.pending\)/g) || []).length === 36 && !has(APP, ":has(>.result-box.on)"), { twoPane: (APP.match(/:has\(>\.result-box\.on,>\.result-box\.pending\)/g) || []).length });
   report("A3) the boot shift, closed at the source: the tab bar reserves its filled 69px, the header's raw language <select> holds the picker's 116×41 footprint (invisible) until upgrade() wraps it and clears the inline sizes, <main> keeps its children's margins inside (flow-root) and stands at least a screen tall, the version tag reserves its slot",
@@ -360,7 +363,7 @@ function releasePins() {
     row && row.v === VER && row.ref === "pgHome" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40 && row.s[l].startsWith("**")) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
   report("E3) CI runs this test right after the wave D step and the landing says how many tests the suite runs (262 when this wave shipped, 263 since 6.121.0 added verify_album_designer)",
     has(CI, "run: node test/verify_ux_wave_6119.js\n") && has(CI, "run: node test/verify_ux_wave_6120.js") && CI.indexOf("verify_ux_wave_6119") < CI.indexOf("verify_ux_wave_6120") &&
-    (CI.match(/node test\//g) || []).length === 269 && has(LANDING, "269 tests") && !has(LANDING, "261 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 270 && has(LANDING, "270 tests") && !has(LANDING, "261 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 (async () => {

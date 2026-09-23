@@ -290,6 +290,13 @@ jobs:
       # step keeps both cards named there.
       - name: Verify V2 Retouch shows the layer it just captured
         run: PORT=8931 node test/verify_panel_v2_layer.js
+      # 6.128.0 — the owner asked whether every Generate shows loading and
+      # billing. The balance beside the cost toast never re-read after a run;
+      # Path and the V2 batch were outside the loading contract; and the panel
+      # declared three video pages in its table and never called them. This
+      # step keeps all three closed.
+      - name: Verify every generate shows it is working and moves the balance
+        run: PORT=8931 node test/verify_gen_loading_billing.js
 
       # v5.93.0 — Wave 11 begins at the door. Every state the account server
       # can report is read from server/lib/auth.js and pushed through both

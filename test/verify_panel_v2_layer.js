@@ -46,7 +46,7 @@ const APP = read("docs/app/index.html");
 const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const PWN = read("panel/js/hnk_whats_new.js");
-const VER = "6.127.1", PVER = "6.198.1";
+const VER = "6.128.0", PVER = "6.199.0";
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
@@ -194,16 +194,19 @@ function releasePins() {
     String(man.version) === PVER && String(rel.version) === PVER,
     { appVer, ver: ver.v, panel: man.version, rel: rel.version });
 
+  /* 6.128.0 — this wave shipped as 6.127.1 and led the strip that day; the row
+     is found rather than read at 0 now that a release sits above it. */
   const wn = JSON.parse(read("docs/app/data/whatsnew.js").replace(/^window\.HNK_WHATS_NEW=/, "").replace(/;\s*$/, ""));
-  const row = wn[0];
-  report("C2) the What's New strip leads with this release, in all nine languages, with a bold-led excerpt, and the panel's lifted table carries it",
-    !!row && row.v === VER && LANGS.every(l => row.t[l] && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**")) &&
-    has(PWN, '"v":"' + VER + '"'), row && { v: row.v, kind: row.kind, ref: row.ref });
+  const WAVE_V = "6.127.1";
+  const row = wn.find(r => r.v === WAVE_V);
+  report(`C2) the What's New strip carries the ${WAVE_V} row, in all nine languages, with a bold-led excerpt, and the panel's lifted table carries it (it led the strip when this wave shipped)`,
+    !!row && wn.indexOf(row) <= 1 && LANGS.every(l => row.t[l] && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**")) &&
+    has(PWN, '"v":"' + WAVE_V + '"'), row && { at: wn.indexOf(row), kind: row.kind, ref: row.ref });
 
-  report("C3) CI runs this test right after the skin-card check, and the suite counts 269 invocations",
+  report("C3) CI runs this test right after the skin-card check, and the suite counts 270 invocations (269 when this release shipped; 6.128.0 added verify_gen_loading_billing)",
     has(CI, "run: node test/verify_skin_age_guard.js") && has(CI, "run: PORT=8931 node test/verify_panel_v2_layer.js") &&
     CI.indexOf("verify_skin_age_guard.js") < CI.indexOf("verify_panel_v2_layer.js") &&
-    (CI.match(/node test\//g) || []).length === 269 && has(LANDING, "269 tests"),
+    (CI.match(/node test\//g) || []).length === 270 && has(LANDING, "270 tests"),
     { steps: (CI.match(/node test\//g) || []).length });
 }
 
