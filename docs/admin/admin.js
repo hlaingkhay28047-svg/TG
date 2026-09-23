@@ -57,6 +57,24 @@
      choice is one tap and persists per device. */
   const LANG_KEY = "hnk_admin_lang_v1";
   const MY = {
+    /* v6.130.0 — admin wave A: a loading state, a way out, and what is live */
+    "st.export": "CSV \u1011\u102f\u1010\u103a\u101a\u1030",
+    "hi.export": "CSV \u1011\u102f\u1010\u103a\u101a\u1030",
+    "ov.relEyebrow": "\u1021\u1001\u102f \u1010\u1000\u103a\u1014\u1031\u1010\u102c",
+    "ov.relHead": "\u1011\u102f\u1010\u103a\u101c\u102d\u102f\u1000\u103a\u1019\u103e\u102f",
+    "ov.relRefresh": "\u1011\u1015\u103a\u1005\u1005\u103a",
+    "ov.relEmpty": "\u1010\u1000\u103a\u1014\u1031\u1010\u1032\u1037 version \u1000\u102d\u102f \u1019\u1016\u1010\u103a\u1014\u102d\u102f\u1004\u103a\u1015\u102b\u104b",
+    "rel.app": "\u101d\u1018\u103a\u1021\u1000\u103a",
+    "rel.api": "\u1006\u102c\u1038\u1017\u102c",
+    "rel.panel": "Photoshop panel",
+    "rel.min": "\u1021\u1014\u100a\u103a\u1038\u1006\u102f\u1036\u1038 \u101c\u102d\u102f\u1021\u1015\u103a\u1010\u1032\u1037 panel",
+    "rel.console": "\u1012\u102e admin console",
+    "rel.ok": "\u1000\u102d\u102f\u1000\u103a\u1014\u1031\u1015\u102b\u1010\u101a\u103a",
+    "rel.diff": "\u1019\u1000\u102d\u102f\u1000\u103a\u1015\u102b",
+    "rel.unknown": "\u1019\u101e\u102d\u101b",
+    "msg.csvNone": "\u1011\u102f\u1010\u103a\u1005\u101b\u102c \u1019\u101b\u103e\u102d\u1015\u102b\u104b",
+    "msg.csvDone": "CSV \u1011\u102f\u1010\u103a\u1015\u103c\u102e\u1038\u1015\u102b\u1015\u103c\u102e",
+    "msg.csvBusy": "\u1011\u102f\u1010\u103a\u1014\u1031\u1015\u102b\u1010\u101a\u103a\u2026",
     /* v6.37.0 — bulk review + the student record */
     "bk.approve": "ရွေးထားသူများ အတည်ပြု",
     "bk.reject": "ရွေးထားသူများ ငြင်းပယ်",
@@ -923,6 +941,153 @@
     $("#studentsNext").disabled = state.studentPage * pageSize >= state.studentTotal;
   }
 
+  /* ===== v6.130.0 — LOADING. ================================================
+     The console had no loading state at all: zero skeleton rules, zero
+     aria-busy. A list simply held the previous page's rows until the answer
+     landed, so a slow line looked like a console that had stopped. Every list
+     now says it is working, in the row shape it is about to fill, and a screen
+     reader is told through aria-busy on the same container. */
+  const SKEL_ROWS = 6;
+  function skelRow(cells) {
+    return node("tr", { className: "skel-row" }, cells.map((w, i) =>
+      node("td", { className: i === 0 ? "pick-col" : "" }, [node("span", { className: "skel-cell " + w })])));
+  }
+  function skelCard() {
+    return node("div", { className: "skel-card" },
+      [node("span", { className: "skel-cell wide" }), node("span", { className: "skel-cell mid" })]);
+  }
+  function setBusy(rowsSel, cardsSel, on, widths) {
+    const rows = $(rowsSel), cards = $(cardsSel);
+    [rows, cards].forEach(host => { if (host) host.setAttribute("aria-busy", on ? "true" : "false"); });
+    if (!on) return;
+    if (rows) rows.replaceChildren(...Array.from({ length: SKEL_ROWS }, () => skelRow(widths)));
+    if (cards) cards.replaceChildren(...Array.from({ length: SKEL_ROWS }, skelCard));
+  }
+
+  /* ===== v6.130.0 — CSV. ====================================================
+     A teacher could read a list but never take it anywhere. Export walks the
+     pages of the filter that is on screen — never a wider set than the console
+     is showing — up to a hard ceiling, and writes the file in this tab. The
+     bytes never leave the browser: no upload, no server round trip, no link. */
+  const CSV_PAGE_CAP = 25;
+  function csvCell(value) {
+    const text = value === null || value === undefined ? "" : String(value);
+    return /[",\n\r;]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+  }
+  function toCsv(header, rows) {
+    /* the BOM is what makes Excel open Burmese names as Burmese */
+    return "\uFEFF" + [header, ...rows].map(row => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
+  }
+  function downloadCsv(name, body) {
+    const url = URL.createObjectURL(new Blob([body], { type: "text/csv;charset=utf-8" }));
+    const link = node("a", { href: url, download: name });
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+  function stamp() { return new Date().toISOString().slice(0, 10); }
+  async function collectPages(path, query, keys) {
+    const out = [];
+    for (let page = 1; page <= CSV_PAGE_CAP; page += 1) {
+      query.set("page", String(page));
+      const body = await api(`${path}?${query}`);
+      const batch = normalizeList(body, keys);
+      out.push(...batch);
+      if (batch.length < pageSize) break;
+    }
+    return out;
+  }
+  async function exportCsv(button, run) {
+    if (button.disabled) return;
+    button.disabled = true;
+    notify(t("msg.csvBusy", "Exporting…"));
+    try {
+      const wrote = await run();
+      notify(wrote ? t("msg.csvDone", "CSV exported.") : t("msg.csvNone", "Nothing to export."),
+        wrote ? "ok" : "error");
+    } catch (error) { handleError(error, "Could not export the list."); }
+    finally { button.disabled = false; }
+  }
+  async function exportStudents() {
+    const rows = await collectPages(API.students, studentQuery(), ["students", "items", "data"]);
+    if (!rows.length) return false;
+    downloadCsv(`hnk-students-${stamp()}.csv`,
+      toCsv(["Name", "Email", "Account", "License", "Expires", "Devices", "Last active", "Joined"],
+        rows.map(item => [
+          item.name || "", item.email || "", studentStatus(item), studentLicense(item),
+          item.license_expires_at || item.expires_at || (item.license && item.license.expires_at) || "",
+          deviceSummary(item), item.last_active_at || "", item.created_at || ""])));
+    return true;
+  }
+  async function exportHistory() {
+    const rows = await collectPages(API.histories, historyQuery(), ["events", "history", "items", "data"]);
+    if (!rows.length) return false;
+    downloadCsv(`hnk-activity-${stamp()}.csv`,
+      toCsv(["Time", "Name", "Email", "Activity", "Device", "Result", "Detail"],
+        rows.map(item => [
+          item.created_at || item.time || item.login_at || "", item.name || "", item.email || "",
+          eventLabel(item), prettyDevice(item.device_name || item.browser || item.app || item.channel) || "",
+          item.result || item.status || "success",
+          prettyDetail(item.detail || item.message || "")])));
+    return true;
+  }
+
+  /* ===== v6.130.0 — WHAT IS LIVE. ===========================================
+     The console managed the panel's version policy and said nothing about the
+     web app, the API or itself, so a teacher could not tell a finished deploy
+     from one still running. This card reads the live files and compares them:
+     the app's own version.json, the API's reported version, the panel policy
+     already on this page, and the console's own cache token. */
+  /* the verdict wears its own pill rather than statusPill(), which derives the
+     class name from the word it is handed — in Burmese that would put the
+     translated word into the class. */
+  function relPill(ok) {
+    return node("span", { className: "status-pill " + (ok ? "active" : "expired"),
+      text: ok ? t("rel.ok", "matched") : t("rel.diff", "different") });
+  }
+  function relRow(label, value, verdict) {
+    return node("div", { className: "rel-row" }, [
+      node("div", {}, [node("b", { text: value || t("rel.unknown", "unknown") }), node("small", { text: label })]),
+      typeof verdict === "boolean" ? relPill(verdict) : null,
+    ].filter(Boolean));
+  }
+  async function readJson(url) {
+    try {
+      const response = await fetch(url, { cache: "no-store", credentials: "omit" });
+      return response.ok ? await response.json() : null;
+    } catch (_) { return null; }
+  }
+  async function loadRelease() {
+    const host = $("#releaseRows");
+    if (!host) return;
+    host.setAttribute("aria-busy", "true");
+    host.replaceChildren(node("div", { className: "skel-card" },
+      [node("span", { className: "skel-cell wide" }), node("span", { className: "skel-cell mid" })]));
+    /* /api/health is the readiness endpoint the deploy workflow itself probes,
+       and it reports apiVersion. The panel policy comes from the same admin
+       endpoint the Security page uses, so the card is right on a cold boot
+       that never opened that page. */
+    const app = await readJson("/app/version.json");
+    const health = await readJson("/api/health");
+    const appVersion = app && app.v ? String(app.v) : "";
+    const apiVersion = health && health.apiVersion ? String(health.apiVersion) : "";
+    let policy = {};
+    try { const body = await api(API.panelVersion); policy = body.panel || body || {}; } catch (_) { policy = {}; }
+    const consoleToken = (document.querySelector('script[src*="admin.js"]') || {}).src || "";
+    const rows = [
+      relRow(t("rel.app", "Web app"), appVersion,
+        appVersion && apiVersion ? appVersion === apiVersion : null),
+      relRow(t("rel.api", "Server"), apiVersion, null),
+      relRow(t("rel.panel", "Photoshop panel"), policy.latest_version || "", null),
+      relRow(t("rel.min", "Oldest panel still allowed"), policy.minimum_supported_version || "", null),
+      relRow(t("rel.console", "This admin console"), (consoleToken.match(/v=([0-9a-f]{6,})/) || [])[1] || "", null),
+    ];
+    host.setAttribute("aria-busy", "false");
+    host.replaceChildren(...rows);
+    $("#releaseEmpty").hidden = Boolean(appVersion || apiVersion || policy.latest_version);
+  }
+
   function studentQuery() {
     const query = new URLSearchParams({ page: String(state.studentPage), limit: String(pageSize) });
     const search = $("#studentSearch").value.trim();
@@ -935,8 +1100,10 @@
   }
 
   async function loadStudents() {
+    setBusy("#studentRows", "#studentCards", true, ["narrow", "wide", "narrow", "mid", "narrow", "mid", "narrow"]);
     try { renderStudents(await api(`${API.students}?${studentQuery()}`)); }
     catch (error) { handleError(error, "Could not load students."); }
+    finally { setBusy("#studentRows", "#studentCards", false); }
   }
 
   function historyQuery(studentId = "") {
@@ -1022,8 +1189,10 @@
   }
 
   async function loadHistory() {
+    setBusy("#historyRows", "#historyCards", true, ["mid", "wide", "wide", "mid", "narrow"]);
     try { renderHistory(await api(`${API.histories}?${historyQuery()}`)); }
     catch (error) { handleError(error, "Could not load activity history."); }
+    finally { setBusy("#historyRows", "#historyCards", false); }
   }
 
   function detailRecord(body) {
@@ -1569,7 +1738,10 @@
     if (name === "students") loadStudents();
     if (name === "history") loadHistory();
     if (name === "security") loadPanelVersion();
-    if (name === "overview") loadDashboard(false).catch(error => handleError(error, "Could not refresh the dashboard."));
+    if (name === "overview") {
+      loadDashboard(false).catch(error => handleError(error, "Could not refresh the dashboard."));
+      loadRelease();
+    }
     $("#main").focus({ preventScroll: true });
   }
 
@@ -1608,6 +1780,9 @@
       $("#menuButton").setAttribute("aria-expanded", String(open));
     });
     $("#refreshAll").addEventListener("click", () => activatePanel($(".nav-item.active").dataset.panel));
+    $("#exportStudents").addEventListener("click", event => exportCsv(event.currentTarget, exportStudents));
+    $("#exportHistory").addEventListener("click", event => exportCsv(event.currentTarget, exportHistory));
+    $("#reloadRelease").addEventListener("click", () => loadRelease());
     $("#langToggle").addEventListener("click", () => {
       LANG = LANG === "my" ? "en" : "my";
       try { localStorage.setItem(LANG_KEY, LANG); } catch (_) { }
@@ -1667,7 +1842,10 @@
     if (!accessToken()) return showLogin();
     try {
       await loadDashboard(true);
-      await Promise.all([loadStudents(), loadHistory(), loadPanelVersion()]);
+      await Promise.all([loadStudents(), loadHistory(), loadPanelVersion(), loadRelease()]);
+      /* the Release card sits on the Overview, which is the panel a cold boot
+         already shows without going through activatePanel, so it is filled here
+         rather than only on a later switch back to it. */
       /* reopen on the panel the administrator left, per the owner */
       const remembered = (() => { try { return localStorage.getItem(PANEL_KEY) || ""; } catch (_) { return ""; } })();
       if (remembered && remembered !== "overview" && $(`#panel-${remembered}`)) activatePanel(remembered);
