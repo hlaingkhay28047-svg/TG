@@ -343,7 +343,7 @@ async function panelWalk(browser) {
 
 /* ================= E) the release ================= */
 function releasePins() {
-  const LANDING_CLAIMS = LANDING.replace(/\/\*[\s\S]*?\*\//g, "");
+  const LANDING_CLAIMS = LANDING.replace(/\/\*[\s\S]*?\*\//g, "").replace(/<!--[\s\S]*?-->/g, "");   /* 6.131.0 — a developer comment is not a claim; the newer sibling tests already strip both forms */
   const manifest = JSON.parse(read("panel/release-manifest.json"));
   const pv = JSON.parse(read("docs/download/panel-version.json"));
   /* 6.121.0 — this wave shipped as 6.120.0 / 6.191.0; every wave after it moves the pair on. What stays

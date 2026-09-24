@@ -429,7 +429,7 @@ function languages() {
 
 /* ===================== E) release ===================== */
 function releasePins() {
-  const LANDING_CLAIMS = LANDING.replace(/\/\*[\s\S]*?\*\//g, "");
+  const LANDING_CLAIMS = LANDING.replace(/\/\*[\s\S]*?\*\//g, "").replace(/<!--[\s\S]*?-->/g, "");   /* 6.131.0 — a developer comment is not a claim; the newer sibling tests already strip both forms */
   const manifest = JSON.parse(read("panel/release-manifest.json"));
   const pv = JSON.parse(read("docs/download/panel-version.json"));
   /* 6.123.0 — this wave shipped as 6.122.0 / 6.193.0; every wave after it moves the pair on (the album
