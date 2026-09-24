@@ -46,7 +46,7 @@ const APP = read("docs/app/index.html");
 const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const PWN = read("panel/js/hnk_whats_new.js");
-const VER = "6.132.0", PVER = "6.203.0";
+const VER = "6.133.0", PVER = "6.204.0";
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
@@ -204,10 +204,10 @@ function releasePins() {
     !!row && wn.indexOf(row) <= 5 && LANGS.every(l => row.t[l] && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**")) &&
     has(PWN, '"v":"' + WAVE_V + '"'), row && { at: wn.indexOf(row), kind: row.kind, ref: row.ref });
 
-  report("C3) CI runs this test right after the skin-card check, and the suite counts 274 invocations (269 when this release shipped; 6.128.0 · 6.129.0 · 6.130.0 · 6.131.0 · 6.132.0 each added one)",
+  report("C3) CI runs this test right after the skin-card check, and the suite counts 275 invocations (269 when this release shipped; 6.128.0 · 6.129.0 · 6.130.0 · 6.131.0 · 6.132.0 · 6.133.0 each added one)",
     has(CI, "run: node test/verify_skin_age_guard.js") && has(CI, "run: PORT=8931 node test/verify_panel_v2_layer.js") &&
     CI.indexOf("verify_skin_age_guard.js") < CI.indexOf("verify_panel_v2_layer.js") &&
-    (CI.match(/node test\//g) || []).length === 274 && has(LANDING, "274 tests"),
+    (CI.match(/node test\//g) || []).length === 275 && has(LANDING, "275 tests"),
     { steps: (CI.match(/node test\//g) || []).length });
 }
 

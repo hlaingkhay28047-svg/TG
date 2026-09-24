@@ -143,7 +143,7 @@ report("E2) the panel carries the three AVOID items too, and no 'keep … fine l
   !/keep (every )?(real )?pores?,? fine lines?/i.test(PANEL), null);
 
 /* ── F) release pins ─────────────────────────────────────────────────────── */
-const VER = "6.132.0", PVER = "6.203.0";
+const VER = "6.133.0", PVER = "6.204.0";
 report(`F) ${VER} / panel ${PVER} in lockstep on the app, the API, the panel and the download footer`,
   R("docs/app/index.html").indexOf(`var APP_VER="${VER}";`) >= 0 &&
   R("docs/app/version.json").indexOf(`"v":"${VER}"`) >= 0 &&
