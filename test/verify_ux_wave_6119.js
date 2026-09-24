@@ -186,7 +186,7 @@ async function landingWalk(browser) {
 function releasePins() {
   /* the landing's version CLAIMS (badges, JSON-LD, meta, nine-language lines) must all have moved on; the two
      "6.118.0 — the 10px floor" CSS comments are history and stay — so comments are stripped before the stale check */
-  const LANDING_CLAIMS = LANDING.replace(/\/\*[\s\S]*?\*\//g, "");
+  const LANDING_CLAIMS = LANDING.replace(/\/\*[\s\S]*?\*\//g, "").replace(/<!--[\s\S]*?-->/g, "");   /* 6.131.0 — a developer comment is not a claim; the newer sibling tests already strip both forms */
   const manifest = JSON.parse(read("panel/release-manifest.json"));
   const pv = JSON.parse(read("docs/download/panel-version.json"));
   /* 6.120.0 — this wave shipped as 6.119.0 / 6.190.0; every wave after it moves the pair on. What stays
@@ -206,7 +206,7 @@ function releasePins() {
     row && row.v === VER && row.ref === "pgHome" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40 && row.s[l].startsWith("**")) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
   report("C3) CI runs this test right after the wave C step and the landing says how many tests the suite runs (261 when this wave shipped, 262 since 6.120.0 added verify_ux_wave_6120, 263 since 6.121.0 added verify_album_designer)",
     has(CI, "run: node test/verify_ux_wave_6118.js\n") && has(CI, "run: node test/verify_ux_wave_6119.js") && CI.indexOf("verify_ux_wave_6118") < CI.indexOf("verify_ux_wave_6119") &&
-    (CI.match(/node test\//g) || []).length === 272 && has(LANDING, "272 tests") && !has(LANDING, "260 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 273 && has(LANDING, "273 tests") && !has(LANDING, "260 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 (async () => {

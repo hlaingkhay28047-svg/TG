@@ -501,6 +501,45 @@ async function recordVisit(body) {
   return {status:202,body:{ok:true}};
 }
 
+/* v6.131.0 — one paid run, recorded where the teacher can read it.
+   THE GAP. rhBookSpend has booked every paid run since 6.94.0, and it books it
+   into the student's own browser. That ledger is complete for the person
+   holding the phone and invisible to everyone else: a teacher asking what a
+   student ran, or what the class cost this month, had nothing to open.
+   WHAT IS AND IS NOT SENT. The task id, which surface ran it, the kind of
+   tool, the card's own label, and what RunningHub charged. No prompt, no
+   photograph, no result — a usage ledger, not a copy of the work.
+   The surface comes from the session's own client type, never from the body:
+   a web token cannot file a run as the panel's. Every text field is stripped
+   of control characters and cut; the two amounts are clamped to a sane ceiling
+   so a broken client cannot write a month's total into one row. */
+const USAGE_TASK_RE=/^[A-Za-z0-9._:-]{1,128}$/;
+const USAGE_TEXT_MAX=80;
+const USAGE_MONEY_MAX=100000;
+const USAGE_COINS_MAX=10000000;
+function usageText(value) {
+  const text=String(value==null?"":value).replace(/[\u0000-\u001f\u007f]/g,"").trim();
+  return text?text.slice(0,USAGE_TEXT_MAX):null;
+}
+function usageAmount(value,cap) {
+  const amount=Number(value);
+  if (!Number.isFinite(amount)||amount<0) return 0;
+  return Math.min(amount,cap);
+}
+async function recordUsage(identity,body) {
+  const taskId=String(body&&body.task_id||"");
+  if (!USAGE_TASK_RE.test(taskId)) throw new ApiError(400,"Bad task id","invalid_task_id");
+  const surface=identity.clientType==="panel"?"panel":"web";
+  await asService(client=>client.query(
+    `insert into public.usage_events (user_id,task_id,surface,kind,label,money,coins,currency)
+      values ($1,$2,$3,$4,$5,$6,$7,$8)
+      on conflict (user_id,task_id) do nothing`,
+    [identity.uid,taskId,surface,usageText(body&&body.kind),usageText(body&&body.label),
+     usageAmount(body&&body.money,USAGE_MONEY_MAX),usageAmount(body&&body.coins,USAGE_COINS_MAX),
+     usageText(body&&body.currency)]));
+  return {status:202,body:{ok:true}};
+}
+
 async function handle(input) {
   const pathname=input.pathname;
   const method=input.method;
@@ -522,6 +561,7 @@ async function handle(input) {
     const got=await imageProxy.fetchImage(input.params.get("url"));
     return {status:200,raw:got.bytes,contentType:got.contentType};
   }
+  if (pathname==="/v1/usage"&&method==="POST") return recordUsage(identity,body);
   if (pathname==="/v1/devices/enroll"&&method==="POST") return enrollDevice(identity,body,context);
   if (pathname==="/v1/devices/release"&&method==="POST") return releaseDevice(identity,body);
   if (pathname==="/v1/panel/pair"&&method==="POST") return panelPair(identity,body,context);
@@ -530,6 +570,9 @@ async function handle(input) {
 
   if (pathname==="/v1/admin/dashboard"&&method==="GET") {
     return {status:200,body:await adminCall(identity,context,(client,id)=>admin.dashboard(client,id))};
+  }
+  if (pathname==="/v1/admin/usage"&&method==="GET") {
+    return {status:200,body:await adminCall(identity,context,(client,id)=>admin.usage(client,id,input.params))};
   }
   if (pathname==="/v1/admin/students"&&method==="GET") {
     return {status:200,body:await adminCall(identity,context,(client,id)=>admin.students(client,id,input.params))};

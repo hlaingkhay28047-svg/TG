@@ -269,3 +269,22 @@ td.cell-time{white-space:nowrap}
 .rel-row small{display:block;color:var(--muted);font-size:.74rem;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rel-row .status-pill{flex:0 0 auto}
+
+/* ===== 6.131.0 — admin wave B ==============================================
+   The usage ledger. Every finished run was booked into the student's own
+   browser and nowhere else, so the console could show who signed in but never
+   what anyone ran. The totals strip carries the whole filter, not the page on
+   screen — a teacher asking "what did this month cost" must not have to add up
+   twenty-row pages by hand. */
+.usage-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.usage-total{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}
+.usage-total span{display:block;color:var(--muted);font-size:.72rem;letter-spacing:.06em}
+.usage-total b{display:block;margin-top:6px;font-size:1.45rem;font-variant-numeric:tabular-nums}
+.usage-total small{display:block;margin-top:2px;color:var(--muted);font-size:.72rem}
+/* The surface a run came from is a fact, not a verdict, so it wears a quiet
+   chip rather than the green/red status pill vocabulary. */
+.surface-chip{display:inline-flex;align-items:center;min-height:24px;padding:0 10px;
+  border:1px solid var(--line);border-radius:99px;background:#0d141f;
+  color:var(--muted);font-size:.74rem;font-weight:800}
+.cell-cost{font-variant-numeric:tabular-nums;white-space:nowrap}
+@media(max-width:1000px){.usage-totals{grid-template-columns:1fr}}

@@ -31,6 +31,7 @@
     visits: "/api/v1/admin/visits",
     students: "/api/v1/admin/students",
     histories: "/api/v1/admin/histories",
+    usage: "/api/v1/admin/usage",
     panelVersion: "/api/v1/admin/panel-version",
     artifactInitiate: "/api/v1/admin/panel-artifacts/initiate",
     artifacts: "/api/v1/admin/panel-artifacts",
@@ -75,6 +76,29 @@
     "msg.csvNone": "\u1011\u102f\u1010\u103a\u1005\u101b\u102c \u1019\u101b\u103e\u102d\u1015\u102b\u104b",
     "msg.csvDone": "CSV \u1011\u102f\u1010\u103a\u1015\u103c\u102e\u1038\u1015\u102b\u1015\u103c\u102e",
     "msg.csvBusy": "\u1011\u102f\u1010\u103a\u1014\u1031\u1015\u102b\u1010\u101a\u103a\u2026",
+    /* v6.131.0 — admin wave B: the usage ledger */
+    "nav.usage": "\u101e\u102f\u1036\u1038\u1005\u103d\u1032\u1019\u103e\u102f",
+    "us.eyebrow": "\u1021\u1010\u1014\u103a\u1038\u1000 \u1018\u102c\u1010\u103d\u1031 \u101c\u102f\u1015\u103a\u1014\u1031\u101c\u1032",
+    "us.head": "generate \u1010\u102d\u102f\u1004\u103a\u1038\u104a \u1000\u102f\u1014\u103a\u1000\u103b\u1005\u101b\u102d\u1010\u103a\u1014\u1032\u1037",
+    "us.sub": "\u1015\u103c\u102e\u1038\u101e\u103d\u102c\u1038\u1010\u1032\u1037 run \u1010\u1005\u103a\u1001\u102f\u1000\u102d\u102f \u1010\u1005\u103a\u1000\u103c\u1031\u102c\u1004\u103a\u1038\u104a web app \u1014\u1032\u1037 Photoshop panel \u1000 \u1015\u102d\u102f\u1037\u1015\u1031\u1038\u1010\u102c\u104b prompt \u1014\u1032\u1037 \u1013\u102c\u1010\u103a\u1015\u102f\u1036\u1010\u103d\u1031 \u1018\u101a\u103a\u1010\u1031\u102c\u1037\u1019\u103e \u1019\u1015\u102b\u101d\u1004\u103a\u1015\u102b\u104b",
+    "us.export": "CSV \u1011\u102f\u1010\u103a\u101a\u1030",
+    "us.refresh": "\u1011\u1015\u103a\u1005\u1005\u103a",
+    "us.searchLabel": "run \u1010\u103d\u1031 \u101b\u103e\u102c\u101b\u1014\u103a",
+    "us.surfaceLabel": "\u1018\u101a\u103a\u1014\u1031\u101b\u102c\u1019\u103e\u102c \u101c\u102f\u1015\u103a\u1010\u102c\u101c\u1032",
+    "us.allSurfaces": "\u1014\u1031\u101b\u102c\u1021\u102c\u1038\u101c\u102f\u1036\u1038",
+    "us.web": "\u101d\u1018\u103a\u1021\u1000\u103a\u1015\u103a",
+    "us.panel": "Photoshop panel",
+    "us.empty": "\u1012\u102e\u1005\u1005\u103a\u1011\u102f\u1010\u103a\u1019\u103e\u102f\u1021\u1010\u103d\u1000\u103a run \u1019\u103e\u1010\u103a\u1010\u1019\u103a\u1038 \u1019\u101b\u103e\u102d\u101e\u1031\u1038\u1015\u102b\u104b",
+    "us.runs": "run \u1021\u101b\u1031\u1021\u1010\u103d\u1000\u103a",
+    "us.money": "\u1000\u102f\u1014\u103a\u1000\u103b\u1004\u103d\u1031",
+    "us.coins": "RunningHub coin",
+    "us.whole": "\u1005\u1005\u103a\u1011\u102f\u1010\u103a\u1019\u103e\u102f \u1010\u1005\u103a\u1001\u102f\u101c\u102f\u1036\u1038",
+    "us.free": "\u1019\u103e\u1010\u103a\u1010\u1019\u103a\u1038\u1019\u101b\u103e\u102d",
+    "th.tool": "\u1000\u102d\u101b\u102d\u101a\u102c",
+    "th.where": "\u1014\u1031\u101b\u102c",
+    "th.cost": "\u1000\u102f\u1014\u103a\u1000\u103b\u1005\u101b\u102d\u1010\u103a",
+    "dl.openUsage": "\u101e\u1030\u1037 run \u1010\u103d\u1031 \u1016\u103d\u1004\u103a\u1037",
+    "ph.searchUsage": "\u1000\u103b\u1031\u102c\u1004\u103a\u1038\u101e\u102c\u1038\u104a \u1021\u102e\u1038\u1019\u1031\u1038\u101c\u103a\u104a \u1000\u102d\u101b\u102d\u101a\u102c \u101e\u102d\u102f\u1037\u1019\u101f\u102f\u1010\u103a \u1000\u1010\u103a",
     /* v6.37.0 — bulk review + the student record */
     "bk.approve": "ရွေးထားသူများ အတည်ပြု",
     "bk.reject": "ရွေးထားသူများ ငြင်းပယ်",
@@ -317,7 +341,7 @@
     if (toggle) toggle.setAttribute("aria-label", t("lang.aria", "Language · ဘာသာစကား"));
   }
   const pageSize = 20;
-  const state = { studentPage: 1, historyPage: 1, studentTotal: 0, historyTotal: 0,
+  const state = { studentPage: 1, historyPage: 1, usagePage: 1, studentTotal: 0, historyTotal: 0, usageTotal: 0,
     selected: null, loading: false, artifactFile: null, artifactBusy: false,
     /* v6.37.0 — bulk review. picked holds student ids; pageStudents is what the
        current page actually rendered, so "select all" means "all of these" and
@@ -1195,6 +1219,121 @@
     finally { setBusy("#historyRows", "#historyCards", false); }
   }
 
+  /* ===== v6.131.0 — THE USAGE LEDGER. =======================================
+     Every finished RunningHub run has been booked since 6.94.0 — into the
+     student's own browser, and nowhere else. The teacher who pays the bill
+     could see who signed in and never what anyone ran. The two apps now post
+     one row per run (id, kind, the card's label, what RunningHub charged; never
+     a prompt, a photograph or a result) and this panel reads them back.
+     The totals come from the server over the WHOLE filter, not the twenty rows
+     on screen, because "what did this month cost" is the question being asked. */
+  function usageQuery() {
+    const query = new URLSearchParams({ page: String(state.usagePage), limit: String(pageSize) });
+    const search = $("#usageSearch").value.trim();
+    if (search) query.set("q", search);
+    const surface = $("#usageSurface").value;
+    if (surface) query.set("surface", surface);
+    if ($("#usageFrom").value) query.set("from", $("#usageFrom").value);
+    if ($("#usageTo").value) query.set("to", $("#usageTo").value);
+    return query;
+  }
+
+  function surfaceLabel(raw) {
+    const key = String(raw || "").toLowerCase();
+    if (key === "panel") return t("us.panel", "Photoshop panel");
+    if (key === "web") return t("us.web", "Web app");
+    return title(key || "unknown");
+  }
+
+  /* Money is printed the way the studio prints it to the student: short where
+     the number is tiny, two decimals where it is not, and never rounded up to
+     a figure nobody was charged. */
+  function usageMoney(value, currency) {
+    const amount = Number(value) || 0;
+    if (!amount) return "";
+    const text = amount < 0.1
+      ? amount.toFixed(4).replace(/0+$/, "").replace(/\.$/, "")
+      : amount.toFixed(2);
+    return currency ? `${text} ${currency}` : text;
+  }
+  function usageCost(item) {
+    const parts = [];
+    const money = usageMoney(item.money, item.currency);
+    if (money) parts.push(money);
+    const coins = Number(item.coins) || 0;
+    if (coins) parts.push(`${Math.round(coins)} RH`);
+    return parts.length ? parts.join(" · ") : t("us.free", "not recorded");
+  }
+  function usageTool(item) {
+    const label = String(item.label || "").trim();
+    return label || title(String(item.kind || "run"));
+  }
+
+  function usageTotal(label, value, note) {
+    return node("div", { className: "usage-total" }, [
+      node("span", { text: label }), node("b", { text: value }),
+      node("small", { text: note }),
+    ]);
+  }
+  function renderUsageTotals(body) {
+    const totals = (body && body.totals) || {};
+    const whole = t("us.whole", "whole filter");
+    const money = usageMoney(totals.money, totals.currency || "");
+    const coins = Number(totals.coins) || 0;
+    $("#usageTotals").replaceChildren(
+      usageTotal(t("us.runs", "Runs"), String(Number(totals.runs) || 0), whole),
+      usageTotal(t("us.money", "Spent"), money || "0", whole),
+      usageTotal(t("us.coins", "RunningHub coins"), coins ? String(Math.round(coins)) : "0", whole));
+  }
+
+  function renderUsage(body) {
+    const runs = normalizeList(body, ["runs", "events", "items", "data"]);
+    state.usageTotal = count(body, "total", "count") || runs.length;
+    renderUsageTotals(body);
+    $("#usageRows").replaceChildren(...runs.map(item => node("tr", {}, [
+      node("td", { className: "cell-time", text: formatDate(item.created_at) }),
+      node("td", {}, person(item)),
+      node("td", {}, [node("b", { text: usageTool(item) }),
+        node("small", { text: title(String(item.kind || "")) })]),
+      node("td", {}, node("span", { className: "surface-chip", text: surfaceLabel(item.surface) })),
+      node("td", { className: "cell-cost", text: usageCost(item) }),
+    ])));
+    /* the same rows as cards below 1000px, exactly like the audit trail */
+    $("#usageCards").replaceChildren(...runs.map(item => node("article", { className: "history-card" }, [
+      node("div", { className: "history-card-top" }, [
+        node("b", { text: usageTool(item) }),
+        node("span", { className: "surface-chip", text: surfaceLabel(item.surface) })]),
+      node("div", {}, person(item)),
+      node("div", { className: "history-card-meta" }, [
+        node("span", { text: formatDate(item.created_at) }),
+        node("span", { className: "cell-cost", text: usageCost(item) })]),
+    ])));
+    $("#usageEmpty").hidden = runs.length > 0;
+    $("#usagePage").textContent = `${t("pg.page", "Page")} ${state.usagePage}`;
+    $("#usagePrev").disabled = state.usagePage <= 1;
+    $("#usageNext").disabled = state.usagePage * pageSize >= state.usageTotal;
+  }
+
+  async function loadUsage() {
+    setBusy("#usageRows", "#usageCards", true, ["mid", "wide", "wide", "narrow", "narrow"]);
+    try { renderUsage(await api(`${API.usage}?${usageQuery()}`)); }
+    catch (error) { handleError(error, "Could not load the usage ledger."); }
+    finally { setBusy("#usageRows", "#usageCards", false); }
+  }
+
+  async function exportUsage() {
+    const rows = await collectPages(API.usage, usageQuery(), ["runs", "events", "items", "data"]);
+    if (!rows.length) return false;
+    downloadCsv(`hnk-usage-${stamp()}.csv`,
+      toCsv(["Time", "Name", "Email", "Tool", "Kind", "Where", "Money", "Currency", "Coins", "Task"],
+        rows.map(item => [
+          item.created_at || "", item.name || "", item.email || "", usageTool(item),
+          item.kind || "", surfaceLabel(item.surface),
+          Number(item.money) || 0, item.currency || "", Number(item.coins) || 0,
+          item.task_id || ""])));
+    return true;
+  }
+
   function detailRecord(body) {
     const student = body.student || body.user || body.profile || body;
     const flatLicense = {
@@ -1730,13 +1869,15 @@
       button.setAttribute("aria-current", active ? "page" : "false");
     });
     const titles = { overview: ["nav.overview", "Overview"], students: ["nav.students", "Students"],
-      history: ["nav.history", "Activity history"], security: ["nav.security", "Security & Panel"] };
+      history: ["nav.history", "Activity history"], usage: ["nav.usage", "Usage & spend"],
+      security: ["nav.security", "Security & Panel"] };
     const pair = titles[name];
     $("#pageTitle").textContent = pair ? t(pair[0], pair[1]) : title(name);
     $(".sidebar").classList.remove("open");
     $("#menuButton").setAttribute("aria-expanded", "false");
     if (name === "students") loadStudents();
     if (name === "history") loadHistory();
+    if (name === "usage") loadUsage();
     if (name === "security") loadPanelVersion();
     if (name === "overview") {
       loadDashboard(false).catch(error => handleError(error, "Could not refresh the dashboard."));
@@ -1782,6 +1923,7 @@
     $("#refreshAll").addEventListener("click", () => activatePanel($(".nav-item.active").dataset.panel));
     $("#exportStudents").addEventListener("click", event => exportCsv(event.currentTarget, exportStudents));
     $("#exportHistory").addEventListener("click", event => exportCsv(event.currentTarget, exportHistory));
+    $("#exportUsage").addEventListener("click", event => exportCsv(event.currentTarget, exportUsage));
     $("#reloadRelease").addEventListener("click", () => loadRelease());
     $("#langToggle").addEventListener("click", () => {
       LANG = LANG === "my" ? "en" : "my";
@@ -1808,8 +1950,17 @@
     $("#historyFilters").addEventListener("submit", event => { event.preventDefault(); state.historyPage = 1; loadHistory(); });
     $("#historyPrev").addEventListener("click", () => { if (state.historyPage > 1) { state.historyPage--; loadHistory(); } });
     $("#historyNext").addEventListener("click", () => { state.historyPage++; loadHistory(); });
+    $("#reloadUsage").addEventListener("click", loadUsage);
+    $("#usageFilters").addEventListener("submit", event => { event.preventDefault(); state.usagePage = 1; loadUsage(); });
+    $("#usagePrev").addEventListener("click", () => { if (state.usagePage > 1) { state.usagePage--; loadUsage(); } });
+    $("#usageNext").addEventListener("click", () => { state.usagePage++; loadUsage(); });
     $("#viewStudentHistory").addEventListener("click", () => {
       $("#studentDialog").close(); activatePanel("history"); $("#historySearch").value = state.selected && (state.selected.email || state.selected.name) || ""; state.historyPage = 1; loadHistory();
+    });
+    /* the same door as the audit trail's, onto the ledger: the ledger's free-text
+       filter reads the student's name and email, so one line is enough. */
+    $("#viewStudentUsage").addEventListener("click", () => {
+      $("#studentDialog").close(); activatePanel("usage"); $("#usageSearch").value = state.selected && (state.selected.email || state.selected.name) || ""; state.usagePage = 1; loadUsage();
     });
     $("#extendLicense").addEventListener("click", () => confirmAndRun("extend_license", "Extend license", { months: Number($("#licenseMonths").value) }));
     $("#setExpiry").addEventListener("click", () => {

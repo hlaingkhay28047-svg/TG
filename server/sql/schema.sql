@@ -1707,6 +1707,42 @@ create table if not exists public.student_notes (
   updated_at timestamptz not null default now()
 );
 
+-- v6.131.0 — the usage ledger the teacher can actually see.
+--
+-- WHAT WAS MISSING. Every paid run already books a row, but it books it in the
+-- student's own browser: rhBookSpend -> spendSave -> local storage. That ledger
+-- is honest and complete for the person looking at their own phone, and it is
+-- invisible to everyone else. A teacher asking "what did this student run, and
+-- what did it cost" had nothing to read and no way to total a month — the
+-- Activity page records sign-ins and devices, never a generation.
+--
+-- WHY IT IS SERVICE-ONLY, like student_notes above. `authenticated` holds no
+-- grant on this table and the only policy is the service context, so a row
+-- reaches the database through POST /v1/usage and leaves it through the admin
+-- read — never through a browser that could rewrite what a run cost.
+--
+-- (user_id, task_id) is unique because the writer is a retry-prone client: a
+-- reconnect, a resumed generation or a second tab must all fold into the one
+-- row rather than double a student's month.
+create table if not exists public.usage_events (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references public.hnk_auth_users (id) on delete cascade,
+  task_id    text not null,
+  surface    text not null check (surface in ('web','panel')),
+  kind       text,
+  label      text,
+  money      numeric(14,6) not null default 0 check (money >= 0),
+  coins      numeric(14,3) not null default 0 check (coins >= 0),
+  currency   text,
+  created_at timestamptz not null default now(),
+  unique (user_id, task_id)
+);
+
+create index if not exists usage_events_user_time_idx
+  on public.usage_events (user_id, created_at desc);
+create index if not exists usage_events_time_idx
+  on public.usage_events (created_at desc);
+
 create table if not exists public.admin_mfa (
   user_id          uuid primary key references public.hnk_auth_users (id) on delete cascade,
   encrypted_secret text not null,
@@ -1913,7 +1949,7 @@ revoke all on public.roles, public.user_roles, public.licenses,
   public.app_permissions, public.device_slots, public.device_installations,
   public.sessions, public.login_history, public.download_history,
   public.admin_audit_logs, public.panel_versions, public.device_pairing_codes,
-  public.device_history, public.student_notes, public.admin_mfa, public.auth_attempts,
+  public.device_history, public.student_notes, public.usage_events, public.admin_mfa, public.auth_attempts,
   public.panel_artifacts, public.panel_artifact_chunks from public;
 
 alter table public.roles enable row level security;
@@ -1930,6 +1966,7 @@ alter table public.panel_versions enable row level security;
 alter table public.device_pairing_codes enable row level security;
 alter table public.device_history enable row level security;
 alter table public.student_notes enable row level security;
+alter table public.usage_events enable row level security;
 alter table public.admin_mfa enable row level security;
 alter table public.auth_attempts enable row level security;
 alter table public.panel_artifacts enable row level security;
@@ -1949,6 +1986,7 @@ alter table public.panel_versions force row level security;
 alter table public.device_pairing_codes force row level security;
 alter table public.device_history force row level security;
 alter table public.student_notes force row level security;
+alter table public.usage_events force row level security;
 alter table public.admin_mfa force row level security;
 alter table public.auth_attempts force row level security;
 alter table public.panel_artifacts force row level security;
@@ -1966,7 +2004,7 @@ begin
          'roles','user_roles','licenses','app_permissions','device_slots',
          'device_installations','sessions','login_history','download_history',
          'admin_audit_logs','panel_versions','device_pairing_codes',
-         'device_history','student_notes','admin_mfa','auth_attempts',
+         'device_history','student_notes','usage_events','admin_mfa','auth_attempts',
          'panel_artifacts','panel_artifact_chunks'
        ]::text[])
   loop
@@ -2017,6 +2055,9 @@ create policy device_history_service_all on public.device_history for all to pub
   using (public.hnk_request_role() = 'service_role')
   with check (public.hnk_request_role() = 'service_role');
 create policy student_notes_service_all on public.student_notes for all to public
+  using (public.hnk_request_role() = 'service_role')
+  with check (public.hnk_request_role() = 'service_role');
+create policy usage_events_service_all on public.usage_events for all to public
   using (public.hnk_request_role() = 'service_role')
   with check (public.hnk_request_role() = 'service_role');
 create policy admin_mfa_service_all on public.admin_mfa for all to public

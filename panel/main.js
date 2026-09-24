@@ -2791,7 +2791,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.201.0";
+const PANEL_VERSION = "6.202.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5072,10 +5072,35 @@ function fmtMoney(v, cur) {
   else s = n.toFixed(2);
   return cur ? (s + " " + cur) : s;
 }
+/* 6.131.0 — the app's usageReport, same reasons: the row above lives in this
+   computer's settings file and nowhere else, so a teacher asking what a student
+   ran had nothing to open. The run's id, its kind, the card's label and what
+   RunningHub charged go up — never a prompt, a photograph or a result.
+   Fire and forget, and wrapped: a ledger that cannot be filed must not turn a
+   generation that already succeeded into an error on the student's screen. */
+function usageReport(taskId, meta, u) {
+  if (!taskId) return false;
+  if (!(gateS.sess && gateS.sess.access)) return false;
+  try {
+    gateReq("/v1/usage", {
+      method: "POST",
+      body: JSON.stringify({
+        task_id: String(taskId),
+        kind: (meta && meta.kind) || "image",
+        label: String((meta && meta.label) || ""),
+        money: (u && u.has) ? u.money : 0,
+        coins: (u && u.has) ? u.coins : 0,
+        currency: (spendLoad().cur || state.rhLastCur || "")
+      })
+    }, gateS.sess.access).catch(function () { });
+  } catch (e) { return false; }
+  return true;
+}
 /* a finished RunningHub task books its own cost; the status bar names it */
 function rhBookSpend(taskId, meta, finalJson) {
   const u = rhUsageOf(finalJson);
   spendAdd(taskId, meta, u);
+  try { usageReport(taskId, meta, u); } catch (e) { }
   balAfterSpend();
   if (!u.has) return;
   const cur = spendLoad().cur || state.rhLastCur || "";
