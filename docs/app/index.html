@@ -4521,14 +4521,14 @@ html.splashing #splash{display:flex}
      element is never built, never shown, and never even read. -->
 <div class="wiz" id="wizPay" role="dialog" aria-modal="true"><div class="wiz-in" id="wizPayIn"></div></div>
 
-<script src="data/hnkdata.js?v=3b68aeb2725b"></script>
-<script src="data/libwf.js?v=b084a7f5e537"></script>
-<script src="data/imagine.js?v=4a636fb6eeaa"></script>
+<script src="data/hnkdata.js?v=9f7c58bdb600"></script>
+<script src="data/libwf.js?v=0373aed02545"></script>
+<script src="data/imagine.js?v=2b97eb6a9d09"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=0d7fd4fe3cf0"></script>
+<script src="data/album-module.js?v=43cd95c5e33f"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=93c41c48a96e"></script>
-<script src="data/whatsnew.js?v=12c42ba86ff1"></script>
+<script src="data/whatsnew.js?v=59f7fb39e38a"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -10666,12 +10666,17 @@ function updateGenOptsForRHKind(){
   if(!hideRatio) rhNarrowRatioOptionsFor(active);
   $("selSize").style.display = (active && noSize[active.kind]) ? "none" : "";
   rhNarrowSizeOptionsFor(active);   /* v6.26.0 — only the tiers this model honours */
-  /* v5.94.0 — on these kinds the pixel size is looked up FROM the ratio
-     (RH_QWEN3_T2I_SIZE / RH_WAN_RATIO_WH), so with Ratio on Auto — the
-     default — a 2K or 4K pick reaches the engine as nothing at all and the
-     student pays for a size they did not get. Say so, rather than letting the
-     control look effective. */
-  var sizeNeedsRatio = !!(active && (active.sizeParam || active.whParam));
+  /* v5.94.0, corrected in 6.132.0 — on these kinds the pixel size is looked up
+     FROM the ratio (RH_QWEN3_T2I_SIZE / RH_WAN_RATIO_WH). That USED to mean a
+     2K or 4K pick reached the engine as nothing at all whenever Ratio was on
+     Auto, and this note said so. Since 6.82.0 it is no longer true:
+     rhNeedsMeasuredRatio covers exactly sizeParam/whParam, rhGenerateOne
+     measures IMAGE 1 and resolves the shape before the body is built, and all
+     seven of rhNearestRatio's keys exist in both tables — the size IS applied.
+     The note now states that, and no longer asks the student to replace Auto
+     with a fixed ratio: that request is the one thing in this whole path that
+     can change the frame of the photograph they are editing. */
+  var sizeFromShape = !!(active && (active.sizeParam || active.whParam));
   var szNote = $("genSizeNote");
   if(!szNote){
     szNote = document.createElement("div");
@@ -10680,17 +10685,17 @@ function updateGenOptsForRHKind(){
     $("selSize").parentNode.appendChild(szNote);
   }
   var szWanted = $("selSize").value && $("selSize").style.display !== "none";
-  if(sizeNeedsRatio && szWanted && !$("selRatio").value){
+  if(sizeFromShape && szWanted && !$("selRatio").value){
     szNote.textContent = L9({
-      my:"ℹ ဒီ model မှာ အရွယ်အစားက ratio ပေါ်မူတည်တယ် — Ratio ကို Auto ထားရင် "+$("selSize").value+" အလုပ်မလုပ်ပါ။ Ratio တစ်ခု ရွေးပါ",
-      en:"ℹ on this model the size comes from the ratio — with Ratio on Auto, "+$("selSize").value+" is not applied. Pick a ratio",
-      shn:"ℹ model ၼႆႉ ၶၢဝ်းယႂ်ႇလဵၵ်ႉ ဢိင်ၼိူဝ် ratio — Ratio ပဵၼ် Auto ၸိုင် "+$("selSize").value+" ဢမ်ႇႁဵတ်းၵၢၼ်။ လိူၵ်ႈ ratio",
-      kac:"ℹ ndai model hta size gaw ratio kaw na la ai — Ratio Auto nga yang "+$("selSize").value+" n hkrak na. Ratio lata u",
-      th:"ℹ โมเดลนี้ขนาดมาจากอัตราส่วน — ถ้า Ratio เป็น Auto จะไม่ใช้ "+$("selSize").value+" กรุณาเลือกอัตราส่วน",
-      zh:"ℹ 该模型的尺寸由比例决定 — 比例为 Auto 时，"+$("selSize").value+" 不会生效。请选择一个比例",
-      vi:"ℹ ở model này kích thước lấy từ tỷ lệ — để Ratio là Auto thì "+$("selSize").value+" không được áp dụng. Hãy chọn tỷ lệ",
-      id:"ℹ pada model ini ukuran berasal dari rasio — dengan Ratio Auto, "+$("selSize").value+" tidak diterapkan. Pilih rasio",
-      ms:"ℹ pada model ini saiz datang daripada nisbah — dengan Ratio Auto, "+$("selSize").value+" tidak digunakan. Pilih nisbah"});
+      my:"ℹ ဒီ model မှာ အရွယ်အစားက ပုံသဏ္ဌာန်ပေါ် မူတည်တယ် — Auto မှာ သင့်ဓာတ်ပုံကို တိုင်းတယ်၊ ဒါကြောင့် "+$("selSize").value+" ကို ပုံရဲ့ မူလ ပုံသဏ္ဌာန်အတိုင်း သုံးပါတယ်။ Frame မပြောင်းပါ",
+      en:"ℹ on this model the size comes from the shape — on Auto your photo is measured, so "+$("selSize").value+" is applied at the photo's own shape. The frame does not change",
+      shn:"ℹ model ၼႆႉ ၶၢဝ်းယႂ်ႇလဵၵ်ႉ ဢိင်ၼိူဝ် ႁၢင်ႈ — Auto ၸိုင် တႅၵ်ႈၶႅပ်းႁၢင်ႈၸဝ်ႈၵဝ်ႇသေ "+$("selSize").value+" ၸႂ်ႉၸွမ်း ႁၢင်ႈၸဝ်ႈၵဝ်ႇ။ Frame ဢမ်ႇလႅၵ်ႈ",
+      kac:"ℹ ndai model hta size gaw hkrang kaw na la ai — Auto nga yang na sumla hpe shadawn nna "+$("selSize").value+" gaw sumla a hkrang hta hkrak na. Frame n galai ai",
+      th:"ℹ โมเดลนี้ขนาดมาจากรูปทรง — เมื่อเป็น Auto ระบบจะวัดจากภาพของคุณ จึงใช้ "+$("selSize").value+" ตามสัดส่วนเดิมของภาพ กรอบภาพไม่เปลี่ยน",
+      zh:"ℹ 该模型的尺寸由画面形状决定 — Auto 会测量你的照片，因此 "+$("selSize").value+" 会按照片原本的比例生效。画面不会改变",
+      vi:"ℹ ở model này kích thước lấy từ hình dạng — với Auto, ảnh của bạn được đo, nên "+$("selSize").value+" được áp dụng theo đúng tỷ lệ gốc của ảnh. Khung hình không đổi",
+      id:"ℹ pada model ini ukuran berasal dari bentuk — dengan Auto, foto Anda diukur, jadi "+$("selSize").value+" diterapkan pada bentuk asli foto. Bingkai tidak berubah",
+      ms:"ℹ pada model ini saiz datang daripada bentuk — dengan Auto, foto anda diukur, jadi "+$("selSize").value+" digunakan pada bentuk asal foto. Bingkai tidak berubah"});
     szNote.style.display = "";
   } else szNote.style.display = "none";
   rhFillModelSelect($("selModel"), active);
@@ -13358,14 +13363,32 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       " photograph's edge cut off — a hand, a foot, a hem, a gown's train, a chair —"+
       " stays cut off at the same place, and the person is never made larger or smaller"+
       " inside the frame to make room for the new scene: build the scene around the body"+
-      " you were given, never pull back, zoom out or extend the canvas.";
+      " you were given, never pull back, zoom out or extend the canvas."+
+      /* 6.132.0 — the owner's second photograph: the abstract rule was read and still
+         lost. Name the thing that came back. */
+      " Never draw a leg, a foot, a shoe, a hand or a hem that the photograph you are"+
+      " editing does not already show.";
     var SEP_TAG="COLOUR SEPARATION LOCK:";
     var SEP_LINE=SEP_TAG+" the scene's colour never washes over the person. Their white"+
       " balance and exposure stay exactly as they were photographed, and skin, hair, outfit"+
       " and jewellery all keep the colour they had. Seat them in the scene with light"+
       " DIRECTION, falloff and contact shadow, and at most a faint ambient bounce at the"+
       " very edge of the body — never an amber, gold, teal or any other tint laid across"+
-      " the face, arms, hands or clothes.";
+      " the face, arms, hands or clothes. They stay clearly separated from what is behind"+
+      " them in brightness, in hue and in contrast: never one flat tone across person and place.";
+    /* 6.132.0 — three of the twenty-nine exist to put IMAGE 2's grade on the whole
+       frame: Studio Look Copy, Full Look Transfer, Regency Birthday Portrait. Telling
+       them the person's white balance may not change contradicts the card, and a model
+       handed two opposite instructions obeys one of them. They keep the separation
+       requirement without the freeze. */
+    var SEP_LOOK_IDS=["studio-look-copy","full-look-transfer","regency-birthday"];
+    var SEP_LOOK_TAG="SUBJECT SEPARATION LOCK:";
+    var SEP_LOOK_LINE=SEP_LOOK_TAG+" this card grades the whole frame on purpose, so the"+
+      " person takes the new look together with the scene — but one grade never means one"+
+      " tone. Keep the person clearly separated from what is behind them in brightness, in hue"+
+      " and in contrast, keep their own complexion under the new light, and never let the face,"+
+      " arms and hands settle to the backdrop's own colour: a single sepia, amber or monochrome"+
+      " wash across person and place alike is a failed result.";
     var MATCH_TAG="LIGHT MATCH LOCK:";
     var MATCH_LINE=MATCH_TAG+" {{MATCH}}";
     var MATCH_LABEL={my:"အလင်း ကိုက်ညှိမှု", en:"Light match", shn:"Light match", kac:"Light match",
@@ -13384,14 +13407,17 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
         line:"the person follows the scene — relight the person to sit under the scene's key"+
           " light: its direction, its height, its softness, its falloff and the contact shadow it"+
           " would cast. Their own colour and exposure still come from the photograph you are"+
-          " editing.",
+          " editing, and they must still read as SEPARATED from the backdrop in brightness,"+
+          " hue and contrast — never relight them until skin and background are one tone.",
         label:{my:"လူက scene ကို လိုက်", en:"Subject follows scene", shn:"Subject follows scene",
           kac:"Subject follows scene", th:"คนตามฉาก", zh:"人物跟随场景",
           vi:"Người theo cảnh", id:"Subjek mengikuti scene", ms:"Subjek ikut scene"} },
       { v:"scene",
         line:"the scene follows the person — regrade and relight the new background to match"+
           " the subject photograph's own light direction, contrast and white balance. The"+
-          " person is not touched at all.",
+          " person is not touched at all. Grading the scene toward the person must never end in"+
+          " one flat tone: keep them clearly SEPARATED from the backdrop in brightness, in hue"+
+          " and in contrast — skin the same tone as the wall behind it is a failed result.",
         label:{my:"Scene က လူကို လိုက်", en:"Scene follows subject", shn:"Scene follows subject",
           kac:"Scene follows subject", th:"ฉากตามคน", zh:"场景跟随人物",
           vi:"Cảnh theo người", id:"Scene mengikuti subjek", ms:"Scene ikut subjek"} }
@@ -13410,6 +13436,14 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       " exposure, contrast and white balance consistent across person and scene, blacks not"+
       " crushed, highlights not blown, one believable colour temperature for the picture. This"+
       " never overrides COLOUR SEPARATION LOCK: the person's own colour still comes from IMAGE 1.";
+    /* 6.132.0 — on the three whole-frame look cards the balance line must name the lock
+       they carry, not the one they do not: citing COLOUR SEPARATION LOCK there put the
+       contradiction straight back. */
+    var BAL_LOOK_LINE=BAL_TAG+" finish the whole frame the way a professional would grade it"+
+      " \u2014 exposure, contrast and white balance consistent across person and scene, blacks not"+
+      " crushed, highlights not blown, one believable colour temperature for the picture. This"+
+      " never overrides SUBJECT SEPARATION LOCK: the person must still read as separated from the"+
+      " backdrop in brightness, hue and contrast.";
     var BAL_LABEL={my:"အလင်း/အရောင် ဟန်ချက်", en:"Balance", shn:"Balance", kac:"Balance",
       th:"สมดุล", zh:"平衡", vi:"Cân bằng", id:"Keseimbangan", ms:"Keseimbangan"};
     var BAL_OFF=BAL_TAG+" no whole-frame grade — leave the exposure, the contrast and the white"+
@@ -13417,7 +13451,9 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     var SCENE_NEG="a half-body photograph returned as a full-length shot, a wider or a tighter"+
       " frame than the photograph being edited, a hand, a foot, a hem or a train invented"+
       " beyond that photograph's edge, the person made larger or smaller inside the frame,"+
-      " the scene's colour cast laid over the skin, the hair or the clothes";
+      " the scene's colour cast laid over the skin, the hair or the clothes, a leg or a foot"+
+      " drawn that the photograph never showed, the person and the background reduced to one"+
+      " tone, the subject lost against the backdrop";
     /* 6.129.0 — a line added AFTER a card's TASK GUARD becomes part of the
        guard, and rhTruncatePrompt treats the guard as one indivisible block:
        Studio Look Copy's guard alone went 1,509 characters past its 800 cap
@@ -13434,7 +13470,9 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       c.items.forEach(function(w){
         if(!w.prompt) return;
         if(w.prompt.indexOf(EXTENT_TAG)<0) w.prompt=sceneAdd(w.prompt, EXTENT_LINE);
-        if(w.prompt.indexOf(SEP_TAG)<0) w.prompt=sceneAdd(w.prompt, SEP_LINE);
+        var sepTag=(SEP_LOOK_IDS.indexOf(w.id)>=0)?SEP_LOOK_TAG:SEP_TAG;
+        var sepLine=(SEP_LOOK_IDS.indexOf(w.id)>=0)?SEP_LOOK_LINE:SEP_LINE;
+        if(w.prompt.indexOf(sepTag)<0) w.prompt=sceneAdd(w.prompt, sepLine);
         if(w.negative && w.negative.indexOf("full-length shot")<0)
           w.negative=String(w.negative).replace(/\s*\.?\s*$/,"")+", "+SCENE_NEG;
         if(!ctrl) return;
@@ -13451,7 +13489,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
             "default":false, label:SMOOTH_LABEL });
         }
         if(!have.framebal && w.prompt.indexOf(BAL_TAG)<0){
-          w.prompt=sceneAdd(w.prompt, BAL_LINE);
+          w.prompt=sceneAdd(w.prompt, (SEP_LOOK_IDS.indexOf(w.id)>=0)?BAL_LOOK_LINE:BAL_LINE);
           add.push({ key:"framebal", type:"toggle", tag:BAL_TAG, off:BAL_OFF,
             "default":true, label:BAL_LABEL });
         }
@@ -31059,7 +31097,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.131.0";
+var APP_VER="6.132.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -31949,7 +31987,18 @@ var IMAGINE = (function(){
     else if(preset){ core = tool.basePrompt.split("{P}").join(preset.p); if(desc) core += " EXTRA WISHES: " + desc; }
     else core = "Edit this photograph as described, changing only what the description asks for and nothing else: " + desc;
     /* 6.30.0 — a tool may carry its own KEEP / AVOID line: Outfit changes the clothing the shared lock protects, Product and Architecture have no person */
-    return core + "\n\n" + (tool.keep || D.frame.keep) + "\n" + (tool.real || D.frame.real) + "\n" + (tool.avoid || D.frame.avoid) + "\n" + D.frame.guard;
+    /* 6.132.0 — the 6.129.0 house locks reach Imagine. Measured first: every one of these
+       tools said "framing exactly" and not one said how much of the BODY stays visible, or
+       forbade the new scene's colour washing the person — the same two holes the 62 Smart
+       Workflow scene cards had. The nine tools that change what is AROUND the subject get the
+       frame-extent lock; the six of those that put a new scene or new light on a PERSON also
+       get the colour-separation lock. ID Photo is in neither list on purpose: re-framing to
+       head-and-shoulders IS that tool. Both lines are named "... LOCK:" so the 6.126.0
+       lock-aware cut keeps them whole on the capped models. */
+    var locks = "";
+    if(D.frame.extentIds && D.frame.extentIds.indexOf(tool.id) >= 0) locks += "\n" + D.frame.extent;
+    if(D.frame.sepIds && D.frame.sepIds.indexOf(tool.id) >= 0) locks += "\n" + D.frame.sep;
+    return core + "\n\n" + (tool.keep || D.frame.keep) + locks + "\n" + (tool.real || D.frame.real) + "\n" + (tool.avoid || D.frame.avoid) + "\n" + D.frame.guard;
   }
 
   /* ---------- render ---------- */

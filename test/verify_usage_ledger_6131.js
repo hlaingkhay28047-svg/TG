@@ -51,7 +51,8 @@ const MAIN = read("panel/main.js");
 const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.131.0", PVER = "6.202.0", COUNT = 273;
+const VER = "6.132.0", PVER = "6.203.0", COUNT = 274;
+const WAVE_V = "6.131.0";   /* this wave's own What's New row; VER moves on with every release */
 const MIME = { ".html": "text/html", ".js": "application/javascript", ".css": "text/css",
   ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp",
   ".svg": "image/svg+xml", ".mp4": "video/mp4", ".webm": "video/webm" };
@@ -138,10 +139,10 @@ report("A11) both surfaces report from the one place every paid run already pass
   /if \(!\(gateS\.sess && gateS\.sess\.access\)\) return false;/.test(MAIN) &&
   /gateReq\("\/v1\/usage", \{/.test(MAIN), null);
 
-const wn = WN.appRow(VER, "pgAccount");
-const wnP = WN.panelRow(VER, "pgAccount");
+const wn = WN.appRow(WAVE_V, "pgAccount");
+const wnP = WN.panelRow(WAVE_V, "pgAccount");
 const tests = parseInt((LANDING.match(/data-count="tests">(\d+)</) || [])[1] || "0", 10);
-report(`A12) CI runs this test, the suite counts ${COUNT} invocations, the landing says so, and What's New carries the ${VER} row in nine languages on the app and the panel`,
+report(`A12) CI runs this test, the suite counts ${COUNT} invocations, the landing says so, and What's New carries the ${WAVE_V} row in nine languages on the app and the panel`,
   has(CI, "node test/verify_usage_ledger_6131.js") &&
   (CI.match(/node test\//g) || []).length === COUNT &&
   tests === COUNT && has(LANDING, `${COUNT} tests`) &&
