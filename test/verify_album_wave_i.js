@@ -53,7 +53,7 @@ const WI = require(path.join(ROOT, "tools", "lib", "album_wave_i.js"));
 const GEN = require(path.join(ROOT, "tools", "build_album_data.js"));
 /* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 ceiling) */
 const MOD = read("docs/app/data/album-module.js");
-const VER = "6.130.0", PVER = "6.201.0";
+const VER = "6.131.0", PVER = "6.202.0";
 const L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
 const PACKS = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "ne", "pa", "ta", "te", "ur"];
 /* every line this wave added, as the module asks for it */
@@ -410,8 +410,8 @@ function release() {
      widens by one rather than the row being re-dated */
   const WAVE_V = "6.125.0";
   const row = wn.find((r) => r.v === WAVE_V);
-  report(`E2) the What's New strip carries the ${WAVE_V} row, in all nine languages, pointing at the Album page (it led the strip when this wave shipped; the 6.126.0, 6.127.0, 6.127.1, 6.128.0 and 6.129.0 rows sit above it now)`,
-    !!row && wn.indexOf(row) <= 6 && row.ref === "pgAlbum" &&
+  report(`E2) the What's New strip carries the ${WAVE_V} row, in all nine languages, pointing at the Album page (it led the strip when this wave shipped; the 6.126.0, 6.127.0, 6.127.1, 6.128.0, 6.129.0, 6.130.0 and 6.131.0 rows sit above it now)`,
+    !!row && wn.indexOf(row) <= 7 && row.ref === "pgAlbum" &&
     ["my", "en"].concat(L7).every((l) => typeof row.t[l] === "string" && row.t[l].length > 10 && typeof row.s[l] === "string" && row.s[l].length > 80),
     { v: row && row.v, ref: row && row.ref });
 
