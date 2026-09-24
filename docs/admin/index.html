@@ -30,7 +30,7 @@
        may keep the assets cached, and a stale admin.js binding against changed
        markup throws before the boot code runs, wedging the tab on the
        "Checking admin access" gate. -->
-  <link rel="stylesheet" href="admin.css?v=45932b68d591">
+  <link rel="stylesheet" href="admin.css?v=070a578cc5b0">
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to admin content</a>
@@ -45,6 +45,7 @@
     <symbol id="ai-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.2 2.9 7.4 7 9 4.1-1.6 7-4.8 7-9V6l-7-3z"/><path d="m9 12 2.2 2.2L15.5 10"/></symbol>
     <symbol id="ai-bell" viewBox="0 0 24 24"><path d="M18 15.5V10a6 6 0 1 0-12 0v5.5L4.5 18h15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></symbol>
     <symbol id="ai-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4"/></symbol>
+    <symbol id="ai-usage" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 20v-6"/><path d="M12 20V6"/><path d="M17 20v-9"/></symbol>
   </svg>
 
   <section class="gate" id="adminChecking" role="status" aria-live="polite">
@@ -83,6 +84,7 @@
         <button class="nav-item active" type="button" data-panel="overview"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-home"/></svg></span><span data-i18n="nav.overview">Overview</span></button>
         <button class="nav-item" type="button" data-panel="students"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-users"/></svg></span><span data-i18n="nav.students">Students</span></button>
         <button class="nav-item" type="button" data-panel="history"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-history"/></svg></span><span data-i18n="nav.history">Activity history</span></button>
+        <button class="nav-item" type="button" data-panel="usage"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-usage"/></svg></span><span data-i18n="nav.usage">Usage &amp; spend</span></button>
         <button class="nav-item" type="button" data-panel="security"><span class="nav-ic" aria-hidden="true"><svg><use href="#ai-shield"/></svg></span><span data-i18n="nav.security">Security &amp; Panel</span></button>
       </nav>
       <div class="side-foot"><span class="online-dot" aria-hidden="true"></span><span data-i18n="side.authorized">Server-authorized</span><a href="../app/" data-i18n="side.studentApp">Student App</a></div>
@@ -145,6 +147,18 @@
           <section class="surface"><div class="table-wrap history-table"><table><thead><tr><th data-i18n="th.time">Time</th><th data-i18n="th.student">Student</th><th data-i18n="th.activity">Activity</th><th data-i18n="th.deviceApp">Device / App</th><th data-i18n="th.result">Result</th></tr></thead><tbody id="historyRows"></tbody></table></div><div class="history-cards" id="historyCards"></div><p class="empty" id="historyEmpty" hidden data-i18n="hi.empty">No matching activity.</p><div class="pagination"><button class="button" id="historyPrev" type="button" data-i18n="pg.prev">Previous</button><span id="historyPage">Page 1</span><button class="button" id="historyNext" type="button" data-i18n="pg.next">Next</button></div></section>
         </section>
 
+        <section class="panel" id="panel-usage" aria-labelledby="usageHeading">
+          <div class="section-head"><div><p class="eyebrow" data-i18n="us.eyebrow">WHAT THE CLASS IS RUNNING</p><h2 id="usageHeading" data-i18n="us.head">Every generate, and what it cost</h2><p data-i18n="us.sub">One row per finished run, reported by the web app and the Photoshop panel. Prompts and photographs are never sent here.</p></div><div class="head-actions"><button class="button" id="exportUsage" type="button" data-i18n="us.export">Export CSV</button><button class="button" id="reloadUsage" type="button" data-i18n="us.refresh">Refresh usage</button></div></div>
+          <form class="filter-bar" id="usageFilters" role="search">
+            <label class="search-field"><span class="sr-only" data-i18n="us.searchLabel">Search runs</span><span aria-hidden="true">⌕</span><input id="usageSearch" type="search" placeholder="Student, email, tool or card" data-i18n-ph="ph.searchUsage" autocomplete="off"></label>
+            <label><span class="sr-only" data-i18n="us.surfaceLabel">Where it ran</span><select id="usageSurface"><option value="" data-i18n="us.allSurfaces">Everywhere</option><option value="web" data-i18n="us.web">Web app</option><option value="panel" data-i18n="us.panel">Photoshop panel</option></select></label>
+            <label class="date-field"><span data-i18n="hi.from">From</span><input id="usageFrom" type="date"></label><label class="date-field"><span data-i18n="hi.to">To</span><input id="usageTo" type="date"></label>
+            <button class="button primary" type="submit" data-i18n="hi.filter">Filter</button>
+          </form>
+          <div class="usage-totals" id="usageTotals"></div>
+          <section class="surface"><div class="table-wrap history-table"><table><thead><tr><th data-i18n="th.time">Time</th><th data-i18n="th.student">Student</th><th data-i18n="th.tool">Tool</th><th data-i18n="th.where">Where</th><th data-i18n="th.cost">Cost</th></tr></thead><tbody id="usageRows"></tbody></table></div><div class="history-cards" id="usageCards"></div><p class="empty" id="usageEmpty" hidden data-i18n="us.empty">No runs recorded for this filter yet.</p><div class="pagination"><button class="button" id="usagePrev" type="button" data-i18n="pg.prev">Previous</button><span id="usagePage">Page 1</span><button class="button" id="usageNext" type="button" data-i18n="pg.next">Next</button></div></section>
+        </section>
+
         <section class="panel" id="panel-security" aria-labelledby="securityHeading">
           <div class="section-head"><div><p class="eyebrow" data-i18n="se.eyebrow">SECURITY &amp; RELEASES</p><h2 id="securityHeading" data-i18n="se.head">Panel policy and admin protection</h2><p data-i18n="se.sub">Minimum-version enforcement and private panel release control.</p></div></div>
           <div class="settings-grid">
@@ -176,13 +190,13 @@
       <section class="action-section"><h3 data-i18n="hi.accounts">Account actions</h3><div class="action-grid" id="accountActions"></div></section>
       <section class="action-section"><h3 data-i18n="th.license">License</h3><div class="license-actions"><label><span data-i18n="dl.extendBy">Extend by</span><select id="licenseMonths"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></label><button class="button primary" id="extendLicense" type="button" data-i18n="dl.extend">Extend license</button><label><span data-i18n="dl.customExpiry">Custom expiry</span><input id="customExpiry" type="date"></label><button class="button" id="setExpiry" type="button" data-i18n="dl.setExpiry">Set expiry</button></div></section>
       <section class="action-section"><h3 data-i18n="dl.secDevices">Security &amp; devices</h3><div class="action-grid" id="securityActions"></div><div class="artifact-fields stack-top"><label>စက် အရေအတွက် (allowed devices)<input id="deviceLimit" inputmode="numeric" pattern="[0-9]+" min="1" max="20" type="number"></label><button class="button" id="deviceLimitSave" type="button" data-i18n="dl.setDevices">Set devices</button></div><p class="hint" id="deviceLimitHint">စက်အရေအတွက်က renewal ဈေးနှုန်းကိုပါ မြှောက်ပါတယ် (allowed_devices × per-device)။</p></section>
-      <section class="action-section"><div class="surface-head"><h3 data-i18n="dl.recent">Recent history</h3><button class="text-button" id="viewStudentHistory" type="button" data-i18n="dl.openHistory">Open full history</button></div><div id="studentHistory" class="mini-history"></div></section>
+      <section class="action-section"><div class="surface-head"><h3 data-i18n="dl.recent">Recent history</h3><button class="text-button" id="viewStudentHistory" type="button" data-i18n="dl.openHistory">Open full history</button><button class="text-button" id="viewStudentUsage" type="button" data-i18n="dl.openUsage">Open their runs</button></div><div id="studentHistory" class="mini-history"></div></section>
     </div>
   </dialog>
 
   <dialog class="confirm-dialog" id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><p class="eyebrow" data-i18n="cf.eyebrow">CONFIRM ADMIN ACTION</p><h2 id="confirmTitle" data-i18n="cf.title">Confirm action</h2><p id="confirmMessage"></p><div class="dialog-actions"><button class="button" value="cancel" data-i18n="cf.cancel">Cancel</button><button class="button danger" id="confirmAction" value="confirm" data-i18n="cf.confirm">Confirm</button></div></form></dialog>
 
   <div class="toast" id="liveStatus" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script src="admin.js?v=98d110057882" defer></script>
+  <script src="admin.js?v=215d16b92144" defer></script>
 </body>
 </html>

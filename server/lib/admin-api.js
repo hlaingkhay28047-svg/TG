@@ -912,6 +912,59 @@ async function histories(client, identity, params) {
   return { type:kind,events,history:events,page,limit,total };
 }
 
+/* v6.131.0 — the usage ledger, read by the teacher.
+   One row per paid run (usage_events), joined to the student it belongs to.
+   The filters are the ones the Activity page already trained the teacher on:
+   one student, a date range, and free text — here over the student's name and
+   email and over the kind of run and the card's own label.
+   TOTALS ARE OVER THE WHOLE FILTER, not the page on screen. A month's cost
+   that changed when you turned the page would be worse than no total at all,
+   so the two sums are window functions over the filtered set and the page's
+   own limit never touches them. */
+async function usage(client, identity, params) {
+  requireAdmin(identity,"view_usage");
+  const values=[]; const where=[];
+  const studentId=params.get("student_id");
+  if (studentId) { values.push(assertUuid(studentId,"student_id")); where.push(`e.user_id=$${values.length}`); }
+  const from=historyDate(params.get("from"),"from"), to=historyDate(params.get("to"),"to");
+  if (from) { values.push(from); where.push(`e.created_at>=$${values.length}`); }
+  if (to) { values.push(to); where.push(`e.created_at<=$${values.length}`); }
+  const surface=String(params.get("surface")||"").trim();
+  if (["web","panel"].includes(surface)) { values.push(surface); where.push(`e.surface=$${values.length}`); }
+  const q=String(params.get("q")||params.get("search")||"").trim().toLowerCase().slice(0,100);
+  if (q) {
+    values.push("%"+q+"%");
+    where.push(`lower(concat_ws(' ',p.name,coalesce(p.email,u.email),e.kind,e.label,e.surface)) like $${values.length}`);
+  }
+  const page=Math.max(1,Number(params.get("page")||1));
+  const limit=Math.min(100,Math.max(1,Number(params.get("limit")||50)));
+  values.push(limit,(page-1)*limit);
+  const clause=where.length?" where "+where.join(" and "):"";
+  const { rows }=await client.query(
+    `select e.id,e.created_at,e.task_id,e.surface,e.kind,e.label,e.currency,
+            e.money::float8 as money,e.coins::float8 as coins,
+            e.user_id as student_id,p.name,coalesce(p.email,u.email) as email,
+            count(*) over()::int as total_count,
+            sum(e.money) over()::float8 as total_money,
+            sum(e.coins) over()::float8 as total_coins
+       from public.usage_events e
+       join public.hnk_auth_users u on u.id=e.user_id
+       left join public.profiles p on p.id=e.user_id
+       ${clause}
+      order by e.created_at desc limit $${values.length-1} offset $${values.length}`,values);
+  const total=rows.length?Number(rows[0].total_count):0;
+  const runs=rows.map(row=>{
+    const item=Object.assign({},row);
+    delete item.total_count; delete item.total_money; delete item.total_coins;
+    return item;
+  });
+  return { runs,events:runs,page,limit,total,
+    totals:{ runs:total,
+      money:rows.length?Number(rows[0].total_money)||0:0,
+      coins:rows.length?Number(rows[0].total_coins)||0:0,
+      currency:(runs.find(r=>r.currency)||{}).currency||null } };
+}
+
 async function getPanelVersion(client, identity) {
   requireAdmin(identity,"manage_panel_versions");
   const { rows }=await client.query("select * from public.panel_versions order by released_at desc");
@@ -1129,6 +1182,6 @@ async function mfaVerify(client, identity, body, context) {
 
 module.exports={ audit,visits,dashboard,students,studentDetail,studentAction,sessionHeartbeat,
   listPaymentRequests,reviewPayment,paymentProof,grantPayment,histories,
-  getPanelVersion,putPanelVersion,mfaSetup,mfaVerify,requireAdmin,requireAdminBase,
+  usage,getPanelVersion,putPanelVersion,mfaSetup,mfaVerify,requireAdmin,requireAdminBase,
   effectiveAccountStatus,normalizeDeviceSlots,normalizeStudent,normalizeHistoryType,validatePanelPolicy,
   initiatePanelArtifact,panelArtifactStatus,putPanelArtifactChunk,finalizePanelArtifact };

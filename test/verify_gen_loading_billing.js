@@ -50,7 +50,7 @@ const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const PWN = read("panel/js/hnk_whats_new.js");
 const PORT = process.env.PORT || "8931";
-const VER = "6.130.0", PVER = "6.201.0";
+const VER = "6.131.0", PVER = "6.202.0";
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
@@ -67,8 +67,11 @@ function sourcePins() {
      and it runs AFTER the charge exists. Hanging the read off the button, or
      off a page open, would go back to guessing. */
   report("A1) both surfaces re-read the balance from the booking itself, debounced, delayed and quiet",
-    /spendAdd\(taskId, meta, u\);\s*\n\s*balAfterSpend\(\);/.test(APP) &&
-    /spendAdd\(taskId, meta, u\);\s*\n\s*balAfterSpend\(\);/.test(PMAIN) &&
+    /* 6.131.0 — the usage ledger's fire-and-forget report now sits between the
+       two, on both surfaces. The property this pins is unchanged: the balance
+       read hangs off the booking itself and nothing else may come between them. */
+    /spendAdd\(taskId, meta, u\);\s*\n(\s*try\s*\{\s*usageReport\(taskId, meta, u\);\s*\}\s*catch\s*\(e\)\s*\{\s*\}\s*\n)?\s*balAfterSpend\(\);/.test(APP) &&
+    /spendAdd\(taskId, meta, u\);\s*\n(\s*try\s*\{\s*usageReport\(taskId, meta, u\);\s*\}\s*catch\s*\(e\)\s*\{\s*\}\s*\n)?\s*balAfterSpend\(\);/.test(PMAIN) &&
     /var BAL_AFTER_MS=6000, balAfterT=null;/.test(APP) && /const BAL_AFTER_MS = 6000;/.test(PMAIN) &&
     /clearTimeout\(balAfterT\)/.test(APP) && /clearTimeout\(balAfterT\)/.test(PMAIN) &&
     /moneyRefresh\(true\)/.test(APP) && /moneyRefresh\(true\)/.test(PMAIN), {
@@ -259,10 +262,10 @@ function releasePins() {
     !!row && row.v === VER && LANGS.every(l => row.t[l] && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**")) &&
     has(PWN, '"v":"' + VER + '"'), row && { v: row.v, kind: row.kind, ref: row.ref });
 
-  report("D3) CI runs this test right after the V2 layer check, and the suite counts 271 invocations",
+  report("D3) CI runs this test right after the V2 layer check, and the suite counts 273 invocations",
     has(CI, "run: PORT=8931 node test/verify_gen_loading_billing.js") &&
     CI.indexOf("verify_panel_v2_layer.js") < CI.indexOf("verify_gen_loading_billing.js") &&
-    (CI.match(/node test\//g) || []).length === 272 && has(LANDING, "272 tests"),
+    (CI.match(/node test\//g) || []).length === 273 && has(LANDING, "273 tests"),
     { steps: (CI.match(/node test\//g) || []).length });
 }
 

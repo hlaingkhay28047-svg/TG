@@ -4525,10 +4525,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=b084a7f5e537"></script>
 <script src="data/imagine.js?v=4a636fb6eeaa"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=1067473a8ae7"></script>
+<script src="data/album-module.js?v=0d7fd4fe3cf0"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=93c41c48a96e"></script>
-<script src="data/whatsnew.js?v=61da9dc38f1a"></script>
+<script src="data/whatsnew.js?v=12c42ba86ff1"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -8867,11 +8867,35 @@ async function rhPollTracked(apiKey, taskId, meta, onTick, timeoutMs, signal){
     throw e;
   }
 }
+/* 6.131.0 — THE SAME ROW, WHERE THE TEACHER CAN READ IT. Everything below has
+   booked the run into this browser since 6.94.0, which is honest and complete
+   for the person holding the phone and invisible to everyone else: a teacher
+   asking what a student ran, or what the class cost this month, had nothing to
+   open. usageReport sends the run's id, its kind, the card's own label and what
+   RunningHub charged — never a prompt, a photograph or a result.
+   Fire and forget, and wrapped: a ledger that cannot be filed must not turn a
+   generation that already succeeded into an error on the student's screen. */
+function usageReport(taskId, meta, u){
+  if(!taskId) return false;
+  if(!(acc.sess && acc.sess.access)) return false;
+  try{
+    accFetch("/v1/usage", { method:"POST", body: JSON.stringify({
+      task_id:  String(taskId),
+      kind:     (meta&&meta.kind)||"image",
+      label:    String((meta&&meta.label)||""),
+      money:    (u&&u.has)?u.money:0,
+      coins:    (u&&u.has)?u.coins:0,
+      currency: (spendLoad().cur||RH_LAST_CUR||"")
+    }) }).catch(function(){});
+  }catch(e){ return false; }
+  return true;
+}
 /* Write the row and tell the operator, once, what that run cost. The toast is
    the whole point: "1 GENERATE" was never a price. */
 function rhBookSpend(taskId, meta, finalJson){
   var u=rhUsageOf(finalJson);
   spendAdd(taskId, meta, u);
+  try{ usageReport(taskId, meta, u); }catch(e){}
   balAfterSpend();
   if(!u.has) return;
   if(typeof toast!=="function") return;
@@ -31035,7 +31059,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.130.0";
+var APP_VER="6.131.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

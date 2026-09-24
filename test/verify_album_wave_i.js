@@ -417,7 +417,7 @@ function release() {
 
   const steps = (CI.match(/node test\/[a-zA-Z0-9_]+\.js/g) || []).length;
   report("E3) the sweep runs this test and the landing says how many tests it runs (267 when this wave shipped, 268 since 6.127.0 added verify_skin_age_guard, 269 since 6.127.1 added verify_panel_v2_layer, 270 since 6.128.0 added verify_gen_loading_billing)",
-    has(CI, "node test/verify_album_wave_i.js") && steps === 272 && has(LANDING, "272 tests") && !/\b266 tests\b/.test(LANDING),
+    has(CI, "node test/verify_album_wave_i.js") && steps === 273 && has(LANDING, "273 tests") && !/\b266 tests\b/.test(LANDING),
     { steps });
 }
 

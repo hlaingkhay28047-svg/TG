@@ -7,6 +7,8 @@ const ADMIN_ACTIONS = Object.freeze([
   "view_login_history", "view_device_history", "view_download_history", "manage_panel_versions",
   "list_payment_requests", "review_payment", "view_payment_proof", "grant_payment",
   "view_visits", "update_record",
+  /* v6.131.0 — read the usage ledger: who ran what, and what it cost. */
+  "view_usage",
 ]);
 
 /* v6.37.0 — the admin can finally fix a student's RECORD, not only its state.

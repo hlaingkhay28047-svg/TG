@@ -34,7 +34,7 @@ const HTML = read("docs/admin/index.html");
 const CSS = read("docs/admin/admin.css");
 const JSRC = read("docs/admin/admin.js");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.130.0", PVER = "6.201.0", COUNT = 272;
+const VER = "6.131.0", PVER = "6.202.0", COUNT = 273;
 
 let pass = 0, fail = 0;
 function report(name, ok, detail) {
@@ -57,7 +57,7 @@ report("A2) the stylesheet has a skeleton row, and its only animation stops unde
 report("A3) the loading engine marks the same container a screen reader is told about, and clears it in a finally so a refusal cannot leave the list busy for ever",
   has(JSRC, "function setBusy(rowsSel, cardsSel, on, widths)") &&
   has(JSRC, 'host.setAttribute("aria-busy", on ? "true" : "false")') &&
-  (JSRC.match(/finally \{ setBusy\(/g) || []).length === 2, null);
+  (JSRC.match(/finally \{ setBusy\(/g) || []).length === 3   /* students · history · usage (6.131.0) */, null);
 
 report("A4) the CSV engine quotes what has to be quoted, writes the BOM Excel needs for Burmese names, walks the pages of the filter on screen, and has a hard ceiling",
   has(JSRC, "function csvCell(value)") && has(JSRC, 'text.replace(/"/g, \'""\')') &&
@@ -129,11 +129,11 @@ async function walk() {
       const request = route.request(), url = request.url();
       const json = (status, body) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
       if (url.includes("grant_type=password")) return json(200, { access_token: "A", refresh_token: "R", expires_at: 1999999999, session_id: "s", user: { id: "admin-1", email: "owner@example.com" } });
-      if (url.includes("/api/health")) return json(200, { ok: true, apiVersion: "6.130.0" });
+      if (url.includes("/api/health")) return json(200, { ok: true, apiVersion: VER });
       if (url.includes("/admin/session")) return json(200, { admin: { id: "admin-1", email: "owner@example.com", role: "admin" } });
       if (url.includes("/dashboard")) return json(200, { total: 23, active: 20, pending: 2, online: 1, latest_logins: [], signups: [] });
       if (url.includes("/visits")) return json(200, { days: [], pages: [] });
-      if (url.includes("/panel-version")) return json(200, { latest_version: "6.201.0", minimum_supported_version: "6.24.0" });
+      if (url.includes("/panel-version")) return json(200, { latest_version: PVER, minimum_supported_version: "6.24.0" });
       if (/\/students(?:\?|$)/.test(url)) {
         const asked = Number(new URL(url).searchParams.get("page") || 1);
         pagesAsked.push(asked);
@@ -237,8 +237,8 @@ async function walk() {
 
   report("B3) the release card names five surfaces with the values actually read — the app's version.json, the API's own apiVersion, the panel policy, the oldest panel still allowed and this console's token — and calls a matching pair matched",
     r.release.busy === "false" && r.release.rows.length === 5 &&
-    r.release.rows[0].value === "6.130.0" && r.release.rows[0].verdict === "matched" &&
-    r.release.rows[1].value === "6.130.0" && r.release.rows[2].value === "6.201.0" &&
+    r.release.rows[0].value === VER && r.release.rows[0].verdict === "matched" &&
+    r.release.rows[1].value === VER && r.release.rows[2].value === PVER &&
     r.release.rows[3].value === "6.24.0" && /^[0-9a-f]{12}$/.test(r.release.rows[4].value), r.release);
 
   report("B4) the students export writes a real CSV: the BOM Excel needs, the eight headings, one line per student, and a name holding a comma and a quote comes back quoted and escaped",

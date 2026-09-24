@@ -308,6 +308,13 @@ jobs:
         run: PORT=8931 node test/verify_scene_frame_6129.js
       - name: Verify the admin console loads, exports and says what is live
         run: PORT=8931 node test/verify_admin_wave_6130.js
+      # Wave B. Every paid run was booked into the student's own browser and
+      # nowhere else, so the teacher paying the bill could see who signed in and
+      # never what anyone ran. This step holds the ledger's shape and privacy
+      # against a real database, the admin read and its whole-filter totals, the
+      # console's new panel, and both surfaces actually filing a row.
+      - name: Verify the usage ledger records every run and only the teacher reads it
+        run: PORT=8931 node test/verify_usage_ledger_6131.js
 
       # v5.93.0 — Wave 11 begins at the door. Every state the account server
       # can report is read from server/lib/auth.js and pushed through both

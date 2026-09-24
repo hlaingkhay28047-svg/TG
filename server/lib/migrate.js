@@ -38,6 +38,10 @@ const REQUIRED_APPLICATION_TABLES = Object.freeze([
      It is listed here for the same reason as the rest: this check is what makes
      a table without FORCE RLS fail the migration rather than ship open. */
   "student_notes",
+  /* v6.131.0 — usage_events holds one row per paid run. Listed here for the
+     same reason as the rest: a table that reaches production without FORCE
+     RLS must fail the migration, not ship a student's spend history open. */
+  "usage_events",
 ]);
 const REQUIRED_PLATFORM_TABLES = Object.freeze([
   "hnk_auth_users","hnk_auth_refresh_tokens","hnk_storage_buckets","hnk_storage_objects",
