@@ -50,7 +50,7 @@ const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const PWN = read("panel/js/hnk_whats_new.js");
 const PORT = process.env.PORT || "8931";
-const VER = "6.131.0", PVER = "6.202.0";
+const VER = "6.132.0", PVER = "6.203.0";
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
@@ -262,10 +262,10 @@ function releasePins() {
     !!row && row.v === VER && LANGS.every(l => row.t[l] && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**")) &&
     has(PWN, '"v":"' + VER + '"'), row && { v: row.v, kind: row.kind, ref: row.ref });
 
-  report("D3) CI runs this test right after the V2 layer check, and the suite counts 273 invocations",
+  report("D3) CI runs this test right after the V2 layer check, and the suite counts 274 invocations",
     has(CI, "run: PORT=8931 node test/verify_gen_loading_billing.js") &&
     CI.indexOf("verify_panel_v2_layer.js") < CI.indexOf("verify_gen_loading_billing.js") &&
-    (CI.match(/node test\//g) || []).length === 273 && has(LANDING, "273 tests"),
+    (CI.match(/node test\//g) || []).length === 274 && has(LANDING, "274 tests"),
     { steps: (CI.match(/node test\//g) || []).length });
 }
 

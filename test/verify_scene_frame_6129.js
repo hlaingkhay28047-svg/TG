@@ -41,11 +41,16 @@ const has = (s, t) => s.indexOf(t) >= 0;
 const APP = read("docs/app/index.html"), LANDING = read("docs/index.html"), CI = read(".github/workflows/test.yml");
 const MAIN = read("panel/main.js"), WN = read("docs/app/data/whatsnew.js"), PWN = read("panel/js/hnk_whats_new.js");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.131.0", PVER = "6.202.0";
-const COUNT = 273;
+const VER = "6.132.0", PVER = "6.203.0";
+const COUNT = 274;
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
 const EXTENT = "FRAME EXTENT LOCK:", SEP = "COLOUR SEPARATION LOCK:", MATCH = "LIGHT MATCH LOCK:";
+/* 6.132.0 — the three cards whose whole job is to grade the WHOLE frame carry a lock of their
+   own: they may take IMAGE 2's grade, and must still keep the person readable against the set. */
+const SEP_LOOK = "SUBJECT SEPARATION LOCK:";
+const SEP_LOOK_IDS = ["studio-look-copy", "full-look-transfer", "regency-birthday"];
+const sepTagFor = (id) => (SEP_LOOK_IDS.indexOf(id) >= 0 ? SEP_LOOK : SEP);
 const SMOOTH = "SKIN FINISH:", BAL = "FRAME BALANCE:";
 
 let failures = 0;
@@ -91,8 +96,10 @@ report("A4) the three controls the owner asked for: a LIGHT MATCH LOCK choice of
   /* a switch that is off says so, rather than leaving the reader of the prompt to infer it */
   has(APP, 'var SMOOTH_OFF=SMOOTH_TAG+" no skin-finish pass at all') && has(APP, 'var BAL_OFF=BAL_TAG+" no whole-frame grade'), null);
 
-report("A5) the pass cannot double-write: every block is added only where its own tag is absent, and a card that already owns one of the three keys keeps its own field",
-  has(APP, "if(w.prompt.indexOf(EXTENT_TAG)<0)") && has(APP, "if(w.prompt.indexOf(SEP_TAG)<0)") &&
+report("A5) the pass cannot double-write: every block is added only where its own tag is absent — the separation tag is chosen per card first, so a look card is measured against its own lock — and a card that already owns one of the three keys keeps its own field",
+  has(APP, "if(w.prompt.indexOf(EXTENT_TAG)<0)") &&
+  has(APP, "var sepTag=(SEP_LOOK_IDS.indexOf(w.id)>=0)?SEP_LOOK_TAG:SEP_TAG;") &&
+  has(APP, "if(w.prompt.indexOf(sepTag)<0)") &&
   has(APP, "if(!have.matchmode && w.prompt.indexOf(MATCH_TAG)<0)") &&
   has(APP, "if(!have.skinsmooth && w.prompt.indexOf(SMOOTH_TAG)<0)") &&
   has(APP, "if(!have.framebal && w.prompt.indexOf(BAL_TAG)<0)") &&
@@ -121,7 +128,8 @@ async function appWalk(browser) {
       const m = fieldOf(w, "matchmode"), s = fieldOf(w, "skinsmooth"), b = fieldOf(w, "framebal");
       const why = [];
       if (p.indexOf(T.EXTENT) < 0) why.push("no extent");
-      if (p.indexOf(T.SEP) < 0) why.push("no separation");
+      const sepWant = T.SEP_LOOK_IDS.indexOf(w.id) >= 0 ? T.SEP_LOOK : T.SEP;
+      if (p.indexOf(sepWant) < 0) why.push("no separation");
       if (p.indexOf(T.MATCH + " {{MATCH}}") < 0) why.push("no match line");
       if (p.indexOf(T.SMOOTH) < 0) why.push("no skin finish");
       if (p.indexOf(T.BAL) < 0) why.push("no balance");
@@ -160,7 +168,7 @@ async function appWalk(browser) {
     out.balOff = window._wfFieldPrompt("bg-replace", { framebal: false });
     out.batch = window._wfBatchPrompt("bg-replace");
     return out;
-  }, { EXTENT, SEP, MATCH, SMOOTH, BAL, LANGS });
+  }, { EXTENT, SEP, SEP_LOOK, SEP_LOOK_IDS, MATCH, SMOOTH, BAL, LANGS });
   /* the wizard draws the design controls on step 3, where they have sat since
      v5.62.0, and step 2 will not let go until the workflow's photo is in its
      slot — so the walk fills IMAGE 1 the way a pick does and taps through */
@@ -301,7 +309,7 @@ function releasePins() {
     (pBg ? pBg.items : []).forEach(w => {
       const p = String(w.prompt || ""), n = String(w.negative || "");
       const f = (k) => (w.fields || []).filter(x => x.key === k)[0];
-      if (p.indexOf(EXTENT) < 0 || p.indexOf(SEP) < 0 || p.indexOf(MATCH) < 0) pGaps.push(w.id + " lines");
+      if (p.indexOf(EXTENT) < 0 || p.indexOf(sepTagFor(w.id)) < 0 || p.indexOf(MATCH) < 0) pGaps.push(w.id + " lines");
       if (!f("matchmode") || !f("skinsmooth") || !f("framebal")) pGaps.push(w.id + " fields");
       if (n.indexOf("full-length shot") < 0) pGaps.push(w.id + " avoid");
     });

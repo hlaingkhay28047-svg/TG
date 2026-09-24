@@ -1196,3 +1196,12 @@ jobs:
       # hundred and forty-six new lines in nine languages plus the fifteen reader packs.
       - name: Verify Smart Album wave I — the template library, the build, the standees, the mockup and the marks
         run: PORT=8931 node test/verify_album_wave_i.js
+      # 6.132.0 — the card stops arguing with its own lock, and the lock reaches Imagine. Four Smart Workflow
+      # cards told the model, in the same prompt as their own FRAME EXTENT and COLOUR SEPARATION locks, to
+      # extend the frame and to colour-grade the person into the scene; six sentences rewritten, three
+      # whole-frame look cards moved to SUBJECT SEPARATION LOCK, and a standing scan that re-reads every one of
+      # the sixty-two scene cards against its own locks. The same two locks now reach the nine Imagine tools
+      # that change what is around the subject (ID Photo exempt, on purpose), and the size note stops asking a
+      # student to replace Auto with a fixed ratio.
+      - name: Verify the card and its lock say the same thing, in both scene directions and in Imagine
+        run: PORT=8931 node test/verify_scene_lock_agreement_6132.js
