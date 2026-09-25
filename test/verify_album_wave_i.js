@@ -411,7 +411,7 @@ function release() {
   const WAVE_V = "6.125.0";
   const row = wn.find((r) => r.v === WAVE_V);
   report(`E2) the What's New strip carries the ${WAVE_V} row, in all nine languages, pointing at the Album page (it led the strip when this wave shipped; the 6.126.0, 6.127.0, 6.127.1, 6.128.0, 6.129.0, 6.130.0, 6.131.0, 6.132.0 and 6.133.0 rows sit above it now)`,
-    !!row && wn.indexOf(row) <= 8 && row.ref === "pgAlbum" &&
+    !!row && wn.indexOf(row) <= 10 && row.ref === "pgAlbum" &&
     ["my", "en"].concat(L7).every((l) => typeof row.t[l] === "string" && row.t[l].length > 10 && typeof row.s[l] === "string" && row.s[l].length > 80),
     { v: row && row.v, ref: row && row.ref });
 

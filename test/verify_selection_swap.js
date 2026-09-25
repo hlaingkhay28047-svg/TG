@@ -12,7 +12,7 @@
  * prompt's roles and rules, the AVOID list), the nine-language card line and the two four-step guides, the app's region flow
  * and the panel's registry following the record's region flag instead of one id, the choice field's maths on both surfaces
  * (byte-identical prompts for the same values), the wizard's chips and quick picks and the panel's, the card picture, the
- * counts 197 → 198 and 204 → 205 on every surface, the What's New row, the CI step and the lockstep pair of the day (6.124.0 / 6.195.0 when this wave shipped).
+ * counts 197 → 198 (199 since 6.133.0) and 204 → 205 (206) on every surface, the What's New row, the CI step and the lockstep pair of the day (6.124.0 / 6.195.0 when this wave shipped).
  * Usage: PORT=8931 node test/verify_selection_swap.js   (serve docs/app first) */
 "use strict";
 const fs = require("fs");
@@ -102,13 +102,13 @@ report("B2) the web app's region flow follows the record's flag (the marquee on 
   has(APP, 'frow.className += " is-choice";') && has(APP, 'var cb=el("button","chip wiz-choice");') && has(APP, 'chint.textContent=(po&&po.hint) ? L9(po.hint) : "";') &&
   has(APP, '.wiz-field.is-choice{flex-direction:column;align-items:stretch;') && has(APP, '.wiz-choices{display:flex;flex-wrap:wrap;gap:6px}') && has(APP, '.wiz-quick-chip{min-height:32px;'), null);
 const LANDING_CLAIMS = LANDING.replace(/\/\*[\s\S]*?\*\//g, "").replace(/<!--[\s\S]*?-->/g, "");
-report("B3) the counts moved 197 → 198 Smart Workflows and 204 → 205 One-Tap on the app's meta and statline fallbacks, the landing (ASCII and Myanmar digits, the two counters) and the panel's Home; the data file holds 94 workflows",
-  (APP.match(/Smart Workflow 198/g) || []).length === 3 && !has(APP, "Smart Workflow 197") && (APP.match(/One-Tap 205/g) || []).length === 3 && !has(APP, "One-Tap 204") &&
-  has(APP, '<b id="stWfCount">198</b>') && has(APP, '<b id="stTapCount">205</b>') &&
-  (LANDING.match(/Smart Workflow 198/g) || []).length >= 30 && !has(LANDING_CLAIMS, "Smart Workflow 197") && (LANDING.match(/One-Tap 205/g) || []).length >= 30 && !has(LANDING_CLAIMS, "One-Tap 204") &&
-  /data-count="wf">198</.test(LANDING) && /data-count="tap">205</.test(LANDING) && has(LANDING, "၁၉၈") && !has(LANDING_CLAIMS, "၁၉၇") &&
-  has(PANEL_HOME, 'stat(205, "One-Tap Workflows");') && W.filter(x => !x.kind).length === 94,
-  { app198: (APP.match(/Smart Workflow 198/g) || []).length, landing198: (LANDING.match(/Smart Workflow 198/g) || []).length, wf: W.filter(x => !x.kind).length });
+report("B3) the counts moved 197 → 198 → 199 Smart Workflows and 204 → 205 → 206 One-Tap (6.133.0 added Horse & Straw) on the app's meta and statline fallbacks, the landing (ASCII and Myanmar digits, the two counters) and the panel's Home; the data file holds 95 workflows",
+  (APP.match(/Smart Workflow 199/g) || []).length === 3 && !has(APP, "Smart Workflow 197") && (APP.match(/One-Tap 206/g) || []).length === 3 && !has(APP, "One-Tap 204") &&
+  has(APP, '<b id="stWfCount">199</b>') && has(APP, '<b id="stTapCount">206</b>') &&
+  (LANDING.match(/Smart Workflow 199/g) || []).length >= 30 && !has(LANDING_CLAIMS, "Smart Workflow 197") && (LANDING.match(/One-Tap 206/g) || []).length >= 30 && !has(LANDING_CLAIMS, "One-Tap 204") &&
+  /data-count="wf">199</.test(LANDING) && /data-count="tap">206</.test(LANDING) && has(LANDING, "၁၉၉") && !has(LANDING_CLAIMS, "၁၉၇") &&
+  has(PANEL_HOME, 'stat(206, "One-Tap Workflows");') && W.filter(x => !x.kind).length === 95,
+  { app199: (APP.match(/Smart Workflow 199/g) || []).length, landing199: (LANDING.match(/Smart Workflow 199/g) || []).length, wf: W.filter(x => !x.kind).length });
 const artGaps = [];
 (() => {
   const p = path.join(ROOT, "docs", "app", "lib", "wf", "cards5", ID + ".jpg");
@@ -153,8 +153,8 @@ else {
   LANGS.forEach(l => { const s = cat.i18n && cat.i18n[l] && cat.i18n[l].sum && cat.i18n[l].sum[ID]; if (!s || s.length < 10) pGaps.push("no " + l + " summary"); });
 }
 const rpIds = rpCat ? rpCat.items.map(x => x.id) : [];
-report("C2) the panel's lifted catalog carries the record with the app's prompt, AVOID list, inputs, fields and region flag, nine card lines, 198 cards in all, under Repair & Enhance right after Selection Edit; it is the only item wearing the flag (Selection Edit keeps its id rule)",
-  pGaps.length === 0 && cat.total === 198 && items.length === 198 && rpIds.indexOf(ID) === rpIds.indexOf("region-edit") + 1 && items.filter(x => x.region).length === 1, { pGaps, total: cat.total, rp: rpIds.slice(0, 3) });
+report("C2) the panel's lifted catalog carries the record with the app's prompt, AVOID list, inputs, fields and region flag, nine card lines, 199 cards in all, under Repair & Enhance right after Selection Edit; it is the only item wearing the flag (Selection Edit keeps its id rule)",
+  pGaps.length === 0 && cat.total === 199 && items.length === 199 && rpIds.indexOf(ID) === rpIds.indexOf("region-edit") + 1 && items.filter(x => x.region).length === 1, { pGaps, total: cat.total, rp: rpIds.slice(0, 3) });
 const REG = require("../panel/src/workflows/workflow-registry.js");
 const wf = REG.get(ID);
 const VALS = {
@@ -295,8 +295,8 @@ async function releasePins() {
   const browser = withPremium(await chromium.launch());
   try {
     const { r, errs } = await appWalk(browser);
-    report("D1) the booted app composes 198 cards, Selection Edit → Selection Swap & Fill → Remove Light Stands & Gear under Repair & Enhance, the record wears its flag and card picture, and the statline says 198 / 205",
-      r.total === 198 && JSON.stringify(r.rpOrder) === JSON.stringify(["region-edit", ID, "light-gear-remove"]) && r.region === true && r.cardImg === "lib/wf/cards5/" + ID + ".jpg" && r.title === TITLE && r.wfc === "198" && r.tap === "205", r && { total: r.total, rp: r.rpOrder, wfc: r.wfc, tap: r.tap });
+    report("D1) the booted app composes 199 cards, Selection Edit → Selection Swap & Fill → Remove Light Stands & Gear under Repair & Enhance, the record wears its flag and card picture, and the statline says 199 / 206",
+      r.total === 199 && JSON.stringify(r.rpOrder) === JSON.stringify(["region-edit", ID, "light-gear-remove"]) && r.region === true && r.cardImg === "lib/wf/cards5/" + ID + ".jpg" && r.title === TITLE && r.wfc === "199" && r.tap === "206", r && { total: r.total, rp: r.rpOrder, wfc: r.wfc, tap: r.tap });
     report("D2) the app's field maths equals the panel's compiler byte for byte on the same five value sets, the batch prompt carries AVOID, no FRAME LOCK and no raw token",
       Object.keys(VALS).every(k => r.prompts[k] === C[k]) && /\n\nAVOID: /.test(r.batch) && !/FRAME LOCK/.test(r.batch) && !/\{\{/.test(r.batch) && r.batch.indexOf(C.def) === 0,
       { same: Object.keys(VALS).map(k => k + ":" + (r.prompts[k] === C[k])) });

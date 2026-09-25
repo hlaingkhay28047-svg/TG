@@ -227,12 +227,12 @@ async function appWalk(browser) {
   try {
     const { r, errs } = await appWalk(browser);
     report("C1) every scene card's frame lock now names the failure — no leg, foot, shoe, hand or hem the photograph does not show",
-      r.all === 62 && r.extent.length === 0, { n: r.all, gaps: r.extent.slice(0, 6) });
-    report("C2) each card carries the separation lock that fits it: the three whole-frame look cards the subject one, the other fifty-nine the colour one with the flattening forbidden",
+      r.all === 63 && r.extent.length === 0, { n: r.all, gaps: r.extent.slice(0, 6) });
+    report("C2) each card carries the separation lock that fits it: the three whole-frame look cards the subject one, the other sixty the colour one with the flattening forbidden",
       r.sepLook.length === 0 && r.sepPlain.length === 0,
       { look: r.sepLook.slice(0, 6), plain: r.sepPlain.slice(0, 6) });
-    report("C3) FRAME BALANCE names the lock its own card actually carries, on all twenty-nine Background & Scene cards",
-      r.bg === 29 && r.balWrong.length === 0, { bg: r.bg, wrong: r.balWrong.slice(0, 6) });
+    report("C3) FRAME BALANCE names the lock its own card actually carries, on all thirty Background & Scene cards",
+      r.bg === 30 && r.balWrong.length === 0, { bg: r.bg, wrong: r.balWrong.slice(0, 6) });
     report("C4) THE STANDING RULE — no card in the three groups licenses, in its own words, what its own locks forbid; the same scan found exactly six such sentences before this release, on the four cards it rewrote",
       r.licence.length === 0, r.licence.slice(0, 5));
     report("C5) both ways the owner named compile with the separation requirement and no raw token; the professional balance he said worked is unchanged",
@@ -268,7 +268,7 @@ async function appWalk(browser) {
       });
     });
     report("D1) the Photoshop panel's lifted catalog carries the identical lines — it is generated from this same composed catalog, so the student sees one studio on both surfaces",
-      !!pBg && pBg.items.length === 29 && pItems.length > 190 && pGaps.length === 0,
+      !!pBg && pBg.items.length === 30 && pItems.length > 190 && pGaps.length === 0,
       { bg: pBg && pBg.items.length, n: pItems.length, gaps: pGaps.slice(0, 6) });
 
     /* ===================== F) the locks reach Imagine too ===================== */

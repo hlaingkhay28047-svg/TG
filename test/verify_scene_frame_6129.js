@@ -269,8 +269,8 @@ function releasePins() {
   const browser = withPremium(await chromium.launch());
   try {
     const { r, errs } = await appWalk(browser);
-    report("B1) all twenty-nine Background & Scene cards carry both locks, the match line and the two switch lines, with the designed defaults, nine-language labels and both new AVOID items",
-      r.bgN === 29 && r.bgGaps.length === 0, { n: r.bgN, gaps: r.bgGaps.slice(0, 6) });
+    report("B1) all thirty Background & Scene cards carry both locks, the match line and the two switch lines, with the designed defaults, nine-language labels and both new AVOID items",
+      r.bgN === 30 && r.bgGaps.length === 0, { n: r.bgN, gaps: r.bgGaps.slice(0, 6) });
     report("B2) Studio Scenes and Studio Relight take the two locks and none of the three controls — they relight the same real person, but the controls belong to the group the owner named",
       r.lockOnlyN > 0 && r.lockOnlyGaps.length === 0, { n: r.lockOnlyN, gaps: r.lockOnlyGaps.slice(0, 6) });
     report("B3) no card in any other group gained any of the five lines",
@@ -313,8 +313,8 @@ function releasePins() {
       if (!f("matchmode") || !f("skinsmooth") || !f("framebal")) pGaps.push(w.id + " fields");
       if (n.indexOf("full-length shot") < 0) pGaps.push(w.id + " avoid");
     });
-    report("C1) the panel's lifted catalog carries the same twenty-nine records — both locks, the match line, the three fields and the two AVOID items — so the CCX says what the web app says",
-      !!pBg && pBg.items.length === 29 && pGaps.length === 0 && pItems.length === cat.total,
+    report("C1) the panel's lifted catalog carries the same thirty records — both locks, the match line, the three fields and the two AVOID items — so the CCX says what the web app says",
+      !!pBg && pBg.items.length === 30 && pGaps.length === 0 && pItems.length === cat.total,
       { n: pBg && pBg.items.length, gaps: pGaps.slice(0, 6) });
     const REG = require("../panel/src/workflows/workflow-registry.js");
     const cDef = REG.compile("bg-replace", undefined), cSub = REG.compile("bg-replace", { matchmode: "subject" });

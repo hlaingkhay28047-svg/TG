@@ -155,11 +155,11 @@ const wn = data("docs/app/data/whatsnew.js");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 /* 6.127.1 — this wave shipped as 6.127.0 and led the strip that day; the
    6.127.1 row sits above it now, so the row is found rather than read at 0.
-   6.129.0 — one more release above it. */
+   6.129.0 — one more release above it; 6.133.0 — one more again. */
 const WAVE_V = "6.127.0";
 const wnRow = wn.find(r => r.v === WAVE_V);
 report(`F2) the What's New strip carries the ${WAVE_V} row, in all nine languages, with a bold-led excerpt (it led the strip when this wave shipped)`,
-  !!wnRow && wn.indexOf(wnRow) <= 6 && wnRow.kind === "wf" &&
+  !!wnRow && wn.indexOf(wnRow) <= 8 && wnRow.kind === "wf" &&
   LANGS.every(l => wnRow.t[l] && wnRow.s[l] && !wnRow.t[l].startsWith("**") && wnRow.s[l].startsWith("**")),
   { at: wnRow ? wn.indexOf(wnRow) : -1, head: wn[0] && wn[0].v });
 
