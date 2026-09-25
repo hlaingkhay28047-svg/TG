@@ -130,7 +130,7 @@ report("A11) the card is listed in the Background & Scene group, so the house sc
 
 report("A12) the four-step guide is there in English and in Myanmar, and the nine-language card line is complete",
   has(APP, '"' + ID + '": [\n      "Add your photo as IMAGE 1') &&
-  has(APP, '"' + ID + '": [\n      "ကိုယ့်ပုံကို IMAGE 1') &&
+  has(APP, '"' + ID + '": [\n      "ကိုယ့်ပုံကို IMAGE 1') &&
   (APP.match(new RegExp('"' + ID + '": \\[', "g")) || []).length === 2 &&
   LANGS.every(l => new RegExp('"' + ID + '":\\{[^}]*\\b' + l + ':"').test(APP)),
   { steps: (APP.match(new RegExp('"' + ID + '": \\[', "g")) || []).length });
@@ -223,10 +223,18 @@ function panelCatalog() {
       r.found && r.title === "Horse & Straw" && r.cardImg === "lib/wf/cards5/" + ID + ".jpg" && r.bgN === 30,
       { found: r.found, n: r.bgN, img: r.cardImg });
 
-    report("B2) it inherits all five house scene lines — the two 6.129.0 locks plus the three controls the owner's group carries",
+    /* the v5.74.0 guard: a card whose OWN prompt already names the skin tone keeps its own
+       wording and is given neither the house SKIN TONE TRUTH line nor the "Keep real skin tone"
+       switch. Horse & Straw's SUBJECT LOCK names it ("the expression, the skin tone, the hair"),
+       so it joins the twelve of the thirty Background & Scene cards that state it themselves —
+       master-bgfg-replace, couple-compose and the four Outfit & Scene cards among them. Its
+       skin tone is therefore locked unconditionally rather than left to a switch. */
+    report("B2) it inherits the house scene lines — the two 6.129.0 locks plus the three controls the owner's group carries — and, because its own SUBJECT LOCK names the skin tone, the v5.74.0 guard gives it neither the SKIN TONE TRUTH line nor the switch",
       ["FRAME EXTENT LOCK:", "COLOUR SEPARATION LOCK:", "LIGHT MATCH LOCK:", "SKIN FINISH:", "FRAME BALANCE:"]
         .every(t => has(r.prompt || "", t)) &&
-      ["matchmode", "skinsmooth", "framebal", "skintone"].every(k => (r.fieldKeys || []).indexOf(k) >= 0),
+      ["matchmode", "skinsmooth", "framebal"].every(k => (r.fieldKeys || []).indexOf(k) >= 0) &&
+      (r.fieldKeys || []).indexOf("skintone") < 0 && !has(r.prompt || "", "SKIN TONE TRUTH:") &&
+      /the expression, the skin tone, the hair/.test(r.prompt || ""),
       { keys: r.fieldKeys, missing: ["FRAME EXTENT LOCK:", "COLOUR SEPARATION LOCK:", "LIGHT MATCH LOCK:", "SKIN FINISH:", "FRAME BALANCE:"].filter(t => !has(r.prompt || "", t)) });
 
     report("B3) the house AVOID items join the card's own list, so the scene failures are refused here too",
@@ -259,9 +267,15 @@ function panelCatalog() {
 
     const REG = require("../panel/src/workflows/workflow-registry.js");
     const c = REG.compile(ID, undefined);
-    report("C2) the panel's own compiler resolves the card exactly as the app's wizard does",
+    const cSub = REG.compile(ID, { matchmode: "subject" });
+    const cSm = REG.compile(ID, { skinsmooth: true }), cBal = REG.compile(ID, { framebal: false });
+    report("C2) the panel's own compiler resolves the card and its three controls exactly as the app's wizard does (the AVOID list rides the record, as it does for every scene card, and is appended at send)",
       !!c && !/\{\{/.test(c.prompt) && has(c.prompt, "SUBJECT LOCK:") && has(c.prompt, "HORSE FRAMING: crop the horse, never the person.") &&
-      /\nLIGHT MATCH LOCK: the person and the scene meet in the middle/.test(c.prompt) && /\n\nAVOID: /.test(c.prompt),
+      /\nLIGHT MATCH LOCK: the person and the scene meet in the middle/.test(c.prompt) &&
+      /SKIN FINISH: no skin-finish pass at all/.test(c.prompt) && /FRAME BALANCE: finish the whole frame/.test(c.prompt) &&
+      /the person follows the scene/.test(cSub.prompt) &&
+      /SKIN FINISH: give the person a light skin-finish pass/.test(cSm.prompt) &&
+      /FRAME BALANCE: no whole-frame grade/.test(cBal.prompt) && !/finish the whole frame/.test(cBal.prompt),
       { len: c && c.prompt.length });
 
     /* ---- D) the release ---- */

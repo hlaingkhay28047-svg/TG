@@ -180,6 +180,7 @@ version without its line, or a line whose facts disagree with the manifest,
 fails the release contract.
 
 <!-- publish-ledger:start -->
+- v6.204.0 · 2026-09-24 · SHA-256 `28814aaaf43c…` · 24,321,941 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
 - v6.203.0 · 2026-09-24 · SHA-256 `9eb6d1e34d66…` · 24,312,996 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
 - v6.202.0 · 2026-09-24 · SHA-256 `fa06623b9da0…` · 24,303,381 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte
 - v6.201.0 · 2026-09-23 · SHA-256 `c1884748cd39…` · 24,299,033 bytes · adobe_acceptance **pending** — no in-Photoshop checklist on this build; published only if a panel-release run matched this SHA-256 byte for byte

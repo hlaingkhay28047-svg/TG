@@ -196,12 +196,12 @@ function releasePins() {
 
   /* 6.128.0 — this wave shipped as 6.127.1 and led the strip that day; the row
      is found rather than read at 0 now that a release sits above it.
-     6.129.0 — one more release above it. */
+     6.129.0 — one more release above it; 6.133.0 — one more again. */
   const wn = JSON.parse(read("docs/app/data/whatsnew.js").replace(/^window\.HNK_WHATS_NEW=/, "").replace(/;\s*$/, ""));
   const WAVE_V = "6.127.1";
   const row = wn.find(r => r.v === WAVE_V);
   report(`C2) the What's New strip carries the ${WAVE_V} row, in all nine languages, with a bold-led excerpt, and the panel's lifted table carries it (it led the strip when this wave shipped)`,
-    !!row && wn.indexOf(row) <= 5 && LANGS.every(l => row.t[l] && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**")) &&
+    !!row && wn.indexOf(row) <= 7 && LANGS.every(l => row.t[l] && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**")) &&
     has(PWN, '"v":"' + WAVE_V + '"'), row && { at: wn.indexOf(row), kind: row.kind, ref: row.ref });
 
   report("C3) CI runs this test right after the skin-card check, and the suite counts 275 invocations (269 when this release shipped; 6.128.0 · 6.129.0 · 6.130.0 · 6.131.0 · 6.132.0 · 6.133.0 each added one)",
