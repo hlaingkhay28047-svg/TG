@@ -1,0 +1,29 @@
+{
+ "ok": [
+  {
+   "name": "hs-subject",
+   "file": "hs-subject.png",
+   "taskId": "2103278781786652674",
+   "bytes": 1900172,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.041"
+   }
+  },
+  {
+   "name": "hs-result",
+   "file": "hs-result.png",
+   "taskId": "2103279327344218114",
+   "bytes": 2161053,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.039"
+   }
+  }
+ ],
+ "failed": []
+}
