@@ -1,0 +1,22 @@
+{
+ "ok": [
+  {
+   "name": "hs-subject",
+   "file": "hs-subject.png",
+   "taskId": "2103275485324005378",
+   "bytes": 1867675,
+   "usage": {
+    "consumeMoney": null,
+    "consumeCoins": null,
+    "taskCostTime": "0",
+    "thirdPartyConsumeMoney": "0.041"
+   }
+  }
+ ],
+ "failed": [
+  {
+   "name": "hs-result",
+   "error": "submit-failed 200 {\"taskId\":\"\",\"status\":\"\",\"errorCode\":\"1007\",\"errorMessage\":\"field 'prompt' length 3617 is greater than the maximum length 3000\",\"results\":null,\"clientId\":\"\",\"promptTips\":\"\",\"failedReason\":{},\"usage\":null,\"parentTaskId\":null,\"taskUsageList\":"
+  }
+ ]
+}
