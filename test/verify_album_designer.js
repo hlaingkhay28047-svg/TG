@@ -526,7 +526,7 @@ function releasePins() {
     row && row.v === VER && row.ref === "pgAlbum" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40 && row.s[l].startsWith("**")) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
   report("E3) CI runs this test right after the wave E step and the landing says how many tests the suite runs (263 when this wave shipped, 264 since 6.122.0 added verify_album_wave_g, 265 since 6.123.0 added verify_prop_wave_h, 266 since 6.124.0 added verify_selection_swap, 267 since 6.125.0 added verify_album_wave_i, 268 since 6.127.0 added verify_skin_age_guard, 269 since 6.127.1 added verify_panel_v2_layer, 270 since 6.128.0 added verify_gen_loading_billing)",
     has(CI, "run: node test/verify_ux_wave_6120.js\n") && has(CI, "run: PORT=8931 node test/verify_album_designer.js") && CI.indexOf("verify_ux_wave_6120") < CI.indexOf("verify_album_designer") &&
-    (CI.match(/node test\//g) || []).length === 275 && has(LANDING, "275 tests") && !has(LANDING, "262 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 276 && has(LANDING, "276 tests") && !has(LANDING, "262 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 (async () => {

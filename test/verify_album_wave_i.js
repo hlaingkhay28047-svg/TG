@@ -53,7 +53,7 @@ const WI = require(path.join(ROOT, "tools", "lib", "album_wave_i.js"));
 const GEN = require(path.join(ROOT, "tools", "build_album_data.js"));
 /* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 ceiling) */
 const MOD = read("docs/app/data/album-module.js");
-const VER = "6.133.0", PVER = "6.204.0";
+const VER = "6.134.0", PVER = "6.205.0";
 const L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
 const PACKS = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "ne", "pa", "ta", "te", "ur"];
 /* every line this wave added, as the module asks for it */
@@ -417,7 +417,7 @@ function release() {
 
   const steps = (CI.match(/node test\/[a-zA-Z0-9_]+\.js/g) || []).length;
   report("E3) the sweep runs this test and the landing says how many tests it runs (267 when this wave shipped, 268 since 6.127.0 added verify_skin_age_guard, 269 since 6.127.1 added verify_panel_v2_layer, 270 since 6.128.0 added verify_gen_loading_billing)",
-    has(CI, "node test/verify_album_wave_i.js") && steps === 275 && has(LANDING, "275 tests") && !/\b266 tests\b/.test(LANDING),
+    has(CI, "node test/verify_album_wave_i.js") && steps === 276 && has(LANDING, "276 tests") && !/\b266 tests\b/.test(LANDING),
     { steps });
 }
 
