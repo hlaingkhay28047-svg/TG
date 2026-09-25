@@ -4525,10 +4525,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
 <script src="data/imagine.js?v=2b97eb6a9d09"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=b08f69777a24"></script>
+<script src="data/album-module.js?v=8133d9e8d284"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=93c41c48a96e"></script>
-<script src="data/whatsnew.js?v=8680f1b3529c"></script>
+<script src="data/whatsnew.js?v=ca5e101051db"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -11931,6 +11931,23 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
   };
   /* ---- 4-step workflow wizard: 1 Guide · 2 Images · 3 Generate · 4 Result (v4.27.0) ---- */
   var wiz = { w: null, step: 1, prompt: "", token: 0, busy: false, result: null, error: "", region: null };
+  /* 6.135.0 — the wizard's run clock. wizSpinLine() is what the busy line says; the
+     interval only repaints an element that is still on screen and stops itself the
+     moment the run ends or the wizard is closed, so a re-render never stacks timers. */
+  var wizSpinT=null, wizSpinT0=0;
+  function wizSpinLine(){
+    var n = wizSpinT0 ? Math.round((Date.now()-wizSpinT0)/1000) : 0;
+    return t("spin_gen") + (n>0 ? " \u00b7 "+n+"s" : "");
+  }
+  function wizClockStop(){ if(wizSpinT){ clearInterval(wizSpinT); wizSpinT=null; } wizSpinT0=0; }
+  function wizClockStart(){
+    wizClockStop(); wizSpinT0=Date.now();
+    wizSpinT=setInterval(function(){
+      var e=document.getElementById("wizSpin");
+      if(!e || !wiz.busy){ wizClockStop(); return; }
+      e.textContent=wizSpinLine();
+    },1000);
+  }
   function wizInputs(w){
     return w.req.map(function(l){ return { label: l, req: true }; })
       .concat(w.opt.map(function(l){ return { label: l, req: false }; }));
@@ -12010,7 +12027,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
   }
   window._wizSendPrompt=wizSendPrompt;
   /* v6.83.0 — test hook: land a result on step 4 without a paid run (verify_panel_wf_results D) */
-  window._wizShowResult=function(res){ wiz.step=4; wiz.busy=false; wiz.error=""; wiz.result=res; renderWiz(); };
+  window._wizShowResult=function(res){ wiz.step=4; wiz.busy=false; wiz.error=""; wiz.result=res; wizClockStop(); renderWiz(); };   /* 6.135.0 */
   /* 6.93.0 — the drawn selection (Selection Edit on the web), readable and settable from outside the closure */
   window._wizRegion=function(r){ if(arguments.length){ wiz.region=r||null; } return wiz.region; };
   window._scenePresetIds=function(){ return scenePresetList(LW.items).map(function(it){ return it.id; }); };
@@ -12123,7 +12140,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     /* v5.56.0 — only models whose request can really carry this workflow's
        required images are offered while it is open */
     if(typeof wfModelFilter==="function") wfModelFilter((w.req||[]).length);
-    wiz.token++; wiz.busy=false; wiz.result=null; wiz.error=""; window._wizBusy=false;
+    wiz.token++; wiz.busy=false; wiz.result=null; wiz.error=""; window._wizBusy=false; wizClockStop();   /* 6.135.0 */
     wiz.cmp=false; /* v6.83.0 — the Before | After compare closes with the workflow it belonged to */
     wiz.prompt=w.prompt+(w.negative ? "\n\nAVOID: "+w.negative+"." : "");
     wiz.avoidTail=wiz.prompt.slice(w.prompt.length); /* the tail, composed once above */
@@ -12167,6 +12184,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     saveState();
     var token=wiz.token;
     wiz.step=4; wiz.busy=true; wiz.result=null; wiz.error=""; window._wizBusy=true;
+    wizClockStart();   /* 6.135.0 */
     renderWiz(); $("wiz").scrollTop=0;
     /* v4.54 — a value left on #selRatio by an earlier Create-page run must
        not silently reframe a workflow, so the stale global is blanked for
@@ -12195,7 +12213,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     /* wizard was closed or re-opened for another workflow meanwhile — this
        run's result already lives on the Create page + Gallery, stop here */
     if(token!==wiz.token || $("wiz").className.indexOf("on")<0) return;
-    wiz.busy=false; window._wizBusy=false;
+    wiz.busy=false; window._wizBusy=false; wizClockStop();   /* 6.135.0 */
     if(state.hist[0]!==beforeFirst){
       if(rgn && rgnFull){
         /* the paste-back: the full photograph with the result set into the rectangle; the crop's own gallery
@@ -12690,7 +12708,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
     }
     if (wiz.step===4){
       if (wiz.busy){
-        var bs=el("div","spin on"); bs.textContent=t("spin_gen"); body.appendChild(bs);
+        /* 6.135.0 — the wizard counts its seconds. Every other generate in the app has
+           done so since v4.51 (Freeform, Video, Upscale, V\u2192V, Talking Photo, Text\u2192Image,
+           Retouch A/B, Retouch V2, Path, Imagine); the Smart Workflow wizard — the screen
+           197 of the studio's workflows run through — showed one frozen sentence, so a
+           two-minute run and a five-second one looked exactly alike. */
+        var bs=el("div","spin on"); bs.id="wizSpin"; bs.textContent=wizSpinLine(); body.appendChild(bs);
         body.appendChild(el("p","mut",L9({my:"ထုတ်နေပါပြီ — ရလဒ်က ဒီမှာပဲ ပေါ်လာမယ်",en:"Generating — the result will appear right here",shn:"တိုၵ်ႉထုတ်ႇယူႇ — ၽွၼ်းလႆႈတေဢွၵ်ႇမႃးတီႈၼႆႈ",kac:"Shaw nga ai — result gaw ndai kaw sha pru wa na",th:"กำลังสร้าง — ผลลัพธ์จะแสดงตรงนี้",zh:"生成中 — 结果会直接显示在这里",vi:"Đang tạo — kết quả sẽ hiện ngay tại đây",id:"Sedang membuat — hasil akan muncul di sini",ms:"Sedang menjana — hasil akan muncul di sini"})));
       } else if (wiz.result){
         var rsrc="data:"+wiz.result.mime+";base64,"+wiz.result.b64;
@@ -31110,7 +31133,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.134.0";
+var APP_VER="6.135.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

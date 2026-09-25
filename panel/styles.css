@@ -3689,6 +3689,18 @@ body.motion-reduce .im-spin { animation: none; }
 .prefs-row { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; margin-top: 8px; }
 .prefs-row .lbl { font-size: 11px; color: var(--muted); margin: 0 6px 6px 0; }
 .prefs-row .chip { margin: 0 6px 6px 0; }
+/* 6.135.0 — Setup ▸ Storage. One row per store: name, measured size, Delete. The row
+   wraps on a narrow panel like every other .row here, and the total wears a hairline
+   above it so the sum reads as a sum rather than a sixth store. */
+.store-row { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.store-row .lbl { font-size: 11px; color: var(--cream); margin: 0 8px 6px 0; min-width: 96px; }
+.store-row .mut { font-size: 11px; margin: 0 8px 6px 0; flex: 1 1 auto; }
+.store-row .btn { margin: 0 0 6px 0; }
+.store-total { border-top: 1px solid rgba(217,164,65,.28); padding-top: 8px; }
+.store-total .lbl { color: var(--gold); font-weight: 700; }
+/* 11px, not 10: the panel's text floor (wave C) is 11px and verify_ux_wave_6114 walks every
+   page for anything smaller. */
+#storeKeptNote { font-size: 11px; margin-top: 6px; }
 #galCount { margin-bottom: 6px; }
 .dash-recent-h { font-size: 9px; color: var(--muted-2); letter-spacing: .12em; text-transform: uppercase; font-weight: 700; margin-top: 8px; }
 .dash-recent { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; margin-top: 6px; padding-bottom: 4px; }

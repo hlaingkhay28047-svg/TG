@@ -360,7 +360,7 @@ async function panelWalk(browser) {
       if (strip) { strip.children[0].click(); await until(() => state.page === "gallery" && !!GAL.pick); await settle(); out.homeTap = { page: state.page, pick: GAL.pick, pickShown: document.getElementById("galPick").style.display }; }
       /* Setup ▸ SETTINGS: text size */
       switchPage("setup"); await settle();
-      out.prefs = { h2: txt("prefsH2"), h2Word: ff9(PREFS_L.h2), lbl: txt("prefsTsizeL"), lblWord: ff9(PREFS_L.tsize), chips: [...document.querySelectorAll("#prefsTsizeRow .chip")].map(b => b.textContent + (/\bon\b/.test(b.className) ? "*" : "")), words: [ff9(PREFS_L.s), ff9(PREFS_L.m) + "*", ff9(PREFS_L.l)], afterData: document.getElementById("cardPrefs").previousElementSibling.id, beforePlat: document.getElementById("cardPrefs").nextElementSibling.id };
+      out.prefs = { h2: txt("prefsH2"), h2Word: ff9(PREFS_L.h2), lbl: txt("prefsTsizeL"), lblWord: ff9(PREFS_L.tsize), chips: [...document.querySelectorAll("#prefsTsizeRow .chip")].map(b => b.textContent + (/\bon\b/.test(b.className) ? "*" : "")), words: [ff9(PREFS_L.s), ff9(PREFS_L.m) + "*", ff9(PREFS_L.l)], afterData: document.getElementById("cardPrefs").previousElementSibling.id, beforePlat: document.getElementById("cardPrefs").nextElementSibling.id, storeThenPlat: String(((document.getElementById("cardStorage") || {}).nextElementSibling || {}).id || "") };
       const fs0 = getComputedStyle(document.body).fontSize, btn0 = getComputedStyle(document.querySelector("#pageSetup .btn")).fontSize;
       document.getElementById("prefsTsizeL2").click(); await settle();
       out.tsize = { cls: document.body.className, fs0, fs: getComputedStyle(document.body).fontSize, btn0, btn: getComputedStyle(document.querySelector("#pageSetup .btn")).fontSize, state: state.tsize, get: window.HNK.textSize.get(), on: [...document.querySelectorAll("#prefsTsizeRow .chip")].filter(b => /\bon\b/.test(b.className)).map(b => b.id) };
@@ -416,8 +416,11 @@ async function panelWalk(browser) {
     report("C3) the sort button opens the panel's own <dialog id=hnkPick> (a native select never opens in Photoshop)", o.pick.open, o.pick);
     report("C4) Home: #hnkDashRecent under the AI Tools home carries the three newest results (data-name each) under GAL_L.recent; a tap on the first opens the Gallery with that file picked",
       o.home.strip && o.home.card && o.home.n === 3 && o.home.h === o.home.word && o.home.names.every(n => !!n) && o.homeTap && o.homeTap.page === "gallery" && o.homeTap.pick === o.home.names[0] && o.homeTap.pickShown === "", { home: o.home, tap: o.homeTap });
-    report("C5) Setup ▸ SETTINGS: the card sits between DATA and the platform card, wears PREFS_L.h2 and the Text size label, chips Small · Normal* · Large",
-      o.prefs.afterData === "cardData" && o.prefs.beforePlat === "cardPlat" && o.prefs.h2 === o.prefs.h2Word && o.prefs.lbl === o.prefs.lblWord && o.prefs.chips.join("|") === o.prefs.words.join("|"), o.prefs);
+    /* 6.135.0 put the Storage card between SETTINGS and the platform card, so SETTINGS is
+       followed by Storage and Storage by the platform card. The run of cards this wave
+       shipped is still unbroken, which is what the check is for. */
+    report("C5) Setup ▸ SETTINGS: the card still follows DATA and still runs into the platform card (through 6.135.0's Storage card), wears PREFS_L.h2 and the Text size label, chips Small · Normal* · Large",
+      o.prefs.afterData === "cardData" && o.prefs.beforePlat === "cardStorage" && o.prefs.storeThenPlat === "cardPlat" && o.prefs.h2 === o.prefs.h2Word && o.prefs.lbl === o.prefs.lblWord && o.prefs.chips.join("|") === o.prefs.words.join("|"), o.prefs);
     report("C6) Text size: Large puts tsize-l on <body>, the body 12 → 14px and a .btn 13 → 14.5px, state.tsize = HNK.textSize.get() = l, the Large chip on; Small → 11px / s; set(m) clears the class and the Normal chip is on",
       o.tsize.cls.split(/\s+/).indexOf("tsize-l") >= 0 && o.tsize.fs0 === "12px" && o.tsize.fs === "14px" && o.tsize.btn === "14.5px" && parseFloat(o.tsize.btn) > parseFloat(o.tsize.btn0) && o.tsize.state === "l" && o.tsize.get === "l" && o.tsize.on.join() === "prefsTsizeL2" &&
       o.tsizeS.cls.split(/\s+/).indexOf("tsize-s") >= 0 && o.tsizeS.fs === "11px" && o.tsizeS.state === "s" && !/tsize-/.test(o.tsizeBack.cls) && o.tsizeBack.fs === "12px" && o.tsizeBack.on.join() === "prefsTsizeM", { l: o.tsize, s: o.tsizeS, m: o.tsizeBack });

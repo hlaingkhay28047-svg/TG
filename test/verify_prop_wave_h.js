@@ -31,7 +31,7 @@ const APP = read("docs/app/index.html"), LANDING = read("docs/index.html"), CI =
 const PANEL_CAT = read("panel/js/hnk_wf_catalog_data.js"), PANEL_HOME = read("panel/src/ui/screens/home-screen.js");
 const WN = read("docs/app/data/whatsnew.js"), PWN = read("panel/js/hnk_whats_new.js"), MAIN = read("panel/main.js");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.134.0", PVER = "6.205.0";   /* the wave shipped as 6.123.0 / 6.194.0; every release since moves the pair on, and the strip leads with the newest row */
+const VER = "6.135.0", PVER = "6.206.0";   /* the wave shipped as 6.123.0 / 6.194.0; every release since moves the pair on, and the strip leads with the newest row */
 const IDS = ["prop-insert", "decor-theme-color", "light-gear-remove"];
 
 let failures = 0;
@@ -138,12 +138,12 @@ const row = rows.find(r => r.v === WAVE_V);
 /* the row wears the shipped shape — t a plain title, s the excerpt with its **bold lead** — because renderDashNew
    reads both (a row without s threw "Cannot read properties of undefined (reading 'my')" in the dry run) */
 report("B6) the What's New strip carries the 6.123.0 row — kind wf, opening the prop card — a plain title and a bold-led excerpt in all nine languages, both naming the three cards, and the panel's lifted table carries it (it led the strip when this wave shipped; the 6.123.1, 6.124.0, 6.125.0, 6.126.0 and every release since sit above it now)",
-  !!row && row.v === WAVE_V && rows.indexOf(row) <= 13 &&   /* 6.134.0 — each release adds a row above it; the window widens by one rather than the row being re-dated */ row.kind === "wf" && row.ref === "prop-insert" && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
+  !!row && row.v === WAVE_V && rows.indexOf(row) <= 14 &&   /* 6.134.0, then 6.135.0 — each release adds a row above it; the window widens by one rather than the row being re-dated */ row.kind === "wf" && row.ref === "prop-insert" && LANGS.every(l => row.t[l] && row.s && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**") &&
     [row.t[l], row.s[l]].every(x => /Furniture & Prop Insert/.test(x) && /Decor Theme Colour/.test(x) && /Remove Light Stands & Gear/.test(x))) &&
   has(PWN, '"v":"' + WAVE_V + '"') && has(PWN, '"ref":"prop-insert"'), row && { v: row.v, kind: row.kind, ref: row.ref, at: rows.indexOf(row) });
-report("B7) CI runs this test right after the Reference Scenes check, the suite counts 276 invocations and the landing says 276 tests (265 until 6.124.0 added verify_selection_swap, 266 until 6.125.0 added verify_album_wave_i, 267 until 6.127.0 added verify_skin_age_guard, 268 until 6.127.1 added verify_panel_v2_layer, 269 until 6.128.0 added verify_gen_loading_billing, 270 until 6.129.0 added verify_scene_frame_6129, 271 until 6.130.0 added verify_admin_wave_6130, 272 until 6.131.0 added verify_usage_ledger_6131, 273 until 6.132.0 added verify_scene_lock_agreement_6132, 274 until 6.133.0 added verify_horse_straw_6133, 275 until 6.134.0 added verify_panel_canvas_state_6134)",
+report("B7) CI runs this test right after the Reference Scenes check, the suite counts 277 invocations and the landing says 277 tests (265 until 6.124.0 added verify_selection_swap, 266 until 6.125.0 added verify_album_wave_i, 267 until 6.127.0 added verify_skin_age_guard, 268 until 6.127.1 added verify_panel_v2_layer, 269 until 6.128.0 added verify_gen_loading_billing, 270 until 6.129.0 added verify_scene_frame_6129, 271 until 6.130.0 added verify_admin_wave_6130, 272 until 6.131.0 added verify_usage_ledger_6131, 273 until 6.132.0 added verify_scene_lock_agreement_6132, 274 until 6.133.0 added verify_horse_straw_6133, 275 until 6.134.0 added verify_panel_canvas_state_6134, 277 until 6.135.0 added verify_storage_clock_6135)",
   has(CI, "run: PORT=8931 node test/verify_reference_scenes.js\n") && has(CI, "run: PORT=8931 node test/verify_prop_wave_h.js") && CI.indexOf("verify_reference_scenes.js") < CI.indexOf("verify_prop_wave_h.js") &&
-  (CI.match(/node test\//g) || []).length === 276 && has(LANDING, "276 tests") && !has(LANDING, "264 tests") && /data-count="tests">276</.test(LANDING), { steps: (CI.match(/node test\//g) || []).length });
+  (CI.match(/node test\//g) || []).length === 277 && has(LANDING, "277 tests") && !has(LANDING, "264 tests") && /data-count="tests">277</.test(LANDING), { steps: (CI.match(/node test\//g) || []).length });
 
 /* ===================== C) the panel's lifted catalog and its compiler ===================== */
 const cat = JSON.parse(PANEL_CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);

@@ -1223,3 +1223,12 @@ jobs:
       # pixel-identical to a native one.
       - name: Verify the panel's canvas can save its own state where the host cannot
         run: PORT=8931 node test/verify_panel_canvas_state_6134.js
+
+      # 6.135.0 — Setup ▸ Storage and the run clock. The owner asked for two things: histories
+      # deletable so the machine does not get heavy, and a loading time on every generate that
+      # still had none. Each history already had a delete; what was missing was a place that says
+      # HOW MUCH is on the disk, and a delete for the web-picture scratch files, which nothing had
+      # ever removed. The clock went to the three generates without one: the AI Tools / Smart
+      # Workflow strip, the panel's shared dots line (Text→Image rides it) and the app's wizard.
+      - name: Verify the panel says what it is storing, can delete it, and every generate counts its seconds
+        run: PORT=8931 node test/verify_storage_clock_6135.js
