@@ -15,6 +15,15 @@ const FAKE_FS_SRC = `(function () {
         return Promise.resolve(typeof data === "string" ? data : new TextDecoder().decode(data || new Uint8Array()));
       },
       delete: function () { del(); return Promise.resolve(); },
+      /* 6.135.0 — Setup ▸ Storage measures with getMetadata().size, so the fake folder
+         answers with the byte length of whatever was written into it. A file never
+         written reports 0, exactly as an empty file on disk would. */
+      getMetadata: function () {
+        var n = 0;
+        if (data instanceof Uint8Array) n = data.byteLength;
+        else if (typeof data === "string") n = new TextEncoder().encode(data).length;
+        return Promise.resolve({ size: n });
+      },
       _data: function () { return data; } };
   }
   function mkFolder(p) {

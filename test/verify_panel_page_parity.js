@@ -79,7 +79,28 @@ const PANEL_ONLY = {
   album: [
     "Photoshop ထဲ ဖွင့်"
   ],
-  setup: []
+  /* 6.135.0 — SETUP ▸ STORAGE is the panel's card and only the panel's. It reads the
+     plugin's own data folder (uxp.storage.localFileSystem.getDataFolder) and offers to empty
+     it: results, video takes, album records, the web-picture scratch files and the settings
+     file, each with its measured size. A browser has no such folder — the web app's results
+     live in IndexedDB, which the Gallery already clears — so there is nothing on the app side
+     for these lines to differ FROM. The four Deletes are one word each, listed four times
+     because dropOnce takes one occurrence per entry. The six measured readings are generated,
+     not written, so they are matched by pattern below. */
+  setup: [
+    "သိမ်းဆည်းမှု",                                  /* STORAGE */
+    "ဒီ Panel က ကွန်ပျူတာထဲမှာ သိမ်းထားတာတွေ — ဖျက်ချင်တာ ရွေးဖျက်လို့ရပါတယ်",
+    "ရလဒ် ပုံများ",                                        /* Results */
+    "ဗီဒီယိုများ",                                          /* Videos */
+    "Album မှတ်တမ်း",                                            /* Albums */
+    "ယာယီ ဖိုင်များ",                                      /* Temporary files */
+    "ပြင်ဆင်ချက် ဖိုင်များ",                            /* Settings files */
+    "စုစုပေါင်း",                                            /* Total */
+    "★ ထားတာတွေ မဖျက်ပါ",                              /* the kept note */
+    "နေရာ ရှင်းမယ်",                                      /* Free space now */
+    "ပြန်တွက်",                                                /* Refresh */
+    "ဖျက်", "ဖျက်", "ဖျက်", "ဖျက်"                          /* Delete × 4 */
+  ]
 };
 /* Strings the APP shows that the panel draws instead of writing: the app's
    size tile is an inline <svg> with the letters HD inside it, which counts as
@@ -224,7 +245,11 @@ const PANEL_ONLY_RE = {
      families are now disabled header rows, which every renderer draws, so the
      panel carries one text node per family that the app expresses in an
      attribute. Same grouping, same order, same models. */
-  video: [/^— .+ \(\d+\) —$/]
+  video: [/^— .+ \(\d+\) —$/],
+  /* 6.135.0 — the Storage card's six readings are measured off the plugin's data folder
+     ("2 files · 488 KB"), so the count and the size are whatever that folder holds when the
+     walk runs. The shape is fixed and the words around it are pinned in PANEL_ONLY above. */
+  setup: [/^\d+ .+ · (0|\d+(\.\d)? (B|KB|MB|GB))$/]
 };
 function dropPatterns(list, res) {
   if (!res || !res.length) return list;

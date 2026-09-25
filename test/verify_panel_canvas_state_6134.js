@@ -49,8 +49,8 @@ const APP = read("docs/app/index.html"), LANDING = read("docs/index.html"), CI =
 const MAIN = read("panel/main.js"), INDEX = read("panel/index.html");
 const SHIM = read("panel/src/app/uxp-canvas.js");
 const ALBUM = read("panel/js/hnk_album.js");
-const VER = "6.134.0", PVER = "6.205.0";
-const COUNT = 276;
+const VER = "6.135.0", PVER = "6.206.0";
+const COUNT = 277;
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml",
   ".mp4": "video/mp4", ".woff2": "font/woff2", ".ico": "image/x-icon" };
@@ -372,7 +372,7 @@ async function panelRun(browser, withShim) {
     const pv = JSON.parse(read("docs/download/panel-version.json"));
     report("D3) " + VER + " / panel " + PVER + " in lockstep: APP_VER, version.json, sw.js cache, API_VERSION, PANEL_VERSION, manifest, release-manifest, panel-version.json, the download footer and the landing's badges",
       has(APP, 'var APP_VER="' + VER + '";') && has(read("docs/app/version.json"), '"v":"' + VER + '"') &&
-      has(read("docs/app/sw.js"), "hnk-web-studio-v6-134-0") &&
+      has(read("docs/app/sw.js"), "hnk-web-studio-v6-135-0") &&
       has(read("server/index.js"), 'const API_VERSION = "' + VER + '";') && has(MAIN, 'const PANEL_VERSION = "' + PVER + '";') &&
       has(read("panel/manifest.json"), '"version": "' + PVER + '"') &&
       man.version === PVER && man.artifact_file === "HNK_Ai_Panel_v" + PVER + ".ccx" && /^[0-9a-f]{64}$/.test(man.sha256) && man.bytes > 20000000 &&

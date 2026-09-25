@@ -122,6 +122,7 @@ const state = {
   rtStrength: 100,
   promptCap: MAX_PROMPT, page: "aitools", keep: { frame: true, pose: true, face: true, expr: false, hair: false, dress: false, skin: false, light: false, color: false, bg: false, subject: false },
   pendingBtn: null, busyBtnEl: null, busyBtnTxt: null,
+  busyT0: 0,   /* 6.135.0 — when the current startBusy run began, so the dots line can say how long it has been */
   history: [],
   histSel: -1, lastAction: "Prompt",
   /* v6.56.0 — the app's Text to Image opens on AUTO, letting the model pick
@@ -2791,7 +2792,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.205.0";
+const PANEL_VERSION = "6.206.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6404,6 +6405,7 @@ function bindSetupRefresh() {
   safe("setup:about", renderAbout);
   safe("setup:readiness", renderSetupStatus);
   safe("setup:datastore", function () { refreshDataStore(); });
+  safe("setup:storage-paint", function () { renderStorageP(); });   /* 6.135.0 — words only; the walk is on page open */
 }
 function bindSetup() {
   /* account */
@@ -6453,6 +6455,8 @@ function bindSetup() {
       const b = $(r[0]); if (b) ffPressable(b, function () { motionSetP(r[1]); });
     });
   });
+  /* 6.135.0 — Setup ▸ Storage */
+  safe("setup:storage", function () { bindStorage(); });
   /* platforms · share · about */
   safe("setup:about-wire", function () {
     wireStaticGrp("platGrpAndroid"); wireStaticGrp("platGrpIos"); wireStaticGrp("platGrpDesktop"); wireStaticGrp("platGrpPs");
@@ -8769,6 +8773,137 @@ const PREFS_L = {
   mFull: { my: "အပြည့်", en: "Full", shn: "တဵမ်", kac: "Hkum", th: "เต็มที่", zh: "完整", vi: "Đầy đủ", id: "Penuh", ms: "Penuh" },
   mReduced: { my: "လျှော့", en: "Reduced", shn: "ယွမ်း", kac: "Yawm", th: "ลดลง", zh: "减少", vi: "Giảm", id: "Dikurangi", ms: "Dikurangkan" }
 };
+/* ============================================================
+   6.135.0 — SETUP ▸ STORAGE. The owner, 2026-09-25: "Ccx မှာ စက်မလေးအောင်
+   history တွေကို ဖျက်လို့ရအောင် လုပ်ပေးပါ".
+
+   Every history already had a delete — the Gallery's ✕ and Clear, the video
+   strips' ✕ and Clear, the albums shelf's ✕, the prompt list's ✕. What
+   the panel never had was a place that says HOW MUCH is on the disk, so a
+   studio could not tell there was anything worth deleting: the results folder
+   has had no ceiling since 6.57.0 (the owner's own instruction: keep them
+   until I delete them), an album record carries its photographs at 2,400 or
+   4,000 pixels as text, and the web-picture scratch files were never removed
+   by anything at all.
+
+   One card, one row per store, real byte counts, a Delete per row and a "Free
+   space now" that only ever touches scratch. ★-marked results are never in a
+   delete, and the settings row has no button: signing the studio out is not
+   housekeeping. Every Delete is the Gallery's own two-press arm — press once
+   to arm, again within four seconds to do it — because UXP's confirm dialogs
+   are a thing this panel has learned not to rely on.
+   ============================================================ */
+const STORE_L = {
+  h2: { my: "သိမ်းဆည်းမှု", en: "STORAGE", shn: "ၵၢၼ်သိမ်း", kac: "Makoi da ai", th: "พื้นที่จัดเก็บ", zh: "存储", vi: "LƯU TRỮ", id: "PENYIMPANAN", ms: "STORAN" },
+  note: { my: "ဒီ Panel က ကွန်ပျူတာထဲမှာ သိမ်းထားတာတွေ — ဖျက်ချင်တာ ရွေးဖျက်လို့ရပါတယ်",
+    en: "What this panel keeps on your computer — delete any row you do not need",
+    shn: "ပႃႇၼႄႇလ်ၼႆႉ သိမ်းဝႆႉၼႂ်းၶွမ်း — လိူၵ်ႈမွတ်ႇလႆႈ",
+    kac: "Ndai panel gaw computer hta makoi da ai ni — ra ai hpe shakau lu ai",
+    th: "สิ่งที่แผงนี้เก็บไว้ในเครื่อง — ลบแถวที่ไม่ต้องการได้",
+    zh: "此面板存放在电脑上的内容 — 不需要的可逐行删除",
+    vi: "Những gì bảng này lưu trên máy — xoá hàng nào bạn không cần",
+    id: "Yang disimpan panel ini di komputer — hapus baris yang tidak perlu",
+    ms: "Apa yang panel ini simpan pada komputer — padam baris yang tidak perlu" },
+  results: { my: "ရလဒ် ပုံများ", en: "Results", shn: "ၽွၼ်းလႆႈ", kac: "Result ni", th: "ผลลัพธ์", zh: "结果图", vi: "Kết quả", id: "Hasil", ms: "Hasil" },
+  videos: { my: "ဗီဒီယိုများ", en: "Videos", shn: "ဝီးတီးဢူဝ်း", kac: "Video ni", th: "วิดีโอ", zh: "视频", vi: "Video", id: "Video", ms: "Video" },
+  albums: { my: "Album မှတ်တမ်း", en: "Albums", shn: "ဢႄႇလ်ပမ်ႇ", kac: "Album ni", th: "อัลบั้ม", zh: "相册", vi: "Album", id: "Album", ms: "Album" },
+  temps: { my: "ယာယီ ဖိုင်များ", en: "Temporary files", shn: "ၾၢႆႇၸူဝ်ႈၶၢဝ်း", kac: "Ten kadun file ni", th: "ไฟล์ชั่วคราว", zh: "临时文件", vi: "Tệp tạm", id: "Berkas sementara", ms: "Fail sementara" },
+  settings: { my: "ပြင်ဆင်ချက် ဖိုင်များ", en: "Settings files", shn: "ၾၢႆႇၶိူင်ႈမၢႆ", kac: "Setting file ni", th: "ไฟล์การตั้งค่า", zh: "设置文件", vi: "Tệp cài đặt", id: "Berkas pengaturan", ms: "Fail tetapan" },
+  total: { my: "စုစုပေါင်း", en: "Total", shn: "တင်းမူတ်း", kac: "Yawng", th: "รวม", zh: "合计", vi: "Tổng", id: "Total", ms: "Jumlah" },
+  files: { my: "ဖိုင်", en: "files", shn: "ၾၢႆႇ", kac: "file", th: "ไฟล์", zh: "个", vi: "tệp", id: "berkas", ms: "fail" },
+  del: { my: "ဖျက်", en: "Delete", shn: "မွတ်ႇ", kac: "Shakau", th: "ลบ", zh: "删除", vi: "Xoá", id: "Hapus", ms: "Padam" },
+  armed: { my: "သေချာလား? — ထပ်နှိပ်", en: "Sure? Tap again", shn: "တႄႉႁိုဝ်? — ၼဵၵ်းထႅင်ႈ", kac: "Teng ai i? — bai dip", th: "แน่ใจไหม? แตะอีกครั้ง", zh: "确定？再点一次", vi: "Chắc chứ? Chạm lại", id: "Yakin? Ketuk lagi", ms: "Pasti? Ketik lagi" },
+  free: { my: "နေရာ ရှင်းမယ်", en: "Free space now", shn: "ႁဵတ်းႁႂ်ႈတီႈဝႆႇ", kac: "Shara shalai kau", th: "ล้างพื้นที่", zh: "立即清理", vi: "Dọn chỗ ngay", id: "Bebaskan ruang", ms: "Bebaskan ruang" },
+  refresh: { my: "ပြန်တွက်", en: "Refresh", shn: "ႁဵတ်းမႂ်ႇ", kac: "Bai hkrung", th: "คำนวณใหม่", zh: "重新统计", vi: "Tính lại", id: "Hitung ulang", ms: "Kira semula" },
+  kept: { my: "★ ထားတာတွေ မဖျက်ပါ", en: "★ kept results are never deleted", shn: "★ ဢၼ်မၢႆဝႆႉ ဢမ်ႇမွတ်ႇ", kac: "★ makoi da ai ni gaw n shakau ai", th: "★ ที่ติดดาวไว้จะไม่ถูกลบ", zh: "★ 标星的不会被删除", vi: "★ đã giữ sẽ không bị xoá", id: "★ yang ditandai tidak dihapus", ms: "★ yang ditanda tidak dipadam" },
+  none: { my: "ဖျက်စရာ မရှိပါ", en: "Nothing to delete", shn: "ဢမ်ႇမီးဢၼ်တေမွတ်ႇ", kac: "Shakau na nlu", th: "ไม่มีอะไรให้ลบ", zh: "没有可删除的", vi: "Không có gì để xoá", id: "Tidak ada yang dihapus", ms: "Tiada apa untuk dipadam" },
+  freed: { my: "နေရာ ပြန်ရပါပြီ", en: "freed", shn: "လႆႈတီႈဝႆႇၶိုၼ်း", kac: "shara lu sai", th: "คืนพื้นที่แล้ว", zh: "已释放", vi: "đã giải phóng", id: "dibebaskan", ms: "dibebaskan" },
+  nohost: { my: "ဒီ host မှာ ဖိုင် folder မရှိပါ", en: "This host gives the panel no data folder", shn: "ႁူင်းၼႆႉ ဢမ်ႇမီး folder", kac: "Ndai host gaw data folder n jaw ai", th: "โฮสต์นี้ไม่มีโฟลเดอร์ข้อมูล", zh: "此宿主未提供数据文件夹", vi: "Máy chủ này không cho thư mục dữ liệu", id: "Host ini tidak memberi folder data", ms: "Hos ini tidak memberi folder data" }
+};
+/* the four rows that carry a Delete, in the order the card shows them; "settings" is
+   measured and shown but never offered, because deleting it signs the studio out */
+const STORE_ROWS = ["results", "videos", "albums", "temps"];
+const STORE = { last: null, arm: {}, busy: false };
+function storeApi() { return (globalThis.HNK && globalThis.HNK.panelStorage) || null; }
+function storeKeep(name) { return !!(typeof GAL !== "undefined" && GAL && GAL.keep && GAL.keep[name]); }
+async function storeMeasureP() {
+  const api = storeApi();
+  STORE.last = api ? await api.measure() : null;
+  renderStorageP();
+}
+function storeRowLine(api, k) {
+  const m = STORE.last;
+  const r = m && m[k];
+  if (!r) return "\u2014";
+  return r.n + " " + ff9(STORE_L.files) + " \u00b7 " + api.fmt(r.bytes);
+}
+function renderStorageP() {
+  const h = $("storeH2"); if (!h) return;
+  setIcnText(h, "i-stack", "gold", ff9(STORE_L.h2), "ic-h2");
+  const nt = $("storeNote"); if (nt) nt.textContent = ff9(STORE_L.note);
+  const api = storeApi();
+  const armed = function (k) { return Date.now() - (STORE.arm[k] || 0) < 4000; };
+  ["results", "videos", "albums", "temps", "settings"].forEach(function (k) {
+    const lb = $("storeL_" + k); if (lb) lb.textContent = ff9(STORE_L[k]);
+    const vl = $("storeV_" + k); if (vl) vl.textContent = api ? storeRowLine(api, k) : "\u2014";
+    const bt = $("storeB_" + k);
+    if (bt) {
+      const on = armed(k);
+      bt.className = "btn" + (on ? " btn-gold" : "");
+      setIcnText(bt, "i-trash", on ? "ink" : "cream", ff9(on ? STORE_L.armed : STORE_L.del));
+    }
+  });
+  const tl = $("storeTotalL"); if (tl) tl.textContent = ff9(STORE_L.total);
+  const tv = $("storeTotalV");
+  if (tv) tv.textContent = (api && STORE.last && STORE.last.ok) ? storeRowLine(api, "total") : ff9(STORE_L.nohost);
+  const kp = $("storeKeptNote"); if (kp) kp.textContent = ff9(STORE_L.kept);
+  /* i-sparkle, not a broom: the panel's icon set has no broom, and 6.136.0's own rule is
+     that a builder never asks for a glyph the CCX does not carry */
+  const fb = $("btnStoreFree"); if (fb) setIcnText(fb, "i-sparkle", "cream", ff9(STORE_L.free));
+  /* i-reset ships in the muted tone only — verify_panel_art walks every page and fails on
+     a picture that does not paint, and this is the tone the CCX carries */
+  const rb = $("btnStoreRefresh"); if (rb) setIcnText(rb, "i-reset", "muted", ff9(STORE_L.refresh));
+}
+async function storeDeleteP(kind) {
+  const api = storeApi(); if (!api || STORE.busy) return;
+  if (Date.now() - (STORE.arm[kind] || 0) >= 4000) {
+    STORE.arm[kind] = Date.now(); renderStorageP();
+    setTimeout(function () { try { renderStorageP(); } catch (e) { } }, 4200);
+    return;
+  }
+  STORE.arm[kind] = 0;
+  STORE.busy = true;
+  try {
+    const out = await api.clear(kind, { keep: storeKeep });
+    await storeMeasureP();
+    if (!out.ok) stSet("stStore", ff9(STORE_L.nohost), "err");
+    else if (!out.n) stSet("stStore", ff9(STORE_L.none), "ok");
+    else stSet("stStore", out.n + " \u00b7 " + api.fmt(out.bytes) + " " + ff9(STORE_L.freed) + (out.kept ? " \u2014 \u2605 " + out.kept : ""), "ok");
+  } catch (e) { stSet("stStore", friendlyErr(e), "err"); }
+  STORE.busy = false;
+}
+async function storeFreeP() {
+  const api = storeApi(); if (!api || STORE.busy) return;
+  STORE.busy = true;
+  try {
+    const out = await api.sweepTemps();
+    await storeMeasureP();
+    if (!out.ok) stSet("stStore", ff9(STORE_L.nohost), "err");
+    else if (!out.n) stSet("stStore", ff9(STORE_L.none), "ok");
+    else stSet("stStore", out.n + " \u00b7 " + api.fmt(out.bytes) + " " + ff9(STORE_L.freed), "ok");
+  } catch (e) { stSet("stStore", friendlyErr(e), "err"); }
+  STORE.busy = false;
+}
+function bindStorage() {
+  STORE_ROWS.forEach(function (k) {
+    const b = $("storeB_" + k); if (b) ffPressable(b, function () { storeDeleteP(k); });
+  });
+  const fb = $("btnStoreFree"); if (fb) ffPressable(fb, storeFreeP);
+  const rb = $("btnStoreRefresh"); if (rb) ffPressable(rb, function () { storeMeasureP(); });
+  renderStorageP();
+  REFRESHERS.push(function () { try { renderStorageP(); } catch (e) { hwarn("storage:", e); } });
+}
+
 /* 6.191.0 — MOTION (wave E): the one switch is body.motion-reduce (styles.css stills every transition and the Imagine
    ring; spinFrame leaves the spinner where it is). Persisted in the settings file like text size. */
 function motionReducedP() { return state.motion === "reduced"; }
@@ -10604,8 +10739,22 @@ async function hnkFetch(url, opts, timeoutMs) {
   }
 }
 
+/* 6.135.0 — THE DOTS LEARN THE TIME. The owner, 2026-09-25: "Generate မှာ
+   loading time တွေမပါသေးတာတေွ ပါအောင်ထည့်ပေးပါ". Freeform and the four video
+   pages have counted their seconds since 6.51.0; every run that goes through
+   startBusy — Text\u2192Image above all, and the capture / place / web-fetch
+   steps — showed a word and three moving dots, so a run that had been going
+   for two minutes looked exactly like one that started a second ago. The dots
+   stay (they move four times a second and prove the panel is alive between
+   ticks); the seconds are appended in the app's own shape, base \u00b7 Ns. */
+function busySecs() { return state.busyT0 ? Math.round((Date.now() - state.busyT0) / 1000) : 0; }
+function busyLine(msgKey, dots) {
+  const n = busySecs();
+  return t(msgKey) + (n > 0 ? " \u00b7 " + n + "s" : "") + (dots ? " " + dots : "");
+}
 function startBusy(msgKey) {
   state.busy = true;
+  state.busyT0 = Date.now();
   if (state.pendingBtn && !state.busyBtnEl) {
     state.busyBtnEl = state.pendingBtn;
     state.busyBtnTxt = state.busyBtnEl.textContent;
@@ -10618,7 +10767,7 @@ function startBusy(msgKey) {
   dotsTimer = setInterval(function () {
     n = (n + 1) % 4;
     const s = $("status");
-    if (s) s.textContent = t(msgKey) + " " + new Array(n + 1).join(".");
+    if (s) s.textContent = busyLine(msgKey, new Array(n + 1).join("."));
     if (state.busyBtnEl) {
       let bt = "";
       for (let bi = 0; bi < 1 + (n % 3); bi++) bt += "\u2022 ";
@@ -10628,6 +10777,7 @@ function startBusy(msgKey) {
 }
 function endBusy() {
   state.busy = false;
+  state.busyT0 = 0;   /* 6.135.0 — the run clock stops with the run */
   if (state.busyBtnEl) {
     state.busyBtnEl.textContent = state.busyBtnTxt || "";
   }
@@ -11112,6 +11262,13 @@ async function loadUrlIntoAnySlot(rawUrl, cfg) {
       const tmp = await folder.createFile(cfg.tmpPrefix + Date.now() + "." + ext, { overwrite: true });
       await tmp.write(got.buf, { format: formats.binary });
       ref = await captureFileViaPS(tmp, urlLabel(got.url), 1536);
+      /* 6.135.0 — AND THEN DELETE IT. This scratch file has been written once per
+         converted web picture since 6.82.0 and never removed: a studio that loaded
+         fifty links carried fifty files in the plugin's data folder that nothing in
+         the panel could see or clear. Photoshop has the pixels by now, so the file
+         has no further use. The delete is best-effort — a host that refuses it leaves
+         the bytes for Setup ▸ Storage ▸ Free space now to pick up. */
+      try { await tmp.delete(); } catch (eTmp) { hwarn("web temp:", eTmp); }
     }
     if (!imgMagicOk(ref.b64)) { endBusy(); setStatus(t("st_img_bad") + " (Ref)", "err"); return; } /* AUDIT-FIX #4: endBusy before return so the panel never sticks busy */
     cfg.assign(ref); /* check 1/3: ref verified */
@@ -14400,7 +14557,7 @@ function switchPage(key) {
      opened (and on Run again), never on the boot path: renderSelfTest also
      runs from setupApplyStatics at boot, and a probe there would reach out
      to RunningHub on every panel start. The row re-paints when they answer. */
-  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); hnkNetProbeStart(false); hnkLayerProbeStart(false); hnkSaveProbeStart(false); hnkPlaceProbeStart(false); renderSelfTest(); } catch (e) { } }
+  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); storeMeasureP(); hnkNetProbeStart(false); hnkLayerProbeStart(false); hnkSaveProbeStart(false); hnkPlaceProbeStart(false); renderSelfTest(); } catch (e) { } }   /* 6.135.0 — the storage walk runs when Setup opens, never at boot */
   /* the sticky GENERATE follows the page that owns it */
   try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
 }
@@ -14753,6 +14910,16 @@ function init() {
     safe("version", function () { paintPanelVersion(); checkPanelUpdate(); });
     safe("page-restore", function () { switchPage(state.page || "aitools"); });
     safe("takes-restore", function () { takesRestoreP(); });   /* v6.87.0 — the video strips come back */
+    /* 6.135.0 — the scratch files older versions left behind. loadUrlIntoAnySlot wrote one
+       hnk_ff_web_<ts> per converted web picture from 6.82.0 to 6.134.0 and never removed one,
+       so a studio upgrading into this release is carrying every link they ever loaded. The
+       sweep runs once, off the boot path, and never reports: Setup ▸ Storage is where a
+       studio sees the number. */
+    safe("temp-sweep", function () {
+      setTimeout(function () {
+        try { const api = storeApi(); if (api) api.sweepTemps().catch(function () { }); } catch (e) { }
+      }, 2500);
+    });
     safe("meta", function () { renderRefs(); refreshCompare(); });
     safe("reflib-restore", function () { try { refLibRestoreSlots(); } catch (e) { hwarn("lib restore:", e); } });
     safe("ready", function () { setStatus(t("st_ready")); });

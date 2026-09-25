@@ -13,7 +13,7 @@
    paints fill, ignores stroke, and does not inherit `fill="none"` — a path
    with no fill falls back to the default, which is black.
 
-   263 of the panel's 276 icons are stroke-drawn. That one fact is the whole of
+   263 of the panel's 277 icons are stroke-drawn. That one fact is the whole of
    the owner's "icons တွေ အမဲဖြစ်နေတယ်", and it survived five waves of
    diagnostics because nothing had ever drawn a stroke icon beside a fill icon
    and asked which one arrived.

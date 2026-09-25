@@ -19,8 +19,8 @@
  * the nine-language card line, the four-step guide in English and Myanmar, the card picture, the
  * composed prompt the wizard really sends (house lines present, no raw token left), the panel's
  * lifted catalog and compiler producing the same prompt, the counts 198 → 199 / 205 → 206, the
- * What's New row in nine languages, the CI step and the 276-test chain, and the 6.133.0 / 6.204.0
- * lockstep.
+ * What's New row in nine languages, the CI step, the live test-count chain and the release lockstep
+ * (both of which move with every wave, so this header names neither by number).
  * Usage: PORT=8931 node test/verify_horse_straw_6133.js   (serve docs/app first) */
 "use strict";
 const fs = require("fs");
@@ -35,9 +35,9 @@ const has = (s, t) => s.indexOf(t) >= 0;
 const APP = read("docs/app/index.html"), LANDING = read("docs/index.html"), CI = read(".github/workflows/test.yml");
 const MAIN = read("panel/main.js");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.134.0", PVER = "6.205.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.135.0", PVER = "6.206.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.133.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 276;
+const COUNT = 277;
 const ID = "horse-straw";
 
 let failures = 0;
@@ -286,7 +286,7 @@ function panelCatalog() {
     /* 6.134.0 — it led the strip when this wave shipped; each release since adds a row above it, so the
        claim is that the row is there, near the top, and still points at the card — never that it leads. */
     report("D2) What's New carries the " + WAVE_V + " row near the top, in all nine languages, pointing at the card — and the panel's lifted table carries it too",
-      !!row && rows.indexOf(row) <= 1 && row.kind === "wf" && row.ref === ID &&
+      !!row && rows.indexOf(row) <= 2 &&   /* 6.135.0 — one more release above it */ row.kind === "wf" && row.ref === ID &&
       LANGS.every(l => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 200) &&
       has(PWN, '"v":"' + WAVE_V + '"') && has(PWN, '"ref":"' + ID + '"'),
       row && { at: rows.indexOf(row), kind: row.kind, ref: row.ref, langs: LANGS.filter(l => !row.t[l]) });
@@ -310,7 +310,7 @@ function panelCatalog() {
     const pv = JSON.parse(read("docs/download/panel-version.json"));
     report("D4) " + VER + " / panel " + PVER + " in lockstep: APP_VER, version.json, sw.js cache, API_VERSION, PANEL_VERSION, manifest, release-manifest, panel-version.json, the download footer and the landing's badges",
       has(APP, 'var APP_VER="' + VER + '";') && has(read("docs/app/version.json"), '"v":"' + VER + '"') &&
-      has(read("docs/app/sw.js"), 'hnk-web-studio-v6-134-0') &&
+      has(read("docs/app/sw.js"), 'hnk-web-studio-v6-135-0') &&
       has(read("server/index.js"), 'const API_VERSION = "' + VER + '";') && has(MAIN, 'const PANEL_VERSION = "' + PVER + '";') &&
       has(read("panel/manifest.json"), '"version": "' + PVER + '"') &&
       man.version === PVER && man.artifact_file === "HNK_Ai_Panel_v" + PVER + ".ccx" && /^[0-9a-f]{64}$/.test(man.sha256) && man.bytes > 20000000 &&

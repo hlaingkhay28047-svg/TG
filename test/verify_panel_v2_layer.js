@@ -46,7 +46,7 @@ const APP = read("docs/app/index.html");
 const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const PWN = read("panel/js/hnk_whats_new.js");
-const VER = "6.134.0", PVER = "6.205.0";
+const VER = "6.135.0", PVER = "6.206.0";
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
@@ -201,13 +201,13 @@ function releasePins() {
   const WAVE_V = "6.127.1";
   const row = wn.find(r => r.v === WAVE_V);
   report(`C2) the What's New strip carries the ${WAVE_V} row, in all nine languages, with a bold-led excerpt, and the panel's lifted table carries it (it led the strip when this wave shipped)`,
-    !!row && wn.indexOf(row) <= 7 && LANGS.every(l => row.t[l] && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**")) &&
+    !!row && wn.indexOf(row) <= 8 &&   /* 6.135.0 — one more release above it */ LANGS.every(l => row.t[l] && row.s[l] && !row.t[l].startsWith("**") && row.s[l].startsWith("**")) &&
     has(PWN, '"v":"' + WAVE_V + '"'), row && { at: wn.indexOf(row), kind: row.kind, ref: row.ref });
 
-  report("C3) CI runs this test right after the skin-card check, and the suite counts 276 invocations (269 when this release shipped; 6.128.0 · 6.129.0 · 6.130.0 · 6.131.0 · 6.132.0 · 6.133.0 · 6.134.0 each added one)",
+  report("C3) CI runs this test right after the skin-card check, and the suite counts 277 invocations (269 when this release shipped; 6.128.0 · 6.129.0 · 6.130.0 · 6.131.0 · 6.132.0 · 6.133.0 · 6.134.0 · 6.135.0 each added one)",
     has(CI, "run: node test/verify_skin_age_guard.js") && has(CI, "run: PORT=8931 node test/verify_panel_v2_layer.js") &&
     CI.indexOf("verify_skin_age_guard.js") < CI.indexOf("verify_panel_v2_layer.js") &&
-    (CI.match(/node test\//g) || []).length === 276 && has(LANDING, "276 tests"),
+    (CI.match(/node test\//g) || []).length === 277 && has(LANDING, "277 tests"),
     { steps: (CI.match(/node test\//g) || []).length });
 }
 

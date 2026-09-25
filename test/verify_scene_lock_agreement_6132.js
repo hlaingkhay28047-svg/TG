@@ -51,8 +51,8 @@ const APP = read("docs/app/index.html"), LANDING = read("docs/index.html"), CI =
 const MAIN = read("panel/main.js"), WN = read("docs/app/data/whatsnew.js"), PWN = read("panel/js/hnk_whats_new.js");
 const LIBWF = A.libWfText(), HNKDATA = A.hnkDataText(), PCAT = read("panel/js/hnk_wf_catalog_data.js");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.134.0", PVER = "6.205.0";
-const COUNT = 276;
+const VER = "6.135.0", PVER = "6.206.0";
+const COUNT = 277;
 const LOOK_IDS = ["studio-look-copy", "full-look-transfer", "regency-birthday"];
 const HOUSE_TAGS = ["FRAME EXTENT LOCK:", "COLOUR SEPARATION LOCK:", "SUBJECT SEPARATION LOCK:",
   "LIGHT MATCH LOCK:", "SKIN FINISH:", "FRAME BALANCE:", "REAL PHOTOGRAPH:", "SKIN TONE TRUTH:"];

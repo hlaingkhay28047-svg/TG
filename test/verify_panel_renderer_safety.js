@@ -785,11 +785,11 @@ const READ_CARD = () => {
   /* D) className IS NOT A STRING IN UXP.
         v6.53.0 — the owner photographed the self-test on panel 6.119.0: Wiring
         56 ok / 4 FAILED, every failure the same line —
-        "Cannot read properties of null (reading 'replace') @ main.js:276" —
+        "Cannot read properties of null (reading 'replace') @ main.js:277" —
         and Labels ✗ "Setup #btnCheckUpdate" beneath it.
 
         A browser hands back "" for an element with no class attribute. UXP
-        hands back null. Line 276 read host.className and called .replace on
+        hands back null. Line 277 read host.className and called .replace on
         it. Every one of the four failing wirings paints an accordion title of
         exactly one shape — <span id="..."> carrying an id and NO class, inside
         <div class="grp-h"> — and setup:statics threw on platPS seven lines

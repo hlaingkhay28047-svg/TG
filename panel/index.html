@@ -235,7 +235,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.205.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.206.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.png" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -456,6 +456,46 @@
           <div role="button" tabindex="0" class="chip" id="prefsMotionFull"></div>
           <div role="button" tabindex="0" class="chip" id="prefsMotionReduced"></div>
         </div>
+      </div>
+
+      <!-- 6.135.0 — STORAGE. The owner asked for the histories to be deletable so the
+           machine does not get heavy. Every history already had a delete; what was
+           missing was a place that says how much disk is in use, and a delete for the
+           web-picture scratch files, which nothing had ever removed. One row per store,
+           real byte counts, a Delete per row (two presses, the Gallery's own arm) and a
+           "Free space now" that only touches scratch. The settings row is measured and
+           shown but carries no button: signing the studio out is not housekeeping. -->
+      <div class="card" id="cardStorage">
+        <h2 id="storeH2"><img class="ic-h2" src="icons/ui/i-stack-gold.png" alt=""></h2>
+        <p class="mut" id="storeNote"></p>
+        <div class="row store-row" id="storeRow_results">
+          <span class="lbl" id="storeL_results"></span><span class="mut" id="storeV_results"></span>
+          <div role="button" tabindex="0" class="btn" id="storeB_results"></div>
+        </div>
+        <div class="row store-row" id="storeRow_videos">
+          <span class="lbl" id="storeL_videos"></span><span class="mut" id="storeV_videos"></span>
+          <div role="button" tabindex="0" class="btn" id="storeB_videos"></div>
+        </div>
+        <div class="row store-row" id="storeRow_albums">
+          <span class="lbl" id="storeL_albums"></span><span class="mut" id="storeV_albums"></span>
+          <div role="button" tabindex="0" class="btn" id="storeB_albums"></div>
+        </div>
+        <div class="row store-row" id="storeRow_temps">
+          <span class="lbl" id="storeL_temps"></span><span class="mut" id="storeV_temps"></span>
+          <div role="button" tabindex="0" class="btn" id="storeB_temps"></div>
+        </div>
+        <div class="row store-row" id="storeRow_settings">
+          <span class="lbl" id="storeL_settings"></span><span class="mut" id="storeV_settings"></span>
+        </div>
+        <div class="row store-row store-total" id="storeRow_total">
+          <span class="lbl" id="storeTotalL"></span><span class="mut" id="storeTotalV"></span>
+        </div>
+        <p class="mut" id="storeKeptNote"></p>
+        <div class="row" style="margin-top:10px">
+          <div role="button" tabindex="0" class="btn grow" id="btnStoreFree"></div>
+          <div role="button" tabindex="0" class="btn grow" id="btnStoreRefresh"></div>
+        </div>
+        <div class="status" id="stStore"></div>
       </div>
 
       <div class="card" id="cardPlat">
@@ -1614,7 +1654,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.205.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.206.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
@@ -1735,6 +1775,8 @@
 <!-- HNK AI Tools persistence (store-injected) -->
 <script src="src/app/uxp-store.js"></script>
 <script src="src/app/gallery-store.js"></script>
+    <!-- 6.135.0 — what the panel keeps on disk, measured and deletable (Setup ▸ Storage) -->
+    <script src="src/app/panel-storage.js"></script>
 <script src="src/app/wf-results.js"></script>
 <script src="src/app/wb-match.js"></script>
 <script src="src/app/takes-store.js"></script>
