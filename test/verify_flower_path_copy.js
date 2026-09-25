@@ -101,10 +101,10 @@ const cat = JSON.parse(PANEL_CAT.match(/var CATALOG = (\{[\s\S]*?\});\n/)[1]);
 const items = [].concat.apply([], cat.categories.map(c => c.items));
 const total = items.length;
 report("E) the app's share text and the landing count the new workflow — Smart Workflow " + total + " — and the landing carries no stale 188",
-  total === 198 && APP.indexOf("Smart Workflow 198") >= 0 && APP.indexOf("Smart Workflow 188") < 0 &&
-  (LANDING.match(/Smart Workflow 198/g) || []).length >= 30 && LANDING.indexOf("Smart Workflow 188") < 0 &&
-  /data-count="wf">198</.test(LANDING) && /data-count="tap">205</.test(LANDING) && APP.indexOf("One-Tap 205") >= 0 && APP.indexOf("One-Tap 195") < 0,
-  { total, app189: APP.indexOf("Smart Workflow 198") >= 0, landing189: (LANDING.match(/Smart Workflow 198/g) || []).length });
+  total === 199 && APP.indexOf("Smart Workflow 199") >= 0 && APP.indexOf("Smart Workflow 188") < 0 &&
+  (LANDING.match(/Smart Workflow 199/g) || []).length >= 30 && LANDING.indexOf("Smart Workflow 188") < 0 &&
+  /data-count="wf">199</.test(LANDING) && /data-count="tap">206</.test(LANDING) && APP.indexOf("One-Tap 206") >= 0 && APP.indexOf("One-Tap 195") < 0,
+  { total, app199: APP.indexOf("Smart Workflow 199") >= 0, landing199: (LANDING.match(/Smart Workflow 199/g) || []).length });
 
 /* ---- F) the panel carries it ---- */
 const pit = items.find(i => i.id === ID);

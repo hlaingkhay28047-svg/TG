@@ -54,8 +54,8 @@ report("A3) title, summary and explanation say what moves and what stays; the AV
   w && { title: w.title, idx, slc, visual: w.visual });
 
 /* ---- B) the category, the summary row, the guides ---- */
-report("B) Background & Scene lists it right after Studio Look Copy and before Couple Compose",
-  APP.indexOf('"scene-fit-pro","studio-look-copy","reference-scenes","prop-insert","decor-theme-color","couple-compose",') >= 0, "category line");   /* 6.123.0 — the two wave H scene cards follow it */
+report("B) Background & Scene lists it right after Studio Look Copy and before the wave H pair, Horse & Straw and Couple Compose",
+  APP.indexOf('"scene-fit-pro","studio-look-copy","reference-scenes","prop-insert","decor-theme-color","horse-straw","couple-compose",') >= 0, "category line");   /* 6.123.0 — the two wave H scene cards follow it; 6.133.0 — Horse & Straw after them */
 const sumRow = (APP.match(new RegExp('      "' + ID + '":\\{([^\\n]*)\\},\\n')) || [])[1] || "";
 report("B2) the nine-language summary row exists and names IMAGE 1 and IMAGE 2 in English",
   LANGS.every(l => sumRow.indexOf(l + ':"') >= 0) && /IMAGE 2/.test(sumRow) && /IMAGE 1/.test(sumRow), sumRow.slice(0, 120));
@@ -70,10 +70,10 @@ report("C) the card picture exists at the pack's 960x640 and the card is not on 
   !!sz && sz.w === 960 && sz.h === 640 && !new RegExp('NO_CARD_JPG=\\[[^\\]]*"' + ID + '"').test(APP), sz);
 
 /* ---- D) the counts, What's New, CI ---- */
-report("D) the app's meta, the landing and its counter all count 198 Smart Workflows (193 nowhere; 194 until 6.123.0 added the three wave H cards, 197 until 6.124.0 added Selection Swap & Fill)",
-  APP.indexOf("Smart Workflow 198") >= 0 && APP.indexOf("Smart Workflow 193") < 0 && (LANDING.match(/Smart Workflow 198/g) || []).length >= 30 && LANDING.indexOf("Smart Workflow 193") < 0 &&
-  /data-count="wf">198</.test(LANDING) && !/data-count="wf">193</.test(LANDING) && lib.workflows.filter(x => !x.kind).length + 0 > 0,
-  { app: APP.indexOf("Smart Workflow 198") >= 0, landing: (LANDING.match(/Smart Workflow 198/g) || []).length });
+report("D) the app's meta, the landing and its counter all count 199 Smart Workflows (193 nowhere; 194 until 6.123.0 added the three wave H cards, 197 until 6.124.0 added Selection Swap & Fill, 198 until 6.133.0 added Horse & Straw)",
+  APP.indexOf("Smart Workflow 199") >= 0 && APP.indexOf("Smart Workflow 193") < 0 && (LANDING.match(/Smart Workflow 199/g) || []).length >= 30 && LANDING.indexOf("Smart Workflow 193") < 0 &&
+  /data-count="wf">199</.test(LANDING) && !/data-count="wf">193</.test(LANDING) && lib.workflows.filter(x => !x.kind).length + 0 > 0,
+  { app: APP.indexOf("Smart Workflow 199") >= 0, landing: (LANDING.match(/Smart Workflow 199/g) || []).length });
 /* v6.91.0 — both rows are history in the archive record (docs/app/data/whats-new-archive.json, newest first);
    the panel lifts the live table only, so an archived row rides neither surface */
 const wnArch = require("../tools/lib/app-data.js").readWhatsNewArchive();
@@ -101,8 +101,8 @@ const bgCat = cat.categories.find(c => c.items.some(x => x.id === ID));
 const HOUSE = /^(REAL PHOTOGRAPH:|SKIN TONE TRUTH:|FRAME EXTENT LOCK:|COLOUR SEPARATION LOCK:|LIGHT MATCH LOCK:|SKIN FINISH:|FRAME BALANCE:)/;
 const REC = w ? w.prompt : PROMPT;   /* 6.32.3 — the record's whole prompt (sentence + roles); the house lines follow THAT */
 const houseOnly = extra => { const ls = extra.split("\n"); return ls[0] === "" && ls.length >= 2 && ls.slice(1).every(l => HOUSE.test(l)) && !/\bFRAME LOCK\b|TASK GUARD|EXTRA REQUEST/.test(extra) && (extra.match(/\{\{/g) || []).length <= 1; };
-report("E) the panel's lifted catalog carries the record in Background & Scene with the same two inputs, the record's prompt (the owner's sentence + the roles) with only the house lines after it, and counts 198 items (194 until 6.123.0 added the three wave H cards, 197 until 6.124.0 added Selection Swap & Fill)",
-  !!pi && typeof pi.prompt === "string" && pi.prompt.indexOf(REC) === 0 && houseOnly(pi.prompt.slice(REC.length)) && Array.isArray(pi.req) && pi.req.length === 2 && !!bgCat && /Background/.test(bgCat.category || bgCat.t || "") && items.length === 198,
+report("E) the panel's lifted catalog carries the record in Background & Scene with the same two inputs, the record's prompt (the owner's sentence + the roles) with only the house lines after it, and counts 199 items (194 until 6.123.0 added the three wave H cards, 197 until 6.124.0 added Selection Swap & Fill, 198 until 6.133.0 added Horse & Straw)",
+  !!pi && typeof pi.prompt === "string" && pi.prompt.indexOf(REC) === 0 && houseOnly(pi.prompt.slice(REC.length)) && Array.isArray(pi.req) && pi.req.length === 2 && !!bgCat && /Background/.test(bgCat.category || bgCat.t || "") && items.length === 199,
   { found: !!pi, head: pi && pi.prompt.slice(0, 120), tail: pi && pi.prompt.slice(REC.length, REC.length + 60), n: items.length, cat: bgCat && (bgCat.category || bgCat.t) });
 
 /* ---- F) the page ---- */

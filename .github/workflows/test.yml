@@ -1205,3 +1205,10 @@ jobs:
       # student to replace Auto with a fixed ratio.
       - name: Verify the card and its lock say the same thing, in both scene directions and in Imagine
         run: PORT=8931 node test/verify_scene_lock_agreement_6132.js
+      # 6.133.0 — Horse & Straw, the ninety-fifth Smart Workflow. One brown horse and dry golden straw are
+      # added to the student's own photograph: the horse is read against the subject's own framing and sized
+      # to it — close portrait, half body, full body or wide — and posed to the person rather than the person
+      # being moved, cropped or re-scaled to suit the horse. The card carries the whole house line, and the
+      # standing 6.132.0 scanner re-reads its prompt so its own words cannot licence what its own locks forbid.
+      - name: Verify Horse & Straw sizes the horse to the frame, never the frame to the horse
+        run: PORT=8931 node test/verify_horse_straw_6133.js

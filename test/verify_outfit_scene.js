@@ -128,11 +128,11 @@ report("C4) Couple's steps tell the student to combine HER photo first, then HIS
   /pick HER outfit photo first, then HIS/.test(APP) && /မိန်းကလေးဝတ်စုံပုံ အရင်၊ ယောက်ျားလေးဝတ်စုံပုံ နောက်/.test(APP), null);
 
 /* ---- D) counts ---- */
-report("D) the app, the landing and the panel's Home all count 198 Smart Workflows and 205 One-Tap (194 / 201 until 6.123.0 added the three wave H cards, 197 / 204 until 6.124.0 added Selection Swap & Fill)",
-  lib.workflows.filter(x => IDS.indexOf(x.id) >= 0).length === 4 && APP.indexOf("Smart Workflow 198") >= 0 && APP.indexOf("Smart Workflow 189") < 0 && APP.indexOf("One-Tap 205") >= 0 &&
-  (LANDING.match(/Smart Workflow 198/g) || []).length >= 30 && /data-count="wf">198</.test(LANDING) && /data-count="tap">205</.test(LANDING) && LANDING.indexOf("One-Tap 196") < 0 &&
-  /stat\(205, "One-Tap Workflows"\)/.test(PANEL_HOME),
-  { n: lib.workflows.filter(x => IDS.indexOf(x.id) >= 0).length, app198: APP.indexOf("Smart Workflow 198") >= 0, landing198: (LANDING.match(/Smart Workflow 198/g) || []).length, panelHome: /stat\(200,/.test(PANEL_HOME) });
+report("D) the app, the landing and the panel's Home all count 199 Smart Workflows and 206 One-Tap (194 / 201 until 6.123.0 added the three wave H cards, 197 / 204 until 6.124.0 added Selection Swap & Fill, 198 / 205 until 6.133.0 added Horse & Straw)",
+  lib.workflows.filter(x => IDS.indexOf(x.id) >= 0).length === 4 && APP.indexOf("Smart Workflow 199") >= 0 && APP.indexOf("Smart Workflow 189") < 0 && APP.indexOf("One-Tap 206") >= 0 &&
+  (LANDING.match(/Smart Workflow 199/g) || []).length >= 30 && /data-count="wf">199</.test(LANDING) && /data-count="tap">206</.test(LANDING) && LANDING.indexOf("One-Tap 196") < 0 &&
+  /stat\(206, "One-Tap Workflows"\)/.test(PANEL_HOME),
+  { n: lib.workflows.filter(x => IDS.indexOf(x.id) >= 0).length, app199: APP.indexOf("Smart Workflow 199") >= 0, landing199: (LANDING.match(/Smart Workflow 199/g) || []).length, panelHome: /stat\(200,/.test(PANEL_HOME) });
 
 /* ---- E) the board helper in the source ---- */
 report("E) the wizard owns a multi-file board input, a composeBoard that lays two or three side by side and four two-by-two, and a Combine button only on a board slot",
@@ -206,7 +206,7 @@ report("E) the wizard owns a multi-file board input, a composeBoard that lays tw
   });
   const bgCat = cat.categories.find(c => c.category === "Background & Scene" || c.t === "Background & Scene");
   report("I) the panel's lifted catalog carries all four in Background & Scene with the app's prompts, AVOID lists (including the 6.129.0 frame item) and inputs",
-    pGaps.length === 0 && !!bgCat && IDS.every(id => bgCat.items.some(x => x.id === id)) && items.length === 198,
+    pGaps.length === 0 && !!bgCat && IDS.every(id => bgCat.items.some(x => x.id === id)) && items.length === 199,
     { pGaps, total: items.length, bg: !!bgCat });
 
   /* ---- J) What's New, CI ---- */
