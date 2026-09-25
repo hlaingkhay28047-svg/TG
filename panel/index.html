@@ -235,7 +235,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.204.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.205.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.png" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -1614,7 +1614,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.204.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.205.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
@@ -1672,6 +1672,13 @@
      host's own storage does not round-trip a value, this installs one over the
      plugin's data folder; in a browser it does nothing. It depends on nothing. -->
 <script src="src/app/uxp-local-storage.js"></script>
+<!-- v6.134.0 — SECOND, right behind the storage shim and ahead of every module that
+     draws: Adobe's UXP renderer hands out a 2D canvas context with no save() and no
+     restore(), and the owner's photograph of the Album page caught it
+     ("x.save is not a function @ hnk_album.js:4250"). This wraps getContext so every
+     2D context the panel makes can save and restore; in a browser it installs nothing
+     at all. It depends on nothing. -->
+<script src="src/app/uxp-canvas.js"></script>
 <!-- v6.107.0 — FIRST, on purpose: this installs the error, rejection and
      resource-load hooks, so an exception thrown by any script below is caught
      while there is still something to catch. It depends on nothing. -->

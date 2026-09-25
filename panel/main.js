@@ -2791,7 +2791,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.204.0";
+const PANEL_VERSION = "6.205.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -6060,6 +6060,19 @@ function selfTestRowsInner() {
        other rulers, each printed: whichever answers is the one to build on. */
     const wp = hnkWidthProbes();
     rows.push({ label: "width probes", detail: wp.detail, level: wp.best > 0 ? "ok" : "host" });
+    /* 6.134.0 — THE CANVAS ITSELF. The owner's Album photograph carried
+       "album:draw x.save is not a function": this renderer's 2D context draws
+       but cannot save or restore its own state, and twenty-one call sites
+       lifted from the web app assume it can. src/app/uxp-canvas.js supplies
+       save/restore (and ellipse, and a solid-line setLineDash) where they are
+       missing; this row prints what the host really has, which fallbacks are
+       live, and NAMES anything the panel uses that is still missing rather
+       than letting the next one arrive as a crash. */
+    rows.push((function () {
+      const cs = globalThis.HNK && globalThis.HNK.canvasShim;
+      const ln = (cs && typeof cs.line === "function") ? cs.line() : null;
+      return { label: "Canvas", detail: (ln && ln.detail) || "\u2014", level: (ln && ln.level) || "pend" };
+    })());
     /* v6.80.0 — RunningHub and its file storage, each reached or not (see hnkNetProbeStart) */
     rows.push(hnkNetProbeRow());
     /* v6.84.0 — the Active-layer read every image slot uses, on the open document (see hnkLayerProbeStart) */

@@ -1212,3 +1212,14 @@ jobs:
       # standing 6.132.0 scanner re-reads its prompt so its own words cannot licence what its own locks forbid.
       - name: Verify Horse & Straw sizes the horse to the frame, never the frame to the horse
         run: PORT=8931 node test/verify_horse_straw_6133.js
+
+      # 6.134.0 / panel 6.205.0 — THE CANVAS THAT COULD NOT SAVE ITSELF. The owner's photograph of the
+      # Album page in Photoshop carried the panel's own line, "x.save is not a function @ hnk_album.js:4250":
+      # Adobe's UXP renderer draws, but the 2D context it hands out has no save() and no restore(), and the
+      # lifted Album module uses them twenty-one times. Crippled the same way, the page builds 7 of its 13
+      # cards and 44 of its 234 controls. src/app/uxp-canvas.js supplies the state stack (and ellipse, and a
+      # solid-line setLineDash) where the host has none, and says in SELF-TEST what it found; in a browser it
+      # installs nothing. This test proves the crash, proves it gone, and proves the shimmed drawing is
+      # pixel-identical to a native one.
+      - name: Verify the panel's canvas can save its own state where the host cannot
+        run: PORT=8931 node test/verify_panel_canvas_state_6134.js
