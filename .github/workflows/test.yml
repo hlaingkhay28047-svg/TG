@@ -1240,3 +1240,13 @@ jobs:
       # stay the plugin's alone and carry data-panel-only, so the parity walk skips the row.
       - name: Verify the web app says what it is keeping too, in the panel's own words
         run: PORT=8931 node test/verify_storage_parity_6136.js
+
+      # 6.137.0 — the album's frames get a light of their own. The six looks of 6.121.0 are six
+      # decisions somebody else made; a studio's real complaint is that ONE photograph on the
+      # spread came out a stop under, or flat. Every frame now carries an exposure and a contrast
+      # step (-5..+5, zero being the photograph as it arrived), riding the same path the looks do
+      # — the canvas filter where the renderer has one, the identical arithmetic over the pixels
+      # where it does not — so the stage, the page rail, the JPEG, the PDF and the PSD layer all
+      # show one picture.
+      - name: Verify the album's frames carry their own exposure and contrast, everywhere they are drawn
+        run: PORT=8931 node test/verify_album_light_6137.js

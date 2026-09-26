@@ -49,8 +49,21 @@ const APP = read("docs/app/index.html"), LANDING = read("docs/index.html"), CI =
 const MAIN = read("panel/main.js"), INDEX = read("panel/index.html");
 const SHIM = read("panel/src/app/uxp-canvas.js");
 const ALBUM = read("panel/js/hnk_album.js");
-const VER = "6.136.0", PVER = "6.207.0";
-const COUNT = 278;
+/* 6.137.0 — the owner photographed "hnk_album.js:4250", and that number was drawLook's first
+   statement IN THE BUILD THEY PHOTOGRAPHED. It is a fact about that afternoon, not about the
+   file, and the album module has grown since (the frame's own exposure and contrast). C2 still
+   demands the live stack name drawLook's own x.save() — it just works out which line that is
+   rather than being re-pinned by hand every time a line is added above it. */
+const DRAW_SAVE_LINE = (function () {
+  const lines = ALBUM.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    if (!/function drawLook\(x, look, X, Y, W, Hh\)\{/.test(lines[i])) continue;
+    for (let k = i; k < Math.min(lines.length, i + 8); k++) if (/^\s*x\.save\(\);/.test(lines[k])) return k + 1;
+  }
+  return -1;
+})();
+const VER = "6.137.0", PVER = "6.208.0";
+const COUNT = 279;
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml",
   ".mp4": "video/mp4", ".woff2": "font/woff2", ".ico": "image/x-icon" };
@@ -335,10 +348,11 @@ async function panelRun(browser, withShim) {
       Array.isArray(before.crippled) && before.crippled.length === 3 && Array.isArray(after.crippled) && after.crippled.length === 3,
       { before: before.crippled, after: after.crippled });
 
-    report("C2) FAULT INJECTION: without the shim the panel reproduces the owner's photographed line word for word — \"x.save is not a function @ hnk_album.js:4250\" — and drawLook's own first statements throw",
-      before.warns.some((w) => /x\.save is not a function/.test(w) && /hnk_album\.js:4250/.test(w)) &&
+    report("C2) FAULT INJECTION: without the shim the panel reproduces the owner's photographed line — \"x.save is not a function @ hnk_album.js:" + DRAW_SAVE_LINE + "\", which is drawLook's own first statement — and drawLook throws",
+      DRAW_SAVE_LINE > 0 &&
+      before.warns.some((w) => /x\.save is not a function/.test(w) && new RegExp("hnk_album\\.js:" + DRAW_SAVE_LINE + "\\b").test(w)) &&
       /x\.save is not a function/.test(before.seen.drawErr),
-      { warns: before.warns.slice(0, 3), drawErr: before.seen.drawErr });
+      { line: DRAW_SAVE_LINE, warns: before.warns.slice(0, 3), drawErr: before.seen.drawErr });
 
     report("C3) with the shim the line is gone and drawLook's shape paints its own paper colour (#f6f1e7 = 246,241,231)",
       after.warns.length === 0 && after.seen.drawErr === "" && after.seen.px === "246,241,231",

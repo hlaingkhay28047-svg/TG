@@ -41,8 +41,8 @@ const has = (s, t) => s.indexOf(t) >= 0;
 const APP = read("docs/app/index.html"), LANDING = read("docs/index.html"), CI = read(".github/workflows/test.yml");
 const MAIN = read("panel/main.js"), WN = read("docs/app/data/whatsnew.js"), PWN = read("panel/js/hnk_whats_new.js");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.136.0", PVER = "6.207.0";
-const COUNT = 278;
+const VER = "6.137.0", PVER = "6.208.0";
+const COUNT = 279;
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4" };
 const EXTENT = "FRAME EXTENT LOCK:", SEP = "COLOUR SEPARATION LOCK:", MATCH = "LIGHT MATCH LOCK:";

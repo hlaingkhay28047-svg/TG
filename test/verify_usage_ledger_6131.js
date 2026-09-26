@@ -51,7 +51,7 @@ const MAIN = read("panel/main.js");
 const CI = read(".github/workflows/test.yml");
 const LANDING = read("docs/index.html");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.136.0", PVER = "6.207.0", COUNT = 278;
+const VER = "6.137.0", PVER = "6.208.0", COUNT = 279;
 const WAVE_V = "6.131.0";   /* this wave's own What's New row; VER moves on with every release */
 const MIME = { ".html": "text/html", ".js": "application/javascript", ".css": "text/css",
   ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp",

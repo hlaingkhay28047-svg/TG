@@ -76,10 +76,15 @@ function report(name, ok, detail) {
 function sourcePins() {
   report("A0) the album module and its stylesheet were found", MOD.length > 150000 && CSS.length > 5000, { mod: MOD.length, css: CSS.length });
 
+  /* 6.137.0 — the three signatures grew two arguments (the frame's own exposure and contrast)
+     and every call site passes them, so this pin follows the code rather than the code being
+     held to a shape it has outgrown. What the check is FOR is unchanged: one function draws a
+     photograph, every path goes through it, and a renderer without a canvas filter gets the
+     same picture computed over the pixels. */
   report("A1) the six looks are one function, drawPhotoFx, and every path that draws a photograph goes through it — the page (stage · rail · JPG · PDF), the PSD's photo layer and the layout sketch — with the pixel fallback for a renderer that has no canvas filter",
-    /function fxFilter\(fx\)/.test(MOD) && /function fxPixels\(data, fx\)/.test(MOD) && /function drawPhotoFx\(x, im, fit, dx, dy, dw, dh, fx\)/.test(MOD) &&
-    (MOD.match(/drawPhotoFx\(x, im, fit, dx, dy, dw, dh, ph\.fx\)/g) || []).length >= 2 && /drawPhotoFx\(/.test(MOD.slice(MOD.indexOf("function pageLayers"), MOD.indexOf("function psdEstimate"))) &&
-    /if \(filterOk\(\)\)\{/.test(MOD) && /fxPixels\(px\.data, fx\); x\.putImageData\(px, rx, ry\);/.test(MOD) &&
+    /function fxFilter\(fx, ev, ct\)/.test(MOD) && /function fxPixels\(data, fx, ev, ct\)/.test(MOD) && /function drawPhotoFx\(x, im, fit, dx, dy, dw, dh, fx, ev, ct\)/.test(MOD) &&
+    (MOD.match(/drawPhotoFx\(x, im, fit, dx, dy, dw, dh, ph\.fx, ph\.ev, ph\.ct\)/g) || []).length >= 2 && /drawPhotoFx\(/.test(MOD.slice(MOD.indexOf("function pageLayers"), MOD.indexOf("function psdEstimate"))) &&
+    /if \(filterOk\(\)\)\{/.test(MOD) && /fxPixels\(px\.data, fx, ev, ct\); x\.putImageData\(px, rx, ry\);/.test(MOD) &&
     /var FX_LIST = \(D && D\.fx && D\.fx\.length\) \? D\.fx : \["", "bw", "sepia", "warm", "cool", "fade"\];/.test(MOD), null);
 
   report("A2) the design engine is the five named steps, every mark it writes carries `auto`, and a redesign clears only the engine's own marks; the opener and a page with no photograph are left alone",
@@ -170,7 +175,9 @@ async function maths(page) {
     out.sepia = M.fxPixels(new Uint8ClampedArray(px), "sepia"); out.sepiaWarm = out.sepia[0] > out.sepia[2];
     out.fade = M.fxPixels(new Uint8ClampedArray(px), "fade"); out.fadeLifted = out.fade[0] > px[0] && out.fade[4] < px[4];
     out.none = Array.from(M.fxPixels(new Uint8ClampedArray(px), "")).join() === Array.from(px).join();
-    out.filters = ["bw", "sepia", "warm", "cool", "fade"].map(M.fxFilter);
+    /* 6.137.0 — called one argument at a time: fxFilter now takes the frame's exposure and
+       contrast after the look, and a bare .map would hand it the array index as an exposure. */
+    out.filters = ["bw", "sepia", "warm", "cool", "fade"].map(function (f) { return M.fxFilter(f); });
     /* B2 — the room a layout leaves */
     const band = M.freeRegion([{ x: 0, y: 0, w: 1, h: 0.6 }]);
     out.band = band;
@@ -526,7 +533,7 @@ function releasePins() {
     row && row.v === VER && row.ref === "pgAlbum" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40 && row.s[l].startsWith("**")) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
   report("E3) CI runs this test right after the wave E step and the landing says how many tests the suite runs (263 when this wave shipped, 264 since 6.122.0 added verify_album_wave_g, 265 since 6.123.0 added verify_prop_wave_h, 266 since 6.124.0 added verify_selection_swap, 267 since 6.125.0 added verify_album_wave_i, 268 since 6.127.0 added verify_skin_age_guard, 269 since 6.127.1 added verify_panel_v2_layer, 270 since 6.128.0 added verify_gen_loading_billing)",
     has(CI, "run: node test/verify_ux_wave_6120.js\n") && has(CI, "run: PORT=8931 node test/verify_album_designer.js") && CI.indexOf("verify_ux_wave_6120") < CI.indexOf("verify_album_designer") &&
-    (CI.match(/node test\//g) || []).length === 278 && has(LANDING, "278 tests") && !has(LANDING, "262 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 279 && has(LANDING, "279 tests") && !has(LANDING, "262 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 (async () => {
