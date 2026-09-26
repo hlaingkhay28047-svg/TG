@@ -44,8 +44,9 @@ const MAIN = read("panel/main.js"), INDEX = read("panel/index.html");
 const PARITY = read("test/verify_panel_page_parity.js");
 const HARNESS = read("test/lib/panel-parity-harness.js");
 const ST = require("../panel/src/app/panel-storage.js");
-const VER = "6.136.0", PVER = "6.207.0";
-const COUNT = 278;
+const VER = "6.137.0", PVER = "6.208.0";
+const WAVE_V = "6.136.0";   /* this wave's own What's New row; VER moves on with every release */
+const COUNT = 279;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const SHARED = ["h2", "note", "results", "videos", "albums", "settings", "total", "files", "del", "armed", "refresh", "kept", "none", "freed"];
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
@@ -275,10 +276,13 @@ function partD() {
     has(read("docs/download/panel-version.json"), '"latest_version": "' + PVER + '"'));
   const WN = read("docs/app/data/whatsnew.js");
   const i = WN.indexOf('"' + VER + '"');
-  report("D3) What's New leads with the " + VER + " row, points at the page that grew the card, and the landing counts " + COUNT + " tests",
-    i > 0 && i < 4000 && /\{"v":"6\.136\.0","kind":"page","ref":"pgHome"/.test(WN) &&
+  /* VER is the tree's current release and moves with every wave; WAVE_V is this one's own row,
+     which stays where it is and keeps pointing at the page that grew the card. */
+  const j = WN.indexOf('{"v":"' + WAVE_V + '","kind":"page","ref":"pgHome"');
+  report("D3) What's New leads with the " + VER + " row, this wave's row still points at the page that grew the card, and the landing counts " + COUNT + " tests",
+    i > 0 && i < 4000 && j > 0 &&
     has(LANDING, COUNT + " tests") && new RegExp('data-count="tests">' + COUNT + '<').test(LANDING),
-    { at: i });
+    { at: i, wave: j });
 }
 
 /* ===================== run ===================== */

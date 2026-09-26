@@ -143,7 +143,7 @@ report("E2) the panel carries the three AVOID items too, and no 'keep … fine l
   !/keep (every )?(real )?pores?,? fine lines?/i.test(PANEL), null);
 
 /* ── F) release pins ─────────────────────────────────────────────────────── */
-const VER = "6.136.0", PVER = "6.207.0";
+const VER = "6.137.0", PVER = "6.208.0";
 report(`F) ${VER} / panel ${PVER} in lockstep on the app, the API, the panel and the download footer`,
   R("docs/app/index.html").indexOf(`var APP_VER="${VER}";`) >= 0 &&
   R("docs/app/version.json").indexOf(`"v":"${VER}"`) >= 0 &&
@@ -156,13 +156,13 @@ const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 /* 6.127.1 — this wave shipped as 6.127.0 and led the strip that day; the
    6.127.1 row sits above it now, so the row is found rather than read at 0.
    6.129.0 — one more release above it; 6.133.0 — one more again; 6.135.0 —
-   one more again; 6.136.0 — one more again. The ceiling moves with the strip,
+   one more again; 6.136.0 and 6.137.0 — one more again each. The ceiling moves with the strip,
    which is the honest contract: the row must still be ON the strip, not still
    at a fixed slot. */
 const WAVE_V = "6.127.0";
 const wnRow = wn.find(r => r.v === WAVE_V);
 report(`F2) the What's New strip carries the ${WAVE_V} row, in all nine languages, with a bold-led excerpt (it led the strip when this wave shipped)`,
-  !!wnRow && wn.indexOf(wnRow) <= 10 && wnRow.kind === "wf" &&
+  !!wnRow && wn.indexOf(wnRow) <= 11 && wnRow.kind === "wf" &&
   LANGS.every(l => wnRow.t[l] && wnRow.s[l] && !wnRow.t[l].startsWith("**") && wnRow.s[l].startsWith("**")),
   { at: wnRow ? wn.indexOf(wnRow) : -1, head: wn[0] && wn[0].v });
 

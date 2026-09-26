@@ -57,6 +57,25 @@ var ALBUM = (function(){
      to the page wave A began, and keeps every rule the earlier waves set: fractions of the
      safe area, ES5, createElement, no CSS grid, one maths for painter and hit test. */
   var FX_LIST = (D && D.fx && D.fx.length) ? D.fx : ["", "bw", "sepia", "warm", "cool", "fade"];
+  /* 6.137.0 — EXPOSURE AND CONTRAST, PER FRAME.
+     The six looks are six decisions somebody else made. A wedding studio's real complaint about
+     a spread is never "this wants sepia" — it is that ONE photograph came out of the camera a
+     stop under, or flat, and it sits next to eleven that did not. Every frame now carries two
+     numbers of its own, steps rather than a free slider so the value is a word a studio can say
+     out loud and a test can pin: -5..+5, zero being the photograph as it arrived.
+     One exposure step is 6% of the light and one contrast step 5%, so the ends are a little
+     under a stop either way — enough to rescue a frame, not enough to wreck a book.
+     They ride the SAME path the looks do: the canvas filter where the renderer has one, the
+     identical arithmetic over the pixels where it does not, so the stage, the page rail, the
+     JPEG, the PDF and the PSD layer all show one picture. */
+  var EV_MIN = -5, EV_MAX = 5, EV_PER = 0.06;
+  var CT_MIN = -5, CT_MAX = 5, CT_PER = 0.05;
+  function evStep(n){ n = Math.round(+n || 0); return n < EV_MIN ? EV_MIN : n > EV_MAX ? EV_MAX : n; }
+  function ctStep(n){ n = Math.round(+n || 0); return n < CT_MIN ? CT_MIN : n > CT_MAX ? CT_MAX : n; }
+  function evMul(n){ return 1 + evStep(n) * EV_PER; }
+  function ctMul(n){ return 1 + ctStep(n) * CT_PER; }
+  /* "0", "+2", "\u22123" — the minus is a real minus sign, not a hyphen, because it is a number */
+  function stepLabel(n){ n = Math.round(+n || 0); return n > 0 ? "+" + n : n < 0 ? "\u2212" + (-n) : "0"; }
   var PAPERS = (D && D.papers && D.papers.length) ? D.papers : ["#ffffff", "#f6f1e7", "#141416"];
   var STYLES = ["editorial", "classic", "minimal", "script"];
   var DENSITIES = ["airy", "balanced", "dense"];
@@ -560,7 +579,7 @@ var ALBUM = (function(){
      every one of those goes through drawPhotoFx. Where the renderer has a canvas filter the look
      is the filter; where it has none (or refuses it) the SAME look is computed over the pixels,
      so a phone whose browser lacks the property prints the same picture the monitor showed. */
-  function fxFilter(fx){
+  function fxLook(fx){
     if (fx === "bw") return "grayscale(1)";
     if (fx === "sepia") return "sepia(0.85)";
     if (fx === "warm") return "sepia(0.28) saturate(1.15) brightness(1.03)";
@@ -568,8 +587,17 @@ var ALBUM = (function(){
     if (fx === "fade") return "contrast(0.82) brightness(1.08) saturate(0.8)";
     return "";
   }
+  /* 6.137.0 — the look first, then this frame's own light. CSS filters apply left to right, and
+     fxPixels below multiplies in that same order, so the two renderers cannot drift apart.
+     A frame at zero returns exactly what 6.121.0 returned, down to the string. */
+  function fxFilter(fx, ev, ct){
+    var out = fxLook(fx), e = evStep(ev), c = ctStep(ct);
+    if (e) out += (out ? " " : "") + "brightness(" + evMul(e).toFixed(3) + ")";
+    if (c) out += (out ? " " : "") + "contrast(" + ctMul(c).toFixed(3) + ")";
+    return out;
+  }
   /* the same six looks over RGBA bytes — pure, so a test measures it in Node */
-  function fxPixels(data, fx){
+  function fxPixels(data, fx, ev, ct){
     var i, n = data.length, r, g, b, l;
     if (fx === "bw"){ for (i=0;i<n;i+=4){ l = 0.2126*data[i] + 0.7152*data[i+1] + 0.0722*data[i+2]; data[i]=data[i+1]=data[i+2]=l; } }
     else if (fx === "sepia"){ for (i=0;i<n;i+=4){ r=data[i]; g=data[i+1]; b=data[i+2];
@@ -582,6 +610,21 @@ var ALBUM = (function(){
       data[i]   = Math.min(255, 128 + (r*0.8 + l*0.2 - 128)*0.82 + 12);
       data[i+1] = Math.min(255, 128 + (g*0.8 + l*0.2 - 128)*0.82 + 12);
       data[i+2] = Math.min(255, 128 + (b*0.8 + l*0.2 - 128)*0.82 + 12); } }
+    /* 6.137.0 — then this frame's own light, in the order the canvas filter would: brightness
+       is a multiply, contrast a stretch about mid-grey. 127.5 is the middle of 0..255, which is
+       what CSS's 0.5 becomes, so a pixel the renderer filtered and a pixel computed here land
+       on the same byte. */
+    var e = evStep(ev), c = ctStep(ct);
+    if (e || c){
+      var bm = evMul(e), cm = ctMul(c), v, k;
+      for (i=0;i<n;i+=4){
+        for (k=0;k<3;k++){
+          v = data[i+k] * bm;
+          v = (v - 127.5) * cm + 127.5;
+          data[i+k] = v < 0 ? 0 : v > 255 ? 255 : v;
+        }
+      }
+    }
     return data;
   }
   var FILTER_OK = null;
@@ -595,8 +638,8 @@ var ALBUM = (function(){
     } catch(e){ FILTER_OK = false; }
     return FILTER_OK;
   }
-  function drawPhotoFx(x, im, fit, dx, dy, dw, dh, fx){
-    var f = fxFilter(fx);
+  function drawPhotoFx(x, im, fit, dx, dy, dw, dh, fx, ev, ct){
+    var f = fxFilter(fx, ev, ct);
     if (!f){ try { x.drawImage(im, fit.sx, fit.sy, fit.sw, fit.sh, dx, dy, dw, dh); } catch(e){} return; }
     if (filterOk()){
       x.save();
@@ -608,7 +651,7 @@ var ALBUM = (function(){
       x.drawImage(im, fit.sx, fit.sy, fit.sw, fit.sh, dx, dy, dw, dh);
       var rx = Math.max(0, Math.floor(dx)), ry = Math.max(0, Math.floor(dy));
       var rw = Math.min(x.canvas.width - rx, Math.ceil(dx + dw) - rx), rh = Math.min(x.canvas.height - ry, Math.ceil(dy + dh) - ry);
-      if (rw > 0 && rh > 0){ var px = x.getImageData(rx, ry, rw, rh); fxPixels(px.data, fx); x.putImageData(px, rx, ry); }
+      if (rw > 0 && rh > 0){ var px = x.getImageData(rx, ry, rw, rh); fxPixels(px.data, fx, ev, ct); x.putImageData(px, rx, ry); }
     } catch(e3){}
   }
   /* THE DECOR (6.121.0). A rule is a hairline the width the design gave it; a scrim is the soft
@@ -694,7 +737,7 @@ var ALBUM = (function(){
       var a = ph.anchor || { x:0.5, y:0.5 };
       var fit = coverFit(im.naturalWidth||im.width, im.naturalHeight||im.height, r.w, r.h, a.x, a.y, ph.zoom);
       if (!fit) continue;
-      drawPhotoFx(x, im, fit, dx, dy, dw, dh, ph.fx);
+      drawPhotoFx(x, im, fit, dx, dy, dw, dh, ph.fx, ph.ev, ph.ct);
     }
   }
   /* the whole page in one synchronous pass over the cache — for the PSD's overlay layer, which
@@ -1454,6 +1497,23 @@ var ALBUM = (function(){
       box.appendChild(subh(L("alb_fx")));
       var frow = grid("size", fxc, albWidth()); frow.id = "albSelFx";
       box.appendChild(frow);
+      /* 6.137.0 wave J — THIS FRAME'S OWN LIGHT. Three buttons per control, and the heading
+         carries the number, because the number is what a studio is looking at while it presses:
+         darker · back to the photograph · brighter. The middle button is the way out — nobody
+         should have to count their presses backwards to undo a fiddle. */
+      var evv = evStep(o.ev), ctv = ctStep(o.ct);
+      box.appendChild(subh(L("alb_ev") + "  " + stepLabel(evv)));
+      var evDn = selBtn("\u2212", L("alb_ev_dn"), function(){ nudgeEv(-1); }); evDn.id = "albEvDn"; evDn.disabled = (evv <= EV_MIN);
+      var evZr = selBtn("0", L("alb_ev_zero"), function(){ nudgeEv(0); });      evZr.id = "albEvZero"; evZr.disabled = (evv === 0);
+      var evUp = selBtn("+", L("alb_ev_up"), function(){ nudgeEv(1); });        evUp.id = "albEvUp"; evUp.disabled = (evv >= EV_MAX);
+      var erow = grid("btn", [evDn, evZr, evUp], albWidth()); erow.id = "albSelEv";
+      box.appendChild(erow);
+      box.appendChild(subh(L("alb_ct") + "  " + stepLabel(ctv)));
+      var ctDn = selBtn("\u2212", L("alb_ct_dn"), function(){ nudgeCt(-1); }); ctDn.id = "albCtDn"; ctDn.disabled = (ctv <= CT_MIN);
+      var ctZr = selBtn("0", L("alb_ct_zero"), function(){ nudgeCt(0); });      ctZr.id = "albCtZero"; ctZr.disabled = (ctv === 0);
+      var ctUp = selBtn("+", L("alb_ct_up"), function(){ nudgeCt(1); });        ctUp.id = "albCtUp"; ctUp.disabled = (ctv >= CT_MAX);
+      var crow = grid("btn", [ctDn, ctZr, ctUp], albWidth()); crow.id = "albSelCt";
+      box.appendChild(crow);
       var rp = selBtn(L("alb_replace"), L("alb_replace"), function(){ PICK_MODE = "replace"; if (H && typeof H.pickFiles === "function") H.pickFiles(); });
       rp.id = "albSelReplace";
       if (H && typeof H.wirePick === "function"){ try { H.wirePick(rp, function(){ PICK_MODE = "replace"; }); } catch(e){} }
@@ -2594,7 +2654,7 @@ var ALBUM = (function(){
         if (im && ph){
           var a = ph.anchor || { x:0.5, y:0.5 };
           var fit = coverFit(im.naturalWidth||im.width, im.naturalHeight||im.height, dw, dh, a.x, a.y, ph.zoom);
-          if (fit){ drawPhotoFx(x, im, fit, dx, dy, dw, dh, ph.fx); continue; }
+          if (fit){ drawPhotoFx(x, im, fit, dx, dy, dw, dh, ph.fx, ph.ev, ph.ct); continue; }
         }
         x.fillStyle = "#c9a227"; x.fillRect(dx, dy, dw, dh);
         if (ph && !im && !pending){ pending = true; imgFor(ph.src).then(function(){ pending = false; paint(); }); }
@@ -3665,10 +3725,12 @@ var ALBUM = (function(){
   function replaceSelected(items){
     var o = selObj(), src = items && items[0];
     if (!o || SEL.kind !== "photo" || !src) return Promise.resolve(0);
-    var pg = curPage(), at = SEL.i, fx = o.fx || "";
+    var pg = curPage(), at = SEL.i, fx = o.fx || "", ev = evStep(o.ev), ct = ctStep(o.ct);
     return readPhoto(src).then(function(ph){
       if (!ph) return 0;
-      ph.fx = fx;
+      /* 6.137.0 — the frame's light travels with the frame, not with the file: a studio who
+         set this one a stop brighter did so because of where it sits on the spread. */
+      ph.fx = fx; ph.ev = ev; ph.ct = ct;
       pg.photos[at] = ph;
       poolAdd(ph);
       reAnchor(pg, DOC.cur); onDocChange(false);
@@ -3700,6 +3762,25 @@ var ALBUM = (function(){
   function setFx(fx){
     var o = selObj(); if (!o || SEL.kind !== "photo") return false;
     o.fx = (FX_LIST.indexOf(fx) >= 0) ? fx : "";
+    touchChanged(false);
+    return true;
+  }
+  /* 6.137.0 — the selected frame's exposure and contrast. `d` is a step, and 0 means put it
+     back where the photograph started: the row's middle button is the way out of any amount of
+     fiddling, and a studio does not have to count its own presses backwards. */
+  function nudgeEv(d){
+    var o = selObj(); if (!o || SEL.kind !== "photo") return false;
+    var was = evStep(o.ev);
+    o.ev = d ? evStep(was + d) : 0;
+    if (o.ev === was) return false;
+    touchChanged(false);
+    return true;
+  }
+  function nudgeCt(d){
+    var o = selObj(); if (!o || SEL.kind !== "photo") return false;
+    var was = ctStep(o.ct);
+    o.ct = d ? ctStep(was + d) : 0;
+    if (o.ct === was) return false;
     touchChanged(false);
     return true;
   }
@@ -3987,7 +4068,7 @@ var ALBUM = (function(){
           var a = ph.anchor || { x:0.5, y:0.5 };
           var fit = coverFit(im.naturalWidth||im.width, im.naturalHeight||im.height, r.w, r.h, a.x, a.y, ph.zoom);
           if (!fit) return;
-          drawPhotoFx(x, im, fit, l0 - l, t0 - t, r0 - l0, b0 - t0, ph.fx);   /* 6.121.0 — the layer wears the look too */
+          drawPhotoFx(x, im, fit, l0 - l, t0 - t, r0 - l0, b0 - t0, ph.fx, ph.ev, ph.ct);   /* 6.121.0 — the layer wears the look too; 6.137.0 — and its own light */
         } });
       })(photos[i], rects[i], i);
     }
@@ -4647,7 +4728,7 @@ var ALBUM = (function(){
       return Promise.resolve(sendFile(bytes, "hnk-album-library.json", "application/json")).then(function(){ H.toast(L("alb_lib_exported").replace("{N}", String(out.records.length)).replace("{M}", String(Math.max(1, Math.round(bytes.length/1048576)))), "ok"); return true; });
     }).catch(function(){ H.toast(L("alb_export_fail"), "err"); return false; });
   }
-  var APP_MARK = "6.136.0";
+  var APP_MARK = "6.137.0";
   function utf8Bytes(s){
     var out = [], i, c;
     for (i=0;i<s.length;i++){
@@ -6286,6 +6367,9 @@ var ALBUM = (function(){
     relay: function(){ return relayAlbum(); },
     check: function(){ return printCheck(DOC, curSize()); },
     setFx: function(fx){ return setFx(fx); },
+    /* 6.137.0 — a step on the selected frame, or 0 to put it back as it arrived */
+    nudgeEv: function(d){ return nudgeEv(d); },
+    nudgeCt: function(d){ return nudgeCt(d); },
     place: function(i){ return placeFromTray(i); },
     removeSelected: function(){ return removeSelected(); },
     swap: function(dir){ return swapSel(dir); },
@@ -6366,6 +6450,8 @@ var ALBUM = (function(){
                layout leaves, where the block goes, the story sets, the block itself (with a
                caller's ruler), the print check and the density-aware page plan */
             fxPixels: fxPixels, fxFilter: fxFilter, freeRegion: freeRegion, designRegion: designRegion,
+            EV_MIN: EV_MIN, EV_MAX: EV_MAX, EV_PER: EV_PER, CT_MIN: CT_MIN, CT_MAX: CT_MAX, CT_PER: CT_PER,
+            evStep: evStep, ctStep: ctStep, evMul: evMul, ctMul: ctMul, stepLabel: stepLabel,
             storyFor: storyFor, composeBlock: composeBlock, printCheck: printCheck, paperDark: paperDark,
             PPI_SOFT: PPI_SOFT, PPI_LOW: PPI_LOW, FX_LIST: FX_LIST, PAPERS: PAPERS, STYLES: STYLES, DENSITIES: DENSITIES,
             /* 6.125.0 wave I — the library's arithmetic: the sheet planner, the shape pairing, the group guess, the date and the
@@ -6409,7 +6495,10 @@ var ALBUM = (function(){
              zoom: isFinite(q.zoom) ? clamp(+q.zoom, ZOOM_MIN, ZOOM_MAX) : 1,
              manual: !!q.manual,
              /* 6.121.0 — the look a frame wears; a word the row does not offer is no look */
-             fx: (typeof q.fx === "string" && FX_LIST.indexOf(q.fx) >= 0) ? q.fx : "" };
+             fx: (typeof q.fx === "string" && FX_LIST.indexOf(q.fx) >= 0) ? q.fx : "",
+             /* 6.137.0 — and its own light. An album saved before this wave has neither and
+                reads back at zero, which is the photograph exactly as it arrived. */
+             ev: evStep(q.ev), ct: ctStep(q.ct) };
   }
   function normalize(d){
     var out = blankDoc();

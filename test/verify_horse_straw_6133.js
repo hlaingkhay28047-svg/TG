@@ -35,9 +35,9 @@ const has = (s, t) => s.indexOf(t) >= 0;
 const APP = read("docs/app/index.html"), LANDING = read("docs/index.html"), CI = read(".github/workflows/test.yml");
 const MAIN = read("panel/main.js");
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
-const VER = "6.136.0", PVER = "6.207.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.137.0", PVER = "6.208.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.133.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 278;
+const COUNT = 279;
 const ID = "horse-straw";
 
 let failures = 0;
@@ -286,7 +286,7 @@ function panelCatalog() {
     /* 6.134.0 — it led the strip when this wave shipped; each release since adds a row above it, so the
        claim is that the row is there, near the top, and still points at the card — never that it leads. */
     report("D2) What's New carries the " + WAVE_V + " row near the top, in all nine languages, pointing at the card — and the panel's lifted table carries it too",
-      !!row && rows.indexOf(row) <= 3 &&   /* 6.135.0, then 6.136.0 — one more release above it each time */ row.kind === "wf" && row.ref === ID &&
+      !!row && rows.indexOf(row) <= 4 &&   /* 6.135.0, 6.136.0, then 6.137.0 — one more release above it each time */ row.kind === "wf" && row.ref === ID &&
       LANGS.every(l => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 200) &&
       has(PWN, '"v":"' + WAVE_V + '"') && has(PWN, '"ref":"' + ID + '"'),
       row && { at: rows.indexOf(row), kind: row.kind, ref: row.ref, langs: LANGS.filter(l => !row.t[l]) });

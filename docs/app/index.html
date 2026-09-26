@@ -4568,10 +4568,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
 <script src="data/imagine.js?v=2b97eb6a9d09"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=29e633a1cbc9"></script>
+<script src="data/album-module.js?v=e9605cb55d9c"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
-<script src="data/trmore.js?v=93c41c48a96e"></script>
-<script src="data/whatsnew.js?v=dd3ea6120644"></script>
+<script src="data/trmore.js?v=5671000af3ad"></script>
+<script src="data/whatsnew.js?v=d5685cb4953d"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -4582,7 +4582,7 @@ html.splashing #splash{display:flex}
    synchronous way to add a script while the document is still being parsed;
    the address is built from this fixed list and a two-or-three-letter code,
    never from the link's text. tools/build_app_data.js writes the tags. */
-window.HNK_TRL_TAGS={"bn":"7422f6125ba5","gu":"8627964cb9cb","hi":"1f5319b0facd","ja":"7941a306dee1","km":"987bc5cc2402","kn":"a348c77eaa95","ko":"7262814be656","lo":"b2906a09f443","ml":"e110c0e4021a","mr":"545464af26be","ne":"cdc49b656e14","pa":"1b845c807787","ta":"c5997fb12d1e","te":"48afca4e3c57","ur":"4f90e73a2d63","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
+window.HNK_TRL_TAGS={"bn":"692af8c8937e","gu":"736a356d9447","hi":"ad8f78bdb980","ja":"ec36966848a4","km":"6581ab5650ee","kn":"6673f8f43c16","ko":"994709929b54","lo":"c1f6842b62c5","ml":"a05625f0eff5","mr":"d8c65b372329","ne":"a23c63f60383","pa":"d43c86ee9f18","ta":"6878b33bd1a7","te":"9d2036578644","ur":"893fc9b24c55","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
 (function(){
   var T=window.HNK_TRL_TAGS, has=function(k){ return Object.prototype.hasOwnProperty.call(T,k); };
   var BASE=/^(my|en|shn|kac|th|zh|vi|id|ms)$/, u="", code="";
@@ -5459,6 +5459,16 @@ var TR_PH={
   alb_fx_warm:{my:"နွေးနွေး",en:"Warm"},
   alb_fx_cool:{my:"အေးအေး",en:"Cool"},
   alb_fx_fade:{my:"မှေးမှိန်",en:"Faded"},
+  /* 6.137.0 — the frame's own light. The heading carries the number beside the word, so the
+     three buttons under it need no readout of their own: darker · as it arrived · brighter. */
+  alb_ev:{my:"အလင်း",en:"EXPOSURE"},
+  alb_ev_dn:{my:"မှိန်အောင်",en:"Darker"},
+  alb_ev_up:{my:"လင်းအောင်",en:"Brighter"},
+  alb_ev_zero:{my:"မူလ အလင်းအတိုင်း",en:"Back to the photograph's own light"},
+  alb_ct:{my:"ကွာဟချက်",en:"CONTRAST"},
+  alb_ct_dn:{my:"နူးညံ့အောင်",en:"Softer"},
+  alb_ct_up:{my:"ပြတ်သားအောင်",en:"Punchier"},
+  alb_ct_zero:{my:"မူလ ကွာဟချက်အတိုင်း",en:"Back to the photograph's own contrast"},
   alb_replace:{my:"ပုံ အစားထိုး…",en:"Replace…"},
   alb_swap_l:{my:"‹ ရှေ့နဲ့ နေရာလဲ",en:"‹ Swap"},
   alb_swap_r:{my:"နောက်နဲ့ နေရာလဲ ›",en:"Swap ›"},
@@ -31176,7 +31186,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.136.0";
+var APP_VER="6.137.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
