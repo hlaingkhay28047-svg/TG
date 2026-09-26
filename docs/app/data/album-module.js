@@ -1514,6 +1514,15 @@ var ALBUM = (function(){
       var ctUp = selBtn("+", L("alb_ct_up"), function(){ nudgeCt(1); });        ctUp.id = "albCtUp"; ctUp.disabled = (ctv >= CT_MAX);
       var crow = grid("btn", [ctDn, ctZr, ctUp], albWidth()); crow.id = "albSelCt";
       box.appendChild(crow);
+      /* 6.138.0 — and the same treatment on every photograph in the book, the way the overlay and
+         the background have always offered */
+      var fxAll = selBtn(L("alb_fx_all"), L("alb_fx_all"), function(){
+        var n = lookAll();
+        H.toast(L(n ? "alb_fx_all_done" : "alb_fx_all_none").replace("{N}", String(n)), n ? "ok" : "");
+      });
+      fxAll.id = "albFxAll";
+      var farow = grid("btn", [fxAll], albWidth()); farow.id = "albSelFxAll";
+      box.appendChild(farow);
       var rp = selBtn(L("alb_replace"), L("alb_replace"), function(){ PICK_MODE = "replace"; if (H && typeof H.pickFiles === "function") H.pickFiles(); });
       rp.id = "albSelReplace";
       if (H && typeof H.wirePick === "function"){ try { H.wirePick(rp, function(){ PICK_MODE = "replace"; }); } catch(e){} }
@@ -3784,6 +3793,25 @@ var ALBUM = (function(){
     touchChanged(false);
     return true;
   }
+  /* 6.138.0 — THE WHOLE BOOK AT ONCE. The overlay, the background, the ornaments, the logo, the
+     design and the template have each had an "on every page" button for releases; the frame's own
+     treatment never did, so a studio who wanted the book black and white, or the book a stop
+     brighter, pressed forty frames one at a time.
+     It carries the three together — look, exposure, contrast — because they ARE the frame's
+     treatment, and a studio thinking "make it all like this one" means this one, not a third of
+     it. Pages only, the same reach every other "all" button has: the tray is the source list, and
+     a photograph nobody has placed yet has not been given a look to keep. */
+  function lookAll(){
+    var o = selObj(); if (!o || SEL.kind !== "photo") return 0;
+    var fx = (FX_LIST.indexOf(o.fx || "") >= 0) ? (o.fx || "") : "";
+    var ev = evStep(o.ev), ct = ctStep(o.ct), n = 0, i, j, ps;
+    for (i = 0; i < DOC.pages.length; i++){
+      ps = DOC.pages[i].photos || [];
+      for (j = 0; j < ps.length; j++){ ps[j].fx = fx; ps[j].ev = ev; ps[j].ct = ct; n++; }
+    }
+    if (n) onDocChange(false);
+    return n;
+  }
   /* the bar a long job shows — Make the album reads every photograph, forty of them on a phone
      is seconds — drawn once under the occasion card and removed when the count is reached */
   function progress(a, b, key){
@@ -4728,7 +4756,7 @@ var ALBUM = (function(){
       return Promise.resolve(sendFile(bytes, "hnk-album-library.json", "application/json")).then(function(){ H.toast(L("alb_lib_exported").replace("{N}", String(out.records.length)).replace("{M}", String(Math.max(1, Math.round(bytes.length/1048576)))), "ok"); return true; });
     }).catch(function(){ H.toast(L("alb_export_fail"), "err"); return false; });
   }
-  var APP_MARK = "6.137.0";
+  var APP_MARK = "6.138.0";
   function utf8Bytes(s){
     var out = [], i, c;
     for (i=0;i<s.length;i++){
@@ -6370,6 +6398,7 @@ var ALBUM = (function(){
     /* 6.137.0 — a step on the selected frame, or 0 to put it back as it arrived */
     nudgeEv: function(d){ return nudgeEv(d); },
     nudgeCt: function(d){ return nudgeCt(d); },
+    lookAll: function(){ return lookAll(); },
     place: function(i){ return placeFromTray(i); },
     removeSelected: function(){ return removeSelected(); },
     swap: function(dir){ return swapSel(dir); },

@@ -53,7 +53,7 @@ const WI = require(path.join(ROOT, "tools", "lib", "album_wave_i.js"));
 const GEN = require(path.join(ROOT, "tools", "build_album_data.js"));
 /* 6.125.0 — the ALBUM module left the shell for docs/app/data/album-module.js (the A4 ceiling) */
 const MOD = read("docs/app/data/album-module.js");
-const VER = "6.137.0", PVER = "6.208.0";
+const VER = "6.138.0", PVER = "6.209.0";
 const L7 = ["shn", "kac", "th", "zh", "vi", "id", "ms"];
 const PACKS = ["bn", "gu", "hi", "ja", "km", "kn", "ko", "lo", "ml", "mr", "ne", "pa", "ta", "te", "ur"];
 /* every line this wave added, as the module asks for it */
@@ -411,13 +411,13 @@ function release() {
   const WAVE_V = "6.125.0";
   const row = wn.find((r) => r.v === WAVE_V);
   report(`E2) the What's New strip carries the ${WAVE_V} row, in all nine languages, pointing at the Album page (it led the strip when this wave shipped; the 6.126.0, 6.127.0, 6.127.1, 6.128.0, 6.129.0, 6.130.0, 6.131.0, 6.132.0 and 6.133.0 rows sit above it now)`,
-    !!row && wn.indexOf(row) <= 13 &&   /* 6.135.0, 6.136.0, then 6.137.0 — one more release above it each time */ row.ref === "pgAlbum" &&
+    !!row && wn.indexOf(row) <= 14 &&   /* 6.135.0, 6.136.0, then 6.137.0 — one more release above it each time */ row.ref === "pgAlbum" &&
     ["my", "en"].concat(L7).every((l) => typeof row.t[l] === "string" && row.t[l].length > 10 && typeof row.s[l] === "string" && row.s[l].length > 80),
     { v: row && row.v, ref: row && row.ref });
 
   const steps = (CI.match(/node test\/[a-zA-Z0-9_]+\.js/g) || []).length;
   report("E3) the sweep runs this test and the landing says how many tests it runs (267 when this wave shipped, 268 since 6.127.0 added verify_skin_age_guard, 269 since 6.127.1 added verify_panel_v2_layer, 270 since 6.128.0 added verify_gen_loading_billing)",
-    has(CI, "node test/verify_album_wave_i.js") && steps === 279 && has(LANDING, "279 tests") && !/\b266 tests\b/.test(LANDING),
+    has(CI, "node test/verify_album_wave_i.js") && steps === 280 && has(LANDING, "280 tests") && !/\b266 tests\b/.test(LANDING),
     { steps });
 }
 
