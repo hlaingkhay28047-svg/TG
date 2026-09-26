@@ -840,9 +840,6 @@ const SETUP_L = {
   data_notbk:{"my":"ဒီဖိုင်က HNK backup ဖိုင် မဟုတ်ပါ","en":"That file is not an HNK backup","shn":"ၾၢႆႇၼႆႉ ဢမ်ႇၸႂ်ႈ HNK backup","kac":"Ndai file gaw HNK backup n re","th":"ไฟล์นี้ไม่ใช่สำรองของ HNK","zh":"该文件不是 HNK 备份","vi":"Tệp này không phải bản sao lưu HNK","id":"File itu bukan cadangan HNK","ms":"Fail itu bukan sandaran HNK"},
   data_nothing:{"my":"ဖိုင်ထဲမှာ ပြန်သွင်းစရာ မတွေ့ပါ","en":"Nothing restorable in that file","shn":"ဢမ်ႇမီးသင်တႃႇသႂ်ႇၶိုၼ်း","kac":"Bai bang na n nga ai","th":"ไม่มีอะไรให้กู้คืน","zh":"文件中没有可恢复内容","vi":"Không có gì để khôi phục","id":"Tidak ada yang bisa dipulihkan","ms":"Tiada apa untuk dipulihkan"},
   data_confirm:{"my":"Backup ထဲက setting {N} ခုကို ဒီ browser ထဲ ထည့်မယ် — လက်ရှိတန်ဖိုးတွေ အစားထိုးခံရမယ်။ ဆက်မလား?","en":"Restore {N} settings from the backup? Current values will be replaced.","shn":"သႂ်ႇၶိုၼ်း setting {N} ဢၼ်? ဢၼ်မီးယူႇတေထုၵ်ႇတႅၼ်း","kac":"Backup na setting {N} hpe bai bang na? Ya na ni hpe galai kau na","th":"กู้คืน {N} การตั้งค่า? ค่าปัจจุบันจะถูกแทนที่","zh":"恢复 {N} 项设置？当前值将被替换","vi":"Khôi phục {N} cài đặt? Giá trị hiện tại sẽ bị thay thế","id":"Pulihkan {N} pengaturan? Nilai saat ini akan diganti","ms":"Pulihkan {N} tetapan? Nilai semasa akan diganti"},
-  data_total:{"my":"Setting စုစုပေါင်း","en":"Settings total","shn":"Setting တင်းမူတ်း","kac":"Setting yawng","th":"การตั้งค่ารวม","zh":"设置总量","vi":"Tổng cài đặt","id":"Total pengaturan","ms":"Jumlah tetapan"},
-  data_photos:{"my":" ပုံ","en":" photos","shn":" ၶႅပ်း","kac":" sumla","th":" รูป","zh":" 张","vi":" ảnh","id":" foto","ms":" foto"},
-  data_store:{"my":"plugin သိုလှောင်မှု","en":"plugin storage","shn":"သိုၵ်းၶေႃႈမုၼ်း plugin","kac":"plugin storage","th":"พื้นที่ปลั๊กอิน","zh":"插件存储","vi":"bộ nhớ plugin","id":"penyimpanan plugin","ms":"storan plugin"},
   plat_h2:{"my":"ဘယ်စက်မှာမဆို သုံးလို့ရတယ်","en":"Works on every device","shn":"ၸႂ်ႉလႆႈၼိူဝ်ၶိူင်ႈၵူႈဢၼ်","kac":"Jak shagu hta lang mai ai","th":"ใช้งานได้ทุกอุปกรณ์","zh":"任何设备都能用","vi":"Dùng được trên mọi thiết bị","id":"Berfungsi di semua perangkat","ms":"Berfungsi pada setiap peranti"},
   plat_p1:{"my":"Chrome နဲ့ဖွင့် → menu (⋮) → “Add to Home screen” / “Install app” → app icon နဲ့ တစ်ချက်နှိပ်ဖွင့်လို့ရပြီ။","en":"Open in Chrome → menu (⋮) → “Add to Home screen” / “Install app” → launch from an app icon.","shn":"ပိုတ်ႇလူၺ်ႈ Chrome → menu (⋮) → “Add to Home screen” / “Install app” → ၼဵၵ်း app icon သေ ပိုတ်ႇလႆႈၵမ်းလဵဝ်။","kac":"Chrome hte hpaw u → menu (⋮) → “Add to Home screen” / “Install app” → app icon kaw na hpaw mai sai.","th":"เปิดใน Chrome → เมนู (⋮) → “Add to Home screen” / “Install app” → เปิดใช้จากไอคอนแอปได้เลย.","zh":"用 Chrome 打开 → 菜单 (⋮) → “Add to Home screen” / “Install app” → 之后即可从 app 图标启动。","vi":"Mở bằng Chrome → menu (⋮) → “Add to Home screen” / “Install app” → khởi chạy từ icon ứng dụng.","id":"Buka di Chrome → menu (⋮) → “Add to Home screen” / “Install app” → luncurkan dari ikon aplikasi.","ms":"Buka dalam Chrome → menu (⋮) → “Add to Home screen” / “Install app” → lancarkan dari ikon app."},
   plat_p2:{"my":"Safari နဲ့ဖွင့် → Share (⬆︎) ခလုတ် → “Add to Home Screen” → home screen မှာ HNK icon ပေါ်လာမယ်။","en":"Open in Safari → Share (⬆︎) → “Add to Home Screen” → the HNK icon appears on your home screen.","shn":"ပိုတ်ႇလူၺ်ႈ Safari → ၼဵၵ်း Share (⬆︎) → “Add to Home Screen” → HNK icon တေဢွၵ်ႇမႃးၼိူဝ် home screen မႂ်း။","kac":"Safari hte hpaw u → Share (⬆︎) → “Add to Home Screen” → na a home screen kaw HNK icon pru wa na.","th":"เปิดใน Safari → Share (⬆︎) → “Add to Home Screen” → ไอคอน HNK จะปรากฏบนหน้าจอโฮมของคุณ.","zh":"用 Safari 打开 → Share (⬆︎) → “Add to Home Screen” → HNK 图标就会出现在主屏幕上。","vi":"Mở bằng Safari → Share (⬆︎) → “Add to Home Screen” → icon HNK xuất hiện trên màn hình chính.","id":"Buka di Safari → Share (⬆︎) → “Add to Home Screen” → ikon HNK muncul di home screen Anda.","ms":"Buka dalam Safari → Share (⬆︎) → “Add to Home Screen” → ikon HNK muncul pada skrin utama anda."},
@@ -2792,7 +2789,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.206.0";
+const PANEL_VERSION = "6.207.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -5752,27 +5749,12 @@ async function settingsFileText() {
     return String(await f.read({ format: formats.utf8 }) || "");
   } catch (e) { return ""; }
 }
-/* the app's line is settings total · Gallery count · storage used; here the
-   third figure is what the plugin's data folder holds (settings + kept files) */
-async function refreshDataStore() {
-  const el = $("dataStore");
-  if (!el) return;
-  const txt = await settingsFileText();
-  const bytes = txt.length;
-  const size = bytes > 1048576 ? (bytes / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(bytes / 1024)) + " KB";
-  const files = (typeof GAL !== "undefined" && GAL && Array.isArray(GAL.files)) ? GAL.files : [];
-  const line = sl("data_total") + ": " + size + " · Gallery: " + files.length + sl("data_photos");
-  el.textContent = line;
-  let used = bytes;
-  for (let i = 0; i < files.length; i++) {
-    try {
-      const f = files[i];
-      const m = (f && typeof f.getMetadata === "function") ? await f.getMetadata() : null;
-      used += Number((m && m.size) || (f && f.size) || 0) || 0;
-    } catch (e) { }
-  }
-  el.textContent = line + " · " + sl("data_store") + ": " + (used / 1048576).toFixed(1) + " MB";
-}
+/* 6.136.0 — refreshDataStore IS GONE, on both surfaces. It printed one line under DATA &
+   BACKUP — "settings total · Gallery N photos · storage used" — and 6.135.0's Storage card,
+   two cards below it, now says the same thing properly: every store named, measured, with its
+   own Delete. Two readings of the same disk, one of them coarser, is the kind of duplication
+   that makes a studio wonder which to believe. DATA & BACKUP keeps what only it does — Export
+   and Restore — and the size question has one answer. */
 function backupFilter(o) {
   const out = {};
   for (const k in o) { if (!BACKUP_SKIP[k]) out[k] = o[k]; }
@@ -6404,7 +6386,6 @@ function bindSetupRefresh() {
   safe("setup:statics", setupApplyStatics);
   safe("setup:about", renderAbout);
   safe("setup:readiness", renderSetupStatus);
-  safe("setup:datastore", function () { refreshDataStore(); });
   safe("setup:storage-paint", function () { renderStorageP(); });   /* 6.135.0 — words only; the walk is on page open */
 }
 function bindSetup() {
@@ -8795,15 +8776,17 @@ const PREFS_L = {
    ============================================================ */
 const STORE_L = {
   h2: { my: "သိမ်းဆည်းမှု", en: "STORAGE", shn: "ၵၢၼ်သိမ်း", kac: "Makoi da ai", th: "พื้นที่จัดเก็บ", zh: "存储", vi: "LƯU TRỮ", id: "PENYIMPANAN", ms: "STORAN" },
-  note: { my: "ဒီ Panel က ကွန်ပျူတာထဲမှာ သိမ်းထားတာတွေ — ဖျက်ချင်တာ ရွေးဖျက်လို့ရပါတယ်",
-    en: "What this panel keeps on your computer — delete any row you do not need",
-    shn: "ပႃႇၼႄႇလ်ၼႆႉ သိမ်းဝႆႉၼႂ်းၶွမ်း — လိူၵ်ႈမွတ်ႇလႆႈ",
-    kac: "Ndai panel gaw computer hta makoi da ai ni — ra ai hpe shakau lu ai",
-    th: "สิ่งที่แผงนี้เก็บไว้ในเครื่อง — ลบแถวที่ไม่ต้องการได้",
-    zh: "此面板存放在电脑上的内容 — 不需要的可逐行删除",
-    vi: "Những gì bảng này lưu trên máy — xoá hàng nào bạn không cần",
-    id: "Yang disimpan panel ini di komputer — hapus baris yang tidak perlu",
-    ms: "Apa yang panel ini simpan pada komputer — padam baris yang tidak perlu" },
+  /* 6.136.0 — the same sentence now runs on the web app's own Storage card, so it names the
+     DEVICE rather than the panel: on a phone the same words are true of the browser's store. */
+  note: { my: "သင့်စက်ထဲမှာ သိမ်းထားတာတွေ — ဖျက်ချင်တာ ရွေးဖျက်လို့ရပါတယ်",
+    en: "What is kept on your device — delete any row you do not need",
+    shn: "ဢၼ်သိမ်းဝႆႉၼႂ်းၶိူင်ႈၸဝ်ႈၵဝ်ႇ — လိူၵ်ႈမွတ်ႇလႆႈ",
+    kac: "Na a machine hta makoi da ai ni — ra ai hpe shakau lu ai",
+    th: "สิ่งที่เก็บไว้ในเครื่องของคุณ — ลบแถวที่ไม่ต้องการได้",
+    zh: "存放在您设备上的内容 — 不需要的可逐行删除",
+    vi: "Những gì lưu trên máy của bạn — xoá hàng nào bạn không cần",
+    id: "Yang disimpan di perangkat Anda — hapus baris yang tidak perlu",
+    ms: "Apa yang disimpan pada peranti anda — padam baris yang tidak perlu" },
   results: { my: "ရလဒ် ပုံများ", en: "Results", shn: "ၽွၼ်းလႆႈ", kac: "Result ni", th: "ผลลัพธ์", zh: "结果图", vi: "Kết quả", id: "Hasil", ms: "Hasil" },
   videos: { my: "ဗီဒီယိုများ", en: "Videos", shn: "ဝီးတီးဢူဝ်း", kac: "Video ni", th: "วิดีโอ", zh: "视频", vi: "Video", id: "Video", ms: "Video" },
   albums: { my: "Album မှတ်တမ်း", en: "Albums", shn: "ဢႄႇလ်ပမ်ႇ", kac: "Album ni", th: "อัลบั้ม", zh: "相册", vi: "Album", id: "Album", ms: "Album" },
@@ -8855,7 +8838,12 @@ function renderStorageP() {
   });
   const tl = $("storeTotalL"); if (tl) tl.textContent = ff9(STORE_L.total);
   const tv = $("storeTotalV");
-  if (tv) tv.textContent = (api && STORE.last && STORE.last.ok) ? storeRowLine(api, "total") : ff9(STORE_L.nohost);
+  /* 6.136.0 — until the first measure has come back there is nothing to report, so the total
+     reads like its rows: an em dash. "This host gives the panel no data folder" is a claim about
+     the host, and making it while the walk is still counting was simply wrong — and it made the
+     two Setup pages differ for as long as either side was still counting. */
+  if (tv) tv.textContent = STORE.last ? (STORE.last.ok ? storeRowLine(api, "total") : ff9(STORE_L.nohost))
+                                      : (api ? "\u2014" : ff9(STORE_L.nohost));
   const kp = $("storeKeptNote"); if (kp) kp.textContent = ff9(STORE_L.kept);
   /* i-sparkle, not a broom: the panel's icon set has no broom, and 6.136.0's own rule is
      that a builder never asks for a glyph the CCX does not carry */
@@ -14557,7 +14545,7 @@ function switchPage(key) {
      opened (and on Run again), never on the boot path: renderSelfTest also
      runs from setupApplyStatics at boot, and a probe there would reach out
      to RunningHub on every panel start. The row re-paints when they answer. */
-  if (key === "setup") { try { renderSetupStatus(); refreshDataStore(); storeMeasureP(); hnkNetProbeStart(false); hnkLayerProbeStart(false); hnkSaveProbeStart(false); hnkPlaceProbeStart(false); renderSelfTest(); } catch (e) { } }   /* 6.135.0 — the storage walk runs when Setup opens, never at boot */
+  if (key === "setup") { try { renderSetupStatus(); storeMeasureP(); hnkNetProbeStart(false); hnkLayerProbeStart(false); hnkSaveProbeStart(false); hnkPlaceProbeStart(false); renderSelfTest(); } catch (e) { } }   /* 6.135.0 — the storage walk runs when Setup opens, never at boot */
   /* the sticky GENERATE follows the page that owns it */
   try { stickyGenSchedule(); setTimeout(stickyGenSchedule, 50); } catch (e) { }
 }

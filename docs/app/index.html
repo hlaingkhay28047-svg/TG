@@ -1687,6 +1687,16 @@ button.acc-kv{min-height:40px;align-items:center;padding:2px 0;border-radius:8px
 .dash-recent img{width:64px;height:64px;object-fit:cover;border-radius:var(--r-md);border:1px solid var(--line-soft);flex:none;cursor:pointer;background:var(--ink)}
 .prefs-row{align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px}
 .prefs-row .lbl{font-size:var(--fs-sm);color:var(--muted);margin-right:4px}
+/* 6.136.0 — Setup ▸ Storage: one row per store, the measured size beside its name, and the
+   Delete at the end of the row. Same shape as the panel's card so the two Setup pages read
+   alike; the app's type scale is the token, not a hard 11px. */
+.store-row{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;margin-top:8px}
+.store-row .lbl{font-size:var(--fs-sm);color:var(--cream);margin:0 8px 6px 0;min-width:96px}
+.store-row .mut{font-size:var(--fs-sm);margin:0 8px 6px 0;flex:1 1 auto}
+.store-row .btn{margin:0 0 6px 0}
+.store-total{border-top:1px solid rgba(217,164,65,.28);padding-top:8px}
+.store-total .lbl{color:var(--gold);font-weight:700}
+#storeKeptNote{font-size:var(--fs-sm);margin-top:6px}
 /* text size — the three steps move the type tokens every component reads (S · M · L) */
 html.tsize-l{--fs-2xs:12px;--fs-xs:13px;--fs-sm:14px;--fs-base:15px;--fs-md:16.5px}
 html.tsize-l body{font-size:17px}
@@ -3365,7 +3375,6 @@ html.splashing #splash{display:flex}
        Backup exports the whole set as one JSON file; Restore reads it back. -->
   <section class="card" id="cardData">
     <h2 id="dataH2"></h2>
-    <div class="mut" id="dataStore"></div>
     <div class="row" style="margin-top:10px">
       <button class="btn grow" id="btnExportData"></button>
       <button class="btn grow" id="btnImportData"></button>
@@ -3394,6 +3403,40 @@ html.splashing #splash{display:flex}
       <button class="chip" id="prefsNotify"></button>
       <span class="mut" id="prefsNotifyNote" style="margin:0"></span>
     </div>
+  </section>
+
+  <!-- 6.136.0 — STORAGE. The panel got this card in 6.206.0 and the web app did not, though it
+       keeps just as much: every result and every video in IndexedDB, an album record per album,
+       and the settings in localStorage. One line under DATA & BACKUP said "Gallery N photos" and
+       a browser total, which is not enough to decide what to delete. Same rows and same words as
+       the panel, measured on this side's own stores; scratch files are a plugin thing and have no
+       counterpart here, so this card has four rows where the panel has five. -->
+  <section class="card" id="cardStorage">
+    <h2 id="storeH2"></h2>
+    <p class="mut" id="storeNote"></p>
+    <div class="row store-row" id="storeRow_results">
+      <span class="lbl" id="storeL_results"></span><span class="mut" id="storeV_results"></span>
+      <button class="btn" id="storeB_results"></button>
+    </div>
+    <div class="row store-row" id="storeRow_videos">
+      <span class="lbl" id="storeL_videos"></span><span class="mut" id="storeV_videos"></span>
+      <button class="btn" id="storeB_videos"></button>
+    </div>
+    <div class="row store-row" id="storeRow_albums">
+      <span class="lbl" id="storeL_albums"></span><span class="mut" id="storeV_albums"></span>
+      <button class="btn" id="storeB_albums"></button>
+    </div>
+    <div class="row store-row" id="storeRow_settings">
+      <span class="lbl" id="storeL_settings"></span><span class="mut" id="storeV_settings"></span>
+    </div>
+    <div class="row store-row store-total" id="storeRow_total">
+      <span class="lbl" id="storeTotalL"></span><span class="mut" id="storeTotalV"></span>
+    </div>
+    <p class="mut" id="storeKeptNote"></p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn grow" id="btnStoreRefresh"></button>
+    </div>
+    <div class="status" id="stStore"></div>
   </section>
 
   <section class="card">
@@ -4525,10 +4568,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
 <script src="data/imagine.js?v=2b97eb6a9d09"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=8133d9e8d284"></script>
+<script src="data/album-module.js?v=29e633a1cbc9"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=93c41c48a96e"></script>
-<script src="data/whatsnew.js?v=ca5e101051db"></script>
+<script src="data/whatsnew.js?v=dd3ea6120644"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -6662,7 +6705,7 @@ function switchPage(id, fromPop){
   if (id==="pgGallery" && typeof renderGallery==="function") renderGallery();
   if (id==="pgDash" && typeof renderDash==="function") renderDash();
   if (id==="pgAccount" && typeof unifiedRender==="function") unifiedRender();
-  if (id==="pgHome" && typeof renderSetupStatus==="function"){ renderSetupStatus(); if(typeof refreshDataStore==="function") refreshDataStore(); }
+  if (id==="pgHome" && typeof renderSetupStatus==="function"){ renderSetupStatus(); if(typeof storeReadW==="function") storeReadW(); }
 }
 window.addEventListener("popstate", function(ev){
   /* back closes the topmost overlay first, then walks pages */
@@ -31133,7 +31176,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.135.0";
+var APP_VER="6.136.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -31425,13 +31468,261 @@ function pendBox(spinId,on){
     });
   }catch(e){}
 })();
+/* ============================================================
+   6.136.0 — SETUP ▸ STORAGE, the web app's own.
+
+   The panel shipped this card in 6.206.0 after the owner asked for the CCX's histories to be
+   deletable so the machine stops getting heavy. The same complaint was still true here and the
+   app said almost nothing about it: one line under DATA & BACKUP with a Gallery count and a
+   browser total, which tells a studio that something is large without telling them what.
+
+   Same rows and the same words as the panel, measured over this side's own stores:
+     results   IndexedDB "gal", every record that is not a video (b64 + its thumbnail)
+     videos    IndexedDB "gal", kind:"video" (the blob, plus the poster thumbnail)
+     albums    IndexedDB "kv", one record per album (hnk_album_doc_v1:<id>); the shelf index is
+               bookkeeping, not something a studio made, so it is not counted — the same rule
+               the panel applies to its own _keep.json
+     settings  the HNK_LS_KEYS localStorage records
+
+   Delete is the panel's two-press arm rather than a confirm() dialog, so the two surfaces ask
+   the question with the same words. ★-kept results are never deleted, and the settings row has
+   no button: it holds the key and the sign-in.
+   ============================================================ */
+var STORE_W = {
+  h2: { my: "သိမ်းဆည်းမှု", en: "STORAGE", shn: "ၵၢၼ်သိမ်း", kac: "Makoi da ai", th: "พื้นที่จัดเก็บ", zh: "存储", vi: "LƯU TRỮ", id: "PENYIMPANAN", ms: "STORAN" },
+  note: { my: "သင့်စက်ထဲမှာ သိမ်းထားတာတွေ — ဖျက်ချင်တာ ရွေးဖျက်လို့ရပါတယ်",
+    en: "What is kept on your device — delete any row you do not need",
+    shn: "ဢၼ်သိမ်းဝႆႉၼႂ်းၶိူင်ႈၸဝ်ႈၵဝ်ႇ — လိူၵ်ႈမွတ်ႇလႆႈ",
+    kac: "Na a machine hta makoi da ai ni — ra ai hpe shakau lu ai",
+    th: "สิ่งที่เก็บไว้ในเครื่องของคุณ — ลบแถวที่ไม่ต้องการได้",
+    zh: "存放在您设备上的内容 — 不需要的可逐行删除",
+    vi: "Những gì lưu trên máy của bạn — xoá hàng nào bạn không cần",
+    id: "Yang disimpan di perangkat Anda — hapus baris yang tidak perlu",
+    ms: "Apa yang disimpan pada peranti anda — padam baris yang tidak perlu" },
+  results: { my: "ရလဒ် ပုံများ", en: "Results", shn: "ၽွၼ်းလႆႈ", kac: "Result ni", th: "ผลลัพธ์", zh: "结果图", vi: "Kết quả", id: "Hasil", ms: "Hasil" },
+  videos: { my: "ဗီဒီယိုများ", en: "Videos", shn: "ဝီးတီးဢူဝ်း", kac: "Video ni", th: "วิดีโอ", zh: "视频", vi: "Video", id: "Video", ms: "Video" },
+  albums: { my: "Album မှတ်တမ်း", en: "Albums", shn: "ဢႄႇလ်ပမ်ႇ", kac: "Album ni", th: "อัลบั้ม", zh: "相册", vi: "Album", id: "Album", ms: "Album" },
+  settings: { my: "ပြင်ဆင်ချက် ဖိုင်များ", en: "Settings files", shn: "ၾၢႆႇၶိူင်ႈမၢႆ", kac: "Setting file ni", th: "ไฟล์การตั้งค่า", zh: "设置文件", vi: "Tệp cài đặt", id: "Berkas pengaturan", ms: "Fail tetapan" },
+  total: { my: "စုစုပေါင်း", en: "Total", shn: "တင်းမူတ်း", kac: "Yawng", th: "รวม", zh: "合计", vi: "Tổng", id: "Total", ms: "Jumlah" },
+  files: { my: "ဖိုင်", en: "files", shn: "ၾၢႆႇ", kac: "file", th: "ไฟล์", zh: "个", vi: "tệp", id: "berkas", ms: "fail" },
+  del: { my: "ဖျက်", en: "Delete", shn: "မွတ်ႇ", kac: "Shakau", th: "ลบ", zh: "删除", vi: "Xoá", id: "Hapus", ms: "Padam" },
+  armed: { my: "သေချာလား? — ထပ်နှိပ်", en: "Sure? Tap again", shn: "တႄႉႁိုဝ်? — ၼဵၵ်းထႅင်ႈ", kac: "Teng ai i? — bai dip", th: "แน่ใจไหม? แตะอีกครั้ง", zh: "确定？再点一次", vi: "Chắc chứ? Chạm lại", id: "Yakin? Ketuk lagi", ms: "Pasti? Ketik lagi" },
+  refresh: { my: "ပြန်တွက်", en: "Refresh", shn: "ႁဵတ်းမႂ်ႇ", kac: "Bai hkrung", th: "คำนวณใหม่", zh: "重新统计", vi: "Tính lại", id: "Hitung ulang", ms: "Kira semula" },
+  kept: { my: "★ ထားတာတွေ မဖျက်ပါ", en: "★ kept results are never deleted", shn: "★ ဢၼ်မၢႆဝႆႉ ဢမ်ႇမွတ်ႇ", kac: "★ makoi da ai ni gaw n shakau ai", th: "★ ที่ติดดาวไว้จะไม่ถูกลบ", zh: "★ 标星的不会被删除", vi: "★ đã giữ sẽ không bị xoá", id: "★ yang ditandai tidak dihapus", ms: "★ yang ditanda tidak dipadam" },
+  none: { my: "ဖျက်စရာ မရှိပါ", en: "Nothing to delete", shn: "ဢမ်ႇမီးဢၼ်တေမွတ်ႇ", kac: "Shakau na nlu", th: "ไม่มีอะไรให้ลบ", zh: "没有可删除的", vi: "Không có gì để xoá", id: "Tidak ada yang dihapus", ms: "Tiada apa untuk dipadam" },
+  freed: { my: "နေရာ ပြန်ရပါပြီ", en: "freed", shn: "လႆႈတီႈဝႆႇၶိုၼ်း", kac: "shara lu sai", th: "คืนพื้นที่แล้ว", zh: "已释放", vi: "đã giải phóng", id: "dibebaskan", ms: "dibebaskan" },
+  nostore: { my: "ဒီ browser က သိုလှောင်ခွင့် မပေးပါ", en: "This browser gives the app no store", shn: "browser ၼႆႉ ဢမ်ႇပၼ်တီႈသိမ်း", kac: "Ndai browser gaw store n jaw ai", th: "เบราว์เซอร์นี้ไม่ให้พื้นที่เก็บ", zh: "此浏览器未提供存储", vi: "Trình duyệt này không cho bộ nhớ", id: "Peramban ini tidak memberi penyimpanan", ms: "Pelayar ini tidak memberi storan" }
+};
+var STORE_W_ROWS = ["results", "videos", "albums"];          /* the three that carry a Delete */
+var STORE_W_ALL = ["results", "videos", "albums", "settings"];
+var ALB_DOC_PREFIX = "hnk_album_doc_v1:", ALB_SHELF_KEY = "hnk_album_shelf_v1";
+var STOREW = { last: null, arm: {}, busy: false };
+
+/* the same arithmetic the panel prints, so "3.0 MB" means the same thing on both surfaces */
+function storeFmtW(bytes){
+  var b = Number(bytes) || 0;
+  if (b <= 0) return "0";
+  if (b >= 1048576) return (b / 1048576).toFixed(1) + " MB";
+  if (b >= 1024) return Math.round(b / 1024) + " KB";
+  return b + " B";
+}
+function storeRowW(){ return { n: 0, bytes: 0 }; }
+/* base64 carries 3 bytes in every 4 characters — the record's real weight, not its string length */
+function storeB64W(s){ s = String(s || ""); return s ? Math.floor(s.length * 3 / 4) : 0; }
+
+function storeMeasureW(){
+  var out = { ok:false, err:"", results:storeRowW(), videos:storeRowW(), albums:storeRowW(),
+              settings:storeRowW(), total:storeRowW() };
+  try{
+    HNK_LS_KEYS.forEach(function(k){
+      var v = null; try{ v = localStorage.getItem(k); }catch(e){}
+      if (v !== null){ out.settings.n++; out.settings.bytes += v.length; }
+    });
+  }catch(e){}
+  function finish(){
+    out.ok = true;
+    STORE_W_ALL.forEach(function(k){ out.total.n += out[k].n; out.total.bytes += out[k].bytes; });
+    return out;
+  }
+  return galDb().then(function(d){
+    return new Promise(function(res){
+      var settled = false;
+      function done(){ if (settled) return; settled = true; res(finish()); }
+      var tx, gst, kst;
+      try{ tx = d.transaction(["gal","kv"],"readonly"); gst = tx.objectStore("gal"); kst = tx.objectStore("kv"); }
+      catch(e){ out.err = String((e && e.message) || e); res(out); return; }
+      tx.onabort = done; tx.onerror = done;
+      var cur = gst.openCursor();
+      cur.onerror = done;
+      cur.onsuccess = function(e){
+        var c = e.target.result;
+        if (c){
+          var r = c.value || {};
+          var row = (r.kind === "video") ? out.videos : out.results;
+          row.n++;
+          row.bytes += (r.blob && r.blob.size) ? Number(r.blob.size) : storeB64W(r.b64);
+          row.bytes += storeB64W(r.thumb);
+          c.continue();
+          return;
+        }
+        var kq;
+        try{ kq = kst.getAllKeys(); }catch(e2){ done(); return; }
+        kq.onerror = done;
+        kq.onsuccess = function(){
+          var keys = (kq.result || []).filter(function(k){
+            return typeof k === "string" && k.indexOf(ALB_DOC_PREFIX) === 0;
+          });
+          var left = keys.length;
+          if (!left){ done(); return; }
+          keys.forEach(function(k){
+            var g = kst.get(k);
+            g.onerror = function(){ if (!--left) done(); };
+            g.onsuccess = function(){
+              var v = g.result;
+              if (v !== undefined && v !== null){
+                out.albums.n++;
+                try{ out.albums.bytes += JSON.stringify(v).length; }catch(e3){}
+              }
+              if (!--left) done();
+            };
+          });
+        };
+      };
+    });
+  }).catch(function(e){ out.err = String((e && e.message) || e); return out; });
+}
+
+/* results / videos: every record of that kind that is NOT ★ kept.
+   albums: every album record, and the shelf index with them — a shelf listing albums whose
+   records are gone would offer the studio rows that open nothing. */
+function storeClearW(kind){
+  var out = { n:0, bytes:0, kept:0, ok:false, err:"" };
+  if (STORE_W_ROWS.indexOf(kind) < 0){
+    out.err = "not a deletable row: " + String(kind);
+    return Promise.resolve(out);
+  }
+  return galDb().then(function(d){
+    return new Promise(function(res){
+      var settled = false;
+      function done(){ if (settled) return; settled = true; out.ok = true; res(out); }
+      var tx, st;
+      try{ tx = d.transaction(kind === "albums" ? "kv" : "gal","readwrite"); st = tx.objectStore(kind === "albums" ? "kv" : "gal"); }
+      catch(e){ out.err = String((e && e.message) || e); res(out); return; }
+      tx.onabort = function(){ if (!settled){ settled = true; out.err = "aborted"; res(out); } };
+      tx.onerror = tx.onabort;
+      tx.oncomplete = done;
+      if (kind === "albums"){
+        var kq = st.getAllKeys();
+        kq.onerror = function(){ };
+        kq.onsuccess = function(){
+          (kq.result || []).forEach(function(k){
+            if (typeof k !== "string") return;
+            if (k.indexOf(ALB_DOC_PREFIX) !== 0 && k !== ALB_SHELF_KEY) return;
+            if (k.indexOf(ALB_DOC_PREFIX) === 0){
+              out.n++;
+              var g = st.get(k);
+              g.onsuccess = function(){ try{ out.bytes += JSON.stringify(g.result).length; }catch(e){} };
+            }
+            st.delete(k);
+          });
+        };
+        return;
+      }
+      var cur = st.openCursor();
+      cur.onerror = function(){ };
+      cur.onsuccess = function(e){
+        var c = e.target.result;
+        if (!c) return;
+        var r = c.value || {};
+        var mine = (kind === "videos") ? (r.kind === "video") : (r.kind !== "video");
+        if (mine){
+          if (r.keep){ out.kept++; }
+          else {
+            out.n++;
+            out.bytes += (r.blob && r.blob.size) ? Number(r.blob.size) : storeB64W(r.b64);
+            out.bytes += storeB64W(r.thumb);
+            c.delete();
+          }
+        }
+        c.continue();
+      };
+    });
+  }).catch(function(e){ out.err = String((e && e.message) || e); return out; });
+}
+
+function storeLineW(k){
+  var m = STOREW.last, r = m && m[k];
+  if (!r) return "—";
+  return r.n + " " + L9(STORE_W.files) + " · " + storeFmtW(r.bytes);
+}
+function renderStorageW(){
+  if (!$("cardStorage")) return;
+  $("storeH2").innerHTML = icn("i-stack","ic-h2") + escH(L9(STORE_W.h2));
+  $("storeNote").textContent = L9(STORE_W.note);
+  var armed = function(k){ return Date.now() - (STOREW.arm[k] || 0) < 4000; };
+  STORE_W_ALL.forEach(function(k){
+    var lb = $("storeL_" + k); if (lb) lb.textContent = L9(STORE_W[k]);
+    var vl = $("storeV_" + k); if (vl) vl.textContent = storeLineW(k);
+    var bt = $("storeB_" + k);
+    if (bt){
+      var on = armed(k);
+      bt.className = "btn" + (on ? " btn-gold" : "");
+      setIcnText(bt, "i-trash", L9(on ? STORE_W.armed : STORE_W.del));
+    }
+  });
+  $("storeTotalL").textContent = L9(STORE_W.total);
+  /* the same rule as the panel: an em dash while the count is still running, and the "no store"
+     sentence only once a measure has actually come back empty-handed. */
+  $("storeTotalV").textContent = STOREW.last ? (STOREW.last.ok ? storeLineW("total") : L9(STORE_W.nostore)) : "\u2014";
+  $("storeKeptNote").textContent = L9(STORE_W.kept);
+  /* the panel draws this with i-reset; the app's sprite has no such symbol and i-retry is the
+     same gesture in this set. An icon is not a visible string, so the two Setup pages still read
+     alike word for word. */
+  setIcnText($("btnStoreRefresh"), "i-retry", L9(STORE_W.refresh));
+}
+function storeReadW(){
+  return storeMeasureW().then(function(m){ STOREW.last = m; renderStorageW(); return m; })
+    .catch(function(){ STOREW.last = null; renderStorageW(); });
+}
+function storeDeleteW(kind){
+  if (STOREW.busy) return Promise.resolve();
+  if (Date.now() - (STOREW.arm[kind] || 0) >= 4000){
+    STOREW.arm[kind] = Date.now();
+    renderStorageW();
+    setTimeout(function(){ try{ renderStorageW(); }catch(e){} }, 4200);
+    return Promise.resolve();
+  }
+  STOREW.arm[kind] = 0;
+  STOREW.busy = true;
+  return storeClearW(kind).then(function(out){
+    return storeReadW().then(function(){
+      if (!out.ok) setSt("stStore", L9(STORE_W.nostore), "err");
+      else if (!out.n) setSt("stStore", L9(STORE_W.none), "ok");
+      else setSt("stStore", out.n + " · " + storeFmtW(out.bytes) + " " + L9(STORE_W.freed) +
+                 (out.kept ? " — ★ " + out.kept : ""), "ok");
+      try{ if (typeof renderGallery === "function") renderGallery(); }catch(e){}
+    });
+  }).catch(function(e){ setSt("stStore", String((e && e.message) || e), "err"); })
+    .then(function(){ STOREW.busy = false; });
+}
+function wireStorageCard(){
+  if (!$("cardStorage")) return;
+  STORE_W_ROWS.forEach(function(k){
+    var b = $("storeB_" + k);
+    if (b && !b._hnkStoreBound){ b._hnkStoreBound = 1; b.onclick = function(){ storeDeleteW(k); }; }
+  });
+  var rb = $("btnStoreRefresh");
+  if (rb && !rb._hnkStoreBound){ rb._hnkStoreBound = 1; rb.onclick = function(){ storeReadW(); }; }
+  renderStorageW();
+  storeReadW();
+}
 function wireDataCard(){
   if(!$("cardData")) return;
   try{ renderPrefs(); }catch(eP){}
   $("dataH2").innerHTML=icn("i-stack","ic-h2")+escH(L9({my:"DATA သိမ်းဆည်းမှု",en:"DATA & BACKUP",shn:"DATA လႄႈ BACKUP",kac:"DATA hte BACKUP",th:"ข้อมูลและสำรอง",zh:"数据与备份",vi:"Dữ liệu & sao lưu",id:"Data & cadangan",ms:"Data & sandaran"}));
   setIcnText($("btnExportData"),"i-download",L9({my:"Backup ထုတ်မယ်",en:"Export backup",shn:"ဢွၵ်ႇ backup",kac:"Backup shapraw u",th:"ส่งออกสำรอง",zh:"导出备份",vi:"Xuất bản sao lưu",id:"Ekspor cadangan",ms:"Eksport sandaran"}));
   setIcnText($("btnImportData"),"i-restore",L9({my:"Backup ပြန်သွင်းမယ်",en:"Restore backup",shn:"သႂ်ႇၶိုၼ်း backup",kac:"Backup bai bang u",th:"กู้คืนสำรอง",zh:"恢复备份",vi:"Khôi phục sao lưu",id:"Pulihkan cadangan",ms:"Pulihkan sandaran"}));
-  refreshDataStore();
+  wireStorageCard();
   $("btnExportData").onclick=function(){
     var data={};
     HNK_LS_KEYS.forEach(function(k){
@@ -31472,26 +31763,12 @@ function wireDataCard(){
     rd.readAsText(f);
   };
 }
-function refreshDataStore(){
-  var elx=$("dataStore"); if(!elx) return;
-  var bytes=0;
-  HNK_LS_KEYS.forEach(function(k){ try{ var v=localStorage.getItem(k); if(v) bytes+=v.length; }catch(e){} });
-  var line=L9({my:"Setting စုစုပေါင်း",en:"Settings total",shn:"Setting တင်းမူတ်း",kac:"Setting yawng",th:"การตั้งค่ารวม",zh:"设置总量",vi:"Tổng cài đặt",id:"Total pengaturan",ms:"Jumlah tetapan"})+": "+(bytes>1048576 ? (bytes/1048576).toFixed(1)+" MB" : Math.max(1,Math.round(bytes/1024))+" KB");
-  elx.textContent=line;
-  try{
-    galDb().then(function(d){
-      d.transaction("gal").objectStore("gal").count().onsuccess=function(e){
-        var extra=" · Gallery: "+e.target.result+L9({my:" ပုံ",en:" photos",shn:" ၶႅပ်း",kac:" sumla",th:" รูป",zh:" 张",vi:" ảnh",id:" foto",ms:" foto"});
-        if(navigator.storage && navigator.storage.estimate){
-          navigator.storage.estimate().then(function(est){
-            var used=est.usage||0;
-            elx.textContent=line+extra+" · "+L9({my:"browser သိုလှောင်မှု",en:"browser storage",shn:"သိုၵ်းၶေႃႈမုၼ်း browser",kac:"browser storage",th:"พื้นที่เบราว์เซอร์",zh:"浏览器存储",vi:"bộ nhớ trình duyệt",id:"penyimpanan browser",ms:"storan pelayar"})+": "+(used/1048576).toFixed(1)+" MB";
-          }).catch(function(){ elx.textContent=line+extra; });
-        } else elx.textContent=line+extra;
-      };
-    }).catch(function(){});
-  }catch(e){}
-}
+/* 6.136.0 — refreshDataStore IS GONE, on both surfaces. It printed one line under DATA &
+   BACKUP — "settings total · Gallery N photos · browser storage" — and the Storage card two
+   cards above it now says the same thing properly: every store named, measured, with its own
+   Delete. Two readings of the same disk, one of them coarser, is the kind of duplication that
+   makes a studio wonder which to believe. DATA & BACKUP keeps what only it does — Export and
+   Restore — and the size question has one answer. */
 
 /* ---- About & Updates ---- */
 /* v5.85.0 — THE LAUNCH CHIME'S ONE SWITCH.
