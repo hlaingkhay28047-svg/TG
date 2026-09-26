@@ -3433,6 +3433,9 @@ html.splashing #splash{display:flex}
       <span class="lbl" id="storeTotalL"></span><span class="mut" id="storeTotalV"></span>
     </div>
     <p class="mut" id="storeKeptNote"></p>
+    <!-- 6.138.0 — whether the browser has promised to keep any of this. The panel has no
+         counterpart: a plugin writes real files to a real folder and nothing evicts them. -->
+    <p class="mut" id="storeKeep"></p>
     <div class="row" style="margin-top:10px">
       <button class="btn grow" id="btnStoreRefresh"></button>
     </div>
@@ -4568,10 +4571,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
 <script src="data/imagine.js?v=2b97eb6a9d09"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=e9605cb55d9c"></script>
+<script src="data/album-module.js?v=7d89612bb63a"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
-<script src="data/trmore.js?v=5671000af3ad"></script>
-<script src="data/whatsnew.js?v=d5685cb4953d"></script>
+<script src="data/trmore.js?v=525c22c69a33"></script>
+<script src="data/whatsnew.js?v=8ea434ee5497"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -4582,7 +4585,7 @@ html.splashing #splash{display:flex}
    synchronous way to add a script while the document is still being parsed;
    the address is built from this fixed list and a two-or-three-letter code,
    never from the link's text. tools/build_app_data.js writes the tags. */
-window.HNK_TRL_TAGS={"bn":"692af8c8937e","gu":"736a356d9447","hi":"ad8f78bdb980","ja":"ec36966848a4","km":"6581ab5650ee","kn":"6673f8f43c16","ko":"994709929b54","lo":"c1f6842b62c5","ml":"a05625f0eff5","mr":"d8c65b372329","ne":"a23c63f60383","pa":"d43c86ee9f18","ta":"6878b33bd1a7","te":"9d2036578644","ur":"893fc9b24c55","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
+window.HNK_TRL_TAGS={"bn":"c87b0e0ca42d","gu":"8ea5c3c4102a","hi":"88c4f4a819db","ja":"296b43886ac9","km":"cd507d7ea2ef","kn":"1b8aff731d91","ko":"834ce8784ec8","lo":"7344448aa802","ml":"aec3f184875f","mr":"3a5d74fcab39","ne":"3a6f13f794b6","pa":"4a3a9ce4b0a3","ta":"8f6e26d48c91","te":"1cc0266e3d40","ur":"8ff7a0574916","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
 (function(){
   var T=window.HNK_TRL_TAGS, has=function(k){ return Object.prototype.hasOwnProperty.call(T,k); };
   var BASE=/^(my|en|shn|kac|th|zh|vi|id|ms)$/, u="", code="";
@@ -5469,6 +5472,11 @@ var TR_PH={
   alb_ct_dn:{my:"နူးညံ့အောင်",en:"Softer"},
   alb_ct_up:{my:"ပြတ်သားအောင်",en:"Punchier"},
   alb_ct_zero:{my:"မူလ ကွာဟချက်အတိုင်း",en:"Back to the photograph's own contrast"},
+  /* 6.138.0 — the frame's whole treatment on every photograph in the book: the look and the
+     light travel together, because that is what a studio means by "make them all like this one". */
+  alb_fx_all:{my:"ပုံအားလုံးကို ဒီအတိုင်း",en:"Every photo like this one"},
+  alb_fx_all_done:{my:"ပုံ {N} ပုံကို ဒီအသွင်၊ ဒီအလင်း ထားပြီ",en:"{N} photos now wear this look and this light"},
+  alb_fx_all_none:{my:"ပြောင်းစရာ ပုံ မရှိပါ",en:"No photos to change"},
   alb_replace:{my:"ပုံ အစားထိုး…",en:"Replace…"},
   alb_swap_l:{my:"‹ ရှေ့နဲ့ နေရာလဲ",en:"‹ Swap"},
   alb_swap_r:{my:"နောက်နဲ့ နေရာလဲ ›",en:"Swap ›"},
@@ -31182,11 +31190,17 @@ if ("serviceWorker" in navigator) {
   } catch(e){}
   /* ask the browser not to evict this origin (cached library images +
      localStorage gallery/keys) under storage pressure */
-  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
+  /* 6.138.0 — AND KEEP THE ANSWER. This call has been made since the storage work and its result
+     thrown away, which made it a wish rather than a fact: Safari on iPhone commonly refuses, and a
+     studio whose albums could be evicted was never told. The answer is remembered here and the
+     Storage card says it in words. Asking twice is harmless — a browser that has already granted
+     it resolves true without prompting — so a device that was full at first launch gets another
+     chance every time the app opens. */
+  try { persistAsk(); } catch(e){}
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.137.0";
+var APP_VER="6.138.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -31521,8 +31535,40 @@ var STORE_W = {
   kept: { my: "★ ထားတာတွေ မဖျက်ပါ", en: "★ kept results are never deleted", shn: "★ ဢၼ်မၢႆဝႆႉ ဢမ်ႇမွတ်ႇ", kac: "★ makoi da ai ni gaw n shakau ai", th: "★ ที่ติดดาวไว้จะไม่ถูกลบ", zh: "★ 标星的不会被删除", vi: "★ đã giữ sẽ không bị xoá", id: "★ yang ditandai tidak dihapus", ms: "★ yang ditanda tidak dipadam" },
   none: { my: "ဖျက်စရာ မရှိပါ", en: "Nothing to delete", shn: "ဢမ်ႇမီးဢၼ်တေမွတ်ႇ", kac: "Shakau na nlu", th: "ไม่มีอะไรให้ลบ", zh: "没有可删除的", vi: "Không có gì để xoá", id: "Tidak ada yang dihapus", ms: "Tiada apa untuk dipadam" },
   freed: { my: "နေရာ ပြန်ရပါပြီ", en: "freed", shn: "လႆႈတီႈဝႆႇၶိုၼ်း", kac: "shara lu sai", th: "คืนพื้นที่แล้ว", zh: "已释放", vi: "đã giải phóng", id: "dibebaskan", ms: "dibebaskan" },
+  keepYes: { my: "✓ ဒီစက်က ဒါတွေကို သိမ်းထားပေးမယ်လို့ ကတိပေးထားပါတယ်",
+    en: "✓ This device has promised to keep all of this",
+    shn: "✓ ၶိူင်ႈၼႆႉ ဝႃႈတေသိမ်းဝႆႉပၼ်",
+    kac: "✓ Ndai machine gaw makoi da na ngu ga sadi jaw sai",
+    th: "✓ เครื่องนี้รับปากว่าจะเก็บทั้งหมดนี้ไว้",
+    zh: "✓ 本设备已承诺保留这些内容",
+    vi: "✓ Thiết bị này đã hứa giữ lại tất cả",
+    id: "✓ Perangkat ini berjanji menyimpan semua ini",
+    ms: "✓ Peranti ini berjanji menyimpan semua ini" },
+  keepNo: { my: "⚠ ဒီစက်က ကတိ မပေးထားပါ — နေရာနည်းလာရင် browser က ဖျက်ပစ်နိုင်ပါတယ်။ အရေးကြီးတဲ့ Album တွေကို ထုတ်သိမ်းထားပါ",
+    en: "⚠ This device has made no such promise — the browser may delete this when it runs short of room. Export any album that matters",
+    shn: "⚠ ၶိူင်ႈၼႆႉ ဢမ်ႇပၼ်ၵတိ — တီႈဝႆႇလဵၵ်ႉမႃးၸိုင် browser မွတ်ႇပႅတ်ႈလႆႈ။ ဢႄႇလ်ပမ်ႇလမ်ႇလွင်ႈ ဢွၵ်ႇသိမ်းဝႆႉ",
+    kac: "⚠ Ndai machine gaw ga sadi n jaw ai — shara yawm wa yang browser shakau kau na re. Ahkyak ai album ni gaw shapraw da u",
+    th: "⚠ เครื่องนี้ไม่ได้รับปาก — เมื่อพื้นที่เหลือน้อย เบราว์เซอร์อาจลบทิ้ง ส่งออกอัลบั้มที่สำคัญไว้",
+    zh: "⚠ 本设备并未作此承诺 —— 空间不足时浏览器可能删除。请导出重要的相册",
+    vi: "⚠ Thiết bị này chưa hứa điều đó — khi hết chỗ, trình duyệt có thể xoá. Hãy xuất những album quan trọng",
+    id: "⚠ Perangkat ini tidak berjanji — saat ruang menipis peramban bisa menghapusnya. Ekspor album yang penting",
+    ms: "⚠ Peranti ini tidak berjanji — apabila ruang menipis pelayar boleh memadamnya. Eksport album yang penting" },
   nostore: { my: "ဒီ browser က သိုလှောင်ခွင့် မပေးပါ", en: "This browser gives the app no store", shn: "browser ၼႆႉ ဢမ်ႇပၼ်တီႈသိမ်း", kac: "Ndai browser gaw store n jaw ai", th: "เบราว์เซอร์นี้ไม่ให้พื้นที่เก็บ", zh: "此浏览器未提供存储", vi: "Trình duyệt này không cho bộ nhớ", id: "Peramban ini tidak memberi penyimpanan", ms: "Pelayar ini tidak memberi storan" }
 };
+/* 6.138.0 — WHETHER THIS DEVICE HAS PROMISED TO KEEP ANY OF IT.
+   Everything the card above measures lives in storage a browser is allowed to throw away when the
+   phone runs short. Chrome and Android grant persistence to an installed app almost always; Safari
+   on iPhone commonly refuses, and a refused promise is exactly the case a wedding studio needs to
+   hear about BEFORE the album is gone rather than after. persistAsk() reads the standing answer,
+   asks once if it has not been granted, and remembers what came back so the card can say it. */
+var PERSIST = { known: false, on: false };
+function persistAsk(){
+  if (!(navigator.storage && navigator.storage.persist)) { PERSIST.known = true; PERSIST.on = false; return Promise.resolve(false); }
+  var had = navigator.storage.persisted ? navigator.storage.persisted() : Promise.resolve(false);
+  return had.then(function(yes){ return yes ? true : navigator.storage.persist(); })
+    .then(function(yes){ PERSIST.known = true; PERSIST.on = !!yes; try{ renderStorageW(); }catch(e){} return PERSIST.on; })
+    .catch(function(){ PERSIST.known = true; PERSIST.on = false; try{ renderStorageW(); }catch(e){} return false; });
+}
 var STORE_W_ROWS = ["results", "videos", "albums"];          /* the three that carry a Delete */
 var STORE_W_ALL = ["results", "videos", "albums", "settings"];
 var ALB_DOC_PREFIX = "hnk_album_doc_v1:", ALB_SHELF_KEY = "hnk_album_shelf_v1";
@@ -31685,6 +31731,8 @@ function renderStorageW(){
      sentence only once a measure has actually come back empty-handed. */
   $("storeTotalV").textContent = STOREW.last ? (STOREW.last.ok ? storeLineW("total") : L9(STORE_W.nostore)) : "\u2014";
   $("storeKeptNote").textContent = L9(STORE_W.kept);
+  /* said only once the browser has actually answered: a line that guesses is worse than no line */
+  $("storeKeep").textContent = PERSIST.known ? L9(PERSIST.on ? STORE_W.keepYes : STORE_W.keepNo) : "";
   /* the panel draws this with i-reset; the app's sprite has no such symbol and i-retry is the
      same gesture in this set. An icon is not a visible string, so the two Setup pages still read
      alike word for word. */
@@ -31725,6 +31773,10 @@ function wireStorageCard(){
   if (rb && !rb._hnkStoreBound){ rb._hnkStoreBound = 1; rb.onclick = function(){ storeReadW(); }; }
   renderStorageW();
   storeReadW();
+  /* 6.138.0 — and ask the browser again while the studio is looking at the card. A device that
+     was full the first time can grant it later, and this is the one screen where the answer
+     means something. */
+  try{ persistAsk(); }catch(e){}
 }
 function wireDataCard(){
   if(!$("cardData")) return;

@@ -1250,3 +1250,12 @@ jobs:
       # show one picture.
       - name: Verify the album's frames carry their own exposure and contrast, everywhere they are drawn
         run: PORT=8931 node test/verify_album_light_6137.js
+
+      # 6.138.0 — the whole book at once, and the device's promise to keep it. The overlay, the
+      # background, the ornaments, the logo, the design and the template have each had an "on
+      # every page" button for releases; the frame's own treatment never did, so a studio who
+      # wanted the book black and white pressed forty frames one at a time. And the app has been
+      # calling navigator.storage.persist() since the storage work while throwing the answer away
+      # — a wish rather than a fact, on the very phones (Safari) that refuse it.
+      - name: Verify one frame's treatment reaches the whole book, and the Storage card says whether the device will keep it
+        run: PORT=8931 node test/verify_album_all_6138.js

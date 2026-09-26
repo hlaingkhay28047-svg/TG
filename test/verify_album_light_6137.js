@@ -37,8 +37,9 @@ const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
 const PANELMOD = read("panel/js/hnk_album.js");
 const A = require(path.join(ROOT, "tools", "lib", "app-data.js"));
-const VER = "6.137.0", PVER = "6.208.0";
-const COUNT = 279;
+const VER = "6.138.0", PVER = "6.209.0";
+const WAVE_V = "6.137.0";   /* this wave's own What's New row; VER moves on with every release */
+const COUNT = 280;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const KEYS = ["alb_ev", "alb_ev_dn", "alb_ev_up", "alb_ev_zero", "alb_ct", "alb_ct_dn", "alb_ct_up", "alb_ct_zero"];
 const PORT = Number(process.env.PORT || 8931);
@@ -362,8 +363,10 @@ function partE() {
     has(MOD, 'var APP_MARK = "' + VER + '";'));
   const WN = read("docs/app/data/whatsnew.js");
   const i = WN.indexOf('"' + VER + '"');
-  report("E3) What's New leads with the " + VER + " row, points at the album page, and the landing counts " + COUNT + " tests",
-    i > 0 && i < 4000 && has(WN, '{"v":"' + VER + '","kind":"page","ref":"pgAlbum"') &&
+  /* VER is the tree's current release and moves with every wave; WAVE_V is this one's own row,
+     which stays where it is and keeps pointing at the page that grew the control. */
+  report("E3) What's New leads with the " + VER + " row, this wave's row still points at the album page, and the landing counts " + COUNT + " tests",
+    i > 0 && i < 4000 && has(WN, '{"v":"' + WAVE_V + '","kind":"page","ref":"pgAlbum"') &&
     has(LANDING, COUNT + " tests") && new RegExp('data-count="tests">' + COUNT + '<').test(LANDING),
     { at: i });
 }

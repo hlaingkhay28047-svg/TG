@@ -44,9 +44,9 @@ const MAIN = read("panel/main.js"), INDEX = read("panel/index.html");
 const PARITY = read("test/verify_panel_page_parity.js");
 const HARNESS = read("test/lib/panel-parity-harness.js");
 const ST = require("../panel/src/app/panel-storage.js");
-const VER = "6.137.0", PVER = "6.208.0";
+const VER = "6.138.0", PVER = "6.209.0";
 const WAVE_V = "6.136.0";   /* this wave's own What's New row; VER moves on with every release */
-const COUNT = 279;
+const COUNT = 280;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const SHARED = ["h2", "note", "results", "videos", "albums", "settings", "total", "files", "del", "armed", "refresh", "kept", "none", "freed"];
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",

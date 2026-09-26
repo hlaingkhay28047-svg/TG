@@ -107,6 +107,13 @@ const APP_ONLY = {
      that download — a card inviting a student to install what they are
      already looking at is the one thing this page must not carry. */
   setup: [
+    /* 6.138.0 — whether the browser has promised not to evict the studio's albums. The panel
+       writes real files into a real data folder and nothing evicts them, so the question does
+       not arise there; on a phone it is the difference between a wedding kept and a wedding
+       gone. Both answers are listed because only one of them is on the page at a time, and
+       which one it is belongs to the device rather than to the product. */
+    "\u2713 \u1012\u102e\u1005\u1000\u103a\u1000 \u1012\u102b\u1010\u103d\u1031\u1000\u102d\u102f \u101e\u102d\u1019\u103a\u1038\u1011\u102c\u1038\u1015\u1031\u1038\u1019\u101a\u103a\u101c\u102d\u102f\u1037 \u1000\u1010\u102d\u1015\u1031\u1038\u1011\u102c\u1038\u1015\u102b\u1010\u101a\u103a",
+    "\u26a0 \u1012\u102e\u1005\u1000\u103a\u1000 \u1000\u1010\u102d \u1019\u1015\u1031\u1038\u1011\u102c\u1038\u1015\u102b \u2014 \u1014\u1031\u101b\u102c\u1014\u100a\u103a\u1038\u101c\u102c\u101b\u1004\u103a browser \u1000 \u1016\u103b\u1000\u103a\u1015\u1005\u103a\u1014\u102d\u102f\u1004\u103a\u1015\u102b\u1010\u101a\u103a\u104b \u1021\u101b\u1031\u1038\u1000\u103c\u102e\u1038\u1010\u1032\u1037 Album \u1010\u103d\u1031\u1000\u102d\u102f \u1011\u102f\u1010\u103a\u101e\u102d\u1019\u103a\u1038\u1011\u102c\u1038\u1015\u102b",
     /* v5.85.0 — the launch chime and its switch. The chime belongs to the
        INSTALLED WEB APP's splash: a Photoshop plugin has no launch screen to
        sound over, it opens inside an application the studio already has open,

@@ -326,10 +326,14 @@ const NEW = Object.keys(SCRIPTS);
      through LANG_FB (A2); the fifteen reader packs carry their own. */
   const V61370_KEYS = ["alb_ev", "alb_ev_dn", "alb_ev_up", "alb_ev_zero",
     "alb_ct", "alb_ct_dn", "alb_ct_up", "alb_ct_zero"];
+  /* 6.138.0 — the frame's treatment on every photograph in the book: three lines, on the same
+     terms as every album block above. TR carries real Shan for all three and the three Tai packs
+     read it through LANG_FB (A2); the fifteen reader packs carry their own. */
+  const V61380_KEYS = ["alb_fx_all", "alb_fx_all_done", "alb_fx_all_none"];
   const PENDING = {
-    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS, ...V61250_KEYS, ...V61370_KEYS],
-    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS, ...V61250_KEYS, ...V61370_KEYS],
-    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS, ...V61250_KEYS, ...V61370_KEYS],
+    tdd: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS, ...V61250_KEYS, ...V61370_KEYS, ...V61380_KEYS],
+    khb: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS, ...V61250_KEYS, ...V61370_KEYS, ...V61380_KEYS],
+    kht: ["acc_pending", ...AVATAR_KEYS, ...V550_KEYS, ...V620_KEYS, ...V650_KEYS, ...V6290_KEYS, ...V6350_KEYS, ...V61020_KEYS, ...V61040_KEYS, ...V61050_KEYS, ...V61060_KEYS, ...V61070_KEYS, ...V61100_KEYS, ...V61210_KEYS, ...V61220_KEYS, ...V61250_KEYS, ...V61370_KEYS, ...V61380_KEYS],
   };
   const unregistered = {};
   Object.keys(data.missingByLang || {}).forEach(l => {
