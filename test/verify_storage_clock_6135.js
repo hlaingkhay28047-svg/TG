@@ -48,8 +48,8 @@ const MAIN = read("panel/main.js"), INDEX = read("panel/index.html"), CSS = read
 const STORE_SRC = read("panel/src/app/panel-storage.js");
 const STRIP = read("panel/src/ui/progress-strip.js");
 const ST = require("../panel/src/app/panel-storage.js");
-const VER = "6.135.0", PVER = "6.206.0";
-const COUNT = 277;
+const VER = "6.136.0", PVER = "6.207.0";
+const COUNT = 278;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml",
@@ -352,7 +352,7 @@ async function appWalk(browser) {
 
 function partF() {
   const steps = (CI.match(/node test\//g) || []).length;
-  report("F1) the suite runs " + COUNT + " tests and this one is the " + COUNT + "th, named in the workflow",
+  report("F1) the suite runs " + COUNT + " tests and this one is named in the workflow",
     steps === COUNT && has(CI, "node test/verify_storage_clock_6135.js"), { steps: steps });
   report("F2) the release is " + VER + " / panel " + PVER + " in lockstep across the app, the API, the panel and the download record",
     has(read("docs/app/version.json"), '"' + VER + '"') && has(read("server/index.js"), 'const API_VERSION = "' + VER + '";') &&

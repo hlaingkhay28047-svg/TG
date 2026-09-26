@@ -117,8 +117,14 @@ function report(name, ok, detail) {
     const rhCard = !!document.getElementById("rhKey") && !!document.getElementById("btnSaveRhKey");
     const gemCardGone = !document.getElementById("apiKey") && !document.getElementById("btnSaveKey")
       && !document.getElementById("stKeyDel");
+    /* 6.136.0 — the line that says how much this device is holding moved out of DATA &
+       BACKUP and onto the Storage card, where every store is named and measured on its own
+       row. One reading of the disk, not two: the total is what this check reads now. */
+    await storeReadW();
+    const total = (document.getElementById("storeTotalV") || {}).textContent || "";
     return { rhReady, upToDate, ver, appVer: APP_VER, exported, rhCard, gemCardGone,
-      dataLine: document.getElementById("dataStore").textContent.indexOf("KB") >= 0 || document.getElementById("dataStore").textContent.indexOf("MB") >= 0 };
+      dataLine: /\u00b7 (0|\d+(\.\d)? (B|KB|MB|GB))$/.test(total), total: total,
+      dataStoreGone: !document.getElementById("dataStore") };
   });
   /* The pay hint is a SIGNED-OUT string — "sign in before you can buy" — so from
      v5.30.0 it cannot be read off the same page as everything else here, which
@@ -148,10 +154,10 @@ function report(name, ok, detail) {
   });
   await outPage.close();
 
-  report("Setup: 5-row readiness strip with RunningHub ✓ first, manual update check reports current, backup exports a file, one-engine key card only (Gemini card gone), logged-out sign-in prompt",
+  report("Setup: 5-row readiness strip with RunningHub ✓ first, manual update check reports current, backup exports a file, one-engine key card only (Gemini card gone), logged-out sign-in prompt, and the Storage card's total reads the disk (the old DATA & BACKUP line is gone)",
     /* the version LINE must name the build, whatever the build is — pinning
        this to /^v4\./ made a major bump look like a Setup regression */
-    setup.rhReady && setup.upToDate && setup.ver === "v" + setup.appVer && /^\d+\.\d+\.\d+$/.test(setup.appVer) && /hnk-backup-/.test(setup.exported || "") && setup.rhCard && setup.gemCardGone && setup.authPrompt && setup.dataLine,
+    setup.rhReady && setup.upToDate && setup.ver === "v" + setup.appVer && /^\d+\.\d+\.\d+$/.test(setup.appVer) && /hnk-backup-/.test(setup.exported || "") && setup.rhCard && setup.gemCardGone && setup.authPrompt && setup.dataLine && setup.dataStoreGone,
     setup);
 
   /* ---- 4) Workflow page ---- */

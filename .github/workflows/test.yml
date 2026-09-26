@@ -1232,3 +1232,11 @@ jobs:
       # Workflow strip, the panel's shared dots line (Text→Image rides it) and the app's wizard.
       - name: Verify the panel says what it is storing, can delete it, and every generate counts its seconds
         run: PORT=8931 node test/verify_storage_clock_6135.js
+
+      # 6.136.0 — and the SAME card on the web app, measured over its own stores: results and
+      # video takes in IndexedDB, an album record per album, the settings in localStorage. The old
+      # one-line reading under DATA & BACKUP is deleted from both surfaces, because two answers to
+      # "how much is on this disk" only makes a studio wonder which one to believe. Scratch files
+      # stay the plugin's alone and carry data-panel-only, so the parity walk skips the row.
+      - name: Verify the web app says what it is keeping too, in the panel's own words
+        run: PORT=8931 node test/verify_storage_parity_6136.js

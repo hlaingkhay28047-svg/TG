@@ -79,27 +79,17 @@ const PANEL_ONLY = {
   album: [
     "Photoshop ထဲ ဖွင့်"
   ],
-  /* 6.135.0 — SETUP ▸ STORAGE is the panel's card and only the panel's. It reads the
-     plugin's own data folder (uxp.storage.localFileSystem.getDataFolder) and offers to empty
-     it: results, video takes, album records, the web-picture scratch files and the settings
-     file, each with its measured size. A browser has no such folder — the web app's results
-     live in IndexedDB, which the Gallery already clears — so there is nothing on the app side
-     for these lines to differ FROM. The four Deletes are one word each, listed four times
-     because dropOnce takes one occurrence per entry. The six measured readings are generated,
-     not written, so they are matched by pattern below. */
+  /* 6.136.0 — SETUP ▸ STORAGE NOW STANDS ON BOTH SURFACES. 6.135.0 gave the card to the
+     panel alone and listed every one of its words here as panel-only, on the reasoning that a
+     browser has no data folder. It does have stores, and just as much in them: results and video
+     takes in IndexedDB, an album record per album, the settings in localStorage. So the app grew
+     the same card with the same words, and this list is down to the one line that is genuinely
+     the plugin's: emptying the OS temp folder. The scratch-files row is not dropped here at all —
+     it carries data-panel-only and the walk never reaches it.
+     The measured readings ("2 files · 488 KB") are the disk's answer, not the product's, and the
+     two disks hold different things; they are matched by pattern below on both sides. */
   setup: [
-    "သိမ်းဆည်းမှု",                                  /* STORAGE */
-    "ဒီ Panel က ကွန်ပျူတာထဲမှာ သိမ်းထားတာတွေ — ဖျက်ချင်တာ ရွေးဖျက်လို့ရပါတယ်",
-    "ရလဒ် ပုံများ",                                        /* Results */
-    "ဗီဒီယိုများ",                                          /* Videos */
-    "Album မှတ်တမ်း",                                            /* Albums */
-    "ယာယီ ဖိုင်များ",                                      /* Temporary files */
-    "ပြင်ဆင်ချက် ဖိုင်များ",                            /* Settings files */
-    "စုစုပေါင်း",                                            /* Total */
-    "★ ထားတာတွေ မဖျက်ပါ",                              /* the kept note */
-    "နေရာ ရှင်းမယ်",                                      /* Free space now */
-    "ပြန်တွက်",                                                /* Refresh */
-    "ဖျက်", "ဖျက်", "ဖျက်", "ဖျက်"                          /* Delete × 4 */
+    "နေရာ ရှင်းမယ်"                                      /* Free space now */
   ]
 };
 /* Strings the APP shows that the panel draws instead of writing: the app's
@@ -246,10 +236,18 @@ const PANEL_ONLY_RE = {
      panel carries one text node per family that the app expresses in an
      attribute. Same grouping, same order, same models. */
   video: [/^— .+ \(\d+\) —$/],
-  /* 6.135.0 — the Storage card's six readings are measured off the plugin's data folder
-     ("2 files · 488 KB"), so the count and the size are whatever that folder holds when the
-     walk runs. The shape is fixed and the words around it are pinned in PANEL_ONLY above. */
-  setup: [/^\d+ .+ · (0|\d+(\.\d)? (B|KB|MB|GB))$/]
+  /* 6.136.0 — the Storage card's readings are measured off real storage, so the count and the
+     size are whatever that storage holds when the walk runs — the plugin's data folder on one
+     side, IndexedDB and localStorage on the other. The shape is fixed and every word around them
+     is compared as normal. The em dash is the same reading before the first measure has come
+     back: the two cards start their counts independently, and neither one is late by being
+     second. */
+  setup: [/^\d+ .+ · (0|\d+(\.\d)? (B|KB|MB|GB))$/, /^\u2014$/]
+};
+/* The same two, on the app's side of the walk: identical card, identical readings, measured
+   over this device's own stores. */
+const APP_ONLY_RE = {
+  setup: [/^\d+ .+ · (0|\d+(\.\d)? (B|KB|MB|GB))$/, /^\u2014$/]
 };
 function dropPatterns(list, res) {
   if (!res || !res.length) return list;
@@ -372,7 +370,7 @@ function rewrite(list) {
       report(`${p.label} opens on the web app's own choices — ${aState.ph.length} placeholder(s), ${aState.sel.length} selection(s)`,
         sd.length === 0, sd.slice(0, 4).join(" | "));
 
-      const want = rewrite(dropOnce(a, APP_ONLY[p.key] || []));
+      const want = rewrite(dropPatterns(dropOnce(a, APP_ONLY[p.key] || []), APP_ONLY_RE[p.key]));
       const got = rewrite(dropPatterns(dropOnce(b, PANEL_ONLY[p.key] || []), PANEL_ONLY_RE[p.key]));
       let i = 0;
       while (i < want.length && i < got.length && want[i] === got[i]) i++;
