@@ -76,7 +76,9 @@ function partA() {
     has(APP, 'if(curPage!==want){ switchPage(want); setTimeout(go,60); } else go();\n  }\n  function stRecentRender(){') &&
     has(APP, '<div class="chips" id="stRecent" style="display:none"></div>') &&
     has(PANEL_HTML, '<div class="chips" id="stRecent" style="display:none"></div>') &&
-    has(PANEL_CSS, ".stpg #stRecent {") && has(PANEL_CSS, "\n#stRecent {") && has(APP, "#stRecent .chip{"));
+    has(PANEL_CSS, ".stpg #stRecent {") && has(PANEL_CSS, "\n#stRecent {") && has(APP, "#stRecent .chip{") &&
+    /* the jump-bar diet (deep-scrolled, keyboard-open, landscape PiP) keeps one chip row of at most 50px: Recent waits for the full bar */
+    has(APP, "#pgStudio.stcompact #stRecent,#pgMeitu.stcompact #stRecent,#pgEvoto.stcompact #stRecent{display:none!important}"));
 
   report("A3) the lifted studio module carries the recent list and none of the app-only parts: no IndexedDB draft, no keyboard sheet, no stLoadImage",
     has(SUITES, "function stRecentTouch(id){") && has(SUITES, "function stRecentRender(){") && has(SUITES, "function stRecentGo(id){") &&
