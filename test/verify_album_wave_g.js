@@ -168,10 +168,10 @@ function sourcePins() {
     PCSS.indexOf("/* ---- ALBUM_CSS") > PCSS.indexOf("/* ---- IMAGINE_CSS ---- */") && has(PCSS, "/* ---- /ALBUM_CSS ---- */") && has(PCSS, ".alb-shelftile") && has(PCSS, ".alb-orntile") && !has(PCSS, "#pgAlbum"),
     { appHead, panelHead, phOk, members: hostMembers.filter((m) => !new RegExp("\\n    " + m + ": (async )?function").test(hostSrc)) });
 
-  report("A8) the tests that know every panel page know this one: the parity walk's row + its one panel-only line (Open in Photoshop), the banner walk (fifteen heroes), the glyph pass on the new lifter, the renderer-safety page list, the dictionary rule for a module that reads through L()",
+  report("A8) the tests that know every panel page know this one: the parity walk's row + its one panel-only line (Open in Photoshop), the banner walk (sixteen heroes since 6.142.0), the glyph pass on the new lifter, the renderer-safety page list, the dictionary rule for a module that reads through L()",
     has(read("test/verify_panel_page_parity.js"), '{ key: "album", panelKey: "album", appKey: "pgAlbum", panelRoot: "#pageAlbum", appRoot: "#pgAlbum", label: "Album" }') &&
     has(read("test/verify_panel_page_parity.js"), '  album: [\n    "' + TRPH.alb_open_ps.my + '"\n  ],') &&
-    has(read("test/verify_panel_hero_banners.js"), '["album", "pageAlbum"]') && has(read("test/verify_panel_hero_banners.js"), "heroes === 15") &&
+    has(read("test/verify_panel_hero_banners.js"), '["album", "pageAlbum"]') && has(read("test/verify_panel_hero_banners.js"), "heroes === 16") &&   /* 6.142.0 — Portrait Style joined the banner walk */
     /"imagine", "tutorials", "album"\]/.test(read("test/verify_panel_glyphs.js")) && /"gallery", "album", "setup"\]/.test(read("test/verify_panel_renderer_safety.js")) &&
     has(read("test/verify_panel_dead_lookups.js"), 'const OWN_L = { "panel/js/hnk_album.js": 1 };'), null);
 
