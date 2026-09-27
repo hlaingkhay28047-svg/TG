@@ -108,11 +108,11 @@ function partA() {
     has(APP, "    hotFolder: hotFolder,   /* 6.146.0 */") && has(APP, "    share: (navigator.share ? share : null),"));
 
   const boot = hostSlice(APP, "var _qp = stNormalizePage(", "} catch(e){}");
-  const swPost = SW.indexOf('if (e.request.method === "POST" && url.origin === location.origin && /\\/share$/.test(url.pathname)) {');
-  report("A4) the share target: the manifest names ./share (POST, multipart, one image file called photo); the worker's POST branch stands before its GET early-return, keeps the file in the share inbox and redirects to Portrait Style with ?shared=1; the app's boot takes the shot out of the inbox, opens the page, hands it to the shot door and strips the flag",
+  const swGuard = SW.indexOf('if ((e.request.method !== "GET" && !share) || url.origin !== location.origin) return;'), swPost = SW.indexOf("  if (share) {\n    e.respondWith(e.request.formData()");
+  report("A4) the share target: the manifest names ./share (POST, multipart, one image file called photo); the worker's cross-origin guard still comes first (a POST to ./share is the one non-GET it lets through), then the share branch keeps the file in the share inbox and redirects to Portrait Style with ?shared=1 before any cache is touched; the app's boot takes the shot out of the inbox, opens the page, hands it to the shot door and strips the flag",
     MANIFEST.share_target && MANIFEST.share_target.action === "./share" && MANIFEST.share_target.method === "POST" && MANIFEST.share_target.enctype === "multipart/form-data" &&
     MANIFEST.share_target.params && MANIFEST.share_target.params.files && MANIFEST.share_target.params.files[0].name === "photo" && MANIFEST.share_target.params.files[0].accept.join() === "image/*" &&
-    swPost > 0 && swPost < SW.indexOf('if (e.request.method !== "GET" || url.origin !== location.origin) return;') &&
+    swGuard > 0 && swPost > swGuard && SW.indexOf('caches.open("hnk-share-inbox")') > swPost && has(SW, 'var share = e.request.method === "POST" && /\\/share$/.test(url.pathname);') &&
     has(SW, 'caches.open("hnk-share-inbox")') && has(SW, 'c.put("./__share_inbox"') && has(SW, 'Response.redirect("./?page=pgPStyle&shared=1", 303)') &&
     has(boot, 'new URLSearchParams(location.search).get("shared") === "1"') && has(boot, 'caches.open("hnk-share-inbox")') && has(boot, 'c.match("./__share_inbox")') && has(boot, 'c.delete("./__share_inbox")') &&
     has(boot, 'switchPage("pgPStyle"); window.HNK.pstyle.onShot({ dataUrl: du, name: "shared-" + Date.now() + ".jpg" });') && has(boot, 'history.replaceState(null, "", location.pathname + "?page=pgPStyle");'));
