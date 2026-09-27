@@ -2799,7 +2799,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.212.0";
+const PANEL_VERSION = "6.213.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -13125,6 +13125,80 @@ function imagineEnter() {
 /* a language change repaints the page the way the app's reload would */
 REFRESHERS.push(function () { try { if (imagineReady) imagineEnter(); } catch (e) { } });
 
+/* 6.213.0 — the panel's side of the PSTYLE contract: the same module the web app draws (js/hnk_pstyle.js),
+   with Photoshop's own answers — the photo from the active layer or a file, the reference the same way,
+   no camera, the RunningHub call through callImageAPI, the panel's gallery store, Place into Photoshop
+   where the app prints. */
+function pstyleHost() {
+  const pick = function (btn, onFiles, kind) {
+    const fromFiles = async function () {
+      try {
+        const picked = await fsp.getFileForOpening({ allowMultiple: false, types: REF_LIB_TYPES });
+        const arr = picked ? (Array.isArray(picked) ? picked : [picked]) : [];
+        const out = [];
+        for (let i = 0; i < arr.length; i++) {
+          try { const e = await refCaptureEntry(arr[i]); if (e && e.b64) out.push({ dataUrl: "data:" + (e.mime || "image/jpeg") + ";base64," + e.b64, name: e.label || arr[i].name || "" }); }
+          catch (e) { setStatus(friendlyErr(e), "err"); }
+        }
+        if (out.length) onFiles(out);
+      } catch (e) { setStatus(friendlyErr(e), "err"); }
+    };
+    btn.addEventListener("click", function () {
+      photoSheet(ff9(FF_L.where), {
+        onLayer: async function () { const e = await layerPhotoCapture(); if (e) { onFiles([{ dataUrl: e._url, name: e.name }]); setStatus(t(kind === "psRefFile" ? "st_ref_layer_added" : "st_photo_layer_added"), "ok"); } },
+        onFile: fromFiles
+      });
+    });
+  };
+  return {
+    t9: function (m) { return ff9(m); },
+    ellMark: function (root, sel, lines) { ellMark(root, sel, lines); },
+    icon: function (name) { return ffIcon(name, "cream"); },
+    button: function (cls) { return mkBtn(cls); },
+    asset: function (kind, file) { return (kind === "thumb" ? "icons/imagine/th/" : "icons/imagine/") + file; },
+    assetDataUrl: async function (url) {
+      try { const r = await fetch(url); const b = await r.arrayBuffer(); return "data:image/jpeg;base64," + bufToB64(b); } catch (e) { return null; }
+    },
+    pickWire: pick,
+    hasModel: function (id) { return !!ffModelById(id); },
+    modelLabel: function (id) { const m = ffModelById(id); return (m && m.label) || id; },
+    sizeTiers: function (id) { const m = ffModelById(id); if (!m || !ffHasSize(m)) return null; return t2iSizeTiers(m) || ["1k", "2k", "4k"]; },
+    hasKey: function () { return !!(state.rhKey || "").trim(); },
+    gotoSetup: function () { switchPage("setup"); },
+    generate: async function (o) {
+      const m = /^data:([^;]+);base64,(.*)$/.exec(o.dataUrl || "");
+      const parts = [{ text: o.prompt }, { inlineData: { mimeType: m ? m[1] : "image/jpeg", data: m ? m[2] : "" } }];
+      if (o.refDataUrl) { const r2 = /^data:([^;]+);base64,(.*)$/.exec(o.refDataUrl); if (r2) parts.push({ inlineData: { mimeType: r2[1], data: r2[2] } }); }
+      const svCount = state.ffCount; state.ffCount = 1;
+      try {
+        const r = await callImageAPI(o.modelId, parts, { size: String(o.size || "").toUpperCase() }, o.signal);
+        return r ? { b64: r.b64, mime: r.mime || "image/png" } : null;
+      } finally { state.ffCount = svCount; }
+    },
+    friendly: function (e) { return friendlyErr(e); },
+    saveGallery: async function (out) {
+      const gs = globalThis.HNK && globalThis.HNK.galleryStore;
+      if (gs) await gs.save(out.b64, out.mime === "image/jpeg" ? "jpg" : "png", "pstyle");
+    },
+    /* Download on the web is Place into Photoshop here (the Imagine host's answer); there is no printer in a panel */
+    exportOut: async function (out) {
+      state.resultB64 = out.b64; state.resultMime = out.mime || "image/png"; state.lastAction = "Portrait Style";
+      await placeResultToPS();
+    },
+    exportLabel: function () { return ff9(HIST_L.toPs); },
+    toast: function (msg, kind) { setStatus(msg, kind === "err" ? "err" : kind === "ok" ? "ok" : ""); },
+    scrollTop: function () { const p = $("pages"); if (p) p.scrollTop = 0; }
+  };
+}
+let pstyleReady = false;
+function pstyleEnter() {
+  const ps = globalThis.HNK && globalThis.HNK.pstyle;
+  if (!ps || !$("psRoot")) return;
+  if (!pstyleReady) { ps.init(pstyleHost(), $("psRoot")); pstyleReady = true; }
+  else ps.onEnter();
+}
+REFRESHERS.push(function () { try { if (pstyleReady) pstyleEnter(); } catch (e) { } });
+
 /* ================= ALBUM PAGE (6.122.0 wave G — the app's pgAlbum) =================
    The page is DRAWN by js/hnk_album.js, the app's own ALBUM module lifted verbatim
    (tools/build_panel_album.js); this is the panel's side of its host contract — what the
@@ -14387,6 +14461,8 @@ const PAGES = [
   { key: "prompt",  page: "pagePrompt",  group: "edit",  sub: "Freeform",  ic: "i-pen" },
   /* 6.29.0 wave — the app's pgImagine: one-tap AI tools, drawn by the app's own IMAGINE module (js/hnk_imagine.js) */
   { key: "imagine", page: "pageImagine", group: "edit",  sub: "Imagine",   ic: "i-wand" },
+  /* 6.213.0 — the app's pgPStyle: Portrait Style, drawn by the app's own PSTYLE module (js/hnk_pstyle.js) */
+  { key: "pstyle",  page: "pagePStyle",  group: "edit",  sub: "Style",     ic: "i-compare" },
   /* the app's Edit group is Freeform · Retouch A · Retouch B · Retouch · Path.
      v6.51.0 — Retouch A and Retouch B are now the app's OWN studio pages
      (its two suites, 375 controls, built by the app's own code — see
@@ -14606,6 +14682,7 @@ function switchPage(key) {
     } catch (e) { }
   }
   if (key === "imagine") { try { imagineEnter(); } catch (e) { hwarn("imagine:", e); } }   /* 6.29.0 wave — paints the hub / tool view on entry */
+  if (key === "pstyle") { try { pstyleEnter(); } catch (e) { hwarn("pstyle:", e); } }   /* 6.213.0 — the three steps on entry */
   if (key === "album") { try { albumEnter(); } catch (e) { hwarn("album:", e); } }   /* 6.122.0 wave G — the album designer on entry */
   /* v6.75.0 — a page switch is a cheap moment to re-ask for pictures a dead line took (throttled inside) */
   try { const ra = globalThis.HNK && globalThis.HNK.remoteArt; if (ra && ra.retryFailed) ra.retryFailed(false); } catch (e) { }

@@ -124,7 +124,7 @@ const stripCode = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "");
      HNK.albumStrings and are read through L() (every alb_* key, checked by verify_album_wave_g); it has no t() reads */
   const OWN_L = { "panel/js/hnk_album.js": 1 };
   report("C3) the lifted modules that carry their own dictionary (" + selfDict.map(m => path.basename(m.name)).join(", ") + ") read only keys that dictionary carries — those reads are theirs, not main.js's (the Album module reads its HNK.albumStrings through L())",
-    selfDict.length === 3 && selfMiss.every(m => m.missing.length === 0 && (m.reads >= 10 || OWN_L[m.name])), selfMiss);
+    selfDict.length === 4 && selfMiss.every(m => m.missing.length === 0 && (m.reads >= 10 || OWN_L[m.name])), selfMiss);   /* 6.213.0 — four: hnk_pstyle.js (Portrait Style) joined with a t() of its own */
 
   /* ---------------- D. the fixes, pinned in source ---------------- */
   const CODE = stripCode(MAIN);

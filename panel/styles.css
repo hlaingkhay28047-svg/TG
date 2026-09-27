@@ -3968,3 +3968,102 @@ body.tsize-s .sub, body.tsize-s .btn-sm { font-size: 9px; }
 .alb-bgstrip .chip{margin:4px}
 .alb-bgtile.on{box-shadow:0 0 0 2px var(--accent)}
 /* ---- /ALBUM_CSS ---- */
+
+/* ---- PSTYLE_CSS ---- */
+/* 6.142.0 — Portrait Style (#pagePStyle). One module on both surfaces; this block is lifted into panel/styles.css by
+   tools/build_panel_pstyle.js (tokens renamed, page id renamed, uxpSafeCss). Flex + margins only — no gap, no grid, nothing
+   UXP cannot draw — so the same rules hold in Photoshop. */
+#pagePStyle #psRoot{display:block}
+#pagePStyle .ps-steps{display:flex;flex-direction:row;align-items:stretch;margin:0 0 12px 0;border:1px solid rgba(217,164,65,.35);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03)}
+#pagePStyle .ps-step{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:56px;padding:6px 4px;background:transparent;border:0;border-right:1px solid rgba(217,164,65,.25);color:var(--muted);font:inherit;cursor:pointer}
+#pagePStyle .ps-step:last-child{border-right:0}
+#pagePStyle .ps-step .ps-step-n{font-size:11px;letter-spacing:.14em;color:var(--muted)}
+#pagePStyle .ps-step .ps-step-t{font-size:13px;font-weight:700;margin-top:2px}
+#pagePStyle .ps-step.on{background:rgba(217,164,65,.14);color:var(--accent-h)}
+#pagePStyle .ps-step.on .ps-step-n{color:var(--accent)}
+#pagePStyle .ps-step.done{color:var(--text)}
+#pagePStyle .ps-step.is-off{opacity:.45;cursor:default}
+#pagePStyle .ps-body{display:block}
+#pagePStyle .ps-intro{margin:0 0 10px 0}
+#pagePStyle .ps-h2{font-size:17px;font-weight:700;color:var(--text);margin:4px 0 6px 0}
+#pagePStyle .ps-h3{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px 0}
+#pagePStyle .ps-kick{font-size:11px;letter-spacing:.16em;color:var(--accent);text-align:center;margin-top:4px}
+#pagePStyle .ps-s3 .ps-h2{text-align:center}
+#pagePStyle .ps-drop{display:flex;flex-direction:column;align-items:stretch;padding:18px 14px;border:1px dashed rgba(217,164,65,.5);border-radius:14px;background:rgba(255,255,255,.02)}
+#pagePStyle .ps-drop .btn{margin:4px 0}
+#pagePStyle .ps-drop .ps-add{min-height:56px;font-size:15px}
+#pagePStyle .ps-hint{margin-top:8px;text-align:center}
+#pagePStyle .ps-tip{margin-top:12px;font-size:12px}
+#pagePStyle .ps-photo{display:flex;justify-content:center;background:#000;border-radius:14px;overflow:hidden;max-height:60vh}
+#pagePStyle .ps-photo img{display:block;width:auto;height:auto;max-width:100%;max-height:60vh}
+#pagePStyle .ps-row{display:flex;flex-direction:row;flex-wrap:wrap;margin-top:8px}
+#pagePStyle .ps-row .chip{margin:0 6px 6px 0}
+#pagePStyle .ps-next{margin-top:10px;width:100%}
+#pagePStyle .ps-recent{margin-top:10px}
+#pagePStyle .ps-strip{display:flex;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+#pagePStyle .ps-th{flex:0 0 auto;width:72px;height:72px;margin-right:8px;padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;background-color:#000;background-size:cover;background-position:center;cursor:pointer}
+#pagePStyle .ps-th:focus-visible{border-color:var(--accent)}
+#pagePStyle .ps-own{display:flex;flex-direction:row;align-items:center;padding:10px;border:1px solid rgba(217,164,65,.35);border-radius:12px;background:rgba(255,255,255,.03);margin-top:8px}
+#pagePStyle .ps-own.on{border-color:var(--accent);box-shadow:0 0 0 2px rgba(217,164,65,.35)}
+#pagePStyle .ps-own .ps-own-im{flex:0 0 auto;width:84px;height:84px;border-radius:10px;margin-right:10px;background-color:#000;background-size:cover;background-position:center}
+#pagePStyle .ps-own .ps-add-ref{margin-right:10px;min-height:48px}
+#pagePStyle .ps-own .ps-own-x{margin-left:auto}
+#pagePStyle .ps-groups{margin-top:6px}
+#pagePStyle .ps-grid{display:flex;flex-direction:row;flex-wrap:wrap;margin-top:6px}
+#pagePStyle .ps-card{flex:0 0 auto;width:31%;margin:0 3.5% 8px 0;padding:0;border:2px solid transparent;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.04);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+#pagePStyle .ps-card:nth-child(3n){margin-right:0}
+#pagePStyle .ps-card .ps-card-im{position:relative;width:100%;padding-top:150%;overflow:hidden;background-color:#000}
+#pagePStyle .ps-card .ps-card-im img{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+#pagePStyle .ps-card .ps-card-n{font-size:11.5px;padding:5px 6px 6px;line-height:1.25}
+#pagePStyle .ps-card.on{border-color:var(--accent);box-shadow:0 0 0 2px rgba(217,164,65,.35)}
+#pagePStyle .ps-card:focus-visible{border-color:var(--accent-h)}
+#pagePStyle .ps-field{margin-top:12px}
+#pagePStyle .ps-lab{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+#pagePStyle .ps-opts{display:flex;flex-direction:column;align-items:stretch}
+#pagePStyle .ps-opt{display:flex;flex-direction:row;align-items:center;min-height:44px;padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.06);font-size:14px;color:var(--text)}
+#pagePStyle .ps-opt input{width:22px;height:22px;margin:0 10px 0 0;accent-color:var(--accent)}
+#pagePStyle .ps-opt-lock{color:var(--muted)}
+#pagePStyle .ps-opt-lock svg,#pagePStyle .ps-opt-lock img{width:16px;height:16px;margin-right:10px}
+#pagePStyle .ps-engine{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;margin-top:12px}
+#pagePStyle .ps-engine .inp{flex:1 1 140px;margin:0 8px 8px 0;min-height:44px}
+#pagePStyle .ps-count{flex:0 0 auto;margin-bottom:8px}
+#pagePStyle .ps-nav{display:flex;flex-direction:row;justify-content:space-between;align-items:center;margin-top:12px}
+#pagePStyle .ps-nav .gen{flex:1 1 auto;margin-left:10px}
+#pagePStyle .ps-cmp{margin:8px 0 10px 0}
+#pagePStyle .ps-stage{display:flex;flex-direction:row;justify-content:center;align-items:stretch;background:#000;border-radius:14px;overflow:hidden;min-height:200px}
+#pagePStyle .ps-pane{flex:1 1 0;position:relative;display:flex;justify-content:center;align-items:center;border-right:2px solid #15130f;min-width:0}
+#pagePStyle .ps-pane:last-child{border-right:0}
+#pagePStyle .ps-pane img{display:block;width:auto;height:auto;max-width:100%;max-height:64vh}
+#pagePStyle .ps-tag{position:absolute;left:8px;bottom:8px;font-size:11px;letter-spacing:.08em;padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.6);color:var(--text)}
+#pagePStyle .ps-cmpbox{position:relative;display:block;width:100%;max-width:720px;margin:0 auto;overflow:hidden;touch-action:none;cursor:ew-resize;user-select:none;-webkit-user-select:none}
+#pagePStyle .ps-cmpbox .ps-under{display:block;width:100%;height:auto}
+#pagePStyle .ps-cmpbox .ps-top{position:absolute;left:0;top:0;bottom:0;overflow:hidden}
+#pagePStyle .ps-cmpbox .ps-top img{display:block;height:100%;width:auto;max-width:none}
+#pagePStyle .ps-cmpbox .ps-line{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--accent)}
+#pagePStyle .ps-cmpbox .ps-knob{position:absolute;top:50%;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:var(--accent);color:#1a1408;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+#pagePStyle .ps-cmpbox .ps-tag-l{left:8px}
+#pagePStyle .ps-cmpbox .ps-tag-r{left:auto;right:8px}
+#pagePStyle .ps-wait{display:flex;justify-content:center;align-items:center;width:100%}
+#pagePStyle .ps-wait img{display:block;width:auto;height:auto;max-width:100%;max-height:64vh}
+#pagePStyle .ps-dim{opacity:.35}
+#pagePStyle .ps-status{min-height:20px;margin-top:8px;text-align:center;color:var(--accent-h);font-size:13px}
+#pagePStyle .ps-meta{text-align:center;font-size:12px}
+#pagePStyle .ps-acts{display:flex;flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:10px}
+#pagePStyle .ps-acts .btn,#pagePStyle .ps-acts .chip{margin:0 6px 8px 0}
+#pagePStyle .ps-saved{color:var(--accent-h);border-color:rgba(217,164,65,.45)}
+#pagePStyle .ps-handoff{display:flex;flex-direction:row;flex-wrap:wrap;justify-content:center;margin-top:4px}
+#pagePStyle .ps-handoff .chip{margin:0 6px 6px 0}
+#pagePStyle .ps-versions{display:flex;flex-direction:column;align-items:stretch}
+#pagePStyle .ps-ver{display:flex;flex-direction:row;align-items:center;padding:6px;margin-bottom:6px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.03);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+#pagePStyle .ps-ver .ps-ver-im{width:56px;height:56px;border-radius:8px;margin-right:10px;flex:0 0 auto;background-color:#000;background-size:cover;background-position:center}
+#pagePStyle .ps-ver .ps-ver-t{display:flex;flex-direction:column;min-width:0}
+#pagePStyle .ps-ver .ps-ver-t b{font-size:13px}
+#pagePStyle .ps-ver .ps-ver-t span{font-size:11.5px}
+#pagePStyle .ps-ver.on{border-color:var(--accent);background:rgba(217,164,65,.1)}
+#pagePStyle .is-off{opacity:.5}
+@media(min-width:900px){
+  #pagePStyle .ps-card{width:23.5%;margin-right:2%}
+  #pagePStyle .ps-card:nth-child(3n){margin-right:2%}
+  #pagePStyle .ps-card:nth-child(4n){margin-right:0}
+}
+/* ---- /PSTYLE_CSS ---- */

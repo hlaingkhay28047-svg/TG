@@ -54,8 +54,8 @@ const MAIN = read("panel/main.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
 const A = require(path.join(ROOT, "tools", "lib", "app-data.js"));
-const VER = "6.141.0", PVER = "6.212.0";
-const COUNT = 283;
+const VER = "6.142.0", PVER = "6.213.0";
+const COUNT = 284;
 const CUT = "6.110.0";
 const PORT = Number(process.env.PORT || 8931);
 const BASE = "http://127.0.0.1:" + PORT;
@@ -203,7 +203,7 @@ function partC() {
     { oldestDemanded: oldestDemanded, oldestOnStrip: oldestOnStrip, demanded: demanded.length, rows: live.length });
 
   report("C2) this wave moved no release note: the record holds what it held, and the strip differs only by the row this release added",
-    arc.length === 111 && live[0].v === VER && live.length === 74 &&   /* 72 when 6.139.0 shipped; one more row per release since (6.140.0, 6.141.0) — the archive stays at 111 */
+    arc.length === 111 && live[0].v === VER && live.length === 75 &&   /* 72 when 6.139.0 shipped; one more row per release since (6.140.0, 6.141.0, 6.142.0) — the archive stays at 111 */
     arc.every((r) => cmp(r.v, oldestOnStrip) < 0),
     { archive: arc.length, rows: live.length, newest: live[0].v });
 

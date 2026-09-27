@@ -98,6 +98,8 @@ const PANEL_ONLY = {
    text node. Nothing a student sees differs. */
 const APP_ONLY = {
   vidup: ["HD"], v2v: [], talk: [], gallery: [], create: [], path: [],
+  /* 6.142.0 — Portrait Style: Take a photo and From the Gallery are the web app host's own buttons (a camera, an IndexedDB gallery); the panel picks from a layer or a file through the shared Add button */
+  pstyle: ["ကင်မရာနဲ့ ရိုက်မယ်", "ပြခန်းက ယူမယ်"],
   home: [], wf: [], lib: [], album: [],
   /* the app's Size tile is an inline <svg> with the letters HD drawn inside
      it, which counts as text here; the panel's tile is that same picture as a
@@ -193,6 +195,9 @@ const PAGES = [
   /* 6.29.0 wave — Imagine is ONE module on both surfaces (js/hnk_imagine.js is the app's block, lifted), so its
      hub must read identically: kick, headline, intro, four cards, the coming-waves line. */
   { key: "imagine", panelKey: "imagine", appKey: "pgImagine", panelRoot: "#pageImagine", appRoot: "#pgImagine", label: "Imagine" },
+  /* 6.142.0 — Portrait Style is ONE module on both surfaces too (js/hnk_pstyle.js is the app's PSTYLE block, lifted): the stepper, the
+     add buttons, the tip must read identically — minus the camera and the Gallery button, which only the web app has (host-side). */
+  { key: "pstyle", panelKey: "pstyle", appKey: "pgPStyle", panelRoot: "#pagePStyle", appRoot: "#pgPStyle", label: "Portrait Style" },
   { key: "lib", panelKey: "presets", appKey: "pgLib", panelRoot: "#pagePresets", appRoot: "#pgLib", label: "Library" },
   /* 6.122.0 wave G — the Album page is ONE module on both surfaces too (js/hnk_album.js is the app's ALBUM block,
      lifted; its words ride along as HNK.albumStrings), so the shelf, the twelve cards and every chip must read identically. */
