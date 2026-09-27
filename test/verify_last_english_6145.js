@@ -39,9 +39,9 @@ const LIFTER = read("tools/build_panel_wf_catalog.js");
 const CATALOG = read("panel/js/hnk_wf_catalog_data.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.146.0", PVER = "6.217.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.147.0", PVER = "6.218.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.145.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 288;
+const COUNT = 289;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const CATS = ["Face & Portrait", "Background & Scene", "Look Sets", "Studio Scenes", "Style Studio", "Creator Studio", "Lens Styles", "Fashion & Style", "Wedding Suite", "Studio Relight", "Repair & Enhance", "Replace Mix", "Prompt Ideas"];

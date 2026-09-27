@@ -99,7 +99,8 @@ const PANEL_ONLY = {
 const APP_ONLY = {
   vidup: ["HD"], v2v: [], talk: [], gallery: [], create: [], path: [],
   /* 6.142.0 — Portrait Style: Take a photo and From the Gallery are the web app host's own buttons (a camera, an IndexedDB gallery); the panel picks from a layer or a file through the shared Add button */
-  pstyle: ["ကင်မရာနဲ့ ရိုက်မယ်", "ပြခန်းက ယူမယ်", "ကင်မရာ · Live"],   /* 6.146.0 — Camera · Live on the tether card is the web host's camera sheet too */
+  pstyle: ["ကင်မရာနဲ့ ရိုက်မယ်", "ပြခန်းက ယူမယ်", "ကင်မရာ · Live"],
+  imagine: ["ကင်မရာ · Live"],   /* 6.147.0 — Imagine's Camera · Live is the web host's camera sheet; the hot folder is on both */   /* 6.146.0 — Camera · Live on the tether card is the web host's camera sheet too */
   home: [], wf: [], lib: [], album: [],
   /* the app's Size tile is an inline <svg> with the letters HD drawn inside
      it, which counts as text here; the panel's tile is that same picture as a
