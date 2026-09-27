@@ -1296,3 +1296,11 @@ jobs:
       # through the studio's own image-edit engines with the photo first and the reference second.
       - name: Verify Portrait Style on both surfaces
         run: PORT=8931 node test/verify_pstyle_6142.js
+
+      # 6.143.0 — the Portrait Style occasion sets: 42 reference photographs of the studio's own (seven
+      # occasions of six looks, every one on the brand model through the masked-key art lane), finished to
+      # 630×945 and shipped identical on both surfaces; step 02 draws the occasions row above the building
+      # blocks and opens on the birthday set. Also pins the landing's 280px grid minimum the count bumps had
+      # been nudging.
+      - name: Verify the Portrait Style occasion sets on both surfaces
+        run: PORT=8931 node test/verify_pstyle_sets_6143.js

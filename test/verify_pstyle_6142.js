@@ -44,9 +44,9 @@ const PANEL_JS = read("panel/js/hnk_pstyle.js");
 const PARITY = read("test/verify_panel_page_parity.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.142.0", PVER = "6.213.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.143.0", PVER = "6.214.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.142.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 284;
+const COUNT = 285;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
@@ -82,7 +82,7 @@ function partA() {
     lifter.build({ dry: true }).changed.length === 0, { drift: lifter.build({ dry: true }).changed });
 
   report("A3) the words: " + Object.keys(D.ui).length + " ui strings and six group names in all nine base languages; six toggles with an ON and an OFF line; the frame carries the roles, the task, the identity lock, the realism, the avoid list and the guard",
-    Object.keys(D.ui).length >= 60 && Object.keys(D.ui).every((k) => all9(D.ui[k])) && D.groups.length === 6 && D.groups.every((g) => all9(g.name)) &&
+    Object.keys(D.ui).length >= 60 && Object.keys(D.ui).every((k) => all9(D.ui[k])) && D.groups.length === 13 && D.groups.every((g) => all9(g.name)) &&
     D.opts.length === 6 && D.opts.every((o) => o.id && typeof o.def === "boolean" && o.on && o.off) &&
     ["roles", "task", "keep", "real", "avoid", "guard"].every((k) => typeof D.frame[k] === "string" && D.frame[k].length > 20) &&
     has(D.frame.roles, "IMAGE 1 = MAIN SUBJECT") && has(D.frame.roles, "IMAGE 2 = STYLE REFERENCE") && has(D.frame.keep, "IDENTITY LOCK"),
@@ -91,7 +91,7 @@ function partA() {
   const rh = APP.slice(APP.indexOf("var RH_MODELS"), APP.indexOf("var RH_MODELS") + 40000);
   report("A4) every engine the page offers exists in the app's RH_MODELS and every group points at an Imagine tool whose thumbnails ship on both surfaces — no invented endpoint, no missing picture",
     D.models.length >= 6 && D.models.every((id) => new RegExp('id:"' + id + '"').test(rh)) &&
-    D.groups.every((g) => { const im = A.readImagine(); const t = im.tools.find((x) => x.id === g.tool); return !!t && t.presets.length >= 8 && t.presets.every((p) => fs.existsSync(path.join(ROOT, "docs/app/lib/wf/imagine/th", t.id + "-" + p.id + ".jpg")) && fs.existsSync(path.join(PANEL, "icons/imagine/th", t.id + "-" + p.id + ".jpg"))); }),
+    D.groups.every((g) => { if (g.sets) return g.sets.length >= 6 && g.sets.every((s) => fs.existsSync(path.join(ROOT, "docs/app/lib/wf/pstyle/th", s.thumb)) && fs.existsSync(path.join(PANEL, "icons/pstyle/th", s.thumb))); const im = A.readImagine(); const t = im.tools.find((x) => x.id === g.tool); return !!t && t.presets.length >= 8 && t.presets.every((p) => fs.existsSync(path.join(ROOT, "docs/app/lib/wf/imagine/th", t.id + "-" + p.id + ".jpg")) && fs.existsSync(path.join(PANEL, "icons/imagine/th", t.id + "-" + p.id + ".jpg"))); }),
     { models: D.models.filter((id) => !new RegExp('id:"' + id + '"').test(rh)) });
 
   report("A5) the hosts: the web app's brings the camera (getUserMedia), the Gallery picker, the browser's print dialog, IndexedDB for the recent photos and references, and the hand-off chips; the panel's brings the layer/file sheet and Place into Photoshop, no camera, no print",
@@ -173,9 +173,9 @@ async function partB(browser) {
     out.genOff = q("#psGen").classList.contains("is-off"); out.recentKv = await kvGet("hnk_ps_recent_v1");
     return out;
   }, PHOTO);
-  report("B2) a photo goes on step 01 (preview, Change photo, Next) and is remembered in IndexedDB; Next opens step 02: your own reference first, six groups, a grid of the studio's looks with thumbnails, six toggles at their defaults (hair off), the face lock, named Model and Size selects, Create disabled until a reference is chosen",
+  report("B2) a photo goes on step 01 (preview, Change photo, Next) and is remembered in IndexedDB; Next opens step 02: your own reference first, thirteen groups (seven occasions of the studio's own sets, six building blocks), a grid of the studio's looks with thumbnails, six toggles at their defaults (hair off), the face lock, named Model and Size selects, Create disabled until a reference is chosen",
     b2.preview && b2.next && b2.change && b2.step === 1 && b2.w === 520 && b2.h === 600 && b2.step2 === 2 && b2.on === "02" && b2.own &&
-    b2.groups.join() === "scene,outfit,light,hair,tone,id" && b2.cards >= 12 && /lib\/wf\/imagine\/th\/portrait-/.test(b2.thumb || "") &&
+    b2.groups.join() === "birthday,graduation,wedding,myanmar,family,corporate,festive,scene,outfit,light,hair,tone,id" && b2.cards >= 6 && /lib\/wf\/pstyle\/th\/birthday-/.test(b2.thumb || "") &&
     b2.opts.join() === "pose=true,outfit=true,bg=true,props=true,light=true,hair=false" && b2.lock && b2.model && b2.size && b2.genOff &&
     Array.isArray(b2.recentKv) && b2.recentKv.length === 1, b2);
 
@@ -309,7 +309,7 @@ async function partC(browser) {
       return out;
     }, PHOTO);
     report("C1) the panel boots the same module on Edit ▸ Style: three steps, Add a photo through the layer/file sheet, no camera and no Gallery button, the same grid of looks from icons/imagine/th, the six toggles, the named Model select, the same prompt",
-      c1.page === "pstyle" && c1.on && c1.steps === 3 && c1.add && !c1.cam && !c1.gal && c1.kick === "Portrait Style" && c1.step === 2 && c1.cards >= 12 && /^icons\/imagine\/th\/portrait-/.test(c1.thumb || "") && c1.model && c1.own && c1.opts === 6 && c1.picked === "set" && c1.prompt, c1);
+      c1.page === "pstyle" && c1.on && c1.steps === 3 && c1.add && !c1.cam && !c1.gal && c1.kick === "Portrait Style" && c1.step === 2 && c1.cards >= 6 && /^icons\/pstyle\/th\/birthday-/.test(c1.thumb || "") && c1.model && c1.own && c1.opts === 6 && c1.picked === "set" && c1.prompt, c1);
     report("C2) no page error in the panel", errs.length === 0, errs);
     await pp.close();
   } finally { server.close(); }

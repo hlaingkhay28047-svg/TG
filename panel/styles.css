@@ -4008,7 +4008,8 @@ body.tsize-s .sub, body.tsize-s .btn-sm { font-size: 9px; }
 #pagePStyle .ps-own .ps-own-im{flex:0 0 auto;width:84px;height:84px;border-radius:10px;margin-right:10px;background-color:#000;background-size:cover;background-position:center}
 #pagePStyle .ps-own .ps-add-ref{margin-right:10px;min-height:48px}
 #pagePStyle .ps-own .ps-own-x{margin-left:auto}
-#pagePStyle .ps-groups{margin-top:6px}
+#pagePStyle .ps-groups{margin-top:4px}
+#pagePStyle .ps-h4{font-size:11px;color:var(--muted);margin:8px 0 2px 0}
 #pagePStyle .ps-grid{display:flex;flex-direction:row;flex-wrap:wrap;margin-top:6px}
 #pagePStyle .ps-card{flex:0 0 auto;width:31%;margin:0 3.5% 8px 0;padding:0;border:2px solid transparent;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.04);color:var(--text);font:inherit;text-align:left;cursor:pointer}
 #pagePStyle .ps-card:nth-child(3n){margin-right:0}
