@@ -40,7 +40,8 @@ const PANEL_CSS = read("panel/styles.css");
 const SUITES = read("panel/js/hnk_studio_suites.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.141.0", PVER = "6.212.0";
+const VER = "6.141.0", PVER = "6.212.0";   /* the tree's current release, for the lockstep pin */
+const WAVE_V = "6.140.0";                  /* this wave's own release, for its own What's New row */
 const COUNT = 283;
 const PORT = Number(process.env.PORT || 8931);
 const BASE = "http://127.0.0.1:" + PORT;
@@ -261,10 +262,10 @@ async function partB(browser) {
 /* ===================== C) What's New ===================== */
 
 function partC() {
-  const row = WN.find(WN.appRows(), VER, "pgMeitu");
-  report("C1) What's New carries the " + VER + " row for Retouch A, in nine languages, without the warning glyph the panel lifter drops, and the panel says the same",
+  const row = WN.find(WN.appRows(), WAVE_V, "pgMeitu");
+  report("C1) What's New carries the " + WAVE_V + " row for Retouch A, in nine languages, without the warning glyph the panel lifter drops, and the panel says the same",
     !!row && LANGS.every((c) => row.t[c] && row.s[c]) && !/\u26a0/.test(JSON.stringify(row)) &&
-    WN.appRow(VER, "pgMeitu") === WN.panelRow(VER, "pgMeitu") && WN.appRow(VER, "pgMeitu").length > 200,
+    WN.appRow(WAVE_V, "pgMeitu") === WN.panelRow(WAVE_V, "pgMeitu") && WN.appRow(WAVE_V, "pgMeitu").length > 200,
     { row: !!row, langs: row ? LANGS.filter((c) => !(row.t[c] && row.s[c])) : null });
 }
 

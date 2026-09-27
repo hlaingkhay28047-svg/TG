@@ -50,7 +50,8 @@ const ALBUM = read("docs/app/data/album-module.js");
 const PALBUM = read("panel/js/hnk_album.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.141.0", PVER = "6.212.0";
+const VER = "6.141.0", PVER = "6.212.0";   /* the tree's current release, for the lockstep pin */
+const WAVE_V = "6.141.0";                  /* this wave's own release, for its own What's New row */
 const COUNT = 283;
 const PORT = Number(process.env.PORT || 8931);
 const BASE = "http://127.0.0.1:" + PORT;
@@ -245,9 +246,9 @@ async function partC(browser) {
 /* ===================== D) What's New · E) release pins ===================== */
 
 function partD() {
-  const row = WN.find(WN.appRows(), VER, "pgHome");
-  report("D1) What's New carries the " + VER + " row in nine languages and the panel says the same",
-    !!row && LANGS.every((c) => row.t[c] && row.s[c]) && WN.appRow(VER, "pgHome") === WN.panelRow(VER, "pgHome") && WN.appRow(VER, "pgHome").length > 200, { row: !!row });
+  const row = WN.find(WN.appRows(), WAVE_V, "pgHome");
+  report("D1) What's New carries the " + WAVE_V + " row in nine languages and the panel says the same",
+    !!row && LANGS.every((c) => row.t[c] && row.s[c]) && WN.appRow(WAVE_V, "pgHome") === WN.panelRow(WAVE_V, "pgHome") && WN.appRow(WAVE_V, "pgHome").length > 200, { row: !!row });
 }
 function partE() {
   const steps = (CI.match(/node test\//g) || []).length;
