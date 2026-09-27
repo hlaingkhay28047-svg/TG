@@ -2410,6 +2410,31 @@ body.wall #wallRetry.on{display:block}
 #pgPStyle .ps-row .chip{margin:0 6px 6px 0}
 #pgPStyle .ps-next{margin-top:10px;width:100%}
 #pgPStyle .ps-recent{margin-top:10px}
+#pgPStyle .ps-thw{position:relative;flex:0 0 auto;margin-right:8px}
+#pgPStyle .ps-thw .ps-th{margin-right:0}
+#pgPStyle .ps-th-x{position:absolute;top:-6px;right:-6px;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:rgba(20,17,12,.9);color:var(--cream);font:inherit;font-size:16px;line-height:24px;text-align:center;cursor:pointer}
+#pgPStyle .ps-th-x:focus-visible{outline:2px solid var(--gold)}
+#pgPStyle .ps-tether{margin-top:16px;padding:12px;border:1px solid rgba(217,164,65,.35);border-radius:12px;background:rgba(255,255,255,.03)}
+#pgPStyle .ps-tether .ps-h3{margin-top:0}
+#pgPStyle .ps-tether-intro{margin:0 0 6px 0;font-size:12.5px}
+#pgPStyle .ps-tether-row .chip{margin:0 6px 6px 0}
+#pgPStyle .ps-hot{margin-top:6px;font-size:13px;color:var(--gold-hi)}
+#pgPStyle .ps-hot-hint{text-align:left;margin-top:4px}
+#pgPStyle .ps-auto{margin-top:6px;border-bottom:0}
+#pgPStyle .ps-guide{margin-top:8px;display:flex;flex-direction:column}
+#pgPStyle .ps-guide-cam{padding:8px 0;border-top:1px solid rgba(255,255,255,.08);font-size:12.5px}
+#pgPStyle .ps-guide-cam b{display:block;color:var(--gold-hi);margin-bottom:3px}
+#pgPStyle .ps-guide-line{margin:2px 0;color:var(--cream)}
+#pgPStyle .ps-guide-k{color:var(--muted)}
+#pgPStyle .ps-share{margin:8px 0 0 0;justify-content:center}
+#pgPStyle .ps-share-hint{text-align:center;margin-top:4px}
+#pgPStyle .ps-verhead{display:flex;flex-direction:row;align-items:center;justify-content:space-between}
+#pgPStyle .ps-verhead .ps-h3{margin-right:8px}
+#pgPStyle .ps-clear{flex:0 0 auto}
+#pgPStyle .ps-verw{display:flex;flex-direction:row;align-items:center}
+#pgPStyle .ps-verw .ps-ver{flex:1 1 auto;min-width:0}
+#pgPStyle .ps-ver-x{flex:0 0 auto;width:40px;height:40px;margin:0 0 6px 6px;padding:0;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.04);color:var(--cream);font:inherit;font-size:18px;cursor:pointer}
+#pgPStyle .ps-ver-x:focus-visible{border-color:var(--gold)}
 #pgPStyle .ps-strip{display:flex;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
 #pgPStyle .ps-th{flex:0 0 auto;width:72px;height:72px;margin-right:8px;padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;background-color:#000;background-size:cover;background-position:center;cursor:pointer}
 #pgPStyle .ps-th:focus-visible{border-color:var(--gold)}
@@ -2480,7 +2505,20 @@ body.wall #wallRetry.on{display:block}
 /* ---- /PSTYLE_CSS ---- */
 /* the two sheets the web app's Portrait Style host draws over the page (app-only: the panel has no camera and picks from Photoshop) */
 .ps-camsheet{position:fixed;inset:0;z-index:70;background:#000;display:flex;flex-direction:column}
-.ps-camsheet video{flex:1 1 auto;width:100%;min-height:0;object-fit:contain;background:#000}
+.ps-camsheet .ps-camview{position:relative;flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ps-camsheet video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.ps-camsheet video.ps-soft{filter:blur(10px);mix-blend-mode:soft-light;pointer-events:none}
+.ps-camsheet .ps-ghost{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.ps-camsheet .ps-gridov{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(to right,rgba(255,255,255,.35) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.35) 1px,transparent 1px);background-size:33.333% 33.333%}
+.ps-camsheet .ps-count{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:96px;font-weight:700;color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.7);pointer-events:none}
+.ps-camsheet .ps-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s}
+.ps-camsheet .ps-camctl{flex:0 0 auto;max-height:42vh;overflow:auto;padding:8px 12px 0;background:rgba(10,9,7,.96);color:var(--cream)}
+.ps-camsheet .ps-camctl .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0}
+.ps-camsheet .ps-camctl label.ps-sl{display:flex;align-items:center;gap:8px;flex:1 1 44%;min-width:160px;font-size:12.5px;color:var(--muted)}
+.ps-camsheet .ps-camctl label.ps-sl input[type=range]{flex:1 1 auto;accent-color:var(--gold)}
+.ps-camsheet .ps-camctl select{min-height:40px;max-width:100%;flex:1 1 auto}
+.ps-camsheet .ps-camctl .chips .chip{margin:0 6px 6px 0}
+.ps-camsheet .ps-camctl .ps-tg{display:flex;align-items:center;gap:6px;min-height:40px;font-size:13px}
 .ps-cambar{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:10px;padding:12px calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));background:#15130f}
 .ps-cambar .ps-snap{min-width:140px;min-height:52px;font-size:16px}
 .ps-galsheet{position:fixed;inset:0;z-index:70;background:rgba(10,9,7,.96);display:flex;flex-direction:column;padding:12px}
@@ -4713,13 +4751,13 @@ html.splashing #splash{display:flex}
 
 <script src="data/hnkdata.js?v=9f7c58bdb600"></script>
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
-<script src="data/pstyle.js?v=d8f1ac4f6ef5"></script>
+<script src="data/pstyle.js?v=084ea3485046"></script>
 <script src="data/imagine.js?v=3f72b8b25456"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=2a9207df452f"></script>
+<script src="data/album-module.js?v=df9ce0baff92"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=ac0badf84ffb"></script>
-<script src="data/whatsnew.js?v=6da3608f1f01"></script>
+<script src="data/whatsnew.js?v=abde93299849"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -31728,7 +31766,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.145.0";
+var APP_VER="6.146.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -33456,7 +33494,10 @@ var PSTYLE = (function(){
   var H = null, root = null, refs = {};
   var LS_KEY = "hnk_ps_v1", MAX_RECENT = 8, MAX_REFS = 8, MAX_VER = 12;
   var S = { step:1, photo:null, ref:null, group:"birthday", opts:{}, model:"", size:"", count:1, caption:"",
-            busy:false, job:null, cmp:"slider", split:50, versions:[], cur:-1, recent:[], recentRefs:[], status:"", camOn:false };
+            busy:false, job:null, cmp:"slider", split:50, versions:[], cur:-1, recent:[], recentRefs:[], status:"", camOn:false,
+            /* 6.146.0 — the studio camera: a hot folder being watched, the queue of shots waiting for the style, auto-style,
+               the connection guide open or not, the share size, the two-tap arm of Clear history */
+            hot:null, queue:[], autoStyle:false, guide:false, social:"full", clearArm:0 };
   D.opts.forEach(function(o){ S.opts[o.id] = !!o.def; });
 
   /* ---------- small helpers (the Imagine module's, verbatim in spirit) ---------- */
@@ -33471,8 +33512,10 @@ var PSTYLE = (function(){
     if([1,2,4].indexOf(o.count)>=0) S.count=o.count;
     if(typeof o.group==="string" && groupById(o.group)) S.group=o.group;
     if(["slider","side","three","result"].indexOf(o.cmp)>=0) S.cmp=o.cmp;
+    if(typeof o.autoStyle==="boolean") S.autoStyle=o.autoStyle;
+    if(["full","916","45","11"].indexOf(o.social)>=0) S.social=o.social;
   }
-  function save(){ lsSet(JSON.stringify({ opts:S.opts, model:S.model, size:S.size, count:S.count, group:S.group, cmp:S.cmp })); }
+  function save(){ lsSet(JSON.stringify({ opts:S.opts, model:S.model, size:S.size, count:S.count, group:S.group, cmp:S.cmp, autoStyle:S.autoStyle, social:S.social })); }
   function t(key, vars){
     var s = H.t9(D.ui[key]||{}) || key;
     if(vars) Object.keys(vars).forEach(function(k){ s = s.split("{"+k+"}").join(String(vars[k])); });
@@ -33578,6 +33621,8 @@ var PSTYLE = (function(){
       S.status = stopped ? t("stopped") : (job.done ? t("done") : t("err_gen"));
       render();
       if(job.done && !stopped) H.toast(t("done"),"ok");
+      /* 6.146.0 — the next shot that arrived while this one ran */
+      if(!stopped && S.autoStyle && S.queue.length && S.ref){ var nx=S.queue.shift(); setPhoto(nx); setTimeout(run, 50); }
     }
     refDataUrl().then(function(rdu){
       var calls=[];
@@ -33632,18 +33677,25 @@ var PSTYLE = (function(){
     });
     return w;
   }
-  function thumbStrip(title, list, onPick, kind){
+  function thumbStrip(title, list, onPick, kind, onRemove){
     if(!list.length) return null;
     var w=el("div","ps-recent");
     w.appendChild(el("div","ps-h3", title));
     var row=el("div","ps-strip");
     list.forEach(function(it){
+      var wrap=el("span","ps-thw");
       var b=btn("ps-th",""); clear(b);
       b.style.backgroundImage="url("+it.dataUrl+")";   /* a background-size:cover box — UXP has no object-fit */
       b.setAttribute("aria-label", (it.name||title)+" · "+hhmm(it.ts||Date.now()));
       b.setAttribute("data-kind", kind);
       b.onclick=function(){ onPick(it); };
-      row.appendChild(b);
+      wrap.appendChild(b);
+      if(onRemove){   /* 6.146.0 — a shot or a reference leaves the strip on its own × */
+        var x=btn("ps-th-x","×"); x.setAttribute("aria-label", t("recent_remove")); x.setAttribute("data-kind", kind+"-x");
+        x.onclick=function(ev){ if(ev && ev.stopPropagation) ev.stopPropagation(); onRemove(it); };
+        wrap.appendChild(x);
+      }
+      row.appendChild(wrap);
     });
     w.appendChild(row);
     return w;
@@ -33676,10 +33728,112 @@ var PSTYLE = (function(){
       }
       drop.appendChild(el("div","mut ps-hint", t("photo_hint")));
       w.appendChild(drop);
-      var rs=thumbStrip(t("recent"), S.recent, function(it){ setPhoto(it); }, "photo"); if(rs){ rs.id="psRecent"; w.appendChild(rs); }
+      var rs=thumbStrip(t("recent"), S.recent, function(it){ setPhoto(it); }, "photo", function(it){ dropRecent(S.recent, it, "recentSet"); }); if(rs){ rs.id="psRecent"; w.appendChild(rs); }
       w.appendChild(el("p","mut ps-tip", t("tip_studio")));
     }
+    w.appendChild(tetherCard());   /* 6.146.0 — the studio camera: Live, the hot folder, auto-style, the connection guide */
     return w;
+  }
+  function dropRecent(list, it, hostFn){
+    var i=list.indexOf(it); if(i<0) return;
+    list.splice(i,1); try{ if(H[hostFn]) H[hostFn](list.slice()); }catch(e){} render();
+  }
+  /* ---------- 6.146.0 — THE STUDIO CAMERA ----------
+     The studio in the owner's video shoots tethered: the camera on USB or Wi-Fi, every shot on the tablet at once,
+     the style applied in front of the customer. Three doors, one card: Camera · Live (the web host's getUserMedia —
+     a phone's camera, or a Canon / Nikon / Sony / Fuji through the maker's free webcam utility or an HDMI capture
+     card), the hot folder (the web host's directory picker on Chrome / Edge, the panel's UXP folder — the folder the
+     maker's tether app saves into, polled for new shots), and the phone's own Share sheet (the PWA share target —
+     the camera's app sends the shot to the phone, the phone shares it to HNK). "Auto-style each new shot" runs the
+     chosen reference on every arrival; shots that arrive while one is running wait in a queue. */
+  function tetherCard(){
+    var w=el("div","ps-tether"); w.id="psTether";
+    w.appendChild(el("div","ps-h3", t("tether_h3")));
+    w.appendChild(el("p","mut ps-tether-intro", t("tether_intro")));
+    var row=el("div","ps-row ps-tether-row");
+    if(H.camera){ var cam=btn("chip", t("connect_cam"), "i-camera"); cam.id="psTetherCam"; cam.onclick=function(){ openCamera(); }; row.appendChild(cam); }
+    var hot=btn("chip"+(S.hot?" on":""), S.hot ? t("hot_stop") : t("hot_folder"), "i-folder"); hot.id="psHot"; hot.onclick=function(){ if(S.hot) hotStop(); else hotPick(); }; row.appendChild(hot);
+    var gd=btn("chip"+(S.guide?" on":""), t("cam_guide"), "i-info"); gd.id="psGuideTgl"; gd.setAttribute("aria-expanded", S.guide?"true":"false"); gd.onclick=function(){ S.guide=!S.guide; render(); }; row.appendChild(gd);
+    w.appendChild(row);
+    if(S.hot){
+      var st=el("div","ps-hot", t("hot_watching",{f:S.hot.name||"…", n:S.hot.n})+(S.queue.length ? " · "+t("queue_n",{n:S.queue.length}) : "")); st.id="psHotStatus"; w.appendChild(st);
+    } else { w.appendChild(el("p","mut ps-hint ps-hot-hint", t("hot_hint"))); }
+    var lab=el("label","ps-opt ps-auto"); var cb=document.createElement("input"); cb.type="checkbox"; cb.id="psAutoStyle"; cb.checked=!!S.autoStyle;
+    cb.onchange=function(){ S.autoStyle=!!cb.checked; save(); render(); };
+    lab.appendChild(cb); lab.appendChild(document.createTextNode(t("auto_style"))); w.appendChild(lab);
+    w.appendChild(el("p","mut ps-hint", t("auto_style_hint")));
+    if(S.guide){
+      var g=el("div","ps-guide"); g.id="psGuide";
+      (D.cams||[]).forEach(function(c){
+        var card=el("div","ps-guide-cam"); card.setAttribute("data-cam", c.id);
+        card.appendChild(el("b",null, c.id==="phone" ? t("guide_phone_h") : c.name));
+        [["guide_usb","usb"],["guide_tether","tether"],["guide_wireless","wireless"]].forEach(function(k){
+          var line=el("div","ps-guide-line"); line.appendChild(el("span","ps-guide-k", t(k[0])+" — ")); line.appendChild(el("span",null, H.t9(c[k[1]]))); card.appendChild(line);
+        });
+        g.appendChild(card);
+      });
+      g.appendChild(el("p","mut ps-hint", t("guide_note")));
+      w.appendChild(g);
+    }
+    return w;
+  }
+  function hotPick(){
+    if(!H.hotFolder){ H.toast(t("hot_no"),"err"); return; }
+    H.hotFolder.pick(function(ctl){
+      if(!ctl){ return; }
+      if(S.hot && S.hot.stop){ try{ S.hot.stop(); }catch(e){} }
+      S.hot={ name:ctl.name||"", n:0, stop:ctl.stop||null }; render();
+    }, onShot);
+  }
+  function hotStop(){ if(!S.hot) return; try{ if(S.hot.stop) S.hot.stop(); }catch(e){} S.hot=null; S.queue=[]; render(); }
+  /* a shot from the camera, the hot folder or the phone's share: the next photo — and, with auto-style on and a
+     reference chosen, the next run; while one runs the shot waits its turn */
+  function canAuto(){ return !!(S.autoStyle && S.ref && H.hasKey() && curModelId()); }
+  function onShot(item){
+    if(!item || !item.dataUrl) return;
+    if(S.hot) S.hot.n++;
+    if(canAuto()){
+      if(S.busy){ S.queue.push(item); render(); return; }
+      setPhoto(item); run(); return;
+    }
+    setPhoto(item); if(S.step!==1) setStep(1);
+  }
+  /* the share sizes — the picture cut to the frame the network wants, from the middle, at most 1920 tall */
+  var SOCIAL={ "916":9/16, "45":4/5, "11":1 };
+  function socialCrop(v, mode){
+    var r=SOCIAL[mode]; if(!r || !v) return Promise.resolve(v);
+    return new Promise(function(res){
+      try{
+        var im=new Image();
+        im.onload=function(){
+          try{
+            var w=im.naturalWidth||im.width, h=im.naturalHeight||im.height; if(!(w>0&&h>0)) { res(v); return; }
+            var cw=w, ch=h; if(w/h>r){ cw=Math.round(h*r); } else { ch=Math.round(w/r); }
+            var scale=Math.min(1, 1920/Math.max(cw,ch)); var ow=Math.round(cw*scale), oh=Math.round(ch*scale);
+            var c=document.createElement("canvas"); c.width=ow; c.height=oh; var cx=c.getContext("2d");
+            cx.drawImage(im, Math.round((w-cw)/2), Math.round((h-ch)/2), cw, ch, 0, 0, ow, oh);
+            var du=c.toDataURL("image/jpeg",0.92); var m=/^data:([^;]+);base64,(.*)$/.exec(du);
+            res(m ? { mime:m[1], b64:m[2], dataUrl:du, w:ow, h:oh, model:v.model, size:v.size, ts:v.ts } : v);
+          }catch(e){ res(v); }
+        };
+        im.onerror=function(){ res(v); };
+        im.src=v.dataUrl;
+      }catch(e){ res(v); }
+    });
+  }
+  function outName(out){ return "hnk-portrait-style-"+stamp()+(S.social!=="full" ? "-"+S.social : "")+(out.mime==="image/jpeg"?".jpg":".png"); }
+  function shareOut(v){ socialCrop(v, S.social).then(function(out){ if(H.share) return H.share(out, outName(out)); return H.exportOut(out, outName(out)); }).then(null, function(){}); }
+  function removeVersion(i){
+    if(S.busy) return; S.versions.splice(i,1);
+    if(!S.versions.length){ S.cur=-1; S.step=2; }   /* the last one gone: back to the style, where Create is */
+    else if(S.cur>=S.versions.length) S.cur=S.versions.length-1; else if(S.cur>i) S.cur--;
+    render();
+  }
+  function clearHistory(){
+    if(S.busy) return;
+    var now=Date.now();
+    if(now-S.clearArm>4000){ S.clearArm=now; render(); setTimeout(function(){ if(Date.now()-S.clearArm>=4000){ S.clearArm=0; render(); } },4200); return; }
+    S.versions=[]; S.cur=-1; S.clearArm=0; S.step=2; render();   /* the history gone: back to the style, where Create is */
   }
   function step2(){
     var w=el("div","ps-body ps-s2");
@@ -33697,7 +33851,7 @@ var PSTYLE = (function(){
       own.appendChild(el("div","mut", t("own_ref")));
     }
     w.appendChild(own);
-    var rr=thumbStrip(t("recent_refs"), S.recentRefs, function(it){ setOwnRef(it); }, "ref"); if(rr){ rr.id="psRecentRefs"; w.appendChild(rr); }
+    var rr=thumbStrip(t("recent_refs"), S.recentRefs, function(it){ setOwnRef(it); }, "ref", function(it){ dropRecent(S.recentRefs, it, "recentRefsSet"); }); if(rr){ rr.id="psRecentRefs"; w.appendChild(rr); }
     /* the studio's own looks */
     w.appendChild(el("div","ps-h3", t("built_in")));
     /* 6.143.0 — two rows of groups: the occasions (the studio's own sets) and the building blocks (the Imagine template art) */
@@ -33808,22 +33962,37 @@ var PSTYLE = (function(){
     if(S.busy){ var sp=btn("btn", t("stop"), "i-close"); sp.id="psStop"; sp.onclick=stop; acts.appendChild(sp); }
     if(v){
       var sv=el("span","chip ps-saved"); var ok=ico("i-check"); if(ok) sv.appendChild(ok); sv.appendChild(document.createTextNode(" "+t("saved"))); acts.appendChild(sv);
-      var dl=btn("btn", H.exportLabel ? H.exportLabel() : t("download"), "i-download"); dl.id="psDl"; dl.onclick=function(){ H.exportOut(v, "hnk-portrait-style-"+stamp()+(v.mime==="image/jpeg"?".jpg":".png")); }; acts.appendChild(dl);
+      var dl=btn("btn", H.exportLabel ? H.exportLabel() : t("download"), "i-download"); dl.id="psDl"; dl.onclick=function(){ if(S.social==="full"){ H.exportOut(v, outName(v)); return; } socialCrop(v, S.social).then(function(out){ H.exportOut(out, outName(out)); }); }; acts.appendChild(dl);
+      if(H.share){ var sh=btn("btn btn-gold", t("share"), "i-external"); sh.id="psShare"; sh.onclick=function(){ shareOut(v); }; acts.appendChild(sh); }
       if(H.printOut){ var pr=btn("btn", H.printLabel ? H.printLabel() : t("print"), "i-doc"); pr.id="psPrint"; pr.onclick=function(){ H.printOut(v); }; acts.appendChild(pr); }
       var rg=btn("btn", t("regen"), "i-retry"); rg.id="psRegen"; rg.onclick=run; if(S.busy){ rg.classList.add("is-off"); rg.setAttribute("aria-disabled","true"); } acts.appendChild(rg);
     }
     var nw=btn("btn", t("new_photo"), "i-sparkle"); nw.id="psNew"; nw.onclick=function(){ if(S.busy) return; S.photo=null; S.versions=[]; S.cur=-1; S.step=1; render(); }; acts.appendChild(nw);
     w.appendChild(acts);
+    if(v){   /* 6.146.0 — the frame the network wants: the original, 9:16 for TikTok / Reels, 4:5 for Facebook / IG, 1:1 */
+      var sz=el("div","chips seg ps-share"); sz.setAttribute("role","group"); sz.setAttribute("aria-label", t("share"));
+      [["full","social_full"],["916","social_916"],["45","social_45"],["11","social_11"]].forEach(function(m){
+        var c=btn("chip"+(S.social===m[0]?" on":""), t(m[1])); c.setAttribute("data-social", m[0]); c.setAttribute("aria-pressed", S.social===m[0]?"true":"false");
+        c.onclick=function(){ S.social=m[0]; save(); render(); }; sz.appendChild(c);
+      });
+      w.appendChild(sz);
+      if(H.share) w.appendChild(el("p","mut ps-hint ps-share-hint", t("share_hint")));
+    }
     if(H.handoff && v){ var ho=el("div","ps-handoff"); ho.id="psHandoff"; w.appendChild(ho); setTimeout(function(){ if(ho.isConnected) H.handoff(ho, v); },0); }   /* after render has attached the body: the app's host finds the row by id */
     if(S.versions.length){
-      w.appendChild(el("div","ps-h3", t("versions")));
+      var vh=el("div","ps-verhead"); vh.appendChild(el("div","ps-h3", t("versions")));
+      var clr=btn("chip ps-clear"+(S.clearArm?" on":""), S.clearArm ? t("clear_sure",{n:S.versions.length}) : t("clear_hist"), "i-trash"); clr.id="psClearHist"; clr.onclick=clearHistory; if(S.busy){ clr.classList.add("is-off"); clr.setAttribute("aria-disabled","true"); } vh.appendChild(clr);
+      w.appendChild(vh);
       var list=el("div","ps-versions"); list.id="psVersions";
       S.versions.forEach(function(x, i){
+        var wrap=el("div","ps-verw");
         var row=btn("ps-ver"+(i===S.cur?" on":""), ""); clear(row); row.setAttribute("aria-pressed", i===S.cur?"true":"false");
         var im=el("div","ps-ver-im"); im.style.backgroundImage="url("+x.dataUrl+")"; row.appendChild(im);
         var tx=el("div","ps-ver-t"); tx.appendChild(el("b",null,t("version_n",{n:S.versions.length-i}))); tx.appendChild(el("span","mut", modelLabel(x.model)+(x.size?" · "+x.size.toUpperCase():"")+" · "+hhmm(x.ts))); row.appendChild(tx);
         row.onclick=function(){ S.cur=i; render(); };
-        list.appendChild(row);
+        wrap.appendChild(row);
+        var x=btn("ps-ver-x","×"); x.setAttribute("aria-label", t("ver_remove")); x.setAttribute("data-ver", String(i)); x.onclick=function(ev){ if(ev && ev.stopPropagation) ev.stopPropagation(); removeVersion(i); }; if(S.busy){ x.classList.add("is-off"); x.setAttribute("aria-disabled","true"); } wrap.appendChild(x);
+        list.appendChild(wrap);
       });
       w.appendChild(list);
     }
@@ -33854,7 +34023,11 @@ var PSTYLE = (function(){
     });
   }
   /* the camera — the host opens it; the module only asks and takes the picture back */
-  function openCamera(){ if(!H.camera || S.camOn) return; S.camOn=true; H.camera(function(item){ S.camOn=false; if(item) setPhoto(item); else render(); }); }
+  function openCamera(){
+    if(!H.camera || S.camOn) return; S.camOn=true;
+    var ctx={ ref: S.ref ? (S.ref.kind==="own" ? S.ref.dataUrl : S.ref.thumb) : "", refName: S.ref ? (S.ref.name||"") : "" };   /* 6.146.0 — the ghost overlay */
+    H.camera(function(item){ S.camOn=false; if(item){ setPhoto(item); if(canAuto()) run(); } else render(); }, ctx);
+  }
 
   /* ---------- API ---------- */
   function init(host, rootEl){
@@ -33864,7 +34037,8 @@ var PSTYLE = (function(){
     render();
   }
   function onEnter(){ render(); }
-  return { init:init, onEnter:onEnter, render:render, state:S, prompt:buildPrompt, setPhoto:setPhoto, setOwnRef:setOwnRef, pickSet:pickSet, run:run, stop:stop, setCmp:setCmp, setStep:setStep, sets:sets, groups:function(){ return D.groups; } };
+  return { init:init, onEnter:onEnter, render:render, state:S, prompt:buildPrompt, setPhoto:setPhoto, setOwnRef:setOwnRef, pickSet:pickSet, run:run, stop:stop, setCmp:setCmp, setStep:setStep, sets:sets, groups:function(){ return D.groups; },
+           onShot:onShot, hotPick:hotPick, hotStop:hotStop, socialCrop:socialCrop, removeVersion:removeVersion, clearHistory:clearHistory };
 })();
 if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PSTYLE; }
 /* ---- /PSTYLE_MODULE ---- */
@@ -33952,37 +34126,186 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
       rd.readAsDataURL(f);
     });
   }
-  /* the camera: a full-screen sheet with the live view, Snap · Flip · Cancel; the picture comes back as a JPEG data URL */
-  function camera(done){
+  /* 6.146.0 — THE STUDIO CAMERA SHEET. The live view of ANY video input the browser can see — the phone's own
+     camera, a Canon / Nikon / Sony / Fuji through the maker's free webcam utility (EOS Webcam Utility, Nikon Webcam
+     Utility, Imaging Edge Webcam, FUJIFILM X Webcam) over USB, or any camera through an HDMI capture card — picked by
+     name. On the view: exposure, contrast and warmth as CSS filters (baked into the JPEG through the canvas filter),
+     soft skin as a blurred copy of the stream blended soft-light, eight live looks (one matches the reference's tone
+     from its pixels), the chosen reference as a ghost overlay for pose and framing, a thirds grid, a mirror, a 3s
+     timer. Snap · Flip · Cancel keep their ids. The picture comes back as a JPEG data URL. */
+  var CAM_KEY="hnk_ps_cam_v1";
+  function camPrefs(){ try{ return JSON.parse(localStorage.getItem(CAM_KEY)||"{}")||{}; }catch(e){ return {}; } }
+  function camSave(o){ try{ localStorage.setItem(CAM_KEY, JSON.stringify(o)); }catch(e){} }
+  /* the reference's tone as filter values: its mean brightness, saturation and warmth, measured on 24×24 pixels */
+  function toneOf(dataUrl){
+    return new Promise(function(res){
+      try{
+        var im=new Image(); im.onload=function(){
+          try{
+            var c=document.createElement("canvas"); c.width=24; c.height=24; var cx=c.getContext("2d"); cx.drawImage(im,0,0,24,24);
+            var d=cx.getImageData(0,0,24,24).data, n=0, lum=0, sat=0, warm=0;
+            for(var i=0;i<d.length;i+=4){ var r=d[i],g=d[i+1],b=d[i+2]; var mx=Math.max(r,g,b), mn=Math.min(r,g,b); lum+=(0.299*r+0.587*g+0.114*b); sat+= mx ? (mx-mn)/mx : 0; warm+=(r-b); n++; }
+            lum/=n; sat/=n; warm/=n;
+            res({ brightness:Math.max(0.85, Math.min(1.15, 1+(lum-128)/640)), saturate:Math.max(0.8, Math.min(1.3, 0.85+sat*0.9)), sepia:warm>10 ? Math.min(0.28, warm/220) : 0, hue: warm<-10 ? Math.max(-14, warm/6) : 0, contrast: 1.03 });
+          }catch(e){ res(null); }
+        }; im.onerror=function(){ res(null); }; im.crossOrigin="anonymous"; im.src=dataUrl;
+      }catch(e){ res(null); }
+    });
+  }
+  function camera(done, ctx){
+    ctx=ctx||{};
     if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){ toast(L9(PSTYLE_DATA.ui.camera_no),"err"); done(null); return; }
-    var facing="user", stream=null;
-    var sh=el("div","ps-camsheet"); sh.id="psCamSheet"; sh.setAttribute("role","dialog"); sh.setAttribute("aria-modal","true"); sh.setAttribute("aria-label", L9(PSTYLE_DATA.ui.take_photo));
-    var v=document.createElement("video"); v.autoplay=true; v.playsInline=true; v.muted=true; v.setAttribute("playsinline",""); sh.appendChild(v);
+    var U=PSTYLE_DATA.ui, LOOKS=PSTYLE_DATA.looks||[], pref=camPrefs();
+    var facing="user", stream=null, deviceId=pref.deviceId||"", look=pref.look||"natural", exp=pref.exp||1, con=pref.con||1, warm=pref.warm||0, soft=(typeof pref.soft==="number")?pref.soft:0.3, ghostOp=(typeof pref.ghost==="number")?pref.ghost:0.35, grid=!!pref.grid, mirror=(pref.mirror!==false), timer=!!pref.timer, matchTone=null;
+    var sh=el("div","ps-camsheet"); sh.id="psCamSheet"; sh.setAttribute("role","dialog"); sh.setAttribute("aria-modal","true"); sh.setAttribute("aria-label", L9(U.take_photo));
+    var view=el("div","ps-camview");
+    var v=document.createElement("video"); v.autoplay=true; v.playsInline=true; v.muted=true; v.setAttribute("playsinline",""); view.appendChild(v);
+    var v2=document.createElement("video"); v2.className="ps-soft"; v2.autoplay=true; v2.playsInline=true; v2.muted=true; v2.setAttribute("playsinline",""); v2.setAttribute("aria-hidden","true"); view.appendChild(v2);
+    var ghost=null; if(ctx.ref){ ghost=document.createElement("img"); ghost.className="ps-ghost"; ghost.id="psGhost"; ghost.alt=""; ghost.src=ctx.ref; view.appendChild(ghost); }
+    var gridOv=el("div","ps-gridov"); gridOv.id="psGridOv"; view.appendChild(gridOv);
+    var count=el("div","ps-count",""); count.id="psCount"; count.setAttribute("aria-live","assertive"); view.appendChild(count);
+    var flash=el("div","ps-flash"); view.appendChild(flash);
+    sh.appendChild(view);
+    var ctl=el("div","ps-camctl");
+    var r1=el("div","row");
+    var devLab=el("label",null,L9(U.cam_device)+" "); var dev=document.createElement("select"); dev.id="psCamDev"; dev.setAttribute("aria-label", L9(U.cam_device)); devLab.appendChild(dev); r1.appendChild(devLab);
+    ctl.appendChild(r1);
+    var looks=el("div","chips ps-camlooks"); looks.id="psCamLooks"; looks.setAttribute("role","group"); looks.setAttribute("aria-label", L9(U.cam_look));
+    ctl.appendChild(looks);
+    var r2=el("div","row");
+    function slider(id, labelKey, min, max, step, val, on){
+      var lab=el("label","ps-sl"); lab.appendChild(document.createTextNode(L9(U[labelKey])));
+      var inp=document.createElement("input"); inp.type="range"; inp.id=id; inp.min=String(min); inp.max=String(max); inp.step=String(step); inp.value=String(val); inp.setAttribute("aria-label", L9(U[labelKey]));
+      inp.oninput=function(){ on(Number(inp.value)); apply(); }; lab.appendChild(inp); r2.appendChild(lab); return inp;
+    }
+    slider("psCamExp","cam_exposure",0.6,1.4,0.02,exp,function(x){ exp=x; });
+    slider("psCamCon","cam_contrast",0.8,1.3,0.02,con,function(x){ con=x; });
+    slider("psCamWarm","cam_warmth",-0.2,0.35,0.01,warm,function(x){ warm=x; });
+    slider("psCamSoft","cam_soft",0,0.8,0.05,soft,function(x){ soft=x; });
+    if(ghost) slider("psGhostOp","cam_ghost",0,0.8,0.05,ghostOp,function(x){ ghostOp=x; });
+    ctl.appendChild(r2);
+    var r3=el("div","row");
+    function toggle(id, labelKey, val, on){ var lab=el("label","ps-tg"); var cb=document.createElement("input"); cb.type="checkbox"; cb.id=id; cb.checked=!!val; cb.onchange=function(){ on(!!cb.checked); apply(); }; lab.appendChild(cb); lab.appendChild(document.createTextNode(L9(U[labelKey]))); r3.appendChild(lab); return cb; }
+    toggle("psGrid","cam_grid",grid,function(x){ grid=x; });
+    toggle("psMirror","cam_mirror",mirror,function(x){ mirror=x; });
+    toggle("psTimer","cam_timer",timer,function(x){ timer=x; });
+    ctl.appendChild(r3);
+    sh.appendChild(ctl);
     var bar=el("div","ps-cambar");
-    var snap=el("button","btn btn-gold ps-snap"); snap.type="button"; snap.id="psSnap"; snap.textContent=L9(PSTYLE_DATA.ui.snap);
-    var flip=el("button","btn"); flip.type="button"; flip.id="psFlip"; flip.textContent=L9(PSTYLE_DATA.ui.flip);
-    var cancel=el("button","btn"); cancel.type="button"; cancel.id="psCamCancel"; cancel.textContent=L9(PSTYLE_DATA.ui.cancel);
+    var snap=el("button","btn btn-gold ps-snap"); snap.type="button"; snap.id="psSnap"; snap.textContent=L9(U.snap);
+    var flip=el("button","btn"); flip.type="button"; flip.id="psFlip"; flip.textContent=L9(U.flip);
+    var cancel=el("button","btn"); cancel.type="button"; cancel.id="psCamCancel"; cancel.textContent=L9(U.cancel);
     bar.appendChild(flip); bar.appendChild(snap); bar.appendChild(cancel); sh.appendChild(bar);
     document.body.appendChild(sh);
+    function filterStr(){
+      var f="";
+      var lk=null; for(var i=0;i<LOOKS.length;i++) if(LOOKS[i].id===look) lk=LOOKS[i];
+      if(lk && lk.f==="match" && matchTone){ f="brightness("+matchTone.brightness.toFixed(3)+") contrast("+matchTone.contrast+") saturate("+matchTone.saturate.toFixed(3)+")"+(matchTone.sepia?" sepia("+matchTone.sepia.toFixed(3)+")":"")+(matchTone.hue?" hue-rotate("+matchTone.hue.toFixed(1)+"deg)":""); }
+      else if(lk && lk.f && lk.f!=="match") f=lk.f;
+      var extra=" brightness("+exp.toFixed(3)+") contrast("+con.toFixed(3)+")"+(warm>0 ? " sepia("+warm.toFixed(3)+")" : warm<0 ? " hue-rotate("+(warm*60).toFixed(1)+"deg)" : "");
+      return (f+extra).trim();
+    }
+    function apply(){
+      v.style.filter=filterStr();
+      var lk=null; for(var i=0;i<LOOKS.length;i++) if(LOOKS[i].id===look) lk=LOOKS[i];
+      var s=Math.min(0.9, soft+(lk?lk.soft:0)); v2.style.opacity=String(s); v2.style.display = s>0 ? "" : "none";
+      var mir = mirror && facing==="user" && !deviceId; v.style.transform = mir ? "scaleX(-1)" : ""; v2.style.transform=v.style.transform;
+      if(ghost) ghost.style.opacity=String(ghostOp);
+      gridOv.style.display = grid ? "" : "none";
+      Array.prototype.forEach.call(looks.children, function(c){ var on=c.getAttribute("data-look")===look; c.className="chip"+(on?" on":""); c.setAttribute("aria-pressed", on?"true":"false"); });
+      camSave({ deviceId:deviceId, look:look, exp:exp, con:con, warm:warm, soft:soft, ghost:ghostOp, grid:grid, mirror:mirror, timer:timer });
+    }
+    LOOKS.forEach(function(lk){
+      if(lk.f==="match" && !ctx.ref) return;
+      var c=el("button","chip"); c.type="button"; c.setAttribute("data-look", lk.id); c.textContent=L9(lk.name);
+      c.onclick=function(){ look=lk.id; apply(); }; looks.appendChild(c);
+    });
+    if(ctx.ref) toneOf(ctx.ref).then(function(tn){ matchTone=tn; apply(); });
+    function listDevices(){
+      if(!navigator.mediaDevices.enumerateDevices) return Promise.resolve([]);
+      return navigator.mediaDevices.enumerateDevices().then(function(ds){ return ds.filter(function(d){ return d.kind==="videoinput"; }); }, function(){ return []; });
+    }
+    function fillDevices(ds){
+      dev.innerHTML="";
+      var any=document.createElement("option"); any.value=""; any.textContent=L9(U.cam_auto); dev.appendChild(any);
+      ds.forEach(function(d, i){ var o=document.createElement("option"); o.value=d.deviceId; o.textContent=d.label || (L9(U.cam_device)+" "+(i+1)); dev.appendChild(o); });
+      dev.value=deviceId && ds.some(function(d){ return d.deviceId===deviceId; }) ? deviceId : "";
+      if(!ds.length) toast(L9(U.cam_no_devices),"err");
+    }
+    dev.onchange=function(){ deviceId=dev.value; camSave({ deviceId:deviceId, look:look, exp:exp, con:con, warm:warm, soft:soft, ghost:ghostOp, grid:grid, mirror:mirror, timer:timer }); start(); };
     function stopAll(){ try{ if(stream) stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} stream=null; }
     function close(item){ stopAll(); if(sh.parentNode) sh.parentNode.removeChild(sh); done(item||null); }
     function start(){
       stopAll();
-      navigator.mediaDevices.getUserMedia({ video:{ facingMode:facing, width:{ideal:2048}, height:{ideal:2048} }, audio:false })
-        .then(function(s){ stream=s; v.srcObject=s; })
-        .catch(function(){ toast(L9(PSTYLE_DATA.ui.camera_err),"err"); close(null); });
+      var vc = deviceId ? { deviceId:{ exact:deviceId }, width:{ideal:2048}, height:{ideal:2048} } : { facingMode:facing, width:{ideal:2048}, height:{ideal:2048} };
+      navigator.mediaDevices.getUserMedia({ video:vc, audio:false })
+        .then(function(s){ stream=s; v.srcObject=s; v2.srcObject=s; apply(); return listDevices().then(fillDevices); })
+        .catch(function(){ if(deviceId){ deviceId=""; start(); return; } toast(L9(U.camera_err),"err"); close(null); });
     }
-    snap.onclick=function(){
+    function take(){
       var w=v.videoWidth||0, h=v.videoHeight||0; if(!(w>0&&h>0)) return;
       var c=document.createElement("canvas"); c.width=w; c.height=h; var cx=c.getContext("2d");
-      if(facing==="user"){ cx.translate(w,0); cx.scale(-1,1); }   /* a selfie the way the mirror showed it */
+      var mir = mirror && facing==="user" && !deviceId;
+      if(mir){ cx.translate(w,0); cx.scale(-1,1); }   /* a selfie the way the mirror showed it */
+      try{ cx.filter=filterStr(); }catch(e){}
       cx.drawImage(v,0,0,w,h);
+      var lk=null; for(var i=0;i<LOOKS.length;i++) if(LOOKS[i].id===look) lk=LOOKS[i];
+      var s=Math.min(0.9, soft+(lk?lk.soft:0));
+      if(s>0){ try{ cx.filter="blur("+Math.max(6, Math.round(w/180))+"px)"; cx.globalCompositeOperation="soft-light"; cx.globalAlpha=s; cx.drawImage(v,0,0,w,h); cx.globalAlpha=1; cx.globalCompositeOperation="source-over"; cx.filter="none"; }catch(e){} }
+      flash.style.opacity="1"; setTimeout(function(){ flash.style.opacity="0"; },120);
       var du=c.toDataURL("image/jpeg",0.92);
-      close({ dataUrl:du, name:"camera-"+Date.now()+".jpg", w:w, h:h });
+      close({ dataUrl:du, name:"camera-"+Date.now()+".jpg", w:w, h:h, look:look });
+    }
+    var armed=false;
+    snap.onclick=function(){
+      if(armed) return;
+      if(!timer){ take(); return; }
+      armed=true; var n=3; count.textContent=String(n);
+      var iv=setInterval(function(){ n--; if(n<=0){ clearInterval(iv); count.textContent=""; armed=false; take(); } else count.textContent=String(n); },1000);
     };
-    flip.onclick=function(){ facing = facing==="user" ? "environment" : "user"; start(); };
+    flip.onclick=function(){ deviceId=""; facing = facing==="user" ? "environment" : "user"; start(); };
     cancel.onclick=function(){ close(null); };
+    apply();
     start();
+  }
+  /* 6.146.0 — THE HOT FOLDER. Chrome / Edge on a computer can watch a folder (the File System Access API): the one
+     the maker's tether software saves into — EOS Utility, NX Tether, Imaging Edge Remote, X Acquire, Lightroom's or
+     Capture One's import folder. Every new JPEG / PNG / WebP that lands there is picked up within two seconds; the
+     shots already in the folder when it was chosen are left alone. Other browsers get the phone door instead. */
+  var hotFolder = {
+    pick: function(onCtl, onShot){
+      if(typeof window.showDirectoryPicker!=="function"){ toast(L9(PSTYLE_DATA.ui.hot_no),"err"); onCtl(null); return; }
+      window.showDirectoryPicker({ mode:"read" }).then(function(dir){
+        var seen={}, timer=0, busy=false;
+        async function scan(first){
+          if(busy) return; busy=true;
+          try{
+            for await (var ent of dir.values()){
+              if(ent.kind!=="file" || !/\.(jpe?g|png|webp)$/i.test(ent.name)) continue;
+              if(seen[ent.name]) continue;
+              seen[ent.name]=1;
+              if(first) continue;
+              var f=await ent.getFile();
+              readFiles([f], function(items){ if(items && items[0]) onShot(items[0]); });
+            }
+          }catch(e){}
+          busy=false;
+        }
+        scan(true).then(function(){ timer=setInterval(function(){ scan(false); }, 2000); onCtl({ name:dir.name||"", stop:function(){ if(timer) clearInterval(timer); timer=0; } }); });
+      }).catch(function(){ onCtl(null); });
+    }
+  };
+  /* 6.146.0 — SHARE. A phone hands the picture to Facebook, TikTok, Instagram or any app through its own share sheet
+     (the Web Share API with a file); a browser that cannot share files downloads it for the upload instead. */
+  function share(out, name){
+    var m=/^data:([^;]+);base64,(.*)$/.exec(out.dataUrl||""); var mime=m ? m[1] : (out.mime||"image/jpeg"); var b64=m ? m[2] : out.b64;
+    var bin=atob(b64), bytes=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    var file=null; try{ file=new File([bytes], name, { type:mime }); }catch(e){ file=null; }
+    if(file && navigator.share && navigator.canShare && navigator.canShare({ files:[file] })){
+      return navigator.share({ files:[file], title:"HNK Portrait Style" }).then(function(){ toast(L9(PSTYLE_DATA.ui.shared_ok),"ok"); }, function(){});
+    }
+    host.exportOut(out, name); toast(L9(PSTYLE_DATA.ui.share_dl),"");
+    return Promise.resolve();
   }
   /* print: the picture alone on one page, through the browser's own dialog, from a hidden frame */
   function printOut(out){
@@ -34011,6 +34334,8 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
       nativePick(btn, inputId||"psFile");
     },
     camera: camera,
+    hotFolder: hotFolder,   /* 6.146.0 */
+    share: (navigator.share ? share : null),   /* 6.146.0 — a Share button only where the browser can share at all */
     pickGallery: function(done){
       /* the newest Gallery pictures, in a small sheet — the studio's own results as the next subject */
       galDb().then(function(d){
@@ -34176,6 +34501,28 @@ try {
      dropped — the app just opened wherever it would have anyway. */
   var _qp = stNormalizePage(new URLSearchParams(location.search).get("page"));
   if (_qp && PAGES.some(function(p){ return p[0]===_qp; })) switchPage(_qp);
+  /* 6.146.0 — THE PHONE'S SHARE SHEET AS A CAMERA DOOR. The camera's own app (Camera Connect, SnapBridge, Creators'
+     App, XApp) puts the shot in the phone's gallery; the phone shares it to HNK (manifest share_target); the service
+     worker stores the file in the share inbox and opens ?page=pgPStyle&shared=1; this takes it out of the inbox and
+     puts it on Portrait Style's step 01 — where auto-style may run it at once. */
+  if (new URLSearchParams(location.search).get("shared") === "1" && typeof caches !== "undefined") {
+    caches.open("hnk-share-inbox").then(function (c) {
+      return c.match("./__share_inbox").then(function (r) {
+        if (!r) return;
+        return r.blob().then(function (b) {
+          c.delete("./__share_inbox").catch(function () {});
+          var rd = new FileReader();
+          rd.onload = function () {
+            downscale(String(rd.result), function (du) {
+              if (du && window.HNK && window.HNK.pstyle) { switchPage("pgPStyle"); window.HNK.pstyle.onShot({ dataUrl: du, name: "shared-" + Date.now() + ".jpg" }); toast(L9(PSTYLE_DATA.ui.shared_in), "ok"); }
+            }, 2048);
+          };
+          rd.readAsDataURL(b);
+        });
+      });
+    }).catch(function () {});
+    try { history.replaceState(null, "", location.pathname + "?page=pgPStyle"); } catch (e) {}
+  }
 } catch(e){}
 /* v5.49.0 — bring back the photos the user was working with when the phone
    reclaimed the tab; runs after the page restore so both land together */

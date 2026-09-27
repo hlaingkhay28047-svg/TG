@@ -99,7 +99,7 @@ const PANEL_ONLY = {
 const APP_ONLY = {
   vidup: ["HD"], v2v: [], talk: [], gallery: [], create: [], path: [],
   /* 6.142.0 — Portrait Style: Take a photo and From the Gallery are the web app host's own buttons (a camera, an IndexedDB gallery); the panel picks from a layer or a file through the shared Add button */
-  pstyle: ["ကင်မရာနဲ့ ရိုက်မယ်", "ပြခန်းက ယူမယ်"],
+  pstyle: ["ကင်မရာနဲ့ ရိုက်မယ်", "ပြခန်းက ယူမယ်", "ကင်မရာ · Live"],   /* 6.146.0 — Camera · Live on the tether card is the web host's camera sheet too */
   home: [], wf: [], lib: [], album: [],
   /* the app's Size tile is an inline <svg> with the letters HD drawn inside
      it, which counts as text here; the panel's tile is that same picture as a
@@ -153,7 +153,7 @@ const REWRITE = [
         minute can roll over between them; the DATE is compared, the minute is
         not — a clock that stopped would fail check I of the landing counts,
         not this one. */
-  [/·\s*\d{1,2}:\d{2}\s*(AM|PM)\s*·/, "· TIME ·"],
+  [/·\s*\d{1,2}:\d{2}\s*[^·\n]{0,12}?\s*·/, "· TIME ·"],   /* 6.146.0 — the half of the day is a word in the student's language since 6.145.0 (ညနေ, not PM), so the mask takes any short word there */
   /* 2. measured storage. A browser reports its own quota and a plugin reports
         its data folder; the units are the same sentence, the numbers are the
         machine's. Both sides lose the number, so a missing FIELD still fails. */

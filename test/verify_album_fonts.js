@@ -293,7 +293,7 @@ async function browserWalk() {
      line that will never need one — every file pulled is a Latin face, and the Burmese and Thai
      ones stay on the server until C4's mixed line asks for them. */
   report("C3) an all-Latin title fetches its own family and the three the style rail previews — and no script fallback: nothing Burmese or Thai is downloaded for a line that will never need it",
-    afterLatin.length === 3 && /^playfair-latin-700/.test(afterLatin[0]) &&
+    afterLatin.length === 3 && afterLatin.some((f) => /^playfair-latin-700/.test(f)) &&   /* 6.146.0 — the three Latin faces in any order: under load the rail's previews can reach the network before the line's own family (the order is the browser's, not the page's) */
     afterLatin.every((f) => /-latin-/.test(f)) && latin.text === "Ko Ko and Ma Ma",
     { afterLatin, latin });
 
