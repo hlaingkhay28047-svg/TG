@@ -50,9 +50,9 @@ const ALBUM = read("docs/app/data/album-module.js");
 const PALBUM = read("panel/js/hnk_album.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.145.0", PVER = "6.216.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.146.0", PVER = "6.217.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.141.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 287;
+const COUNT = 288;
 const PORT = Number(process.env.PORT || 8931);
 const BASE = "http://127.0.0.1:" + PORT;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];

@@ -1318,3 +1318,11 @@ jobs:
       # studio headings — one table for both surfaces; the panel's catalog lift carries the names per language.
       - name: Verify the last English on every page speaks nine languages
         run: PORT=8931 node test/verify_last_english_6145.js
+      # 6.146.0 — Portrait Style: the studio camera. The tether card (Camera · Live through any video input
+      # the browser lists — the makers' free webcam utilities put a Canon / Nikon / Sony / Fuji on USB there —
+      # the hot folder the tether software saves into, auto-style on every new shot with a queue, the
+      # connection guide for five cameras), the camera sheet's live looks · exposure · soft skin · ghost
+      # reference · grid · timer, a × on every version and Clear history, the share sizes and Share through
+      # the phone's share sheet, and the PWA as a share target; the panel watches a UXP folder.
+      - name: Verify Portrait Style's studio camera, history delete and share
+        run: PORT=8931 node test/verify_pstyle_camera_6146.js

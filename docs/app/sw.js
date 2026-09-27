@@ -1,6 +1,6 @@
 /* HNK Web Studio service worker — cache-first for library assets,
    network-first for everything else (so app updates arrive immediately). */
-var CACHE = "hnk-web-studio-v6-145-0";
+var CACHE = "hnk-web-studio-v6-146-0";
 /* /lib/ images live in their own cache so an app-shell release does NOT
    wipe the (up to ~52MB) library thumbnails a customer already downloaded
    on mobile data. Bump LIB_CACHE ONLY when files under /lib/ actually
@@ -557,6 +557,17 @@ self.addEventListener("activate", function (e) {
 
 self.addEventListener("fetch", function (e) {
   var url = new URL(e.request.url);
+  /* 6.146.0 — THE SHARE TARGET. The manifest names ./share as where a phone's share sheet POSTs a picture to this
+     app (share_target). The file goes into a one-slot cache — the share inbox — and the app opens on Portrait Style
+     with ?shared=1, which takes it out. Nothing else is ever POSTed to this worker. */
+  if (e.request.method === "POST" && url.origin === location.origin && /\/share$/.test(url.pathname)) {
+    e.respondWith(e.request.formData().then(function (fd) {
+      var f = fd.get("photo") || (fd.getAll("photo") || [])[0] || null;
+      var put = f ? caches.open("hnk-share-inbox").then(function (c) { return c.put("./__share_inbox", new Response(f, { headers: { "Content-Type": f.type || "image/jpeg" } })); }) : Promise.resolve();
+      return put.then(function () { return Response.redirect("./?page=pgPStyle&shared=1", 303); });
+    }).catch(function () { return Response.redirect("./?page=pgPStyle", 303); }));
+    return;
+  }
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
 
   /* THE API IS NOT AN ASSET, and since it moved to this origin the worker can

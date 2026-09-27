@@ -2799,7 +2799,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.216.0";
+const PANEL_VERSION = "6.217.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -13160,6 +13160,36 @@ function pstyleHost() {
       try { const r = await fetch(url); const b = await r.arrayBuffer(); return "data:image/jpeg;base64," + bufToB64(b); } catch (e) { return null; }
     },
     pickWire: pick,
+    /* 6.217.0 — THE HOT FOLDER, the panel's way: the folder the maker's tether software saves into (EOS Utility,
+       NX Tether, Imaging Edge Remote, X Acquire, Lightroom / Capture One), read every 2.5 s for a new JPEG / PNG /
+       WebP; the shots already there when the folder was chosen are left alone. There is no camera in Photoshop —
+       the module draws no Live button when the host has none. */
+    hotFolder: {
+      pick: async function (onCtl, onShot) {
+        try {
+          const f = await fsp.getFolder();
+          if (!f) { onCtl(null); return; }
+          const seen = {};
+          try { (await f.getEntries()).forEach(function (e) { if (e.isFile) seen[e.name] = 1; }); } catch (e) { }
+          let busy = false;
+          const timer = setInterval(async function () {
+            if (busy) return; busy = true;
+            try {
+              const ents = await f.getEntries();
+              for (let i = 0; i < ents.length; i++) {
+                const e = ents[i];
+                if (!e.isFile || seen[e.name] || !/\.(jpe?g|png|webp)$/i.test(e.name)) continue;
+                seen[e.name] = 1;
+                const buf = await e.read({ format: uxp.storage.formats.binary });
+                onShot({ dataUrl: "data:" + extToMime(e.name) + ";base64," + bufToB64(buf), name: e.name });
+              }
+            } catch (e) { }
+            busy = false;
+          }, 2500);
+          onCtl({ name: f.name || "", stop: function () { clearInterval(timer); } });
+        } catch (e) { setStatus(friendlyErr(e), "err"); onCtl(null); }
+      }
+    },
     hasModel: function (id) { return !!ffModelById(id); },
     modelLabel: function (id) { const m = ffModelById(id); return (m && m.label) || id; },
     sizeTiers: function (id) { const m = ffModelById(id); if (!m || !ffHasSize(m)) return null; return t2iSizeTiers(m) || ["1k", "2k", "4k"]; },

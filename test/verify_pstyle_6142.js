@@ -44,9 +44,9 @@ const PANEL_JS = read("panel/js/hnk_pstyle.js");
 const PARITY = read("test/verify_panel_page_parity.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.145.0", PVER = "6.216.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.146.0", PVER = "6.217.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.142.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 287;
+const COUNT = 288;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
@@ -95,7 +95,7 @@ function partA() {
     { models: D.models.filter((id) => !new RegExp('id:"' + id + '"').test(rh)) });
 
   report("A5) the hosts: the web app's brings the camera (getUserMedia), the Gallery picker, the browser's print dialog, IndexedDB for the recent photos and references, and the hand-off chips; the panel's brings the layer/file sheet and Place into Photoshop, no camera, no print",
-    has(APP, "PSTYLE.init(host, $(\"psRoot\"));") && has(APP, "navigator.mediaDevices.getUserMedia({ video:{ facingMode:facing") && has(APP, "camera: camera,") &&
+    has(APP, "PSTYLE.init(host, $(\"psRoot\"));") && has(APP, "navigator.mediaDevices.getUserMedia({ video:vc, audio:false })") && has(APP, "deviceId:{ exact:deviceId }") && has(APP, "camera: camera,") &&
     has(APP, "printOut: printOut,") && has(APP, 'kvGet("hnk_ps_recent_v1")') && has(APP, 'kvGet("hnk_ps_refs_v1")') && has(APP, 'stHandoffRow(hostEl.id, out.mime, out.b64, "portrait-style")') &&
     has(APP, 'page:"pgPStyle"') &&
     has(MAIN, "function pstyleHost() {") && has(MAIN, "function pstyleEnter() {") && has(MAIN, "state.lastAction = \"Portrait Style\";") &&
