@@ -3185,6 +3185,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .stpg #stGroupChips .chip { flex: 0 0 auto; white-space: nowrap; min-height: 40px; padding: 4px 11px; font-size: 11px; margin-bottom: 0; }
 .stpg #stGroupChips .chip.edited { border-color: var(--accent); color: var(--accent-h); }
 .stpg #stGroupChips .chip.here { background-color: var(--accent); color: #1a1408; border-color: var(--accent); }
+/* 6.211.0 — the Recent row under the group strip (app: #stRecent): one scrolling line, a muted
+   lead-in word, gold-edged chips. UXP: flex + margins, no gap. */
+.stpg #stRecent { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; overflow-x: auto; margin-top: 4px; padding-bottom: 2px; }
+.stpg #stRecent .st-recent-lb { flex: 0 0 auto; font-size: 11px; color: var(--muted); margin-right: 4px; white-space: nowrap; }
+.stpg #stRecent .chip { flex: 0 0 auto; white-space: nowrap; min-height: 34px; padding: 3px 10px; font-size: 11px; margin-bottom: 0; border-color: rgba(217,164,65,.45); }
+.stpg .st-ctl.st-flash { border: 2px solid var(--accent); border-radius: 8px; }
 .stpg #stSearchTgl { display: none; }
 /* v6.79.0 — UNSCOPED TWINS. On Retouch A (the owner's 15th photograph) the
    rules above, every one hung off the .stpg ancestor, were not applied: two
@@ -3200,6 +3206,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 #stGroupChips { display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; margin-top: 8px; padding-bottom: 2px; }
 #stGroupChips .chip { flex: 0 0 auto; white-space: nowrap; min-height: 40px; padding: 4px 11px; font-size: 11px; margin-bottom: 0; }
 #stSearchTgl { display: none; }
+#stRecent { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; overflow-x: auto; margin-top: 4px; padding-bottom: 2px; }
+#stRecent .st-recent-lb { flex: 0 0 auto; font-size: 11px; color: var(--muted); margin-right: 4px; white-space: nowrap; }
+#stRecent .chip { flex: 0 0 auto; white-space: nowrap; min-height: 34px; padding: 3px 10px; font-size: 11px; margin-bottom: 0; border-color: rgba(217,164,65,.45); }
 #stPicker .ref { position: relative; display: block; width: 100%; min-height: 120px;
   border: 1px dashed var(--line); border-radius: 12px; background-color: var(--panel-2); overflow: hidden; }
 #stPicker .ref.filled { border-style: solid; }
