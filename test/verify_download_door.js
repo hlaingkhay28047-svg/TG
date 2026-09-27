@@ -107,7 +107,7 @@ report("B6) the one button answers where it was pressed: a toast on refusal, on 
   (requester.match(/toast\(/g) || []).length === 3 && requester.includes('toast("Temporary Panel delivery created'));
 
 report("B7) the tile helper exists and knows the three words",
-  APP.includes("function unifiedPermTile(granted, allowedHere, reason){") && APP.includes('return unifiedComputerOnly(reason) ? "Computer only" : "OFF";') &&
+  APP.includes("function unifiedPermTile(granted, allowedHere, reason){") && APP.includes('return unifiedComputerOnly(reason) ? L9(ACC_UI.comp_only) : L9(ACC_UI.off);') &&
   APP.includes('reason === "device_mismatch" || reason === "device_required"'));
 
 /* ---- C) the panel and the server ---- */
@@ -242,12 +242,14 @@ async function armPage(page, errs) {
     unified.entitlement.permissions.ccx_download = true; unified.entitlement.reasons.ccx_download = "allowed"; unified.entitlement.allowed.ccx_download = true;
     unified.entitlement.allowed.panel = true; unified.entitlement.reasons.panel = "allowed"; unifiedRender();
     const on = { dl: t("unifiedDownloadPermission"), panel: t("unifiedPanelPermission"), can: unifiedCanDownload() };
-    return { before, off, on };
+    /* 6.144.0 — the tiles speak the student's language; the pins read the page's own words */
+    const W = { on: L9(ACC_UI.on), off: L9(ACC_UI.off), co: L9(ACC_UI.comp_only), dlComp: L9(ACC_UI.dl_comp), dlReq: L9(ACC_UI.dl_req) };
+    return { before, off, on, W };
   });
   report("G) a phone with every permission granted reads Computer only (not OFF) for the download and the Panel, WEB APP stays ON, the download stays refused and the group hidden, and the note says where to download",
-    g.before.web === "ON" && g.before.dl === "Computer only" && g.before.panel === "Computer only" && !g.before.can && g.before.grpHidden && /registered Computer only/.test(g.before.note), g.before);
+    g.before.web === g.W.on && g.before.dl === g.W.co && g.before.panel === g.W.co && !g.before.can && g.before.grpHidden && g.before.note === g.W.dlComp, g.before);
   report("G2) a permission the administrator really switched off still reads OFF, and one allowed on this device reads ON",
-    g.off.dl === "OFF" && /Download requires/.test(g.off.note) && g.on.dl === "ON" && g.on.panel === "ON" && g.on.can === true, { off: g.off, on: g.on });
+    g.off.dl === g.W.off && g.off.note === g.W.dlReq && g.on.dl === g.W.on && g.on.panel === g.W.on && g.on.can === true, { off: g.off, on: g.on });
   await ctx3.close();
 
   report("F) no page error while the doors were driven", errs.length === 0, errs);

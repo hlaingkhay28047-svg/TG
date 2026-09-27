@@ -1660,8 +1660,10 @@ var ALBUM = (function(){
       return lo;
     } catch(e2){ return 0; }
   }
+  var ALB_W_NOW = 0;                 /* 6.144.0 — one width per render pass (set in render); the cards read it instead of each forcing a layout */
   var ALB_FALLBACK_W = 340;           /* the Photoshop panel's own column, where nothing measures */
   function albWidth(){
+    if (ALB_W_NOW > 0) return ALB_W_NOW;
     var el = ROOT;
     if (el && el.clientWidth > 0) return el.clientWidth;
     if (H && typeof H.stageWidth === "function"){ try { var hw = H.stageWidth(el); if (hw > 0) return hw; } catch(e){} }
@@ -2346,7 +2348,7 @@ var ALBUM = (function(){
         var ph = pg.photos[idx];
         var t = E("div","alb-tile"); t.setAttribute("data-photo", String(idx));
         var im = document.createElement("img"); im.className = "alb-tileimg";
-        im.alt = ""; im.src = ph.src; t.appendChild(im);
+        im.alt = ""; im.loading = "lazy"; im.decoding = "async"; im.src = ph.src; t.appendChild(im);   /* 6.144.0 — every tile the album draws loads lazily */
         var x = E("button","alb-tilex","✕"); x.id = "albPhotoX_" + idx;
         x.onclick = function(ev){ ev.stopPropagation(); pg.photos.splice(idx,1); onDocChange(false); };
         t.appendChild(x);
@@ -2392,7 +2394,7 @@ var ALBUM = (function(){
         t.setAttribute("role","button"); t.tabIndex = 0;
         t.title = L("alb_used_on").replace("{N}", String(n));
         t.setAttribute("aria-label", L("alb_used_on").replace("{N}", String(n)));
-        var im = document.createElement("img"); im.className = "alb-tileimg"; im.alt = ""; im.src = ph.src; t.appendChild(im);
+        var im = document.createElement("img"); im.className = "alb-tileimg"; im.alt = ""; im.loading = "lazy"; im.decoding = "async"; im.src = ph.src; t.appendChild(im);
         t.appendChild(E("span","alb-badge" + (n ? "" : " zero"), String(n)));
         var x = E("button","alb-tilex","\u2715"); x.type = "button"; x.id = "albTrayX_" + idx; x.title = L("alb_tray_x");
         x.onclick = function(ev){
@@ -2485,7 +2487,7 @@ var ALBUM = (function(){
         var t = E("div","alb-tile alb-shelftile" + (on ? " on" : "")); t.id = "albShelf_" + it.id;
         t.setAttribute("role","button"); t.tabIndex = 0; t.setAttribute("aria-pressed", on ? "true" : "false");
         var pic = E("div","alb-shelfpic");
-        if (it.thumb){ var im = document.createElement("img"); im.className = "alb-tileimg"; im.alt = ""; im.src = it.thumb; pic.appendChild(im); }
+        if (it.thumb){ var im = document.createElement("img"); im.className = "alb-tileimg"; im.alt = ""; im.loading = "lazy"; im.decoding = "async"; im.src = it.thumb; pic.appendChild(im); }
         t.appendChild(pic);
         t.appendChild(E("span","alb-shelfname", albumName(it)));
         t.appendChild(E("span","alb-shelfmeta", L("alb_shelf_meta").replace("{P}", String(it.pages||1)).replace("{N}", String(it.photos||0))));
@@ -2520,7 +2522,7 @@ var ALBUM = (function(){
         if (ORN_FAM && o.fam !== ORN_FAM) return;
         var b = E("button","chip alb-orntile",""); b.id = "albOrn_" + o.id; b.type = "button";
         b.title = ornLabel(o.id); b.setAttribute("aria-label", ornLabel(o.id));
-        var im = document.createElement("img"); im.className = "alb-ornimg"; im.alt = ""; im.src = ornSrc(o.id);
+        var im = document.createElement("img"); im.className = "alb-ornimg"; im.alt = ""; im.loading = "lazy"; im.decoding = "async"; im.src = ornSrc(o.id);
         b.appendChild(im);
         b.onclick = function(){ addOrnament(o.id); };
         tiles.push(b);
@@ -3186,7 +3188,11 @@ var ALBUM = (function(){
     if (SELPAGE !== DOC.cur){ SEL = null; SELPAGE = DOC.cur; }
     /* 6.107.0 — every rail is built against ONE measurement, taken here. Measuring per rail
        would let a card built before the stage canvas exists disagree with the one after it. */
-    BUCKET = widthBucket(albWidth());
+    var w0 = albWidth(); BUCKET = widthBucket(w0);
+    /* 6.144.0 — the cards read this one width (39 albWidth() calls a pass) instead of each making the browser
+       lay out the half-built page again; the container's width does not depend on the cards inside it */
+    ALB_W_NOW = w0;
+    try {
     ROOT.innerHTML = "";
     ROOT.appendChild(shelfCard());           /* 6.122.0 wave G */
     ROOT.appendChild(occasionCard());
@@ -3201,6 +3207,7 @@ var ALBUM = (function(){
     ROOT.appendChild(textCard());
     ROOT.appendChild(exportCard());
     ROOT.appendChild(checkCard());           /* 6.121.0 wave F */
+    } finally { ALB_W_NOW = 0; }
     if (REDRAW) clearTimeout(REDRAW);
     REDRAW = setTimeout(repaint, 0);
   }
@@ -4586,7 +4593,7 @@ var ALBUM = (function(){
       (function(it){
         var t = E("div","alb-tile alb-libtile" + (pg.lib === it.id ? " on" : "") + (LIBV.sel[it.id] ? " picked" : "")); t.id = "albLibT_" + it.id;
         t.setAttribute("role","button"); t.tabIndex = 0; t.title = it.name; t.setAttribute("data-lib", it.id);
-        var im = document.createElement("img"); im.className = "alb-tileimg alb-libimg"; im.alt = ""; libThumb(it, im); t.appendChild(im);
+        var im = document.createElement("img"); im.className = "alb-tileimg alb-libimg"; im.alt = ""; im.loading = "lazy"; im.decoding = "async"; libThumb(it, im); t.appendChild(im);
         t.appendChild(E("span","alb-badge", String(it.n)));
         var nm = E("span","alb-libname", it.name || L("alb_lib_untitled")); t.appendChild(nm);
         var star = E("button","alb-tilemv alb-libstar" + (it.star ? " on" : ""), ""); star.type = "button"; star.id = "albLibStar_" + it.id; star.title = L("alb_lib_star");
@@ -4759,7 +4766,7 @@ var ALBUM = (function(){
       return Promise.resolve(sendFile(bytes, "hnk-album-library.json", "application/json")).then(function(){ H.toast(L("alb_lib_exported").replace("{N}", String(out.records.length)).replace("{M}", String(Math.max(1, Math.round(bytes.length/1048576)))), "ok"); return true; });
     }).catch(function(){ H.toast(L("alb_export_fail"), "err"); return false; });
   }
-  var APP_MARK = "6.143.0";
+  var APP_MARK = "6.144.0";
   function utf8Bytes(s){
     var out = [], i, c;
     for (i=0;i<s.length;i++){
@@ -5930,7 +5937,7 @@ var ALBUM = (function(){
       (function(ph, idx){
         if (seen[ph.src]) return; seen[ph.src] = true;
         var t = E("div","alb-tile alb-bgtile" + (bg && bg.src === ph.src ? " on" : "")); t.id = "albBg_" + idx; t.setAttribute("role","button"); t.tabIndex = 0;
-        var im = document.createElement("img"); im.className = "alb-tileimg"; im.alt = ""; im.src = ph.src; t.appendChild(im);
+        var im = document.createElement("img"); im.className = "alb-tileimg"; im.alt = ""; im.loading = "lazy"; im.decoding = "async"; im.src = ph.src; t.appendChild(im);
         t.onclick = function(){ setSheetBg(ph.src); };
         t.onkeydown = function(ev){ if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); setSheetBg(ph.src); } };
         strip.appendChild(t);
@@ -6033,7 +6040,7 @@ var ALBUM = (function(){
       var rm = E("button","btn", L("alb_logo_remove")); rm.type = "button"; rm.id = "albLogoRemove"; rm.onclick = function(){ removeLogo(); }; ops.push(rm);
     }
     var lrow = grid("btn", ops, w); lrow.id = "albLogoOps"; card.appendChild(lrow);
-    if (DOC.logo){ var pv = document.createElement("img"); pv.className = "alb-logopv"; pv.alt = ""; pv.src = DOC.logo; pv.id = "albLogoPv"; card.appendChild(pv); }
+    if (DOC.logo){ var pv = document.createElement("img"); pv.className = "alb-logopv"; pv.alt = ""; pv.loading = "lazy"; pv.decoding = "async"; pv.src = DOC.logo; pv.id = "albLogoPv"; card.appendChild(pv); }
     card.appendChild(E("p","mut", L("alb_logo_note")));
   }
 
@@ -6344,6 +6351,11 @@ var ALBUM = (function(){
      ornament mask — 48 requests, 1.2 MB — on a boot that opened the Smart Workflow page. Hidden, the
      page is drawn on entry (switchPage → onEnter); nothing of it is fetched before it is opened. */
   function visible(){ try{ return !!(ROOT && ROOT.getClientRects && ROOT.getClientRects().length); }catch(e){ return true; } }
+  /* 6.144.0 — the first drawing after init waits one frame (see init); the Photoshop panel's host asks for it
+     outright (drawOnInit), because its renderer answers getClientRects with nothing */
+  var FIRST_PENDING = false;
+  function albSoon(fn){ if (typeof requestAnimationFrame === "function") return requestAnimationFrame(fn); return setTimeout(fn, 0); }
+  function wantsDraw(){ return visible() || !!(H && H.drawOnInit); }
 
   var API = {
     init: function(host, root){
@@ -6360,19 +6372,31 @@ var ALBUM = (function(){
       if (!KEYS_BOUND && typeof document !== "undefined" && typeof document.addEventListener === "function"){
         try { document.addEventListener("keydown", onKey, false); KEYS_BOUND = true; } catch(e2){}
       }
-      if (visible()) render();        /* an empty album is on screen before the store answers — when the page is */
+      /* 6.144.0 — the first drawing waits one frame: a store that answers inside it (the usual case) draws the
+         album once, with its shelf and its chips, instead of an empty page and then the real one in the same
+         frame — each a full layout of the page, a third of the Album switch on a slow CPU. A slower store
+         still shows the empty album after that frame, as before (6.122.0: an empty album on screen before
+         the store answers, when the page is). */
+      FIRST_PENDING = true;
+      albSoon(function(){
+        FIRST_PENDING = false;
+        if (!DRAWN || !MOUNTED || !wantsDraw()) return;
+        /* a drawing that fails a frame later still reaches the host's log the way a synchronous one did (the
+           panel's "album:draw" line — the owner's photograph of 6.134.0); a host without the hook sees it thrown */
+        try { render(); } catch(eDraw){ if (H && typeof H.onDrawError === "function") H.onDrawError(eDraw); else throw eDraw; }
+      });
       /* 6.125.0 — the library's index and the export choices come up with the album, and every template it names is read before it is drawn */
       loadQuality().then(function(){ return Promise.all([libLoadIndex(), loadExport()]); }).then(function(){ return loadDoc(); }).then(function(saved){
         if (saved && saved.pages && saved.pages.length) DOC = normalize(saved);
         return libPreload(DOC);
       }).then(function(){
-        if (DRAWN || visible()) render();   /* 6.122.0 — the shelf and the quality chips are known now; a page never drawn waits for its entry */
+        if (DRAWN || wantsDraw()) render();   /* 6.122.0 — the shelf and the quality chips are known now; a page never drawn waits for its entry */
         /* 6.121.0 — the first undo step is the album as it was opened, never the empty one before it */
         HIST = []; REDO = []; CUR_SNAP = null; commit();
       });
     },
     onEnter: function(){ if (MOUNTED) { render(); } },
-    drawn: function(){ return DRAWN; },
+    drawn: function(){ return DRAWN || FIRST_PENDING; },   /* 6.144.0 — a drawing one frame away counts: the panel must not draw a second time on top of it */
     /* the host hands picked files in as data URLs — into the open page, or, when the student
        pressed "Make the album", into a whole new album laid out by the occasion */
     accept: function(urls, mode){

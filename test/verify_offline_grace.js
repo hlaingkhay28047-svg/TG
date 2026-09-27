@@ -164,6 +164,7 @@ const hasBurmese = s => /[က-႟]/.test(String(s || ""));
     out.staleText = document.getElementById("unifiedAccessText").textContent;
     out.staleTitle = document.getElementById("unifiedAccessTitle").textContent;
     out.staleWebTile = document.getElementById("unifiedWebPermission").textContent;
+    out.onWord = L9(ACC_UI.on); out.checkingTitle = L9(ACC_UI.chk_title);   /* 6.144.0 — the tiles speak the student's language */
 
     unified.error = false; unified.loading = true;
     unifiedRender();
@@ -312,10 +313,10 @@ const hasBurmese = s => /[က-႟]/.test(String(s || ""));
     hasBurmese(R.staleText) && /နောက်ဆုံး/.test(R.staleText),
     R.staleText);
   report("E2) a stale answer still shows the real status, not 'Checking'",
-    R.staleWebTile === "ON" && !/Checking/.test(R.staleTitle),
+    R.staleWebTile === R.onWord && R.staleTitle !== R.checkingTitle,
     { tile: R.staleWebTile, title: R.staleTitle });
   report("F) a re-check in flight does not blank a card that already has an answer",
-    R.inFlightWebTile === "ON", R.inFlightWebTile);
+    R.inFlightWebTile === R.onWord, R.inFlightWebTile);
 
   /* ---- G : the Photoshop panel ---- */
   const main = fs.readFileSync(path.join(ROOT, "panel", "main.js"), "utf8");

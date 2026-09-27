@@ -2799,7 +2799,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.214.0";
+const PANEL_VERSION = "6.215.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -13355,6 +13355,8 @@ async function albumSaveMany(files) {
 }
 function albumHost() {
   return {
+    drawOnInit: true,   /* 6.215.0 — draw on init, one frame later: this renderer answers getClientRects with nothing (see the module's init) */
+    onDrawError: function (e) { hwarn("album:draw", e); },   /* 6.215.0 — that later drawing reports like the synchronous one did */
     t: function (k) { const S = globalThis.HNK && globalThis.HNK.albumStrings; const m = S && S[k]; return m ? (ff9(m) || k) : k; },
     pick9: function (m) { return ff9(m); },
     pickFiles: function () { albumPick(); },

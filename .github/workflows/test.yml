@@ -1304,3 +1304,10 @@ jobs:
       # been nudging.
       - name: Verify the Portrait Style occasion sets on both surfaces
         run: PORT=8931 node test/verify_pstyle_sets_6143.js
+
+      # 6.144.0 — the page-by-page audit's two real gaps: the Account page's 21 English sentences (the
+      # hero, the seven status tiles, the two device rows, the download note and every state its renderer
+      # writes) now come from ACC_UI in nine languages and follow the language switch; the Album's seven
+      # img sites load lazily on both surfaces. Also walks every page for an eager image below the fold.
+      - name: Verify the Account page's languages and the Album's lazy tiles
+        run: PORT=8931 node test/verify_account_lang_6144.js

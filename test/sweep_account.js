@@ -447,6 +447,7 @@ const SB_FIX = {
              account: document.getElementById("unifiedAccountStatus").textContent.trim(),
              license: document.getElementById("unifiedLicenseStatus").textContent.trim(),
              computer: document.getElementById("unifiedComputer").textContent.trim(),
+             activeWord: L9(ACC_UI.status.active), sharedWord: L9(ACC_UI.shared_slot),   /* 6.144.0 — the tiles speak the student's language */
              version: document.getElementById("unifiedPanelVersion").textContent.trim(),
              door: !document.getElementById("unifiedDownload") && !document.querySelector("a[data-panel-intent]") };
   });
@@ -499,7 +500,7 @@ const SB_FIX = {
   const deniedStates = ["pending", "suspended", "expired", "banned", "rejected", "web_app_disabled"];
   report("6c unified entitlement: an active account opens AI Tools and requests Panel delivery only through a user-initiated POST; Pending/Suspended/Expired/Banned/Rejected and Web-App-disabled verdicts all fail closed immediately",
     c6cActive.enforced && c6cActive.web && c6cActive.download && c6cActive.state === "" &&
-    c6cActive.page === "pgAccount" && c6cActive.account === "Active" && c6cActive.license === "Active" &&
+    c6cActive.page === "pgAccount" && c6cActive.account === c6cActive.activeWord && c6cActive.license === c6cActive.activeWord &&
     /* v6.45.0 — "shared slot" stays pinned; the "1/1" that used to follow it does
        not. That number was a literal in docs/app/index.html, printed whatever
        profiles.allowed_devices said, and removing it is the point of this wave —
@@ -507,7 +508,7 @@ const SB_FIX = {
        and is still asserted, is that one computer seat carries both the Web App
        and the Photoshop Panel. The counts themselves are pinned properly, against
        the real ceiling and usage, by verify_device_seats. */
-    /shared slot/i.test(c6cActive.computer) && c6cActive.version === "6.24.0" && c6cActive.door === true &&
+    c6cActive.computer.indexOf(c6cActive.sharedWord) >= 0 && c6cActive.version === "6.24.0" && c6cActive.door === true &&
     c6cDownload.method === "POST" && !("computer_installation_id" in c6cDownload.body) &&
     c6cDownload.body.version === "6.24.0" && /\/api\/v1\/downloads\/panel\/test-token$/.test(c6cDownload.tap) &&
     /Temporary Panel delivery created/i.test(c6cDownload.status) &&
