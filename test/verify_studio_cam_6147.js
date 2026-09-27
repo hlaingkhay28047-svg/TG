@@ -68,8 +68,8 @@ function partA() {
     has(APP, "if(!out.stamped){ return new Promise(function(res){ wmStampDataUrl(") && APP.indexOf("window.HNK_CAM={") > APP.indexOf('PSTYLE.init(host, $("psRoot"));'));
 
   report("A2) the doors on the pages: the Studio's Before slot, Retouch Pro's picker and Path's Add row each carry a cam-slot with its key; the hand-off row's Share and Create's Share open the sheet; the Imagine web host hands the module camera · hotFolder · share lazily through HNK_CAM",
-    has(APP, 'var camSlot=el("div","cam-slot"); camSlot.setAttribute("data-cam","studio"); host.appendChild(camSlot); if(window.HNK_CAM) HNK_CAM.door(camSlot);') &&
-    has(APP, 'var rsCam=el("div","cam-slot"); rsCam.setAttribute("data-cam","retouch"); host.appendChild(rsCam); if(window.HNK_CAM) HNK_CAM.door(rsCam);') &&
+    has(APP, 'var camSlot=el("div","cam-slot"); camSlot.setAttribute("data-cam","studio"); host.appendChild(camSlot); if(window.HNK_CAM) window.HNK_CAM.door(camSlot);') &&
+    has(APP, 'var rsCam=el("div","cam-slot"); rsCam.setAttribute("data-cam","retouch"); host.appendChild(rsCam); if(window.HNK_CAM) window.HNK_CAM.door(rsCam);') &&
     has(APP, '<div class="cam-slot" id="ptCamDoor" data-cam="path"></div>') &&
     has(APP, 'if(window.HNK_CAM){ HNK_CAM.shareSheet(mime, b64, name||"hnk-result"); return; }') && has(APP, 'if(window.HNK_CAM){ HNK_CAM.shareSheet(out.mime, out.b64, dlName("create",out.mime,state.histSel+1)); return; }') &&
     has(APP, "camera: function(done, ctx){ if(window.HNK_CAM) HNK_CAM.camera(done, ctx||{}); else done(null); },") &&

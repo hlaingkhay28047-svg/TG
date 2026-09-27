@@ -3630,7 +3630,7 @@ function renderRsPicker(){
   d.appendChild(el("span","tag", L9({my:"မူရင်း",en:"Before",shn:"မူႇလ",kac:"Shawng",th:"ก่อน",zh:"之前",vi:"Trước",id:"Sebelum",ms:"Sebelum"})));
   host.appendChild(d);
   if(!ref && ST && ST.draftOffer) ST.draftOffer(host);
-  var rsCam=el("div","cam-slot"); rsCam.setAttribute("data-cam","retouch"); host.appendChild(rsCam); if(window.HNK_CAM) HNK_CAM.door(rsCam);   /* 6.147.0 — Camera · Live + Hot folder, Portrait Style's doors */   /* 6.140.0 — V2 shares the Before slot, so it offers the draft too (app-only hook; ST is still hoisted-undefined on the boot render) */
+  var rsCam=el("div","cam-slot"); rsCam.setAttribute("data-cam","retouch"); host.appendChild(rsCam); if(window.HNK_CAM) window.HNK_CAM.door(rsCam);   /* 6.147.0 — Camera · Live + Hot folder, Portrait Style's doors */   /* 6.140.0 — V2 shares the Before slot, so it offers the draft too (app-only hook; ST is still hoisted-undefined on the boot render) */
   /* v4.28: after To-Ref replaced IMAGE 1 with a result, offer the true
      original back (non-destructive chains) */
   if(state.rsOrig){
