@@ -246,7 +246,7 @@ async function panelWalk(browser) {
     await page.setViewportSize({ width: 900, height: 900 }); await page.waitForTimeout(350);
     const tall = await page.evaluate(() => { fitCompareBox(); const R = (el) => { const r = el.getBoundingClientRect(); return { x: Math.round(r.x), w: Math.round(r.width), h: Math.round(r.height) }; }; const box = document.getElementById("cmpBox"); return { vh: innerHeight, fit: Number(box.getAttribute("data-fit")), box: R(box), parent: R(box.parentNode) }; });
     report("B6) the panel's shared compare (a 600×900 result in the 350px result pane): in a 600px-tall panel the box is (600 − 300) × 2/3 = 200px wide, no taller than 300, centred, the range the same width; back at 900px tall the fit (400) is wider than the pane, so the box is pane-wide again",
-      fit.natural[0] === 600 && fit.fit === Math.round((600 - CMP_CHROME) * 600 / 900) && near(fit.box.w, fit.fit, 2) && fit.box.h <= 600 - CMP_CHROME + 2 && fit.box.h >= 280 &&
+      fit.natural[0] === 600 && fit.fit === Math.round((600 - CMP_CHROME) * 600 / 900) && near(fit.box.w, fit.fit, 2) && fit.box.h <= 600 - CMP_CHROME + 2 && fit.box.h >= 281 &&
       near(fit.box.x - fit.parent.x, (fit.parent.x + fit.parent.w) - (fit.box.x + fit.box.w), 3) && near(fit.range.w, fit.box.w, 2) &&
       tall.fit === 0 && near(tall.box.w, tall.parent.w, 2), { low: fit, tall });
 
@@ -377,7 +377,7 @@ function releasePins() {
     row && row.v === VER && row.ref === "pgMeitu" && LANGS.every((l) => row.t[l] && row.t[l].length > 8 && row.s[l] && row.s[l].length > 40) && has(PWN, `"v":"${VER}"`), row && { v: row.v, langs: Object.keys(row.t) });
   report("D3) CI runs this test right after the wave B1 band and the landing says how many tests the suite runs (258 when this wave shipped, 259 since 6.117.0 added verify_ux_wave_6117, 260 since 6.118.0 added verify_ux_wave_6118, 261 since 6.119.0 added verify_ux_wave_6119, 262 since 6.120.0 added verify_ux_wave_6120, 263 since 6.121.0 added verify_album_designer)",
     has(CI, "run: node test/verify_ux_wave_6115.js\n") && has(CI, "run: node test/verify_ux_wave_6116.js") && CI.indexOf("verify_ux_wave_6115") < CI.indexOf("verify_ux_wave_6116") &&
-    (CI.match(/node test\//g) || []).length === 280 && has(LANDING, "280 tests") && !has(LANDING, "257 tests"), { steps: (CI.match(/node test\//g) || []).length });
+    (CI.match(/node test\//g) || []).length === 281 && has(LANDING, "281 tests") && !has(LANDING, "257 tests"), { steps: (CI.match(/node test\//g) || []).length });
 }
 
 (async () => {
