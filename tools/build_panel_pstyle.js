@@ -12,8 +12,9 @@
    app's block between the PSTYLE_CSS markers with the app's colour tokens renamed to the panel's
    and the page id renamed, run through uxpSafeCss (no gap, no pointer-events on UXP).
 
-   The built-in references are the Imagine tools' template thumbnails, which build_panel_imagine
-   already copies to panel/icons/imagine/th — nothing to copy here.
+   The building-block references are the Imagine tools' template thumbnails, which build_panel_imagine
+   already copies to panel/icons/imagine/th; the occasion sets (6.143.0) are the studio's own pictures under
+   docs/app/lib/wf/pstyle/th, copied here to panel/icons/pstyle/th.
 
    Idempotent: running it on a clean tree changes nothing.
    Usage: node tools/build_panel_pstyle.js
@@ -24,6 +25,8 @@ const ROOT = path.join(__dirname, "..");
 const APP = path.join(ROOT, "docs", "app", "index.html");
 const OUT_JS = path.join(ROOT, "panel", "js", "hnk_pstyle.js");
 const OUT_CSS = path.join(ROOT, "panel", "styles.css");
+const ART_SRC = path.join(ROOT, "docs", "app", "lib", "wf", "pstyle", "th");   /* 6.143.0 — the studio's own occasion sets */
+const ART_DST = path.join(ROOT, "panel", "icons", "pstyle", "th");
 
 const M0 = "/* ---- PSTYLE_MODULE ---- */", M1 = "/* ---- /PSTYLE_MODULE ---- */";
 const C0 = "/* ---- PSTYLE_CSS ---- */", C1 = "/* ---- /PSTYLE_CSS ---- */";
@@ -79,6 +82,11 @@ function build(opts) {
   if (cur.indexOf(C0) >= 0) next = cur.replace(between(cur, C0, C1, "panel css"), css);
   else next = cur.replace(/\s*$/, "\n\n") + css + "\n";
   if (next !== cur) { if (!DRY) fs.writeFileSync(OUT_CSS, next); changed.push("panel/styles.css"); }
+  /* art: every jpg under docs/app/lib/wf/pstyle/th — the same pictures on both surfaces */
+  if (fs.existsSync(ART_SRC)) fs.readdirSync(ART_SRC).forEach(function (f) {
+    if (!/\.(jpe?g|png|webp)$/i.test(f)) return;
+    if (writeIfChanged(path.join(ART_DST, f), fs.readFileSync(path.join(ART_SRC, f)))) changed.push(path.relative(ROOT, path.join(ART_DST, f)));
+  });
   return { changed: changed, moduleBytes: mod.length, cssBytes: css.length, js: js, css: css };
 }
 module.exports = { build, between, panelCss, M0, M1, C0, C1 };

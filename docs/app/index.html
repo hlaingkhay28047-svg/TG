@@ -2418,7 +2418,8 @@ body.wall #wallRetry.on{display:block}
 #pgPStyle .ps-own .ps-own-im{flex:0 0 auto;width:84px;height:84px;border-radius:10px;margin-right:10px;background-color:#000;background-size:cover;background-position:center}
 #pgPStyle .ps-own .ps-add-ref{margin-right:10px;min-height:48px}
 #pgPStyle .ps-own .ps-own-x{margin-left:auto}
-#pgPStyle .ps-groups{margin-top:6px}
+#pgPStyle .ps-groups{margin-top:4px}
+#pgPStyle .ps-h4{font-size:11px;color:var(--muted);margin:8px 0 2px 0}
 #pgPStyle .ps-grid{display:flex;flex-direction:row;flex-wrap:wrap;margin-top:6px}
 #pgPStyle .ps-card{flex:0 0 auto;width:31%;margin:0 3.5% 8px 0;padding:0;border:2px solid transparent;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.04);color:var(--cream);font:inherit;text-align:left;cursor:pointer}
 #pgPStyle .ps-card:nth-child(3n){margin-right:0}
@@ -4712,13 +4713,13 @@ html.splashing #splash{display:flex}
 
 <script src="data/hnkdata.js?v=9f7c58bdb600"></script>
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
-<script src="data/pstyle.js?v=7b8da4c83dd6"></script>
+<script src="data/pstyle.js?v=d8f1ac4f6ef5"></script>
 <script src="data/imagine.js?v=2b97eb6a9d09"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=44594e720d98"></script>
+<script src="data/album-module.js?v=0d67cc810b7b"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=ac0badf84ffb"></script>
-<script src="data/whatsnew.js?v=1ffb6faa3aae"></script>
+<script src="data/whatsnew.js?v=8371755d6870"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -31580,7 +31581,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.142.0";
+var APP_VER="6.143.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -33307,7 +33308,7 @@ var PSTYLE = (function(){
   var D = PSTYLE_DATA;
   var H = null, root = null, refs = {};
   var LS_KEY = "hnk_ps_v1", MAX_RECENT = 8, MAX_REFS = 8, MAX_VER = 12;
-  var S = { step:1, photo:null, ref:null, group:"scene", opts:{}, model:"", size:"", count:1, caption:"",
+  var S = { step:1, photo:null, ref:null, group:"birthday", opts:{}, model:"", size:"", count:1, caption:"",
             busy:false, job:null, cmp:"slider", split:50, versions:[], cur:-1, recent:[], recentRefs:[], status:"", camOn:false };
   D.opts.forEach(function(o){ S.opts[o.id] = !!o.def; });
 
@@ -33350,6 +33351,9 @@ var PSTYLE = (function(){
   function imagine(){ return (typeof window!=="undefined" && window.HNK_IMAGINE) || (typeof IMAGINE_DATA!=="undefined" ? IMAGINE_DATA : null); }
   function toolOf(g){ var im=imagine(); if(!im||!g) return null; for(var i=0;i<im.tools.length;i++) if(im.tools[i].id===g.tool) return im.tools[i]; return null; }
   function sets(g){
+    if(!g) return [];
+    /* 6.143.0 — the studio's own occasion sets: reference photographs of the brand model made on the art lane */
+    if(g.sets && g.sets.length) return g.sets.map(function(s){ return { id:g.id+":"+s.id, name:H.t9(s.name), thumb:H.asset("pth", s.thumb), p:s.p||"" }; });
     var tool=toolOf(g); if(!tool) return [];
     return tool.presets.map(function(p){ return { id:g.id+":"+p.id, tool:tool, preset:p, name:H.t9(p.name), thumb:H.asset("thumb", tool.id+"-"+p.id+".jpg"), p:p.p||"" }; });
   }
@@ -33549,12 +33553,16 @@ var PSTYLE = (function(){
     var rr=thumbStrip(t("recent_refs"), S.recentRefs, function(it){ setOwnRef(it); }, "ref"); if(rr){ rr.id="psRecentRefs"; w.appendChild(rr); }
     /* the studio's own looks */
     w.appendChild(el("div","ps-h3", t("built_in")));
-    var chips=el("div","chips ps-groups");
-    D.groups.forEach(function(g){
-      var c=btn("chip"+(S.group===g.id?" on":""), H.t9(g.name)); c.setAttribute("data-group", g.id);
-      c.onclick=function(){ S.group=g.id; save(); render(); }; chips.appendChild(c);
+    /* 6.143.0 — two rows of groups: the occasions (the studio's own sets) and the building blocks (the Imagine template art) */
+    [["occasions", function(g){ return !!(g.sets && g.sets.length); }], ["blocks", function(g){ return !(g.sets && g.sets.length); }]].forEach(function(row){
+      var lab=el("div","ps-h4", t(row[0])); w.appendChild(lab);
+      var chips=el("div","chips ps-groups"); chips.setAttribute("data-row", row[0]);
+      D.groups.filter(row[1]).forEach(function(g){
+        var c=btn("chip"+(S.group===g.id?" on":""), H.t9(g.name)); c.setAttribute("data-group", g.id);
+        c.onclick=function(){ S.group=g.id; save(); render(); }; chips.appendChild(c);
+      });
+      w.appendChild(chips);
     });
-    w.appendChild(chips);
     var grid=el("div","ps-grid"); grid.id="psGrid";
     sets(groupById(S.group)||D.groups[0]).forEach(function(s){
       var on = S.ref && S.ref.kind==="set" && S.ref.id===s.id;
@@ -33845,7 +33853,7 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
     ellMark: function(root, sel, lines){ ellMark(root, sel, lines); },
     icon: function(name){ var s=document.createElement("span"); s.innerHTML=icn(name); return s.firstChild; },
     button: function(cls){ var b=document.createElement("button"); b.type="button"; b.className=cls||""; return b; },
-    asset: function(kind, file){ return libArt((kind==="thumb" ? "lib/wf/imagine/th/" : "lib/wf/imagine/") + file); },
+    asset: function(kind, file){ return libArt(kind==="pth" ? "lib/wf/pstyle/th/"+file : (kind==="thumb" ? "lib/wf/imagine/th/" : "lib/wf/imagine/") + file); },   /* 6.143.0 — pth: the studio's own sets */
     assetDataUrl: function(url){
       return fetch(url).then(function(r){ return r.blob(); }).then(function(b){ return new Promise(function(res, rej){ var rd=new FileReader(); rd.onload=function(){ res(String(rd.result)); }; rd.onerror=rej; rd.readAsDataURL(b); }); });
     },

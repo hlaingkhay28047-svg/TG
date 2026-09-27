@@ -1,0 +1,551 @@
+{
+ "note": "Portrait Style occasion sets (6.143.0) — every person is the brand model (tools/art_ref/hnk-model.jpg, the Freeform hero's face): 42 studio reference photographs at 2:3 / 2k, one per look, finished to 630×945 thumbnails under docs/app/lib/wf/pstyle/th/. Never a real person's likeness.",
+ "jobs": [
+  {
+   "name": "ps-birthday-blueBalloons",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a birthday studio set in sky blue and white: a wall of pastel-blue and white balloons with a big silver foil number balloon, a HAPPY BIRTHDAY garland in soft pastel letters, a two-tier white cake with blue candles on a small table, scattered confetti on a pale floor; she wears a light-blue collared shirt dress with yellow rain boots and a small party hat, standing with one hand raised in a peace sign and a bright open smile; soft even studio light, playful and clean. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-birthday-pinkParty",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a pastel-pink birthday set: a pink fringe backdrop, a dessert table with a pink cake, cupcakes and macarons, bunches of pink and rose-gold balloons, a small gift stack with ribbons; she wears a pink tulle dress with a sash and a tiny tiara, seated on a white stool holding a cupcake, laughing; soft flattering front light, sweet and airy. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-birthday-goldBlack",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as an evening birthday glam set: a black sequin backdrop with gold and black balloons, a gold '30'-style number balloon, a dark cake with gold leaf on a mirrored table, champagne glasses; she wears a gold sequin mini dress and heels, holding a glass, chin lifted, a confident smile; warm directional light with sparkle highlights. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-birthday-gardenPicnic",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as an outdoor birthday picnic in a green garden: a checked blanket, a wicker basket, a small cake with candles, daisies in a jar, pastel balloons tied to a tree; she sits on the blanket in a white sundress and a straw hat, holding the cake, daylight under leafy shade, warm and natural. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-birthday-confettiStudio",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a clean white studio with colourful confetti frozen in the air around her, a single bright balloon in each hand, a cone party hat; she wears a yellow knit sweater and white jeans, mid-jump with a big laugh; crisp bright light, high key, fun. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-birthday-kidsPlay",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a bright kids'-party set for a family studio: primary-colour balloons, a rainbow backdrop, a giant lollipop and gift boxes, a small candy cart; she wears dungarees over a striped tee with colourful sneakers, sitting cross-legged on the floor holding a rainbow balloon, playful expression; even bright light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-graduation-gownCap",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a graduation studio portrait: a black graduation gown with a gold-and-navy hood, a mortarboard cap with a gold tassel, holding a rolled diploma with a red ribbon, in front of a deep-navy backdrop with a soft gold gradient; three-quarter pose, proud smile; classic soft key light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-graduation-library",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a graduation portrait in an old wood-panelled library: tall bookshelves softly blurred, warm lamps, a leather armchair; she wears the gown open over a white blouse and holds a stack of books and her cap, leaning on a reading table, a calm smile; warm window light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-graduation-campusSteps",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as an outdoor graduation photo on the stone steps of a university building with columns: gown and cap, tassel swinging, one arm raised throwing the cap upward, friends' caps in the air blurred in the distance, bright daylight, celebratory. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-graduation-flowersDiploma",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a bright studio graduation set: a white backdrop with a gold '2026' balloon arch, a large bouquet of sunflowers and white roses in her arms, the diploma tube under her arm, gown and cap; soft even light, joyful. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-graduation-whiteBlazer",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a modern graduation portrait without the gown: a tailored white blazer over a black top, the cap held in one hand at the hip, a grey concrete studio wall with a single beam of light; strong confident pose, editorial. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-graduation-nightLights",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as an evening graduation celebration: string fairy lights and warm bokeh behind her, gown and cap, a sparkler in her hand, a big laugh; blue-hour sky, warm glow on her face, cinematic. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-wedding-whiteGown",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a bridal studio portrait: an ivory A-line wedding gown with a lace bodice and a long veil spread on the floor, a bouquet of white peonies, in front of a soft cream drape backdrop; standing three-quarter with a serene smile; luminous soft light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-wedding-gardenArch",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as an outdoor ceremony set: a wooden arch covered in white and blush roses and greenery, rows of white chairs blurred behind, a petal-strewn aisle; she wears a flowing tulle gown holding a trailing bouquet; golden late-afternoon light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-wedding-myanmarBridal",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a Myanmar traditional bridal portrait: an ornate cream-and-gold silk htamein and a fitted embroidered blouse, a gold-embroidered shoulder shawl, gold jewellery set, hair in an elegant updo with fresh jasmine and a gold hairpiece; a rich burgundy and gold studio backdrop with carved wooden screens; graceful seated pose, gentle smile; warm elegant light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-wedding-beachSunset",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a pre-wedding look on a beach at sunset: a light chiffon gown moving in the wind, bare feet on wet sand, the sea and an orange-pink sky behind, a soft smile looking over her shoulder; warm backlight and rim light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-wedding-rusticBarn",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a rustic wedding set: a wooden barn interior with hanging Edison bulbs, wooden crates with wildflowers, a lace gown with a denim jacket over the shoulders, cowboy boots peeking out, sitting on a hay bale, relaxed laugh; warm tungsten glow. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-wedding-receptionGlam",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as an evening reception look: a champagne satin mermaid gown, a sparkling crystal necklace, hair down in soft waves, a ballroom with chandeliers and candlelit tables blurred behind; standing tall with one hand on the hip; glamorous warm light with sparkle. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-myanmar-thanakaVillage",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a Myanmar village portrait: pale thanaka paste painted in circles on her cheeks, a simple cotton longyi and a white blouse, a bamboo hat in her hand, a bamboo house and green paddy behind her; natural morning light, warm and gentle. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-myanmar-pagodaGold",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as an evening portrait beside a golden pagoda: a silk longyi in deep red with a gold-thread pattern and a matching fitted blouse, a small gold shoulder bag, hands folded holding a string of jasmine, the gilded stupa glowing in low sun behind her; warm golden light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-myanmar-thingyan",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a Thingyan water-festival scene: sprays of water frozen in the air catching the sun, a wet white cotton top and a bright longyi, padauk flowers in her hair, holding a small water bowl, laughing with eyes closed; bright hot daylight, joyful. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-myanmar-shanDress",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a Shan traditional portrait: a long patterned Shan skirt in indigo and pink stripes, a fitted long-sleeved jacket, a woven cloth head wrap, silver jewellery, in front of a misty hill landscape with a teak house; soft cool morning light, dignified. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-myanmar-kachinDress",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a Kachin traditional portrait: a black velvet jacket with rows of silver discs and red woven skirt with intricate patterns, a red head wrap, silver necklaces and bracelets, standing on a bamboo platform before green hills; clear daylight, proud and graceful. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-myanmar-karenDress",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a Karen traditional portrait: a red hand-woven tunic dress with white and black stripes and small tassels, a woven shoulder bag, beaded necklaces, in a bamboo-and-teak village setting with banana leaves; warm soft light, gentle smile. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-family-maternityFlow",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a maternity studio portrait: a long flowing dusty-rose chiffon gown with a train lifting in a breeze, hands resting gently on a rounded pregnant belly, a soft cream backdrop, eyes lowered with a tender smile; luminous soft light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-family-nurseryPastel",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a pastel nursery set: a white wooden cot with a knitted blanket, a soft bunny toy, a moon-and-stars mobile, mint and peach walls, a rocking chair; she sits in the chair in a cream knit cardigan holding a folded baby blanket, warm gentle smile; soft window light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-family-livingRoom",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a cosy family living-room set: a beige sofa with knit throws, a wooden coffee table with a mug and a photo frame, fairy lights, a soft rug; she sits curled on the sofa in a cream sweater and jeans, laughing warmly; soft golden interior light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-family-babyShower",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a baby-shower party set: a sage-green and white balloon garland, a 'Oh Baby' sign, a dessert table with a small cake and cookies, wrapped gifts and eucalyptus; she wears a sage midi dress with a flower crown, hand on her belly, smiling; bright soft light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-family-smashCake",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a first-birthday smash-cake set for a family studio: a giant '1' number prop, a small frosted cake on a low table with cake crumbs, a pastel balloon arch, a white fur rug; she kneels beside the set in a pastel-yellow dress holding a party horn, playful; bright high-key light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-family-kidsPlayroom",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a colourful kids' playroom set: wooden building blocks, a toy kitchen, a teepee tent with fairy lights, soft rainbow rug; she sits inside the teepee in a striped tee and dungarees holding a teddy bear; bright even light, cheerful. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-corporate-navySuit",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a corporate headshot: a tailored navy suit over a white blouse, minimal jewellery, hair sleek, a plain mid-grey studio backdrop, three-quarter torso framing, arms lightly crossed, a confident professional smile; clean soft key light with a subtle rim. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-corporate-whiteShirt",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a clean headshot: a crisp white shirt, natural makeup, hair down, a soft off-white backdrop, head-and-shoulders framing, a warm approachable smile; bright even beauty light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-corporate-officeBokeh",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a business portrait in a modern glass office: desks and plants softly blurred behind, a charcoal blazer over a cream top, a laptop closed under one arm, standing relaxed; daylight from tall windows. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-corporate-doctorCoat",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a medical professional portrait: a white doctor's coat over a light-blue shirt, a stethoscope around the neck, a name badge, a bright clinic corridor softly blurred behind; standing with hands together, a reassuring smile; clean bright light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-corporate-teacher",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a teacher portrait in a bright classroom: a green chalkboard with a few chalk marks, wooden desks, books and a globe on the desk, a soft-blue blouse and a cardigan, holding a book, a kind smile; natural window light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-corporate-passportBlue",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a formal ID photograph: a plain light-blue background, a dark blazer over a white collared shirt, hair neatly tied back, facing straight to camera, neutral expression with a faint smile, head and shoulders centred; flat even light, no shadows. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-festive-christmasTree",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a Christmas studio set: a tall decorated tree with warm string lights, wrapped presents, a plaid armchair, a mug of cocoa; she wears a red knit sweater and a Santa hat, sitting on the rug holding a gift; warm cosy light with bokeh. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-festive-lunarRed",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a Lunar New Year set: red lanterns, gold coins and blossom branches, a red-and-gold backdrop with paper cuttings; she wears a red qipao-style dress with gold embroidery, holding a red envelope, a bright smile; warm red-gold light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-festive-thadingyut",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a Thadingyut festival of lights scene: rows of glowing paper lanterns and candles on a temple terrace at dusk, a silk longyi and a fitted blouse in soft gold, holding a lit lantern, a serene smile; warm candlelight, deep blue sky. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-festive-newYearParty",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a New Year's Eve party set: gold and silver balloons, a shimmering curtain backdrop, a '2027' light sign, confetti, a champagne glass raised; a silver sequin dress; sparkling glamorous light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-festive-valentineRoses",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as a Valentine set: a wall of red and pink roses, heart-shaped balloons, a small table with a gift box and chocolates; she wears a red satin slip dress, holding a single red rose to her lips; soft romantic pink light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  },
+  {
+   "name": "ps-festive-autumnHarvest",
+   "apiPath": "alibaba/qwen-image-3.0-pro/image-edit",
+   "refs": [
+    "tools/art_ref/hnk-model.jpg",
+    "tools/art_ref/hnk-model-front.jpg"
+   ],
+   "base": null,
+   "ratio": "2:3",
+   "resolution": "2k",
+   "maxMs": 1200000,
+   "prompt": "IDENTITY: the reference photos show ONE woman, the HNK model — keep her EXACT face in every detail: an oval face with soft full cheeks and a gently rounded chin, large almond-shaped dark-brown eyes with long lashes and a softly winged liner, well-defined arched brows, a small straight nose, full soft-pink lips, fair porcelain skin, early twenties, long thick wavy dark-brown hair. Same person, same face shape, same eyes, nose, lips and jawline as the references — do not redesign, slim, age, harden or replace her. LOOK: fair luminous porcelain skin retouched flawless and glass-smooth over face and body (no visible pores, no blemishes), soft glam, a clean colour grade with no orange or yellow cast on her skin, delicate and pretty. Change everything else as described.\n\nCreate a studio reference photograph of the HNK model from the references — her exact face, looking into the lens — as an autumn harvest set: pumpkins and hay bales, a wooden cart with apples, dried corn and maple leaves, a rust-orange knit dress and a wool scarf, sitting on a hay bale with a basket; warm golden afternoon light. Full styled set in frame (the person from head to at least the knees, the outfit, the backdrop and the props all visible), 85mm lens, vertical 2:3 framing.\n\nREALISM: a photograph, not a render — true lens optics, natural fabric and hair texture, believable light, correct hands, no painterly or CGI look. This is a STUDIO REFERENCE PHOTOGRAPH: the complete styled set must read at a glance — outfit, backdrop, props and light all in frame — so a customer can point at it and say \"like this\".\nAVOID: a different person or face, a second person, added text, captions, logos, watermarks, borders, extra limbs, warped hands, duplicated people. NO STUDIO GEAR IN THE FRAME: no softboxes, light stands, umbrellas, reflectors, lamps or any photographic equipment may be drawn into the picture.\nTASK GUARD: return exactly one finished photograph and nothing else — vertical 2:3 framing, no text, no captions, no UI, no watermark."
+  }
+ ]
+}

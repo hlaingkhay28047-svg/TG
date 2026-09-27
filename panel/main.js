@@ -2799,7 +2799,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.213.0";
+const PANEL_VERSION = "6.214.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -13155,7 +13155,7 @@ function pstyleHost() {
     ellMark: function (root, sel, lines) { ellMark(root, sel, lines); },
     icon: function (name) { return ffIcon(name, "cream"); },
     button: function (cls) { return mkBtn(cls); },
-    asset: function (kind, file) { return (kind === "thumb" ? "icons/imagine/th/" : "icons/imagine/") + file; },
+    asset: function (kind, file) { return kind === "pth" ? "icons/pstyle/th/" + file : (kind === "thumb" ? "icons/imagine/th/" : "icons/imagine/") + file; },   /* 6.214.0 — pth: the studio's own sets */
     assetDataUrl: async function (url) {
       try { const r = await fetch(url); const b = await r.arrayBuffer(); return "data:image/jpeg;base64," + bufToB64(b); } catch (e) { return null; }
     },
