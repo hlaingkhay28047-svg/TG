@@ -1259,3 +1259,13 @@ jobs:
       # — a wish rather than a fact, on the very phones (Safari) that refuse it.
       - name: Verify one frame's treatment reaches the whole book, and the Storage card says whether the device will keep it
         run: PORT=8931 node test/verify_album_all_6138.js
+
+      # 6.139.0 — the app opens in a fraction of the time. Measured on a phone at 4x CPU with no
+      # network in the way: one blocking task of 4,341 ms and DOMContentLoaded at 5,421 ms, of
+      # which ellMark alone was 1,991 ms — the clamp marker unclamping, measuring and restyling
+      # 502 Smart Workflow card lines that were not on screen, for zero marks. A box with no
+      # layout is now skipped on both surfaces. C1 also pins why the What's New strip could not be
+      # trimmed in the same wave: sixteen tests read the live table as the record that their
+      # release announced itself, and the panel has no archive to compare against.
+      - name: Verify the app does not measure text nobody can see
+        run: PORT=8931 node test/verify_boot_cost_6139.js

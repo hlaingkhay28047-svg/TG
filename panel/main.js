@@ -514,6 +514,16 @@ function ellMark(root, sel, lines) {
        written here: not the text, not the attribute, not a style. */
     Array.prototype.forEach.call(list, function (n) {
       try {
+        /* 6.139.0 — A BOX WITH NO LAYOUT IS NOT MEASURED. Phase 2 unclamps a sentence with six
+           inline styles, reads scrollHeight and puts the seven back — one forced layout each, and
+           a binary search when the text really is too long. On a box that is not laid out (a card
+           in a closed group, a page nobody has opened) scrollHeight is 0, so all of it runs and
+           learns nothing. The web app measured 938 ms of exactly that at boot over its 502 Smart
+           Workflow card lines, for zero marks; the panel draws the same cards from the same
+           module, so it carries the same guard. clientWidth is read here anyway (ellKey asks for
+           it), and the card is measured the moment it is really shown. */
+        const w = n.clientWidth;
+        if (!(w > 0)) return;
         const full = ELL_FULL.has(n) ? ELL_FULL.get(n) : (n.textContent || "");
         const m = ellCeil(n, lines);
         jobs.push({ n: n, full: full, m: m, key: (m.ceil > 0 ? ellKey(n, full, lines) : "") });
@@ -2789,7 +2799,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.209.0";
+const PANEL_VERSION = "6.210.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);

@@ -4571,10 +4571,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
 <script src="data/imagine.js?v=2b97eb6a9d09"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=7d89612bb63a"></script>
+<script src="data/album-module.js?v=9d2cf740d741"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=525c22c69a33"></script>
-<script src="data/whatsnew.js?v=8ea434ee5497"></script>
+<script src="data/whatsnew.js?v=990af9a16ac3"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -4731,6 +4731,18 @@ function ellMark(root, sel, lines){
        written here: not the text, not the attribute, not a style. */
     Array.prototype.forEach.call(list, function(n){
       try{
+        /* 6.139.0 — A BOX WITH NO LAYOUT IS NOT MEASURED, AND THAT IS MOST OF THE BOOT.
+           Phase 2 below unclamps a sentence with six inline styles, reads scrollHeight and puts
+           the seven back — one forced layout per node, and a binary search on top when the text
+           really is too long. On a box that is not laid out (a card inside a closed group, a page
+           the studio has not opened) scrollHeight is 0, so all of that work runs and learns
+           nothing: measured on a phone at 4x CPU, one pass over the 502 Smart Workflow card lines
+           cost 938 ms and produced ZERO marks, and boot made that pass more than once.
+           clientWidth is read here anyway — ellKey already asks for it — so this costs nothing and
+           removes the whole of it. The card is measured the moment it is really shown: renderWf
+           marks the list, opening a group marks that group, the filter marks what it re-opens. */
+        var w=n.clientWidth;
+        if(!(w>0)) return;
         var full=ELL_FULL.has(n)?ELL_FULL.get(n):(n.textContent||"");
         var m=ellCeil(n, lines);
         jobs.push({ n:n, full:full, m:m, key:(m.ceil>0?ellKey(n, full, lines):"") });
@@ -31200,7 +31212,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.138.0";
+var APP_VER="6.139.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
