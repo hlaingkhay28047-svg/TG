@@ -1287,3 +1287,12 @@ jobs:
       # re-applied on every language change; the panel's picker sheet takes the name as its title.
       - name: Verify every control announces itself on both surfaces
         run: PORT=8931 node test/verify_named_controls_6141.js
+
+      # 6.142.0 — PORTRAIT STYLE, the studio flow from the owner's video, as a page on both surfaces:
+      # 01 your photo (file · camera · Gallery · recent) · 02 style (your own reference first, the
+      # studio's looks in six groups, six toggles for what comes across — the face is never a
+      # choice) · 03 result (four compare modes, the session's versions, download, print, create
+      # again, new photo). ONE module (the Imagine pattern) lifted into the panel; the run goes
+      # through the studio's own image-edit engines with the photo first and the reference second.
+      - name: Verify Portrait Style on both surfaces
+        run: PORT=8931 node test/verify_pstyle_6142.js

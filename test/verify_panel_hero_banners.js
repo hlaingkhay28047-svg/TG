@@ -64,7 +64,8 @@ const HEROES = [
   ["path", "pagePath"], ["create", "pageCreate"], ["video", "pageVideo"],
   ["vidup", "pageVideoUp"], ["v2v", "pageV2V"], ["talk", "pageTalk"],
   ["presets", "pagePresets"], ["gallery", "pageGallery"],
-  ["album", "pageAlbum"]   /* 6.122.0 wave G — Library ▸ Album, the app's fairy-forest banner */
+  ["album", "pageAlbum"],   /* 6.122.0 wave G — Library ▸ Album, the app's fairy-forest banner */
+  ["pstyle", "pagePStyle"]  /* 6.142.0 — Edit ▸ Style (Portrait Style), the Imagine banner until it has art of its own */
 ];
 
 let failures = 0;
@@ -78,8 +79,8 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css
 /* ================= A) the source ================= */
 function sourcePins() {
   const heroes = (PIDX.match(/<div class="page-hero">/g) || []).length;
-  report("A1) every banner in the panel's markup opens with the styled class: fifteen .page-hero boxes (6.122.0 — the Album page joined) and not one .phero (the name no rule matches)",
-    heroes === 15 && PIDX.indexOf('class="phero"') < 0 && !/\.phero\b/.test(PCSS),
+  report("A1) every banner in the panel's markup opens with the styled class: sixteen .page-hero boxes (6.122.0 — the Album page joined; 6.142.0 — Portrait Style) and not one .phero (the name no rule matches)",
+    heroes === 16 && PIDX.indexOf('class="phero"') < 0 && !/\.phero\b/.test(PCSS),
     { heroes, phero: PIDX.indexOf('class="phero"') });
 
   report("A2) the two pages the owner photographed carry the styled banner over their own baked art, with the app's kicker and headline inside it",
@@ -154,8 +155,8 @@ async function panelWalk(browser) {
   for (const W of [320, 400]) {
     const rows = out[W].rows;
     const noHero = rows.filter(r => r.noHero).map(r => r.key);
-    report("B1) at " + W + "px all fifteen panel banners are the 126px band — none missing, none taller, none wider than its own page",
-      noHero.length === 0 && rows.length === 15 &&
+    report("B1) at " + W + "px all sixteen panel banners are the 126px band — none missing, none taller, none wider than its own page",
+      noHero.length === 0 && rows.length === 16 &&
       rows.every(r => r.minH === "126px" && r.h >= 126 && r.h <= 132 && !r.widerThanPage && r.pos === "relative" && r.ov === "hidden"),
       rows.filter(r => r.noHero || r.minH !== "126px" || r.h > 132 || r.widerThanPage));
     report("B2) at " + W + "px every banner picture is absolutely placed INSIDE its band — not one pixel of it hangs off (the V→V and Talk pictures used to overhang by 404)",

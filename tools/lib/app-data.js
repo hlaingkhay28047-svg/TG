@@ -41,6 +41,9 @@ const FILES = {
   libwf: { file: "libwf.js", global: "HNK_LIBWF", head: "window.HNK_LIBWF=", tag: "script" },
   hnkdata: { file: "hnkdata.js", global: "HNK_DATA", head: "window.HNK_DATA=", tag: "script" },
   imagine: { file: "imagine.js", global: "HNK_IMAGINE", head: "window.HNK_IMAGINE=", tag: "script" },
+  /* 6.142.0 — the Portrait Style page's tables (the words in nine languages, the reference groups, the
+     toggles, the prompt frame); the panel lifter inlines the same JSON into js/hnk_pstyle.js */
+  pstyle: { file: "pstyle.js", global: "HNK_PSTYLE", head: "window.HNK_PSTYLE=", tag: "script" },
   album: { file: "album.js", global: "HNK_ALBUM", head: "window.HNK_ALBUM=", tag: "script" },
   /* v6.107.0 — the What's New strip. The A4 ceiling in verify_app_data_files said, in so
      many words, that a third rise of the raw figure was not the answer and that WHATS_NEW
@@ -95,6 +98,7 @@ function albumModuleText() { return moduleText("albummod"); }
 function libWfText() { return jsonText("libwf"); }
 function hnkDataText() { return jsonText("hnkdata"); }
 function imagineText() { return jsonText("imagine"); }
+function pstyleText() { return jsonText("pstyle"); }
 function albumText() { return jsonText("album"); }
 function whatsNewText() { return jsonText("whatsnew"); }
 function tutorialsText() { return jsonText("tutorials"); }
@@ -102,6 +106,7 @@ function trMoreText() { return jsonText("trmore"); }
 function readLibWf() { return JSON.parse(libWfText()); }
 function readHnkData() { return JSON.parse(hnkDataText()); }
 function readImagine() { return JSON.parse(imagineText()); }
+function readPstyle() { return JSON.parse(pstyleText()); }
 function readAlbum() { return JSON.parse(albumText()); }
 function readWhatsNew() { return JSON.parse(whatsNewText()); }
 function readTutorials() { return JSON.parse(tutorialsText()); }
@@ -131,5 +136,5 @@ function trlTags() {
 /* the table the shell's loader carries, as the shell prints it */
 function trlTagsLine() { return "window.HNK_TRL_TAGS=" + JSON.stringify(trlTags()) + ";"; }
 
-module.exports = { ROOT, DATA_DIR, FILES, TRL_CODES, wrapperText, jsonText, moduleText, albumModuleText, libWfText, hnkDataText, imagineText, albumText, whatsNewText, tutorialsText, trMoreText,
-  readLibWf, readHnkData, readImagine, readAlbum, readWhatsNew, readTutorials, readTrMore, readTrlPack, readTrl, readWhatsNewArchive, contentTag, trlTags, trlTagsLine };
+module.exports = { ROOT, DATA_DIR, FILES, TRL_CODES, wrapperText, jsonText, moduleText, albumModuleText, libWfText, hnkDataText, imagineText, pstyleText, albumText, whatsNewText, tutorialsText, trMoreText,
+  readLibWf, readHnkData, readImagine, readPstyle, readAlbum, readWhatsNew, readTutorials, readTrMore, readTrlPack, readTrl, readWhatsNewArchive, contentTag, trlTags, trlTagsLine };

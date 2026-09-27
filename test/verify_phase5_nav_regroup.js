@@ -26,12 +26,13 @@ const PORT = process.env.PORT || 8931;
 const ALL_PAGES = [
   ["pgDash", "Home", null],
   ["pgWf", "Workflows", null],
-  ["pgCreate", "Edit", 6],
-  ["pgImagine", "Edit", 6],
-  ["pgMeitu", "Edit", 6],
-  ["pgEvoto", "Edit", 6],
-  ["pgRetouch", "Edit", 6],
-  ["pgPath", "Edit", 6],
+  ["pgCreate", "Edit", 7],
+  ["pgImagine", "Edit", 7],
+  ["pgPStyle", "Edit", 7],   /* 6.142.0 — Portrait Style joined Edit */
+  ["pgMeitu", "Edit", 7],
+  ["pgEvoto", "Edit", 7],
+  ["pgRetouch", "Edit", 7],
+  ["pgPath", "Edit", 7],
   /* v6.2.0 — Media Lab gained a fourth page. Every tool that takes a video IN
      and gives a video BACK moved off VidUp onto its own pgV2V, so VidUp is
      Upscale and nothing else; the count here is the whole point of the test,
@@ -153,7 +154,7 @@ const ST_SUITE_PAGES = ["pgMeitu", "pgEvoto"];
   const legacyOk = ST_SUITE_PAGES.indexOf(legacyStudio.landed) >= 0 && !legacyStudio.studioStillAPage &&
     legacyStudio.pageVisible && legacyStudio.activeTopCount === 1 &&
     legacyStudio.activeTopText.indexOf("Edit") >= 0 &&
-    legacyStudio.subVisible && legacyStudio.subCount === 6 && legacyStudio.activeSubCount === 1;   /* 6.29.0 wave: Imagine joined Edit */
+    legacyStudio.subVisible && legacyStudio.subCount === 7 && legacyStudio.activeSubCount === 1;   /* 6.29.0 wave: Imagine joined Edit; 6.142.0: Portrait Style too */
   console.log(legacyOk ? "PASS (legacy pgStudio deep link still reaches a live suite page under Edit)" : "FAIL (legacy pgStudio id became a dead end)");
 
   // clicking a top-tab returns to the last-visited page within that group,

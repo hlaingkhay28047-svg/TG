@@ -53,6 +53,7 @@ const libwf = A.readLibWf(), hnk = A.readHnkData();
 const tagLib = A.contentTag("libwf"), tagData = A.contentTag("hnkdata");
 const srcLib = APP.match(/<script src="data\/libwf\.js\?v=([0-9a-f]+)"><\/script>/);
 const srcData = APP.match(/<script src="data\/hnkdata\.js\?v=([0-9a-f]+)"><\/script>/);
+const tagPs = A.contentTag("pstyle");   /* 6.142.0 — the Portrait Style tables, ninth */
 const tagIm = A.contentTag("imagine"), srcIm = APP.match(/<script src="data\/imagine\.js\?v=([0-9a-f]+)"><\/script>/);
 report("A1) data/libwf.js and data/hnkdata.js are one window.X= assignment around valid JSON — the Library catalog (items, featured, collections, workflows) and the studio tables (counts)",
   Array.isArray(libwf.items) && libwf.items.length > 1000 && Array.isArray(libwf.workflows) && libwf.featured.length > 0 &&
@@ -239,14 +240,15 @@ report("B1) sw.js declares DATA_CACHE (hnk-data-v1), matches /data/<name>.js, ro
      when wave I took the shell 149 KB past the A4 raw ceiling. It is code, not a table, so the registry
      carries it as kind "module" and it loads from the head block right after data/album.js — one classic
      script of its own, after the tables it reads. */
-  report("D2) the shell asked for each of the eight data files exactly once, under its content tag, and for no language pack",
+  report("D2) the shell asked for each of the nine data files exactly once, under its content tag, and for no language pack",
     reqs.filter((u) => u === "/data/libwf.js?v=" + tagLib).length === 1 && reqs.filter((u) => u === "/data/hnkdata.js?v=" + tagData).length === 1 &&
     reqs.filter((u) => u === "/data/imagine.js?v=" + tagIm).length === 1 &&
     reqs.filter((u) => u === "/data/album.js?v=" + tagAlb).length === 1 &&
     reqs.filter((u) => u === "/data/tutorials.js?v=" + tagTut).length === 1 &&
     reqs.filter((u) => u === "/data/whatsnew.js?v=" + tagWn).length === 1 &&
     reqs.filter((u) => u === "/data/trmore.js?v=" + tagTrm).length === 1 &&
-    reqs.filter((u) => u === "/data/album-module.js?v=" + tagAlbMod).length === 1 && reqs.length === 8, { reqs });
+    reqs.filter((u) => u === "/data/album-module.js?v=" + tagAlbMod).length === 1 &&
+    reqs.filter((u) => u === "/data/pstyle.js?v=" + tagPs).length === 1 && reqs.length === 9, { reqs });
 
   /* ---------------- E. release pins ---------------- */
   /* v6.107.0 — the row is read from the table the shell now loads, and rendered in the
