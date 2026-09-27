@@ -89,8 +89,12 @@ const greet = async (page, lang) => page.evaluate(l => {
     await page.clock.setFixedTime(YGN(20, 5));
     const perLang = [];
     for (const l of LANGS) { const r = await greet(page, l); perLang.push({ l, sub: r.sub }); }
-    report("A2) …in every one of the nine languages, never the 24-hour form",
-      perLang.every(x => /· 8:05 PM ·/.test(x.sub || "") && !/20:05/.test(x.sub || "")), perLang.filter(x => !/· 8:05 PM ·/.test(x.sub || "") || /20:05/.test(x.sub || "")));
+    /* 6.145.0 — the half of the day reads in the language's own word (the app's CLOCK_AMPM: နံနက်/ညနေ, 上午/下午, SA/CH …;
+       AM/PM where the language keeps them), still twelve-hour, never 20:05 */
+    const AMPM = (function () { const m = APP.match(/var CLOCK_AMPM = \{[\s\S]*?\};\n/); const o = {}; new Function("window", m[0] + " window.T = CLOCK_AMPM;")(o); return o.T; })();
+    const pmOk = (x) => new RegExp("· 8:05 " + AMPM[x.l][1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + " ·").test(x.sub || "") && !/20:05/.test(x.sub || "");
+    report("A2) …in every one of the nine languages, in that language's own word for the half of the day (6.145.0), never the 24-hour form",
+      perLang.every(pmOk), perLang.filter(x => !pmOk(x)));
     /* Chromium names the zone Asia/Rangoon; the app shows what the zone says,
        and a Burmese reader gets ရန်ကုန် */
     report("A3) the line still carries the date and the zone city",

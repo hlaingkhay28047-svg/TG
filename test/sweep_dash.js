@@ -122,8 +122,9 @@ function check(ok, label, detail) {
   /* 6.33.1 ONE PLACE — no promo band and no Panel-download door on Home any more */
   const promo = await page.evaluate(() => ({
     band: !!document.getElementById("dashPromo"), doors: document.querySelectorAll("a[data-panel-intent]").length,
-    dest: Array.from(document.querySelectorAll("#pgDash .unified-actions .btn")).map(b => b.textContent.trim()) }));
-  check(!promo.band && promo.doors === 0 && promo.dest.join("|") === "AI Tools|Account & license|Tutorials",
+    dest: Array.from(document.querySelectorAll("#pgDash .unified-actions .btn")).map(b => b.textContent.trim()),
+    destWant: [L9(HOME_UI.dest_ai), L9(HOME_UI.dest_acc), L9(HOME_UI.dest_tut)].join("|") }));   /* 6.145.0 — the three destinations in the page's own words */
+  check(!promo.band && promo.doors === 0 && promo.dest.join("|") === promo.destWant,
     "6.33.1 one place: Home carries no promo band and no Panel-download door — three destinations only", promo);
 
   /* ---- 3) Setup via header gear ---- */

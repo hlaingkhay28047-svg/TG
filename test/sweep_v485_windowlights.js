@@ -191,7 +191,9 @@ report("F) the shared RELIGHT guard still applies to all twelve",
   await page.waitForTimeout(900);
   const opened = await page.evaluate(() => {
     const grps = [...document.querySelectorAll("#wfHost .grp")];
-    const g = grps.find(x => /Studio Relight/i.test((x.querySelector(".grp-h") || x).textContent));
+    /* 6.145.0 — the heading reads the category's name in the studio's language; the English key names it in the catalog */
+    const relightName = ((window.HNK_WF_CATALOG || []).find(c => c.t === "Studio Relight") || {}).tt || "Studio Relight";
+    const g = grps.find(x => ((x.querySelector(".grp-h") || x).textContent || "").indexOf(relightName) >= 0);
     if (!g) return false;
     const h = g.querySelector(".grp-h");
     if (h) h.click();
@@ -204,7 +206,9 @@ report("F) the shared RELIGHT guard still applies to all twelve",
 
   const cards = await page.evaluate(() => {
     const grps = [...document.querySelectorAll("#wfHost .grp")];
-    const g = grps.find(x => /Studio Relight/i.test((x.querySelector(".grp-h") || x).textContent));
+    /* 6.145.0 — the heading reads the category's name in the studio's language; the English key names it in the catalog */
+    const relightName = ((window.HNK_WF_CATALOG || []).find(c => c.t === "Studio Relight") || {}).tt || "Studio Relight";
+    const g = grps.find(x => ((x.querySelector(".grp-h") || x).textContent || "").indexOf(relightName) >= 0);
     if (!g) return null;
     return [...g.querySelectorAll(".wfmini")].map(c => {
       const i = c.querySelector("img");
@@ -254,7 +258,9 @@ report("F) the shared RELIGHT guard still applies to all twelve",
      and the SVG showing instead. Both together are the actual contract. */
   const shipped = await page.evaluate(() => {
     const grps = [...document.querySelectorAll("#wfHost .grp")];
-    const g = grps.find(x => /Studio Relight/i.test((x.querySelector(".grp-h") || x).textContent));
+    /* 6.145.0 — the heading reads the category's name in the studio's language; the English key names it in the catalog */
+    const relightName = ((window.HNK_WF_CATALOG || []).find(c => c.t === "Studio Relight") || {}).tt || "Studio Relight";
+    const g = grps.find(x => ((x.querySelector(".grp-h") || x).textContent || "").indexOf(relightName) >= 0);
     const want = ["lg-winSoftL", "lg-sunShaft", "lg-winHard", "lg-winWide"];
     return want.map(k => {
       const im = [...g.querySelectorAll(".wfmini img")]

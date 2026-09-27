@@ -131,7 +131,7 @@ report("C4) Couple's steps tell the student to combine HER photo first, then HIS
 report("D) the app, the landing and the panel's Home all count 199 Smart Workflows and 206 One-Tap (194 / 201 until 6.123.0 added the three wave H cards, 197 / 204 until 6.124.0 added Selection Swap & Fill, 198 / 205 until 6.133.0 added Horse & Straw)",
   lib.workflows.filter(x => IDS.indexOf(x.id) >= 0).length === 4 && APP.indexOf("Smart Workflow 199") >= 0 && APP.indexOf("Smart Workflow 189") < 0 && APP.indexOf("One-Tap 206") >= 0 &&
   (LANDING.match(/Smart Workflow 199/g) || []).length >= 30 && /data-count="wf">199</.test(LANDING) && /data-count="tap">206</.test(LANDING) && LANDING.indexOf("One-Tap 196") < 0 &&
-  /stat\(206, "One-Tap Workflows"\)/.test(PANEL_HOME),
+  /stat\(206, l9\(HOME_UI\.st_tap\)\)/.test(PANEL_HOME),
   { n: lib.workflows.filter(x => IDS.indexOf(x.id) >= 0).length, app199: APP.indexOf("Smart Workflow 199") >= 0, landing199: (LANDING.match(/Smart Workflow 199/g) || []).length, panelHome: /stat\(200,/.test(PANEL_HOME) });
 
 /* ---- E) the board helper in the source ---- */

@@ -618,7 +618,7 @@ function create(deps) {
         g.b.appendChild(gd);
         host.appendChild(g.g);
         groups.push(g);
-        var chip = dom.el(doc, "button", { class: "chip", text: c.category + " " + c.ids.length });
+        var chip = dom.el(doc, "button", { class: "chip", text: (ct.title || c.category) + " " + c.ids.length });   /* 6.216.0 — the category's name in the panel's language */
         dom.on(chip, "click", function () {
           if (!g.isOpen()) g.setOpen(true);
           try { if (g.g.scrollIntoView) g.g.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { }
