@@ -203,7 +203,7 @@ function partC() {
     { oldestDemanded: oldestDemanded, oldestOnStrip: oldestOnStrip, demanded: demanded.length, rows: live.length });
 
   report("C2) this wave moved no release note: the record holds what it held, and the strip differs only by the row this release added",
-    arc.length === 111 && live[0].v === VER && live.length === 72 &&
+    arc.length === 111 && live[0].v === VER && live.length === 73 &&   /* 72 when 6.139.0 shipped; one more row per release since (6.140.0) — the archive stays at 111 */
     arc.every((r) => cmp(r.v, oldestOnStrip) < 0),
     { archive: arc.length, rows: live.length, newest: live[0].v });
 
