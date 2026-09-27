@@ -3219,7 +3219,7 @@ html.splashing #splash{display:flex}
               <img class="ava-mini" id="avaSignupPrev" alt="">
               <button class="btn grow" id="btnAvaPickSignup" type="button"></button>
             </div>
-            <input type="file" id="avaFileSignup" accept="image/*" style="display:none">
+            <input type="file" id="avaFileSignup" accept="image/*" style="display:none" aria-hidden="true" tabindex="-1">
             <div class="row"><button class="btn btn-gold grow" id="btnAccSignup"></button></div>
             <button class="acc-lnk" id="accToLogin"></button>
           </div>
@@ -3235,7 +3235,7 @@ html.splashing #splash{display:flex}
             <button class="btn" id="btnAvaPick" type="button"></button>
             <button class="btn" id="btnAvaDrop" type="button" style="display:none"></button>
           </div>
-          <input type="file" id="avaFile" accept="image/*" style="display:none">
+          <input type="file" id="avaFile" accept="image/*" style="display:none" aria-hidden="true" tabindex="-1">
           <div class="status" id="stAva"></div>
           <div class="acc-actions"><button class="btn" id="btnAccLogout"></button></div>
 
@@ -3396,7 +3396,7 @@ html.splashing #splash{display:flex}
     <div class="row" style="margin-top:10px">
       <button class="btn grow" id="btnExportData"></button>
       <button class="btn grow" id="btnImportData"></button>
-      <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none" aria-hidden="true" tabindex="-1">
     </div>
     <div class="status" id="stData"></div>
   </section>
@@ -3548,13 +3548,13 @@ html.splashing #splash{display:flex}
     <h2 id="refsH2"></h2>
     <div class="refs" id="refs"></div>
     <div class="mut" style="margin-top:8px" id="refsNote"></div>
-    <input type="file" id="filePick" accept="image/*" hidden>
-    <input type="file" id="filePickBoard" accept="image/*" multiple hidden>
+    <input type="file" id="filePick" accept="image/*" hidden aria-hidden="true" tabindex="-1">
+    <input type="file" id="filePickBoard" accept="image/*" multiple hidden aria-hidden="true" tabindex="-1">
     <!-- Path Retouch owns its own multi-pick input: adding multiple to the
          shared #filePick above would break every single-slot page. -->
-    <input type="file" id="ptFilePick" accept="image/*" multiple hidden>
+    <input type="file" id="ptFilePick" accept="image/*" multiple hidden aria-hidden="true" tabindex="-1">
     <!-- Path Retouch reference-backdrop slot (single, optional) -->
-    <input type="file" id="ptRefPick" accept="image/*" hidden>
+    <input type="file" id="ptRefPick" accept="image/*" hidden aria-hidden="true" tabindex="-1">
   </section>
 
   <section class="card">
@@ -4056,7 +4056,7 @@ html.splashing #splash{display:flex}
   <section class="card">
     <h2><svg class="ic-h2" aria-hidden="true" focusable="false"><use href="#i-rocket"/></svg>VIDEO UPSCALE</h2>
     <p class="mut" id="vuIntro"></p>
-    <input type="file" accept="video/mp4" id="vuFilePick" style="display:none">
+    <input type="file" accept="video/mp4" id="vuFilePick" style="display:none" aria-hidden="true" tabindex="-1">
     <button class="btn" id="btnVuPick"></button>
     <div class="mut" id="vuFormatNote" style="margin-top:4px;font-size:11px"></div>
     <div class="mut" id="vuFileName" style="margin-top:6px"></div>
@@ -4132,7 +4132,7 @@ html.splashing #splash{display:flex}
     <select class="inp" id="selVtModel" style="width:100%;margin-bottom:8px"></select>
     <!-- v6.7.3 — what the chosen tool needs, before anything is picked -->
     <div class="slotchips" id="vtSlotChips"></div>
-    <input type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,.avi" id="vtFilePick" style="display:none">
+    <input type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,.avi" id="vtFilePick" style="display:none" aria-hidden="true" tabindex="-1">
     <button class="btn" id="btnVtPick"></button>
     <!-- v6.4.0 — SHOW WHAT WAS PICKED. The owner picked a clip and a face and
          got two filenames back: a3bcf6d2….mp4 tells a student nothing about
@@ -4147,7 +4147,7 @@ html.splashing #splash{display:flex}
       </div>
       <button class="vtpick-x" id="btnVtFileClear" type="button" aria-label="remove">&times;</button>
     </div>
-    <input type="file" accept="image/*" id="vtImgPick" style="display:none">
+    <input type="file" accept="image/*" id="vtImgPick" style="display:none" aria-hidden="true" tabindex="-1">
     <button class="btn" id="btnVtImgPick" style="display:none;margin-top:6px"></button>
     <div class="vtpick" id="vtImgPrev" style="display:none">
       <img id="vtImgThumb" alt="">
@@ -4218,7 +4218,7 @@ html.splashing #splash{display:flex}
          in the wrong place. Both slots are named up front. -->
     <div class="slotchips" id="tkSlotChips"></div>
 
-    <input type="file" accept="image/*" id="tkImgPick" style="display:none">
+    <input type="file" accept="image/*" id="tkImgPick" style="display:none" aria-hidden="true" tabindex="-1">
     <button class="btn" id="btnTkImgPick"></button>
     <div class="vtpick" id="tkImgPrev" style="display:none">
       <img id="tkImgThumb" alt="">
@@ -4229,7 +4229,7 @@ html.splashing #splash{display:flex}
       <button class="vtpick-x" id="btnTkImgClear" type="button" aria-label="remove">&times;</button>
     </div>
 
-    <input type="file" accept="audio/*" id="tkAudPick" style="display:none">
+    <input type="file" accept="audio/*" id="tkAudPick" style="display:none" aria-hidden="true" tabindex="-1">
     <button class="btn" id="btnTkAudPick" style="margin-top:6px"></button>
     <div class="vtpick" id="tkAudPrev" style="display:none">
       <div class="vtpick-aud" aria-hidden="true"><svg class="ic-s"><use href="#i-mic"/></svg></div>
@@ -4591,10 +4591,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
 <script src="data/imagine.js?v=2b97eb6a9d09"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=a4e203fe82f7"></script>
+<script src="data/album-module.js?v=8131458747e5"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
-<script src="data/trmore.js?v=525c22c69a33"></script>
-<script src="data/whatsnew.js?v=a16d73c134a0"></script>
+<script src="data/trmore.js?v=ac0badf84ffb"></script>
+<script src="data/whatsnew.js?v=b057321ea97c"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -4605,7 +4605,7 @@ html.splashing #splash{display:flex}
    synchronous way to add a script while the document is still being parsed;
    the address is built from this fixed list and a two-or-three-letter code,
    never from the link's text. tools/build_app_data.js writes the tags. */
-window.HNK_TRL_TAGS={"bn":"c87b0e0ca42d","gu":"8ea5c3c4102a","hi":"88c4f4a819db","ja":"296b43886ac9","km":"cd507d7ea2ef","kn":"1b8aff731d91","ko":"834ce8784ec8","lo":"7344448aa802","ml":"aec3f184875f","mr":"3a5d74fcab39","ne":"3a6f13f794b6","pa":"4a3a9ce4b0a3","ta":"8f6e26d48c91","te":"1cc0266e3d40","ur":"8ff7a0574916","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
+window.HNK_TRL_TAGS={"bn":"2a3c1278121e","gu":"7c69ebe12921","hi":"b2ebf9fce70c","ja":"003aad8fbeac","km":"2f4adee1f538","kn":"bfc63511a765","ko":"527bff81cc33","lo":"ed4397270258","ml":"2948d3b29fd6","mr":"d5a0c433652e","ne":"7f0946a72192","pa":"a79387d2aef5","ta":"b073fd015834","te":"e78b3a1fccdb","ur":"70744fc1e3c7","tdd":"60c979e606a1","kht":"e8870e519380","khb":"df4184946a47"};
 (function(){
   var T=window.HNK_TRL_TAGS, has=function(k){ return Object.prototype.hasOwnProperty.call(T,k); };
   var BASE=/^(my|en|shn|kac|th|zh|vi|id|ms)$/, u="", code="";
@@ -5438,6 +5438,7 @@ var TR_PH={
   alb_pair:{my:"စာလုံးပုံစံ တွဲ",en:"Font pairing"},
   alb_pair_note:{my:"ခေါင်းစဉ် နဲ့ စာကိုယ် စာလုံး နှစ်မျိုးကို တစ်ချက်နှိပ်ရုံနဲ့ ရွေးပါ",en:"One tap sets the display face and the reading face together"},
   alb_font:{my:"စာလုံး",en:"Font"},
+  alb_unit:{my:"ယူနစ်",en:"Unit"},
   alb_font_auto:{my:"အလိုအလျောက်",en:"Auto"},
   alb_font_count:{my:"စာလုံး {N} မျိုး · တွဲ {P} မျိုး",en:"{N} fonts · {P} pairings"},
   alb_ink:{my:"မင်အရောင်",en:"Ink"},
@@ -5913,6 +5914,55 @@ function t(k){
       generate, a saved key, a rejected payment — was announced to nobody. A
       live region has to be in the DOM BEFORE its text changes for the change
       to be spoken, which is why this runs at boot rather than inside setSt. */
+/* 6.141.0 — the words every unnamed select gets, in the nine base languages; shared by the app
+   (a11yApplyLang) and the panel (its static-label pass). Context first, then the control. */
+var A11Y_WORDS = {
+  lang:     {my:"ဘာသာစကား",en:"Language",shn:"ၽႃႇသႃႇ",kac:"Ga",th:"ภาษา",zh:"语言",vi:"Ngôn ngữ",id:"Bahasa",ms:"Bahasa"},
+  model:    {my:"မော်ဒယ်",en:"Model",shn:"မေႃႇတႄႇ",kac:"Model",th:"โมเดล",zh:"模型",vi:"Mô hình",id:"Model",ms:"Model"},
+  quality:  {my:"အရည်အသွေး",en:"Quality",shn:"ၸၼ်ႉ",kac:"Kaja ai lam",th:"คุณภาพ",zh:"画质",vi:"Chất lượng",id:"Kualitas",ms:"Kualiti"},
+  engine:   {my:"Engine",en:"Engine",shn:"Engine",kac:"Engine",th:"เอนจิน",zh:"引擎",vi:"Engine",id:"Engine",ms:"Engine"},
+  ratio:    {my:"အချိုး",en:"Aspect ratio",shn:"သႅၼ်းႁၢင်ႈ",kac:"Aspect ratio",th:"สัดส่วนภาพ",zh:"画面比例",vi:"Tỉ lệ khung",id:"Rasio aspek",ms:"Nisbah aspek"},
+  count:    {my:"ပုံအရေအတွက်",en:"Number of images",shn:"မၢႆၼပ်ႉႁၢင်ႈ",kac:"Sumla ga-ap",th:"จำนวนภาพ",zh:"图片数量",vi:"Số ảnh",id:"Jumlah gambar",ms:"Bilangan imej"},
+  size:     {my:"အရွယ်အစား",en:"Size",shn:"သႅၼ်း",kac:"Kaba lam",th:"ขนาด",zh:"尺寸",vi:"Kích cỡ",id:"Ukuran",ms:"Saiz"},
+  res:      {my:"Resolution",en:"Resolution",shn:"Resolution",kac:"Resolution",th:"ความละเอียด",zh:"分辨率",vi:"Độ phân giải",id:"Resolusi",ms:"Resolusi"},
+  dur:      {my:"ကြာချိန်",en:"Duration",shn:"ၶၢဝ်းယၢမ်း",kac:"Aten",th:"ความยาว",zh:"时长",vi:"Thời lượng",id:"Durasi",ms:"Tempoh"},
+  kind:     {my:"အမျိုးအစား",en:"Type",shn:"မဵဝ်း",kac:"Amyu",th:"ประเภท",zh:"类型",vi:"Loại",id:"Jenis",ms:"Jenis"},
+  sort:     {my:"စီစဥ်ပုံ",en:"Sort order",shn:"လၢႆးၸႅၵ်ႇ",kac:"Hpe hkyen",th:"การเรียง",zh:"排序",vi:"Sắp xếp",id:"Urutan",ms:"Susunan"},
+  opt1:     {my:"ရွေးချယ်စရာ ၁",en:"Option 1",shn:"တၢင်းလိူၵ်ႈ 1",kac:"Lata 1",th:"ตัวเลือก 1",zh:"选项 1",vi:"Tuỳ chọn 1",id:"Opsi 1",ms:"Pilihan 1"},
+  opt2:     {my:"ရွေးချယ်စရာ ၂",en:"Option 2",shn:"တၢင်းလိူၵ်ႈ 2",kac:"Lata 2",th:"ตัวเลือก 2",zh:"选项 2",vi:"Tuỳ chọn 2",id:"Opsi 2",ms:"Pilihan 2"},
+  video:    {my:"ဗီဒီယို",en:"Video",shn:"ဝီႇတီႇဢူဝ်ႇ",kac:"Video",th:"วิดีโอ",zh:"视频",vi:"Video",id:"Video",ms:"Video"},
+  vup:      {my:"ဗီဒီယို ကြည်လင်",en:"Video upscale",shn:"ဝီႇတီႇဢူဝ်ႇ ၸႅင်ႈ",kac:"Video upscale",th:"อัปสเกลวิดีโอ",zh:"视频高清",vi:"Nâng nét video",id:"Upscale video",ms:"Upscale video"},
+  v2v:      {my:"ဗီဒီယို → ဗီဒီယို",en:"Video to video",shn:"ဝီႇတီႇဢူဝ်ႇ → ဝီႇတီႇဢူဝ်ႇ",kac:"Video → video",th:"วิดีโอ → วิดีโอ",zh:"视频转视频",vi:"Video sang video",id:"Video ke video",ms:"Video ke video"},
+  talk:     {my:"စကားပြောပုံ",en:"Talking photo",shn:"ႁၢင်ႈလၢတ်ႈ",kac:"Ga shaga sumla",th:"ภาพพูดได้",zh:"会说话的照片",vi:"Ảnh nói",id:"Foto bicara",ms:"Foto bercakap"},
+  t2i:      {my:"စာ → ပုံ",en:"Text to image",shn:"လိၵ်ႈ → ႁၢင်ႈ",kac:"Laika → sumla",th:"ข้อความ → ภาพ",zh:"文生图",vi:"Văn bản sang ảnh",id:"Teks ke gambar",ms:"Teks ke imej"},
+  gallery:  {my:"ပြခန်း",en:"Gallery",shn:"ႁွင်ႈၼႄ",kac:"Gallery",th:"แกลเลอรี",zh:"图库",vi:"Thư viện",id:"Galeri",ms:"Galeri"},
+  freeform: {my:"Freeform",en:"Freeform",shn:"Freeform",kac:"Freeform",th:"Freeform",zh:"Freeform",vi:"Freeform",id:"Freeform",ms:"Freeform"},
+  rh:       {my:"RunningHub",en:"RunningHub",shn:"RunningHub",kac:"RunningHub",th:"RunningHub",zh:"RunningHub",vi:"RunningHub",id:"RunningHub",ms:"RunningHub"},
+  recent:   {my:"မကြာသေးမီ ပုံ — ပြခန်းမှာ ဖွင့်",en:"Recent image — open in the Gallery",shn:"ႁၢင်ႈမိူဝ်ႈၵႆႈ — ပိုတ်ႇၼႂ်းႁွင်ႈၼႄ",kac:"Ya sha sumla — Gallery hta hpaw",th:"ภาพล่าสุด — เปิดในแกลเลอรี",zh:"最近图片 — 在图库中打开",vi:"Ảnh gần đây — mở trong Thư viện",id:"Gambar terbaru — buka di Galeri",ms:"Imej terkini — buka di Galeri"},
+  recentV:  {my:"မကြာသေးမီ ဗီဒီယို — ပြခန်းမှာ ဖွင့်",en:"Recent video — open in the Gallery",shn:"ဝီႇတီႇဢူဝ်ႇမိူဝ်ႈၵႆႈ — ပိုတ်ႇၼႂ်းႁွင်ႈၼႄ",kac:"Ya sha video — Gallery hta hpaw",th:"วิดีโอล่าสุด — เปิดในแกลเลอรี",zh:"最近视频 — 在图库中打开",vi:"Video gần đây — mở trong Thư viện",id:"Video terbaru — buka di Galeri",ms:"Video terkini — buka di Galeri"}
+};
+/* app: select id → [context, word]; the label reads "Context · Word" (context omitted when null) */
+var A11Y_SELECTS = {
+  selLang:[null,"lang"], rhModelSel:["rh","model"], rhQuality:["rh","quality"], selProvider:["freeform","engine"],
+  selModel:["freeform","model"], selRatio:["freeform","ratio"], selCount:["freeform","count"], selSize:["freeform","size"],
+  selVidModel:["video","model"], selVidRes:["video","res"], selVidDur:["video","dur"], selVidAspect:["video","ratio"],
+  selVuRes:["vup","res"], selVtModel:["v2v","model"], selVtOpt1:["v2v","opt1"], selVtOpt2:["v2v","opt2"],
+  selTkModel:["talk","model"], selT2IModel:["t2i","model"], selT2IRatio:["t2i","ratio"], selT2IRes:["t2i","res"],
+  galKind:["gallery","kind"], galSort:["gallery","sort"]
+};
+/* 6.141.0 — EVERY CONTROL ANNOUNCES ITSELF. Measured with a walker over all nineteen pages at 390
+   and 1280 px: twenty-two <select>s carried no programmatic name at all — a screen reader read each
+   as "combo box" followed by whatever option happened to be selected, so "Model" and "Resolution"
+   on the Video page were indistinguishable — and the ten Home thumbnails were role=button images
+   with an empty alt. The names come from the same nine-language table the panel uses, context
+   first ("Video · Resolution"), and are re-applied with every language change. */
+function a11yNameControls(){
+  Object.keys(A11Y_SELECTS).forEach(function(id){
+    var n=$(id); if(!n) return;
+    var w=A11Y_SELECTS[id];
+    n.setAttribute("aria-label",(w[0]?L9(A11Y_WORDS[w[0]])+" \u00b7 ":"")+L9(A11Y_WORDS[w[1]]));
+  });
+}
 function a11yApplyLang(){
   var sk = $("skipLink");
   if (sk) sk.textContent = L9({
@@ -5953,6 +6003,7 @@ function a11yApplyLang(){
   try { wallHelpRender(); } catch(e){}
   var tb = $("tabbar");    if (tb) tb.setAttribute("aria-label", "Sections");
   var st = $("subtabbar"); if (st) st.setAttribute("aria-label", "Pages in this section");
+  a11yNameControls();   /* 6.141.0 */
 }
 /* Every .status element becomes a polite live region, once, at boot. Polite
    means it waits for a pause instead of cutting the user off mid-sentence,
@@ -7295,7 +7346,8 @@ function renderDashRecent(){
         var im=document.createElement("img");
         im.src=it.thumb ? "data:image/jpeg;base64,"+it.thumb : (it.kind==="video" ? GAL_VIDEO_TILE : (it.b64 ? "data:"+it.mime+";base64,"+it.b64 : GAL_VIDEO_TILE));
         if(it.kind==="video") im.classList.add("gal-vid");
-        im.alt=""; im.loading="lazy"; im.decoding="async"; im.dataset.gid=String(it.id);
+        im.alt=L9(it.kind==="video"?A11Y_WORDS.recentV:A11Y_WORDS.recent); im.setAttribute("aria-label",im.alt);   /* 6.141.0 — a role=button image with an empty alt had no name */
+        im.loading="lazy"; im.decoding="async"; im.dataset.gid=String(it.id);
         makePickable(im, function(){ galPendingId=it.id; switchPage("pgGallery"); });
         host.appendChild(im);
       });
@@ -31402,7 +31454,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.140.0";
+var APP_VER="6.141.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

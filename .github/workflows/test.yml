@@ -1278,3 +1278,12 @@ jobs:
       # and Space [ ] 0 1 F E L S P ? join Ctrl+Z/Y/Enter and B, with a sheet in nine languages.
       - name: Verify Retouch A/B keeps the photo, remembers the controls and answers the keyboard
         run: PORT=8931 node test/verify_retouch_workflow_6140.js
+
+      # 6.141.0 — every control announces itself. A walker over all nineteen web-app pages at 390
+      # and 1280 px found twenty-two <select>s with no accessible name (a screen reader read the
+      # Video page's Resolution and Duration as two bare "combo box"es), ten Home thumbnails that
+      # were role=button images with an empty alt, and six unlabeled album inputs — and the same
+      # twenty-two selects on the panel. One nine-language table names them all on both surfaces,
+      # re-applied on every language change; the panel's picker sheet takes the name as its title.
+      - name: Verify every control announces itself on both surfaces
+        run: PORT=8931 node test/verify_named_controls_6141.js

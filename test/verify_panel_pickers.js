@@ -221,8 +221,8 @@ async function main() {
         title: d && d.querySelector(".hnk-dlg-msg").textContent, search: !!(d && d.querySelector(".hnk-pick-q")),
         onIdx: on && on.getAttribute("data-i"), selIdx: sel.selectedIndex, selOffPath: cs.position === "absolute" && cs.left === "-9999px" && cs.width === "1px", cancel: !!(d && d.querySelector(".hnk-dlg-row .btn")) };
     });
-    report("B1) a tap on the Model button (Home ▸ Advanced) opens <dialog id=hnkPick>: title \"Model\", one row per option, the current option marked, a search field (49 > 8), a Cancel row; the native select sits off the hit path",
-      b1.open && b1.isOpen && b1.rows === b1.opts && b1.rows > 8 && b1.title === "Model" && b1.search && b1.onIdx === String(b1.selIdx) && b1.selOffPath && b1.cancel, b1);
+    report("B1) a tap on the Model button (Home ▸ Advanced) opens <dialog id=hnkPick>: title \"RunningHub · Model\" in the panel's language (6.212.0 — the control's full name, which a11yNamesApply put on the select, comes before the short .hsl-ctx word), one row per option, the current option marked, a search field (49 > 8), a Cancel row; the native select sits off the hit path",
+      b1.open && b1.isOpen && b1.rows === b1.opts && b1.rows > 8 && b1.title === "RunningHub \u00b7 မော်ဒယ်" && b1.search && b1.onIdx === String(b1.selIdx) && b1.selOffPath && b1.cancel, b1);
 
     const b2 = await B.page.evaluate(() => {
       const sel = document.getElementById("rhModelSel"); const ev = { input: 0, change: 0 };
@@ -249,8 +249,8 @@ async function main() {
       const my = rows2.find(r => sel.options[+r.getAttribute("data-i")].value === "my"); my.click();
       return { before, rows: rows.length, opts: sel.options.length, title, afterTh, back: state.lang, val: document.getElementById("langVal").textContent, pickTitleMy: t("pick_title") };
     });
-    report("B3) the header's language button opens the same list (title \"Language\", one row per language); ไทย switches the panel to th and paints ไทย on the button; မြန်မာ switches it back",
-      b3.before === "my" && b3.rows === b3.opts && b3.rows >= 9 && b3.title === "Language" && b3.afterTh.lang === "th" && b3.afterTh.val === "ไทย" && b3.afterTh.closed && b3.back === "my" && b3.pickTitleMy === "ရွေးပါ", b3);
+    report("B3) the header's language button opens the same list (title \"ဘာသာစကား\" — the select's nine-language name, 6.212.0 — one row per language); ไทย switches the panel to th and paints ไทย on the button; မြန်မာ switches it back",
+      b3.before === "my" && b3.rows === b3.opts && b3.rows >= 9 && b3.title === "ဘာသာစကား" && b3.afterTh.lang === "th" && b3.afterTh.val === "ไทย" && b3.afterTh.closed && b3.back === "my" && b3.pickTitleMy === "ရွေးပါ", b3);
 
     await B.page.evaluate(() => switchPage("video"));
     const b4 = await B.page.evaluate(() => {

@@ -2799,7 +2799,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.211.0";
+const PANEL_VERSION = "6.212.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -4749,9 +4749,14 @@ function hslPickFor(btn) {
   if (!wrap) return null;
   const sel = wrap.querySelector ? wrap.querySelector("select") : null;
   if (!sel) return null;
+  /* 6.212.0 — the sheet is titled with the control's full name first ("Video · Resolution", nine
+     languages, from a11yNamesApply); the short .hsl-ctx word ("Res") stays the fallback for a picker
+     the table does not know. */
+  let title = "";
+  try { title = sel.getAttribute("aria-label") || ""; } catch (e) { title = ""; }
   const ctx = wrap.querySelector(".hsl-ctx");
-  let title = ctx ? String(ctx.textContent || "").trim() : "";
-  if (!title) { try { title = sel.getAttribute("aria-label") || sel.getAttribute("title") || ""; } catch (e) { title = ""; } }
+  if (!title) title = ctx ? String(ctx.textContent || "").trim() : "";
+  if (!title) { try { title = sel.getAttribute("title") || ""; } catch (e) { title = ""; } }
   return hslPick(sel, title);
 }
 function bindHslPickers() {
@@ -6384,6 +6389,58 @@ function wireStaticGrp(grpId, hdrId) {
     grpShow(g, !open);
   });
 }
+/* 6.141.0 — the words every unnamed select gets, in the nine base languages; shared by the app
+   (a11yApplyLang) and the panel (its static-label pass). Context first, then the control. */
+const A11Y_WORDS = {
+  lang:     {my:"ဘာသာစကား",en:"Language",shn:"ၽႃႇသႃႇ",kac:"Ga",th:"ภาษา",zh:"语言",vi:"Ngôn ngữ",id:"Bahasa",ms:"Bahasa"},
+  model:    {my:"မော်ဒယ်",en:"Model",shn:"မေႃႇတႄႇ",kac:"Model",th:"โมเดล",zh:"模型",vi:"Mô hình",id:"Model",ms:"Model"},
+  quality:  {my:"အရည်အသွေး",en:"Quality",shn:"ၸၼ်ႉ",kac:"Kaja ai lam",th:"คุณภาพ",zh:"画质",vi:"Chất lượng",id:"Kualitas",ms:"Kualiti"},
+  engine:   {my:"Engine",en:"Engine",shn:"Engine",kac:"Engine",th:"เอนจิน",zh:"引擎",vi:"Engine",id:"Engine",ms:"Engine"},
+  ratio:    {my:"အချိုး",en:"Aspect ratio",shn:"သႅၼ်းႁၢင်ႈ",kac:"Aspect ratio",th:"สัดส่วนภาพ",zh:"画面比例",vi:"Tỉ lệ khung",id:"Rasio aspek",ms:"Nisbah aspek"},
+  count:    {my:"ပုံအရေအတွက်",en:"Number of images",shn:"မၢႆၼပ်ႉႁၢင်ႈ",kac:"Sumla ga-ap",th:"จำนวนภาพ",zh:"图片数量",vi:"Số ảnh",id:"Jumlah gambar",ms:"Bilangan imej"},
+  size:     {my:"အရွယ်အစား",en:"Size",shn:"သႅၼ်း",kac:"Kaba lam",th:"ขนาด",zh:"尺寸",vi:"Kích cỡ",id:"Ukuran",ms:"Saiz"},
+  res:      {my:"Resolution",en:"Resolution",shn:"Resolution",kac:"Resolution",th:"ความละเอียด",zh:"分辨率",vi:"Độ phân giải",id:"Resolusi",ms:"Resolusi"},
+  dur:      {my:"ကြာချိန်",en:"Duration",shn:"ၶၢဝ်းယၢမ်း",kac:"Aten",th:"ความยาว",zh:"时长",vi:"Thời lượng",id:"Durasi",ms:"Tempoh"},
+  kind:     {my:"အမျိုးအစား",en:"Type",shn:"မဵဝ်း",kac:"Amyu",th:"ประเภท",zh:"类型",vi:"Loại",id:"Jenis",ms:"Jenis"},
+  sort:     {my:"စီစဥ်ပုံ",en:"Sort order",shn:"လၢႆးၸႅၵ်ႇ",kac:"Hpe hkyen",th:"การเรียง",zh:"排序",vi:"Sắp xếp",id:"Urutan",ms:"Susunan"},
+  opt1:     {my:"ရွေးချယ်စရာ ၁",en:"Option 1",shn:"တၢင်းလိူၵ်ႈ 1",kac:"Lata 1",th:"ตัวเลือก 1",zh:"选项 1",vi:"Tuỳ chọn 1",id:"Opsi 1",ms:"Pilihan 1"},
+  opt2:     {my:"ရွေးချယ်စရာ ၂",en:"Option 2",shn:"တၢင်းလိူၵ်ႈ 2",kac:"Lata 2",th:"ตัวเลือก 2",zh:"选项 2",vi:"Tuỳ chọn 2",id:"Opsi 2",ms:"Pilihan 2"},
+  video:    {my:"ဗီဒီယို",en:"Video",shn:"ဝီႇတီႇဢူဝ်ႇ",kac:"Video",th:"วิดีโอ",zh:"视频",vi:"Video",id:"Video",ms:"Video"},
+  vup:      {my:"ဗီဒီယို ကြည်လင်",en:"Video upscale",shn:"ဝီႇတီႇဢူဝ်ႇ ၸႅင်ႈ",kac:"Video upscale",th:"อัปสเกลวิดีโอ",zh:"视频高清",vi:"Nâng nét video",id:"Upscale video",ms:"Upscale video"},
+  v2v:      {my:"ဗီဒီယို → ဗီဒီယို",en:"Video to video",shn:"ဝီႇတီႇဢူဝ်ႇ → ဝီႇတီႇဢူဝ်ႇ",kac:"Video → video",th:"วิดีโอ → วิดีโอ",zh:"视频转视频",vi:"Video sang video",id:"Video ke video",ms:"Video ke video"},
+  talk:     {my:"စကားပြောပုံ",en:"Talking photo",shn:"ႁၢင်ႈလၢတ်ႈ",kac:"Ga shaga sumla",th:"ภาพพูดได้",zh:"会说话的照片",vi:"Ảnh nói",id:"Foto bicara",ms:"Foto bercakap"},
+  t2i:      {my:"စာ → ပုံ",en:"Text to image",shn:"လိၵ်ႈ → ႁၢင်ႈ",kac:"Laika → sumla",th:"ข้อความ → ภาพ",zh:"文生图",vi:"Văn bản sang ảnh",id:"Teks ke gambar",ms:"Teks ke imej"},
+  gallery:  {my:"ပြခန်း",en:"Gallery",shn:"ႁွင်ႈၼႄ",kac:"Gallery",th:"แกลเลอรี",zh:"图库",vi:"Thư viện",id:"Galeri",ms:"Galeri"},
+  freeform: {my:"Freeform",en:"Freeform",shn:"Freeform",kac:"Freeform",th:"Freeform",zh:"Freeform",vi:"Freeform",id:"Freeform",ms:"Freeform"},
+  rh:       {my:"RunningHub",en:"RunningHub",shn:"RunningHub",kac:"RunningHub",th:"RunningHub",zh:"RunningHub",vi:"RunningHub",id:"RunningHub",ms:"RunningHub"},
+  recent:   {my:"မကြာသေးမီ ပုံ — ပြခန်းမှာ ဖွင့်",en:"Recent image — open in the Gallery",shn:"ႁၢင်ႈမိူဝ်ႈၵႆႈ — ပိုတ်ႇၼႂ်းႁွင်ႈၼႄ",kac:"Ya sha sumla — Gallery hta hpaw",th:"ภาพล่าสุด — เปิดในแกลเลอรี",zh:"最近图片 — 在图库中打开",vi:"Ảnh gần đây — mở trong Thư viện",id:"Gambar terbaru — buka di Galeri",ms:"Imej terkini — buka di Galeri"},
+  recentV:  {my:"မကြာသေးမီ ဗီဒီယို — ပြခန်းမှာ ဖွင့်",en:"Recent video — open in the Gallery",shn:"ဝီႇတီႇဢူဝ်ႇမိူဝ်ႈၵႆႈ — ပိုတ်ႇၼႂ်းႁွင်ႈၼႄ",kac:"Ya sha video — Gallery hta hpaw",th:"วิดีโอล่าสุด — เปิดในแกลเลอรี",zh:"最近视频 — 在图库中打开",vi:"Video gần đây — mở trong Thư viện",id:"Video terbaru — buka di Galeri",ms:"Video terkini — buka di Galeri"}
+};
+/* panel: the same controls under the panel's ids */
+const A11Y_SELECTS_PANEL = {
+  gateLang:[null,"lang"], selLang:[null,"lang"], rhModelSel:["rh","model"], rhQuality:["rh","quality"],
+  ffModel:["freeform","model"], ffRatio:["freeform","ratio"], ffCount:["freeform","count"], ffSize:["freeform","size"],
+  t2iModel:["t2i","model"], t2iRes:["t2i","res"], t2iRatio:["t2i","ratio"], galKind:["gallery","kind"], galSort:["gallery","sort"],
+  vidModel:["video","model"], vidRes:["video","res"], vidDur:["video","dur"], vidAspect:["video","ratio"], vuRes:["vup","res"],
+  vtModel:["v2v","model"], vtOpt:["v2v","opt1"], vtOpt2:["v2v","opt2"], tkModel:["talk","model"]
+};
+/* 6.211.0 — EVERY CONTROL ANNOUNCES ITSELF. The same walker that found twenty-two nameless
+   <select>s in the web app found twenty-two here. Each gets the nine-language name the app uses
+   (context first: "Video · Resolution"), on the <select> itself — which is also what hslPick reads
+   for the picker dialog's title, so the sheet that opens now says what it is choosing instead of
+   the generic "Choose" — and on the .hsl-btn the customer actually taps. Re-run on every language
+   switch through REFRESHERS. */
+function a11yNamesApply() {
+  Object.keys(A11Y_SELECTS_PANEL).forEach(function (id) {
+    const sel = document.getElementById(id); if (!sel) return;
+    const w = A11Y_SELECTS_PANEL[id];
+    const name = (w[0] ? ff9(A11Y_WORDS[w[0]]) + " \u00b7 " : "") + ff9(A11Y_WORDS[w[1]]);
+    sel.setAttribute("aria-label", name);
+    const wrap = sel.parentNode && sel.parentNode.classList && sel.parentNode.classList.contains("hsl") ? sel.parentNode : null;
+    const btn = wrap ? wrap.querySelector(".hsl-btn") : null;
+    if (btn) btn.setAttribute("aria-label", name);
+  });
+}
 /* everything a language switch or a settings reload must repaint */
 /* v6.107.1 — each repaint stands alone (see bindDiag): the card that cannot
    paint is the only card that stays unpainted, and the self-test names it. */
@@ -6471,6 +6528,8 @@ function bindSetup() {
   /* first paint + the language-switch repaint */
   bindSetupRefresh();
   REFRESHERS.push(function () { try { bindSetupRefresh(); } catch (e) { } });
+  safe("a11y:names", a11yNamesApply);   /* 6.211.0 */
+  REFRESHERS.push(function () { try { a11yNamesApply(); } catch (e) { } });
   /* the app's boot balance check: at most once an hour, only with a key */
   setTimeout(function () {
     try {
