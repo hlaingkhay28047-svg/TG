@@ -153,7 +153,7 @@ const REWRITE = [
         minute can roll over between them; the DATE is compared, the minute is
         not — a clock that stopped would fail check I of the landing counts,
         not this one. */
-  [/·\s*\d{1,2}:\d{2}\s*(AM|PM)\s*·/, "· TIME ·"],
+  [/·\s*\d{1,2}:\d{2}\s*[^·\n]{0,12}?\s*·/, "· TIME ·"],   /* 6.146.0 — the half of the day is a word in the student's language since 6.145.0 (ညနေ, not PM), so the mask takes any short word there */
   /* 2. measured storage. A browser reports its own quota and a plugin reports
         its data folder; the units are the same sentence, the numbers are the
         machine's. Both sides lose the number, so a missing FIELD still fails. */
