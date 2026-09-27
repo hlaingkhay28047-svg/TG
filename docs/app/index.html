@@ -1419,6 +1419,24 @@ body:has(#pgStudio.on) .fab-top,body:has(#pgMeitu.on) .fab-top,body:has(#pgEvoto
 #stGroupChips .chip.here{background:var(--gold);color:#1a1408;border-color:var(--gold)}
 #stGroupChips .chip.here.edited{box-shadow:inset 0 -3px 0 var(--gold-hi)}
 #stGroupChips .chip{flex:0 0 auto;white-space:nowrap;min-height:40px;padding:4px 11px;font-size:var(--fs-2xs)}
+/* 6.140.0 — Recent row: same one-line scroll as the group strip, a muted lead-in word, gold chips */
+#stRecent{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px;margin-top:4px;align-items:center}
+#stRecent::-webkit-scrollbar{display:none}
+#stRecent .st-recent-lb{flex:0 0 auto;font-size:var(--fs-2xs);color:var(--muted);margin-right:4px;white-space:nowrap}
+#stRecent .chip{flex:0 0 auto;white-space:nowrap;min-height:34px;padding:3px 10px;font-size:var(--fs-2xs);border-color:rgba(217,164,65,.45)}
+.st-ctl.st-flash{outline:2px solid var(--gold);outline-offset:2px;border-radius:8px;transition:outline-color .6s}
+/* the draft card in the empty picker */
+.st-draft{display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px;border:1px solid rgba(217,164,65,.35);border-radius:12px;background:rgba(255,255,255,.03)}
+.st-draft img{width:72px;height:72px;object-fit:cover;border-radius:8px;flex:0 0 auto}
+.st-draft-txt{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;min-width:0}
+.st-draft-txt b{font-size:var(--fs-sm);color:var(--cream)}
+.st-draft .row{flex:0 0 auto;display:flex;gap:6px}
+/* the keyboard sheet: a small card over the stage, dismissed by any tap */
+.st-keys{position:fixed;right:16px;bottom:16px;z-index:60;background:#15130f;border:1px solid rgba(217,164,65,.45);border-radius:14px;padding:12px 14px;box-shadow:0 12px 40px rgba(0,0,0,.5);max-width:min(92vw,360px)}
+.st-keys-h{font-size:var(--fs-sm);color:var(--gold);font-weight:700;margin-bottom:8px}
+.st-keys-row{display:flex;gap:10px;align-items:center;margin:4px 0;font-size:var(--fs-2xs);color:var(--cream)}
+.st-keys-row kbd{flex:0 0 auto;min-width:112px;font-family:inherit;font-size:var(--fs-2xs);color:var(--gold-hi);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:2px 6px}
+@media (pointer:coarse){ #stKeysTgl{display:none} }
 /* v4.27.1 jump-bar diet: compact drops the two-row top (suite tabs + search) to one 44-50px chip row;
    #stSearch stays in the DOM (search still fully functional) — the #stSearchTgl chip swaps it back in */
 #stSearchTgl{display:none}#pgStudio.stcompact #stJumpTop,#pgMeitu.stcompact #stJumpTop,#pgEvoto.stcompact #stJumpTop{display:none}#pgStudio.stcompact #stSearchTgl,#pgMeitu.stcompact #stSearchTgl,#pgEvoto.stcompact #stSearchTgl{display:inline-flex;min-width:44px;min-height:44px;justify-content:center;position:sticky;left:0;z-index:1;background:var(--ink)}#pgStudio.stcompact #stGroupChips,#pgMeitu.stcompact #stGroupChips,#pgEvoto.stcompact #stGroupChips{margin-top:2px}#pgStudio.stcompact #stJumpBar.searchopen #stJumpTop,#pgMeitu.stcompact #stJumpBar.searchopen #stJumpTop,#pgEvoto.stcompact #stJumpBar.searchopen #stJumpTop{display:flex;margin-top:2px}#pgStudio.stcompact #stJumpBar.searchopen #stSuiteTabs,#pgMeitu.stcompact #stJumpBar.searchopen #stSuiteTabs,#pgEvoto.stcompact #stJumpBar.searchopen #stSuiteTabs{display:none}#pgStudio.stcompact #stJumpBar.searchopen #stGroupChips,#pgMeitu.stcompact #stJumpBar.searchopen #stGroupChips,#pgEvoto.stcompact #stJumpBar.searchopen #stGroupChips{display:none}#pgStudio.stcompact #stJumpBar.searchopen #stSearch,#pgMeitu.stcompact #stJumpBar.searchopen #stSearch,#pgEvoto.stcompact #stJumpBar.searchopen #stSearch{min-height:44px}
@@ -3635,6 +3653,8 @@ html.splashing #splash{display:flex}
       <input class="inp" id="stSearch">
     </div>
     <div class="chips" id="stGroupChips"><button class="chip" id="stSearchTgl"><svg class="ic-s" aria-hidden="true" focusable="false"><use href="#i-search"/></svg></button></div>
+    <!-- 6.140.0 — the eight controls touched last, drawn by the jump bar; hidden while empty -->
+    <div class="chips" id="stRecent" style="display:none"></div>
   </div>
 
   <section class="card" id="stRecipeCard">
@@ -4571,10 +4591,10 @@ html.splashing #splash{display:flex}
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
 <script src="data/imagine.js?v=2b97eb6a9d09"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=9d2cf740d741"></script>
+<script src="data/album-module.js?v=a4e203fe82f7"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=525c22c69a33"></script>
-<script src="data/whatsnew.js?v=990af9a16ac3"></script>
+<script src="data/whatsnew.js?v=a16d73c134a0"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -14344,7 +14364,7 @@ function renderRsPicker(){
     var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="before"; d.appendChild(im);
     var x=el("button","x"); x.innerHTML=icn("i-close");
     x.setAttribute("aria-label",t("lb_remove_image"));
-    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.rsOrig=null; state.cmpBase=null; state.imgRoles=null; stDropFull(); renderRefs(); };
+    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.rsOrig=null; state.cmpBase=null; state.imgRoles=null; stDropFull(); if(ST&&ST.draftClear) ST.draftClear(); renderRefs(); };   /* 6.140.0 — taking the photo off the stage is a decision, so the draft goes with it (app-only hook; the panel has no draft) */
     d.appendChild(x);
   } else {
     /* V2 hero empty-state: same big dropzone treatment as Studio's stPicker */
@@ -14358,6 +14378,7 @@ function renderRsPicker(){
   }
   d.appendChild(el("span","tag", L9({my:"မူရင်း",en:"Before",shn:"မူႇလ",kac:"Shawng",th:"ก่อน",zh:"之前",vi:"Trước",id:"Sebelum",ms:"Sebelum"})));
   host.appendChild(d);
+  if(!ref && ST && ST.draftOffer) ST.draftOffer(host);   /* 6.140.0 — V2 shares the Before slot, so it offers the draft too (app-only hook; ST is still hoisted-undefined on the boot render) */
   /* v4.28: after To-Ref replaced IMAGE 1 with a result, offer the true
      original back (non-destructive chains) */
   if(state.rsOrig){
@@ -17520,7 +17541,7 @@ var ST = {
   undoSnap:null,
   /* v4.27.1 stage UI prefs — mode/pipCorner persist in hnk_st_ui (NOT state.st.v: stReset
      wipes that and Reset must never change the stage size); zoom is session-only */
-  ui:{mode:"auto",pipCorner:"tr",zoom:{s:1,x:0,y:0}},
+  ui:{mode:"auto",pipCorner:"tr",zoom:{s:1,x:0,y:0},recent:[]},
   /* v6.23.0 — adaptive preview quality rung (see stQObserve): i = buffer rung,
      pi = drag-proxy rung, counters of consecutive fast/slow frames, and whether
      a changed rung still waits for a clean photo to rebuild the buffer */
@@ -17532,12 +17553,29 @@ var ST_UI_LS="hnk_st_ui"; /* same house pattern as ST_RECIPE_LS */
     var u=JSON.parse(localStorage.getItem(ST_UI_LS)||"{}");
     if(u.mode==="compact"||u.mode==="mini"||u.mode==="auto") ST.ui.mode=u.mode;
     if(/^(tl|tr|bl|br)$/.test(String(u.pipCorner))) ST.ui.pipCorner=u.pipCorner;
+    /* 6.140.0 — the eight controls this studio touched last, so they are one tap away next time */
+    if(Array.isArray(u.recent)) ST.ui.recent=u.recent.filter(function(x){ return typeof x==="string"&&x; }).slice(0,8);
     /* v6.23.0 — the measured quality rung, per device class (inline: this block is
        lifted into the panel's studio slice, which carries no ladder) */
     var qc=window.innerWidth<720?"phone":"desktop", qq=u.q&&u.q[qc]; if(qq){ ST.q.i=qq.i|0; ST.q.pi=qq.pi|0; }
   }catch(e){}
 })();
-function stUiSave(){ try{ var u={}; try{ u=JSON.parse(localStorage.getItem(ST_UI_LS)||"{}")||{}; }catch(e0){} u.mode=ST.ui.mode; u.pipCorner=ST.ui.pipCorner; localStorage.setItem(ST_UI_LS,JSON.stringify(u)); }catch(e){} }
+function stUiSave(){ try{ var u={}; try{ u=JSON.parse(localStorage.getItem(ST_UI_LS)||"{}")||{}; }catch(e0){} u.mode=ST.ui.mode; u.pipCorner=ST.ui.pipCorner; u.recent=ST.ui.recent||[]; localStorage.setItem(ST_UI_LS,JSON.stringify(u)); }catch(e){} }
+/* 6.140.0 — RECENT CONTROLS. Retouch A carries 163 controls and Retouch B 213, in seventeen groups
+   each, and a working studio uses the same six or eight of them on every face. Every slider tap
+   moves its id to the front of a list of eight; the jump bar draws that list as chips under the
+   group strip, and a chip opens the group, scrolls the row into view and puts the focus on it. The
+   list is remembered with the other stage preferences (hnk_st_ui), not with the photo's edit —
+   it is a habit of the studio, not a property of the picture. Data here, drawing in the jump bar. */
+function stRecentTouch(id){
+  if(!id||typeof id!=="string") return;
+  var r=ST.ui.recent||[];
+  if(r[0]===id) return;                       /* a drag fires this per pixel; only the order matters */
+  r=r.filter(function(x){ return x!==id; }); r.unshift(id);
+  ST.ui.recent=r.slice(0,8);
+  stUiSave();
+  if(ST.recentRender) ST.recentRender();
+}
 /* sv keys that feed the settle pipeline (dirty checks + settle "need" checks) */
 ST.pipeSv=["st_hsl_","st_curve_","st_grade_","st_bw","st_leak","st_geo","st_wbAuto","st_bgEnh","st_frame"];
 /* v4.71 — tile geometry lives up here, ahead of every renderer that uses it.
@@ -22126,6 +22164,60 @@ function stFaceScanNow(buf,tok){
     w.postMessage({ id:id, bitmap:bmp, w:sw, h:sh },[bmp]);
   }).catch(function(){});
 }
+/* 6.140.0 — THE DRAFT. Every slider in this studio survives a reload (state.st is saved), and
+   the photograph never did: base64 is too large for localStorage, so a phone that reloaded, a tab
+   the browser threw away, a crash, all came back to a full set of sliders and an empty stage. The
+   picture now goes to IndexedDB (the same store the Gallery and the albums use) the moment it is
+   loaded, and the empty picker offers it back: "Continue your last edit", with the thumbnail, or
+   Discard. One record, replaced by every new photo, dropped by Discard and by taking the photo
+   off the stage. Retouch V2 shares the slot, so its empty picker offers the same card. The panel
+   has no counterpart — its picture is a Photoshop layer. */
+var ST_DRAFT_KEY="hnk_st_draft_v1";
+function stDraftSave(img,bitmap){
+  if(!img||!img.b64||typeof kvSet!=="function") return;
+  clearTimeout(ST._draftT);
+  var th="";
+  try{ /* a 144px cover tile, so the offer never decodes a 4000px photograph to draw a thumbnail */
+    var c=document.createElement("canvas"); c.width=144; c.height=144;
+    var sc=Math.max(144/bitmap.naturalWidth,144/bitmap.naturalHeight), dw=bitmap.naturalWidth*sc, dh=bitmap.naturalHeight*sc;
+    c.getContext("2d").drawImage(bitmap,(144-dw)/2,(144-dh)/2,dw,dh);
+    th=c.toDataURL("image/jpeg",0.8);
+  }catch(e){}
+  ST._draftT=setTimeout(function(){ kvSet(ST_DRAFT_KEY,{mime:img.mime,b64:img.b64,w:img.w,h:img.h,th:th,ts:Date.now()}).catch(function(){}); },800);
+}
+function stDraftClear(){
+  clearTimeout(ST._draftT);
+  if(typeof kvDel==="function") kvDel(ST_DRAFT_KEY).catch(function(){});
+  var cards=document.querySelectorAll(".st-draft"); for(var i=0;i<cards.length;i++) cards[i].parentNode.removeChild(cards[i]);
+}
+function stDraftOffer(host){
+  if(typeof kvGet!=="function"||!host) return;
+  kvGet(ST_DRAFT_KEY).then(function(d){
+    if(!d||!d.b64||state.refs[0]||host.querySelector(".st-draft")) return;
+    if(!document.body.contains(host)) return;
+    var card=el("div","st-draft"); if(!document.getElementById("stDraftCard")) card.id="stDraftCard";
+    var im=document.createElement("img"); im.src=d.th||("data:"+d.mime+";base64,"+d.b64); im.alt=""; card.appendChild(im);
+    var txt=el("div","st-draft-txt");
+    txt.appendChild(el("b",null,L9({my:"နောက်ဆုံး ပြင်ခဲ့တဲ့ပုံ ဆက်ပြင်မလား?",en:"Continue your last edit?",shn:"သိုပ်ႇမႄးၶႅပ်းၵမ်းလိုၼ်းသုတ်းႁိုဝ်?",kac:"Hpang jahtum galai ai sumla hpe matut na i?",th:"ทำต่อจากรูปที่แก้ล่าสุดไหม?",zh:"继续上次的修图？",vi:"Tiếp tục ảnh sửa lần trước?",id:"Lanjutkan suntingan terakhir?",ms:"Teruskan suntingan terakhir?"})));
+    var when=new Date(d.ts||Date.now()), p2=function(x){ return (x<10?"0":"")+x; };
+    txt.appendChild(el("span","mut",p2(when.getDate())+"/"+p2(when.getMonth()+1)+" "+p2(when.getHours())+":"+p2(when.getMinutes())+" · "+(d.w||"?")+"×"+(d.h||"?")));
+    card.appendChild(txt);
+    var row=el("div","row");
+    var go=el("button","btn btn-gold st-draft-go"); go.type="button";
+    go.textContent=L9({my:"ဆက်ပြင်မယ်",en:"Continue",shn:"သိုပ်ႇမႄး",kac:"Matut na",th:"ทำต่อ",zh:"继续",vi:"Tiếp tục",id:"Lanjutkan",ms:"Teruskan"});
+    go.onclick=function(){ stLoadImage("data:"+d.mime+";base64,"+d.b64); };
+    var no=el("button","btn st-draft-drop"); no.type="button";
+    no.textContent=L9({my:"ဖယ်လိုက်မယ်",en:"Discard",shn:"မွတ်ႇပႅတ်ႈ",kac:"Kabai kau",th:"ทิ้ง",zh:"放弃",vi:"Bỏ",id:"Buang",ms:"Buang"});
+    no.onclick=function(){ stDraftClear(); };
+    row.appendChild(go); row.appendChild(no); card.appendChild(row);
+    host.appendChild(card);
+  }).catch(function(){});
+}
+/* the lifted pickers reach the draft through ST, so the panel build (which has no IndexedDB
+   photo store and no stLoadImage) simply finds nothing there */
+ST.draftOffer=stDraftOffer; ST.draftClear=stDraftClear;
+/* the V2 picker drew its empty state at boot, before this line ran — offer there now */
+try{ if(!state.refs[0]) stDraftOffer($("rsPicker")); }catch(e){}
 function stLoadImage(dataUrl,opts){
   opts=opts||{};
   var img=new Image();
@@ -22134,6 +22226,7 @@ function stLoadImage(dataUrl,opts){
     var m=/^data:([^;]+);base64,(.*)$/.exec(dataUrl);
     state.st.img = m?{mime:m[1],b64:m[2],w:ST.srcW,h:ST.srcH}:null;
     ST.orig = state.st.img;
+    stDraftSave(state.st.img,img);   /* 6.140.0 — the picture survives a reload from here on */
     if(!opts.fromRef && m){ state.refs[0]={mime:m[1],b64:m[2],label:"studio"}; renderRefs(); }
     ST.maskCache=null; ST.lutKey=""; ST.geoCache=null; ST.faceLM=null;
     ST.heals=[]; /* v4.44: heal taps belong to the previous photo */
@@ -22586,6 +22679,7 @@ function stSlider(o){ /* {id,label,min,max,def,get,set} -> element; registers a 
     val.textContent=fmt(v); val.className="st-val"+(v!==o.def?" on":"");
     stTrackFill(inp,v,o.min,o.max);
     o.set(v);
+    stRecentTouch(o.id);   /* 6.140.0 */
   };
   /* dblclick = straight to the default (MUST #8) */
   inp.ondblclick=function(){ inp.value=String(o.def); prev=null; inp.oninput(); };
@@ -25630,7 +25724,7 @@ function renderStPicker(){
     var im=document.createElement("img"); im.src="data:"+ref.mime+";base64,"+ref.b64; im.alt="before"; d.appendChild(im);
     var x=el("button","x"); x.innerHTML=icn("i-close");
     x.setAttribute("aria-label",t("lb_remove_image"));
-    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.rsOrig=null; state.cmpBase=null; state.imgRoles=null; stDropFull(); renderRefs(); };
+    x.onclick=function(ev){ ev.stopPropagation(); state.refs[0]=null; state.rsOrig=null; state.cmpBase=null; state.imgRoles=null; stDropFull(); if(ST&&ST.draftClear) ST.draftClear(); renderRefs(); };   /* 6.140.0 — taking the photo off the stage is a decision, so the draft goes with it (app-only hook; the panel has no draft) */
     d.appendChild(x);
   } else {
     /* MUST #9: large dropzone empty-state — dead controls stay hidden until a photo exists */
@@ -25644,6 +25738,7 @@ function renderStPicker(){
   }
   d.appendChild(el("span","tag",L9({my:"မူရင်း",en:"Before"})));
   host.appendChild(d);
+  if(!ref && ST.draftOffer) ST.draftOffer(host);   /* 6.140.0 — an empty stage offers the last photo back (app-only hook) */
   var tg=$("stTarget"); if(tg) tg.style.display=ref?"":"none";
   stSyncFromRef();
 }
@@ -25681,7 +25776,12 @@ function renderStPicker(){
    Ctrl/Cmd+Z undo · Ctrl+Shift+Z / Ctrl+Y redo · hold B = Before ·
    Ctrl/Cmd+Enter = GENERATE. */
 (function(){
-  function typing(ev){ return /INPUT|TEXTAREA|SELECT/.test((ev.target&&ev.target.tagName)||""); }
+  function typing(ev){ /* 6.140.0 — a focused slider, checkbox or button is not "typing": the studio's own controls keep the keyboard alive */
+    var t=ev.target, tn=(t&&t.tagName)||"";
+    if(/TEXTAREA|SELECT/.test(tn)) return true;
+    if(tn==="INPUT") return !/^(range|checkbox|radio|button)$/.test(t.type||"text");
+    return !!(t&&t.isContentEditable);
+  }
   document.addEventListener("keydown",function(ev){
     if(!ST_SUITE_PAGE[curPage]||typing(ev)) return;
     var mod=ev.ctrlKey||ev.metaKey;
@@ -25689,10 +25789,54 @@ function renderStPicker(){
     else if(mod && (ev.key==="y"||ev.key==="Y"||(ev.shiftKey&&(ev.key==="z"||ev.key==="Z")))){ ev.preventDefault(); stRedo(); }
     else if(mod && ev.key==="Enter"){ ev.preventDefault(); if(!stBusy) $("btnStGen").click(); }
     else if((ev.key==="b"||ev.key==="B") && !mod && !ev.repeat && ST.holdDown){ ev.preventDefault(); ST.holdDown(); }
+    /* 6.140.0 — THE REST OF THE KEYBOARD. A retoucher at a desk checks the same three places on
+       every face and flips before/after a hundred times a day; each of those was a mouse trip to a
+       chip. Space peeks like B (Photoshop's own habit), [ and ] step the loupe, 0 fits, 1 is 100%,
+       F E L frame the face, eyes and lips when a face was found, S is the A|B split, P pins, and ?
+       draws the sheet. None fire while a control is being typed into, and Space leaves a focused
+       button alone so it still presses it. */
+    else if(!mod && !ev.altKey && ST.srcBitmap){
+      var tg=ev.target, tagN=(tg&&tg.tagName)||"";
+      if(ev.key===" "){ if(/^(BUTTON|A|SUMMARY|INPUT)$/.test(tagN)) return; ev.preventDefault(); if(!ev.repeat && ST.holdDown) ST.holdDown(); }
+      else if(ev.key==="]"||ev.key==="["){ ev.preventDefault(); if(ST.zoomTo) ST.zoomTo((ST.ui.zoom.s||1)*(ev.key==="]"?1.15:0.87)); }
+      else if(ev.key==="0"){ ev.preventDefault(); var z0=$("stZpFit"); if(z0) z0.click(); }
+      else if(ev.key==="1"){ ev.preventDefault(); var z1=$("stZp100"); if(z1) z1.click(); }
+      else if(ev.key==="f"||ev.key==="F"){ var zf=$("stZpFace"); if(zf&&zf.offsetParent){ ev.preventDefault(); zf.click(); } }
+      else if(ev.key==="e"||ev.key==="E"){ var ze=$("stZpEyes"); if(ze&&ze.offsetParent){ ev.preventDefault(); ze.click(); } }
+      else if(ev.key==="l"||ev.key==="L"){ var zl=$("stZpLips"); if(zl&&zl.offsetParent){ ev.preventDefault(); zl.click(); } }
+      else if(ev.key==="s"||ev.key==="S"){ ev.preventDefault(); var sp=$("stSplit"); if(sp) sp.click(); }
+      else if(ev.key==="p"||ev.key==="P"){ ev.preventDefault(); var pn=$("stPin"); if(pn) pn.click(); }
+      else if(ev.key==="?"){ ev.preventDefault(); stKeysSheet(); }
+    }
+    else if(ev.key==="?" && !mod){ ev.preventDefault(); stKeysSheet(); }
   });
   document.addEventListener("keyup",function(ev){
-    if((ev.key==="b"||ev.key==="B") && ST.holdUp) ST.holdUp();
+    if((ev.key==="b"||ev.key==="B"||ev.key===" ") && ST.holdUp) ST.holdUp();
   });
+  /* the sheet: what the keys do, in the studio's language, closed by ? again, Esc or a tap */
+  window.stKeysSheet=function(){
+    var old=$("stKeysSheet"); if(old){ if(old._close) old._close(); else old.remove(); return; }
+    var sh=el("div","st-keys"); sh.id="stKeysSheet"; sh.setAttribute("role","dialog");
+    var h=el("div","st-keys-h",L9({my:"ကီးဘုတ် — Retouch",en:"Keyboard — Retouch",shn:"ၶီးပွတ်ႉ — Retouch",kac:"Keyboard — Retouch",th:"คีย์บอร์ด — Retouch",zh:"键盘 — 修图",vi:"Bàn phím — Retouch",id:"Keyboard — Retouch",ms:"Papan kekunci — Retouch"}));
+    sh.appendChild(h);
+    var rows=[
+      ["Space · B", L9({my:"ဖိထားရင် မူရင်း ပြ",en:"Hold to see the original",shn:"ၼဵၵ်းဝႆႉ ၼႄဢၼ်ၵဝ်ႇ",kac:"Dip da yang mying hpe madun",th:"กดค้างเพื่อดูต้นฉบับ",zh:"按住查看原图",vi:"Giữ để xem ảnh gốc",id:"Tahan untuk melihat aslinya",ms:"Tahan untuk melihat asal"})],
+      ["[ · ]", L9({my:"ချုံ့ · ချဲ့",en:"Zoom out · in",shn:"ယွမ်း · ယႂ်ႇ",kac:"Kaji · kaba",th:"ซูมออก · เข้า",zh:"缩小 · 放大",vi:"Thu nhỏ · phóng to",id:"Perkecil · perbesar",ms:"Kecilkan · besarkan"})],
+      ["0 · 1", L9({my:"ပုံအပြည့် · 100%",en:"Fit · 100%",shn:"တဵမ် · 100%",kac:"Yawng · 100%",th:"พอดี · 100%",zh:"适应 · 100%",vi:"Vừa · 100%",id:"Pas · 100%",ms:"Muat · 100%"})],
+      ["F · E · L", L9({my:"မျက်နှာ · မျက်လုံး · နှုတ်ခမ်း ချဲ့",en:"Frame the face · eyes · lips",shn:"ၼႃႈ · မၢၵ်ႇတႃ · သူပ်း",kac:"Myi man · myi · n-gup",th:"หน้า · ตา · ปาก",zh:"脸 · 眼 · 唇",vi:"Mặt · mắt · môi",id:"Wajah · mata · bibir",ms:"Muka · mata · bibir"})],
+      ["S", L9({my:"A|B ခွဲကြည့်",en:"A|B split",shn:"A|B ၽႄ",kac:"A|B ga",th:"แบ่ง A|B",zh:"A|B 分屏",vi:"Chia A|B",id:"Belah A|B",ms:"Belah A|B"})],
+      ["P", L9({my:"မှတ်ထား (pin)",en:"Pin this state",shn:"မၢႆဝႆႉ",kac:"Pin da",th:"ปักหมุด",zh:"钉住",vi:"Ghim",id:"Sematkan",ms:"Semat"})],
+      ["Ctrl+Z · Ctrl+Y", L9({my:"နောက်ပြန် · ရှေ့ပြန်",en:"Undo · redo",shn:"ထွၼ် · ႁဵတ်းၶိုၼ်း",kac:"Bai · shawng",th:"เลิกทำ · ทำซ้ำ",zh:"撤销 · 重做",vi:"Hoàn tác · làm lại",id:"Urungkan · ulangi",ms:"Buat asal · buat semula"})],
+      ["Ctrl+Enter", "GENERATE"],
+      ["?", L9({my:"ဒီစာရင်း ပြ/ဖျောက်",en:"Show or hide this sheet",shn:"ၼႄ/မွတ်ႇ",kac:"Madun/makoi",th:"แสดง/ซ่อน",zh:"显示/隐藏",vi:"Hiện/ẩn",id:"Tampil/sembunyi",ms:"Tunjuk/sorok"})]
+    ];
+    rows.forEach(function(r){ var d=el("div","st-keys-row"); d.appendChild(el("kbd",null,r[0])); d.appendChild(el("span",null,r[1])); sh.appendChild(d); });
+    var esc=function(ev){ if(ev.key==="Escape"){ ev.stopPropagation(); close(); } };
+    var close=function(){ if(sh.parentNode) sh.parentNode.removeChild(sh); document.removeEventListener("keydown",esc,true); };
+    sh.onclick=close; sh._close=close;
+    document.addEventListener("keydown",esc,true);
+    document.body.appendChild(sh);
+  };
 })();
 /* Reset threw away every slider, chip and queued edit on one tap, with no
    confirmation and nothing to return to — it even nulled the single snapshot
@@ -27348,6 +27492,13 @@ function stColsFit(){
   ztg.title=ztt; ztg.setAttribute("aria-label",ztt);
   ztg.onclick=function(){ if(!ST.srcBitmap) return; var on=!(stgEl&&stgEl.classList.contains("zoomrow")); if(stgEl) stgEl.classList.toggle("zoomrow",on); ztg.classList.toggle("on",on); };
   if(rail) rail.appendChild(ztg);
+  /* 6.140.0 — the keyboard sheet, one chip; the coarse-pointer rule hides it on a phone */
+  var ktg=el("button","chip st-ov st-keystgl"); ktg.id="stKeysTgl"; ktg.type="button";
+  ktg.textContent="⌨";
+  var ktt=L9({my:"ကီးဘုတ် shortcut စာရင်း",en:"Keyboard shortcuts",shn:"ၶီးပွတ်ႉ shortcut",kac:"Keyboard shortcut ni",th:"คีย์ลัด",zh:"键盘快捷键",vi:"Phím tắt",id:"Pintasan keyboard",ms:"Pintasan papan kekunci"});
+  ktg.title=ktt; ktg.setAttribute("aria-label",ktt);
+  ktg.onclick=function(){ if(window.stKeysSheet) window.stKeysSheet(); };
+  if(rail) rail.appendChild(ktg);
   function presetsSync(){
     var has=!!faceRegion("eyes");
     [fz,ez,lz].forEach(function(b){ b.style.display=has?"":"none"; });
@@ -27619,6 +27770,45 @@ function stColsFit(){
     g.jumpChip=c;
     strip.appendChild(c);
   });
+  /* 6.140.0 — RECENT, under the group strip. The eight controls touched last, each a chip that
+     opens the group, scrolls the row into view and focuses it — on the other suite page too, the
+     way the group chips already switch. The row hides itself until there is something to show. */
+  var recHost=$("stRecent");
+  function stRecentGo(id){
+    var inp=document.getElementById(id); if(!inp) return;
+    var g=null, i;
+    for(i=0;i<ST.groups.length;i++){ if(ST.groups[i].el&&ST.groups[i].el.contains(inp)){ g=ST.groups[i]; break; } }
+    var go=function(){
+      if(g){ g.el.classList.remove("hide"); g.el.className="grp open"; }
+      var row=inp.parentNode;
+      while(row&&row!==g.el&&!(row.classList&&row.classList.contains("st-ctl"))) row=row.parentNode;
+      if(row===g.el) row=null;
+      (row||inp).scrollIntoView({block:"center"});
+      if(row){ row.classList.add("st-flash"); setTimeout(function(){ row.classList.remove("st-flash"); },1400); }
+      try{ inp.focus({preventScroll:true}); }catch(e){}
+    };
+    var want=g?stSuitePageOf(g):curPage;
+    if(curPage!==want){ switchPage(want); setTimeout(go,60); } else go();
+  }
+  function stRecentRender(){
+    if(!recHost) return;
+    var ids=(ST.ui.recent||[]).filter(function(id){ return !!document.getElementById(id); });
+    recHost.innerHTML="";
+    if(!ids.length){ recHost.style.display="none"; return; }
+    recHost.style.display="";
+    recHost.appendChild(el("span","st-recent-lb",L9({my:"မကြာသေးမီ",en:"Recent",shn:"မိူဝ်ႈၵႆႈ",kac:"Ya sha",th:"ล่าสุด",zh:"最近",vi:"Gần đây",id:"Terakhir",ms:"Terkini"})));
+    ids.forEach(function(id){
+      var inp=document.getElementById(id), gi;
+      var c=el("button","chip st-recent-chip"); c.type="button";
+      c.textContent=(inp&&inp.getAttribute("aria-label"))||id;
+      for(gi=0;gi<ST.groups.length;gi++){ if(ST.groups[gi].el&&ST.groups[gi].el.contains(inp)){ c.title=ST.groups[gi].title; break; } }
+      c.setAttribute("data-for",id);
+      c.onclick=function(){ stRecentGo(id); };
+      recHost.appendChild(c);
+    });
+  }
+  ST.recentRender=stRecentRender;
+  stRecentRender();
   /* feature search — Burmese (rendered text) + English (per-group keywords) both indexed */
   var inp=$("stSearch");
   inp.placeholder=L9({my:"Feature ရှာ…",en:"Search features…"});
@@ -31212,7 +31402,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.139.0";
+var APP_VER="6.140.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

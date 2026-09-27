@@ -1269,3 +1269,12 @@ jobs:
       # release announced itself, and the panel has no archive to compare against.
       - name: Verify the app does not measure text nobody can see
         run: PORT=8931 node test/verify_boot_cost_6139.js
+
+      # 6.140.0 — Retouch A/B keeps the photo, remembers the controls and answers the keyboard.
+      # The survey against Meitu and Evoto found the feature list already level and the hour of
+      # work around it not: the photograph never survived a reload (state.st did, base64 does not
+      # fit localStorage) — it now goes to IndexedDB as it loads and the empty picker offers it
+      # back; the eight controls touched last are chips under the jump bar, lifted to the panel;
+      # and Space [ ] 0 1 F E L S P ? join Ctrl+Z/Y/Enter and B, with a sheet in nine languages.
+      - name: Verify Retouch A/B keeps the photo, remembers the controls and answers the keyboard
+        run: PORT=8931 node test/verify_retouch_workflow_6140.js

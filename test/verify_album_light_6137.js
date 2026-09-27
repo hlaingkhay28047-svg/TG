@@ -37,9 +37,9 @@ const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
 const PANELMOD = read("panel/js/hnk_album.js");
 const A = require(path.join(ROOT, "tools", "lib", "app-data.js"));
-const VER = "6.139.0", PVER = "6.210.0";
+const VER = "6.140.0", PVER = "6.211.0";
 const WAVE_V = "6.137.0";   /* this wave's own What's New row; VER moves on with every release */
-const COUNT = 281;
+const COUNT = 282;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const KEYS = ["alb_ev", "alb_ev_dn", "alb_ev_up", "alb_ev_zero", "alb_ct", "alb_ct_dn", "alb_ct_up", "alb_ct_zero"];
 const PORT = Number(process.env.PORT || 8931);
