@@ -2102,6 +2102,7 @@ var ALBUM = (function(){
       var r = document.createElement("input");
       r.type = "range"; r.id = "albRange" + key.toUpperCase(); r.className = "alb-rng";
       r.min = lo; r.max = hi; r.step = step; r.value = String(cur[key]);
+      n.setAttribute("aria-label", label); r.setAttribute("aria-label", label);   /* 6.141.0 — the caption is the name */
       n.oninput = function(){ var v = parseFloat(n.value); if (isFinite(v)) commit(key, v); };
       r.oninput = function(){ var v = parseFloat(r.value); if (isFinite(v)) commit(key, v); };
       row.appendChild(n); row.appendChild(r);
@@ -2112,6 +2113,7 @@ var ALBUM = (function(){
 
     var opts = E("div","alb-opts"); opts.id = "albFreeOpts";
     var us = document.createElement("select"); us.id = "albCustomUnit"; us.className = "inp alb-sel";
+    us.setAttribute("aria-label", L("alb_unit"));   /* 6.141.0 */
     ["in","cm","mm","px"].forEach(function(u){
       var o = document.createElement("option"); o.value = u; o.textContent = u;
       if (unit === u) o.selected = true; us.appendChild(o);
@@ -2847,6 +2849,7 @@ var ALBUM = (function(){
         /* the face for this one line: Auto (the pairing decides) or a family by name */
         var sel = document.createElement("select");
         sel.className = "inp alb-fontsel"; sel.id = "albFont_" + role.id;
+        sel.setAttribute("aria-label", L("alb_font") + " \u00b7 " + pick9(role.label));   /* 6.141.0 — "Font · Title" */
         var o0 = document.createElement("option");
         o0.value = ""; o0.textContent = L("alb_font_auto");
         if (!(cur && cur.font)) o0.selected = true;
@@ -4756,7 +4759,7 @@ var ALBUM = (function(){
       return Promise.resolve(sendFile(bytes, "hnk-album-library.json", "application/json")).then(function(){ H.toast(L("alb_lib_exported").replace("{N}", String(out.records.length)).replace("{M}", String(Math.max(1, Math.round(bytes.length/1048576)))), "ok"); return true; });
     }).catch(function(){ H.toast(L("alb_export_fail"), "err"); return false; });
   }
-  var APP_MARK = "6.140.0";
+  var APP_MARK = "6.141.0";
   function utf8Bytes(s){
     var out = [], i, c;
     for (i=0;i<s.length;i++){

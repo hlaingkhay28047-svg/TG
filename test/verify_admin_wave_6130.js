@@ -34,7 +34,7 @@ const HTML = read("docs/admin/index.html");
 const CSS = read("docs/admin/admin.css");
 const JSRC = read("docs/admin/admin.js");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.140.0", PVER = "6.211.0", COUNT = 282;
+const VER = "6.141.0", PVER = "6.212.0", COUNT = 283;
 
 let pass = 0, fail = 0;
 function report(name, ok, detail) {
