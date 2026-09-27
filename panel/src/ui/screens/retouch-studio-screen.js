@@ -663,6 +663,16 @@ function build() {
    same, and shows only the card that belongs to the page. */
 var SUITE_CARD = { pageMeitu: "stMuCard", pageEvoto: "stEvCard" };
 function mount(pageKey) {
+  /* 6.215.0 — on the first visit to a suite page the block is built IN that page's mount point instead of
+     parked in #stDock and moved there afterwards: the page is already on screen when the shell asks for the
+     mount, so there is no move, no second layout pass for a moved block (6.79.0, still there for the later
+     moves between Retouch A and B) and no extra layout inside the switch. Retouch Pro and a rebuild keep
+     the dock. Measured at 4x CPU: the Meitu cold switch fell from ~0.9s to ~0.6s. */
+  if (!API && (pageKey === "meitu" || pageKey === "evoto")) {
+    var page0 = $((pageKey === "evoto") ? "pageEvoto" : "pageMeitu"), cols0 = $("stCols");
+    var mnt0 = page0 && page0.querySelector ? page0.querySelector(".st-mount") : null;
+    if (mnt0 && cols0 && cols0.parentNode !== mnt0) { try { mnt0.appendChild(cols0); } catch (e0) { } }
+  }
   if (!API && !build()) return;
   if (builtLang !== lang()) rebuild();
   /* Retouch Pro is a page of its own — it has no shared block to move, only
@@ -679,7 +689,7 @@ function mount(pageKey) {
   if (!page || !dock || !cols) return;
   var mnt = page.querySelector ? page.querySelector(".st-mount") : null;
   if (mnt && cols.parentNode !== mnt) { mnt.appendChild(cols); stRelayoutSoon(cols); }
-  stTwoColBind(); stTwoCol();   /* 6.187.0 — one or two columns, from the block's own width */
+  stTwoColBind(); stTwoColSoon();   /* 6.187.0 — one or two columns, from the block's own width; 6.215.0 — measured in the next frame */
   var colR = $("stColR"), keepId = SUITE_CARD[pageId];
   /* the card goes back above the result card. The app inserts it before
      #stResultBox — an id the panel REPLACES with a void element, and
@@ -777,6 +787,16 @@ function stTwoCol() {
   }
   try { cols.setAttribute("data-cols", two ? "2" : "1"); cols.setAttribute("data-width", String(Math.round(w))); cols.setAttribute("data-host", String(Math.round(host))); } catch (e3) { }
   return two ? 2 : 1;
+}
+/* 6.215.0 — the first measurement of a freshly built block used to run inside the page switch, where any
+   geometry read makes the browser lay the whole block out on the spot — about a third of the Meitu switch
+   on a slow CPU, and the same layout again forty milliseconds later for the relayout pass. One frame later
+   the layout is due for the paint anyway, so the read costs nothing extra and the columns are still set
+   before anything is seen. */
+function stTwoColSoon() {
+  var run = function () { try { stTwoCol(); } catch (e) { } };
+  if (typeof requestAnimationFrame === "function") { requestAnimationFrame(run); return; }
+  setTimeout(run, 0);
 }
 var stTwoColBound = false, stTwoColTimer = 0;
 function stTwoColBind() {

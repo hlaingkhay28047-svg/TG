@@ -136,7 +136,7 @@ function source() {
     /"alb-grid alb-c" \+ albCols\(kind, items\.length, w\)/.test(MOD), null);
 
   report("A5) one measurement per render, and a resize only rebuilds when it crosses a column boundary — render() replaces every node, so a one-pixel window drag must not take the caret out of a caption being typed",
-    /BUCKET = widthBucket\(albWidth\(\)\);/.test(MOD) &&
+    /var w0 = albWidth\(\); BUCKET = widthBucket\(w0\);/.test(MOD) && /ALB_W_NOW = w0;/.test(MOD) && /if \(ALB_W_NOW > 0\) return ALB_W_NOW;/.test(MOD) &&   /* 6.144.0 — the one measurement is also the one the cards read */
     /function widthBucket\(w\)/.test(MOD) &&
     /if \(widthBucket\(albWidth\(\)\) === BUCKET\) \{ repaint\(\); return; \}/.test(MOD) &&
     /if \(!RESIZE_BOUND && typeof window !== "undefined"/.test(MOD) &&

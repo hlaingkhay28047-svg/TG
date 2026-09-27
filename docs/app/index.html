@@ -3176,40 +3176,40 @@ html.splashing #splash{display:flex}
 
 <div class="page" id="pgAccount">
   <header class="unified-hero">
-    <p class="unified-kick">HNK STUDENT ACCOUNT</p>
-    <h1>Account, license &amp; devices</h1>
-    <p>Your live access state comes from the shared HNK server. One Phone and one shared Computer slot cover the Web App and Photoshop Panel.</p>
+    <p class="unified-kick" data-acc="kick">HNK STUDENT ACCOUNT</p>
+    <h1 data-acc="h1">Account, license &amp; devices</h1>
+    <p data-acc="lede">Your live access state comes from the shared HNK server. One Phone and one shared Computer slot cover the Web App and Photoshop Panel.</p>
   </header>
   <section class="unified-banner" id="unifiedAccessBanner" role="status" aria-live="polite">
-    <span class="u-dot" aria-hidden="true"></span><div><b id="unifiedAccessTitle">Checking secure access…</b><span id="unifiedAccessText">Tools remain locked until the server confirms this session.</span></div>
+    <span class="u-dot" aria-hidden="true"></span><div><b id="unifiedAccessTitle" data-acc="chk_title">Checking secure access…</b><span id="unifiedAccessText" data-acc="chk_text0">Tools remain locked until the server confirms this session.</span></div>
   </section>
-  <section class="unified-grid" aria-label="Account and license summary">
-    <article class="unified-stat"><span>Account status</span><b id="unifiedAccountStatus">Checking</b></article>
-    <article class="unified-stat"><span>License status</span><b id="unifiedLicenseStatus">Checking</b></article>
-    <article class="unified-stat"><span>License expiry</span><b id="unifiedLicenseExpiry">—</b></article>
-    <article class="unified-stat"><span>Panel version</span><b id="unifiedPanelVersion">—</b></article>
-    <article class="unified-stat"><span>Web App permission</span><b id="unifiedWebPermission">Checking</b></article>
-    <article class="unified-stat"><span>Panel download</span><b id="unifiedDownloadPermission">Checking</b></article>
-    <article class="unified-stat"><span>Photoshop Panel</span><b id="unifiedPanelPermission">Checking</b></article>
+  <section class="unified-grid" aria-label="Account and license summary" data-acc-aria="grid_aria">
+    <article class="unified-stat"><span data-acc="st_account">Account status</span><b id="unifiedAccountStatus">Checking</b></article>
+    <article class="unified-stat"><span data-acc="st_license">License status</span><b id="unifiedLicenseStatus">Checking</b></article>
+    <article class="unified-stat"><span data-acc="st_expiry">License expiry</span><b id="unifiedLicenseExpiry">—</b></article>
+    <article class="unified-stat"><span data-acc="st_panelver">Panel version</span><b id="unifiedPanelVersion">—</b></article>
+    <article class="unified-stat"><span data-acc="st_web">Web App permission</span><b id="unifiedWebPermission">Checking</b></article>
+    <article class="unified-stat"><span data-acc="st_dl">Panel download</span><b id="unifiedDownloadPermission">Checking</b></article>
+    <article class="unified-stat"><span data-acc="st_panel">Photoshop Panel</span><b id="unifiedPanelPermission">Checking</b></article>
   </section>
   <section class="card">
-    <h2>Registered devices</h2>
-    <p class="mut">You can release your own Computer slot and your own Phone slot once every 7 days each, and every release is recorded. Ask an HNK administrator when you need more devices than your plan allows.</p>
+    <h2 data-acc="dev_h2">Registered devices</h2>
+    <p class="mut" data-acc="dev_note">You can release your own Computer slot and your own Phone slot once every 7 days each, and every release is recorded. Ask an HNK administrator when you need more devices than your plan allows.</p>
     <div class="unified-devices">
-      <article class="unified-device"><h3>Phone · Web App</h3><p id="unifiedPhone">Checking this Phone slot…</p><button class="btn" id="unifiedEnrollPhone" type="button">Register this Phone</button><button class="btn" id="unifiedReleasePhone" type="button" hidden>Release this Phone</button><p class="mut" style="margin-top:6px;font-size:12px">ဖုန်းအသစ် ပြောင်းလိုက်ရင် အပေါ်က “Phone နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်လိုက်ပါ — ၇ ရက်ကို တစ်ကြိမ် ကိုယ်တိုင် လုပ်လို့ရပါတယ်။</p></article>
-      <article class="unified-device"><h3>Computer · Web App + Panel</h3><p id="unifiedComputer">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button">Register this Computer</button><button class="btn" id="unifiedReleaseComputer" type="button" hidden>Release this Computer</button><p class="mut" style="margin-top:6px;font-size:12px">ဒီ computer က တစ်ခါ register ဖြစ်ပြီးရင် အလိုအလျောက် မှတ်ထားပါတယ် — Photoshop panel လည်း sign-in တစ်ခါတည်းနဲ့ ဝင်လို့ရပါပြီ။ စက်အသစ် ပြောင်းလိုက်ရင် အပေါ်က “Computer နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်လိုက်ပါ — ၇ ရက်ကို တစ်ကြိမ် ကိုယ်တိုင် လုပ်လို့ရပါတယ်။ စက် အရေအတွက် ထပ်တိုးချင်တာကတော့ ဆရာ့ကို ပြောပါ။</p></article>
+      <article class="unified-device"><h3 data-acc="phone_h3">Phone · Web App</h3><p id="unifiedPhone" data-acc="phone_chk">Checking this Phone slot…</p><button class="btn" id="unifiedEnrollPhone" type="button" data-acc="enroll_phone">Register this Phone</button><button class="btn" id="unifiedReleasePhone" type="button" hidden>Release this Phone</button><p class="mut" style="margin-top:6px;font-size:12px" data-acc="phone_note">ဖုန်းအသစ် ပြောင်းလိုက်ရင် အပေါ်က “Phone နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်လိုက်ပါ — ၇ ရက်ကို တစ်ကြိမ် ကိုယ်တိုင် လုပ်လို့ရပါတယ်။</p></article>
+      <article class="unified-device"><h3 data-acc="comp_h3">Computer · Web App + Panel</h3><p id="unifiedComputer" data-acc="comp_chk">Checking this Computer slot…</p><button class="btn" id="unifiedEnrollComputer" type="button" data-acc="enroll_comp">Register this Computer</button><button class="btn" id="unifiedReleaseComputer" type="button" hidden>Release this Computer</button><p class="mut" style="margin-top:6px;font-size:12px" data-acc="comp_note">ဒီ computer က တစ်ခါ register ဖြစ်ပြီးရင် အလိုအလျောက် မှတ်ထားပါတယ် — Photoshop panel လည်း sign-in တစ်ခါတည်းနဲ့ ဝင်လို့ရပါပြီ။ စက်အသစ် ပြောင်းလိုက်ရင် အပေါ်က “Computer နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်လိုက်ပါ — ၇ ရက်ကို တစ်ကြိမ် ကိုယ်တိုင် လုပ်လို့ရပါတယ်။ စက် အရေအတွက် ထပ်တိုးချင်တာကတော့ ဆရာ့ကို ပြောပါ။</p></article>
     </div>
   </section>
   <section class="card">
-    <h2>Secure Photoshop Panel</h2>
-    <p class="mut" id="unifiedDownloadNote">Approved account, active license, download permission and the registered Computer are required.</p>
+    <h2 data-acc="secure_h2">Secure Photoshop Panel</h2>
+    <p class="mut" id="unifiedDownloadNote" data-acc="dl_note0">Approved account, active license, download permission and the registered Computer are required.</p>
     <div class="unified-actions">
       <!-- 6.33.1 — ONE PLACE (owner, 2026-09-07: "တစ်နေရာပဲ ထားပေးပါ"). This page reports the account,
            the license and the registered devices; the Panel itself is downloaded from the Account
            card's Photoshop Panel group under Setup and nowhere else. The door button that sat here
            since 6.28.1 — like the ones on Home and Tutorials — is gone; the note above names the place. -->
-      <button class="btn" id="unifiedOpenSetup" type="button">Login, password &amp; payments</button>
-      <button class="btn" id="unifiedLogout" type="button">Logout</button>
+      <button class="btn" id="unifiedOpenSetup" type="button" data-acc="open_setup">Login, password &amp; payments</button>
+      <button class="btn" id="unifiedLogout" type="button" data-acc="logout">Logout</button>
     </div>
     <div class="status" id="unifiedStatus" role="status" aria-live="polite"></div>
   </section>
@@ -4716,10 +4716,10 @@ html.splashing #splash{display:flex}
 <script src="data/pstyle.js?v=d8f1ac4f6ef5"></script>
 <script src="data/imagine.js?v=2b97eb6a9d09"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=0d67cc810b7b"></script>
+<script src="data/album-module.js?v=c9841c1da7b4"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=ac0badf84ffb"></script>
-<script src="data/whatsnew.js?v=8371755d6870"></script>
+<script src="data/whatsnew.js?v=5e6a7938cdc4"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -6169,6 +6169,73 @@ function renderTutorials(){
   });
 }
 
+/* 6.144.0 — THE ACCOUNT PAGE SPEAKS THE STUDIO'S LANGUAGE. Every word pgAccount shows — the static
+   markup (data-acc nodes, painted by unifiedApplyLang from applyLang) and the states unifiedRender
+   writes (signed out · checking · compatibility · live tiles · the two device rows · the download
+   note) — in the nine base languages. The panel has no Account page; this is the web app's alone. */
+var ACC_UI = {
+  kick:        {my:"HNK ကျောင်းသား အကောင့်", en:"HNK STUDENT ACCOUNT", shn:"ACCOUNT လုၵ်ႈႁဵၼ်း HNK", kac:"HNK JAWNG MA ACCOUNT", th:"บัญชีนักเรียน HNK", zh:"HNK 学员账号", vi:"TÀI KHOẢN HỌC VIÊN HNK", id:"AKUN SISWA HNK", ms:"AKAUN PELAJAR HNK"},
+  h1:          {my:"အကောင့်၊ လိုင်စင်နဲ့ စက်များ", en:"Account, license & devices", shn:"Account၊ လၢႆးသုၼ်ႇ လႄႈ ၶိူင်ႈ", kac:"Account, license hte jaw ni", th:"บัญชี ใบอนุญาต และอุปกรณ์", zh:"账号、许可与设备", vi:"Tài khoản, giấy phép và thiết bị", id:"Akun, lisensi & perangkat", ms:"Akaun, lesen & peranti"},
+  lede:        {my:"သင့်ရဲ့ လက်ရှိ အသုံးပြုခွင့် အခြေအနေကို HNK server ကနေ တိုက်ရိုက် ယူပါတယ်။ ဖုန်း တစ်လုံးနဲ့ ကွန်ပျူတာ (မျှဝေ) တစ်လုံးက Web App နဲ့ Photoshop Panel နှစ်ခုလုံးကို ဖုံးပါတယ်။", en:"Your live access state comes from the shared HNK server. One Phone and one shared Computer slot cover the Web App and Photoshop Panel.", shn:"ငဝ်းလၢႆး ၶႂၢင်းၸႂ်ႉ သူ မႃးတီႈ server HNK။ ၾူၼ်း 1 လႄႈ ၶွမ်ႇ (ၸႂ်ႉႁူမ်ႈ) 1 ႁူမ်ႇ Web App လႄႈ Photoshop Panel။", kac:"Na a jai lu ai lam gaw HNK server kaw na sa wa ai. Phone langai hte Computer (garan jai) langai gaw Web App hte Photoshop Panel hpe hkum ai.", th:"สถานะการเข้าถึงของคุณมาจากเซิร์ฟเวอร์ HNK โดยตรง โทรศัพท์ 1 เครื่องและคอมพิวเตอร์ (ใช้ร่วม) 1 เครื่องครอบคลุมทั้ง Web App และ Photoshop Panel", zh:"你的实时访问状态来自 HNK 共享服务器。一部手机和一台（共享）电脑名额覆盖网页版和 Photoshop 面板。", vi:"Trạng thái truy cập của bạn lấy trực tiếp từ máy chủ HNK. Một điện thoại và một máy tính (dùng chung) bao gồm cả Web App và Photoshop Panel.", id:"Status akses langsung Anda berasal dari server HNK bersama. Satu ponsel dan satu slot komputer bersama mencakup Web App dan Photoshop Panel.", ms:"Status akses langsung anda datang daripada pelayan HNK kongsi. Satu telefon dan satu slot komputer kongsi meliputi Web App dan Photoshop Panel."},
+  grid_aria:   {my:"အကောင့်နဲ့ လိုင်စင် အနှစ်ချုပ်", en:"Account and license summary", shn:"ႁူမ်ႈ account လႄႈ လၢႆးသုၼ်ႇ", kac:"Account hte license kadun", th:"สรุปบัญชีและใบอนุญาต", zh:"账号与许可摘要", vi:"Tóm tắt tài khoản và giấy phép", id:"Ringkasan akun dan lisensi", ms:"Ringkasan akaun dan lesen"},
+  st_account:  {my:"အကောင့် အခြေအနေ", en:"Account status", shn:"ငဝ်းလၢႆး account", kac:"Account lam", th:"สถานะบัญชี", zh:"账号状态", vi:"Trạng thái tài khoản", id:"Status akun", ms:"Status akaun"},
+  st_license:  {my:"လိုင်စင် အခြေအနေ", en:"License status", shn:"ငဝ်းလၢႆး လၢႆးသုၼ်ႇ", kac:"License lam", th:"สถานะใบอนุญาต", zh:"许可状态", vi:"Trạng thái giấy phép", id:"Status lisensi", ms:"Status lesen"},
+  st_expiry:   {my:"လိုင်စင် သက်တမ်း", en:"License expiry", shn:"ဝၼ်းမူတ်း လၢႆးသုၼ်ႇ", kac:"License hkring na nhtoi", th:"วันหมดอายุใบอนุญาต", zh:"许可到期", vi:"Hạn giấy phép", id:"Masa berlaku lisensi", ms:"Tamat tempoh lesen"},
+  st_panelver: {my:"Panel ဗားရှင်း", en:"Panel version", shn:"ဝႃးသျိၼ်း Panel", kac:"Panel version", th:"เวอร์ชัน Panel", zh:"面板版本", vi:"Phiên bản Panel", id:"Versi Panel", ms:"Versi Panel"},
+  st_web:      {my:"Web App ခွင့်ပြုချက်", en:"Web App permission", shn:"ၶႂၢင်း Web App", kac:"Web App ahkang", th:"สิทธิ์ Web App", zh:"网页版权限", vi:"Quyền Web App", id:"Izin Web App", ms:"Kebenaran Web App"},
+  st_dl:       {my:"Panel ဒေါင်းလုဒ်", en:"Panel download", shn:"ဒွၼ်းလူတ်ႇ Panel", kac:"Panel download", th:"ดาวน์โหลด Panel", zh:"面板下载", vi:"Tải Panel", id:"Unduh Panel", ms:"Muat turun Panel"},
+  st_panel:    {my:"Photoshop Panel", en:"Photoshop Panel", shn:"Photoshop Panel", kac:"Photoshop Panel", th:"Photoshop Panel", zh:"Photoshop 面板", vi:"Photoshop Panel", id:"Photoshop Panel", ms:"Photoshop Panel"},
+  dev_h2:      {my:"မှတ်ပုံတင်ထားတဲ့ စက်များ", en:"Registered devices", shn:"ၶိူင်ႈဢၼ်မၢႆၽၢင်ဝႆႉ", kac:"Mying galaw da ai jaw ni", th:"อุปกรณ์ที่ลงทะเบียน", zh:"已注册设备", vi:"Thiết bị đã đăng ký", id:"Perangkat terdaftar", ms:"Peranti berdaftar"},
+  dev_note:    {my:"ကိုယ့် ကွန်ပျူတာ slot နဲ့ ကိုယ့် ဖုန်း slot ကို ၇ ရက် တစ်ခါစီ ကိုယ်တိုင် ဖြုတ်လို့ရပြီး ဖြုတ်တိုင်း မှတ်တမ်း ကျန်ပါတယ်။ plan ထက် စက် ပိုလိုရင် HNK အက်ဒမင်ကို ပြောပါ။", en:"You can release your own Computer slot and your own Phone slot once every 7 days each, and every release is recorded. Ask an HNK administrator when you need more devices than your plan allows.", shn:"သူပွႆႇ slot ၶွမ်ႇ လႄႈ slot ၾူၼ်း ၶွင်သူလႆႈ 7 ဝၼ်း ၼိုင်ႈပွၵ်ႈ၊ ၵူႈပွၵ်ႈမီးမၢႆတွင်း။ လူဝ်ႇၶိူင်ႈလိူဝ် plan ၸိုင် ထၢမ် admin HNK။", kac:"Na Computer slot hte Phone slot hpe 7 ya lang mi shalawt lu ai, shalawt ai shagu ka da ai. Plan hta na jaw grau ra yang HNK admin hpe san u.", th:"คุณปล่อยสล็อตคอมพิวเตอร์และสล็อตโทรศัพท์ของตัวเองได้ทุก 7 วันต่อครั้ง และทุกการปล่อยจะถูกบันทึก หากต้องการอุปกรณ์มากกว่าที่แพลนอนุญาต ให้ติดต่อผู้ดูแล HNK", zh:"你可以每 7 天各释放一次自己的电脑名额和手机名额，每次释放都会记录。需要超出套餐的设备时，请联系 HNK 管理员。", vi:"Bạn có thể tự giải phóng chỗ máy tính và chỗ điện thoại của mình mỗi 7 ngày một lần, mỗi lần đều được ghi lại. Cần nhiều thiết bị hơn gói cho phép thì hỏi quản trị viên HNK.", id:"Anda dapat melepas slot komputer dan slot ponsel Anda sendiri masing-masing sekali setiap 7 hari, dan setiap pelepasan dicatat. Hubungi administrator HNK bila butuh perangkat lebih dari yang paket izinkan.", ms:"Anda boleh melepaskan slot komputer dan slot telefon anda sendiri sekali setiap 7 hari, dan setiap pelepasan direkodkan. Hubungi pentadbir HNK jika perlukan lebih banyak peranti daripada pelan anda."},
+  phone_h3:    {my:"ဖုန်း · Web App", en:"Phone · Web App", shn:"ၾူၼ်း · Web App", kac:"Phone · Web App", th:"โทรศัพท์ · Web App", zh:"手机 · 网页版", vi:"Điện thoại · Web App", id:"Ponsel · Web App", ms:"Telefon · Web App"},
+  comp_h3:     {my:"ကွန်ပျူတာ · Web App + Panel", en:"Computer · Web App + Panel", shn:"ၶွမ်ႇ · Web App + Panel", kac:"Computer · Web App + Panel", th:"คอมพิวเตอร์ · Web App + Panel", zh:"电脑 · 网页版 + 面板", vi:"Máy tính · Web App + Panel", id:"Komputer · Web App + Panel", ms:"Komputer · Web App + Panel"},
+  phone_chk:   {my:"ဒီ ဖုန်း slot ကို စစ်နေပါတယ်…", en:"Checking this Phone slot…", shn:"တိုၵ်ႉၵူတ်ႇ slot ၾူၼ်းၼႆႉ…", kac:"Ndai Phone slot hpe jep nga ai…", th:"กำลังตรวจสล็อตโทรศัพท์นี้…", zh:"正在检查此手机名额…", vi:"Đang kiểm tra chỗ điện thoại này…", id:"Memeriksa slot ponsel ini…", ms:"Menyemak slot telefon ini…"},
+  comp_chk:    {my:"ဒီ ကွန်ပျူတာ slot ကို စစ်နေပါတယ်…", en:"Checking this Computer slot…", shn:"တိုၵ်ႉၵူတ်ႇ slot ၶွမ်ႇၼႆႉ…", kac:"Ndai Computer slot hpe jep nga ai…", th:"กำลังตรวจสล็อตคอมพิวเตอร์นี้…", zh:"正在检查此电脑名额…", vi:"Đang kiểm tra chỗ máy tính này…", id:"Memeriksa slot komputer ini…", ms:"Menyemak slot komputer ini…"},
+  enroll_phone:{my:"ဒီ ဖုန်းကို မှတ်ပုံတင်မယ်", en:"Register this Phone", shn:"မၢႆၽၢင် ၾူၼ်းၼႆႉ", kac:"Ndai Phone hpe mying galaw u", th:"ลงทะเบียนโทรศัพท์นี้", zh:"注册此手机", vi:"Đăng ký điện thoại này", id:"Daftarkan ponsel ini", ms:"Daftarkan telefon ini"},
+  enroll_comp: {my:"ဒီ ကွန်ပျူတာကို မှတ်ပုံတင်မယ်", en:"Register this Computer", shn:"မၢႆၽၢင် ၶွမ်ႇၼႆႉ", kac:"Ndai Computer hpe mying galaw u", th:"ลงทะเบียนคอมพิวเตอร์นี้", zh:"注册此电脑", vi:"Đăng ký máy tính này", id:"Daftarkan komputer ini", ms:"Daftarkan komputer ini"},
+  phone_note:  {my:"ဖုန်းအသစ် ပြောင်းလိုက်ရင် အပေါ်က “ဖုန်း နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်လိုက်ပါ — ၇ ရက်ကို တစ်ကြိမ် ကိုယ်တိုင် လုပ်လို့ရပါတယ်။", en:"Changed phones? Tap “Release this Phone” above — you can do it yourself once every 7 days.", shn:"လႅၵ်ႈၾူၼ်းမႂ်ႇၸိုင် ၼဵၵ်း “ပွႆႇ slot ၾူၼ်း” တၢင်းၼိူဝ် — ႁဵတ်းလႆႈႁင်းၵူၺ်း 7 ဝၼ်း ၼိုင်ႈပွၵ်ႈ။", kac:"Phone nnan galai yang lahta na “Ndai Phone hpe shalawt u” hpe dip u — 7 ya lang mi tinang galaw lu ai.", th:"เปลี่ยนโทรศัพท์ใหม่? แตะ “ปล่อยโทรศัพท์นี้” ด้านบน — ทำเองได้ทุก 7 วันต่อครั้ง", zh:"换了手机？点上方的“释放此手机”——每 7 天可自行操作一次。", vi:"Đổi điện thoại? Bấm “Giải phóng điện thoại này” ở trên — bạn tự làm được mỗi 7 ngày một lần.", id:"Ganti ponsel? Ketuk “Lepas ponsel ini” di atas — bisa Anda lakukan sendiri sekali setiap 7 hari.", ms:"Tukar telefon? Ketik “Lepaskan telefon ini” di atas — boleh dilakukan sendiri sekali setiap 7 hari."},
+  comp_note:   {my:"ဒီ ကွန်ပျူတာက တစ်ခါ မှတ်ပုံတင်ပြီးရင် အလိုအလျောက် မှတ်ထားပါတယ် — Photoshop panel လည်း sign-in တစ်ခါတည်းနဲ့ ဝင်လို့ရပါပြီ။ စက်အသစ် ပြောင်းလိုက်ရင် အပေါ်က “ကွန်ပျူတာ နေရာ ပြန်လွှတ်မယ်” ကို နှိပ်လိုက်ပါ — ၇ ရက်ကို တစ်ကြိမ် ကိုယ်တိုင် လုပ်လို့ရပါတယ်။ စက် အရေအတွက် ထပ်တိုးချင်တာကတော့ ဆရာ့ကို ပြောပါ။", en:"Once this computer is registered it stays remembered — the Photoshop panel signs in with the same login. Changed computers? Tap “Release this Computer” above — you can do it yourself once every 7 days. For more devices, ask your teacher.", shn:"ၶွမ်ႇၼႆႉ မၢႆၽၢင်ယဝ်ႉ တေၸႂ်ဝႆႉႁင်းၵူၺ်း — panel Photoshop ၶဝ်ႈလႆႈတင်း login လဵဝ်။ လႅၵ်ႈၶွမ်ႇမႂ်ႇၸိုင် ၼဵၵ်း “ပွႆႇ slot ၶွမ်ႇ” တၢင်းၼိူဝ် — 7 ဝၼ်း ၼိုင်ႈပွၵ်ႈ။ လူဝ်ႇၶိူင်ႈလိူဝ်ၸိုင် လၢတ်ႈသြႃႇ။", kac:"Ndai computer hpe kalang mying galaw ngut yang tinang hkrai matsing da ai — Photoshop panel mung sign-in langai hte shang lu ai. Computer nnan galai yang lahta na “Ndai Computer hpe shalawt u” hpe dip u — 7 ya lang mi. Jaw grau ra yang sara hpe tsun u.", th:"เมื่อลงทะเบียนคอมพิวเตอร์นี้แล้วระบบจะจำไว้ — พาเนล Photoshop เข้าสู่ระบบด้วยล็อกอินเดียวกัน เปลี่ยนเครื่องใหม่? แตะ “ปล่อยคอมพิวเตอร์นี้” ด้านบน — ทำเองได้ทุก 7 วันต่อครั้ง ต้องการอุปกรณ์เพิ่มให้แจ้งครู", zh:"这台电脑注册一次后会一直记住——Photoshop 面板用同一登录即可进入。换了电脑？点上方的“释放此电脑”——每 7 天可自行操作一次。需要更多设备请联系老师。", vi:"Máy tính này đăng ký một lần là được ghi nhớ — panel Photoshop đăng nhập bằng cùng tài khoản. Đổi máy? Bấm “Giải phóng máy tính này” ở trên — bạn tự làm được mỗi 7 ngày một lần. Cần thêm thiết bị thì hỏi giáo viên.", id:"Setelah komputer ini terdaftar, ia tetap diingat — panel Photoshop masuk dengan login yang sama. Ganti komputer? Ketuk “Lepas komputer ini” di atas — bisa Anda lakukan sendiri sekali setiap 7 hari. Butuh perangkat lebih, tanyakan guru Anda.", ms:"Setelah komputer ini didaftarkan ia kekal diingati — panel Photoshop log masuk dengan log masuk yang sama. Tukar komputer? Ketik “Lepaskan komputer ini” di atas — boleh dilakukan sendiri sekali setiap 7 hari. Perlukan lebih peranti, tanya guru anda."},
+  secure_h2:   {my:"လုံခြုံတဲ့ Photoshop Panel", en:"Secure Photoshop Panel", shn:"Photoshop Panel ဢၼ်လွတ်ႈၽေး", kac:"Secure Photoshop Panel", th:"Photoshop Panel แบบปลอดภัย", zh:"安全的 Photoshop 面板", vi:"Photoshop Panel bảo mật", id:"Photoshop Panel aman", ms:"Photoshop Panel selamat"},
+  dl_note0:    {my:"အတည်ပြုထားတဲ့ အကောင့်၊ သက်ဝင်တဲ့ လိုင်စင်၊ ဒေါင်းလုဒ် ခွင့်ပြုချက်နဲ့ မှတ်ပုံတင်ထားတဲ့ ကွန်ပျူတာ လိုပါတယ်။", en:"Approved account, active license, download permission and the registered Computer are required.", shn:"လူဝ်ႇ account ဢၼ်ႁပ်ႉ၊ လၢႆးသုၼ်ႇၸႂ်ႉလႆႈ၊ ၶႂၢင်းဒွၼ်းလူတ်ႇ လႄႈ ၶွမ်ႇဢၼ်မၢႆၽၢင်ဝႆႉ။", kac:"Hkap la da ai account, jai nga ai license, download ahkang hte mying galaw da ai Computer ra ai.", th:"ต้องมีบัญชีที่อนุมัติ ใบอนุญาตที่ใช้งาน สิทธิ์ดาวน์โหลด และคอมพิวเตอร์ที่ลงทะเบียน", zh:"需要已批准的账号、有效许可、下载权限和已注册的电脑。", vi:"Cần tài khoản đã duyệt, giấy phép còn hiệu lực, quyền tải và máy tính đã đăng ký.", id:"Diperlukan akun yang disetujui, lisensi aktif, izin unduh, dan komputer terdaftar.", ms:"Perlu akaun diluluskan, lesen aktif, kebenaran muat turun dan komputer berdaftar."},
+  open_setup:  {my:"Login၊ password နဲ့ ငွေပေးချေမှု", en:"Login, password & payments", shn:"Login၊ password လႄႈ ၵၢၼ်ၸၢႆႇ", kac:"Login, password hte ja jaw ai", th:"เข้าสู่ระบบ รหัสผ่าน และการชำระเงิน", zh:"登录、密码与付款", vi:"Đăng nhập, mật khẩu & thanh toán", id:"Login, kata sandi & pembayaran", ms:"Log masuk, kata laluan & pembayaran"},
+  logout:      {my:"ထွက်မယ်", en:"Logout", shn:"ဢွၵ်ႇ", kac:"Logout", th:"ออกจากระบบ", zh:"退出登录", vi:"Đăng xuất", id:"Keluar", ms:"Log keluar"},
+  /* ---- the states unifiedRender writes ---- */
+  signin_title:{my:"Login ဝင်ဖို့ လိုပါတယ်", en:"Sign in required", shn:"လူဝ်ႇၶဝ်ႈ login", kac:"Sign in ra ai", th:"ต้องเข้าสู่ระบบ", zh:"需要登录", vi:"Cần đăng nhập", id:"Perlu masuk", ms:"Perlu log masuk"},
+  signin_text: {my:"Login၊ password နဲ့ ငွေပေးချေမှု ကို ဖွင့်ပြီး login ဝင် ဒါမှမဟုတ် အကောင့် ဖွင့်ပါ။", en:"Open Login, password & payments to sign in or register.", shn:"ပိုတ်ႇ Login၊ password လႄႈ ၵၢၼ်ၸၢႆႇ သေ ၶဝ်ႈ ဢမ်ႇၼၼ် မၢႆၽၢင်။", kac:"Login, password hte ja jaw ai hpe hpaw nna sign in sha n rai yang mying galaw u.", th:"เปิด เข้าสู่ระบบ รหัสผ่าน และการชำระเงิน เพื่อเข้าสู่ระบบหรือลงทะเบียน", zh:"打开“登录、密码与付款”以登录或注册。", vi:"Mở Đăng nhập, mật khẩu & thanh toán để đăng nhập hoặc đăng ký.", id:"Buka Login, kata sandi & pembayaran untuk masuk atau mendaftar.", ms:"Buka Log masuk, kata laluan & pembayaran untuk log masuk atau mendaftar."},
+  signed_out:  {my:"ထွက်ထားပါတယ်", en:"Signed out", shn:"ဢွၵ်ႇဝႆႉ", kac:"Sign out da ai", th:"ออกจากระบบแล้ว", zh:"未登录", vi:"Đã đăng xuất", id:"Sudah keluar", ms:"Telah log keluar"},
+  chk_title:   {my:"လုံခြုံတဲ့ အသုံးပြုခွင့်ကို စစ်နေပါတယ်…", en:"Checking secure access…", shn:"တိုၵ်ႉၵူတ်ႇ ၶႂၢင်းၸႂ်ႉ…", kac:"Secure access hpe jep nga ai…", th:"กำลังตรวจสิทธิ์การเข้าถึง…", zh:"正在检查安全访问…", vi:"Đang kiểm tra quyền truy cập…", id:"Memeriksa akses aman…", ms:"Menyemak akses selamat…"},
+  chk_text0:   {my:"Server က ဒီ session ကို အတည်မပြုမချင်း tools တွေ ပိတ်ထားပါတယ်။", en:"Tools remain locked until the server confirms this session.", shn:"Tools ပိၵ်ႉဝႆႉ တေႃႇ server ႁပ်ႉ session ၼႆႉ။", kac:"Server ndai session hpe hkap la ai du hkra tools ni pat da ai.", th:"เครื่องมือยังถูกล็อกจนกว่าเซิร์ฟเวอร์จะยืนยันเซสชันนี้", zh:"在服务器确认本次会话之前，工具保持锁定。", vi:"Công cụ vẫn khóa cho đến khi máy chủ xác nhận phiên này.", id:"Alat tetap terkunci sampai server mengonfirmasi sesi ini.", ms:"Alat kekal berkunci sehingga pelayan mengesahkan sesi ini."},
+  verify_unav: {my:"အတည်ပြုလို့ မရသေးပါ", en:"Verification unavailable", shn:"ၵူတ်ႇဢမ်ႇလႆႈ", kac:"Jep n lu ai", th:"ตรวจสอบไม่ได้", zh:"暂时无法验证", vi:"Chưa xác minh được", id:"Verifikasi tidak tersedia", ms:"Pengesahan tidak tersedia"},
+  locked_text: {my:"Server က ဒီ session ကို အတည်မပြုမချင်း AI Tools နဲ့ Panel ပေးပို့မှု ပိတ်ထားပါတယ်။", en:"AI Tools and Panel delivery remain locked until the server confirms this session.", shn:"AI Tools လႄႈ ၵၢၼ်သူင်ႇ Panel ပိၵ်ႉဝႆႉ တေႃႇ server ႁပ်ႉ session ၼႆႉ။", kac:"Server ndai session hpe hkap la ai du hkra AI Tools hte Panel jaw ai pat da ai.", th:"AI Tools และการส่ง Panel ยังถูกล็อกจนกว่าเซิร์ฟเวอร์จะยืนยันเซสชันนี้", zh:"在服务器确认本次会话之前，AI 工具与面板交付保持锁定。", vi:"AI Tools và việc cấp Panel vẫn khóa cho đến khi máy chủ xác nhận phiên này.", id:"AI Tools dan pengiriman Panel tetap terkunci sampai server mengonfirmasi sesi ini.", ms:"AI Tools dan penghantaran Panel kekal berkunci sehingga pelayan mengesahkan sesi ini."},
+  checking:    {my:"စစ်နေသည်", en:"Checking", shn:"တိုၵ်ႉၵူတ်ႇ", kac:"Jep nga ai", th:"กำลังตรวจ", zh:"检查中", vi:"Đang kiểm tra", id:"Memeriksa", ms:"Menyemak"},
+  compat_title:{my:"အကောင့် ယာယီ mode", en:"Account compatibility mode", shn:"Account mode ၸူဝ်ႈၶၢဝ်း", kac:"Account compatibility mode", th:"โหมดความเข้ากันได้ของบัญชี", zh:"账号兼容模式", vi:"Chế độ tương thích tài khoản", id:"Mode kompatibilitas akun", ms:"Mod keserasian akaun"},
+  compat_text: {my:"အကောင့် ဝန်ဆောင်မှုကို ပြန်စနေပါတယ်။ သင့် plan ကို Setup မှာ ဆက်မြင်ရပါမယ်။", en:"Refreshing the unified account service. Your existing plan remains visible in Setup.", shn:"တိုၵ်ႉၸၼ်မႂ်ႇ account service။ plan သူ တိုၵ်ႉႁၼ်ၼႂ်း Setup။", kac:"Account service hpe bai nnan galaw nga ai. Na plan gaw Setup hta mu nga ai.", th:"กำลังรีเฟรชบริการบัญชี แพลนของคุณยังเห็นได้ใน Setup", zh:"正在刷新账号服务。你现有的套餐仍可在 Setup 中查看。", vi:"Đang làm mới dịch vụ tài khoản. Gói hiện tại vẫn thấy trong Setup.", id:"Menyegarkan layanan akun. Paket Anda tetap terlihat di Setup.", ms:"Menyegarkan perkhidmatan akaun. Pelan anda masih kelihatan di Setup."},
+  plan_check:  {my:"Plan စစ်နေသည်", en:"Active plan check", shn:"တိုၵ်ႉၵူတ်ႇ plan", kac:"Plan jep nga ai", th:"กำลังตรวจแพลน", zh:"套餐检查中", vi:"Đang kiểm tra gói", id:"Memeriksa paket", ms:"Menyemak pelan"},
+  active:      {my:"သက်ဝင်", en:"Active", shn:"ၸႂ်ႉလႆႈ", kac:"Jai nga ai", th:"ใช้งาน", zh:"有效", vi:"Hiệu lực", id:"Aktif", ms:"Aktif"},
+  inactive:    {my:"မသက်ဝင်", en:"Inactive", shn:"ဢမ်ႇၸႂ်ႉလႆႈ", kac:"N jai ai", th:"ไม่ใช้งาน", zh:"无效", vi:"Không hiệu lực", id:"Tidak aktif", ms:"Tidak aktif"},
+  legacy:      {my:"အဟောင်း", en:"Legacy", shn:"ၵဝ်ႇ", kac:"Dingsa", th:"แบบเดิม", zh:"旧版", vi:"Cũ", id:"Lama", ms:"Lama"},
+  on:          {my:"ဖွင့်", en:"ON", shn:"ပိုတ်ႇ", kac:"ON", th:"เปิด", zh:"开", vi:"BẬT", id:"AKTIF", ms:"HIDUP"},
+  off:         {my:"ပိတ်", en:"OFF", shn:"ပိၵ်ႉ", kac:"OFF", th:"ปิด", zh:"关", vi:"TẮT", id:"MATI", ms:"MATI"},
+  comp_only:   {my:"ကွန်ပျူတာမှာသာ", en:"Computer only", shn:"ၶွမ်ႇၵူၺ်း", kac:"Computer sha", th:"เฉพาะคอมพิวเตอร์", zh:"仅限电脑", vi:"Chỉ máy tính", id:"Hanya komputer", ms:"Komputer sahaja"},
+  registered:  {my:"မှတ်ပုံတင်ပြီး", en:"Registered", shn:"မၢႆၽၢင်ယဝ်ႉ", kac:"Mying galaw da sai", th:"ลงทะเบียนแล้ว", zh:"已注册", vi:"Đã đăng ký", id:"Terdaftar", ms:"Berdaftar"},
+  available:   {my:"လွတ်နေသည်", en:"Available", shn:"ပႆႇမီး", kac:"Lu ai", th:"ว่าง", zh:"可用", vi:"Còn trống", id:"Tersedia", ms:"Tersedia"},
+  shared_slot: {my:"မျှဝေ slot", en:"shared slot", shn:"slot ၸႂ်ႉႁူမ်ႈ", kac:"garan jai slot", th:"สล็อตใช้ร่วม", zh:"共享名额", vi:"chỗ dùng chung", id:"slot bersama", ms:"slot kongsi"},
+  dl_ok:       {my:"အတည်ပြုပြီးပါပြီ။ Panel ကို Setup ▸ အကောင့် ▸ Photoshop Panel မှာ ဒေါင်းလုဒ်ပါ — ယာယီ link ဖန်တီးပေးတဲ့ တစ်နေရာတည်း ဖြစ်ပါတယ်။", en:"Verified. Download the Panel under Setup ▸ Account ▸ Photoshop Panel — the one place in the app that creates the temporary link.", shn:"ႁပ်ႉယဝ်ႉ။ ဒွၼ်းလူတ်ႇ Panel တီႈ Setup ▸ Account ▸ Photoshop Panel — တီႈလဵဝ်ဢၼ်ႁဵတ်း link ၸူဝ်ႈၶၢဝ်း။", kac:"Hkap la sai. Panel hpe Setup ▸ Account ▸ Photoshop Panel kaw download u — link hpe galaw ai shara langai sha.", th:"ยืนยันแล้ว ดาวน์โหลด Panel ที่ Setup ▸ บัญชี ▸ Photoshop Panel — ที่เดียวในแอปที่สร้างลิงก์ชั่วคราว", zh:"已验证。请在 Setup ▸ 账号 ▸ Photoshop 面板 下载面板——应用中唯一生成临时链接的地方。", vi:"Đã xác minh. Tải Panel tại Setup ▸ Tài khoản ▸ Photoshop Panel — nơi duy nhất trong ứng dụng tạo liên kết tạm.", id:"Terverifikasi. Unduh Panel di Setup ▸ Akun ▸ Photoshop Panel — satu-satunya tempat di aplikasi yang membuat tautan sementara.", ms:"Disahkan. Muat turun Panel di Setup ▸ Akaun ▸ Photoshop Panel — satu-satunya tempat dalam aplikasi yang mencipta pautan sementara."},
+  dl_comp:     {my:"Panel ကို မှတ်ပုံတင်ထားတဲ့ ကွန်ပျူတာမှာသာ ဒေါင်းလုဒ်ရပါတယ် — အဲဒီမှာ Web App ဖွင့်ပါ (Setup ▸ အကောင့် ▸ Photoshop Panel)။ ဒီစက်က .ccx ကို ဒေါင်းလုဒ်လို့ မရပါ။", en:"The Panel is downloaded on your registered Computer only — open the Web App there (Setup ▸ Account ▸ Photoshop Panel). This device cannot download the .ccx.", shn:"Panel ဒွၼ်းလူတ်ႇလႆႈတီႈ ၶွမ်ႇဢၼ်မၢႆၽၢင်ဝႆႉၵူၺ်း — ပိုတ်ႇ Web App တီႈၼၼ်ႈ (Setup ▸ Account ▸ Photoshop Panel)။ ၶိူင်ႈၼႆႉ ဒွၼ်းလူတ်ႇ .ccx ဢမ်ႇလႆႈ။", kac:"Panel hpe mying galaw da ai Computer kaw sha download lu ai — dai kaw Web App hpaw u (Setup ▸ Account ▸ Photoshop Panel). Ndai jaw gaw .ccx download n lu ai.", th:"ดาวน์โหลด Panel ได้เฉพาะบนคอมพิวเตอร์ที่ลงทะเบียน — เปิด Web App ที่นั่น (Setup ▸ บัญชี ▸ Photoshop Panel) อุปกรณ์นี้ดาวน์โหลด .ccx ไม่ได้", zh:"面板只能在已注册的电脑上下载——请在那台电脑打开网页版（Setup ▸ 账号 ▸ Photoshop 面板）。此设备无法下载 .ccx。", vi:"Panel chỉ tải được trên máy tính đã đăng ký — mở Web App ở đó (Setup ▸ Tài khoản ▸ Photoshop Panel). Thiết bị này không tải được .ccx.", id:"Panel hanya diunduh di komputer terdaftar Anda — buka Web App di sana (Setup ▸ Akun ▸ Photoshop Panel). Perangkat ini tidak dapat mengunduh .ccx.", ms:"Panel hanya dimuat turun pada komputer berdaftar anda — buka Web App di sana (Setup ▸ Akaun ▸ Photoshop Panel). Peranti ini tidak boleh memuat turun .ccx."},
+  dl_req:      {my:"ဒေါင်းလုဒ်ဖို့ သက်ဝင်တဲ့ အကောင့် + လိုင်စင်၊ ဒေါင်းလုဒ် ခွင့်ပြုချက်နဲ့ မှတ်ပုံတင်ထားတဲ့ ဒီ ကွန်ပျူတာ လိုပါတယ်။", en:"Download requires Active account + license, download permission and this registered Computer.", shn:"ဒွၼ်းလူတ်ႇ လူဝ်ႇ account + လၢႆးသုၼ်ႇ ၸႂ်ႉလႆႈ၊ ၶႂၢင်းဒွၼ်းလူတ်ႇ လႄႈ ၶွမ်ႇၼႆႉ ဢၼ်မၢႆၽၢင်ဝႆႉ။", kac:"Download na matu jai nga ai account + license, download ahkang hte mying galaw da ai ndai Computer ra ai.", th:"การดาวน์โหลดต้องมีบัญชี + ใบอนุญาตที่ใช้งาน สิทธิ์ดาวน์โหลด และคอมพิวเตอร์ที่ลงทะเบียนเครื่องนี้", zh:"下载需要有效账号 + 许可、下载权限和这台已注册的电脑。", vi:"Tải cần tài khoản + giấy phép còn hiệu lực, quyền tải và máy tính đã đăng ký này.", id:"Unduhan memerlukan akun + lisensi aktif, izin unduh, dan komputer terdaftar ini.", ms:"Muat turun memerlukan akaun + lesen aktif, kebenaran muat turun dan komputer berdaftar ini."},
+  /* the server's status words the tiles pretty-print — the ones the API sends today; anything else stays as sent */
+  status:      {active:{my:"သက်ဝင်", en:"Active", shn:"ၸႂ်ႉလႆႈ", kac:"Jai nga ai", th:"ใช้งาน", zh:"有效", vi:"Hiệu lực", id:"Aktif", ms:"Aktif"},
+                inactive:{my:"မသက်ဝင်", en:"Inactive", shn:"ဢမ်ႇၸႂ်ႉလႆႈ", kac:"N jai ai", th:"ไม่ใช้งาน", zh:"无效", vi:"Không hiệu lực", id:"Tidak aktif", ms:"Tidak aktif"},
+                pending:{my:"စောင့်ဆိုင်းဆဲ", en:"Pending", shn:"တိုၵ်ႉပႂ်ႉ", kac:"La nga ai", th:"รอดำเนินการ", zh:"待处理", vi:"Đang chờ", id:"Menunggu", ms:"Menunggu"},
+                approved:{my:"အတည်ပြုပြီး", en:"Approved", shn:"ႁပ်ႉယဝ်ႉ", kac:"Hkap la sai", th:"อนุมัติแล้ว", zh:"已批准", vi:"Đã duyệt", id:"Disetujui", ms:"Diluluskan"},
+                expired:{my:"သက်တမ်းကုန်", en:"Expired", shn:"မူတ်းယဝ်ႉ", kac:"Hkring sai", th:"หมดอายุ", zh:"已过期", vi:"Hết hạn", id:"Kedaluwarsa", ms:"Tamat tempoh"},
+                banned:{my:"ပိတ်ပင်ထား", en:"Banned", shn:"ထုၵ်ႇႁၢမ်ႈ", kac:"Pat da ai", th:"ถูกแบน", zh:"已封禁", vi:"Bị cấm", id:"Diblokir", ms:"Diharamkan"},
+                rejected:{my:"ပယ်ချထား", en:"Rejected", shn:"ထုၵ်ႇပၢၵ်ႈ", kac:"N hkap la ai", th:"ถูกปฏิเสธ", zh:"已拒绝", vi:"Bị từ chối", id:"Ditolak", ms:"Ditolak"},
+                suspended:{my:"ယာယီ ရပ်ထား", en:"Suspended", shn:"ၵိုတ်းဝႆႉ", kac:"Hkring da ai", th:"ระงับชั่วคราว", zh:"已暂停", vi:"Tạm ngưng", id:"Ditangguhkan", ms:"Digantung"},
+                unknown:{my:"မသိ", en:"Unknown", shn:"ဢမ်ႇႁူႉ", kac:"N chye ai", th:"ไม่ทราบ", zh:"未知", vi:"Không rõ", id:"Tidak diketahui", ms:"Tidak diketahui"}}
+};
+/* the table sits above applyLang's first call at boot (top-level code in this one <script>); its painter and
+   the status-word helper stay beside unifiedRender, hoisted as declarations */
 function applyLang(){
   /* language hint for screen readers / translate / Myanmar-script font
      heuristics — LANG codes (my/en/shn/kac/th/zh/vi/id/ms) are valid BCP47 */
@@ -6187,6 +6254,7 @@ function applyLang(){
   document.documentElement.dir = RTL_LANGS.indexOf(LANG) >= 0 ? "rtl" : "ltr";
   a11yApplyLang();
   renderTutorials();   /* 6.88.0 — the ten lessons follow the language */
+  unifiedApplyLang();   /* 6.144.0 — the Account page follows the language, static nodes and rendered states alike */
   $("heroH1").innerHTML=t("hero_h1");
   $("heroLede").textContent=t("hero_lede");
   PH_MAP.forEach(function(p){ var el=$(p[0]); if(el) el.innerHTML=t(p[1]); });
@@ -30346,9 +30414,9 @@ function unifiedComputerOnly(reason){
   return reason === "device_mismatch" || reason === "device_required" || reason === "computer_required";
 }
 function unifiedPermTile(granted, allowedHere, reason){
-  if (granted !== true) return "OFF";
-  if (allowedHere) return "ON";
-  return unifiedComputerOnly(reason) ? "Computer only" : "OFF";
+  if (granted !== true) return L9(ACC_UI.off);
+  if (allowedHere) return L9(ACC_UI.on);
+  return unifiedComputerOnly(reason) ? L9(ACC_UI.comp_only) : L9(ACC_UI.off);
 }
 /* v6.45.0 — "{U} of {A} devices used", in the student's own language. */
 var SEAT_TXT = {
@@ -30385,6 +30453,20 @@ var ENROLL_TXT = {
   }
 };
 /* v6.43.0 — the footnote for an answer that could not be re-confirmed. */
+/* the static nodes follow the language; then the renderer repaints its own states from what it knows */
+function unifiedApplyLang(){
+  if (!$("unifiedAccessBanner")) return;
+  var nodes = document.querySelectorAll("#pgAccount [data-acc]");
+  for (var i = 0; i < nodes.length; i++){ var k = nodes[i].getAttribute("data-acc"); if (ACC_UI[k]) nodes[i].textContent = L9(ACC_UI[k]); }
+  var arias = document.querySelectorAll("#pgAccount [data-acc-aria]");
+  for (var j = 0; j < arias.length; j++){ var ka = arias[j].getAttribute("data-acc-aria"); if (ACC_UI[ka]) arias[j].setAttribute("aria-label", L9(ACC_UI[ka])); }
+  try { unifiedRender(); } catch(e){}
+}
+/* the server's status word in the student's language — anything the table does not know stays as sent, prettied */
+function unifiedStatusWord(v){
+  var k = String(v || "unknown").toLowerCase();
+  return ACC_UI.status[k] ? L9(ACC_UI.status[k]) : unifiedPretty(v);
+}
 var UNIFIED_STALE = {
   my:"(အင်တာနက် မမိလို့ နောက်ဆုံး စစ်ထားတဲ့ အဖြေကို ပြနေပါတယ် — ဆက်သုံးလို့ ရပါတယ်)",
   en:"(Offline — showing the last answer that got through. You can keep working.)",
@@ -30401,9 +30483,9 @@ function unifiedRender(){
   var data = unified.entitlement, banner = $("unifiedAccessBanner");
   if (!acc.sess){
     banner.className = "unified-banner denied";
-    $("unifiedAccessTitle").textContent = "Sign in required";
-    $("unifiedAccessText").textContent = "Open Login, password & payments to sign in or register.";
-    $("unifiedAccountStatus").textContent = "Signed out"; $("unifiedLicenseStatus").textContent = "—"; $("unifiedLicenseExpiry").textContent = "—";
+    $("unifiedAccessTitle").textContent = L9(ACC_UI.signin_title);
+    $("unifiedAccessText").textContent = L9(ACC_UI.signin_text);
+    $("unifiedAccountStatus").textContent = L9(ACC_UI.signed_out); $("unifiedLicenseStatus").textContent = "—"; $("unifiedLicenseExpiry").textContent = "—";
     $("unifiedWebPermission").textContent = "—"; $("unifiedDownloadPermission").textContent = "—"; $("unifiedPanelPermission").textContent = "—";
     return;
   }
@@ -30414,18 +30496,18 @@ function unifiedRender(){
      answer sees this now. */
   if ((unified.loading && !data) || (unified.enforced && !data)){
     banner.className = "unified-banner";
-    $("unifiedAccessTitle").textContent = unified.error ? "Verification unavailable" : "Checking secure access…";
-    $("unifiedAccessText").textContent = "AI Tools and Panel delivery remain locked until the server confirms this session.";
-    $("unifiedAccountStatus").textContent = "Checking"; $("unifiedLicenseStatus").textContent = "Checking";
-    $("unifiedWebPermission").textContent = "Checking"; $("unifiedDownloadPermission").textContent = "Checking"; $("unifiedPanelPermission").textContent = "Checking";
+    $("unifiedAccessTitle").textContent = unified.error ? L9(ACC_UI.verify_unav) : L9(ACC_UI.chk_title);
+    $("unifiedAccessText").textContent = L9(ACC_UI.locked_text);
+    $("unifiedAccountStatus").textContent = L9(ACC_UI.checking); $("unifiedLicenseStatus").textContent = L9(ACC_UI.checking);
+    $("unifiedWebPermission").textContent = L9(ACC_UI.checking); $("unifiedDownloadPermission").textContent = L9(ACC_UI.checking); $("unifiedPanelPermission").textContent = L9(ACC_UI.checking);
     return;
   }
   if (!data){
     banner.className = "unified-banner";
-    $("unifiedAccessTitle").textContent = "Account compatibility mode";
-    $("unifiedAccessText").textContent = "Refreshing the unified account service. Your existing plan remains visible in Setup.";
-    $("unifiedAccountStatus").textContent = acc.profile ? "Active plan check" : "Checking"; $("unifiedLicenseStatus").textContent = isPremium() ? "Active" : "Inactive";
-    $("unifiedWebPermission").textContent = "Legacy"; $("unifiedDownloadPermission").textContent = "Legacy"; $("unifiedPanelPermission").textContent = "Legacy";
+    $("unifiedAccessTitle").textContent = L9(ACC_UI.compat_title);
+    $("unifiedAccessText").textContent = L9(ACC_UI.compat_text);
+    $("unifiedAccountStatus").textContent = acc.profile ? L9(ACC_UI.plan_check) : L9(ACC_UI.checking); $("unifiedLicenseStatus").textContent = isPremium() ? L9(ACC_UI.active) : L9(ACC_UI.inactive);
+    $("unifiedWebPermission").textContent = L9(ACC_UI.legacy); $("unifiedDownloadPermission").textContent = L9(ACC_UI.legacy); $("unifiedPanelPermission").textContent = L9(ACC_UI.legacy);
     return;
   }
   var status = unifiedAccountStatus(data), license = data.license || {}, p = data.permissions || {}, devices = data.devices || {}, panel = data.panel || {};
@@ -30436,8 +30518,8 @@ function unifiedRender(){
      through. The student keeps working, and is told plainly why the card is
      not moving, rather than being shown a stale verdict as if it were live. */
   $("unifiedAccessText").textContent = msg[1] + (unified.error ? " " + L9(UNIFIED_STALE) : "");
-  $("unifiedAccountStatus").textContent = unifiedPretty(status);
-  $("unifiedLicenseStatus").textContent = unifiedPretty(license.status || (license.active ? "active" : "inactive"));
+  $("unifiedAccountStatus").textContent = unifiedStatusWord(status);
+  $("unifiedLicenseStatus").textContent = unifiedStatusWord(license.status || (license.active ? "active" : "inactive"));
   $("unifiedLicenseExpiry").textContent = unifiedDate(license.expires_at);
   /* v5.74.0 — the panel version shown here is the SERVER's answer or nothing.
      It used to fall back to a literal "6.24.0" that stopped being true after
@@ -30447,7 +30529,7 @@ function unifiedRender(){
      the truth, and the number can never again drift from what the download
      lane actually issues. */
   $("unifiedPanelVersion").textContent = panel.latest_version || "\u2014";
-  $("unifiedWebPermission").textContent = p.web_app === true && unifiedAllowed("web_app") ? "ON" : "OFF";
+  $("unifiedWebPermission").textContent = p.web_app === true && unifiedAllowed("web_app") ? L9(ACC_UI.on) : L9(ACC_UI.off);
   var rs = data.reasons || {};
   $("unifiedDownloadPermission").textContent = unifiedPermTile(p.ccx_download === true, unifiedAllowed("ccx_download"), rs.ccx_download);
   $("unifiedPanelPermission").textContent = unifiedPermTile(p.photoshop_panel === true || p.panel === true, unifiedAllowed("panel"), rs.panel);
@@ -30486,18 +30568,18 @@ function unifiedRender(){
   var phoneN = liveOfType("phone") || (devices.phone ? 1 : 0);
   var compN = liveOfType("computer") || (devices.computer ? 1 : 0);
   $("unifiedPhone").textContent = (phoneN
-    ? ((devices.phone && (devices.phone.label || devices.phone.device_name) || "Registered") +
+    ? ((devices.phone && (devices.phone.label || devices.phone.device_name) || L9(ACC_UI.registered)) +
        (phoneN > 1 ? " +" + (phoneN - 1) : ""))
-    : "Available") + seatWord;
+    : L9(ACC_UI.available)) + seatWord;
   try{ accPanelBtnLabel(); }catch(e){}   /* the button quotes the same answer */
   /* "shared slot" stays: one computer seat carries BOTH the Web App and the
      Photoshop Panel, which is unchanged by the seat count and is the thing a
      student most needs to know about this row. Only the "1/1" it used to be
      followed by is gone — that was the hard-coded number this wave removes. */
   $("unifiedComputer").textContent = (compN
-    ? ((devices.computer && (devices.computer.label || devices.computer.device_name) || "Registered") +
-       " · shared slot" + (compN > 1 ? " +" + (compN - 1) : ""))
-    : "Available") + seatWord;
+    ? ((devices.computer && (devices.computer.label || devices.computer.device_name) || L9(ACC_UI.registered)) +
+       " · " + L9(ACC_UI.shared_slot) + (compN > 1 ? " +" + (compN - 1) : ""))
+    : L9(ACC_UI.available)) + seatWord;
   var current = unifiedDeviceType();
   /* a seat is free, and THIS browser is not the one already sitting on one —
      the server answers device_required / device_mismatch for exactly that. */
@@ -30521,10 +30603,8 @@ function unifiedRender(){
   var relPhoneBtn = $("unifiedReleasePhone");
   if (relPhoneBtn){ relPhoneBtn.hidden = !phoneN; relPhoneBtn.textContent = L9(REL_PHONE_TXT.btn); }
   $("unifiedDownloadNote").textContent = unifiedCanDownload()
-    ? "Verified. Download the Panel under Setup ▸ Account ▸ Photoshop Panel — the one place in the app that creates the temporary link."
-    : (p.ccx_download === true && unifiedComputerOnly(rs.ccx_download)
-        ? "The Panel is downloaded on your registered Computer only — open the Web App there (Setup ▸ Account ▸ Photoshop Panel). This device cannot download the .ccx."
-        : "Download requires Active account + license, download permission and this registered Computer.");
+    ? L9(ACC_UI.dl_ok)
+    : (p.ccx_download === true && unifiedComputerOnly(rs.ccx_download) ? L9(ACC_UI.dl_comp) : L9(ACC_UI.dl_req));
   var legacyPanel = $("accGrpPanel");
   if (legacyPanel){
     var open = legacyPanel.className.indexOf("open") >= 0;
@@ -31581,7 +31661,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.143.0";
+var APP_VER="6.144.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
