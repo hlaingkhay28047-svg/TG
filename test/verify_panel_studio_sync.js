@@ -230,8 +230,15 @@ async function smoke() {
        difference still fails. */
     const { uxpSafeText } = require("../tools/lib/uxp_safe_text.js");
     const deglyph = (l) => l.map((s) => { try { return uxpSafeText(s, "studio-sync"); } catch (e) { return s; } });
+    /* 6.147.0 — THE ONE LINE THE BROWSER HAS AND PHOTOSHOP CANNOT: each page's cam-slot carries Camera · Live
+       (getUserMedia — a phone's camera, a DSLR on USB through the maker's webcam utility) beside Hot folder on
+       the web; the panel draws the same Hot folder in the same slot and has no camera to offer. That one chip
+       is dropped from the app's list ONCE, by its exact text, the way verify_panel_page_parity's APP_ONLY names
+       Portrait Style's and Imagine's; every other difference still fails. */
+    const APP_ONLY = { meitu: ["ကင်မရာ · Live"], evoto: ["ကင်မရာ · Live"], retouch: ["ကင်မရာ · Live"] };
+    const dropOnce = (list, names) => { const out = list.slice(); names.forEach((n) => { const i = out.indexOf(n); if (i >= 0) out.splice(i, 1); }); return out; };
     [["Retouch A", "meitu"], ["Retouch B", "evoto"], ["Retouch Pro", "retouch"]].forEach(([label, key]) => {
-      const a = deglyph(appText[key] || []), b = deglyph(panelText[key] || []);
+      const a = deglyph(dropOnce(appText[key] || [], APP_ONLY[key] || [])), b = deglyph(panelText[key] || []);
       let i = 0;
       while (i < a.length && i < b.length && a[i] === b[i]) i++;
       report(`${label} shows the web app's strings, all ${a.length} of them, in order`,

@@ -4252,6 +4252,8 @@ function applyI18n() {
          sheet every other slot opens (Layer · File), through the panel's own
          capture paths. */
       pickPhoto: function () { try { stPickInto("subject-reference", "PHOTO"); } catch (e) { } },
+      /* 6.218.0 — the Hot folder door the screen draws under the PHOTO slot (Retouch A / B) and after the V2 picker (Retouch Pro) */
+      hotDoor: function (slot, key) { try { panelCamDoor(slot, key); } catch (e) { hwarn("hot door", e); } },
       /* 6.164.0 — the card's ↻: read the active layer again, straight into the PHOTO slot */
       pickLayer: function () { try { refLayerInto("subject-reference"); } catch (e) { } },
       pickRef: function () { try { stPickInto("reference-2", "REF"); } catch (e) { } },
@@ -7282,6 +7284,7 @@ function bindPath() {
   wireStaticGrp("ptGrpPrompt", "ptPromptH");
   const add = $("btnPtAdd"); if (add) add.addEventListener("click", ptAdd);
   const em = $("ptEmpty"); if (em) em.addEventListener("click", ptAdd);
+  try { panelCamDoor($("ptCamDoor"), "path"); } catch (e) { hwarn("hot door path", e); }   /* 6.218.0 — the Hot folder door under Add photos */
   const clr = $("btnPtClear");
   if (clr) clr.addEventListener("click", function () {
     if (PT.busy) return;
@@ -13130,6 +13133,44 @@ REFRESHERS.push(function () { try { if (imagineReady) imagineEnter(); } catch (e
    with Photoshop's own answers — the photo from the active layer or a file, the reference the same way,
    no camera, the RunningHub call through callImageAPI, the panel's gallery store, Place into Photoshop
    where the app prints. */
+/* 6.218.0 — THE HOT FOLDER DOOR on Retouch A / B, Retouch Pro and Path. The web app draws Camera · Live and Hot
+   folder into each page's cam-slot (window.HNK_CAM); Photoshop has no camera, so the panel draws the one door it
+   has — the same UXP folder watch Portrait Style and Imagine use — into the same slot, with the same words (Imagine's
+   data, which are Portrait Style's). A shot goes where the page keeps its photo: the shared PHOTO slot
+   (state.refs[0] — Retouch A / B and Retouch Pro alike) or the Path batch. */
+const HOT_DOORS = {};
+function hotDoorWords() { const im = globalThis.HNK && globalThis.HNK.imagine; return (im && im.data && im.data.ui) || null; }
+function panelCamDoor(slot, key) {
+  if (!slot) return;
+  const U = hotDoorWords(); if (!U || !U.hot_folder) return;
+  const d = HOT_DOORS[key] || (HOT_DOORS[key] = { hot: null, n: 0 });
+  slot.innerHTML = ""; slot.classList.add("cam-door");
+  const row = document.createElement("div"); row.className = "chips cam-door-row";
+  const hot = mkBtn("chip cam-hot" + (d.hot ? " on" : ""));
+  setIcnText(hot, "i-folder", "cream", ff9(d.hot ? U.hot_stop : U.hot_folder));
+  hot.setAttribute("aria-pressed", d.hot ? "true" : "false");
+  hot.addEventListener("click", function () {
+    if (d.hot) { try { if (d.hot.stop) d.hot.stop(); } catch (e) { } d.hot = null; panelCamDoor(slot, key); return; }
+    uxpHotFolder().pick(function (ctl) { if (!ctl) return; d.hot = { name: ctl.name || "", stop: ctl.stop || null }; d.n = 0; panelCamDoor(slot, key); },
+      function (item) {
+        d.n++; try { hotDoorIntake(key, item); } catch (e) { hwarn("hot door intake", e); }
+        const st = slot.querySelector(".cam-door-st"); if (st && d.hot) st.textContent = ff9(U.hot_watching).replace("{f}", d.hot.name).replace("{n}", String(d.n));
+      });
+  });
+  row.appendChild(hot); slot.appendChild(row);
+  if (d.hot) { const st = document.createElement("div"); st.className = "mut cam-door-st"; st.textContent = ff9(U.hot_watching).replace("{f}", d.hot.name).replace("{n}", String(d.n)); slot.appendChild(st); }
+}
+function hotDoorIntake(key, item) {
+  const m = /^data:([^;]+);base64,(.*)$/.exec(item.dataUrl || ""); if (!m) return;
+  if (key === "path") {
+    if (PT.busy || PT.photos.length >= PT_MAX) return;
+    PT.photos.push({ id: "p" + (++PT.seq), name: String(item.name || ("photo-" + PT.seq)), srcDataUrl: item.dataUrl, status: "queued", lookOverride: null, outB64: null, outMime: "", doneSrc: "", file: null });
+    ptSync(); setStatus(ptT("pt_n").replace("{N}", String(PT.photos.length)), "ok"); return;
+  }
+  const slot = refSlotById("subject-reference"); if (!slot) return;
+  slot.assign({ b64: m[2], mime: m[1], label: item.name || "camera" });
+  setStatus(t("st_photo_layer_added"), "ok");
+}
 /* 6.218.0 — THE HOT FOLDER, the panel's way, for Portrait Style and Imagine alike */
 function uxpHotFolder() {
   return {

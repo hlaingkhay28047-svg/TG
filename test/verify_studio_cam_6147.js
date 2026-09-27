@@ -87,14 +87,25 @@ function partA() {
 
   const helper = slice(MAIN, "function uxpHotFolder() {", "function pstyleHost() {");
   const ph = slice(MAIN, "function pstyleHost() {", "function pstyleEnter() {"), ih = slice(MAIN, "function imagineHost() {", "function imagineEnter() {");
-  report("A4) the panel: one UXP folder watch (uxpHotFolder) used by the Portrait Style host and the Imagine host alike; neither host has a camera or a share",
+  const SCREEN = read("panel/src/ui/screens/retouch-studio-screen.js"), PANEL_HTML = read("panel/index.html");
+  report("A4) the panel: one UXP folder watch (uxpHotFolder) used by the Portrait Style host, the Imagine host and the Hot folder door alike; the door is drawn into the same cam-slot on Retouch A / B (the screen's PHOTO slot), Retouch Pro (the lifted picker's slot) and Path (its own slot), feeds the shared PHOTO slot or the Path batch, and speaks Imagine's words; no host has a camera or a share",
     has(helper, "const f = await fsp.getFolder();") && has(helper, "}, 2500);") && has(helper, "const buf = await e.read({ format: uxp.storage.formats.binary });") &&
-    has(ph, "hotFolder: uxpHotFolder(),") && has(ih, "hotFolder: uxpHotFolder(),") && !has(ih, "camera:") && !has(ih, "share:") && !has(ph, "camera:") && !has(ph, "share:"));
+    has(ph, "hotFolder: uxpHotFolder(),") && has(ih, "hotFolder: uxpHotFolder(),") && !has(ih, "camera:") && !has(ih, "share:") && !has(ph, "camera:") && !has(ph, "share:") &&
+    has(MAIN, "function panelCamDoor(slot, key) {") && has(MAIN, "function hotDoorIntake(key, item) {") && has(MAIN, "uxpHotFolder().pick(function (ctl) {") &&
+    has(MAIN, 'const slot = refSlotById("subject-reference"); if (!slot) return;\n  slot.assign({ b64: m[2], mime: m[1], label: item.name || "camera" });') &&
+    has(MAIN, 'PT.photos.push({ id: "p" + (++PT.seq), name: String(item.name || ("photo-" + PT.seq)), srcDataUrl: item.dataUrl,') &&
+    has(MAIN, "hotDoor: function (slot, key) { try { panelCamDoor(slot, key); } catch (e) { hwarn(\"hot door\", e); } },") && has(MAIN, 'try { panelCamDoor($("ptCamDoor"), "path"); }') &&
+    has(MAIN, "function hotDoorWords() { const im = globalThis.HNK && globalThis.HNK.imagine; return (im && im.data && im.data.ui) || null; }") &&
+    has(SCREEN, 'var camSlot = el("div", "cam-slot"); camSlot.setAttribute("data-cam", "studio"); host.appendChild(camSlot);') && has(SCREEN, 'bd.hotDoor(camSlot, "studio")') &&
+    has(SCREEN, '$("rsPicker").querySelector(\'.cam-slot[data-cam="retouch"]\')') && has(PANEL_HTML, '<div class="cam-slot" id="ptCamDoor" data-cam="path"></div>') &&
+    has(read("panel/js/hnk_studio_suites.js"), 'rsCam.setAttribute("data-cam","retouch")'));
 
   const imCss = imLift.between(APP, imLift.C0, imLift.C1, "css");
   report("A5) the CSS: the door and the sheet are app-only; the Imagine row's rule sits in the lifted block and draws on UXP; the parity walk names Imagine's Camera · Live as the web host's own",
     has(APP, ".cam-door{margin-top:8px}") && has(APP, ".cam-share .cam-share-sizes{") && has(imCss, ".im-camrow{margin:4px 0 8px 0}") && has(imCss, ".im-hot{font-size:12.5px;color:var(--gold-hi);margin-left:4px}") &&
-    has(read("panel/styles.css"), ".im-camrow{") && has(PARITY, 'imagine: ["ကင်မရာ · Live"],'));
+    has(read("panel/styles.css"), ".im-camrow{") && has(read("panel/styles.css"), ".cam-door{margin-top:8px}") &&
+    has(PARITY, 'imagine: ["ကင်မရာ · Live"],') && has(PARITY, 'path: ["ကင်မရာ · Live"],') &&
+    has(read("test/verify_panel_studio_sync.js"), 'const APP_ONLY = { meitu: ["ကင်မရာ · Live"], evoto: ["ကင်မရာ · Live"], retouch: ["ကင်မရာ · Live"] };'));
 }
 
 /* ---------------- B) the web app ---------------- */
@@ -315,7 +326,32 @@ async function partC(browser) {
     }, PNG_B64);
     report("C1) the panel's Imagine gets the hot folder (no Camera · Live, no Share — Photoshop has neither): UXP's folder is watched, the shot already there is left alone, the new one joins the photos within a poll, Stop lets go; Portrait Style's door still stands",
       c1.row && !c1.live && c1.hot === "Hot folder ကြည့်မယ်" && !c1.share && c1.hotOn && c1.name === "X Acquire" && has(c1.status || "", "X Acquire") && c1.photos === 1 && c1.pname === "DSC_0101.JPG" && c1.oldIgnored && c1.stopped && c1.psHot, c1);
-    report("C2) no page error in the panel", errs.length === 0, errs);
+    const c2 = await pp.evaluate(async (png) => {
+      const q = (s) => document.querySelector(s), tx = (n) => ((n && n.textContent) || "").trim();
+      const bin = atob(png), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const out = {};
+      switchPage("meitu"); await new Promise((r) => setTimeout(r, 700)); out.studio = tx(q('#stPicker .cam-slot[data-cam="studio"] .cam-hot')); out.noLive = !q('#stPicker .cam-live');
+      switchPage("retouch"); await new Promise((r) => setTimeout(r, 600)); out.retouch = tx(q('#rsPicker .cam-slot[data-cam="retouch"] .cam-hot'));
+      switchPage("path"); await new Promise((r) => setTimeout(r, 500)); out.path = tx(q("#ptCamDoor .cam-hot"));
+      window.__ents = [{ isFile: true, name: "DSC_0200.JPG", read: async () => bytes.buffer }];
+      require("uxp").storage.localFileSystem.getFolder = async () => ({ name: "EOS Utility", getEntries: async () => window.__ents.slice() });
+      q("#ptCamDoor .cam-hot").click(); await new Promise((r) => setTimeout(r, 400)); out.pathWatch = tx(q("#ptCamDoor .cam-door-st"));
+      window.__ents.push({ isFile: true, name: "DSC_0201.JPG", read: async () => bytes.buffer });
+      let t0 = Date.now(); while (Date.now() - t0 < 7000 && !PT.photos.length) await new Promise((r) => setTimeout(r, 80));
+      out.pathPhotos = PT.photos.map((p) => p.name).join(); q("#ptCamDoor .cam-hot").click(); await new Promise((r) => setTimeout(r, 200)); out.pathStopped = !q("#ptCamDoor .cam-door-st");
+      switchPage("meitu"); await new Promise((r) => setTimeout(r, 600));
+      q("#stPicker .cam-hot").click(); await new Promise((r) => setTimeout(r, 400)); out.studioWatch = tx(q("#stPicker .cam-door-st")); out.studioStop = tx(q("#stPicker .cam-hot"));
+      window.__ents.push({ isFile: true, name: "DSC_0202.JPG", read: async () => bytes.buffer });
+      t0 = Date.now(); while (Date.now() - t0 < 7000 && !(state.refs[0] && state.refs[0].label === "DSC_0202.JPG")) await new Promise((r) => setTimeout(r, 80));
+      out.studioLoaded = state.refs[0] && state.refs[0].label; out.filled = !!q("#stPicker .ref.filled img"); out.doorStays = !!q("#stPicker .cam-hot");
+      switchPage("retouch"); await new Promise((r) => setTimeout(r, 600)); out.rsFilled = !!q("#rsPicker .ref.filled img"); out.rsDoor = tx(q('#rsPicker .cam-hot'));
+      switchPage("meitu"); await new Promise((r) => setTimeout(r, 500)); q("#stPicker .cam-hot").click(); await new Promise((r) => setTimeout(r, 200)); out.studioStopped = !q("#stPicker .cam-door-st");
+      return out;
+    }, PNG_B64);
+    report("C2) the panel's Retouch A, Retouch Pro and Path carry the same Hot folder door in the same slot (no Camera · Live — Photoshop has none); Path's watched folder adds the new shot to the batch, the studio's fills the shared PHOTO slot (Retouch Pro shows the photo, with its own door at rest), the shot already there is left alone, the door stays for the next one, Stop lets go",
+      c2.studio === "Hot folder ကြည့်မယ်" && c2.noLive && c2.retouch === "Hot folder ကြည့်မယ်" && c2.path === "Hot folder ကြည့်မယ်" && has(c2.pathWatch || "", "EOS Utility") && c2.pathPhotos === "DSC_0201.JPG" && c2.pathStopped &&
+      has(c2.studioWatch || "", "EOS Utility") && c2.studioStop === "ရပ်မယ်" && c2.studioLoaded === "DSC_0202.JPG" && c2.filled && c2.doorStays && c2.rsFilled && c2.rsDoor === "Hot folder ကြည့်မယ်" && c2.studioStopped, c2);   /* Retouch Pro shares the photo, not the watch: its own door is at rest */
+    report("C3) no page error in the panel", errs.length === 0, errs);
     await pp.close();
   } finally { server.close(); }
 }
