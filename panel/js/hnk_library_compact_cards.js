@@ -43,6 +43,15 @@
   }
   /* The app's Library copy, in the panel's nine languages. Local to this
      module on purpose — the panel's I18N pack never grows for one page. */
+  /* 6.216.0 — the app's LIB_CAT9, verbatim: the six collections' names in nine languages; the keys stay the filter */
+  var LIB_CAT9 = {
+    "Reference":    {my:"Reference ပုံ", en:"Reference", shn:"Reference", kac:"Reference", th:"อ้างอิง", zh:"参考", vi:"Tham chiếu", id:"Referensi", ms:"Rujukan"},
+    "Lighting":     {my:"အလင်း", en:"Lighting", shn:"လႅင်း", kac:"Jan", th:"แสง", zh:"光线", vi:"Ánh sáng", id:"Pencahayaan", ms:"Pencahayaan"},
+    "Exact Skin":   {my:"အသားအရေ အတိအက်", en:"Exact Skin", shn:"ၼိူဝ်ႉၼင်ၽိဝ် တႅတ်ႈ", kac:"Hpyi tsawm", th:"ผิวเป๊ะ", zh:"精确肤质", vi:"Da chuẩn", id:"Kulit presisi", ms:"Kulit tepat"},
+    "Background":   {my:"နောက်ခံ", en:"Background", shn:"ပိုၼ်ႉလင်", kac:"Hpang", th:"ฉากหลัง", zh:"背景", vi:"Nền", id:"Latar", ms:"Latar"},
+    "Makeup":       {my:"မိတ်ကပ်", en:"Makeup", shn:"မဵၵ်ႉဢပ်ႉ", kac:"Makeup", th:"เมคอัพ", zh:"妆容", vi:"Trang điểm", id:"Riasan", ms:"Solekan"},
+    "Baby & Child": {my:"ကလေးနဲ့ ကလေးငယ်", en:"Baby & Child", shn:"လုၵ်ႈဢွၼ်ႇ", kac:"Ma kaji hte ma", th:"ทารกและเด็ก", zh:"婴儿与儿童", vi:"Em bé & trẻ nhỏ", id:"Bayi & anak", ms:"Bayi & kanak-kanak"}
+  };
   var LIB_L = {
     refsH2: { my: "ပုံများ (IMAGE 1 = အဓိက Subject)", en: "Images (IMAGE 1 = main subject)", shn: "ၶႅပ်းႁၢင်ႈ (IMAGE 1 = တူဝ်ထိင်)", kac: "Sumla ni (IMAGE 1 = madung)", th: "รูปภาพ (IMAGE 1 = บุคคลหลัก)", zh: "图片（IMAGE 1 = 主体）", vi: "Ảnh (IMAGE 1 = chủ thể chính)", id: "Gambar (IMAGE 1 = subjek utama)", ms: "Imej (IMAGE 1 = subjek utama)" },
     refsNote: { my: "One-Tap တော်တော်များများက IMAGE 1 (ပင်မပုံ) လိုတယ် · Reference သုံးတဲ့ preset တွေက IMAGE 2 ပါ လိုတယ်", en: "Most one-taps need IMAGE 1 (your main photo) · reference presets also need IMAGE 2", shn: "One-Tap ၵမ်ႈၼမ် လူဝ်ႇ IMAGE 1 · preset reference လူဝ်ႇ IMAGE 2 ထႅင်ႈ", kac: "One-Tap law malawng gaw IMAGE 1 ra ai · reference preset ni gaw IMAGE 2 mung ra ai", th: "One-Tap ส่วนใหญ่ต้องมี IMAGE 1 · พรีเซ็ตอ้างอิงต้องมี IMAGE 2 ด้วย", zh: "多数 One-Tap 需要 IMAGE 1 · 参考类预设还需要 IMAGE 2", vi: "Hầu hết One-Tap cần IMAGE 1 · preset tham chiếu cần thêm IMAGE 2", id: "Sebagian besar One-Tap butuh IMAGE 1 · preset referensi juga butuh IMAGE 2", ms: "Kebanyakan One-Tap perlukan IMAGE 1 · preset rujukan perlukan IMAGE 2 juga" },
@@ -192,7 +201,7 @@
     var opts = [["featured", "i-star-fill", L9(LIB_L.featured)], ["all", L9(LIB_L.all) + " (" + LW.items.length + ")"]];
     var favN = libFavList().length;
     if (favN) opts.push(["favs", "i-star-fill", L9(LIB_L.favs) + " (" + favN + ")"]);
-    Object.keys(LW.collections).forEach(function (c) { opts.push([c, c + " (" + LW.collections[c] + ")"]); });
+    Object.keys(LW.collections).forEach(function (c) { opts.push([c, L9(LIB_CAT9[c] || { en: c }) + " (" + LW.collections[c] + ")"]); });
     var featuredBypassed = lib.filter === "featured" && lib.search.trim();
     opts.forEach(function (o) {
       var isOn = lib.filter === o[0] && !(o[0] === "featured" && featuredBypassed);

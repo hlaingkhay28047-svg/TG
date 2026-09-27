@@ -1311,3 +1311,10 @@ jobs:
       # img sites load lazily on both surfaces. Also walks every page for an eager image below the fold.
       - name: Verify the Account page's languages and the Album's lazy tiles
         run: PORT=8931 node test/verify_account_lang_6144.js
+
+      # 6.145.0 — the last English on every page speaks nine languages: Home's destinations card and
+      # statline, the clock's weekday/month/half of the day (the studio's own tables where Chromium's Intl
+      # has none), the thirteen Workflows categories, the Library's six collections, 65 Imagine names, two
+      # studio headings — one table for both surfaces; the panel's catalog lift carries the names per language.
+      - name: Verify the last English on every page speaks nine languages
+        run: PORT=8931 node test/verify_last_english_6145.js

@@ -28,7 +28,7 @@ async function readCatalog(page, lang) {
   return page.evaluate(() => {
     const src = window.HNK_WF_CATALOG;
     if (!src) return null;
-    return src.map(c => ({ t: String(c.t || ""), desc: String(c.desc || ""),
+    return src.map(c => ({ t: String(c.t || ""), tt: String(c.tt || ""), desc: String(c.desc || ""),   /* 6.145.0 — tt: the name in that language; t stays the key */
       items: c.items.map(w => ({ id: w.id, summary: String(w.summary || "") })) }));
   });
 }
@@ -65,7 +65,7 @@ async function extract() {
       if (!rows || rows.length !== cats.length) throw new Error("catalog shape changed under ?lang=" + lang);
       const sum = {}, cat = [];
       rows.forEach((c, i) => {
-        cat.push({ t: c.t, desc: c.desc });
+        cat.push({ t: c.tt || c.t, desc: c.desc });   /* 6.145.0 — the panel shows the name, matches on the key */
         c.items.forEach(w => { if (w.id) sum[w.id] = w.summary; });
       });
       i18n[lang] = { sum: sum, cat: cat };

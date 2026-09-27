@@ -171,11 +171,12 @@ async function armPage(page, errs) {
   const one = await page.evaluate(() => ({
     doors: document.querySelectorAll("a[data-panel-intent], #unifiedDownload, #dashPromo, #dashPromoGo").length,
     dest: Array.from(document.querySelectorAll("#pgDash .unified-actions .btn")).map(b => b.textContent.trim()),
+    destWant: [L9(HOME_UI.dest_ai), L9(HOME_UI.dest_acc), L9(HOME_UI.dest_tut)].join("|"),   /* 6.145.0 — the page's own words */
     tut: Array.from(document.querySelectorAll("#pgTutorials .tutorial-card .btn")).map(b => b.textContent.trim()),
     tutWant: TUTORIALS.map(x => L9(x.b)), tut3Page: document.querySelector("#pgTutorials .tutorial-card:nth-child(3) .btn").getAttribute("data-tutorial-page"),
     requesters: document.querySelectorAll("#accPanelDownload").length }));
   report("D) 6.33.1 ONE PLACE in the DOM: no door link, no promo band, no Account Center button; Home keeps three destinations, the ten Tutorials buttons carry the table's words and card 03 opens Setup (6.88.0), exactly one download button exists",
-    one.doors === 0 && one.dest.join("|") === "AI Tools|Account & license|Tutorials" && one.tut.length === 10 && one.tut.join("|") === one.tutWant.join("|") && one.tut3Page === "pgHome" && one.requesters === 1, one);
+    one.doors === 0 && one.dest.join("|") === one.destWant && one.tut.length === 10 && one.tut.join("|") === one.tutWant.join("|") && one.tut3Page === "pgHome" && one.requesters === 1, one);
   const d1 = await page.evaluate(() => {
     _panelDownloadIntent = false; _panelDownloadStage = "";
     const href0 = location.href;

@@ -40,9 +40,9 @@ const PANEL_CSS = read("panel/styles.css");
 const SUITES = read("panel/js/hnk_studio_suites.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.144.0", PVER = "6.215.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.145.0", PVER = "6.216.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.140.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 286;
+const COUNT = 287;
 const PORT = Number(process.env.PORT || 8931);
 const BASE = "http://127.0.0.1:" + PORT;
 const PHOTO = fs.readFileSync(path.join(ROOT, "tools", "art_ref", "hnk-model.jpg")).toString("base64");

@@ -3121,12 +3121,12 @@ html.splashing #splash{display:flex}
     <h2 id="dashNewH2"></h2>
     <div id="dashNewList"></div>
   </section>
-  <section class="card" aria-label="Student Web App destinations">
-    <h2>Student Web App</h2>
+  <section class="card" aria-label="Student Web App destinations" data-home-aria="dest_aria">
+    <h2 data-home="dest_h2">Student Web App</h2>
     <div class="unified-actions">
-      <button class="btn btn-gold" type="button" data-unified-page="pgWf">AI Tools</button>
-      <button class="btn" type="button" data-unified-page="pgAccount">Account &amp; license</button>
-      <button class="btn" type="button" data-unified-page="pgTutorials">Tutorials</button>
+      <button class="btn btn-gold" type="button" data-unified-page="pgWf" data-home="dest_ai">AI Tools</button>
+      <button class="btn" type="button" data-unified-page="pgAccount" data-home="dest_acc">Account &amp; license</button>
+      <button class="btn" type="button" data-unified-page="pgTutorials" data-home="dest_tut">Tutorials</button>
     </div>
   </section>
   <section class="card" id="dashCont" style="display:none">
@@ -3164,11 +3164,11 @@ html.splashing #splash{display:flex}
        written by the same runtime code that populated it in the hero; the
        Visual Library count is now runtime too (stLibCount ← LW.items.length) -->
   <div class="statline dash-stat">
-    <div><b id="stTapCount">206</b><span>One-Tap Workflows</span></div>
-    <div><b id="stLibCount">1850</b><span>Visual Library</span></div>
-    <div><b id="stWfCount">199</b><span>Smart Workflow</span></div>
-    <div><b id="stMeituCount"></b><span>Retouch A Controls</span></div>
-    <div><b id="stEvotoCount"></b><span>Retouch B Pro</span></div>
+    <div><b id="stTapCount">206</b><span data-home="st_tap">One-Tap Workflows</span></div>
+    <div><b id="stLibCount">1850</b><span data-home="st_lib">Visual Library</span></div>
+    <div><b id="stWfCount">199</b><span data-home="st_wf">Smart Workflow</span></div>
+    <div><b id="stMeituCount"></b><span data-home="st_meitu">Retouch A Controls</span></div>
+    <div><b id="stEvotoCount"></b><span data-home="st_evoto">Retouch B Pro</span></div>
   </div>
   <!-- 6.33.1 — the Photoshop-panel promo band that closed this page is gone (owner: ONE download place,
        Setup ▸ Account ▸ Photoshop Panel; Home carries no door to it). -->
@@ -4714,12 +4714,12 @@ html.splashing #splash{display:flex}
 <script src="data/hnkdata.js?v=9f7c58bdb600"></script>
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
 <script src="data/pstyle.js?v=d8f1ac4f6ef5"></script>
-<script src="data/imagine.js?v=2b97eb6a9d09"></script>
+<script src="data/imagine.js?v=3f72b8b25456"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=c9841c1da7b4"></script>
+<script src="data/album-module.js?v=2a9207df452f"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=ac0badf84ffb"></script>
-<script src="data/whatsnew.js?v=5e6a7938cdc4"></script>
+<script src="data/whatsnew.js?v=6da3608f1f01"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -6169,6 +6169,72 @@ function renderTutorials(){
   });
 }
 
+/* 6.145.0 — THE LAST ENGLISH ON EVERY PAGE. The page audit after 6.144.0 (both surfaces) left these: the Home
+   card "Student Web App" and its statline, the clock's English weekday and AM/PM, the Workflows' thirteen category
+   names, the Library's six collections, three Imagine tools and 62 presets named in English in the Burmese slot, two
+   studio headings. The tables below are shared verbatim with the panel (home-screen.js, hnk_library_compact_cards.js);
+   the Workflows names ride the catalog lift. The kickers (the .ph-kick brand lines) and the workflow titles stay the
+   studio's product names; the retouch sliders keep the Lightroom words every retoucher knows. */
+var HOME_UI = {
+  dest_aria:{my:"ကျောင်းသား Web App သွားရာ နေရာများ", en:"Student Web App destinations", shn:"တီႈၵႂႃႇ Web App လုၵ်ႈႁဵၼ်း", kac:"Jawng ma Web App sa na shara ni", th:"ปลายทาง Web App นักเรียน", zh:"学员网页版入口", vi:"Điểm đến Web App học viên", id:"Tujuan Web App siswa", ms:"Destinasi Web App pelajar"},
+  dest_h2:  {my:"ကျောင်းသား Web App", en:"Student Web App", shn:"Web App လုၵ်ႈႁဵၼ်း", kac:"Jawng ma Web App", th:"Web App นักเรียน", zh:"学员网页版", vi:"Web App học viên", id:"Web App siswa", ms:"Web App pelajar"},
+  dest_ai:  {my:"AI ကိရိယာများ", en:"AI Tools", shn:"ၶိူင်ႈမိုဝ်း AI", kac:"AI rai ni", th:"เครื่องมือ AI", zh:"AI 工具", vi:"Công cụ AI", id:"Alat AI", ms:"Alat AI"},
+  dest_acc: {my:"အကောင့်နဲ့ လိုင်စင်", en:"Account & license", shn:"Account လႄႈ လၢႆးသုၼ်ႇ", kac:"Account hte license", th:"บัญชีและใบอนุญาต", zh:"账号与许可", vi:"Tài khoản & giấy phép", id:"Akun & lisensi", ms:"Akaun & lesen"},
+  dest_tut: {my:"သင်ခန်းစာများ", en:"Tutorials", shn:"ပိုၼ်းသွၼ်", kac:"Sharin ai lam ni", th:"บทเรียน", zh:"教程", vi:"Hướng dẫn", id:"Tutorial", ms:"Tutorial"},
+  st_tap:   {my:"One-Tap Workflow များ", en:"One-Tap Workflows", shn:"One-Tap Workflow", kac:"One-Tap Workflow ni", th:"เวิร์กโฟลว์ One-Tap", zh:"One-Tap 工作流", vi:"Workflow One-Tap", id:"Workflow One-Tap", ms:"Aliran kerja One-Tap"},
+  st_lib:   {my:"ပုံ Library", en:"Visual Library", shn:"Library ႁၢင်ႈ", kac:"Sumla Library", th:"คลังภาพ", zh:"视觉图库", vi:"Thư viện hình", id:"Pustaka visual", ms:"Pustaka visual"},
+  st_wf:    {my:"Smart Workflow", en:"Smart Workflow", shn:"Smart Workflow", kac:"Smart Workflow", th:"Smart Workflow", zh:"Smart Workflow", vi:"Smart Workflow", id:"Smart Workflow", ms:"Smart Workflow"},
+  st_meitu: {my:"Retouch A ထိန်းချုပ်ကွက်", en:"Retouch A Controls", shn:"ၶိူင်ႈၵုမ်း Retouch A", kac:"Retouch A control ni", th:"ตัวควบคุม Retouch A", zh:"Retouch A 控制项", vi:"Điều khiển Retouch A", id:"Kontrol Retouch A", ms:"Kawalan Retouch A"},
+  st_evoto: {my:"Retouch B Pro", en:"Retouch B Pro", shn:"Retouch B Pro", kac:"Retouch B Pro", th:"Retouch B Pro", zh:"Retouch B Pro", vi:"Retouch B Pro", id:"Retouch B Pro", ms:"Retouch B Pro"}
+};
+var CLOCK_AMPM = {
+  my:["နံနက်","ညနေ"], en:["AM","PM"], shn:["ၵၢင်ၼႂ်","ၵၢင်ၶမ်ႈ"], kac:["jahpawt","shana"], th:["AM","PM"], zh:["上午","下午"], vi:["SA","CH"], id:["AM","PM"], ms:["AM","PM"]
+};
+var DATE_WORDS = {
+  my:{ days:["တနင်္ဂနွေ","တနင်္လာ","အင်္ဂါ","ဗုဒ္ဓဟူး","ကြာသပတေး","သောကြာ","စနေ"], months:["ဇန်နဝါရီ","ဖေဖော်ဝါရီ","မတ်","ဧပြီ","မေ","ဇွန်","ဇူလိုင်","ဩဂုတ်","စက်တင်ဘာ","အောက်တိုဘာ","နိုဝင်ဘာ","ဒီဇင်ဘာ"], digits:"၀၁၂၃၄၅၆၇၈၉", sep:"၊ " },
+  shn:{ days:["ဝၼ်းဢႃးတိတ်ႉ","ဝၼ်းၸၼ်","ဝၼ်းဢင်းၵၢၼ်း","ဝၼ်းပုတ်ႉ","ဝၼ်းၽတ်း","ဝၼ်းသုၵ်း","ဝၼ်းသဝ်"], months:["ၸၼ်ႇဝႃႇရီႇ","ၾႅပ်ႇဝႃႇရီႇ","မျၢတ်ႉၶျ်","ဢေႇပရႄႇ","မေႇ","ၵျုၼ်ႇ","ၵျူႇလၢႆႇ","ဢေႃးၵၢတ်ႉ","သႅပ်ႇထႅမ်ႇပႃႇ","ဢွၵ်ႇထူဝ်ႇပႃႇ","ၼူဝ်ႇဝႅမ်ႇပႃႇ","တီႇသႅမ်ႇပႃႇ"], digits:"", sep:"၊ " },
+  kac:{ days:["Laban","Laban pang","Laban lahkawng","Laban masum","Laban mali","Laban manga","Laban kru"], months:["Zanuari","Feburari","Mat","Epri","Me","Zun","Zulai","Awgat","Septemba","Oktoba","Nowemba","Disemba"], digits:"", sep:", " }
+};
+var WF_CAT9 = {
+  "Face & Portrait":   {my:"မျက်နှာနဲ့ ပုံတူ", en:"Face & Portrait", shn:"ၼႃႈ လႄႈ ႁၢင်ႈၵူၼ်း", kac:"Myi man hte sumla", th:"หน้าและพอร์ตเทรต", zh:"人脸与人像", vi:"Khuôn mặt & chân dung", id:"Wajah & potret", ms:"Wajah & potret"},
+  "Background & Scene":{my:"နောက်ခံနဲ့ မြင်ကွင်း", en:"Background & Scene", shn:"ပိုၼ်ႉလင် လႄႈ ၽိင်ႈ", kac:"Hpang hte scene", th:"ฉากหลังและซีน", zh:"背景与场景", vi:"Nền & bối cảnh", id:"Latar & adegan", ms:"Latar & adegan"},
+  "Look Sets":         {my:"Look အစုံများ", en:"Look Sets", shn:"ၸုမ်ႇ Look", kac:"Look ahpung ni", th:"ชุดลุค", zh:"风格套组", vi:"Bộ phong cách", id:"Set gaya", ms:"Set gaya"},
+  "Studio Scenes":     {my:"Studio မြင်ကွင်းများ", en:"Studio Scenes", shn:"ၽိင်ႈ Studio", kac:"Studio scene ni", th:"ซีนสตูดิโอ", zh:"影棚场景", vi:"Bối cảnh studio", id:"Adegan studio", ms:"Adegan studio"},
+  "Style Studio":      {my:"စတိုင် Studio", en:"Style Studio", shn:"Studio လၢႆး", kac:"Style Studio", th:"สไตล์สตูดิโอ", zh:"风格影棚", vi:"Studio phong cách", id:"Studio gaya", ms:"Studio gaya"},
+  "Creator Studio":    {my:"ဖန်တီးသူ Studio", en:"Creator Studio", shn:"Studio ၽူႈသၢင်ႈ", kac:"Creator Studio", th:"ครีเอเตอร์สตูดิโอ", zh:"创作者影棚", vi:"Studio sáng tạo", id:"Studio kreator", ms:"Studio pencipta"},
+  "Lens Styles":       {my:"မှန်ဘီလူး စတိုင်များ", en:"Lens Styles", shn:"လၢႆးလႅၼ်ႇ", kac:"Lens style ni", th:"สไตล์เลนส์", zh:"镜头风格", vi:"Phong cách ống kính", id:"Gaya lensa", ms:"Gaya kanta"},
+  "Fashion & Style":   {my:"ဖက်ရှင်နဲ့ စတိုင်", en:"Fashion & Style", shn:"ၾႅတ်ႉသျိၼ်ႇ လႄႈ လၢႆး", kac:"Fashion hte style", th:"แฟชั่นและสไตล์", zh:"时尚与风格", vi:"Thời trang & phong cách", id:"Mode & gaya", ms:"Fesyen & gaya"},
+  "Wedding Suite":     {my:"မင်္ဂလာ အစုံ", en:"Wedding Suite", shn:"ၸုမ်ႇ ၵူပ်ႉၵူႈ", kac:"Hkungran ahpung", th:"ชุดงานแต่ง", zh:"婚礼套组", vi:"Bộ tiệc cưới", id:"Paket pernikahan", ms:"Set perkahwinan"},
+  "Studio Relight":    {my:"Studio အလင်း ပြန်ချ", en:"Studio Relight", shn:"Studio လႅင်းမႂ်ႇ", kac:"Studio jan bai jaw", th:"จัดแสงใหม่สตูดิโอ", zh:"影棚重新打光", vi:"Chiếu sáng lại studio", id:"Pencahayaan ulang studio", ms:"Pencahayaan semula studio"},
+  "Repair & Enhance":  {my:"ပြင်ဆင်နဲ့ ကြည်လင်", en:"Repair & Enhance", shn:"မႄး လႄႈ ႁဵတ်းလီ", kac:"Hkrak hte grau kaja", th:"ซ่อมและปรับปรุง", zh:"修复与增强", vi:"Sửa & nâng cấp", id:"Perbaiki & tingkatkan", ms:"Baiki & tingkatkan"},
+  "Replace Mix":       {my:"အစားထိုး Mix", en:"Replace Mix", shn:"Mix လႅၵ်ႈ", kac:"Galai Mix", th:"มิกซ์แทนที่", zh:"替换混合", vi:"Thay thế Mix", id:"Ganti Mix", ms:"Ganti Mix"},
+  "Prompt Ideas":      {my:"Prompt အိုင်ဒီယာများ", en:"Prompt Ideas", shn:"ၶေႃႈၶႆႈၸႂ် Prompt", kac:"Prompt myit ni", th:"ไอเดียพรอมป์ต์", zh:"提示词灵感", vi:"Ý tưởng prompt", id:"Ide prompt", ms:"Idea prompt"}
+};
+var LIB_CAT9 = {
+  "Reference":    {my:"Reference ပုံ", en:"Reference", shn:"Reference", kac:"Reference", th:"อ้างอิง", zh:"参考", vi:"Tham chiếu", id:"Referensi", ms:"Rujukan"},
+  "Lighting":     {my:"အလင်း", en:"Lighting", shn:"လႅင်း", kac:"Jan", th:"แสง", zh:"光线", vi:"Ánh sáng", id:"Pencahayaan", ms:"Pencahayaan"},
+  "Exact Skin":   {my:"အသားအရေ အတိအက်", en:"Exact Skin", shn:"ၼိူဝ်ႉၼင်ၽိဝ် တႅတ်ႈ", kac:"Hpyi tsawm", th:"ผิวเป๊ะ", zh:"精确肤质", vi:"Da chuẩn", id:"Kulit presisi", ms:"Kulit tepat"},
+  "Background":   {my:"နောက်ခံ", en:"Background", shn:"ပိုၼ်ႉလင်", kac:"Hpang", th:"ฉากหลัง", zh:"背景", vi:"Nền", id:"Latar", ms:"Latar"},
+  "Makeup":       {my:"မိတ်ကပ်", en:"Makeup", shn:"မဵၵ်ႉဢပ်ႉ", kac:"Makeup", th:"เมคอัพ", zh:"妆容", vi:"Trang điểm", id:"Riasan", ms:"Solekan"},
+  "Baby & Child": {my:"ကလေးနဲ့ ကလေးငယ်", en:"Baby & Child", shn:"လုၵ်ႈဢွၼ်ႇ", kac:"Ma kaji hte ma", th:"ทารกและเด็ก", zh:"婴儿与儿童", vi:"Em bé & trẻ nhỏ", id:"Bayi & anak", ms:"Bayi & kanak-kanak"}
+};
+/* the date line in the studio's language: our own weekday and month names where Chromium's Intl has none
+   (Burmese, Shan, Kachin — Intl gives English there, measured 6.145.0), Intl for the rest; identical on both surfaces */
+function fmtDateLong(d, L){
+  var W=DATE_WORDS[L];
+  if(W){ var day=String(d.getDate()); if(W.digits) day=day.replace(/\d/g,function(c){ return W.digits[+c]; }); return W.days[d.getDay()]+W.sep+W.months[d.getMonth()]+" "+day; }
+  var loc = L==="zh" ? "zh-CN" : L;
+  return new Intl.DateTimeFormat(loc,{weekday:"long",day:"numeric",month:"long"}).format(d);
+}
+/* the clock's AM/PM in the studio's language (fmtClock12 itself stays the shared, pinned formatter) */
+function clockWords(s, L){ var w=CLOCK_AMPM[L]||CLOCK_AMPM.en; return String(s).replace(/\bAM\b/,w[0]).replace(/\bPM\b/,w[1]); }
+/* Home's static words follow the language (data-home nodes; the greeting and the counts are painted by their renderers) */
+function homeApplyLang(){
+  var nodes = document.querySelectorAll("#pgDash [data-home]");
+  for (var i = 0; i < nodes.length; i++){ var k = nodes[i].getAttribute("data-home"); if (HOME_UI[k]) nodes[i].textContent = L9(HOME_UI[k]); }
+  var arias = document.querySelectorAll("#pgDash [data-home-aria]");
+  for (var j = 0; j < arias.length; j++){ var ka = arias[j].getAttribute("data-home-aria"); if (HOME_UI[ka]) arias[j].setAttribute("aria-label", L9(HOME_UI[ka])); }
+}
 /* 6.144.0 — THE ACCOUNT PAGE SPEAKS THE STUDIO'S LANGUAGE. Every word pgAccount shows — the static
    markup (data-acc nodes, painted by unifiedApplyLang from applyLang) and the states unifiedRender
    writes (signed out · checking · compatibility · live tiles · the two device rows · the download
@@ -6255,6 +6321,7 @@ function applyLang(){
   a11yApplyLang();
   renderTutorials();   /* 6.88.0 — the ten lessons follow the language */
   unifiedApplyLang();   /* 6.144.0 — the Account page follows the language, static nodes and rendered states alike */
+  homeApplyLang();      /* 6.145.0 — Home's destinations card and statline */
   $("heroH1").innerHTML=t("hero_h1");
   $("heroLede").textContent=t("hero_lede");
   PH_MAP.forEach(function(p){ var el=$(p[0]); if(el) el.innerHTML=t(p[1]); });
@@ -13463,10 +13530,10 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
 
     var cats=[];
     var mm=LANG!=="en";
-    cats.push({ t:"Face & Portrait", ic:"i-face", open:true,
+    cats.push({ t:"Face & Portrait", tt:L9(WF_CAT9["Face & Portrait"]), ic:"i-face", open:true,
       desc: L9({"my": "မျက်နှာ၊ အသားအရေ၊ မိတ်ကပ် — identity လုံးဝမပျက်စေဘဲ ပြင်တဲ့ workflow တွေ", "en": "Face, skin and makeup edits — identity always preserved", "shn": "ၼႃႈ၊ ၽိဝ်ၼိူဝ်ႉ၊ make-up — identity ဢမ်ႇလႅၵ်ႈ", "kac": "Myi man, hpyi hte makeup — identity galoi n galai", "th": "แก้ไขหน้า ผิว เมคอัพ — คงตัวตนเสมอ", "zh": "面部、皮肤与妆容编辑 — 身份始终保留", "vi": "Chỉnh mặt, da, trang điểm — luôn giữ danh tính", "id": "Edit wajah, kulit, makeup — identitas selalu terjaga", "ms": "Edit wajah, kulit, solekan — identiti sentiasa kekal"}),
       items: st(["subject-face","retouch","master-pro-retouch","derma-skin"]).concat(prs(["roFaceRep","roFaceSwap","evoto","meitu","roMkCopy"])) });
-    cats.push({ t:"Background & Scene", ic:"i-frame",
+    cats.push({ t:"Background & Scene", tt:L9(WF_CAT9["Background & Scene"]), ic:"i-frame",
       desc: L9({"my": "နောက်ခံပြောင်း၊ scene ထဲ လူထည့်၊ လူအစားထိုး — အလင်း/perspective အလိုအလျောက်ကိုက်", "en": "Backgrounds, scene transfer and subject replacement with matched light", "shn": "လႅၵ်ႈပိုၼ်ႉလင်၊ သႂ်ႇၵူၼ်းၼႂ်း scene — လႅင်းမႅၼ်ႈလီ", "kac": "Hpang galai, scene hta masha bang — nhtoi hkrak ai", "th": "เปลี่ยนฉากหลัง ย้ายคนเข้าฉาก แทนที่คน — แสงเข้ากันอัตโนมัติ", "zh": "换背景、场景移植与人物替换 — 光线自动匹配", "vi": "Đổi nền, chuyển cảnh, thay chủ thể — ánh sáng tự khớp", "id": "Ganti background, transfer scene, ganti subjek — cahaya otomatis cocok", "ms": "Tukar latar, pindah scene, ganti subjek — cahaya padan automatik"}),
       items: st(["bg-replace","reference-transfer","master-bgfg-replace","kitsune-nine-tail","mermaid-transform","fairy-wings","full-look-transfer","regency-birthday","dress-reference","scene-fit-pro","studio-look-copy","reference-scenes","prop-insert","decor-theme-color","horse-straw","couple-compose","outfit-scene-solo","outfit-scene-couple","outfit-scene-family","outfit-scene-group","silhouette-romance","cinematic-poster"]).concat(prs(["repSolo","repCouple","repFamily","roBgRep","roBgSwap","fgbglc","roSubSwap","roMatch"])) });
     /* v5.91.0 — LOOK SETS. Thirteen complete studio sets the owner sent as
@@ -13475,10 +13542,10 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
        one card cut together as a single shoot. They sit in their own category
        because they are not "change the background" — they are a set the studio
        books, and a student picks the set before they pick anything else. */
-    cats.push({ t:"Look Sets", ic:"i-dress",
+    cats.push({ t:"Look Sets", tt:L9(WF_CAT9["Look Sets"]), ic:"i-dress",
       desc: L9({"my": "အခင်းအကျင်း တစ်ခုလုံး — နောက်ခံအရောင်၊ အလင်း၊ အရောင်ချိန်၊ ဝတ်စုံ အတိအကျ တစ်ပုံစံတည်း။ ပုံ ၁၀၀ လုပ်လည်း တစ်ရိုက်တည်းလို။", "en": "A whole set, fixed: backdrop colour, light, grade and wardrobe identical on every photo, so a hundred frames read as one shoot.", "shn": "ၸုမ်းလင်ႇသဵၼ်ႈ တင်းသဵင်ႈ — သီလင်၊ ၾႆး၊ လၢႆးသီ၊ ၶူဝ်းၼုင်ႈ မိူၼ်ၵၼ်ၵူႊၶႅပ်း", "kac": "Set langai ting — shakum nsam, nhtoi, grade, palawng yawng maren", "th": "เซ็ตทั้งชุด: สีฉาก แสง เกรดสี และชุด เหมือนกันทุกภาพ", "zh": "整套设定固定：背景色、布光、调色与服装每张一致", "vi": "Trọn bộ set cố định: màu phông, ánh sáng, màu và trang phục giống nhau mọi ảnh", "id": "Satu set utuh: warna latar, cahaya, grading dan busana sama di setiap foto", "ms": "Satu set penuh: warna latar, cahaya, gred dan busana sama pada setiap foto"}),
       items: st(["look-butterfly-wing", "look-golden-grecian", "look-highland-indigo", "look-gold-parasol", "look-blossom-braids", "look-sunflower-olive", "look-chiaroscuro-cream", "look-misty-grey", "look-marigold-veil", "look-peach-velvet", "look-temple-lightfall", "look-noir-feather", "look-imperial-yellow"]) });
-    cats.push({ t:"Studio Scenes", ic:"i-clapper",
+    cats.push({ t:"Studio Scenes", tt:L9(WF_CAT9["Studio Scenes"]), ic:"i-clapper",
       desc: L9({"my": "Panel ရဲ့ scene preset တွေ — ဘွဲ့၊ prewedding၊ မြန်မာ/တရုတ်/ရှမ်း/ထိုင်း ရိုးရာ၊ newborn၊ မွေးနေ့", "en": "The panel's scene presets — graduation, prewedding, traditional, newborn, birthday", "shn": "Scene preset — ဘွဲႈ၊ prewedding၊ ႁိတ်ႈႁွႆး၊ လုၵ်ႈဢွၼ်ႇ", "kac": "Scene preset ni — degree, prewedding, htunghking, ma kaji", "th": "พรีเซ็ตฉากจากแผง — รับปริญญา พรีเวดดิ้ง ชุดประเพณี เด็กแรกเกิด วันเกิด", "zh": "面板场景预设 — 毕业、婚前、传统、新生儿、生日", "vi": "Preset cảnh của bảng — tốt nghiệp, prewedding, truyền thống, sơ sinh, sinh nhật", "id": "Preset scene panel — wisuda, prewedding, tradisional, bayi, ulang tahun", "ms": "Preset scene panel — graduasi, prewedding, tradisional, bayi, hari jadi"}),
       items: st(["lanna-gold-heritage","concept-poster","ink-atelier","doll-boudoir","gold-chrysanth","lion-dance","lotus-dance","lotus-garden","saigon-glam","peony-night","blue-silk"]).concat(prs(["scnGrad","scnPrewed","scnVietnam","scnMyanmar","scnChinese","scnShan","scnThailand","scnNewborn","scnBday","scnScarf"])) });
     /* v6.12.0 — STYLE STUDIO: the RunningHub API_* AI Apps the owner showed,
@@ -13487,7 +13554,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
        real photograph, a wider canvas, a clean plate, a turnaround sheet, a
        mecha poster, a neon street. Their own group: they change the STYLE of
        the picture, not the person or the scene. */
-    cats.push({ t:"Style Studio", ic:"i-sparkle",
+    cats.push({ t:"Style Studio", tt:L9(WF_CAT9["Style Studio"]), ic:"i-sparkle",
       desc: L9({"my": "ပုံတစ်ပုံကို 3D anime၊ 2D anime၊ မင်ရေးပန်းချီ၊ manga၊ ကာတွန်း→တကယ့်ပုံ၊ ဘောင်ချဲ့၊ watermark ဖျက်၊ character sheet၊ mecha poster၊ neon လမ်း — style ကတ်တွေ", "en": "One photo into 3D anime, 2D anime, ink sketch, manga, comic-to-real, a wider canvas, a clean plate, a turnaround sheet, a mecha poster or a neon street — the style cards", "shn": "ၶႅပ်းၼိုင်ႈ → 3D anime၊ 2D anime၊ ႁၢင်ႈမိၵ်ႈ၊ manga၊ ၵၢတ်ႉတုၼ်း→တႄႉ၊ ၶႂၢၵ်ႈၶွပ်ႇ၊ လုပ်ႇ watermark — ၵၢတ်ႉ style", "kac": "Sumla langai → 3D anime, 2D anime, ink sketch, manga, comic→real, frame kaba, watermark mat kau — style card ni", "th": "รูปเดียวเป็น 3D อนิเมะ 2D อนิเมะ สเก็ตช์หมึก มังงะ การ์ตูน→ภาพจริง ขยายเฟรม ลบลายน้ำ ชีทตัวละคร โปสเตอร์หุ่นยนต์ ถนนนีออน — การ์ดสไตล์", "zh": "一张照片变 3D 动漫、2D 动漫、水墨速写、漫画、漫画转真人、扩展画幅、去水印、角色三视图、机甲海报、霓虹街景 — 风格卡", "vi": "Một ảnh thành anime 3D, anime 2D, phác thảo mực, manga, truyện tranh→ảnh thật, mở rộng khung, xoá watermark, bảng nhân vật, poster mecha, phố neon — thẻ phong cách", "id": "Satu foto jadi anime 3D, anime 2D, sketsa tinta, manga, komik→nyata, kanvas lebih lebar, bersih watermark, lembar karakter, poster mecha, jalan neon — kartu gaya", "ms": "Satu foto jadi anime 3D, anime 2D, lakaran dakwat, manga, komik→realiti, kanvas lebih luas, bersih tera air, helaian watak, poster mecha, jalan neon — kad gaya"}),
       items: st(["anime-3d-portrait", "anime-2d-portrait", "ink-sketch", "manga-panel", "comic-to-real", "outpaint-extend", "watermark-clean", "character-sheet", "mecha-poster", "neon-street-night"]) });
     /* v6.12.0 — CREATOR STUDIO: the owner's RunningHub Explore feed, rebuilt as
@@ -13495,7 +13562,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
        3D figure, a royal playing card, a product-hold ad, an oil painting, an
        instant-film print, an ID photo, a business headshot, a pet portrait, a
        Chinese ink painting. What a creator posts, from one photograph. */
-    cats.push({ t:"Creator Studio", ic:"i-sparkle",
+    cats.push({ t:"Creator Studio", tt:L9(WF_CAT9["Creator Studio"]), ic:"i-sparkle",
       desc: L9({"my": "ဝတ်စုံ set sheet၊ 3D ရုပ်လေး၊ ဖဲချပ် poster၊ ကုန်ပစ္စည်း ad၊ ဆီဆေးပန်းချီ၊ instant film၊ ID ပုံ၊ business headshot၊ အိမ်မွေးတိရစ္ဆာန် portrait၊ တရုတ်မင်ပန်းချီ — creator ကတ်တွေ", "en": "Outfit set sheet, cute 3D figure, royal playing card, product hold ad, oil painting, instant film, ID photo, business headshot, pet portrait, Chinese ink painting — the creator cards", "shn": "Set sheet ၶူဝ်း၊ ႁုၼ်ႇ 3D၊ ၽၢႆႉ poster၊ ad ၶူဝ်းၶွင်၊ ႁၢင်ႈသီၼမ်ႉမၼ်း၊ instant film၊ ၶႅပ်း ID၊ headshot၊ ႁၢင်ႈသတ်း၊ ႁၢင်ႈမိၵ်ႈၶႄႇ", "kac": "Bu hpun set sheet, 3D figure, card poster, ad, oil painting, instant film, ID sumla, headshot, pet portrait, Chinese ink — creator card ni", "th": "ชีทเซ็ตเสื้อผ้า ฟิกเกอร์ 3D ไพ่ราชินี โฆษณาสินค้า ภาพสีน้ำมัน ฟิล์มอินสแตนท์ รูปบัตร รูปโปรไฟล์ธุรกิจ พอร์ตเทรตสัตว์เลี้ยง ภาพหมึกจีน — การ์ดครีเอเตอร์", "zh": "服装套装图、可爱 3D 手办、扑克牌海报、产品手持广告、油画、拍立得、证件照、商务头像、宠物写真、中国水墨 — 创作者卡", "vi": "Bảng set trang phục, figure 3D dễ thương, poster lá bài, ảnh cầm sản phẩm, sơn dầu, ảnh lấy liền, ảnh thẻ, ảnh doanh nhân, chân dung thú cưng, tranh mực Trung Hoa — thẻ creator", "id": "Lembar set busana, figur 3D imut, poster kartu remi, foto pegang produk, lukisan minyak, foto instan, pas foto, headshot bisnis, potret hewan, lukisan tinta Tionghoa — kartu kreator", "ms": "Helaian set pakaian, figura 3D comel, poster kad terup, foto pegang produk, catan minyak, foto segera, gambar ID, headshot bisnes, potret haiwan, lukisan dakwat Cina — kad pencipta"}),
       items: st(["outfit-set-sheet", "cute-3d-figure", "playing-card-queen", "product-ad-shot", "oil-painting", "instant-film", "id-photo", "business-headshot", "pet-portrait", "chinese-ink-painting"]) });
     /* v6.13.0 — LENS STYLES: the named looks of RunningHub's Higgsfield Soul
@@ -13504,10 +13571,10 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
        chrome lift, a photo booth, 90s film, morning fog, a rainy window, a red
        balloon, a giant accessory, a fisheye street, a Y2K poster. Camera looks,
        from one photograph; the studio never invents an endpoint client-side. */
-    cats.push({ t:"Lens Styles", ic:"i-camera",
+    cats.push({ t:"Lens Styles", tt:L9(WF_CAT9["Lens Styles"]), ic:"i-camera",
       desc: L9({"my": "ပုံတစ်ပုံကို spotlight၊ ဓာတ်လှေကား မှန်၊ photo booth၊ 90s film၊ မြူဆိုင်းနံနက်၊ မှန်ပြတင်းမိုးစက်၊ ပူဖောင်းနီ၊ accessory ကြီး၊ fisheye လမ်း၊ Y2K poster — ကင်မရာ style ကတ်တွေ", "en": "One photo under a spotlight, in a chrome lift, in a photo booth, on 90s film, in morning fog, behind a rainy window, with a red balloon, a giant accessory, a fisheye street or a Y2K poster — the camera-style cards", "shn": "ၶႅပ်းၼိုင်ႈ → spotlight၊ လိပ်ႉမၢၼ်ႇ၊ photo booth၊ ၾိမ်ႈ 90s၊ မွၵ်ႇမူၺ်၊ ၽူၼ်ၼိူဝ်ၵႅဝ်ႈ၊ ပူင်းလႅင်၊ accessory ယႂ်ႇ၊ fisheye၊ Y2K — ၵၢတ်ႈ style ၵွင်ႈထႆႇ", "kac": "Sumla langai → spotlight, chrome lift, photo booth, 90s film, mawn, marang nhpan, balloon hkyeng, accessory kaba, fisheye, Y2K poster — camera style card ni", "th": "รูปเดียวใต้สปอตไลต์ ในลิฟต์โครเมียม ในตู้ถ่ายรูป บนฟิล์มยุค 90 ในหมอกเช้า หลังหน้าต่างวันฝนตก กับลูกโป่งแดง เครื่องประดับยักษ์ ถนนฟิชอาย หรือโปสเตอร์ Y2K — การ์ดสไตล์กล้อง", "zh": "一张照片走进聚光灯、镀铬电梯、照相亭、90 年代胶片、晨雾、雨窗之后、红气球、巨型配饰、鱼眼街头或 Y2K 海报 — 镜头风格卡", "vi": "Một ảnh dưới ánh spotlight, trong thang máy chrome, buồng chụp ảnh, phim thập niên 90, sương sớm, sau ô cửa mưa, với bóng bay đỏ, phụ kiện khổng lồ, phố fisheye hay poster Y2K — thẻ phong cách ống kính", "id": "Satu foto di bawah sorotan, di lift krom, di photo booth, di film 90-an, dalam kabut pagi, di balik jendela hujan, dengan balon merah, aksesori raksasa, jalanan fisheye atau poster Y2K — kartu gaya lensa", "ms": "Satu foto di bawah lampu sorot, dalam lif krom, di gerai foto, pada filem 90-an, dalam kabus pagi, di sebalik tingkap hujan, dengan belon merah, aksesori raksasa, jalan fisheye atau poster Y2K — kad gaya lensa"}),
       items: st(["spotlight-stage", "elevator-mirror", "vintage-photobooth", "film-grain-90s", "foggy-morning", "through-the-glass", "red-balloon", "giant-accessory", "fisheye-street", "y2k-poster"]) });
-    cats.push({ t:"Fashion & Style", ic:"i-dress",
+    cats.push({ t:"Fashion & Style", tt:L9(WF_CAT9["Fashion & Style"]), ic:"i-dress",
       desc: L9({"my": "ဂါဝန်၊ ဆံပင်၊ လက်ဝတ်ရတနာ၊ pose၊ photo style — ဝတ်စုံပိုင်း အကုန်", "en": "Gown, hair, jewelry, pose and photographic style", "shn": "ဂၢဝ်ႇ၊ ၽူမ်၊ ၶူဝ်းၶွင်၊ pose၊ style", "kac": "Gown, kara, lung seng, pose hte style", "th": "ชุด ผม เครื่องประดับ โพส และสไตล์ภาพ", "zh": "礼服、发型、首饰、姿势与摄影风格", "vi": "Váy, tóc, trang sức, dáng và phong cách ảnh", "id": "Gaun, rambut, perhiasan, pose, gaya foto", "ms": "Gaun, rambut, barang kemas, gaya dan stail foto"}),
       items: st(["gown-perfect"]).concat(prs(["sketchPose","roDressRep","roDressRef","hair","access","pose","style","fgProps","textLogo","roLcRef","roLcCopy","roFgRep"])) });
     var wedNames={trail:"Flower Trail",veil:"Veil",gown:"Gown Train",petal:"Petal Rain",extra:"Extra"};
@@ -13527,12 +13594,12 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
           visual:findVis(kwOf(o.label, WED_KW[k])), req:["Your Photo (IMAGE 1)"], opt:[], prompt:o.text, negative:GENERIC_NEG, wedGroup:k });
       });
     });
-    cats.push({ t:"Wedding Suite", ic:"i-ring",
+    cats.push({ t:"Wedding Suite", tt:L9(WF_CAT9["Wedding Suite"]), ic:"i-ring",
       desc: L9({"my": "ပန်းလမ်း၊ ဇာခန်း၊ ဂါဝန်တန်း၊ ပန်းပွင့်မိုး၊ မြင်း/ရေ/အလင်း — wedding အထူး ၃၉ မျိုး", "en": "Flower trails, veils, gown trains, petal rain and scene extras — 39 wedding one-taps", "shn": "သဵၼ်ႈမွၵ်ႇ၊ veil၊ gown train၊ မွၵ်ႇပိဝ် — wedding 39", "kac": "Nampan lam, veil, gown train, nampan marang — wedding 39", "th": "ทางดอกไม้ วีล ชายกระโปรง ฝนกลีบดอก และฉากพิเศษ — 39 แบบ", "zh": "花径、头纱、裙摆、花瓣雨与场景加成 — 39 个婚纱一键", "vi": "Lối hoa, voan, đuôi váy, mưa cánh hoa và cảnh phụ — 39 one-tap cưới", "id": "Jalur bunga, kerudung, ekor gaun, hujan kelopak — 39 one-tap", "ms": "Laluan bunga, tudung, ekor gaun, hujan kelopak — 39 one-tap"}),
       items: st(["bridal-decor","flower-path-copy"]).concat(wed) });
     var lightItems = LW.items.filter(function(it){ return it.c==="Lighting"; });
     var li=0;
-    cats.push({ t:"Studio Relight", ic:"i-bulb",
+    cats.push({ t:"Studio Relight", tt:L9(WF_CAT9["Studio Relight"]), ic:"i-bulb",
       desc: L9({"my": "Studio မီးတစ်လုံးချင်းစီ ၈ မျိုး + ပြတင်းပေါက်အလင်း ၄ မျိုး — Key/Fill/Rim/Hair နဲ့ နောက်ခံပေါ် အရိပ်တန်း", "en": "8 professional single-light studio relights plus 4 window lights that throw their pattern on the backdrop", "shn": "မီး studio လုၵ်ႈလဵဝ် 8 + လႅင်းၽၵ်းတူ 4", "kac": "Studio nhtoi langai hte relight 8 + window nhtoi 4", "th": "จัดแสงทีละดวง 8 แบบ + แสงหน้าต่างทอดเงาบนฉากหลัง 4 แบบ", "zh": "8 种单灯专业重打光 + 4 种在背景投下光影的窗光", "vi": "8 kiểu đánh sáng từng đèn + 4 kiểu ánh sáng cửa sổ đổ bóng lên nền", "id": "8 relight satu lampu + 4 cahaya jendela yang menjatuhkan pola ke latar", "ms": "8 relight satu lampu + 4 cahaya tingkap yang melimpahkan corak ke latar"}),
       items: D.lighting.lights.map(function(l, lgi){
         while(li<lightItems.length && usedVis[lightItems[li].id]) li++;
@@ -13569,7 +13636,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
           visual: vid ? "lib/ui/"+vid.id+".jpg" : findVis(["lighting","light"]),
           req:["Your Photo (IMAGE 1)"], opt:[], prompt:l.text+"\n"+D.lighting.guard, negative:GENERIC_NEG };
       })});
-    cats.push({ t:"Repair & Enhance", ic:"i-tools",
+    cats.push({ t:"Repair & Enhance", tt:L9(WF_CAT9["Repair & Enhance"]), ic:"i-tools",
       desc: L9({"my": "ပုံဟောင်းပြင်၊ ကြည်အောင်လုပ်၊ လူပို/လက်/ခြေ ရှင်း၊ object/ရေ ပြင် — ပြုပြင်ရေးအကုန်", "en": "Restore, upscale, cleanup and object/water edits", "shn": "မႄးၶႅပ်းႁၢင်ႈၵဝ်ႇ၊ upscale၊ cleanup", "kac": "Sumla dingsa hkrak shatai, upscale, cleanup", "th": "ซ่อมภาพเก่า เพิ่มความคม ทำความสะอาด แก้วัตถุ/น้ำ", "zh": "修复老照片、放大、清理与物件/水面编辑", "vi": "Phục hồi, nâng nét, dọn dẹp và chỉnh vật thể/nước", "id": "Restorasi, upscale, pembersihan, edit objek/air", "ms": "Pemulihan, upscale, pembersihan, edit objek/air"}),
       items: st(["region-edit","selection-swap","light-gear-remove","upscale","object-edit","water-edit","text-logo","film-grade","white-balance-fix","sky-water-enhance","editorial-caption","magazine-cover"]).concat(prs(["restore"])).concat(D.cleanups.map(function(c){
         var CL_SUM={ people:{my:"နောက်ခံက လူပိုတွေဖယ်ပြီး နောက်ခံ ပြန်ဆောက်",en:"Removes background bystanders, rebuilds the backdrop",shn:"ဢဝ်ၵူၼ်းပႃႈလင်ဢွၵ်ႇ သေ မႄးၵေႃႇလင်ၶိုၼ်း",kac:"Hpang na masha ni shaw kau nna hpang bai gaw",th:"ลบคนแปลกหน้าด้านหลัง แล้วสร้างฉากหลังใหม่",zh:"移除背景路人并重建背景",vi:"Xóa người lạ phía sau, dựng lại nền",id:"Hapus orang di latar, bangun ulang background",ms:"Buang orang di latar, bina semula latar"},
@@ -13581,7 +13648,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
           visual:findVis(["minimal","clean","white"]), req:["Your Photo (IMAGE 1)"], opt:[], prompt:c.text, negative:GENERIC_NEG };
       })) });
     var MIX_KW={bg:["garden"],fg:["props"],light:["lighting"],color:["film","color"],object:["botanical"]};
-    cats.push({ t:"Replace Mix", ic:"i-shuffle",
+    cats.push({ t:"Replace Mix", tt:L9(WF_CAT9["Replace Mix"]), ic:"i-shuffle",
       desc: L9({"my": "IMAGE 2 ကနေ ကြိုက်တဲ့အပိုင်းပဲ ရွေးယူ — နောက်ခံ/ရှေ့ခံ/အလင်း/အရောင်/ပစ္စည်း", "en": "Take only chosen aspects from IMAGE 2 — bg, fg, light, color, objects", "shn": "ဢဝ်တွၼ်ႈလိူၵ်ႈၼၼ်ႉၵူၺ်း တီႈ IMAGE 2", "kac": "IMAGE 2 kaw na lata ai sha la", "th": "เอาเฉพาะส่วนที่เลือกจาก IMAGE 2 — ฉากหลัง/หน้า/แสง/สี/วัตถุ", "zh": "仅从 IMAGE 2 选取所需 — 背景/前景/光/色/物件", "vi": "Chỉ lấy phần đã chọn từ IMAGE 2 — nền/tiền cảnh/sáng/màu/vật", "id": "Ambil hanya aspek terpilih dari IMAGE 2", "ms": "Ambil hanya aspek terpilih dari IMAGE 2"}),
       items: D.rmix.map(function(m){
         var MX_SUM={ bg:{my:"IMAGE 2 ရဲ့ နောက်ခံပဲ ယူ",en:"Take only IMAGE 2\u2019s background",shn:"ဢဝ်ပိုၼ်ႉလင် IMAGE 2 ၵူၺ်း",kac:"IMAGE 2 a hpang sha la",th:"เอาเฉพาะฉากหลังของ IMAGE 2",zh:"只取 IMAGE 2 的背景",vi:"Chỉ lấy nền của IMAGE 2",id:"Ambil hanya background IMAGE 2",ms:"Ambil hanya latar IMAGE 2"},
@@ -13612,7 +13679,7 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
       {my:"ကုန်ပစ္စည်း ဓာတ်ပုံ — နောက်ခံ သန့်ရှင်းပြီး အလင်း ညင်သာ",en:"Product shot on a clean seamless background with soft gradient light",shn:"ၶႅပ်းႁၢင်ႈၶူဝ်းၶွင် — ပိုၼ်ႉလင်မူတ်းသႂ် လႅင်းၼိမ်",kac:"Rai a sumla — backdrop san seng, nhtoi hkyet ai",th:"ภาพสินค้า — พื้นหลังเรียบสะอาด แสงไล่เฉดนุ่ม",zh:"产品摄影 — 干净无缝背景，柔和渐变光",vi:"Ảnh sản phẩm — nền liền mạch sạch, ánh sáng chuyển dịu",id:"Foto produk — latar seamless bersih, cahaya gradasi lembut",ms:"Foto produk — latar seamless bersih, cahaya gradasi lembut"},
       {my:"ညဘက် cyberpunk လမ်း — neon မီးနဲ့ စိုစွတ်တဲ့ မြေပြင်",en:"Cinematic cyberpunk street at night — neon signage, wet reflective ground",shn:"သဵၼ်ႈတၢင်း cyberpunk ၵၢင်ၶမ်ႈ — ပၢႆႉ neon တင်း လိၼ်ပဵင်းယဵပ်ႇၼမ်ႉ",kac:"Shana de cyberpunk lam — neon shingma hte hka hpring ai ga",th:"ถนนไซเบอร์พังก์ยามค่ำ — ป้ายนีออน พื้นเปียกสะท้อนแสง",zh:"夜晚的赛博朋克街道 — 霓虹招牌，湿润反光地面",vi:"Phố cyberpunk về đêm — biển neon, mặt đường ướt phản chiếu",id:"Jalanan cyberpunk malam hari — papan neon, aspal basah memantul",ms:"Jalan cyberpunk waktu malam — papan neon, jalan basah memantul"}
     ];
-    cats.push({ t:"Prompt Ideas", ic:"i-doc",
+    cats.push({ t:"Prompt Ideas", tt:L9(WF_CAT9["Prompt Ideas"]), ic:"i-doc",
       desc: L9({"my": "ပုံမလိုဘဲ prompt တည်းနဲ့ ထုတ်လို့ရတဲ့ professional prompt ၈ မျိုး", "en": "Eight professional text-to-image prompts — no photo required", "shn": "Prompt 8 — ဢမ်ႇလူဝ်ႇၶႅပ်းႁၢင်ႈ", "kac": "Prompt 8 — sumla n ra ai", "th": "พร้อมพ์มืออาชีพ 8 แบบ — ไม่ต้องใช้รูป", "zh": "八个专业文生图 prompt — 无需照片", "vi": "Tám prompt chuyên nghiệp — không cần ảnh", "id": "Delapan prompt profesional — tanpa foto", "ms": "Lapan prompt profesional — tanpa foto"}),
       items: PROMPT_LIB.map(function(p,i){
         return { id:"pl-"+i, title:p[0], summary: PL_SUM[i] ? L9(PL_SUM[i]) : (p[1].slice(0,80)+"…"), explanation:p[1],
@@ -14159,8 +14226,8 @@ var WF_BATCH_L={my:"ပုံအများနဲ့ လုပ်မယ်",en:
   var wfJumpTargets=[];
   wfCats.forEach(function(c){
     wfTotal += c.items.length;
-    var g=grp(c.t, c.items.length+t("unit"), !!c.open, c.ic);
-    wfJumpTargets.push({t:c.t, n:c.items.length, g:g.g});
+    var g=grp(c.tt||c.t, c.items.length+t("unit"), !!c.open, c.ic);   /* 6.145.0 — the name in the studio's language; c.t stays the key */
+    wfJumpTargets.push({t:c.tt||c.t, n:c.items.length, g:g.g});
     if(c.desc) g.b.appendChild(el("p","mut",c.desc));
     /* v4.41: a 40-card category (Wedding Suite) gets sub-group chips from the
        until-now-dead wedGroup field, so the wall becomes 5 scannable shelves */
@@ -15644,7 +15711,7 @@ function v2RenderFinishNote(){
     : L9({my:"RunningHub ရဲ့ မူလ default (မျက်နှာ ဖွင့်၊ 0.8)",en:"RunningHub's own default (face on, 0.8)",shn:"default ၶွင် RunningHub (ၼႃႈ ပိုတ်ႇ, 0.8)",kac:"RunningHub a default (myiman hpaw, 0.8)",th:"ค่าเริ่มต้นของ RunningHub (เปิดใบหน้า 0.8)",zh:"RunningHub 自身默认（面部开启，0.8）",vi:"mặc định của RunningHub (bật khuôn mặt, 0.8)",id:"default RunningHub (wajah aktif, 0.8)",ms:"lalai RunningHub (wajah hidup, 0.8)"}));
 }
 $("v2LbPreview").textContent=L9({my:"Prompt အစမ်းကြည့်",en:"Prompt preview",shn:"တူၺ်း Prompt ဢွၼ်တၢင်း",kac:"Prompt hpe shawng yu u",th:"ดูตัวอย่าง prompt",zh:"Prompt 预览",vi:"Xem trước prompt",id:"Pratinjau prompt",ms:"Pratonton prompt"});
-$("v2LbManual").textContent=L9({my:"Manual — One-Tap / Sliders",en:"Manual — One-Tap & Sliders",shn:"Manual — One-Tap / Sliders",kac:"Manual — One-Tap hte Sliders",th:"Manual — One-Tap และ Sliders",zh:"手动 — 一键与滑块",vi:"Thủ công — One-Tap & Sliders",id:"Manual — One-Tap & Slider",ms:"Manual — One-Tap & Slider"});
+$("v2LbManual").textContent=L9({my:"ကိုယ်တိုင် — One-Tap / Slider",en:"Manual — One-Tap & Sliders",shn:"Manual — One-Tap / Sliders",kac:"Manual — One-Tap hte Sliders",th:"Manual — One-Tap และ Sliders",zh:"手动 — 一键与滑块",vi:"Thủ công — One-Tap & Sliders",id:"Manual — One-Tap & Slider",ms:"Manual — One-Tap & Slider"});
 setIcnText($("btnV2Retry"),"i-retry",t("retry"));
 setIcnText($("btnV2Next"),"i-camera",L9({my:"နောက်တစ်ပုံ — Setting အတိုင်း",en:"Next photo — same settings",shn:"ၶႅပ်းႁၢင်ႈထႅင်ႈဢၼ် — setting မိူၼ်ၵဝ်ႇ",kac:"Hpang na sumla — setting maren sha",th:"รูปถัดไป — ตั้งค่าเดิม",zh:"下一张 — 设置不变",vi:"Ảnh tiếp theo — giữ nguyên cài đặt",id:"Foto berikutnya — pengaturan sama",ms:"Foto seterusnya — tetapan sama"}));
 
@@ -25535,7 +25602,7 @@ function wmStampDataUrl(src, mime, q, cb){
   /* v4.45 — studio watermark/logo: stamped at DELIVERY TIME only (downloads,
      shares, 2-up) so stored masters and the Gallery stay clean. Settings sit
      outside ST.pipeSv on purpose: changing them never dirties the canvas. */
-  host.appendChild(el("div","subh",L9({my:"Watermark / Logo",en:"Watermark / Logo"})));
+  host.appendChild(el("div","subh",L9({my:"ရေစာ / လိုဂို",en:"Watermark / Logo",shn:"လၢႆးၼမ်ႉ / လူဝ်ႇၵူဝ်ႇ",kac:"Watermark / Logo",th:"ลายน้ำ / โลโก้",zh:"水印 / 标志",vi:"Watermark / Logo",id:"Watermark / Logo",ms:"Tera air / Logo"})));   /* 6.145.0 — nine languages, inline: this slice is lifted into the panel, which has no app-side table */
   var wmRow=el("div","row");
   var wmTgl=el("button","chip"+(svGet("st_wm_on",false)?" on":"")); wmTgl.id="stWmTgl";
   function wmTglPaint(){
@@ -28142,7 +28209,7 @@ function renderLibFilters(){
      anything has been starred */
   var favN=libFavList().length;
   if(favN) opts.push(["favs","i-star-fill",L9({my:"ကြိုက်တာများ",en:"My Looks",shn:"ဢၼ်လႆႈၸႂ်",kac:"Ra ai ni",th:"ที่ชอบ",zh:"我的收藏",vi:"Yêu thích",id:"Favorit",ms:"Kegemaran"})+" ("+favN+")"]);
-  Object.keys(LW.collections).forEach(function(c){ opts.push([c, c+" ("+LW.collections[c]+")"]); });
+  Object.keys(LW.collections).forEach(function(c){ opts.push([c, L9(LIB_CAT9[c]||{en:c})+" ("+LW.collections[c]+")"]); });   /* 6.145.0 — the collection's name in the studio's language; c stays the key */
   var featuredBypassed = lib.filter==="featured" && lib.search.trim();
   opts.forEach(function(o){
     var isOn = lib.filter===o[0] && !(o[0]==="featured" && featuredBypassed);
@@ -28646,14 +28713,14 @@ function renderDashGreet(){
   }catch(e){}
   var dt="";
   try{
-    var loc = LANG==="my" ? "my-MM" : LANG==="zh" ? "zh-CN" : LANG;
-    dt=new Intl.DateTimeFormat(loc,{weekday:"long",day:"numeric",month:"long"}).format(new Date());
+    dt=fmtDateLong(new Date(), LANG);   /* 6.145.0 — Burmese, Shan and Kachin from our own tables; Intl for the rest */
     /* v5.62.1 — owner: the card also tells the TIME and the CITY, in the
        same small line. The city is the device clock's own IANA timezone
        city — no permission prompt, no network, and honest about what it
        is; a Burmese reader gets the Burmese name for the common ones. */
     /* v6.11.0 — twelve-hour, AM/PM, every language (fmtClock12 above) */
     var tm=fmtClock12(new Date());
+    tm=clockWords(tm, LANG);   /* 6.145.0 — the half of the day in the studio's language */
     var city="";
     try{
       var tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||"");
@@ -31661,7 +31728,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.144.0";
+var APP_VER="6.145.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;

@@ -216,6 +216,36 @@ var WX_WORD={
   storm:{my:"မိုးသက်မုန်တိုင်း",en:"Thunderstorm",shn:"ၽူၼ်ၾႃႉၽႃႇ",kac:"Mu nsen",th:"พายุฝนฟ้าคะนอง",zh:"雷雨",vi:"Dông",id:"Badai petir",ms:"Ribut petir"}
 };
 var WX_KEY="hnk_wx_v1", WX_TTL=30*60000, WX_URL="https://api.open-meteo.com/v1/forecast";
+var HOME_UI = {
+  dest_aria:{my:"ကျောင်းသား Web App သွားရာ နေရာများ", en:"Student Web App destinations", shn:"တီႈၵႂႃႇ Web App လုၵ်ႈႁဵၼ်း", kac:"Jawng ma Web App sa na shara ni", th:"ปลายทาง Web App นักเรียน", zh:"学员网页版入口", vi:"Điểm đến Web App học viên", id:"Tujuan Web App siswa", ms:"Destinasi Web App pelajar"},
+  dest_h2:  {my:"ကျောင်းသား Web App", en:"Student Web App", shn:"Web App လုၵ်ႈႁဵၼ်း", kac:"Jawng ma Web App", th:"Web App นักเรียน", zh:"学员网页版", vi:"Web App học viên", id:"Web App siswa", ms:"Web App pelajar"},
+  dest_ai:  {my:"AI ကိရိယာများ", en:"AI Tools", shn:"ၶိူင်ႈမိုဝ်း AI", kac:"AI rai ni", th:"เครื่องมือ AI", zh:"AI 工具", vi:"Công cụ AI", id:"Alat AI", ms:"Alat AI"},
+  dest_acc: {my:"အကောင့်နဲ့ လိုင်စင်", en:"Account & license", shn:"Account လႄႈ လၢႆးသုၼ်ႇ", kac:"Account hte license", th:"บัญชีและใบอนุญาต", zh:"账号与许可", vi:"Tài khoản & giấy phép", id:"Akun & lisensi", ms:"Akaun & lesen"},
+  dest_tut: {my:"သင်ခန်းစာများ", en:"Tutorials", shn:"ပိုၼ်းသွၼ်", kac:"Sharin ai lam ni", th:"บทเรียน", zh:"教程", vi:"Hướng dẫn", id:"Tutorial", ms:"Tutorial"},
+  st_tap:   {my:"One-Tap Workflow များ", en:"One-Tap Workflows", shn:"One-Tap Workflow", kac:"One-Tap Workflow ni", th:"เวิร์กโฟลว์ One-Tap", zh:"One-Tap 工作流", vi:"Workflow One-Tap", id:"Workflow One-Tap", ms:"Aliran kerja One-Tap"},
+  st_lib:   {my:"ပုံ Library", en:"Visual Library", shn:"Library ႁၢင်ႈ", kac:"Sumla Library", th:"คลังภาพ", zh:"视觉图库", vi:"Thư viện hình", id:"Pustaka visual", ms:"Pustaka visual"},
+  st_wf:    {my:"Smart Workflow", en:"Smart Workflow", shn:"Smart Workflow", kac:"Smart Workflow", th:"Smart Workflow", zh:"Smart Workflow", vi:"Smart Workflow", id:"Smart Workflow", ms:"Smart Workflow"},
+  st_meitu: {my:"Retouch A ထိန်းချုပ်ကွက်", en:"Retouch A Controls", shn:"ၶိူင်ႈၵုမ်း Retouch A", kac:"Retouch A control ni", th:"ตัวควบคุม Retouch A", zh:"Retouch A 控制项", vi:"Điều khiển Retouch A", id:"Kontrol Retouch A", ms:"Kawalan Retouch A"},
+  st_evoto: {my:"Retouch B Pro", en:"Retouch B Pro", shn:"Retouch B Pro", kac:"Retouch B Pro", th:"Retouch B Pro", zh:"Retouch B Pro", vi:"Retouch B Pro", id:"Retouch B Pro", ms:"Retouch B Pro"}
+};
+var CLOCK_AMPM = {
+  my:["နံနက်","ညနေ"], en:["AM","PM"], shn:["ၵၢင်ၼႂ်","ၵၢင်ၶမ်ႈ"], kac:["jahpawt","shana"], th:["AM","PM"], zh:["上午","下午"], vi:["SA","CH"], id:["AM","PM"], ms:["AM","PM"]
+};
+var DATE_WORDS = {
+  my:{ days:["တနင်္ဂနွေ","တနင်္လာ","အင်္ဂါ","ဗုဒ္ဓဟူး","ကြာသပတေး","သောကြာ","စနေ"], months:["ဇန်နဝါရီ","ဖေဖော်ဝါရီ","မတ်","ဧပြီ","မေ","ဇွန်","ဇူလိုင်","ဩဂုတ်","စက်တင်ဘာ","အောက်တိုဘာ","နိုဝင်ဘာ","ဒီဇင်ဘာ"], digits:"၀၁၂၃၄၅၆၇၈၉", sep:"၊ " },
+  shn:{ days:["ဝၼ်းဢႃးတိတ်ႉ","ဝၼ်းၸၼ်","ဝၼ်းဢင်းၵၢၼ်း","ဝၼ်းပုတ်ႉ","ဝၼ်းၽတ်း","ဝၼ်းသုၵ်း","ဝၼ်းသဝ်"], months:["ၸၼ်ႇဝႃႇရီႇ","ၾႅပ်ႇဝႃႇရီႇ","မျၢတ်ႉၶျ်","ဢေႇပရႄႇ","မေႇ","ၵျုၼ်ႇ","ၵျူႇလၢႆႇ","ဢေႃးၵၢတ်ႉ","သႅပ်ႇထႅမ်ႇပႃႇ","ဢွၵ်ႇထူဝ်ႇပႃႇ","ၼူဝ်ႇဝႅမ်ႇပႃႇ","တီႇသႅမ်ႇပႃႇ"], digits:"", sep:"၊ " },
+  kac:{ days:["Laban","Laban pang","Laban lahkawng","Laban masum","Laban mali","Laban manga","Laban kru"], months:["Zanuari","Feburari","Mat","Epri","Me","Zun","Zulai","Awgat","Septemba","Oktoba","Nowemba","Disemba"], digits:"", sep:", " }
+};
+/* the date line in the studio's language: our own weekday and month names where Chromium's Intl has none
+   (Burmese, Shan, Kachin — Intl gives English there, measured 6.145.0), Intl for the rest; identical on both surfaces */
+function fmtDateLong(d, L){
+  var W=DATE_WORDS[L];
+  if(W){ var day=String(d.getDate()); if(W.digits) day=day.replace(/\d/g,function(c){ return W.digits[+c]; }); return W.days[d.getDay()]+W.sep+W.months[d.getMonth()]+" "+day; }
+  var loc = L==="zh" ? "zh-CN" : L;
+  return new Intl.DateTimeFormat(loc,{weekday:"long",day:"numeric",month:"long"}).format(d);
+}
+/* the clock's AM/PM in the studio's language (fmtClock12 itself stays the shared, pinned formatter) */
+function clockWords(s, L){ var w=CLOCK_AMPM[L]||CLOCK_AMPM.en; return String(s).replace(/\bAM\b/,w[0]).replace(/\bPM\b/,w[1]); }
 function fmtClock12(d){
   var h=d.getHours(), m=d.getMinutes(), h12=h%12; if(h12===0) h12=12;
   return h12+":"+(m<10?"0":"")+m+" "+(h<12?"AM":"PM");
@@ -294,11 +324,11 @@ function greetSub() {
   var dt = "";
   try {
     var L = lang();
-    var loc = L === "my" ? "my-MM" : L === "zh" ? "zh-CN" : L;
     var now = new Date();
-    var day = new Intl.DateTimeFormat(loc, { weekday: "long", day: "numeric", month: "long" }).format(now);
+    var day = fmtDateLong(now, L);   /* 6.216.0 — Burmese, Shan and Kachin from the shared tables; Intl for the rest */
     /* v6.11.0 — twelve-hour, AM/PM, every language (fmtClock12 above) */
     var clock = fmtClock12(now);
+    clock = clockWords(clock, L);   /* 6.216.0 — the half of the day in the studio's language */
     var city = "";
     try {
       var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
@@ -426,17 +456,17 @@ function render(root, deps) {
      "Photoshop Panel download", is gone on both surfaces — the Panel is
      downloaded from the Account card's Photoshop Panel group under Setup
      and nowhere else (owner: one place). */
-  var destCard = dom.el(doc, "div", { class: "card" });
-  destCard.appendChild(dom.el(doc, "h2", { text: "Student Web App" }));
+  var destCard = dom.el(doc, "div", { class: "card", attrs: { "aria-label": l9(HOME_UI.dest_aria) } });   /* 6.216.0 — the app's HOME_UI, verbatim */
+  destCard.appendChild(dom.el(doc, "h2", { text: l9(HOME_UI.dest_h2) }));
   var acts = dom.el(doc, "div", { class: "unified-actions" });
   function destBtn(label, cls, fn) {
     var b = dom.el(doc, "button", { class: cls, text: label });
     dom.on(b, "click", fn);
     acts.appendChild(b);
   }
-  destBtn("AI Tools", "btn btn-gold", function () { if (deps.onPage) deps.onPage("wf"); });
-  destBtn("Account & license", "btn", function () { if (deps.onPage) deps.onPage("setup"); });
-  destBtn("Tutorials", "btn", function () { if (deps.onNavigate) deps.onNavigate("tutorials"); });
+  destBtn(l9(HOME_UI.dest_ai), "btn btn-gold", function () { if (deps.onPage) deps.onPage("wf"); });
+  destBtn(l9(HOME_UI.dest_acc), "btn", function () { if (deps.onPage) deps.onPage("setup"); });
+  destBtn(l9(HOME_UI.dest_tut), "btn", function () { if (deps.onNavigate) deps.onNavigate("tutorials"); });
   destCard.appendChild(acts);
   root.appendChild(destCard);
 
@@ -599,11 +629,11 @@ function render(root, deps) {
      kind-less Smart Workflow and the 16 Studio preset cards; 6.10.0 added
      Lanna Gold Heritage; 6.11.0 the ten Style Studio cards; 6.16.0 Flower
      Path Copy. verify_panel_page_parity holds this to the app. */
-  stat(206, "One-Tap Workflows");
-  stat(libCount, "Visual Library");
-  stat(wfCount, "Smart Workflow");
-  stat(163, "Retouch A Controls", "meitu");
-  stat(213, "Retouch B Pro", "evoto");
+  stat(206, l9(HOME_UI.st_tap));
+  stat(libCount, l9(HOME_UI.st_lib));
+  stat(wfCount, l9(HOME_UI.st_wf));
+  stat(163, l9(HOME_UI.st_meitu), "meitu");
+  stat(213, l9(HOME_UI.st_evoto), "evoto");
   root.appendChild(stats);
 
   /* 6.102.1 — the Photoshop-panel band (the app's .dash-promo) is gone on both surfaces: one download
