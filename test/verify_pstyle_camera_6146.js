@@ -51,9 +51,9 @@ const PANEL_CSS = read("panel/styles.css");
 const PARITY = read("test/verify_panel_page_parity.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.146.0", PVER = "6.217.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.147.0", PVER = "6.218.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.146.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 288;
+const COUNT = 289;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
@@ -117,9 +117,9 @@ function partA() {
     has(boot, 'new URLSearchParams(location.search).get("shared") === "1"') && has(boot, 'caches.open("hnk-share-inbox")') && has(boot, 'c.match("./__share_inbox")') && has(boot, 'c.delete("./__share_inbox")') &&
     has(boot, 'switchPage("pgPStyle"); window.HNK.pstyle.onShot({ dataUrl: du, name: "shared-" + Date.now() + ".jpg" });') && has(boot, 'history.replaceState(null, "", location.pathname + "?page=pgPStyle");'));
 
-  const ph = hostSlice(MAIN, "function pstyleHost() {", "function pstyleEnter() {");
+  const ph = hostSlice(MAIN, "function pstyleHost() {", "function pstyleEnter() {") + hostSlice(MAIN, "function uxpHotFolder() {", "function pstyleHost() {");   /* 6.147.0 — the folder watch moved to uxpHotFolder(), shared with Imagine */
   report("A5) the panel host: the hot folder is UXP's folder (getFolder, getEntries every 2.5 s, the existing files left alone, a binary read to a data URL); still no camera, no print, no share — the module draws no Live button and no Share where the host has none",
-    has(ph, "hotFolder: {") && has(ph, "const f = await fsp.getFolder();") && has(ph, "(await f.getEntries()).forEach(function (e) { if (e.isFile) seen[e.name] = 1; });") &&
+    has(ph, "hotFolder: uxpHotFolder(),") && has(ph, "const f = await fsp.getFolder();") && has(ph, "(await f.getEntries()).forEach(function (e) { if (e.isFile) seen[e.name] = 1; });") &&
     has(ph, "}, 2500);") && has(ph, "const buf = await e.read({ format: uxp.storage.formats.binary });") && has(ph, 'onShot({ dataUrl: "data:" + extToMime(e.name) + ";base64," + bufToB64(buf), name: e.name });') &&
     has(ph, 'onCtl({ name: f.name || "", stop: function () { clearInterval(timer); } });') &&
     !has(ph, "camera:") && !has(ph, "printOut:") && !has(ph, "share:") &&

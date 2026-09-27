@@ -30,9 +30,9 @@ const PANEL_ALBUM = read("panel/js/hnk_album.js");
 const MAIN = read("panel/main.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.146.0", PVER = "6.217.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.147.0", PVER = "6.218.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.144.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 288;
+const COUNT = 289;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const PURE = () => STATIC_KEYS.filter((k) => RENDERED.indexOf(k) < 0);

@@ -2250,6 +2250,9 @@ body.wall #wallRetry.on{display:block}
 }
 /* ---- IMAGINE_CSS ---- */
 /* Imagine (6.29.0 wave) — the hub and the tool view. Flex and margins only: the same rules are
+.im-camrow{margin:4px 0 8px 0}
+.im-camrow .chip{margin:0 6px 6px 0}
+.im-hot{font-size:12.5px;color:var(--gold-hi);margin-left:4px}
    lifted into the Photoshop panel (tools/build_panel_imagine.js), and UXP draws no CSS grid, no
    flex gap, no aspect-ratio and no object-fit — thumbnails are background-size:cover boxes. */
 #pgImagine .im-intro{margin:0 0 12px;line-height:1.6}
@@ -2519,6 +2522,8 @@ body.wall #wallRetry.on{display:block}
 .ps-camsheet .ps-camctl select{min-height:40px;max-width:100%;flex:1 1 auto}
 .ps-camsheet .ps-camctl .chips .chip{margin:0 6px 6px 0}
 .ps-camsheet .ps-camctl .ps-tg{display:flex;align-items:center;gap:6px;min-height:40px;font-size:13px}
+.cam-slot{margin:0}.cam-door{margin-top:8px}.cam-door-row{margin:0}.cam-door-row .chip{margin:0 6px 6px 0}.cam-door-st{font-size:12.5px;color:var(--gold-hi)}
+.cam-share .ps-galbox{padding:14px}.cam-share .cam-share-sizes{justify-content:center;margin:8px 0}.cam-share .ps-cambar{position:static;margin-top:10px}
 .ps-cambar{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:10px;padding:12px calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));background:#15130f}
 .ps-cambar .ps-snap{min-width:140px;min-height:52px;font-size:16px}
 .ps-galsheet{position:fixed;inset:0;z-index:70;background:rgba(10,9,7,.96);display:flex;flex-direction:column;padding:12px}
@@ -4446,6 +4451,7 @@ html.splashing #splash{display:flex}
     </div>
     <div class="mut" id="ptCount" style="margin-top:8px"></div>
     <div class="row" id="ptMultiBar" style="margin-top:6px"></div>
+    <div class="cam-slot" id="ptCamDoor" data-cam="path"></div>
     <button class="pt-empty" id="ptEmpty"></button>
     <div class="pt-grid" id="ptGrid"></div>
   </section>
@@ -4752,12 +4758,12 @@ html.splashing #splash{display:flex}
 <script src="data/hnkdata.js?v=9f7c58bdb600"></script>
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
 <script src="data/pstyle.js?v=084ea3485046"></script>
-<script src="data/imagine.js?v=3f72b8b25456"></script>
+<script src="data/imagine.js?v=beb7ed90ccd0"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=df9ce0baff92"></script>
+<script src="data/album-module.js?v=0849c14f346d"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=ac0badf84ffb"></script>
-<script src="data/whatsnew.js?v=abde93299849"></script>
+<script src="data/whatsnew.js?v=036c56288657"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -14730,7 +14736,8 @@ function renderRsPicker(){
   }
   d.appendChild(el("span","tag", L9({my:"မူရင်း",en:"Before",shn:"မူႇလ",kac:"Shawng",th:"ก่อน",zh:"之前",vi:"Trước",id:"Sebelum",ms:"Sebelum"})));
   host.appendChild(d);
-  if(!ref && ST && ST.draftOffer) ST.draftOffer(host);   /* 6.140.0 — V2 shares the Before slot, so it offers the draft too (app-only hook; ST is still hoisted-undefined on the boot render) */
+  if(!ref && ST && ST.draftOffer) ST.draftOffer(host);
+  var rsCam=el("div","cam-slot"); rsCam.setAttribute("data-cam","retouch"); host.appendChild(rsCam); if(window.HNK_CAM) window.HNK_CAM.door(rsCam);   /* 6.147.0 — Camera · Live + Hot folder, Portrait Style's doors */   /* 6.140.0 — V2 shares the Before slot, so it offers the draft too (app-only hook; ST is still hoisted-undefined on the boot render) */
   /* v4.28: after To-Ref replaced IMAGE 1 with a result, offer the true
      original back (non-destructive chains) */
   if(state.rsOrig){
@@ -16749,6 +16756,7 @@ function stHandoffRow(hostId, mime, b64, name, skip){
   });
   /* Share everywhere — the same watermark-aware file share Create has */
   if(navigator.share) chip("i-external", L9({my:"Share",en:"Share",shn:"Share",kac:"Share",th:"แชร์",zh:"分享",vi:"Chia sẻ",id:"Bagikan",ms:"Kongsi"}), function(){
+    if(window.HNK_CAM){ HNK_CAM.shareSheet(mime, b64, name||"hnk-result"); return; }   /* 6.147.0 — the frame the network wants, then the sheet */
     wmStampDataUrl(dataUrl, mime, 92, function(du){
       try{
         var blob=rhDataUrlToBlob(du);
@@ -26091,6 +26099,7 @@ function renderStPicker(){
   d.appendChild(el("span","tag",L9({my:"မူရင်း",en:"Before"})));
   host.appendChild(d);
   if(!ref && ST.draftOffer) ST.draftOffer(host);   /* 6.140.0 — an empty stage offers the last photo back (app-only hook) */
+  var camSlot=el("div","cam-slot"); camSlot.setAttribute("data-cam","studio"); host.appendChild(camSlot); if(window.HNK_CAM) window.HNK_CAM.door(camSlot);   /* 6.147.0 — Camera · Live + Hot folder, Portrait Style's doors */
   var tg=$("stTarget"); if(tg) tg.style.display=ref?"":"none";
   stSyncFromRef();
 }
@@ -31766,7 +31775,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.146.0";
+var APP_VER="6.147.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -32866,7 +32875,7 @@ var IMAGINE = (function(){
     var w=imDragWidth(el); if(!(w>0)) return null;
     return Math.max(0, Math.min(100, startPct + (c[0]-downX)/w*100));
   }
-  var S = { tool:null, model:"", size:"", tab:"tpl", preset:{}, desc:{}, photos:[], cur:0, busy:false, job:null, split:50, status:"", ref:{}, markMode:false, brush:1, stageW:0 };   /* 6.80.0 — stageW: the brush stage width the student set where nothing measures (Photoshop) · 6.31.0 — ref: the Reference Card picture per tool (never saved to the device); 6.32.0 — markMode/brush: the brush tools' red paint */
+  var S = { tool:null, model:"", size:"", tab:"tpl", preset:{}, desc:{}, photos:[], cur:0, busy:false, job:null, split:50, status:"", ref:{}, markMode:false, brush:1, stageW:0, hot:null };   /* 6.80.0 — stageW: the brush stage width the student set where nothing measures (Photoshop) · 6.31.0 — ref: the Reference Card picture per tool (never saved to the device); 6.32.0 — markMode/brush: the brush tools' red paint */
   var root = null, refs = {};
   /* 6.32.0 — the brush needs a 2D canvas (the photo + the red strokes are composited into IMAGE 1 before the call); a host without one keeps the templates and words */
   var CAN_MARK = (function(){ try{ var c=document.createElement("canvas"); return !!(c && c.getContext && c.getContext("2d")); }catch(e){ return false; } })();
@@ -33053,6 +33062,7 @@ var IMAGINE = (function(){
        belongs; this line counts photographs and says nothing when there are
        none to count. */
     card.appendChild(el("div","mut im-count", S.photos.length ? t("photo_of",{n:S.cur+1,m:S.photos.length}) : ""));
+    if(S.photos.length) camRow(card);   /* 6.147.0 — the studio camera's doors under the strip */
     /* the picture: Before | After once there is a result */
     var cur = S.photos[S.cur];
     /* 6.32.0 — the brush tools: a bar of chips above the picture — Mark (paint mode on/off), three brush sizes, Undo, Clear — and the red strokes */
@@ -33077,6 +33087,7 @@ var IMAGINE = (function(){
       var empty = el("div","im-empty"); view.appendChild(empty);
       var addBig = btn("btn im-addbig", t("add_photos"), "i-camera"); addBig.id="imAddBig"; empty.appendChild(addBig); H.pickWire(addBig, addPhotos);
       empty.appendChild(el("div","mut", t("empty_hint")));
+      camRow(empty);   /* 6.147.0 — the studio camera's doors beside Add photos */
     } else if(tool.mark && CAN_MARK && (S.markMode || (!cur.out && cur.strokes && cur.strokes.length))){
       view.appendChild(markView(cur, S.markMode && !S.busy));
     } else {
@@ -33089,9 +33100,32 @@ var IMAGINE = (function(){
     var apply = btn("btn im-apply", t("apply"), "i-wand"); apply.id="imApply"; apply.onclick=function(){ applyOne(S.cur); }; off(apply, S.busy); acts.appendChild(apply);
     if(S.photos.length>1){ var all = btn("btn im-applyall", t("apply_all"), "i-stack"); all.id="imApplyAll"; all.onclick=applyAll; off(all, S.busy); acts.appendChild(all); }
     var exp = btn("btn im-export", t("export"), "i-download"); exp.id="imExport"; exp.onclick=exportCur; acts.appendChild(exp);
+    if(H.share){ var shr = btn("btn im-share", t("share"), "i-external"); shr.id="imShare"; shr.onclick=shareCur; acts.appendChild(shr); }   /* 6.147.0 — the host's share sheet */
     if(S.busy){ var stop = btn("btn im-stop", t("stop"), "i-close"); stop.id="imStop"; stop.onclick=stopAll; acts.appendChild(stop); }
     if(S.photos.length && !S.busy){ var clr = btn("btn im-clear", t("clear"), "i-trash"); clr.id="imClear"; clr.onclick=clearAll; acts.appendChild(clr); }
     var st = el("div","mut im-status", S.status||""); st.id="imStatus"; st.setAttribute("aria-live","polite"); card.appendChild(st);
+  }
+  /* 6.147.0 — the studio camera's doors: Camera · Live and the hot folder hand their shots to addPhotos (the web
+     host's camera sheet and directory picker, the panel's UXP folder); Share is the host's sheet with the frame sizes */
+  function camRow(parent){
+    if(!(H.camera || H.hotFolder)) return;
+    var r=el("div","chips im-camrow"); r.id="imCamRow";
+    if(H.camera){ var c=btn("chip", t("cam_live"), "i-camera"); c.id="imCamLive"; c.onclick=function(){ H.camera(function(item){ if(item) addPhotos([item]); }, {}); }; r.appendChild(c); }
+    if(H.hotFolder){
+      var h=btn("chip"+(S.hot?" on":""), S.hot ? t("hot_stop") : t("hot_folder"), "i-folder"); h.id="imHot"; h.setAttribute("aria-pressed", S.hot?"true":"false");
+      h.onclick=function(){
+        if(S.hot){ try{ if(S.hot.stop) S.hot.stop(); }catch(e){} S.hot=null; render(); return; }
+        H.hotFolder.pick(function(ctl){ if(!ctl) return; S.hot={ name:ctl.name||"", n:0, stop:ctl.stop||null }; render(); }, function(item){ if(S.hot) S.hot.n++; addPhotos([item]); });
+      };
+      r.appendChild(h);
+      if(S.hot){ var st=el("span","mut im-hot", t("hot_watching",{f:S.hot.name, n:S.hot.n})); st.id="imHotStatus"; r.appendChild(st); }
+    }
+    parent.appendChild(r);
+  }
+  function shareCur(){
+    var p=S.photos[S.cur];
+    if(!p||!p.out){ H.toast(t("need_result"),"warn"); return; }
+    H.share(p.out, "hnk-imagine-"+p.out.tool+(p.out.preset?"-"+p.out.preset:"")+"-"+stamp()+(p.out.mime==="image/jpeg"?".jpg":".png"));
   }
   function thumb(p, i){
     var th = el("div","im-th"+(i===S.cur?" on":"")+(p.status==="busy"?" busy":"")+(p.out?" done":"")+(p.status==="err"?" err":""));
@@ -34100,6 +34134,10 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
       var a=document.createElement("a"); a.href=out.dataUrl; a.download=name; a.style.display="none";
       document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); },1500);
     },
+    /* 6.147.0 — the studio camera's doors (Portrait Style's, on window.HNK_CAM once its host has run) */
+    camera: function(done, ctx){ if(window.HNK_CAM) HNK_CAM.camera(done, ctx||{}); else done(null); },
+    hotFolder: { pick: function(onCtl, onShot){ if(window.HNK_CAM) HNK_CAM.hotFolder.pick(onCtl, onShot); else onCtl(null); } },
+    share: function(out, name){ if(window.HNK_CAM) HNK_CAM.shareSheet(out.mime, out.b64, name); },
     toast: function(msg, kind){ toast(msg, kind==="err" ? "err" : kind==="ok" ? "ok" : ""); },
     scrollTop: function(){ window.scrollTo(0,0); }
   };
@@ -34299,6 +34337,8 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
      (the Web Share API with a file); a browser that cannot share files downloads it for the upload instead. */
   function share(out, name){
     var m=/^data:([^;]+);base64,(.*)$/.exec(out.dataUrl||""); var mime=m ? m[1] : (out.mime||"image/jpeg"); var b64=m ? m[2] : out.b64;
+    /* 6.147.0 — the stamp first, as every share of the studio's (v4.45); the stamped bytes go on */
+    if(!out.stamped){ return new Promise(function(res){ wmStampDataUrl("data:"+mime+";base64,"+b64, mime, 92, function(du){ var s=/^data:([^;]+);base64,(.*)$/.exec(du||""); res(share(s ? { dataUrl:du, mime:s[1], b64:s[2], stamped:true } : { dataUrl:out.dataUrl||("data:"+mime+";base64,"+b64), mime:mime, b64:b64, stamped:true }, name)); }); }); }
     var bin=atob(b64), bytes=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
     var file=null; try{ file=new File([bytes], name, { type:mime }); }catch(e){ file=null; }
     if(file && navigator.share && navigator.canShare && navigator.canShare({ files:[file] })){
@@ -34392,6 +34432,71 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
   };
   PSTYLE.init(host, $("psRoot"));
   window.pstyleOnEnter = function(){ PSTYLE.onEnter(); };
+  /* ---------- 6.147.0 — THE SAME CAMERA ON EVERY PHOTO PAGE ----------
+     Portrait Style's camera sheet, hot folder and share are the studio's. Retouch A / B, Retouch Pro, Path and
+     Imagine take the same doors through window.HNK_CAM: door(slot) draws Camera · Live + Hot folder (Stop and the
+     watching line while a folder is watched) into a page's own slot and hands every shot to that page's intake;
+     shareSheet() is the Share of every result — the studio stamp first (the delivery path, v4.45), then the frame
+     the network wants, then the phone's share sheet (a download where the browser cannot share a file). */
+  var DOORS={};
+  var DOOR_CFG={
+    studio:  { onShot:function(it){ stLoadImage(it.dataUrl); } },
+    retouch: { onShot:function(it){ var m=/^data:([^;]+);base64,(.*)$/.exec(it.dataUrl||""); if(!m) return; state.refs[0]={ mime:m[1], b64:m[2], label:it.name||"camera" }; state.rsOrig=null; state.imgRoles=null; renderRefs(); } },
+    path:    { onShot:function(it){ ptIngestDataUrls([{ name:it.name||("camera-"+Date.now()+".jpg"), dataUrl:it.dataUrl }]); } }
+  };
+  function camDoor(slot){
+    if(!slot) return null;
+    var key=slot.getAttribute("data-cam"), cfg=DOOR_CFG[key]; if(!cfg) return null;
+    var U=PSTYLE_DATA.ui, d=DOORS[key]||(DOORS[key]={ hot:null, n:0 });
+    slot.innerHTML=""; slot.classList.add("cam-door");
+    var row=el("div","chips cam-door-row");
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+      var live=el("button","chip cam-live"); live.type="button"; live.innerHTML=icn("i-camera")+" "+escH(L9(U.connect_cam));
+      live.onclick=function(){ camera(function(item){ if(item) cfg.onShot(item); }, {}); }; row.appendChild(live);
+    }
+    var hot=el("button","chip cam-hot"+(d.hot?" on":"")); hot.type="button"; hot.innerHTML=icn("i-folder")+" "+escH(L9(d.hot ? U.hot_stop : U.hot_folder)); hot.setAttribute("aria-pressed", d.hot?"true":"false");
+    hot.onclick=function(){
+      if(d.hot){ try{ if(d.hot.stop) d.hot.stop(); }catch(e){} d.hot=null; camDoor(slot); return; }
+      hotFolder.pick(function(ctl){ if(!ctl) return; d.hot={ name:ctl.name||"", stop:ctl.stop||null }; d.n=0; camDoor(slot); },
+        function(item){ d.n++; cfg.onShot(item); var st=slot.querySelector(".cam-door-st"); if(st && d.hot) st.textContent=L9(U.hot_watching).replace("{f}", d.hot.name).replace("{n}", String(d.n)); });
+    };
+    row.appendChild(hot); slot.appendChild(row);
+    if(d.hot) slot.appendChild(el("div","mut cam-door-st", L9(U.hot_watching).replace("{f}", d.hot.name).replace("{n}", String(d.n))));
+    return slot;
+  }
+  function camDoors(){ Array.prototype.forEach.call(document.querySelectorAll(".cam-slot[data-cam]"), function(s){ if(!s.firstChild) camDoor(s); }); }
+  function shareSheet(mime, b64, name){
+    var U=PSTYLE_DATA.ui, dataUrl="data:"+mime+";base64,"+b64, mode="full";
+    var old=$("camShareSheet"); if(old && old.parentNode) old.parentNode.removeChild(old);
+    var sh=el("div","ps-galsheet cam-share"); sh.id="camShareSheet"; sh.setAttribute("role","dialog"); sh.setAttribute("aria-modal","true"); sh.setAttribute("aria-label", L9(U.share));
+    var box=el("div","ps-galbox"); sh.appendChild(box);
+    box.appendChild(el("div","ps-h3", L9(U.share)));
+    var sizes=el("div","chips seg cam-share-sizes"); sizes.setAttribute("role","group"); sizes.setAttribute("aria-label", L9(U.share));
+    [["full","social_full"],["916","social_916"],["45","social_45"],["11","social_11"]].forEach(function(m){
+      var c=el("button","chip"+(mode===m[0]?" on":"")); c.type="button"; c.setAttribute("data-social", m[0]); c.setAttribute("aria-pressed", mode===m[0]?"true":"false"); c.textContent=L9(U[m[1]]);
+      c.onclick=function(){ mode=m[0]; Array.prototype.forEach.call(sizes.children, function(x){ var on=x===c; x.className="chip"+(on?" on":""); x.setAttribute("aria-pressed", on?"true":"false"); }); };
+      sizes.appendChild(c);
+    });
+    box.appendChild(sizes);
+    box.appendChild(el("p","mut ps-hint", L9(U.share_hint)));
+    var bar=el("div","ps-cambar");
+    var go=el("button","btn btn-gold"); go.type="button"; go.id="camShareGo"; go.innerHTML=icn("i-external")+" "+escH(L9(U.share));
+    var cancel=el("button","btn"); cancel.type="button"; cancel.id="camShareCancel"; cancel.textContent=L9(U.cancel);
+    bar.appendChild(go); bar.appendChild(cancel); box.appendChild(bar);
+    function close(){ if(sh.parentNode) sh.parentNode.removeChild(sh); }
+    cancel.onclick=close;
+    go.onclick=function(){
+      go.disabled=true;
+      wmStampDataUrl(dataUrl, mime, 92, function(du){
+        var m=/^data:([^;]+);base64,(.*)$/.exec(du||""); var v=m ? { dataUrl:du, mime:m[1], b64:m[2] } : { dataUrl:dataUrl, mime:mime, b64:b64 };
+        PSTYLE.socialCrop(v, mode).then(function(out){ close(); var base=String(name||"hnk-result").replace(/\.(png|jpe?g|webp)$/i,""); return share(out, base+(mode!=="full" ? "-"+mode : "")+(out.mime==="image/jpeg" ? ".jpg" : ".png")); }).then(null, function(){ close(); });
+      });
+    };
+    document.body.appendChild(sh);
+    return sh;
+  }
+  window.HNK_CAM={ camera:camera, hotFolder:hotFolder, share:share, crop:PSTYLE.socialCrop, door:camDoor, doors:camDoors, shareSheet:shareSheet };
+  camDoors();
 })();
 /* ---- /IMAGINE_HOST ---- */
 
@@ -34765,6 +34870,7 @@ $("btnRetry").onclick=function(){ this.style.display="none"; $("btnGen").onclick
   setIcnText(sb,"i-external",L9({my:"Share",en:"Share",shn:"Share",kac:"Share",th:"แชร์",zh:"分享",vi:"Chia sẻ",id:"Bagikan",ms:"Kongsi"}));
   sb.onclick=async function(){
     var out=state.hist[state.histSel]||state.result; if(!out) return;
+    if(window.HNK_CAM){ HNK_CAM.shareSheet(out.mime, out.b64, dlName("create",out.mime,state.histSel+1)); return; }   /* 6.147.0 — the frame the network wants, then the sheet */
     try{
       var src="data:"+out.mime+";base64,"+out.b64;
       /* v4.45 — shared files carry the studio stamp too (delivery path) */

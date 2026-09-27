@@ -489,6 +489,9 @@ function renderStPicker() {
   }
   d.appendChild(el("span", "tag", L9({ my: "မူရင်း", en: "Before" })));
   host.appendChild(d);
+  /* 6.218.0 — the Hot folder door, where the web app draws its Camera · Live + Hot folder (its camera is the browser's) */
+  var camSlot = el("div", "cam-slot"); camSlot.setAttribute("data-cam", "studio"); host.appendChild(camSlot);
+  var bd = bridge(); if (bd && bd.hotDoor) bd.hotDoor(camSlot, "studio");
   var tg = $("stTarget"); if (tg) tg.style.display = ref ? "" : "none";
 }
 /* 6.198.1 — V2 RETOUCH PAINTS ITS CAPTURED LAYER TOO. 6.164.0 taught the
@@ -506,6 +509,8 @@ function renderRsCard() {
   try { if (API.renderRsPicker) API.renderRsPicker(); } catch (e) { }
   try { if (API.renderV2Hero) API.renderV2Hero(); } catch (e) { }
   decorateRs();
+  /* 6.218.0 — the app's picker draws the cam-slot (empty here: no HNK_CAM in Photoshop); the panel fills it with its Hot folder door */
+  try { var rsSlot = $("rsPicker") && $("rsPicker").querySelector('.cam-slot[data-cam="retouch"]'); var bd2 = bridge(); if (rsSlot && bd2 && bd2.hotDoor) bd2.hotDoor(rsSlot, "retouch"); } catch (e) { }
 }
 /* the app's picker draws the picture, the ✕ and the "Before" tag; Photoshop's
    layer is a source the web app does not have, so the panel adds its two

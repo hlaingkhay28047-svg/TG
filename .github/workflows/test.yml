@@ -1326,3 +1326,9 @@ jobs:
       # the phone's share sheet, and the PWA as a share target; the panel watches a UXP folder.
       - name: Verify Portrait Style's studio camera, history delete and share
         run: PORT=8931 node test/verify_pstyle_camera_6146.js
+      # 6.147.0 — the same camera on every photo page: Retouch A / B, Retouch Pro and Path carry Portrait
+      # Style's doors (Camera · Live + Hot folder through window.HNK_CAM, each shot to the page's own intake),
+      # Imagine takes them through its host on both surfaces (the panel's UXP folder), and every result's
+      # Share — the hand-off row, Create, Imagine — is one sheet: the frame, the studio stamp, the phone's sheet.
+      - name: Verify the studio camera on every photo page and the one share sheet
+        run: PORT=8931 node test/verify_studio_cam_6147.js

@@ -48,8 +48,8 @@ const MAIN = read("panel/main.js"), INDEX = read("panel/index.html"), CSS = read
 const STORE_SRC = read("panel/src/app/panel-storage.js");
 const STRIP = read("panel/src/ui/progress-strip.js");
 const ST = require("../panel/src/app/panel-storage.js");
-const VER = "6.146.0", PVER = "6.217.0";
-const COUNT = 288;
+const VER = "6.147.0", PVER = "6.218.0";
+const COUNT = 289;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml",
