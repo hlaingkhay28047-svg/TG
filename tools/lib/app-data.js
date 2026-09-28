@@ -19,7 +19,8 @@
    docs/app/data/trmore.js      window.HNK_TRMORE=<json>;   TR_V428 · TR_V430 · TR_PATH, the three
                                                             per-wave dictionaries the shell merges
                                                             into TR at boot (6.121.0); TR_X · TR_NEW ·
-                                                            TR_L14 (x · new · l14) followed in 6.122.0
+                                                            TR_L14 (x · new · l14) followed in 6.122.0;
+                                                            TR_L10 · PT_SRC_L (l10 · ptsrc) in 6.150.0
                                                             the app shows (v6.107.0)
    docs/app/data/whats-new-archive.json                    What's New rows older
                                                             than the strip's cut

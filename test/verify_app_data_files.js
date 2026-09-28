@@ -103,7 +103,12 @@ const rawBytes = Buffer.byteLength(APP, "utf8"), gzBytes = zlib.gzipSync(Buffer.
    left for data/tutorials.js. 3,175,354 bytes now; the number stays.
    6.121.0 did it a fifth time: the Smart Album designer arrived with 440 bytes to spare, so
    TR_V428, TR_V430 and TR_PATH (three per-wave dictionaries, 105 KB, merged into TR at boot
-   exactly as before) left for data/trmore.js. The number stays. */
+   exactly as before) left for data/trmore.js. The number stays.
+   6.150.0 did it a sixth time: the print sheets (the composer in the Portrait Style module, the
+   dialog, the print frame, the PDF writer) put the shell 12,068 bytes over, so TR_L10 (the
+   ten-language overlay, 15 KB, merged into TR at boot) and PT_SRC_L (Path's source words,
+   13.5 KB) left for data/trmore.js as sections l10 · ptsrc — the same globals, read from
+   window.HNK_TRMORE like the six sections before them. 3,183,806 bytes now; the number stays. */
 report("A4) the shell stays under its ceilings — 3.20 MB raw, 1.1 MB gzipped (5.8 MB / 1.58 MB before the data left; 3.78 MB / 1.16 MB before the packs and the Imagine tables followed in 6.92.0; 3.30 MB raw until the Album page's type in 6.104.0; 3.35 MB until 6.106.0 wrote a PDF and a PSD writer into the album module; 3.40 MB until 6.107.0 rebuilt the Album page's layout and then moved the 186 KB What's New strip out to data/whatsnew.js rather than raise the number a fourth time; 3.35 MB again when wave I grew the Album page in 6.125.0, and the 376 KB album module left for data/album-module.js rather than raise it a fifth)",
   rawBytes <= 3200000 && gzBytes <= 1100000, { rawBytes, gzBytes });
 const before = APP;
