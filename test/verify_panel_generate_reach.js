@@ -105,7 +105,7 @@ function sourcePins() {
   report("A6) main.js: rh_err_task_failed in nine languages, the SELF-TEST Network row over RunningHub · uploads · results (probe re-armed by Run again), the classic status line prints the stage and reason (e.why)",
     a6.keys === 9 && a6.row && a6.probe && a6.hosts && a6.stage && a6.why && a6.run, a6);
   const imPins = (src) => src.includes('el("input","im-stagerange")') && /function imStageW\(\)\{ return S\.stageW>0 \? S\.stageW : IM_STAGE_W; \}/.test(src)
-    && src.includes("desc:S.desc, stageW:S.stageW })") && src.includes("if(!(vw>0)) return imStageW();") && src.includes('wrap.style.width=imStageW()+"px"; srng.style.display="";');
+    && /desc:S\.desc, stageW:S\.stageW[^}]*\}\)\)/.test(src) && src.includes("if(!(vw>0)) return imStageW();") && src.includes('wrap.style.width=imStageW()+"px"; srng.style.display="";');
   report("A7) the Imagine module (app, and lifted to the panel byte for byte here): a stored stage width, the range under the brush stage, imStageWidth falls back to it, the CSS on both surfaces",
     imPins(APP) && imPins(IMAGINE_PANEL) && /\.im-stagerange\{display:block;width:100%;box-sizing:border-box;margin:6px 0 0\}/.test(APP) && /\.im-stagerange\{/.test(PANEL_CSS), { app: imPins(APP), panel: imPins(IMAGINE_PANEL) });
   const ciIdx = CI.indexOf("node test/verify_panel_generate_reach.js"), prevIdx = CI.indexOf("node test/verify_panel_uxp_dialogs.js");
