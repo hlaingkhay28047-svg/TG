@@ -51,9 +51,9 @@ const PANEL_CSS = read("panel/styles.css");
 const PARITY = read("test/verify_panel_page_parity.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.148.0", PVER = "6.219.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.149.0", PVER = "6.220.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.146.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 290;
+const COUNT = 291;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
