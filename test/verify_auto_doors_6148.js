@@ -105,7 +105,9 @@ function partA() {
   report("A6) the CSS: the switch and the queue line on both surfaces (flex and margins only in the lifted Imagine block and the panel sheet), the overlay app-only, the camera sheet a two-column grid on a landscape tablet",
     has(APP, ".cam-auto{display:flex;align-items:center;gap:8px;min-height:40px;") && has(APP, ".hnk-show{position:fixed;inset:0;z-index:95;") && has(APP, ".hnk-show .hs-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}") &&
     has(APP, "@media (orientation:landscape) and (min-width:760px){\n.ps-camsheet{display:grid;grid-template-columns:1fr 340px;grid-template-rows:1fr auto}") && has(APP, ".ps-camsheet .ps-camview{grid-column:1;grid-row:1/3;height:100%}") &&
-    has(imCss, ".im-auto{display:flex;align-items:center;margin:0 6px 6px 0;min-height:36px;font-size:12.5px;cursor:pointer}") && has(imCss, ".im-auto input{margin:0 8px 0 0}") &&
+    has(imCss, ".im-auto{display:flex;align-items:center;margin:0 6px 6px 0;min-height:40px;font-size:12.5px;cursor:pointer}") && has(imCss, ".im-auto input{width:40px;height:40px;margin:0 8px 0 0;accent-color:var(--gold)}") &&
+    /* the switches themselves stand on the 40px reach floor (verify_ux_wave_6114 measures the input, not its label) */
+    has(APP, ".cam-auto input{width:40px;height:40px;margin:0;flex:0 0 40px;accent-color:var(--gold)}") && has(read("panel/styles.css"), ".cam-auto input{width:40px;height:40px;margin:0 8px 0 0;accent-color:var(--accent)}") && has(read("panel/styles.css"), ".im-auto input{width:40px;height:40px;margin:0 8px 0 0;accent-color:var(--accent)}") &&
     has(read("panel/styles.css"), ".cam-auto{display:flex;align-items:center;min-height:40px;margin-top:4px;font-size:13px;cursor:pointer}") && has(read("panel/styles.css"), ".im-auto{display:flex;"));
 }
 
