@@ -2799,7 +2799,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.219.0";
+const PANEL_VERSION = "6.220.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9761,8 +9761,31 @@ const GAL_L = {
     vi: "Xóa", id: "Hapus", ms: "Padam" },
   pickNone: { my: "ပုံတစ်ပုံ ရွေးပါ", en: "Pick a result first", shn: "လိူၵ်ႈၶႅပ်းၼိုင်ႈ",
     kac: "Sumla langai lata u", th: "เลือกภาพก่อน", zh: "先选一张", vi: "Hãy chọn một ảnh",
-    id: "Pilih hasil dulu", ms: "Pilih hasil dahulu" }
+    id: "Pilih hasil dulu", ms: "Pilih hasil dahulu" },
+  /* 6.220.0 — THE CUSTOMER, the app's GAL_W words */
+  kSess: { my: "ဒီ ဖောက်သည်", en: "This customer", shn: "ၽူႈသိုဝ်ႉၼႆႉ", kac: "Ndai customer", th: "ลูกค้าคนนี้", zh: "这位顾客", vi: "Khách này", id: "Pelanggan ini", ms: "Pelanggan ini" },
+  sessLine: { my: "ဖောက်သည် #{n} · ပုံ {N} ပုံ", en: "Customer #{n} · {N} photos", shn: "ၽူႈသိုဝ်ႉ #{n} · ၶႅပ်း {N}", kac: "Customer #{n} · sumla {N}", th: "ลูกค้า #{n} · {N} ภาพ", zh: "顾客 #{n} · {N} 张", vi: "Khách #{n} · {N} ảnh", id: "Pelanggan #{n} · {N} foto", ms: "Pelanggan #{n} · {N} foto" },
+  sessNew: { my: "ဖောက်သည် အသစ်", en: "New customer", shn: "ၽူႈသိုဝ်ႉမႂ်ႇ", kac: "Customer nnan", th: "ลูกค้าใหม่", zh: "新顾客", vi: "Khách mới", id: "Pelanggan baru", ms: "Pelanggan baharu" },
+  sessStarted: { my: "ဖောက်သည် #{n} စပြီ — ဒီကစ ရိုက်တာ / လုပ်တာ အကုန် သူ့ဟာ", en: "Customer #{n} started — everything from here is theirs", shn: "ၽူႈသိုဝ်ႉ #{n} တႄႇယဝ်ႉ — တႄႇတီႈၼႆႈ ပဵၼ်ၶွင်မၼ်း", kac: "Customer #{n} hpang sai — ndai kaw na yawng shi a rai", th: "เริ่มลูกค้า #{n} — ทุกอย่างจากนี้เป็นของเขา", zh: "顾客 #{n} 开始——从现在起都归他", vi: "Bắt đầu khách #{n} — từ đây là của họ", id: "Pelanggan #{n} dimulai — semua dari sini miliknya", ms: "Pelanggan #{n} dimulakan — semua dari sini miliknya" },
+  sessSave: { my: "ဒီ ဖောက်သည် အကုန် သိမ်း", en: "Save this customer's photos", shn: "သိမ်းၶႅပ်း ၽူႈသိုဝ်ႉၼႆႉ တင်းမူတ်း", kac: "Ndai customer a sumla yawng makoi", th: "บันทึกภาพลูกค้าคนนี้ทั้งหมด", zh: "保存这位顾客的全部照片", vi: "Lưu toàn bộ ảnh khách này", id: "Simpan semua foto pelanggan ini", ms: "Simpan semua foto pelanggan ini" },
+  sessNone: { my: "ဒီ ဖောက်သည် ပုံ မရှိသေး — ရိုက်တာ / လုပ်တာ ဒီမှာ စုပါမယ်", en: "No photos for this customer yet — every shot and result from here will gather", shn: "ၽူႈသိုဝ်ႉၼႆႉ ပႆႇမီးၶႅပ်း — ထႆႇ / ႁဵတ်း တေမႃးၸူႉတီႈၼႆႈ", kac: "Ndai customer a sumla n nga shi — gap ai / galaw ai ndai kaw hpawng na", th: "ยังไม่มีภาพของลูกค้าคนนี้ — ภาพและผลลัพธ์จากนี้จะรวมที่นี่", zh: "这位顾客还没有照片——从现在起的拍摄和结果都会汇集在这里", vi: "Khách này chưa có ảnh — mọi ảnh và kết quả từ đây sẽ gom lại", id: "Belum ada foto pelanggan ini — semua jepretan dan hasil dari sini akan terkumpul", ms: "Belum ada foto pelanggan ini — semua gambar dan hasil dari sini akan terkumpul" }
 };
+/* 6.220.0 — THE CUSTOMER on the panel: the same number the web app keeps (hnk_session_v1), read by the gallery store
+   when it saves a result (gallery/sessions.json names each file's customer) and by the Gallery's view. */
+let SESSION_P = (function () { let s = null; try { s = JSON.parse(localStorage.getItem("hnk_session_v1") || "null"); } catch (e) { s = null; } if (!s || typeof s.id !== "number" || typeof s.n !== "number") { s = { id: Date.now(), n: 1, started: Date.now(), c: 0 }; } if (typeof s.c !== "number") s.c = 0; try { localStorage.setItem("hnk_session_v1", JSON.stringify(s)); } catch (e) { } return s; })();
+function sessionSaveP() { try { localStorage.setItem("hnk_session_v1", JSON.stringify(SESSION_P)); } catch (e) { } }
+function sessionBumpP() { SESSION_P.c = (SESSION_P.c || 0) + 1; sessionSaveP(); try { Object.keys(HOT_DOORS).forEach(function (k) { hotDoorPaint(k); }); } catch (e) { } }
+globalThis.HNK = globalThis.HNK || {}; globalThis.HNK.session = function () { return SESSION_P; }; globalThis.HNK.sessionNext = function () { return sessionNewP(); }; globalThis.HNK.sessionBump = sessionBumpP;
+function sessionNewP() {
+  SESSION_P = { id: Date.now(), n: (SESSION_P.n || 0) + 1, started: Date.now(), c: 0 };
+  sessionSaveP();
+  GAL.kind = "session";
+  try { Object.keys(HOT_DOORS).forEach(function (k) { hotDoorPaint(k); }); } catch (e) { }
+  if (state.page === "gallery") { galRefresh(); }
+  setStatus(ff9(GAL_L.sessStarted).replace("{n}", String(SESSION_P.n)), "ok");
+  return SESSION_P;
+}
+
 
 /* the panel's own keep list, a file beside the pictures — the app keeps the
    same flag on its IndexedDB record */
@@ -9851,6 +9874,7 @@ function renderGal() {
   const pickBox = $("galPick");
   if (pickBox) pickBox.style.display = GAL.pick ? "" : "none";
   galBulkRefresh();
+  galSessionBarP();   /* 6.220.0 */
   if (!grid) return;
   grid.innerHTML = "";
   shown.forEach(function (f) {
@@ -9897,6 +9921,7 @@ function galApplyView(files) {
     if (GAL.kind === "image" && vid) return false;
     if (GAL.kind === "video" && !vid) return false;
     if (GAL.kind === "keep" && !GAL.keep[f.name]) return false;
+    if (GAL.kind === "session" && (f.session || 0) !== SESSION_P.id) return false;   /* 6.220.0 */
     if (!q) return true;
     const label = vid ? galVideoLabel(f.name) : "";
     return (String(f.name || "") + " " + label).toLowerCase().indexOf(q) >= 0;
@@ -9920,7 +9945,7 @@ function galToolsPaint() {
     sel.value = cur;
     const v = $(valId); if (v) v.textContent = label;
   };
-  fill("galKind", "galKindVal", [["all", GAL_L.kAll], ["image", GAL_L.kImg], ["video", GAL_L.kVid], ["keep", GAL_L.kKeep]], GAL.kind);
+  fill("galKind", "galKindVal", [["all", GAL_L.kAll], ["image", GAL_L.kImg], ["video", GAL_L.kVid], ["keep", GAL_L.kKeep], ["session", GAL_L.kSess]], GAL.kind);
   fill("galSort", "galSortVal", [["new", GAL_L.sNew], ["old", GAL_L.sOld], ["big", GAL_L.sBig]], GAL.sort);
 }
 function bindGalleryTools() {
@@ -9996,6 +10021,25 @@ async function galSaveFiles(files) {
     n++;
   }
   return n;
+}
+/* 6.220.0 — THE CUSTOMER'S BAR (the app's galSessionBar): their number and count, New customer, Save all (the
+   panel saves files to a folder the way its selection button does; there is no share sheet in Photoshop) */
+function galSessionBarP() {
+  const bulk = $("galBulkBar"); if (!bulk) return;
+  let bar = $("galSessBar");
+  if (!bar) { bar = document.createElement("div"); bar.className = "row gal-sess"; bar.id = "galSessBar"; bulk.parentNode.insertBefore(bar, bulk); }
+  while (bar.firstChild) bar.removeChild(bar.firstChild);
+  const mine = GAL.files.filter(function (f) { return (f.session || 0) === SESSION_P.id; });
+  if (SESSION_P.c !== mine.length) { SESSION_P.c = mine.length; sessionSaveP(); try { Object.keys(HOT_DOORS).forEach(function (k) { hotDoorPaint(k); }); } catch (e) { } }
+  const tx = document.createElement("span"); tx.className = "mut gal-sess-t"; tx.id = "galSessTxt"; tx.textContent = ff9(GAL_L.sessLine).replace("{n}", String(SESSION_P.n)).replace("{N}", String(mine.length)); bar.appendChild(tx);
+  const nb = mkBtn("chip"); nb.id = "galNewCust"; setIcnText(nb, "i-face", "cream", ff9(GAL_L.sessNew)); nb.addEventListener("click", function () { sessionNewP(); }); bar.appendChild(nb);
+  if (mine.length) {
+    const sv = mkBtn("btn"); sv.id = "galSaveSess"; setIcnText(sv, "i-download", "cream", ff9(GAL_L.sessSave));
+    sv.addEventListener("click", async function () { try { setStatus(await galSaveFiles(mine) + " · " + t("btn_save"), "ok"); } catch (e) { setStatus(friendlyErr(e), "err"); } });
+    bar.appendChild(sv);
+  } else if (GAL.kind === "session") {
+    const none = document.createElement("span"); none.className = "mut gal-sess-none"; none.textContent = ff9(GAL_L.sessNone); bar.appendChild(none);
+  }
 }
 async function galSaveSelected() {
   const picked = GAL.files.filter(function (f) { return GAL.sel[f.name]; });
@@ -13064,6 +13108,8 @@ function imagineHost() {
       });
     },
     hotFolder: uxpHotFolder(),   /* 6.218.0 — the folder the tether software saves into, watched for new shots */
+    session: function () { return SESSION_P; },   /* 6.220.0 — the customer */
+    sessionNext: function () { return sessionNewP(); },
     /* v6.79.0 — the module asks its host for a width before it asks the
        viewport; the panel answers with whichever ruler works here */
     stageWidth: function (el) {
@@ -13200,6 +13246,13 @@ function panelCamDoor(slot, key) {
     al.appendChild(cb); al.appendChild(document.createTextNode(ff9(U.auto_run))); slot.appendChild(al);
     const hint = document.createElement("p"); hint.className = "mut cam-hint"; hint.textContent = ff9(U.auto_run_hint); slot.appendChild(hint);
     if (d.queue && d.queue.length) { const q = document.createElement("div"); q.className = "mut cam-door-q"; q.textContent = ff9(U.queue_n).replace("{n}", String(d.queue.length)); slot.appendChild(q); }
+  }
+  /* 6.220.0 — the customer at this door (the app's line, word for word) */
+  if (U.cust_line && U.cust_new) {
+    const sr = document.createElement("div"); sr.className = "row cam-sess";
+    const sl = document.createElement("span"); sl.className = "mut cam-sess-t"; sl.id = "camSess_" + key; sl.textContent = ff9(U.cust_line).replace("{n}", String(SESSION_P.n)).replace("{N}", String(SESSION_P.c || 0)); sr.appendChild(sl);
+    const nc = mkBtn("chip cam-newcust"); nc.id = "camNewCust_" + key; setIcnText(nc, "i-face", "cream", ff9(U.cust_new)); nc.addEventListener("click", function () { sessionNewP(); }); sr.appendChild(nc);
+    slot.appendChild(sr);
   }
 }
 function hotDoorIntake(key, item) {

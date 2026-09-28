@@ -235,7 +235,7 @@
       <span class="hnk-wordmark">HNK</span>
       <span class="hnk-studio-label">AI PANEL</span>
       <span class="nav-name-ul"></span>
-      <span class="topbar-sub"><span id="brandVer">v6.219.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
+      <span class="topbar-sub"><span id="brandVer">v6.220.0</span> &middot; <span id="brandProv">RunningHub</span><span id="brandPlan" class="topbar-plan"></span></span>
     </div>
     <div role="button" tabindex="0" id="btnGearSetup" class="nav-gear" aria-label="Setup" title="Setup"><img class="nav-gear-ic" src="icons/ui/i-gear-cream.png" alt="" /><span class="nav-dot"></span></div>
     <div class="hsl hsl-for-selLang" id="langHsl">
@@ -479,7 +479,7 @@
           <span class="lbl" id="storeL_albums"></span><span class="mut" id="storeV_albums"></span>
           <div role="button" tabindex="0" class="btn" id="storeB_albums"></div>
         </div>
-        <!-- 6.148.0 — the one row the web app has no counterpart for: scratch files are a
+        <!-- 6.149.0 — the one row the web app has no counterpart for: scratch files are a
              plugin-writing-to-disk thing and a browser has none, so the parity walk skips it
              rather than the two Setup pages being excused line by line. -->
         <div class="row store-row" id="storeRow_temps" data-panel-only="scratch-files">
@@ -1423,7 +1423,7 @@
       <div id="imRoot"></div>
     </div>
 
-    <!-- ========== PAGE: PORTRAIT STYLE (6.219.0 — the app's pgPStyle) ==========
+    <!-- ========== PAGE: PORTRAIT STYLE (6.220.0 — the app's pgPStyle) ==========
          The three steps are drawn into #psRoot by js/hnk_pstyle.js, the app's own PSTYLE module lifted
          verbatim (tools/build_panel_pstyle.js); main.js hands it the panel host (layer/file pickers,
          callImageAPI, galleryStore, place-into-Photoshop). -->
@@ -1485,7 +1485,7 @@
             <input class="inp" id="stSearch" />
           </div>
           <div class="chips" id="stGroupChips"><div role="button" tabindex="0" class="chip" id="stSearchTgl"><img class="ic-s" src="icons/ui/i-search-cream.png" alt="" /></div></div>
-          <!-- 6.219.0 — the eight controls touched last, drawn by the lifted jump bar; hidden while empty -->
+          <!-- 6.220.0 — the eight controls touched last, drawn by the lifted jump bar; hidden while empty -->
           <div class="chips" id="stRecent" style="display:none"></div>
         </div>
 
@@ -1672,7 +1672,7 @@
          whether or not this engine collapses margins; -16px side margins let
          the rule span the full 420px like the app's. -->
     <div class="foot" id="foot"><div class="foot-in">
-      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.219.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
+      <p class="foot-p">HNK Create Studio · AI Panel <span id="footVer">v6.220.0</span> · Web-app parity · Portrait · Wedding · Myanmar</p>
     </div></div>
 
   </div>
@@ -1723,8 +1723,8 @@
 
 </div>
 
-<!-- v6.77.0 / panel 6.148.0 — BEFORE EVERYTHING: Web Storage for a host that has
-     none. Photoshop's renderer has no working localStorage (the owner's 6.148.0
+<!-- v6.77.0 / panel 6.149.0 — BEFORE EVERYTHING: Web Storage for a host that has
+     none. Photoshop's renderer has no working localStorage (the owner's 6.149.0
      photographs), and forty-one call sites lifted from the web app write there in
      silence — recipes, the watermark logo, favourites, Imagine's photos. When the
      host's own storage does not round-trip a value, this installs one over the

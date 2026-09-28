@@ -97,7 +97,11 @@ const PANEL_ONLY = {
    text here; the panel's tile is the same picture as a file, so it carries no
    text node. Nothing a student sees differs. */
 const APP_ONLY = {
-  vidup: ["HD"], v2v: [], talk: [], gallery: [], create: [], path: [],
+  vidup: ["HD"], v2v: [], talk: [], create: [], path: [],
+  /* 6.149.0 — the Gallery's customer bar: Share this customer's photos hands every result to the phone's share sheet
+     (navigator.share with files), which Photoshop has no counterpart for; the panel's bar carries Save instead, on
+     both surfaces. Drawn only once the customer has results, so a fresh walk never meets it — named for the day it does. */
+  gallery: ["ဒီ ဖောက်သည် အကုန် ရှယ်"],
   /* 6.142.0 — Portrait Style: Take a photo and From the Gallery are the web app host's own buttons (a camera, an IndexedDB gallery); the panel picks from a layer or a file through the shared Add button */
   pstyle: ["ကင်မရာနဲ့ ရိုက်မယ်", "ပြခန်းက ယူမယ်", "ကင်မရာ · Live"],
   imagine: ["ကင်မရာ · Live"],   /* 6.147.0 — Imagine's Camera · Live is the web host's camera sheet; the hot folder is on both */
@@ -160,6 +164,10 @@ const REWRITE = [
         its data folder; the units are the same sentence, the numbers are the
         machine's. Both sides lose the number, so a missing FIELD still fails. */
   [/\d+(\.\d+)?\s*(KB|MB|GB)/g, "SIZE"],
+  /* 6.149.0 — THE CUSTOMER'S LINE on every door and in the Gallery: "Customer #n · N photos". The number is
+     whichever customer this device is on and the count is what its own store holds — both the device's answer,
+     not the product's — so both surfaces lose them here; the words around them still have to match. */
+  [/(ဖောက်သည် #)\d+( · ပုံ )\d+( ပုံ)/g, "$1N$2N$3"],
   /* and the noun that sentence uses for its own host — a plugin has no
      browser storage, and saying "browser" inside Photoshop would be wrong. */
   [/(browser|plugin) (သိုလှောင်မှု)/, "HOST $2"],

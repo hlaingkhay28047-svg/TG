@@ -1337,3 +1337,8 @@ jobs:
       # customer turns the tablet to the customer with the result full-screen; the camera sheet in landscape.
       - name: Verify auto-run on every door and Show the customer
         run: PORT=8931 node test/verify_auto_doors_6148.js
+      # 6.149.0 — THE CUSTOMER: every Gallery record carries the customer's number (the panel: sessions.json beside
+      # its files); the Gallery's This customer view and bar (New customer · Share all · Save all); the same line and
+      # New customer under every door on both surfaces.
+      - name: Verify the customer — one customer's shots and results in one place, on both surfaces
+        run: PORT=8931 node test/verify_session_6149.js

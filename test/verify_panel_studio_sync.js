@@ -229,7 +229,10 @@ async function smoke() {
        panel's (already clean) strings are unaffected and every OTHER
        difference still fails. */
     const { uxpSafeText } = require("../tools/lib/uxp_safe_text.js");
-    const deglyph = (l) => l.map((s) => { try { return uxpSafeText(s, "studio-sync"); } catch (e) { return s; } });
+    /* 6.149.0 — the customer's line on each page's door ("Customer #n · N photos"): its number and count are the device's, so both
+       surfaces lose them here and the words around them still have to match (verify_panel_page_parity does the same). */
+    const desess = (s) => String(s).replace(/(ဖောက်သည် #)\d+( · ပုံ )\d+( ပုံ)/g, "$1N$2N$3");
+    const deglyph = (l) => l.map((s) => { try { return desess(uxpSafeText(s, "studio-sync")); } catch (e) { return desess(s); } });
     /* 6.147.0 — THE ONE LINE THE BROWSER HAS AND PHOTOSHOP CANNOT: each page's cam-slot carries Camera · Live
        (getUserMedia — a phone's camera, a DSLR on USB through the maker's webcam utility) beside Hot folder on
        the web; the panel draws the same Hot folder in the same slot and has no camera to offer. That one chip

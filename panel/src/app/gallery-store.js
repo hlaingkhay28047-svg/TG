@@ -53,8 +53,32 @@ async function save(b64, ext, label) {
     if (!bin) return "";
     await f.write(bin, { format: uxp.storage.formats.binary });
     await trim();
+    await _sessTag(dir, name);   /* 6.220.0 — the customer's number for this file */
     return name;
   } catch (e) { return ""; }
+}
+
+/* 6.220.0 — THE CUSTOMER. The web app keeps a customer number (hnk_session_v1) and stamps every Gallery record with
+   it; the panel keeps the same number (HNK.session) and, since a file has no field, names each file's customer in
+   gallery/sessions.json beside the files. list() reads it back onto every entry as .session. */
+var SESS_FILE = "sessions.json";
+async function _sessRead(dir) {
+  try {
+    var uxp = _uxp(); if (!dir || !uxp) return {};
+    var f = await dir.getEntry(SESS_FILE);
+    var s = await f.read({ format: uxp.storage.formats.utf8 });
+    var o = JSON.parse(s || "{}"); return (o && typeof o === "object") ? o : {};
+  } catch (e) { return {}; }
+}
+async function _sessTag(dir, name) {
+  try {
+    var uxp = _uxp(); var sess = globalThis.HNK && typeof globalThis.HNK.session === "function" ? globalThis.HNK.session() : null;
+    if (!dir || !uxp || !sess || typeof sess.id !== "number") return;
+    var idx = await _sessRead(dir); idx[name] = sess.id;
+    var f = await dir.createFile(SESS_FILE, { overwrite: true });
+    await f.write(JSON.stringify(idx), { format: uxp.storage.formats.utf8 });
+    if (typeof globalThis.HNK.sessionBump === "function") globalThis.HNK.sessionBump();
+  } catch (e) { }
 }
 
 async function list() {
@@ -62,8 +86,10 @@ async function list() {
     var dir = await _folder(false);
     if (!dir) return [];
     var all = await dir.getEntries();
-    var files = all.filter(function (e) { return e && e.isFile; });
+    var files = all.filter(function (e) { return e && e.isFile && e.name !== SESS_FILE; });
     files.sort(function (a, b) { return String(b.name).localeCompare(String(a.name)); });
+    var idx = await _sessRead(dir);   /* 6.220.0 — each file's customer */
+    files.forEach(function (f) { try { f.session = idx[f.name] || 0; } catch (e) { } });
     return files;
   } catch (e) { return []; }
 }

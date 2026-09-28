@@ -2253,6 +2253,7 @@ body.wall #wallRetry.on{display:block}
 .im-camrow{margin:4px 0 8px 0}
 .im-auto{display:flex;align-items:center;margin:0 6px 6px 0;min-height:40px;font-size:12.5px;cursor:pointer}
 .im-auto input{width:40px;height:40px;margin:0 8px 0 0;accent-color:var(--gold)}
+.im-sess{display:flex;flex-direction:row;align-items:center;margin:0 0 6px 0;font-size:12.5px}.im-sess-t{margin-right:8px}
 .im-camrow .chip{margin:0 6px 6px 0}
 .im-hot{font-size:12.5px;color:var(--gold-hi);margin-left:4px}
    lifted into the Photoshop panel (tools/build_panel_imagine.js), and UXP draws no CSS grid, no
@@ -2526,6 +2527,7 @@ body.wall #wallRetry.on{display:block}
 .ps-camsheet .ps-camctl .ps-tg{display:flex;align-items:center;gap:6px;min-height:40px;font-size:13px}
 .cam-slot{margin:0}.cam-door{margin-top:8px}.cam-door-row{margin:0}.cam-door-row .chip{margin:0 6px 6px 0}.cam-door-st{font-size:12.5px;color:var(--gold-hi)}
 .cam-auto{display:flex;align-items:center;gap:8px;min-height:40px;margin-top:4px;font-size:13px;cursor:pointer}.cam-auto input{width:40px;height:40px;margin:0;flex:0 0 40px;accent-color:var(--gold)}.cam-hint{margin:0 0 4px 0;font-size:12px}.cam-door-q{font-size:12.5px;color:var(--gold-hi)}
+.cam-sess{align-items:center;gap:8px;margin-top:4px}.cam-sess-t{font-size:12.5px}.gal-sess{align-items:center;gap:8px;margin:6px 0 8px 0}.gal-sess-t{font-size:12.5px}.gal-sess-none{font-size:12.5px;flex:1 1 100%}
 .hnk-show{position:fixed;inset:0;z-index:95;background:#000;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none}
 .hnk-show .hs-stage{position:relative;width:100%;height:100%;overflow:hidden;transition:transform .2s}
 .hnk-show .hs-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
@@ -4775,13 +4777,13 @@ html.splashing #splash{display:flex}
 
 <script src="data/hnkdata.js?v=9f7c58bdb600"></script>
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
-<script src="data/pstyle.js?v=f8ef587dd188"></script>
-<script src="data/imagine.js?v=af8736075ccc"></script>
+<script src="data/pstyle.js?v=f8e699388a11"></script>
+<script src="data/imagine.js?v=6938d1ae49ed"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=b50745c10f03"></script>
+<script src="data/album-module.js?v=0fdc5f56defc"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=ac0badf84ffb"></script>
-<script src="data/whatsnew.js?v=08e96fba1d34"></script>
+<script src="data/whatsnew.js?v=c146f635c1da"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -7491,7 +7493,8 @@ function galleryAddVideo(url, promptSnippet, meta){
           var tx=d.transaction("gal","readwrite"), st=tx.objectStore("gal");
           var rec={ kind:"video", blob:blob, mime:blob.type||"video/mp4", thumb:thumb,
             prompt:promptSnippet||"", ts:Date.now(), page:meta.page||galCurPage(),
-            res:meta.res||"", dur:meta.dur||"", srcUrl:url, keep:0, b64:"", before:null, prov:"", wf:"" };
+            res:meta.res||"", dur:meta.dur||"", srcUrl:url, keep:0, b64:"", before:null, prov:"", wf:"", session:SESSION.id };   /* 6.149.0 */
+          sessionBump();
           var rq=st.add(rec);
           var failed=false;
           function fail(){ if(failed) return; failed=true; galSaveFailed(); resolve(0); }
@@ -7557,7 +7560,8 @@ function galleryAdd(out, promptSnippet, meta){
        again where it was made and compared against what made it. */
     var rq=st.add({ mime:out.mime, b64:out.b64, thumb:thumb, prompt:promptSnippet||"", ts:Date.now(),
       prov:(out&&out._prov)||"", wf:(typeof state!=="undefined"&&state.runWfId)||"", keep:0,
-      kind:"image", page:page, before:before||null });
+      kind:"image", page:page, before:before||null, session:SESSION.id });   /* 6.149.0 — the customer's number */
+    sessionBump();
     rq.onerror=fail;
     tx.onabort=fail; tx.onerror=fail;
     tx.oncomplete=function(){ if(!failed){ if(out && rq.result) out._id=rq.result; resolve(true); } };   /* v6.20.0 — the key rides back on the take */
@@ -7607,6 +7611,32 @@ var galSel=null;
    filter over the same records — nothing is moved or deleted; Select-all selects what is SHOWN. A tile tapped on
    the Home recent strip opens the Gallery with that result picked (galPendingId). */
 var galView={ q:"", kind:"all", sort:"new" }, galPendingId=null, galToolsBound=false;
+/* ---------- 6.149.0 — THE CUSTOMER. A studio shoots one customer at a time: twenty to fifty frames, their results,
+   then the next customer. Every result saved to the Gallery carries the customer's number (SESSION.id), so the
+   Gallery can show one customer's shots and results in one place — share them all, save them all — and "New
+   customer" at any door or in the Gallery starts the next. The number lives on this device (hnk_session_v1). */
+var SESSION=(function(){ var s=null; try{ s=JSON.parse(localStorage.getItem("hnk_session_v1")||"null"); }catch(e){ s=null; } if(!s || typeof s.id!=="number" || typeof s.n!=="number"){ s={ id:Date.now(), n:1, started:Date.now(), c:0 }; } if(typeof s.c!=="number") s.c=0; try{ localStorage.setItem("hnk_session_v1", JSON.stringify(s)); }catch(e){} return s; })();
+function sessionSave(){ try{ localStorage.setItem("hnk_session_v1", JSON.stringify(SESSION)); }catch(e){} }
+/* the running count on the doors' line — kept here so every door can paint it at once; the Gallery's bar puts it back to the truth of the store */
+function sessionBump(){ SESSION.c=(SESSION.c||0)+1; sessionSave(); try{ if(window.HNK_CAM && HNK_CAM.doors) HNK_CAM.doors(true); }catch(e){} }
+function sessionNew(){
+  SESSION={ id:Date.now(), n:(SESSION.n||0)+1, started:Date.now(), c:0 };
+  sessionSave();
+  galView.kind="session";
+  try{ if(window.HNK_CAM && HNK_CAM.doors) HNK_CAM.doors(true); }catch(e){}
+  if(curPage==="pgGallery") renderGallery();
+  toast(L9(GAL_W.sessStarted).replace("{n}", String(SESSION.n)),"ok");
+  return SESSION;
+}
+/* how many results this customer has — the doors' line and the Gallery's bar */
+function galCountSession(){
+  return galDb().then(function(d){ return new Promise(function(res){
+    var n=0, rq=d.transaction("gal").objectStore("gal").openCursor();
+    rq.onsuccess=function(ev){ var c=ev.target.result; if(!c){ res(n); return; } if((c.value||{}).session===SESSION.id) n++; c.continue(); };
+    rq.onerror=function(){ res(n); };
+  }); }).catch(function(){ return 0; });
+}
+window.HNK_SESSION={ get:function(){ return SESSION; }, next:sessionNew, count:galCountSession, bump:sessionBump };
 var GAL_W={
   search:{my:"ရလဒ်ထဲ ရှာမယ် — prompt · workflow · ရက်စွဲ",en:"Search results — prompt · workflow · date",shn:"သွၵ်ႈႁႃၽွၼ်းလႆႈ — prompt · workflow · ဝၼ်း",kac:"Result tam u — prompt · workflow · shani",th:"ค้นหาผลลัพธ์ — prompt · workflow · วันที่",zh:"搜索结果 — 提示词 · 工作流 · 日期",vi:"Tìm kết quả — prompt · workflow · ngày",id:"Cari hasil — prompt · workflow · tanggal",ms:"Cari hasil — prompt · workflow · tarikh"},
   kAll:{my:"အားလုံး",en:"All",shn:"တင်းမူတ်း",kac:"Yawng",th:"ทั้งหมด",zh:"全部",vi:"Tất cả",id:"Semua",ms:"Semua"},
@@ -7619,6 +7649,15 @@ var GAL_W={
   count:{my:"{N} / {M} ပြထား",en:"{N} of {M} shown",shn:"ၼႄ {N} / {M}",kac:"{N} / {M} madun ai",th:"แสดง {N} จาก {M}",zh:"显示 {N} / {M}",vi:"Hiện {N} / {M}",id:"Menampilkan {N} dari {M}",ms:"Menunjukkan {N} daripada {M}"},
   none:{my:"ကိုက်တဲ့ ရလဒ် မရှိပါ — ရှာစာ ဒါမှမဟုတ် filter ပြောင်းကြည့်ပါ",en:"Nothing matches — change the search or the filter",shn:"ဢမ်ႇမီးဢၼ်မႅၼ်ႈ — လႅၵ်ႈသွၵ်ႈႁႃ ဢမ်ႇၼၼ် filter",kac:"Hkrak ai n nga ai — tam ai ga (sh) filter galai u",th:"ไม่มีรายการที่ตรง — ลองเปลี่ยนคำค้นหรือตัวกรอง",zh:"没有匹配项 — 换个搜索词或筛选",vi:"Không có kết quả khớp — đổi từ khóa hoặc bộ lọc",id:"Tidak ada yang cocok — ubah pencarian atau filter",ms:"Tiada yang sepadan — tukar carian atau penapis"},
   recent:{my:"နောက်ဆုံး ရလဒ်များ",en:"Recent results",shn:"ၽွၼ်းလႆႈလိုၼ်းသုတ်း",kac:"Hpang jahtum result ni",th:"ผลลัพธ์ล่าสุด",zh:"最近的结果",vi:"Kết quả gần đây",id:"Hasil terbaru",ms:"Hasil terkini"}
+,
+  /* 6.149.0 — THE CUSTOMER */
+  kSess:{my:"ဒီ ဖောက်သည်",en:"This customer",shn:"ၽူႈသိုဝ်ႉၼႆႉ",kac:"Ndai customer",th:"ลูกค้าคนนี้",zh:"这位顾客",vi:"Khách này",id:"Pelanggan ini",ms:"Pelanggan ini"},
+  sessLine:{my:"ဖောက်သည် #{n} · ပုံ {N} ပုံ",en:"Customer #{n} · {N} photos",shn:"ၽူႈသိုဝ်ႉ #{n} · ၶႅပ်း {N}",kac:"Customer #{n} · sumla {N}",th:"ลูกค้า #{n} · {N} ภาพ",zh:"顾客 #{n} · {N} 张",vi:"Khách #{n} · {N} ảnh",id:"Pelanggan #{n} · {N} foto",ms:"Pelanggan #{n} · {N} foto"},
+  sessNew:{my:"ဖောက်သည် အသစ်",en:"New customer",shn:"ၽူႈသိုဝ်ႉမႂ်ႇ",kac:"Customer nnan",th:"ลูกค้าใหม่",zh:"新顾客",vi:"Khách mới",id:"Pelanggan baru",ms:"Pelanggan baharu"},
+  sessStarted:{my:"ဖောက်သည် #{n} စပြီ — ဒီကစ ရိုက်တာ / လုပ်တာ အကုန် သူ့ဟာ",en:"Customer #{n} started — everything from here is theirs",shn:"ၽူႈသိုဝ်ႉ #{n} တႄႇယဝ်ႉ — တႄႇတီႈၼႆႈ ပဵၼ်ၶွင်မၼ်း",kac:"Customer #{n} hpang sai — ndai kaw na yawng shi a rai",th:"เริ่มลูกค้า #{n} — ทุกอย่างจากนี้เป็นของเขา",zh:"顾客 #{n} 开始——从现在起都归他",vi:"Bắt đầu khách #{n} — từ đây là của họ",id:"Pelanggan #{n} dimulai — semua dari sini miliknya",ms:"Pelanggan #{n} dimulakan — semua dari sini miliknya"},
+  sessShare:{my:"ဒီ ဖောက်သည် အကုန် ရှယ်",en:"Share this customer's photos",shn:"ၽႄၶႅပ်း ၽူႈသိုဝ်ႉၼႆႉ တင်းမူတ်း",kac:"Ndai customer a sumla yawng garan",th:"แชร์ภาพลูกค้าคนนี้ทั้งหมด",zh:"分享这位顾客的全部照片",vi:"Chia sẻ toàn bộ ảnh khách này",id:"Bagikan semua foto pelanggan ini",ms:"Kongsi semua foto pelanggan ini"},
+  sessSave:{my:"ဒီ ဖောက်သည် အကုန် သိမ်း",en:"Save this customer's photos",shn:"သိမ်းၶႅပ်း ၽူႈသိုဝ်ႉၼႆႉ တင်းမူတ်း",kac:"Ndai customer a sumla yawng makoi",th:"บันทึกภาพลูกค้าคนนี้ทั้งหมด",zh:"保存这位顾客的全部照片",vi:"Lưu toàn bộ ảnh khách này",id:"Simpan semua foto pelanggan ini",ms:"Simpan semua foto pelanggan ini"},
+  sessNone:{my:"ဒီ ဖောက်သည် ပုံ မရှိသေး — ရိုက်တာ / လုပ်တာ ဒီမှာ စုပါမယ်",en:"No photos for this customer yet — every shot and result from here will gather",shn:"ၽူႈသိုဝ်ႉၼႆႉ ပႆႇမီးၶႅပ်း — ထႆႇ / ႁဵတ်း တေမႃးၸူႉတီႈၼႆႈ",kac:"Ndai customer a sumla n nga shi — gap ai / galaw ai ndai kaw hpawng na",th:"ยังไม่มีภาพของลูกค้าคนนี้ — ภาพและผลลัพธ์จากนี้จะรวมที่นี่",zh:"这位顾客还没有照片——从现在起的拍摄和结果都会汇集在这里",vi:"Khách này chưa có ảnh — mọi ảnh và kết quả từ đây sẽ gom lại",id:"Belum ada foto pelanggan ini — semua jepretan dan hasil dari sini akan terkumpul",ms:"Belum ada foto pelanggan ini — semua gambar dan hasil dari sini akan terkumpul"}
 };
 function galItemText(it){
   var d=new Date(it.ts||0), p2=function(x){ return (x<10?"0":"")+x; };
@@ -7629,6 +7668,7 @@ function galApplyView(all){
     if(galView.kind==="image" && it.kind==="video") return false;
     if(galView.kind==="video" && it.kind!=="video") return false;
     if(galView.kind==="keep" && !it.keep) return false;
+    if(galView.kind==="session" && it.session!==SESSION.id) return false;   /* 6.149.0 */
     return !q || galItemText(it).indexOf(q)>=0;
   });
   if(galView.sort==="old") out.sort(function(a,b){ return (a.ts||0)-(b.ts||0); });
@@ -7640,7 +7680,7 @@ function galToolsPaint(){
   var sIn=$("galSearch"), k=$("galKind"), so=$("galSort"); if(!sIn||!k||!so) return;
   sIn.placeholder=L9(GAL_W.search);
   var fill=function(sel, rows, cur){ sel.innerHTML=""; rows.forEach(function(r){ var o=document.createElement("option"); o.value=r[0]; o.textContent=L9(r[1]); sel.appendChild(o); }); sel.value=cur; };
-  fill(k, [["all",GAL_W.kAll],["image",GAL_W.kImg],["video",GAL_W.kVid],["keep",GAL_W.kKeep]], galView.kind);
+  fill(k, [["all",GAL_W.kAll],["image",GAL_W.kImg],["video",GAL_W.kVid],["keep",GAL_W.kKeep],["session",GAL_W.kSess]], galView.kind);
   fill(so, [["new",GAL_W.sNew],["old",GAL_W.sOld],["big",GAL_W.sBig]], galView.sort);
 }
 function galToolsBind(){
@@ -7857,7 +7897,7 @@ function galReadIndex(d){
       if(!v.thumb && v.b64 && (v.kind||"image")!=="video") legacy.push(v.id);
       out.push({ id:v.id, mime:v.mime, thumb:v.thumb||"", legacyB64:v.thumb?"":(v.b64||""),
                  prompt:v.prompt||"", ts:v.ts||0, prov:v.prov||"", keep:v.keep?1:0,
-                 kind:v.kind||"image", page:v.page||"",
+                 kind:v.kind||"image", page:v.page||"", session:v.session||0,
                  bytes:(v.b64||"").length || ((v.blob&&v.blob.size)||0) });
       c.continue();
     };
@@ -7902,6 +7942,7 @@ function renderGallery(){
       if(galSel && !items.some(function(it){ return it.id===galSel.id; })) galSel=null;
       if(!galSel){ $("galPick").className="lib-pick"; }
       galBulkRefresh();
+      galSessionBar(all);   /* 6.149.0 */
       /* v5.86.0 — there is no cap any more, so the meter reports a count
          rather than a countdown to work being deleted. */
       var gn=$("galNote");
@@ -8079,24 +8120,61 @@ $("galSelMode").onclick=function(){
   if(galMulti.on){ galSel=null; $("galPick").className="lib-pick"; }
   renderGallery();
 };
+/* v4.53: the grid holds thumbs only, so a ZIP has to read the real plates back by id — a partial ZIP would hand the
+   studio downscaled previews while calling them their delivered work. 6.149.0 — one builder for the selection and
+   for a customer's whole set. */
+async function galZipItems(items, base){
+  var entries=[], missed=0;
+  for(var i=0;i<items.length;i++){
+    var rec=await galFull(items[i].id).catch(function(){ return null; });
+    if(!rec || !rec.b64){ missed++; continue; }
+    entries.push({ name:(base||"hnk-gal")+"-"+ptStamp()+"-"+(entries.length+1)+(rec.mime==="image/png"?".png":".jpg"), u8:ptB64ToU8(rec.b64) });
+  }
+  if(!entries.length){ toast(t("gal_read_fail"),"err"); return false; }
+  if(missed) toast(t("gal_zip_partial").replace("{N}",String(missed)),"err");
+  ptSaveBlob(new Blob([ptZip(entries)],{type:"application/zip"}), (base||"hnk-gallery")+"-"+ptStamp()+".zip");
+  return true;
+}
 $("galZipSel").onclick=function(){
   var items=(window._galItems||[]).filter(function(it){ return galMulti.ids[it.id]; });
   if(!items.length) return;
-  /* v4.53: the grid holds thumbs only, so a ZIP has to read the real plates
-     back by id — a partial ZIP would hand the studio downscaled previews
-     while calling them their delivered work. */
-  (async function(){
-    var entries=[], missed=0;
-    for(var i=0;i<items.length;i++){
-      var rec=await galFull(items[i].id).catch(function(){ return null; });
-      if(!rec || !rec.b64){ missed++; continue; }
-      entries.push({ name:"hnk-gal-"+ptStamp()+"-"+(entries.length+1)+(rec.mime==="image/png"?".png":".jpg"), u8:ptB64ToU8(rec.b64) });
-    }
-    if(!entries.length){ toast(t("gal_read_fail"),"err"); return; }
-    if(missed) toast(t("gal_zip_partial").replace("{N}",String(missed)),"err");
-    ptSaveBlob(new Blob([ptZip(entries)],{type:"application/zip"}), "hnk-gallery-"+ptStamp()+".zip");
-  })();
+  galZipItems(items, "hnk-gal");
 };
+/* 6.149.0 — THE CUSTOMER'S BAR: their number and count, New customer, Share all (the phone's share sheet with every
+   result as a file, the studio stamp on each), Save all (a ZIP). Sits above the selection bar. */
+function galSessionBar(all){
+  var bulk=$("galBulkBar"); if(!bulk) return;
+  var bar=$("galSessBar");
+  if(!bar){ bar=el("div","row gal-sess"); bar.id="galSessBar"; bulk.parentNode.insertBefore(bar, bulk); }
+  bar.innerHTML="";
+  var mine=(all||[]).filter(function(it){ return it.session===SESSION.id; });
+  if(SESSION.c!==mine.length){ SESSION.c=mine.length; sessionSave(); try{ if(window.HNK_CAM && HNK_CAM.doors) HNK_CAM.doors(true); }catch(e){} }
+  var tx=el("span","mut gal-sess-t", L9(GAL_W.sessLine).replace("{n}", String(SESSION.n)).replace("{N}", String(mine.length))); tx.id="galSessTxt"; bar.appendChild(tx);
+  var nb=el("button","chip"); nb.id="galNewCust"; nb.innerHTML=icn("i-face")+" "+escH(L9(GAL_W.sessNew)); nb.onclick=function(){ sessionNew(); }; bar.appendChild(nb);
+  if(mine.length){
+    if(navigator.share){
+      var sh=el("button","btn"); sh.id="galShareSess"; sh.innerHTML=icn("i-external")+" "+escH(L9(GAL_W.sessShare));
+      sh.onclick=function(){ galShareItems(mine); }; bar.appendChild(sh);
+    }
+    var sv=el("button","btn"); sv.id="galSaveSess"; sv.innerHTML=icn("i-download")+" "+escH(L9(GAL_W.sessSave));
+    sv.onclick=function(){ galZipItems(mine, "hnk-customer-"+SESSION.n); }; bar.appendChild(sv);
+  } else if(galView.kind==="session"){
+    bar.appendChild(el("span","mut gal-sess-none", L9(GAL_W.sessNone)));
+  }
+}
+/* every result of the list, stamped, as files to the phone's share sheet; a browser without a file share gets the ZIP */
+async function galShareItems(items){
+  var files=[];
+  for(var i=0;i<items.length;i++){
+    var rec=await galFull(items[i].id).catch(function(){ return null; });
+    if(!rec || !rec.b64) continue;
+    var du=await new Promise(function(res){ wmStampDataUrl("data:"+rec.mime+";base64,"+rec.b64, rec.mime, 92, res); });
+    try{ files.push(new File([rhDataUrlToBlob(du)], "hnk-customer-"+SESSION.n+"-"+(files.length+1)+(rec.mime==="image/png"?".png":".jpg"), { type:rec.mime })); }catch(e){}
+  }
+  if(!files.length){ toast(t("gal_read_fail"),"err"); return false; }
+  if(navigator.share && navigator.canShare && navigator.canShare({ files:files })){ try{ await navigator.share({ files:files, title:"HNK · "+L9(GAL_W.sessLine).replace("{n}", String(SESSION.n)).replace("{N}", String(files.length)) }); }catch(e){} return true; }
+  return galZipItems(items, "hnk-customer-"+SESSION.n);
+}
 $("galDelSel").onclick=function(){
   var ids=Object.keys(galMulti.ids).map(Number);
   if(!ids.length) return;
@@ -31854,7 +31932,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.148.0";
+var APP_VER="6.149.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -33206,6 +33284,13 @@ var IMAGINE = (function(){
     var al=el("label","im-auto"); var cb=document.createElement("input"); cb.type="checkbox"; cb.id="imAuto"; cb.checked=!!S.auto; cb.title=t("auto_run_hint");
     cb.onchange=function(){ S.auto=!!cb.checked; save(); if(S.auto) autoApply(); }; al.appendChild(cb); al.appendChild(text(t("auto_run"))); r.appendChild(al);
     parent.appendChild(r);
+    /* 6.149.0 — the customer at this door (the host keeps the number; the same line the other doors draw) */
+    if(H.session && D.ui.cust_line && D.ui.cust_new){
+      var sess=H.session()||{}, sr=el("div","row im-sess");
+      var sl=el("span","mut im-sess-t", t("cust_line",{ n:String(sess.n||1), N:String(sess.c||0) })); sl.id="imSess"; sr.appendChild(sl);
+      var nc=btn("chip", t("cust_new"), "i-face"); nc.id="imNewCust"; nc.onclick=function(){ if(H.sessionNext) H.sessionNext(); render(); }; sr.appendChild(nc);
+      parent.appendChild(sr);
+    }
   }
   /* 6.148.0 — every photo without a result runs with the chosen template; a run already on marks the rest pending, and finish() picks them up */
   function autoApply(){
@@ -34236,6 +34321,8 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
     hotFolder: { pick: function(onCtl, onShot){ if(window.HNK_CAM) HNK_CAM.hotFolder.pick(onCtl, onShot); else onCtl(null); } },
     share: function(out, name){ if(window.HNK_CAM) HNK_CAM.shareSheet(out.mime, out.b64, name); },
     present: function(o){ if(window.HNK_SHOW) HNK_SHOW.open(o); },   /* 6.148.0 */
+    session: function(){ return window.HNK_SESSION ? HNK_SESSION.get() : null; },   /* 6.149.0 — the customer */
+    sessionNext: function(){ if(window.HNK_SESSION) HNK_SESSION.next(); },
     toast: function(msg, kind){ toast(msg, kind==="err" ? "err" : kind==="ok" ? "ok" : ""); },
     scrollTop: function(){ window.scrollTo(0,0); }
   };
@@ -34597,9 +34684,14 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
     al.appendChild(cb); al.appendChild(document.createTextNode(L9(U.auto_run))); slot.appendChild(al);
     slot.appendChild(el("p","mut cam-hint", L9(U.auto_run_hint)));
     if(d.queue && d.queue.length) slot.appendChild(el("div","mut cam-door-q", L9(U.queue_n).replace("{n}", String(d.queue.length))));
+    /* 6.149.0 — the customer at this door: their number and count, and the next one */
+    var sr=el("div","row cam-sess");
+    var sl=el("span","mut cam-sess-t", L9(U.cust_line).replace("{n}", String(SESSION.n)).replace("{N}", String(SESSION.c||0))); sl.id="camSess_"+key; sr.appendChild(sl);
+    var nc=el("button","chip cam-newcust"); nc.type="button"; nc.id="camNewCust_"+key; nc.innerHTML=icn("i-face")+" "+escH(L9(U.cust_new)); nc.onclick=function(){ sessionNew(); }; sr.appendChild(nc);
+    slot.appendChild(sr);
     return slot;
   }
-  function camDoors(){ Array.prototype.forEach.call(document.querySelectorAll(".cam-slot[data-cam]"), function(s){ if(!s.firstChild) camDoor(s); }); }
+  function camDoors(repaint){ Array.prototype.forEach.call(document.querySelectorAll(".cam-slot[data-cam]"), function(s){ if(repaint || !s.firstChild) camDoor(s); }); }
   function shareSheet(mime, b64, name){
     var U=PSTYLE_DATA.ui, dataUrl="data:"+mime+";base64,"+b64, mode="full";
     var old=$("camShareSheet"); if(old && old.parentNode) old.parentNode.removeChild(old);
