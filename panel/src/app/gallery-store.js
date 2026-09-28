@@ -60,8 +60,13 @@ async function save(b64, ext, label) {
 
 /* 6.220.0 — THE CUSTOMER. The web app keeps a customer number (hnk_session_v1) and stamps every Gallery record with
    it; the panel keeps the same number (HNK.session) and, since a file has no field, names each file's customer in
-   gallery/sessions.json beside the files. list() reads it back onto every entry as .session. */
+   sessions.json in the data folder, beside the gallery folder — never inside it, so the folder a student opens holds
+   photographs alone and every walk that counts its files still counts photographs. list() reads it back onto every
+   entry as .session. */
 var SESS_FILE = "sessions.json";
+async function _sessDir() {
+  try { var uxp = _uxp(); return uxp ? await uxp.storage.localFileSystem.getDataFolder() : null; } catch (e) { return null; }
+}
 async function _sessRead(dir) {
   try {
     var uxp = _uxp(); if (!dir || !uxp) return {};
@@ -73,9 +78,10 @@ async function _sessRead(dir) {
 async function _sessTag(dir, name) {
   try {
     var uxp = _uxp(); var sess = globalThis.HNK && typeof globalThis.HNK.session === "function" ? globalThis.HNK.session() : null;
-    if (!dir || !uxp || !sess || typeof sess.id !== "number") return;
-    var idx = await _sessRead(dir); idx[name] = sess.id;
-    var f = await dir.createFile(SESS_FILE, { overwrite: true });
+    var root = await _sessDir();
+    if (!root || !uxp || !sess || typeof sess.id !== "number") return;
+    var idx = await _sessRead(root); idx[name] = sess.id;
+    var f = await root.createFile(SESS_FILE, { overwrite: true });
     await f.write(JSON.stringify(idx), { format: uxp.storage.formats.utf8 });
     if (typeof globalThis.HNK.sessionBump === "function") globalThis.HNK.sessionBump();
   } catch (e) { }
@@ -86,9 +92,9 @@ async function list() {
     var dir = await _folder(false);
     if (!dir) return [];
     var all = await dir.getEntries();
-    var files = all.filter(function (e) { return e && e.isFile && e.name !== SESS_FILE; });
+    var files = all.filter(function (e) { return e && e.isFile; });
     files.sort(function (a, b) { return String(b.name).localeCompare(String(a.name)); });
-    var idx = await _sessRead(dir);   /* 6.220.0 — each file's customer */
+    var idx = await _sessRead(await _sessDir());   /* 6.220.0 — each file's customer, from the data folder's sessions.json */
     files.forEach(function (f) { try { f.session = idx[f.name] || 0; } catch (e) { } });
     return files;
   } catch (e) { return []; }

@@ -3,9 +3,9 @@
  * A studio shoots one customer at a time: twenty to fifty frames, their results, then the next customer. Until now the
  * Gallery kept every result in one long roll and the doors knew nothing of whose shot it was. This wave gives both
  * surfaces the customer:
- *  · every result saved to the Gallery carries the customer's number (SESSION.id on the web; gallery/sessions.json
- *    beside the panel's files), so the Gallery's kind list gains "This customer" and their shots and results stand in
- *    one place;
+ *  · every result saved to the Gallery carries the customer's number (SESSION.id on the web; sessions.json in the
+ *    panel's data folder beside its gallery folder), so the Gallery's kind list gains "This customer" and their shots
+ *    and results stand in one place;
  *  · a customer bar above the Gallery — Customer #n · N photos, New customer, Share this customer's photos (the phone's
  *    share sheet with every result as a stamped file — the web alone), Save this customer's photos (a ZIP on the web,
  *    a folder in the panel);
@@ -88,16 +88,17 @@ function partA() {
     has(MAIN, "session: function () { return SESSION_P; },") && has(MAIN, "sessionNext: function () { return sessionNewP(); },") &&
     has(APP, ".im-sess{display:flex;flex-direction:row;align-items:center;") && has(PCSS, ".im-sess{display:flex;flex-direction:row;align-items:center;") &&
     slice(APP, "/* ---- IMAGINE_CSS ---- */", "/* ---- /IMAGINE_CSS ---- */").indexOf(".im-sess{") > 0 && slice(PCSS, "/* ---- IMAGINE_CSS ---- */", "/* ---- /IMAGINE_CSS ---- */").indexOf(".im-sess{") > 0);
-  report("A5) the panel: SESSION_P in the same hnk_session_v1, sessionSaveP / sessionBumpP / sessionNewP, HNK.session · sessionNext · sessionBump; the Gallery's session kind and option, the bar (Save through galSaveFiles, no share), the doors' line; the store's sessions.json — written on every save (then the bump), read onto every entry, never listed as a file",
+  report("A5) the panel: SESSION_P in the same hnk_session_v1, sessionSaveP / sessionBumpP / sessionNewP, HNK.session · sessionNext · sessionBump; the Gallery's session kind and option, the bar (Save through galSaveFiles, no share), the doors' line; the store's sessions.json in the data folder beside the gallery folder — written on every save (then the bump), read onto every entry, the gallery folder itself holding photographs alone",
     has(MAIN, 'let SESSION_P = (function () { let s = null; try { s = JSON.parse(localStorage.getItem("hnk_session_v1") || "null"); }') && has(MAIN, "function sessionSaveP() {") &&
     has(MAIN, "function sessionBumpP() { SESSION_P.c = (SESSION_P.c || 0) + 1; sessionSaveP();") && has(MAIN, "function sessionNewP() {") &&
     has(MAIN, "globalThis.HNK.session = function () { return SESSION_P; }; globalThis.HNK.sessionNext = function () { return sessionNewP(); }; globalThis.HNK.sessionBump = sessionBumpP;") &&
     has(MAIN, 'if (GAL.kind === "session" && (f.session || 0) !== SESSION_P.id) return false;') && has(MAIN, '["keep", GAL_L.kKeep], ["session", GAL_L.kSess]], GAL.kind);') &&
     has(MAIN, "galSessionBarP();   /* 6.220.0 */") && has(MAIN, "function galSessionBarP() {") && has(MAIN, 'nb.id = "galNewCust";') && has(MAIN, 'sv.id = "galSaveSess";') && has(MAIN, "await galSaveFiles(mine)") && !has(MAIN, "galShareSess") &&
     has(MAIN, 'sl.id = "camSess_" + key; sl.textContent = ff9(U.cust_line).replace("{n}", String(SESSION_P.n)).replace("{N}", String(SESSION_P.c || 0));') && has(MAIN, 'nc.id = "camNewCust_" + key;') &&
-    has(STORE, 'var SESS_FILE = "sessions.json";') && has(STORE, "async function _sessRead(dir) {") && has(STORE, "async function _sessTag(dir, name) {") && has(STORE, "await _sessTag(dir, name);") &&
+    has(STORE, 'var SESS_FILE = "sessions.json";') && has(STORE, "async function _sessDir() {") && has(STORE, "async function _sessRead(dir) {") && has(STORE, "async function _sessTag(dir, name) {") && has(STORE, "await _sessTag(dir, name);") &&
+    has(STORE, "var root = await _sessDir();") && has(STORE, "var f = await root.createFile(SESS_FILE, { overwrite: true });") &&
     has(STORE, 'if (typeof globalThis.HNK.sessionBump === "function") globalThis.HNK.sessionBump();') &&
-    has(STORE, "var files = all.filter(function (e) { return e && e.isFile && e.name !== SESS_FILE; });") && has(STORE, "files.forEach(function (f) { try { f.session = idx[f.name] || 0; } catch (e) { } });"));
+    has(STORE, "var idx = await _sessRead(await _sessDir());") && has(STORE, "files.forEach(function (f) { try { f.session = idx[f.name] || 0; } catch (e) { } });"));
   report("A6) the CSS on both surfaces (the door's row, the Gallery's bar, its empty line — no gap in the panel's), and the two parity walks: the number and the count are the device's on both sides; the web-only Share chip is named",
     has(APP, ".cam-sess{align-items:center;gap:8px;margin-top:4px}") && has(APP, ".gal-sess{align-items:center;gap:8px;margin:6px 0 8px 0}") && has(APP, ".gal-sess-none{") &&
     has(PCSS, ".cam-sess{display:flex;flex-direction:row;align-items:center;margin-top:4px}") && has(PCSS, ".gal-sess{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;margin:6px 0 8px 0}") && has(PCSS, ".gal-sess-none{") &&
@@ -247,11 +248,12 @@ async function partC(browser) {
       switchPage("meitu"); await new Promise((r) => setTimeout(r, 500));
       const gs = globalThis.HNK.galleryStore; const name = await gs.save(png, "png", "pstyle"); await new Promise((r) => setTimeout(r, 200));
       const list = await gs.list(); const mine = list.filter((f) => f.name === name);
-      const dir = await window.__fx.root.getEntry("gallery"); const idxF = await dir.getEntry("sessions.json"); const idx = JSON.parse(await idxF.read({ format: "utf8" }));
-      return { name, listed: list.map((f) => f.name), sess: mine[0] && mine[0].session, id: globalThis.HNK.session().id, c: globalThis.HNK.session().c, idx, door: tx(q("#stPicker #camSess_studio")) };
+      const idxF = await window.__fx.root.getEntry("sessions.json"); const idx = JSON.parse(await idxF.read({ format: "utf8" }));
+      const folder = await (await window.__fx.root.getEntry("gallery")).getEntries(); const inFolder = folder.map((e) => e.name);
+      return { name, listed: list.map((f) => f.name), inFolder, sess: mine[0] && mine[0].session, id: globalThis.HNK.session().id, c: globalThis.HNK.session().c, idx, door: tx(q("#stPicker #camSess_studio")) };
     }, PNG_B64);
-    report("C2) the store names the saved file's customer in gallery/sessions.json, list() carries it as .session and never lists the sidecar itself; the count is one and the Studio's door says so at once",
-      /^pstyle-\d+\.png$/.test(String(c2.name)) && c2.listed.length === 1 && c2.listed[0] === c2.name && c2.sess === c2.id && c2.c === 1 && c2.idx && c2.idx[c2.name] === c2.id && c2.door === LINE(1, 1), c2);
+    report("C2) the store names the saved file's customer in the data folder's sessions.json — the gallery folder holds the photograph alone — list() carries it as .session; the count is one and the Studio's door says so at once",
+      /^pstyle-\d+\.png$/.test(String(c2.name)) && c2.listed.length === 1 && c2.listed[0] === c2.name && c2.inFolder.length === 1 && c2.inFolder[0] === c2.name && c2.sess === c2.id && c2.c === 1 && c2.idx && c2.idx[c2.name] === c2.id && c2.door === LINE(1, 1), c2);
 
     /* C3 — the Gallery: the bar, Save all to a folder, New customer */
     const c3 = await pp.evaluate(async () => {
