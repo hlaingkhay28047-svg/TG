@@ -2528,6 +2528,7 @@ body.wall #wallRetry.on{display:block}
 .cam-slot{margin:0}.cam-door{margin-top:8px}.cam-door-row{margin:0}.cam-door-row .chip{margin:0 6px 6px 0}.cam-door-st{font-size:12.5px;color:var(--gold-hi)}
 .cam-auto{display:flex;align-items:center;gap:8px;min-height:40px;margin-top:4px;font-size:13px;cursor:pointer}.cam-auto input{width:40px;height:40px;margin:0;flex:0 0 40px;accent-color:var(--gold)}.cam-hint{margin:0 0 4px 0;font-size:12px}.cam-door-q{font-size:12.5px;color:var(--gold-hi)}
 .cam-sess{align-items:center;gap:8px;margin-top:4px}.cam-sess-t{font-size:12.5px}.gal-sess{align-items:center;gap:8px;margin:6px 0 8px 0}.gal-sess-t{font-size:12.5px}.gal-sess-none{font-size:12.5px;flex:1 1 100%}
+.pr-sheet .ps-galbox{max-width:520px}.pr-lab{margin:8px 0 4px 0;font-size:12.5px}.pr-preview{display:flex;flex-direction:column;align-items:center;gap:6px;margin:10px 0 4px 0}.pr-preview img{max-width:100%;max-height:38vh;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.5)}.pr-info{font-size:12.5px}.pr-border{margin-top:8px}
 .hnk-show{position:fixed;inset:0;z-index:95;background:#000;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none}
 .hnk-show .hs-stage{position:relative;width:100%;height:100%;overflow:hidden;transition:transform .2s}
 .hnk-show .hs-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
@@ -4777,13 +4778,13 @@ html.splashing #splash{display:flex}
 
 <script src="data/hnkdata.js?v=9f7c58bdb600"></script>
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
-<script src="data/pstyle.js?v=f8e699388a11"></script>
-<script src="data/imagine.js?v=6938d1ae49ed"></script>
+<script src="data/pstyle.js?v=73d529a0f205"></script>
+<script src="data/imagine.js?v=85d8f5a2a552"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=0fdc5f56defc"></script>
+<script src="data/album-module.js?v=9ed23fb47115"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=ac0badf84ffb"></script>
-<script src="data/whatsnew.js?v=b6130821b157"></script>
+<script src="data/whatsnew.js?v=2ccf3e99aafd"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -7657,7 +7658,8 @@ var GAL_W={
   sessStarted:{my:"ဖောက်သည် #{n} စပြီ — ဒီကစ ရိုက်တာ / လုပ်တာ အကုန် သူ့ဟာ",en:"Customer #{n} started — everything from here is theirs",shn:"ၽူႈသိုဝ်ႉ #{n} တႄႇယဝ်ႉ — တႄႇတီႈၼႆႈ ပဵၼ်ၶွင်မၼ်း",kac:"Customer #{n} hpang sai — ndai kaw na yawng shi a rai",th:"เริ่มลูกค้า #{n} — ทุกอย่างจากนี้เป็นของเขา",zh:"顾客 #{n} 开始——从现在起都归他",vi:"Bắt đầu khách #{n} — từ đây là của họ",id:"Pelanggan #{n} dimulai — semua dari sini miliknya",ms:"Pelanggan #{n} dimulakan — semua dari sini miliknya"},
   sessShare:{my:"ဒီ ဖောက်သည် အကုန် ရှယ်",en:"Share this customer's photos",shn:"ၽႄၶႅပ်း ၽူႈသိုဝ်ႉၼႆႉ တင်းမူတ်း",kac:"Ndai customer a sumla yawng garan",th:"แชร์ภาพลูกค้าคนนี้ทั้งหมด",zh:"分享这位顾客的全部照片",vi:"Chia sẻ toàn bộ ảnh khách này",id:"Bagikan semua foto pelanggan ini",ms:"Kongsi semua foto pelanggan ini"},
   sessSave:{my:"ဒီ ဖောက်သည် အကုန် သိမ်း",en:"Save this customer's photos",shn:"သိမ်းၶႅပ်း ၽူႈသိုဝ်ႉၼႆႉ တင်းမူတ်း",kac:"Ndai customer a sumla yawng makoi",th:"บันทึกภาพลูกค้าคนนี้ทั้งหมด",zh:"保存这位顾客的全部照片",vi:"Lưu toàn bộ ảnh khách này",id:"Simpan semua foto pelanggan ini",ms:"Simpan semua foto pelanggan ini"},
-  sessNone:{my:"ဒီ ဖောက်သည် ပုံ မရှိသေး — ရိုက်တာ / လုပ်တာ ဒီမှာ စုပါမယ်",en:"No photos for this customer yet — every shot and result from here will gather",shn:"ၽူႈသိုဝ်ႉၼႆႉ ပႆႇမီးၶႅပ်း — ထႆႇ / ႁဵတ်း တေမႃးၸူႉတီႈၼႆႈ",kac:"Ndai customer a sumla n nga shi — gap ai / galaw ai ndai kaw hpawng na",th:"ยังไม่มีภาพของลูกค้าคนนี้ — ภาพและผลลัพธ์จากนี้จะรวมที่นี่",zh:"这位顾客还没有照片——从现在起的拍摄和结果都会汇集在这里",vi:"Khách này chưa có ảnh — mọi ảnh và kết quả từ đây sẽ gom lại",id:"Belum ada foto pelanggan ini — semua jepretan dan hasil dari sini akan terkumpul",ms:"Belum ada foto pelanggan ini — semua gambar dan hasil dari sini akan terkumpul"}
+  sessNone:{my:"ဒီ ဖောက်သည် ပုံ မရှိသေး — ရိုက်တာ / လုပ်တာ ဒီမှာ စုပါမယ်",en:"No photos for this customer yet — every shot and result from here will gather",shn:"ၽူႈသိုဝ်ႉၼႆႉ ပႆႇမီးၶႅပ်း — ထႆႇ / ႁဵတ်း တေမႃးၸူႉတီႈၼႆႈ",kac:"Ndai customer a sumla n nga shi — gap ai / galaw ai ndai kaw hpawng na",th:"ยังไม่มีภาพของลูกค้าคนนี้ — ภาพและผลลัพธ์จากนี้จะรวมที่นี่",zh:"这位顾客还没有照片——从现在起的拍摄和结果都会汇集在这里",vi:"Khách này chưa có ảnh — mọi ảnh và kết quả từ đây sẽ gom lại",id:"Belum ada foto pelanggan ini — semua jepretan dan hasil dari sini akan terkumpul",ms:"Belum ada foto pelanggan ini — semua gambar dan hasil dari sini akan terkumpul"},
+  sessPrint:{my:"ဒီ ဖောက်သည် အကုန် ပရင့်",en:"Print this customer's photos",shn:"ပရိၼ်ႉၶႅပ်း ၽူႈသိုဝ်ႉၼႆႉ တင်းမူတ်း",kac:"Ndai customer a sumla yawng print",th:"พิมพ์ภาพลูกค้าคนนี้ทั้งหมด",zh:"打印这位顾客的全部照片",vi:"In toàn bộ ảnh khách này",id:"Cetak semua foto pelanggan ini",ms:"Cetak semua foto pelanggan ini"}   /* 6.150.0 */
 };
 function galItemText(it){
   var d=new Date(it.ts||0), p2=function(x){ return (x<10?"0":"")+x; };
@@ -8158,6 +8160,8 @@ function galSessionBar(all){
     }
     var sv=el("button","btn"); sv.id="galSaveSess"; sv.innerHTML=icn("i-download")+" "+escH(L9(GAL_W.sessSave));
     sv.onclick=function(){ galZipItems(mine, "hnk-customer-"+SESSION.n); }; bar.appendChild(sv);
+    var prb=el("button","btn"); prb.id="galPrintSess"; prb.innerHTML=icn("i-doc")+" "+escH(L9(GAL_W.sessPrint));   /* 6.150.0 — the whole set, N to a sheet */
+    prb.onclick=function(){ galPrintItems(mine); }; bar.appendChild(prb);
   } else if(galView.kind==="session"){
     bar.appendChild(el("span","mut gal-sess-none", L9(GAL_W.sessNone)));
   }
@@ -8174,6 +8178,14 @@ async function galShareItems(items){
   if(!files.length){ toast(t("gal_read_fail"),"err"); return false; }
   if(navigator.share && navigator.canShare && navigator.canShare({ files:files })){ try{ await navigator.share({ files:files, title:"HNK · "+L9(GAL_W.sessLine).replace("{n}", String(SESSION.n)).replace("{N}", String(files.length)) }); }catch(e){} return true; }
   return galZipItems(items, "hnk-customer-"+SESSION.n);
+}
+/* 6.150.0 — the customer's results to the print sheet: the real plates, N to a sheet, as many sheets as it takes */
+async function galPrintItems(items){
+  var list=[];
+  for(var i=0;i<items.length;i++){ var rec=await galFull(items[i].id).catch(function(){ return null; }); if(rec && rec.b64) list.push({ dataUrl:"data:"+rec.mime+";base64,"+rec.b64 }); }
+  if(!list.length){ toast(t("gal_read_fail"),"err"); return false; }
+  if(window.HNK_PRINT) HNK_PRINT.open(list, "hnk-customer-"+SESSION.n);
+  return true;
 }
 $("galDelSel").onclick=function(){
   var ids=Object.keys(galMulti.ids).map(Number);
@@ -16911,6 +16923,8 @@ function stHandoffRow(hostId, mime, b64, name, skip){
     var before = (hostId==="handoffRetouch"||hostId==="handoffStudio") && state.refs[0] ? "data:"+state.refs[0].mime+";base64,"+state.refs[0].b64 : null;
     HNK_SHOW.open({ after:dataUrl, before:before });
   });
+  /* 6.150.0 — the print sheet: this result, one to eight to a sheet, on the paper the studio prints */
+  if(window.HNK_PSTYLE) chip("i-doc", L9(window.HNK_PSTYLE.ui.print), function(){ if(window.HNK_PRINT) HNK_PRINT.open([{ dataUrl:dataUrl }], (name||"hnk-result").replace(/\.(png|jpe?g|webp)$/i,"")); });
   /* Share everywhere — the same watermark-aware file share Create has */
   if(navigator.share) chip("i-external", L9({my:"Share",en:"Share",shn:"Share",kac:"Share",th:"แชร์",zh:"分享",vi:"Chia sẻ",id:"Bagikan",ms:"Kongsi"}), function(){
     if(window.HNK_CAM){ HNK_CAM.shareSheet(mime, b64, name||"hnk-result"); return; }   /* 6.147.0 — the frame the network wants, then the sheet */
@@ -31932,7 +31946,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.149.0";
+var APP_VER="6.150.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -33260,6 +33274,7 @@ var IMAGINE = (function(){
     var exp = btn("btn im-export", t("export"), "i-download"); exp.id="imExport"; exp.onclick=exportCur; acts.appendChild(exp);
     if(H.share){ var shr = btn("btn im-share", t("share"), "i-external"); shr.id="imShare"; shr.onclick=shareCur; acts.appendChild(shr); }   /* 6.147.0 — the host's share sheet */
     if(H.present && cur && cur.out){ var pv = btn("btn im-present", t("present"), "i-compare"); pv.id="imPresent"; pv.onclick=function(){ H.present({ after:cur.out.dataUrl, before:cur.dataUrl }); }; acts.appendChild(pv); }   /* 6.148.0 — the result full-screen for the customer */
+    if(H.printOut && cur && cur.out){ var prb = btn("btn im-print", t("print"), "i-doc"); prb.id="imPrint"; prb.onclick=function(){ H.printOut(cur.out); }; acts.appendChild(prb); }   /* 6.150.0 — the print sheet */
     if(S.busy){ var stop = btn("btn im-stop", t("stop"), "i-close"); stop.id="imStop"; stop.onclick=stopAll; acts.appendChild(stop); }
     if(S.photos.length && !S.busy){ var clr = btn("btn im-clear", t("clear"), "i-trash"); clr.id="imClear"; clr.onclick=clearAll; acts.appendChild(clr); }
     var st = el("div","mut im-status", S.status||""); st.id="imStatus"; st.setAttribute("aria-live","polite"); card.appendChild(st);
@@ -34037,6 +34052,90 @@ var PSTYLE = (function(){
     });
   }
   function outName(out){ return "hnk-portrait-style-"+stamp()+(S.social!=="full" ? "-"+S.social : "")+(out.mime==="image/jpeg"?".jpg":".png"); }
+  /* ---------- 6.150.0 — PRINT SHEETS. A studio prints: one 4×6 of the chosen frame, four wallet-sized on one sheet, the
+     customer's whole set two to a page. The composer lays copies of a photograph — or several photographs — on a sheet of
+     a named paper at 300 dpi: 4×6 · 5×7 · 8×10 · A4, one, two, four or eight cells, the sheet turned when the photograph's
+     shape disagrees with the cell's, a white border when nothing may be cropped. The JPEG carries its 300 dpi in the JFIF
+     header so Photoshop opens it at the paper's size, and the PDF is that JPEG on a page of exactly that size, so a print
+     dialog has nothing to scale. Pure canvas — the same code on both surfaces. ---------- */
+  var PRINT_SIZES=[["4x6",4,6],["5x7",5,7],["8x10",8,10],["a4",8.27,11.69]], PRINT_DPI=300;
+  function printSizeById(id){ for(var i=0;i<PRINT_SIZES.length;i++){ if(PRINT_SIZES[i][0]===id) return PRINT_SIZES[i]; } return PRINT_SIZES[0]; }
+  function printGrid(n){ return n>=8 ? [2,4] : n>=4 ? [2,2] : n>=2 ? [1,2] : [1,1]; }   /* cells across the short side, along the long side */
+  function printLoad(src){ return new Promise(function(res, rej){ var im=new Image(); im.onload=function(){ res(im); }; im.onerror=function(){ rej(new Error("print: image")); }; im.src=src; }); }
+  /* the JPEG's own ruler: JFIF APP0 density units 1 (dots per inch), X and Y — Photoshop and a print driver read it */
+  function printDpiTag(u8, dpi){
+    if(!(u8 && u8.length>18 && u8[0]===0xFF && u8[1]===0xD8 && u8[2]===0xFF && u8[3]===0xE0 && u8[6]===0x4A && u8[7]===0x46 && u8[8]===0x49 && u8[9]===0x46)) return u8;
+    u8[13]=1; u8[14]=(dpi>>8)&255; u8[15]=dpi&255; u8[16]=(dpi>>8)&255; u8[17]=dpi&255; return u8;
+  }
+  function printB64ToU8(b64){ var bin=atob(b64), u8=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i); return u8; }
+  function printU8ToB64(u8){ var s="", CH=0x8000; for(var i=0;i<u8.length;i+=CH) s+=String.fromCharCode.apply(null, u8.subarray(i, i+CH)); return btoa(s); }
+  /* one sheet. items: [{dataUrl}] — one photograph repeated over the cells, or several dealt one to a cell.
+     opts: size (4x6 · 5x7 · 8x10 · a4), copies (1 · 2 · 4 · 8 cells), border (true: the whole photograph inside a white
+     margin; false: the cell filled, the excess cropped from the centre), dpi (300; a preview asks for less), turned (a set
+     keeps every sheet the way its first one turned, so one print job is one paper orientation). */
+  function printSheet(items, opts){
+    opts=opts||{}; var sz=printSizeById(opts.size||"4x6"), dpi=Math.max(20, opts.dpi||PRINT_DPI), n=Math.max(1, Math.min(8, opts.copies||1)), border=!!opts.border;
+    var list=(items||[]).slice(0, n); if(!list.length) return Promise.reject(new Error("print: nothing to print"));
+    return Promise.all(list.map(function(it){ return printLoad(it.dataUrl); })).then(function(imgs){
+      var g=printGrid(n), across=g[0], along=g[1];          /* on a portrait sheet: across the short side, along the long */
+      var sw=sz[1], sh=sz[2];                               /* inches, portrait */
+      var cellW=sw/across, cellH=sh/along;
+      var photoLandscape=imgs[0].naturalWidth>imgs[0].naturalHeight, cellLandscape=cellW>cellH;
+      var turned=(typeof opts.turned==="boolean") ? opts.turned : (photoLandscape!==cellLandscape);   /* the shapes disagree: turn the sheet */
+      if(turned){ var t1=sw; sw=sh; sh=t1; var t2=across; across=along; along=t2; }
+      var W=Math.round(sw*dpi), Hh=Math.round(sh*dpi), cw=W/across, ch=Hh/along;
+      var c=document.createElement("canvas"); c.width=W; c.height=Hh; var x=c.getContext("2d");
+      x.fillStyle="#ffffff"; x.fillRect(0,0,W,Hh);
+      var pad=border ? Math.round(Math.min(cw,ch)*0.04) : 0, k=0;
+      for(var r=0;r<along;r++){ for(var q=0;q<across;q++){
+        var im=imgs.length===1 ? imgs[0] : imgs[k]; k++; if(!im) continue;
+        var x0=Math.round(q*cw)+pad, y0=Math.round(r*ch)+pad, bw=Math.round(cw)-2*pad, bh=Math.round(ch)-2*pad;
+        var iw=im.naturalWidth, ih=im.naturalHeight, s;
+        if(border){ s=Math.min(bw/iw, bh/ih); var dw=Math.max(1, Math.round(iw*s)), dh=Math.max(1, Math.round(ih*s)); x.drawImage(im, 0, 0, iw, ih, x0+Math.round((bw-dw)/2), y0+Math.round((bh-dh)/2), dw, dh); }
+        else { s=Math.max(bw/iw, bh/ih); var sw2=Math.max(1, Math.round(bw/s)), sh2=Math.max(1, Math.round(bh/s)); x.drawImage(im, Math.round((iw-sw2)/2), Math.round((ih-sh2)/2), sw2, sh2, x0, y0, bw, bh); }
+      } }
+      var du=c.toDataURL("image/jpeg", 0.92), m=/^data:([^;]+);base64,(.*)$/.exec(du);
+      var u8=printDpiTag(printB64ToU8(m[2]), dpi), b64=printU8ToB64(u8);
+      c.width=c.height=1;
+      return { mime:"image/jpeg", b64:b64, dataUrl:"data:image/jpeg;base64,"+b64, jpeg:u8, w:W, h:Hh, wIn:sw, hIn:sh, size:sz[0], copies:n, cells:across*along, turned:turned, border:border, dpi:dpi };
+    });
+  }
+  /* the set: several photographs, `copies` to a sheet, as many sheets as it takes, every sheet turned the way the first was */
+  function printSheets(items, opts){
+    opts=opts||{}; var n=Math.max(1, Math.min(8, opts.copies||1)), pages=[], i;
+    if(!items || !items.length) return Promise.reject(new Error("print: nothing to print"));
+    if(items.length===1) return printSheet(items, opts).then(function(p){ return [p]; });
+    for(i=0;i<items.length;i+=n) pages.push(items.slice(i, i+n));
+    var out=[];
+    return pages.reduce(function(pr, chunk){ return pr.then(function(){ var o={ size:opts.size, copies:n, border:opts.border, dpi:opts.dpi }; if(out.length) o.turned=out[0].turned; return printSheet(chunk, o).then(function(sh){ out.push(sh); }); }); }, Promise.resolve()).then(function(){ return out; });
+  }
+  /* the PDF: each sheet's JPEG on a page of exactly its paper size (points), nothing for a print dialog to scale */
+  function printPdf(sheets, title){
+    function u8s(str){ var a=new Uint8Array(str.length); for(var i=0;i<str.length;i++) a[i]=str.charCodeAt(i)&255; return a; }
+    function nP(v){ return String(Math.round(v*100)/100); }
+    var out=[], at=0, xref=[];
+    function put(a){ out.push(a); at+=a.length; }
+    function obj(n, body){ xref[n]=at; put(u8s(n+" 0 obj\n"+body+"\nendobj\n")); }
+    function stream(n, dict, bytes){ xref[n]=at; put(u8s(n+" 0 obj\n"+dict+"\nstream\n")); put(bytes); put(u8s("\nendstream\nendobj\n")); }
+    put(u8s("%PDF-1.4\n")); put(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+    var n=sheets.length, i, kids=[]; for(i=0;i<n;i++) kids.push((4+i*3)+" 0 R");
+    obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+    obj(2, "<< /Type /Pages /Count "+n+" /Kids ["+kids.join(" ")+"] >>");
+    obj(3, "<< /Producer (HNK Create Studio) /Creator (HNK Create Studio) /Title ("+String(title||"HNK print").replace(/[\\()]/g,"\\$&").replace(/[^\x20-\x7e]/g,"?")+") >>");
+    for(i=0;i<n;i++){
+      var P=4+i*3, C=5+i*3, X=6+i*3, sh=sheets[i], pw=sh.wIn*72, ph=sh.hIn*72;
+      var cs=u8s("q\n"+nP(pw)+" 0 0 "+nP(ph)+" 0 0 cm\n/Im0 Do\nQ\n");
+      obj(P, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+nP(pw)+" "+nP(ph)+"] /Resources << /XObject << /Im0 "+X+" 0 R >> /ProcSet [/PDF /ImageC] >> /Contents "+C+" 0 R >>");
+      stream(C, "<< /Length "+cs.length+" >>", cs);
+      stream(X, "<< /Type /XObject /Subtype /Image /Width "+sh.w+" /Height "+sh.h+" /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "+sh.jpeg.length+" >>", sh.jpeg);
+    }
+    var count=4+n*3, startx=at, rows="xref\n0 "+count+"\n0000000000 65535 f \n";
+    for(i=1;i<count;i++){ var s=String(xref[i]||0); while(s.length<10) s="0"+s; rows+=s+" 00000 n \n"; }
+    put(u8s(rows)); put(u8s("trailer\n<< /Size "+count+" /Root 1 0 R /Info 3 0 R >>\nstartxref\n"+startx+"\n%%EOF\n"));
+    var total=0; for(i=0;i<out.length;i++) total+=out[i].length;
+    var all=new Uint8Array(total), o=0; for(i=0;i<out.length;i++){ all.set(out[i], o); o+=out[i].length; }
+    return all;
+  }
   function shareOut(v){ socialCrop(v, S.social).then(function(out){ if(H.share) return H.share(out, outName(out)); return H.exportOut(out, outName(out)); }).then(null, function(){}); }
   function removeVersion(i){
     if(S.busy) return; S.versions.splice(i,1);
@@ -34254,7 +34353,8 @@ var PSTYLE = (function(){
   }
   function onEnter(){ render(); }
   return { init:init, onEnter:onEnter, render:render, state:S, prompt:buildPrompt, setPhoto:setPhoto, setOwnRef:setOwnRef, pickSet:pickSet, run:run, stop:stop, setCmp:setCmp, setStep:setStep, sets:sets, groups:function(){ return D.groups; },
-           onShot:onShot, hotPick:hotPick, hotStop:hotStop, socialCrop:socialCrop, removeVersion:removeVersion, clearHistory:clearHistory };
+           onShot:onShot, hotPick:hotPick, hotStop:hotStop, socialCrop:socialCrop, removeVersion:removeVersion, clearHistory:clearHistory,
+           printSheet:printSheet, printSheets:printSheets, printPdf:printPdf, printSizes:PRINT_SIZES };   /* 6.150.0 */
 })();
 if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PSTYLE; }
 /* ---- /PSTYLE_MODULE ---- */
@@ -34323,6 +34423,7 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
     present: function(o){ if(window.HNK_SHOW) HNK_SHOW.open(o); },   /* 6.148.0 */
     session: function(){ return window.HNK_SESSION ? HNK_SESSION.get() : null; },   /* 6.149.0 — the customer */
     sessionNext: function(){ if(window.HNK_SESSION) HNK_SESSION.next(); },
+    printOut: function(out){ if(window.HNK_PRINT) HNK_PRINT.open([{ dataUrl: out.dataUrl || ("data:"+(out.mime||"image/png")+";base64,"+out.b64) }], "hnk-imagine"); },   /* 6.150.0 */
     toast: function(msg, kind){ toast(msg, kind==="err" ? "err" : kind==="ok" ? "ok" : ""); },
     scrollTop: function(){ window.scrollTo(0,0); }
   };
@@ -34533,16 +34634,65 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
     return Promise.resolve();
   }
   /* print: the picture alone on one page, through the browser's own dialog, from a hidden frame */
-  function printOut(out){
-    var f=document.createElement("iframe"); f.style.position="fixed"; f.style.right="0"; f.style.bottom="0"; f.style.width="0"; f.style.height="0"; f.style.border="0"; f.setAttribute("aria-hidden","true");
+  /* ---------- 6.150.0 — THE PRINT SHEET. One dialog for every result and for a customer's whole set: the paper (4×6 ·
+     5×7 · 8×10 · A4), how many to a sheet (1 · 2 · 4 · 8), a white border or a filled cell, a live preview, then Print (the
+     browser's dialog, one page per sheet, the page exactly the paper's size) or Save PDF (the same pages, to keep or to
+     send to a lab). The choices are remembered (hnk_print_v1). Every plate goes through the studio's stamp first, like a
+     download or a share. The composer itself lives in the Portrait Style module, lifted to the panel byte for byte. */
+  var PRINT_KEY="hnk_print_v1", PRINT_PREF={ size:"4x6", copies:1, border:false };
+  try{ var pp0=JSON.parse(localStorage.getItem(PRINT_KEY)||"null"); if(pp0 && typeof pp0==="object") PRINT_PREF={ size:pp0.size||"4x6", copies:pp0.copies||1, border:!!pp0.border }; }catch(e){}
+  function printPrefSave(){ try{ localStorage.setItem(PRINT_KEY, JSON.stringify(PRINT_PREF)); }catch(e){} }
+  function printStampAll(items){ return Promise.all(items.map(function(it){ return new Promise(function(res){ var m=/^data:([^;]+);base64,/.exec(it.dataUrl||""); wmStampDataUrl(it.dataUrl, m?m[1]:"image/jpeg", 92, function(du){ res({ dataUrl:du||it.dataUrl }); }); }); })); }
+  function saveBytes(bytes, name, mime){ var url=URL.createObjectURL(new Blob([bytes],{type:mime||"application/octet-stream"})); var a=document.createElement("a"); a.href=url; a.download=name; a.style.display="none"; document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },1500); }
+  function printSheetUI(items, base){
+    var U=PSTYLE_DATA.ui; items=(items||[]).filter(function(it){ return it && it.dataUrl; }); if(!items.length) return null;
+    var old=$("printSheet"); if(old && old.parentNode) old.parentNode.removeChild(old);
+    var sh=el("div","ps-galsheet pr-sheet"); sh.id="printSheet"; sh.setAttribute("role","dialog"); sh.setAttribute("aria-modal","true"); sh.setAttribute("aria-label", L9(U.print_sheet));
+    var box=el("div","ps-galbox"); sh.appendChild(box);
+    box.appendChild(el("div","ps-h3", L9(U.print_sheet)+(items.length>1 ? " · "+items.length : "")));
+    var pref=PRINT_PREF;
+    function chips(cls, rows, cur, onPick){ var w=el("div","chips seg "+cls); w.setAttribute("role","group"); rows.forEach(function(r){ var c=el("button","chip"+(cur===r[0]?" on":"")); c.type="button"; c.setAttribute("data-v", String(r[0])); c.setAttribute("aria-pressed", cur===r[0]?"true":"false"); c.textContent=r[1]; c.onclick=function(){ onPick(r[0]); Array.prototype.forEach.call(w.children, function(x){ var on=x===c; x.className="chip"+(on?" on":""); x.setAttribute("aria-pressed", on?"true":"false"); }); }; w.appendChild(c); }); return w; }
+    box.appendChild(el("div","mut pr-lab", L9(U.print_size)));
+    box.appendChild(chips("pr-sizes", PSTYLE.printSizes.map(function(z){ return [z[0], z[0]==="a4" ? "A4" : z[1]+"×"+z[2]+"″"]; }), pref.size, function(v){ pref.size=v; printPrefSave(); preview(); }));
+    box.appendChild(el("div","mut pr-lab", L9(U.print_per)));
+    box.appendChild(chips("pr-copies", [[1,"1"],[2,"2"],[4,"4"],[8,"8"]], pref.copies, function(v){ pref.copies=v; printPrefSave(); preview(); }));
+    var bd=el("button","chip pr-border"+(pref.border?" on":"")); bd.type="button"; bd.id="prBorder"; bd.setAttribute("aria-pressed", pref.border?"true":"false"); bd.textContent=L9(U.print_border);
+    bd.onclick=function(){ pref.border=!pref.border; printPrefSave(); bd.className="chip pr-border"+(pref.border?" on":""); bd.setAttribute("aria-pressed", pref.border?"true":"false"); preview(); }; box.appendChild(bd);
+    var pv=el("div","pr-preview"); var pim=document.createElement("img"); pim.alt=""; pim.id="prPreview"; pv.appendChild(pim); var pinfo=el("div","mut pr-info"); pinfo.id="prInfo"; pv.appendChild(pinfo); box.appendChild(pv);
+    box.appendChild(el("p","mut ps-hint", L9(U.print_hint)));
+    var bar=el("div","ps-cambar");
+    var go=el("button","btn btn-gold"); go.type="button"; go.id="prGo"; go.innerHTML=icn("i-doc")+" "+escH(L9(U.print));
+    var pdf=el("button","btn"); pdf.type="button"; pdf.id="prPdf"; pdf.innerHTML=icn("i-download")+" "+escH(L9(U.print_pdf));
+    var cancel=el("button","btn"); cancel.type="button"; cancel.id="prCancel"; cancel.textContent=L9(U.cancel);
+    bar.appendChild(go); bar.appendChild(pdf); bar.appendChild(cancel); box.appendChild(bar);
+    function close(){ if(sh.parentNode) sh.parentNode.removeChild(sh); }
+    cancel.onclick=close;
+    var seq=0;
+    function preview(){ var my=++seq; PSTYLE.printSheet(items.slice(0, pref.copies), { size:pref.size, copies:pref.copies, border:pref.border, dpi:30 }).then(function(p0){ if(my!==seq) return; pim.src=p0.dataUrl; sh.setAttribute("data-turned", p0.turned?"1":"0"); var pages=items.length>1 ? Math.ceil(items.length/pref.copies) : 1; pinfo.textContent=L9(U.print_pages).replace("{n}", String(pages))+" · "+p0.wIn+"×"+p0.hIn+"″ · 300 dpi"; }, function(){}); }
+    preview();
+    function compose(){ go.disabled=true; pdf.disabled=true; return printStampAll(items).then(function(st){ return PSTYLE.printSheets(st, { size:pref.size, copies:pref.copies, border:pref.border }); }); }
+    pdf.onclick=function(){ compose().then(function(sheets){ var bytes=PSTYLE.printPdf(sheets, "HNK · "+(base||"print")); saveBytes(bytes, (base||"hnk-print")+"-"+pref.size+"-"+ptStamp()+".pdf", "application/pdf"); close(); toast(L9(U.print_pages).replace("{n}", String(sheets.length))+" · PDF","ok"); }, function(){ go.disabled=false; pdf.disabled=false; }); };
+    go.onclick=function(){ compose().then(function(sheets){ close(); printPages(sheets); }, function(){ go.disabled=false; pdf.disabled=false; }); };
+    document.body.appendChild(sh);
+    return sh;
+  }
+  /* the browser's print dialog: one page per sheet, the page exactly the paper's size, the sheet filling it */
+  function printPages(sheets){
+    var f=document.createElement("iframe"); f.style.position="fixed"; f.style.right="0"; f.style.bottom="0"; f.style.width="0"; f.style.height="0"; f.style.border="0"; f.setAttribute("aria-hidden","true"); f.id="printFrame";
     document.body.appendChild(f);
-    var d=f.contentWindow.document;
-    d.open(); d.write('<!doctype html><html><head><title>HNK Portrait Style</title><style>html,body{margin:0;height:100%}body{display:flex;align-items:center;justify-content:center}img{max-width:100%;max-height:100vh}@page{margin:8mm}</style></head><body><img alt="" src="'+out.dataUrl+'"></body></html>'); d.close();
-    var im=d.querySelector("img");
+    var d=f.contentWindow.document, s0=sheets[0];
+    var html='<!doctype html><html><head><title>HNK</title><style>@page{size:'+s0.wIn+'in '+s0.hIn+'in;margin:0}html,body{margin:0;padding:0}img{display:block;width:'+s0.wIn+'in;height:'+s0.hIn+'in;page-break-after:always}</style></head><body>';
+    for(var i=0;i<sheets.length;i++) html+='<img src="'+sheets[i].dataUrl+'">';
+    html+='</body></html>';
+    d.open(); d.write(html); d.close();
+    var imgs=d.querySelectorAll("img"), left=imgs.length;
     var go=function(){ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); },60000); };
-    if(im.complete) setTimeout(go,50); else im.onload=function(){ setTimeout(go,50); };
+    var one=function(){ left--; if(left<=0) setTimeout(go,50); };
+    Array.prototype.forEach.call(imgs, function(im){ if(im.complete) one(); else { im.onload=one; im.onerror=one; } });
     toast(L9(PSTYLE_DATA.ui.printing),"");
   }
+  function printOut(out){ printSheetUI([{ dataUrl: out.dataUrl || ("data:"+out.mime+";base64,"+out.b64) }], "hnk-portrait-style"); }
+  window.HNK_PRINT={ open:printSheetUI, pages:printPages, save:saveBytes };
   var host = {
     t9: function(m){ return L9(m); },
     ellMark: function(root, sel, lines){ ellMark(root, sel, lines); },

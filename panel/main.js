@@ -2799,7 +2799,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.220.0";
+const PANEL_VERSION = "6.221.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -9768,7 +9768,8 @@ const GAL_L = {
   sessNew: { my: "ဖောက်သည် အသစ်", en: "New customer", shn: "ၽူႈသိုဝ်ႉမႂ်ႇ", kac: "Customer nnan", th: "ลูกค้าใหม่", zh: "新顾客", vi: "Khách mới", id: "Pelanggan baru", ms: "Pelanggan baharu" },
   sessStarted: { my: "ဖောက်သည် #{n} စပြီ — ဒီကစ ရိုက်တာ / လုပ်တာ အကုန် သူ့ဟာ", en: "Customer #{n} started — everything from here is theirs", shn: "ၽူႈသိုဝ်ႉ #{n} တႄႇယဝ်ႉ — တႄႇတီႈၼႆႈ ပဵၼ်ၶွင်မၼ်း", kac: "Customer #{n} hpang sai — ndai kaw na yawng shi a rai", th: "เริ่มลูกค้า #{n} — ทุกอย่างจากนี้เป็นของเขา", zh: "顾客 #{n} 开始——从现在起都归他", vi: "Bắt đầu khách #{n} — từ đây là của họ", id: "Pelanggan #{n} dimulai — semua dari sini miliknya", ms: "Pelanggan #{n} dimulakan — semua dari sini miliknya" },
   sessSave: { my: "ဒီ ဖောက်သည် အကုန် သိမ်း", en: "Save this customer's photos", shn: "သိမ်းၶႅပ်း ၽူႈသိုဝ်ႉၼႆႉ တင်းမူတ်း", kac: "Ndai customer a sumla yawng makoi", th: "บันทึกภาพลูกค้าคนนี้ทั้งหมด", zh: "保存这位顾客的全部照片", vi: "Lưu toàn bộ ảnh khách này", id: "Simpan semua foto pelanggan ini", ms: "Simpan semua foto pelanggan ini" },
-  sessNone: { my: "ဒီ ဖောက်သည် ပုံ မရှိသေး — ရိုက်တာ / လုပ်တာ ဒီမှာ စုပါမယ်", en: "No photos for this customer yet — every shot and result from here will gather", shn: "ၽူႈသိုဝ်ႉၼႆႉ ပႆႇမီးၶႅပ်း — ထႆႇ / ႁဵတ်း တေမႃးၸူႉတီႈၼႆႈ", kac: "Ndai customer a sumla n nga shi — gap ai / galaw ai ndai kaw hpawng na", th: "ยังไม่มีภาพของลูกค้าคนนี้ — ภาพและผลลัพธ์จากนี้จะรวมที่นี่", zh: "这位顾客还没有照片——从现在起的拍摄和结果都会汇集在这里", vi: "Khách này chưa có ảnh — mọi ảnh và kết quả từ đây sẽ gom lại", id: "Belum ada foto pelanggan ini — semua jepretan dan hasil dari sini akan terkumpul", ms: "Belum ada foto pelanggan ini — semua gambar dan hasil dari sini akan terkumpul" }
+  sessNone: { my: "ဒီ ဖောက်သည် ပုံ မရှိသေး — ရိုက်တာ / လုပ်တာ ဒီမှာ စုပါမယ်", en: "No photos for this customer yet — every shot and result from here will gather", shn: "ၽူႈသိုဝ်ႉၼႆႉ ပႆႇမီးၶႅပ်း — ထႆႇ / ႁဵတ်း တေမႃးၸူႉတီႈၼႆႈ", kac: "Ndai customer a sumla n nga shi — gap ai / galaw ai ndai kaw hpawng na", th: "ยังไม่มีภาพของลูกค้าคนนี้ — ภาพและผลลัพธ์จากนี้จะรวมที่นี่", zh: "这位顾客还没有照片——从现在起的拍摄和结果都会汇集在这里", vi: "Khách này chưa có ảnh — mọi ảnh và kết quả từ đây sẽ gom lại", id: "Belum ada foto pelanggan ini — semua jepretan dan hasil dari sini akan terkumpul", ms: "Belum ada foto pelanggan ini — semua gambar dan hasil dari sini akan terkumpul" },
+  sessPrint: { my: "ဒီ ဖောက်သည် အကုန် ပရင့်", en: "Print this customer's photos", shn: "ပရိၼ်ႉၶႅပ်း ၽူႈသိုဝ်ႉၼႆႉ တင်းမူတ်း", kac: "Ndai customer a sumla yawng print", th: "พิมพ์ภาพลูกค้าคนนี้ทั้งหมด", zh: "打印这位顾客的全部照片", vi: "In toàn bộ ảnh khách này", id: "Cetak semua foto pelanggan ini", ms: "Cetak semua foto pelanggan ini" }   /* 6.221.0 */
 };
 /* 6.220.0 — THE CUSTOMER on the panel: the same number the web app keeps (hnk_session_v1), read by the gallery store
    when it saves a result (gallery/sessions.json names each file's customer) and by the Gallery's view. */
@@ -10037,9 +10038,96 @@ function galSessionBarP() {
     const sv = mkBtn("btn"); sv.id = "galSaveSess"; setIcnText(sv, "i-download", "cream", ff9(GAL_L.sessSave));
     sv.addEventListener("click", async function () { try { setStatus(await galSaveFiles(mine) + " · " + t("btn_save"), "ok"); } catch (e) { setStatus(friendlyErr(e), "err"); } });
     bar.appendChild(sv);
+    const prb = mkBtn("btn"); prb.id = "galPrintSess"; setIcnText(prb, "i-doc", "cream", ff9(GAL_L.sessPrint));   /* 6.221.0 — the whole set, N to a sheet */
+    prb.addEventListener("click", async function () {
+      const gs = globalThis.HNK && globalThis.HNK.galleryStore; const list = [];
+      for (let i = 0; gs && i < mine.length; i++) { try { const du = await gs.readDataUrl(mine[i].name); if (du) list.push({ dataUrl: du }); } catch (e) { } }
+      if (!list.length) { setStatus(ff9(GAL_L.pickNone), "err"); return; }
+      printSheetP(list, "hnk-customer-" + SESSION_P.n);
+    });
+    bar.appendChild(prb);
   } else if (GAL.kind === "session") {
     const none = document.createElement("span"); none.className = "mut gal-sess-none"; none.textContent = ff9(GAL_L.sessNone); bar.appendChild(none);
   }
+}
+/* ---------- 6.221.0 — THE PRINT SHEET in Photoshop (the app's printSheetUI): the same paper, count and border choices
+   (hnk_print_v1), the same composer from the lifted Portrait Style module; then Open in Photoshop — each sheet a JPEG
+   carrying 300 dpi, so the document opens at the paper's exact size and Photoshop's own print dialog needs no scaling —
+   or Save PDF to a chosen file. A <dialog> through hnkShowDialog like every dialog the panel opens. */
+let PRINT_PREF_P = (function () { try { const p = JSON.parse(localStorage.getItem("hnk_print_v1") || "null"); if (p && typeof p === "object") return { size: p.size || "4x6", copies: p.copies || 1, border: !!p.border }; } catch (e) { } return { size: "4x6", copies: 1, border: false }; })();
+function printPrefSaveP() { try { localStorage.setItem("hnk_print_v1", JSON.stringify(PRINT_PREF_P)); } catch (e) { } }
+function printSheetP(items, base) {
+  const PS = globalThis.HNK && globalThis.HNK.pstyle, U = (typeof PSTYLE_DATA !== "undefined" && PSTYLE_DATA.ui) || null;
+  items = (items || []).filter(function (it) { return it && it.dataUrl; });
+  if (!PS || !PS.printSheet || !U || !items.length) return null;
+  const old = $("printSheet"); if (old && old.parentNode) { try { old.close(); } catch (e) { } old.parentNode.removeChild(old); }
+  const pref = PRINT_PREF_P;
+  const dlg = document.createElement("dialog"); dlg.className = "hnk-dlg pr-dlg"; dlg.id = "printSheet";
+  const body = document.createElement("div"); body.className = "hnk-dlg-body pr-body";
+  const h = document.createElement("div"); h.className = "ps-h3"; h.textContent = ff9(U.print_sheet) + (items.length > 1 ? " \u00b7 " + items.length : ""); body.appendChild(h);
+  const lab = function (k) { const d = document.createElement("div"); d.className = "mut pr-lab"; d.textContent = ff9(U[k]); return d; };
+  const chips = function (cls, rows, cur, onPick) {
+    const w = document.createElement("div"); w.className = "chips seg " + cls; w.setAttribute("role", "group");
+    rows.forEach(function (r) {
+      const c = mkBtn("chip" + (cur === r[0] ? " on" : ""), r[1]); c.setAttribute("data-v", String(r[0])); c.setAttribute("aria-pressed", cur === r[0] ? "true" : "false");
+      c.addEventListener("click", function () { onPick(r[0]); Array.prototype.forEach.call(w.children, function (x) { const on = x === c; x.className = "chip" + (on ? " on" : ""); x.setAttribute("aria-pressed", on ? "true" : "false"); }); });
+      w.appendChild(c);
+    });
+    return w;
+  };
+  body.appendChild(lab("print_size"));
+  body.appendChild(chips("pr-sizes", PS.printSizes.map(function (z) { return [z[0], z[0] === "a4" ? "A4" : z[1] + "\u00d7" + z[2] + "\u2033"]; }), pref.size, function (v) { pref.size = v; printPrefSaveP(); preview(); }));
+  body.appendChild(lab("print_per"));
+  body.appendChild(chips("pr-copies", [[1, "1"], [2, "2"], [4, "4"], [8, "8"]], pref.copies, function (v) { pref.copies = v; printPrefSaveP(); preview(); }));
+  const bd = mkBtn("chip pr-border" + (pref.border ? " on" : ""), ff9(U.print_border)); bd.id = "prBorder"; bd.setAttribute("aria-pressed", pref.border ? "true" : "false");
+  bd.addEventListener("click", function () { pref.border = !pref.border; printPrefSaveP(); bd.className = "chip pr-border" + (pref.border ? " on" : ""); bd.setAttribute("aria-pressed", pref.border ? "true" : "false"); preview(); }); body.appendChild(bd);
+  const pv = document.createElement("div"); pv.className = "pr-preview"; const pim = document.createElement("img"); pim.id = "prPreview"; pim.alt = ""; pv.appendChild(pim);
+  const pinfo = document.createElement("div"); pinfo.className = "mut pr-info"; pinfo.id = "prInfo"; pv.appendChild(pinfo); body.appendChild(pv);
+  const hint = document.createElement("p"); hint.className = "mut ps-hint"; hint.textContent = ff9(U.print_hint); body.appendChild(hint);
+  const row = document.createElement("div"); row.className = "hnk-dlg-row pr-row";
+  const go = mkBtn("btn btn-gold"); go.id = "prGo"; setIcnText(go, "i-doc", "ink", ff9(U.print_ps));
+  const pdf = mkBtn("btn"); pdf.id = "prPdf"; setIcnText(pdf, "i-download", "cream", ff9(U.print_pdf));
+  const cancel = mkBtn("btn"); cancel.id = "prCancel"; cancel.textContent = ff9(U.cancel);
+  row.appendChild(go); row.appendChild(pdf); row.appendChild(cancel); body.appendChild(row);
+  dlg.appendChild(body);
+  let done = false;
+  const fin = function () { if (done) return; done = true; try { dlg.close(); } catch (e) { } try { if (dlg.parentNode) dlg.parentNode.removeChild(dlg); } catch (e) { } };
+  cancel.addEventListener("click", fin); dlg.addEventListener("cancel", fin);
+  let seq = 0;
+  function preview() {
+    const my = ++seq;
+    PS.printSheet(items.slice(0, pref.copies), { size: pref.size, copies: pref.copies, border: pref.border, dpi: 30 }).then(function (p0) {
+      if (my !== seq) return; pim.src = p0.dataUrl; dlg.setAttribute("data-turned", p0.turned ? "1" : "0");
+      const pages = items.length > 1 ? Math.ceil(items.length / pref.copies) : 1;
+      pinfo.textContent = ff9(U.print_pages).replace("{n}", String(pages)) + " \u00b7 " + p0.wIn + "\u00d7" + p0.hIn + "\u2033 \u00b7 300 dpi";
+    }, function () { });
+  }
+  preview();
+  const u8buf = function (u8) { return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength); };
+  function compose() { btnOff(go, true); btnOff(pdf, true); return PS.printSheets(items, { size: pref.size, copies: pref.copies, border: pref.border }); }
+  pdf.addEventListener("click", function () {
+    compose().then(async function (sheets) {
+      const bytes = PS.printPdf(sheets, "HNK \u00b7 " + (base || "print"));
+      const f = await fsp.getFileForSaving((base || "hnk-print") + "-" + pref.size + ".pdf", { types: ["pdf"] });
+      if (f) { await f.write(u8buf(bytes), { format: formats.binary }); setStatus(ff9(U.print_pages).replace("{n}", String(sheets.length)) + " \u00b7 PDF", "ok"); }
+      fin();
+    }).catch(function (e) { setStatus(friendlyErr(e), "err"); btnOff(go, false); btnOff(pdf, false); });
+  });
+  go.addEventListener("click", function () {
+    compose().then(async function (sheets) {
+      const folder = await fsp.getDataFolder();
+      for (let i = 0; i < sheets.length; i++) {
+        const file = await folder.createFile("hnk_print_" + (i + 1) + ".jpg", { overwrite: true });
+        await file.write(u8buf(sheets[i].jpeg), { format: formats.binary });
+        await psCore.executeAsModal(async function () { await app.open(file); }, { commandName: "HNK Open Print Sheet" });
+      }
+      setStatus(ff9(U.print_pages).replace("{n}", String(sheets.length)) + " \u00b7 Photoshop", "ok");
+      fin();
+    }).catch(function (e) { setStatus(friendlyErr(e), "err"); btnOff(go, false); btnOff(pdf, false); });
+  });
+  document.body.appendChild(dlg);
+  hnkShowDialog(dlg, { title: ff9(U.print_sheet), width: 340, height: 540 });
+  return dlg;
 }
 async function galSaveSelected() {
   const picked = GAL.files.filter(function (f) { return GAL.sel[f.name]; });
@@ -12942,6 +13030,7 @@ function refreshCompare() {
   const cw = $("cmpWrap");
   if (cw && !(hasA && hasB)) { cw.style.display = "none"; const cb = $("btnCmp"); if (cb) cb.className = "btn"; }
   btnOff($("btnPlace"), !hasA);
+  btnOff($("btnPrint"), !hasA);   /* 6.221.0 */
   btnOff($("btnSaveAs"), !hasA);
   btnOff($("btnResultToRef"), !hasA);
   ffHandoffRow();
@@ -13110,6 +13199,7 @@ function imagineHost() {
     hotFolder: uxpHotFolder(),   /* 6.218.0 — the folder the tether software saves into, watched for new shots */
     session: function () { return SESSION_P; },   /* 6.220.0 — the customer */
     sessionNext: function () { return sessionNewP(); },
+    printOut: function (out) { printSheetP([{ dataUrl: out.dataUrl || ("data:" + (out.mime || "image/png") + ";base64," + out.b64) }], "hnk-imagine"); },   /* 6.221.0 — the print sheet */
     /* v6.79.0 — the module asks its host for a width before it asks the
        viewport; the panel answers with whichever ruler works here */
     stageWidth: function (el) {
@@ -13357,6 +13447,7 @@ function pstyleHost() {
       await placeResultToPS();
     },
     exportLabel: function () { return ff9(HIST_L.toPs); },
+    printOut: function (out) { printSheetP([{ dataUrl: out.dataUrl || ("data:" + (out.mime || "image/png") + ";base64," + out.b64) }], "hnk-portrait-style"); },   /* 6.221.0 — the print sheet */
     toast: function (msg, kind) { setStatus(msg, kind === "err" ? "err" : kind === "ok" ? "ok" : ""); },
     scrollTop: function () { const p = $("pages"); if (p) p.scrollTop = 0; }
   };
@@ -13800,6 +13891,7 @@ function ffPaintLabels() {
   set("addonSummaryCreate", ff9(FF_L.addonsNone));
   set("resultH2", ff9(FF_L.resultH2));
   set("btnPlace", t("btn_place"));
+  if (typeof PSTYLE_DATA !== "undefined" && PSTYLE_DATA.ui && PSTYLE_DATA.ui.print) setIcnText($("btnPrint"), "i-doc", "cream", ff9(PSTYLE_DATA.ui.print));   /* 6.221.0 */
   setIcnText($("btnResultToRef"), "i-restore", "cream", ff9(FF_L.toRef));
   setIcnText($("chainH"), "i-arrow", "muted", ff9(FF_L.chainH));
   setIcnText($("btnGenStop"), "i-close", "cream", ff9(FF_L.stop));
@@ -15370,6 +15462,8 @@ function init() {
     });
     const bsa = $("btnSaveAs");
     if (bsa) bsa.addEventListener("click", saveResultAs);
+    const bpr = $("btnPrint");   /* 6.221.0 — the result to the print sheet */
+    if (bpr) bpr.addEventListener("click", function () { if (!state.resultB64) return; printSheetP([{ dataUrl: "data:" + (state.resultMime || "image/png") + ";base64," + state.resultB64 }], "hnk-print"); });
   });
 
   /* resize (guarded window.*) */

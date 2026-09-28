@@ -38,9 +38,9 @@ const STORE = read("panel/src/app/gallery-store.js");
 const PCSS = read("panel/styles.css");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.149.0", PVER = "6.220.0";
+const VER = "6.150.0", PVER = "6.221.0";
 const WAVE_V = "6.149.0", PREV_V = "6.148.0";   /* on the WAVE_V line so the bump routine leaves both alone */
-const COUNT = 291;
+const COUNT = 292;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";

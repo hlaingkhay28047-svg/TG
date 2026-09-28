@@ -1342,3 +1342,7 @@ jobs:
       # New customer under every door on both surfaces.
       - name: Verify the customer — one customer's shots and results in one place, on both surfaces
         run: PORT=8931 node test/verify_session_6149.js
+      # 6.150.0 — PRINT SHEETS: 4x6 · 5x7 · 8x10 · A4 at 300 dpi, one to eight to a sheet, a border or a filled cell, the
+      # JPEG carrying its dpi, a PDF at the paper's size; from every result and the customer's whole set, on both surfaces.
+      - name: Verify the print sheets — every result and the customer's set on the paper the studio prints
+        run: PORT=8931 node test/verify_print_sheets_6150.js

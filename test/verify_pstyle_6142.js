@@ -44,9 +44,9 @@ const PANEL_JS = read("panel/js/hnk_pstyle.js");
 const PARITY = read("test/verify_panel_page_parity.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.149.0", PVER = "6.220.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.150.0", PVER = "6.221.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.142.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 291;
+const COUNT = 292;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
@@ -94,14 +94,14 @@ function partA() {
     D.groups.every((g) => { if (g.sets) return g.sets.length >= 6 && g.sets.every((s) => fs.existsSync(path.join(ROOT, "docs/app/lib/wf/pstyle/th", s.thumb)) && fs.existsSync(path.join(PANEL, "icons/pstyle/th", s.thumb))); const im = A.readImagine(); const t = im.tools.find((x) => x.id === g.tool); return !!t && t.presets.length >= 8 && t.presets.every((p) => fs.existsSync(path.join(ROOT, "docs/app/lib/wf/imagine/th", t.id + "-" + p.id + ".jpg")) && fs.existsSync(path.join(PANEL, "icons/imagine/th", t.id + "-" + p.id + ".jpg"))); }),
     { models: D.models.filter((id) => !new RegExp('id:"' + id + '"').test(rh)) });
 
-  report("A5) the hosts: the web app's brings the camera (getUserMedia), the Gallery picker, the browser's print dialog, IndexedDB for the recent photos and references, and the hand-off chips; the panel's brings the layer/file sheet and Place into Photoshop, no camera, no print",
+  report("A5) the hosts: the web app's brings the camera (getUserMedia), the Gallery picker, the browser's print dialog, IndexedDB for the recent photos and references, and the hand-off chips; the panel's brings the layer/file sheet and Place into Photoshop, no camera; since 6.150.0 both hosts' printOut opens the print sheet",
     has(APP, "PSTYLE.init(host, $(\"psRoot\"));") && has(APP, "navigator.mediaDevices.getUserMedia({ video:vc, audio:false })") && has(APP, "deviceId:{ exact:deviceId }") && has(APP, "camera: camera,") &&
     has(APP, "printOut: printOut,") && has(APP, 'kvGet("hnk_ps_recent_v1")') && has(APP, 'kvGet("hnk_ps_refs_v1")') && has(APP, 'stHandoffRow(hostEl.id, out.mime, out.b64, "portrait-style")') &&
     has(APP, 'page:"pgPStyle"') &&
     has(MAIN, "function pstyleHost() {") && has(MAIN, "function pstyleEnter() {") && has(MAIN, "state.lastAction = \"Portrait Style\";") &&
     has(MAIN, "REFRESHERS.push(function () { try { if (pstyleReady) pstyleEnter(); } catch (e) { } });") &&
     !has(MAIN.slice(MAIN.indexOf("function pstyleHost() {"), MAIN.indexOf("function pstyleEnter() {")), "camera:") &&
-    !has(MAIN.slice(MAIN.indexOf("function pstyleHost() {"), MAIN.indexOf("function pstyleEnter() {")), "printOut:"));
+    has(MAIN.slice(MAIN.indexOf("function pstyleHost() {"), MAIN.indexOf("function pstyleEnter() {")), "printOut:"));   /* 6.150.0 — the print sheet on the panel too */
 
   report("A6) the lifted CSS draws on UXP: no grid, no gap, no pointer-events inside the PSTYLE_CSS block; the panel's copy carries the renamed page id and tokens",
     !/display:\s*grid/.test(css) && !/\bgap:/.test(css) && !/pointer-events/.test(css) &&

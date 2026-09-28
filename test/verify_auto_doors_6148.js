@@ -38,9 +38,9 @@ const PANEL_IM = read("panel/js/hnk_imagine.js");
 const PANEL_PS = read("panel/js/hnk_pstyle.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.149.0", PVER = "6.220.0";
+const VER = "6.150.0", PVER = "6.221.0";
 const WAVE_V = "6.148.0", PREV_V = "6.147.0";   /* the wave before, whose What's New row this wave reworded — on the WAVE_V line so the bump routine leaves both alone */
-const COUNT = 291;
+const COUNT = 292;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";

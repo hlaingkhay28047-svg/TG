@@ -51,9 +51,9 @@ const PANEL_CSS = read("panel/styles.css");
 const PARITY = read("test/verify_panel_page_parity.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.149.0", PVER = "6.220.0";   /* the tree's current release, for the lockstep pin */
+const VER = "6.150.0", PVER = "6.221.0";   /* the tree's current release, for the lockstep pin */
 const WAVE_V = "6.146.0";                  /* this wave's own release, for its own What's New row */
-const COUNT = 291;
+const COUNT = 292;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
@@ -118,11 +118,11 @@ function partA() {
     has(boot, 'switchPage("pgPStyle"); window.HNK.pstyle.onShot({ dataUrl: du, name: "shared-" + Date.now() + ".jpg" });') && has(boot, 'history.replaceState(null, "", location.pathname + "?page=pgPStyle");'));
 
   const ph = hostSlice(MAIN, "function pstyleHost() {", "function pstyleEnter() {") + hostSlice(MAIN, "function uxpHotFolder() {", "function pstyleHost() {");   /* 6.147.0 — the folder watch moved to uxpHotFolder(), shared with Imagine */
-  report("A5) the panel host: the hot folder is UXP's folder (getFolder, getEntries every 2.5 s, the existing files left alone, a binary read to a data URL); still no camera, no print, no share — the module draws no Live button and no Share where the host has none",
+  report("A5) the panel host: the hot folder is UXP's folder (getFolder, getEntries every 2.5 s, the existing files left alone, a binary read to a data URL); still no camera, no share — the module draws no Live button and no Share where the host has none; since 6.150.0 the print sheet (Open in Photoshop at 300 dpi · Save PDF) is the one door the panel host does bring",
     has(ph, "hotFolder: uxpHotFolder(),") && has(ph, "const f = await fsp.getFolder();") && has(ph, "(await f.getEntries()).forEach(function (e) { if (e.isFile) seen[e.name] = 1; });") &&
     has(ph, "}, 2500);") && has(ph, "const buf = await e.read({ format: uxp.storage.formats.binary });") && has(ph, 'onShot({ dataUrl: "data:" + extToMime(e.name) + ";base64," + bufToB64(buf), name: e.name });') &&
     has(ph, 'onCtl({ name: f.name || "", stop: function () { clearInterval(timer); } });') &&
-    !has(ph, "camera:") && !has(ph, "printOut:") && !has(ph, "share:") &&
+    !has(ph, "camera:") && has(ph, "printOut:") && !has(ph, "share:") &&   /* 6.150.0 — printOut is the panel's print sheet */
     has(mod, "if(H.camera){ var cam=btn(\"chip\", t(\"connect_cam\"), \"i-camera\");") && has(mod, 'if(H.share){ var sh=btn("btn btn-gold", t("share"), "i-external");'));
 
   report("A6) the CSS: the tether card, the guide, the version ×, the strip × and the share row live in the lifted block and draw on UXP (no grid, no gap, no pointer-events, no object-fit, no inset); the camera sheet's own CSS stays app-only after the block; the panel's stylesheet carries the card; the parity walk names Camera · Live as the web host's own",
