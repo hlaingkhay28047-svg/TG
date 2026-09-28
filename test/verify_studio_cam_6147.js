@@ -41,9 +41,9 @@ const PANEL_IM = read("panel/js/hnk_imagine.js");
 const PARITY = read("test/verify_panel_page_parity.js");
 const LANDING = read("docs/index.html");
 const CI = read(".github/workflows/test.yml");
-const VER = "6.147.0", PVER = "6.218.0";
+const VER = "6.148.0", PVER = "6.219.0";
 const WAVE_V = "6.147.0";
-const COUNT = 289;
+const COUNT = 290;
 const LANGS = ["my", "en", "shn", "kac", "th", "zh", "vi", "id", "ms"];
 const all9 = (o) => !!o && LANGS.every((l) => typeof o[l] === "string" && o[l].trim().length > 0);
 const PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
@@ -61,8 +61,8 @@ function partA() {
   const P = A.readPstyle(), I = A.readImagine();
   const cam = slice(APP, "/* ---------- 6.147.0 — THE SAME CAMERA ON EVERY PHOTO PAGE ----------", "  camDoors();");
   report("A1) HNK_CAM hangs on the PSTYLE host: the camera, the hot folder, the share, the crop, the door, the sheet; three door configs hand a shot to the Studio (stLoadImage), Retouch Pro (state.refs[0]) and Path (ptIngestDataUrls); the sheet stamps first, crops to the frame, then shares",
-    has(cam, "window.HNK_CAM={ camera:camera, hotFolder:hotFolder, share:share, crop:PSTYLE.socialCrop, door:camDoor, doors:camDoors, shareSheet:shareSheet };") &&
-    has(cam, "studio:  { onShot:function(it){ stLoadImage(it.dataUrl); } },") && has(cam, "retouch: { onShot:function(it){") && has(cam, "state.refs[0]={ mime:m[1], b64:m[2], label:it.name||\"camera\" }; state.rsOrig=null; state.imgRoles=null; renderRefs();") &&
+    has(cam, "window.HNK_CAM={ camera:camera, hotFolder:hotFolder, share:share, crop:PSTYLE.socialCrop, door:camDoor, doors:camDoors, shareSheet:shareSheet") &&   /* 6.148.0 added shot · auto · queue after these */
+    has(cam, "studio:  { onShot:function(it){ stLoadImage(it.dataUrl); }") && has(cam, "retouch: { onShot:function(it){") && has(cam, "state.refs[0]={ mime:m[1], b64:m[2], label:it.name||\"camera\" }; state.rsOrig=null; state.imgRoles=null; renderRefs();") &&
     has(cam, "path:    { onShot:function(it){ ptIngestDataUrls([{") && has(cam, "function camDoor(slot){") && has(cam, 'var key=slot.getAttribute("data-cam"), cfg=DOOR_CFG[key]; if(!cfg) return null;') &&
     has(cam, "function shareSheet(mime, b64, name){") && has(cam, "wmStampDataUrl(dataUrl, mime, 92, function(du){") && has(cam, "PSTYLE.socialCrop(v, mode).then(function(out){ close();") &&
     has(APP, "if(!out.stamped){ return new Promise(function(res){ wmStampDataUrl(") && APP.indexOf("window.HNK_CAM={") > APP.indexOf('PSTYLE.init(host, $("psRoot"));'));
@@ -78,7 +78,7 @@ function partA() {
 
   const mod = imLift.between(APP, imLift.M0, imLift.M1, "module");
   report("A3) the Imagine module: the state carries the watched folder; camRow draws Camera · Live and Hot folder (Stop, the watching line) where the host has them, beside Add photos and under the strip; Share beside Export where the host shares; six door strings in nine languages, the same words as Portrait Style's; the panel's copy is today's lift",
-    has(mod, "markMode:false, brush:1, stageW:0, hot:null };") && has(mod, "function camRow(parent){") && has(mod, "if(!(H.camera || H.hotFolder)) return;") &&
+    has(mod, "markMode:false, brush:1, stageW:0, hot:null") && has(mod, "function camRow(parent){") && has(mod, "if(!(H.camera || H.hotFolder)) return;") &&
     has(mod, 'var c=btn("chip", t("cam_live"), "i-camera"); c.id="imCamLive";') && has(mod, 'h.id="imHot";') && has(mod, 'st.id="imHotStatus";') &&
     has(mod, "if(S.photos.length) camRow(card);") && has(mod, "camRow(empty);") && has(mod, 'if(H.share){ var shr = btn("btn im-share", t("share"), "i-external"); shr.id="imShare"; shr.onclick=shareCur; acts.appendChild(shr); }') &&
     has(mod, "function shareCur(){") &&

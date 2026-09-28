@@ -3546,6 +3546,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 /* ---- IMAGINE_CSS ---- */
 /* Imagine (6.29.0 wave) — the hub and the tool view. Flex and margins only: the same rules are
 .im-camrow{margin:4px 0 8px 0}
+.im-auto{display:flex;align-items:center;margin:0 6px 6px 0;min-height:40px;font-size:12.5px;cursor:pointer}
+.im-auto input{width:40px;height:40px;margin:0 8px 0 0;accent-color:var(--accent)}
 .im-camrow .chip{margin:0 6px 6px 0}
 .im-hot{font-size:12.5px;color:var(--accent-h);margin-left:4px}
    lifted into the Photoshop panel (tools/build_panel_imagine.js), and UXP draws no CSS grid, no
@@ -4098,3 +4100,4 @@ body.tsize-s .sub, body.tsize-s .btn-sm { font-size: 9px; }
 /* ---- /PSTYLE_CSS ---- */
 /* 6.218.0 — the Hot folder door on Retouch A / B, Retouch Pro and Path (the app's .cam-door, drawn for UXP) */
 .cam-slot{margin:0}.cam-door{margin-top:8px}.cam-door-row .chip{margin:0 6px 6px 0}.cam-door-st{font-size:12.5px;color:var(--gold-hi)}
+.cam-auto{display:flex;align-items:center;min-height:40px;margin-top:4px;font-size:13px;cursor:pointer}.cam-auto input{width:40px;height:40px;margin:0 8px 0 0;accent-color:var(--accent)}.cam-hint{margin:0 0 4px 0;font-size:12px}.cam-door-q{font-size:12.5px;color:var(--gold-hi)}

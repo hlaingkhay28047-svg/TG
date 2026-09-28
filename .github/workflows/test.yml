@@ -1332,3 +1332,8 @@ jobs:
       # Share — the hand-off row, Create, Imagine — is one sheet: the frame, the studio stamp, the phone's sheet.
       - name: Verify the studio camera on every photo page and the one share sheet
         run: PORT=8931 node test/verify_studio_cam_6147.js
+      # 6.148.0 — every door runs by itself: a switch under Retouch A / B, Retouch Pro, Path and Imagine's doors
+      # (web and panel) presses the page's own button for each new shot, with a queue while a run is on; Show the
+      # customer turns the tablet to the customer with the result full-screen; the camera sheet in landscape.
+      - name: Verify auto-run on every door and Show the customer
+        run: PORT=8931 node test/verify_auto_doors_6148.js

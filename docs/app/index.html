@@ -2251,6 +2251,8 @@ body.wall #wallRetry.on{display:block}
 /* ---- IMAGINE_CSS ---- */
 /* Imagine (6.29.0 wave) — the hub and the tool view. Flex and margins only: the same rules are
 .im-camrow{margin:4px 0 8px 0}
+.im-auto{display:flex;align-items:center;margin:0 6px 6px 0;min-height:40px;font-size:12.5px;cursor:pointer}
+.im-auto input{width:40px;height:40px;margin:0 8px 0 0;accent-color:var(--gold)}
 .im-camrow .chip{margin:0 6px 6px 0}
 .im-hot{font-size:12.5px;color:var(--gold-hi);margin-left:4px}
    lifted into the Photoshop panel (tools/build_panel_imagine.js), and UXP draws no CSS grid, no
@@ -2523,6 +2525,22 @@ body.wall #wallRetry.on{display:block}
 .ps-camsheet .ps-camctl .chips .chip{margin:0 6px 6px 0}
 .ps-camsheet .ps-camctl .ps-tg{display:flex;align-items:center;gap:6px;min-height:40px;font-size:13px}
 .cam-slot{margin:0}.cam-door{margin-top:8px}.cam-door-row{margin:0}.cam-door-row .chip{margin:0 6px 6px 0}.cam-door-st{font-size:12.5px;color:var(--gold-hi)}
+.cam-auto{display:flex;align-items:center;gap:8px;min-height:40px;margin-top:4px;font-size:13px;cursor:pointer}.cam-auto input{width:40px;height:40px;margin:0;flex:0 0 40px;accent-color:var(--gold)}.cam-hint{margin:0 0 4px 0;font-size:12px}.cam-door-q{font-size:12.5px;color:var(--gold-hi)}
+.hnk-show{position:fixed;inset:0;z-index:95;background:#000;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none}
+.hnk-show .hs-stage{position:relative;width:100%;height:100%;overflow:hidden;transition:transform .2s}
+.hnk-show .hs-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.hnk-show .hs-line{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 12px rgba(0,0,0,.6);pointer-events:none}
+.hnk-show .hs-tag{position:absolute;top:calc(14px + env(safe-area-inset-top));padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:14px;pointer-events:none}
+.hnk-show .hs-tag-l{left:14px}.hnk-show .hs-tag-r{right:70px}
+.hnk-show .hs-x{position:absolute;top:calc(8px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));width:48px;height:48px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:28px;line-height:48px;text-align:center;cursor:pointer}
+.hnk-show .hs-hint{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font-size:13px;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;transition:opacity .6s;pointer-events:none}
+.hnk-show .hs-hint.off{opacity:0}
+@media (orientation:landscape) and (min-width:760px){
+.ps-camsheet{display:grid;grid-template-columns:1fr 340px;grid-template-rows:1fr auto}
+.ps-camsheet .ps-camview{grid-column:1;grid-row:1/3;height:100%}
+.ps-camsheet .ps-camctl{grid-column:2;grid-row:1;max-height:none;overflow:auto;padding:12px}
+.ps-camsheet .ps-cambar{grid-column:2;grid-row:2}
+}
 .cam-share .ps-galbox{padding:14px}.cam-share .cam-share-sizes{justify-content:center;margin:8px 0}.cam-share .ps-cambar{position:static;margin-top:10px}
 .ps-cambar{flex:0 0 auto;display:flex;justify-content:center;align-items:center;gap:10px;padding:12px calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));background:#15130f}
 .ps-cambar .ps-snap{min-width:140px;min-height:52px;font-size:16px}
@@ -4757,13 +4775,13 @@ html.splashing #splash{display:flex}
 
 <script src="data/hnkdata.js?v=9f7c58bdb600"></script>
 <script src="data/libwf.js?v=67e44ac5cb6d"></script>
-<script src="data/pstyle.js?v=084ea3485046"></script>
-<script src="data/imagine.js?v=beb7ed90ccd0"></script>
+<script src="data/pstyle.js?v=f8ef587dd188"></script>
+<script src="data/imagine.js?v=af8736075ccc"></script>
 <script src="data/album.js?v=a8df5969f29e"></script>
-<script src="data/album-module.js?v=0849c14f346d"></script>
+<script src="data/album-module.js?v=b50745c10f03"></script>
 <script src="data/tutorials.js?v=c0d95d865894"></script>
 <script src="data/trmore.js?v=ac0badf84ffb"></script>
-<script src="data/whatsnew.js?v=036c56288657"></script>
+<script src="data/whatsnew.js?v=08e96fba1d34"></script>
 <script>
 /* v6.92.0 — THE CHOSEN LANGUAGE'S NATIVE PACK, AND ONLY THAT ONE. Eighteen
    languages carry their own dictionary (data/trl-<code>.js, 10-38 KB each);
@@ -16735,6 +16753,62 @@ var HANDOFF_L={
   studio:{my:"Studio ထဲ ဖွင့်မယ်",en:"Open in Studio",shn:"ပိုတ်ႇတီႈ Studio",kac:"Studio hku hpaw u",th:"เปิดใน Studio",zh:"在 Studio 中打开",vi:"Mở trong Studio",id:"Buka di Studio",ms:"Buka dalam Studio"},
   path:{my:"Path batch ထဲ ထည့်မယ်",en:"Add to Path batch",shn:"သႂ်ႇၶဝ်ႈ Path batch",kac:"Path batch de bang u",th:"เพิ่มเข้าชุด Path",zh:"添加到 Path 批处理",vi:"Thêm vào lô Path",id:"Tambah ke batch Path",ms:"Tambah ke kumpulan Path"}
 };
+/* ---------- 6.148.0 — SHOW THE CUSTOMER. The studio's tablet turns to face the customer: the result full-screen on
+   black, the original under a drag line (or the result alone on a tap), a double tap to zoom, the screen kept awake,
+   nothing else on it. One overlay for every result — the hand-off row's chip (Retouch · Studio · Create), Portrait
+   Style's and Imagine's own chips through their hosts. App-only: Photoshop's panel has no customer-facing screen. */
+var HNK_SHOW = (function(){
+  var el0=null, split=50, mode="cmp", zoom=1, wake=null, lastTap=0, drag=false;
+  function words(){ return (window.HNK_PSTYLE && window.HNK_PSTYLE.ui) || {}; }
+  function mk(tag, cls){ var n=document.createElement(tag); if(cls) n.className=cls; return n; }
+  function open(o){
+    close(); o=o||{}; if(!o.after) return null;
+    var U=words();
+    var w=mk("div","hnk-show"); w.id="hnkShow"; w.setAttribute("role","dialog"); w.setAttribute("aria-modal","true"); w.setAttribute("aria-label", L9(U.present||{en:"Show the customer"}));
+    var st=mk("div","hs-stage"); st.id="hsStage";
+    var after=mk("img","hs-after"); after.alt=""; after.src=o.after; st.appendChild(after);
+    var before=null; if(o.before){ before=mk("img","hs-before"); before.alt=""; before.src=o.before; st.appendChild(before); }
+    var line=mk("div","hs-line"); st.appendChild(line);
+    var lb=mk("span","hs-tag hs-tag-l"); lb.textContent=L9(U.original||{en:"Before"}); st.appendChild(lb);
+    var la=mk("span","hs-tag hs-tag-r"); la.textContent=L9(U.result||{en:"After"}); st.appendChild(la);
+    w.appendChild(st);
+    var x=mk("button","hs-x"); x.type="button"; x.id="hsClose"; x.setAttribute("aria-label", L9(U.present_close||{en:"Close"})); x.textContent="\u00d7"; x.onclick=close; w.appendChild(x);
+    var hint=mk("div","hs-hint"); hint.textContent=L9(U.present_tap||{en:""}); w.appendChild(hint);
+    document.body.appendChild(w); el0=w; split=50; mode=before?"cmp":"after"; zoom=1; paint();
+    setTimeout(function(){ hint.classList.add("off"); }, 3500);
+    try{ if(document.documentElement.requestFullscreen){ var fp=document.documentElement.requestFullscreen(); if(fp && fp.catch) fp.catch(function(){}); } }catch(e){}
+    try{ if(navigator.wakeLock) navigator.wakeLock.request("screen").then(function(wl){ wake=wl; }, function(){}); }catch(e){}
+    document.addEventListener("keydown", onKey);
+    var downX=0, downY=0, moved=false;
+    st.addEventListener("pointerdown", function(ev){ drag=true; moved=false; downX=ev.clientX; downY=ev.clientY; try{ st.setPointerCapture(ev.pointerId); }catch(e){} });
+    st.addEventListener("pointermove", function(ev){ if(!drag) return; if(Math.abs(ev.clientX-downX)>6||Math.abs(ev.clientY-downY)>6) moved=true; if(moved && mode==="cmp"){ var r=st.getBoundingClientRect(); split=Math.max(0,Math.min(100,(ev.clientX-r.left)/Math.max(1,r.width)*100)); paint(); } });
+    st.addEventListener("pointerup", function(ev){
+      drag=false; if(moved) return;
+      var now=Date.now();
+      if(now-lastTap<320){ lastTap=0; zoom = zoom>1 ? 1 : 2; var r=st.getBoundingClientRect(); st.style.transformOrigin=((ev.clientX-r.left)/Math.max(1,r.width)*100)+"% "+((ev.clientY-r.top)/Math.max(1,r.height)*100)+"%"; paint(); return; }
+      lastTap=now; setTimeout(function(){ if(lastTap===now){ lastTap=0; if(before){ mode = mode==="cmp" ? "after" : "cmp"; paint(); } } }, 330);
+    });
+    st.addEventListener("pointercancel", function(){ drag=false; });
+    return w;
+  }
+  function paint(){
+    if(!el0) return; var st=el0.querySelector(".hs-stage"), b=el0.querySelector(".hs-before"), line=el0.querySelector(".hs-line"), lb=el0.querySelector(".hs-tag-l");
+    if(b) b.style.clipPath = mode==="cmp" ? "inset(0 "+(100-split)+"% 0 0)" : "inset(0 100% 0 0)";
+    if(line){ line.style.left=split+"%"; line.style.display = (mode==="cmp" && b) ? "" : "none"; }
+    if(lb) lb.style.display = (mode==="cmp" && b) ? "" : "none";
+    st.style.transform = zoom>1 ? "scale("+zoom+")" : "";
+    el0.setAttribute("data-mode", mode); el0.setAttribute("data-split", String(Math.round(split))); el0.setAttribute("data-zoom", String(zoom));
+  }
+  function onKey(ev){ if(ev.key==="Escape") close(); }
+  function close(){
+    if(!el0) return; var w=el0; el0=null; if(w.parentNode) w.parentNode.removeChild(w);
+    document.removeEventListener("keydown", onKey);
+    try{ if(wake){ var rp=wake.release(); if(rp && rp.catch) rp.catch(function(){}); wake=null; } }catch(e){}
+    try{ if(document.fullscreenElement && document.exitFullscreen){ var xp=document.exitFullscreen(); if(xp && xp.catch) xp.catch(function(){}); } }catch(e){}
+  }
+  return { open:open, close:close, split:function(v){ if(typeof v==="number"){ split=v; paint(); } return split; }, state:function(){ return { open:!!el0, mode:mode, split:split, zoom:zoom }; } };
+})();
+window.HNK_SHOW = HNK_SHOW;
 function stHandoffRow(hostId, mime, b64, name, skip){
   var host=$(hostId); if(!host) return;
   host.innerHTML="";
@@ -16753,6 +16827,11 @@ function stHandoffRow(hostId, mime, b64, name, skip){
   if(skip!=="path") chip("i-stack", L9(HANDOFF_L.path), function(){
     ptIngestDataUrls([{name:name||("result-"+ptStamp()), dataUrl:dataUrl}]);
     switchPage("pgPath");
+  });
+  /* 6.148.0 — Show the customer: the result full-screen, the original under the drag line where this page has one */
+  if(window.HNK_SHOW && window.HNK_PSTYLE) chip("i-compare", L9(window.HNK_PSTYLE.ui.present), function(){
+    var before = (hostId==="handoffRetouch"||hostId==="handoffStudio") && state.refs[0] ? "data:"+state.refs[0].mime+";base64,"+state.refs[0].b64 : null;
+    HNK_SHOW.open({ after:dataUrl, before:before });
   });
   /* Share everywhere — the same watermark-aware file share Create has */
   if(navigator.share) chip("i-external", L9({my:"Share",en:"Share",shn:"Share",kac:"Share",th:"แชร์",zh:"分享",vi:"Chia sẻ",id:"Bagikan",ms:"Kongsi"}), function(){
@@ -31775,7 +31854,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* version check: tell cached users when a new build ships */
-var APP_VER="6.147.0";
+var APP_VER="6.148.0";
 (function(){
   var vv="v"+APP_VER;
   var nv=document.getElementById("navVer"); if(nv) nv.textContent=vv;
@@ -32875,7 +32954,7 @@ var IMAGINE = (function(){
     var w=imDragWidth(el); if(!(w>0)) return null;
     return Math.max(0, Math.min(100, startPct + (c[0]-downX)/w*100));
   }
-  var S = { tool:null, model:"", size:"", tab:"tpl", preset:{}, desc:{}, photos:[], cur:0, busy:false, job:null, split:50, status:"", ref:{}, markMode:false, brush:1, stageW:0, hot:null };   /* 6.80.0 — stageW: the brush stage width the student set where nothing measures (Photoshop) · 6.31.0 — ref: the Reference Card picture per tool (never saved to the device); 6.32.0 — markMode/brush: the brush tools' red paint */
+  var S = { tool:null, model:"", size:"", tab:"tpl", preset:{}, desc:{}, photos:[], cur:0, busy:false, job:null, split:50, status:"", ref:{}, markMode:false, brush:1, stageW:0, hot:null, auto:false, autoPending:false };   /* 6.80.0 — stageW: the brush stage width the student set where nothing measures (Photoshop) · 6.31.0 — ref: the Reference Card picture per tool (never saved to the device); 6.32.0 — markMode/brush: the brush tools' red paint */
   var root = null, refs = {};
   /* 6.32.0 — the brush needs a 2D canvas (the photo + the red strokes are composited into IMAGE 1 before the call); a host without one keeps the templates and words */
   var CAN_MARK = (function(){ try{ var c=document.createElement("canvas"); return !!(c && c.getContext && c.getContext("2d")); }catch(e){ return false; } })();
@@ -32894,8 +32973,9 @@ var IMAGINE = (function(){
     if(o.preset && typeof o.preset==="object") S.preset=o.preset;
     if(o.desc && typeof o.desc==="object") S.desc=o.desc;
     if(typeof o.stageW==="number" && o.stageW>=200 && o.stageW<=900) S.stageW=o.stageW;   /* 6.80.0 */
+    if(typeof o.auto==="boolean") S.auto=o.auto;   /* 6.148.0 — the door's switch */
   }
-  function save(){ lsSet(JSON.stringify({ tool:S.tool, model:S.model, size:S.size, tab:S.tab, preset:S.preset, desc:S.desc, stageW:S.stageW })); }
+  function save(){ lsSet(JSON.stringify({ tool:S.tool, model:S.model, size:S.size, tab:S.tab, preset:S.preset, desc:S.desc, stageW:S.stageW, auto:S.auto })); }
 
   /* ---------- small helpers ---------- */
   function t(key, vars){
@@ -33101,6 +33181,7 @@ var IMAGINE = (function(){
     if(S.photos.length>1){ var all = btn("btn im-applyall", t("apply_all"), "i-stack"); all.id="imApplyAll"; all.onclick=applyAll; off(all, S.busy); acts.appendChild(all); }
     var exp = btn("btn im-export", t("export"), "i-download"); exp.id="imExport"; exp.onclick=exportCur; acts.appendChild(exp);
     if(H.share){ var shr = btn("btn im-share", t("share"), "i-external"); shr.id="imShare"; shr.onclick=shareCur; acts.appendChild(shr); }   /* 6.147.0 — the host's share sheet */
+    if(H.present && cur && cur.out){ var pv = btn("btn im-present", t("present"), "i-compare"); pv.id="imPresent"; pv.onclick=function(){ H.present({ after:cur.out.dataUrl, before:cur.dataUrl }); }; acts.appendChild(pv); }   /* 6.148.0 — the result full-screen for the customer */
     if(S.busy){ var stop = btn("btn im-stop", t("stop"), "i-close"); stop.id="imStop"; stop.onclick=stopAll; acts.appendChild(stop); }
     if(S.photos.length && !S.busy){ var clr = btn("btn im-clear", t("clear"), "i-trash"); clr.id="imClear"; clr.onclick=clearAll; acts.appendChild(clr); }
     var st = el("div","mut im-status", S.status||""); st.id="imStatus"; st.setAttribute("aria-live","polite"); card.appendChild(st);
@@ -33110,17 +33191,30 @@ var IMAGINE = (function(){
   function camRow(parent){
     if(!(H.camera || H.hotFolder)) return;
     var r=el("div","chips im-camrow"); r.id="imCamRow";
-    if(H.camera){ var c=btn("chip", t("cam_live"), "i-camera"); c.id="imCamLive"; c.onclick=function(){ H.camera(function(item){ if(item) addPhotos([item]); }, {}); }; r.appendChild(c); }
+    /* 6.148.0 — a shot through either door: in, and — with the switch on — run with the chosen template at once (or as soon as the current run ends) */
+    function arrive(item){ if(!item) return; addPhotos([item]); if(S.auto) autoApply(); }
+    if(H.camera){ var c=btn("chip", t("cam_live"), "i-camera"); c.id="imCamLive"; c.onclick=function(){ H.camera(function(item){ arrive(item); }, {}); }; r.appendChild(c); }
     if(H.hotFolder){
       var h=btn("chip"+(S.hot?" on":""), S.hot ? t("hot_stop") : t("hot_folder"), "i-folder"); h.id="imHot"; h.setAttribute("aria-pressed", S.hot?"true":"false");
       h.onclick=function(){
         if(S.hot){ try{ if(S.hot.stop) S.hot.stop(); }catch(e){} S.hot=null; render(); return; }
-        H.hotFolder.pick(function(ctl){ if(!ctl) return; S.hot={ name:ctl.name||"", n:0, stop:ctl.stop||null }; render(); }, function(item){ if(S.hot) S.hot.n++; addPhotos([item]); });
+        H.hotFolder.pick(function(ctl){ if(!ctl) return; S.hot={ name:ctl.name||"", n:0, stop:ctl.stop||null }; render(); }, function(item){ if(S.hot) S.hot.n++; arrive(item); });
       };
       r.appendChild(h);
       if(S.hot){ var st=el("span","mut im-hot", t("hot_watching",{f:S.hot.name, n:S.hot.n})); st.id="imHotStatus"; r.appendChild(st); }
     }
+    var al=el("label","im-auto"); var cb=document.createElement("input"); cb.type="checkbox"; cb.id="imAuto"; cb.checked=!!S.auto; cb.title=t("auto_run_hint");
+    cb.onchange=function(){ S.auto=!!cb.checked; save(); if(S.auto) autoApply(); }; al.appendChild(cb); al.appendChild(text(t("auto_run"))); r.appendChild(al);
     parent.appendChild(r);
+  }
+  /* 6.148.0 — every photo without a result runs with the chosen template; a run already on marks the rest pending, and finish() picks them up */
+  function autoApply(){
+    if(!S.tool) return;
+    if(S.busy){ S.autoPending=true; return; }
+    var idxs=[]; for(var i=0;i<S.photos.length;i++){ var p=S.photos[i]; if(p && !p.out && p.status!=="busy") idxs.push(i); }
+    if(!idxs.length) return;
+    var g=guards(); if(!g) return;
+    runQueue(idxs, g);
   }
   function shareCur(){
     var p=S.photos[S.cur];
@@ -33436,6 +33530,8 @@ var IMAGINE = (function(){
       else S.status = job.done ? t("done") : (S.photos[idxs[0]] && S.photos[idxs[0]].err) || t("err_gen");
       render();
       if(job.done && !stopped) H.toast(t("done"),"ok");
+      if(stopped) S.autoPending=false;
+      else if(S.autoPending){ S.autoPending=false; setTimeout(autoApply, 60); }   /* 6.148.0 — the shots that arrived during the run */
     }
     next();
   }
@@ -33487,7 +33583,7 @@ var IMAGINE = (function(){
   function onEnter(){ render(); }
   function drawn(){ return !!(root && root.firstChild); }
 
-  return { init:init, render:render, onEnter:onEnter, drawn:drawn, openTool:openTool, goHub:goHub, addPhotos:addPhotos, removePhoto:removePhoto,
+  return { init:init, render:render, onEnter:onEnter, drawn:drawn, openTool:openTool, goHub:goHub, addPhotos:addPhotos, removePhoto:removePhoto, autoApply:autoApply,
     applyOne:applyOne, applyAll:applyAll, stop:stopAll, exportCur:exportCur, setSplit:setSplit, hubSplit:function(){ return S.hubSplit||{}; },
     prompt:function(toolId, presetId, desc, marked){ var tool=toolById(toolId); if(!tool) return ""; return presetId==="__ref" ? buildPrompt(tool, null, desc, S.ref[toolId]||{ dataUrl:"" }, !!marked) : buildPrompt(tool, presetById(tool,presetId), desc, null, !!marked); },
     setRef:setRef, clearRef:clearRef,
@@ -33998,6 +34094,7 @@ var PSTYLE = (function(){
       var sv=el("span","chip ps-saved"); var ok=ico("i-check"); if(ok) sv.appendChild(ok); sv.appendChild(document.createTextNode(" "+t("saved"))); acts.appendChild(sv);
       var dl=btn("btn", H.exportLabel ? H.exportLabel() : t("download"), "i-download"); dl.id="psDl"; dl.onclick=function(){ if(S.social==="full"){ H.exportOut(v, outName(v)); return; } socialCrop(v, S.social).then(function(out){ H.exportOut(out, outName(out)); }); }; acts.appendChild(dl);
       if(H.share){ var sh=btn("btn btn-gold", t("share"), "i-external"); sh.id="psShare"; sh.onclick=function(){ shareOut(v); }; acts.appendChild(sh); }
+      if(H.present){ var pv=btn("btn", t("present"), "i-compare"); pv.id="psPresent"; pv.onclick=function(){ H.present({ after:v.dataUrl, before:S.photo ? S.photo.dataUrl : null }); }; acts.appendChild(pv); }   /* 6.148.0 — the result full-screen for the customer */
       if(H.printOut){ var pr=btn("btn", H.printLabel ? H.printLabel() : t("print"), "i-doc"); pr.id="psPrint"; pr.onclick=function(){ H.printOut(v); }; acts.appendChild(pr); }
       var rg=btn("btn", t("regen"), "i-retry"); rg.id="psRegen"; rg.onclick=run; if(S.busy){ rg.classList.add("is-off"); rg.setAttribute("aria-disabled","true"); } acts.appendChild(rg);
     }
@@ -34138,6 +34235,7 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
     camera: function(done, ctx){ if(window.HNK_CAM) HNK_CAM.camera(done, ctx||{}); else done(null); },
     hotFolder: { pick: function(onCtl, onShot){ if(window.HNK_CAM) HNK_CAM.hotFolder.pick(onCtl, onShot); else onCtl(null); } },
     share: function(out, name){ if(window.HNK_CAM) HNK_CAM.shareSheet(out.mime, out.b64, name); },
+    present: function(o){ if(window.HNK_SHOW) HNK_SHOW.open(o); },   /* 6.148.0 */
     toast: function(msg, kind){ toast(msg, kind==="err" ? "err" : kind==="ok" ? "ok" : ""); },
     scrollTop: function(){ window.scrollTo(0,0); }
   };
@@ -34376,6 +34474,7 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
     camera: camera,
     hotFolder: hotFolder,   /* 6.146.0 */
     share: (navigator.share ? share : null),   /* 6.146.0 — a Share button only where the browser can share at all */
+    present: function(o){ if(window.HNK_SHOW) HNK_SHOW.open(o); },   /* 6.148.0 — Show the customer */
     pickGallery: function(done){
       /* the newest Gallery pictures, in a small sheet — the studio's own results as the next subject */
       galDb().then(function(d){
@@ -34439,29 +34538,65 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
      shareSheet() is the Share of every result — the studio stamp first (the delivery path, v4.45), then the frame
      the network wants, then the phone's share sheet (a download where the browser cannot share a file). */
   var DOORS={};
+  /* 6.148.0 — AUTO-RUN: each door knows when its page is busy, when it is ready for a run, and how to run it — the
+     same tap the student would make (GENERATE, Start, the batch), so every gate and every cost line still applies. */
   var DOOR_CFG={
-    studio:  { onShot:function(it){ stLoadImage(it.dataUrl); } },
-    retouch: { onShot:function(it){ var m=/^data:([^;]+);base64,(.*)$/.exec(it.dataUrl||""); if(!m) return; state.refs[0]={ mime:m[1], b64:m[2], label:it.name||"camera" }; state.rsOrig=null; state.imgRoles=null; renderRefs(); } },
-    path:    { onShot:function(it){ ptIngestDataUrls([{ name:it.name||("camera-"+Date.now()+".jpg"), dataUrl:it.dataUrl }]); } }
+    studio:  { onShot:function(it){ stLoadImage(it.dataUrl); }, busy:function(){ return !!stBusy; }, ready:function(){ return !!(ST && ST.srcBitmap); }, run:function(){ var b=$("btnStGen"); if(b) b.click(); } },
+    retouch: { onShot:function(it){ var m=/^data:([^;]+);base64,(.*)$/.exec(it.dataUrl||""); if(!m) return; state.refs[0]={ mime:m[1], b64:m[2], label:it.name||"camera" }; state.rsOrig=null; state.imgRoles=null; renderRefs(); }, busy:function(){ return !!rsBusy; }, ready:function(){ return !!state.refs[0]; }, run:function(){ var b=$("btnV2Start"); if(b && !b.disabled) b.click(); } },
+    path:    { onShot:function(it){ ptIngestDataUrls([{ name:it.name||("camera-"+Date.now()+".jpg"), dataUrl:it.dataUrl }]); }, busy:function(){ return !!(PT.busy || rsBusy); }, ready:function(){ return ptPending().length>0; }, run:function(){ ptRunAll(); } }
   };
+  var AUTO_KEY="hnk_cam_auto_v1", AUTO={}, AUTO_T={};
+  try{ AUTO=JSON.parse(localStorage.getItem(AUTO_KEY)||"{}")||{}; }catch(e){ AUTO={}; }
+  function autoSave(){ try{ localStorage.setItem(AUTO_KEY, JSON.stringify(AUTO)); }catch(e){} }
+  /* a shot through a door: straight in when the switch is off; queued and pumped when it is on, so a shot that
+     arrives during a run waits its turn instead of replacing the photo under the run */
+  function doorShot(key, item){
+    var cfg=DOOR_CFG[key]; if(!cfg || !item) return;
+    var d=DOORS[key]||(DOORS[key]={ hot:null, n:0 });
+    if(!AUTO[key]){ cfg.onShot(item); return; }
+    d.queue=d.queue||[]; d.queue.push(item); paintDoor(key); pump(key);
+  }
+  function pump(key){
+    var cfg=DOOR_CFG[key], d=DOORS[key]; if(!cfg || !d || AUTO_T[key]) return;
+    AUTO_T[key]=setInterval(function(){
+      var busy=false; try{ busy=cfg.busy(); }catch(e){ busy=false; }
+      if(busy || (d.cool && Date.now()<d.cool)) return;
+      if(d.armed){
+        var ok=false; try{ ok=cfg.ready(); }catch(e){ ok=false; }
+        if(ok){ d.armed=false; d.cool=Date.now()+1500; try{ cfg.run(); }catch(e){} }
+        else if(Date.now()-d.armedAt>30000){ d.armed=false; }
+        return;
+      }
+      if(!d.queue || !d.queue.length){ clearInterval(AUTO_T[key]); AUTO_T[key]=0; paintDoor(key); return; }
+      var it=d.queue.shift(); try{ cfg.onShot(it); }catch(e){} d.armed=true; d.armedAt=Date.now(); paintDoor(key);
+    }, 350);
+  }
+  function paintDoor(key){ var d=DOORS[key]; if(d && d.slot && d.slot.isConnected) camDoor(d.slot); }
   function camDoor(slot){
     if(!slot) return null;
     var key=slot.getAttribute("data-cam"), cfg=DOOR_CFG[key]; if(!cfg) return null;
     var U=PSTYLE_DATA.ui, d=DOORS[key]||(DOORS[key]={ hot:null, n:0 });
+    d.slot=slot;
     slot.innerHTML=""; slot.classList.add("cam-door");
     var row=el("div","chips cam-door-row");
     if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
       var live=el("button","chip cam-live"); live.type="button"; live.innerHTML=icn("i-camera")+" "+escH(L9(U.connect_cam));
-      live.onclick=function(){ camera(function(item){ if(item) cfg.onShot(item); }, {}); }; row.appendChild(live);
+      live.onclick=function(){ camera(function(item){ if(item) doorShot(key, item); }, {}); }; row.appendChild(live);
     }
     var hot=el("button","chip cam-hot"+(d.hot?" on":"")); hot.type="button"; hot.innerHTML=icn("i-folder")+" "+escH(L9(d.hot ? U.hot_stop : U.hot_folder)); hot.setAttribute("aria-pressed", d.hot?"true":"false");
     hot.onclick=function(){
       if(d.hot){ try{ if(d.hot.stop) d.hot.stop(); }catch(e){} d.hot=null; camDoor(slot); return; }
       hotFolder.pick(function(ctl){ if(!ctl) return; d.hot={ name:ctl.name||"", stop:ctl.stop||null }; d.n=0; camDoor(slot); },
-        function(item){ d.n++; cfg.onShot(item); var st=slot.querySelector(".cam-door-st"); if(st && d.hot) st.textContent=L9(U.hot_watching).replace("{f}", d.hot.name).replace("{n}", String(d.n)); });
+        function(item){ d.n++; doorShot(key, item); var st=slot.querySelector(".cam-door-st"); if(st && d.hot) st.textContent=L9(U.hot_watching).replace("{f}", d.hot.name).replace("{n}", String(d.n)); });
     };
     row.appendChild(hot); slot.appendChild(row);
     if(d.hot) slot.appendChild(el("div","mut cam-door-st", L9(U.hot_watching).replace("{f}", d.hot.name).replace("{n}", String(d.n))));
+    /* 6.148.0 — the switch: run each new shot with the page's current settings */
+    var al=el("label","cam-auto"); var cb=document.createElement("input"); cb.type="checkbox"; cb.id="camAuto_"+key; cb.checked=!!AUTO[key];
+    cb.onchange=function(){ AUTO[key]=!!cb.checked; autoSave(); if(AUTO[key] && d.queue && d.queue.length) pump(key); };
+    al.appendChild(cb); al.appendChild(document.createTextNode(L9(U.auto_run))); slot.appendChild(al);
+    slot.appendChild(el("p","mut cam-hint", L9(U.auto_run_hint)));
+    if(d.queue && d.queue.length) slot.appendChild(el("div","mut cam-door-q", L9(U.queue_n).replace("{n}", String(d.queue.length))));
     return slot;
   }
   function camDoors(){ Array.prototype.forEach.call(document.querySelectorAll(".cam-slot[data-cam]"), function(s){ if(!s.firstChild) camDoor(s); }); }
@@ -34495,7 +34630,7 @@ if(typeof window!=="undefined"){ window.HNK=window.HNK||{}; window.HNK.pstyle=PS
     document.body.appendChild(sh);
     return sh;
   }
-  window.HNK_CAM={ camera:camera, hotFolder:hotFolder, share:share, crop:PSTYLE.socialCrop, door:camDoor, doors:camDoors, shareSheet:shareSheet };
+  window.HNK_CAM={ camera:camera, hotFolder:hotFolder, share:share, crop:PSTYLE.socialCrop, door:camDoor, doors:camDoors, shareSheet:shareSheet, shot:doorShot, auto:function(key, on){ if(typeof on==="boolean"){ AUTO[key]=on; autoSave(); paintDoor(key); } return !!AUTO[key]; }, queue:function(key){ var d=DOORS[key]; return (d && d.queue) ? d.queue.length : 0; } };
   camDoors();
 })();
 /* ---- /IMAGINE_HOST ---- */
