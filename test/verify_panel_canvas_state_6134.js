@@ -62,8 +62,8 @@ const DRAW_SAVE_LINE = (function () {
   }
   return -1;
 })();
-const VER = "6.147.0", PVER = "6.218.0";
-const COUNT = 289;
+const VER = "6.148.0", PVER = "6.219.0";
+const COUNT = 290;
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml",
   ".mp4": "video/mp4", ".woff2": "font/woff2", ".ico": "image/x-icon" };

@@ -2799,7 +2799,7 @@ const I18N = {
 /* v6.10: one version source, painted into the header, plus a once-a-day
    update probe against the site so studios stop running stale builds. The
    probe is fail-silent: offline hosts and blocked networks just skip it. */
-const PANEL_VERSION = "6.218.0";
+const PANEL_VERSION = "6.219.0";
 const PANEL_VERSION_URL = "https://hnk-ai-tools-3-s4nnu.ondigitalocean.app/download/panel-version.json";
 function panelVerNewer(a, b) {
   const pa = String(a).split(".").map(Number), pb = String(b).split(".").map(Number);
@@ -13139,11 +13139,44 @@ REFRESHERS.push(function () { try { if (imagineReady) imagineEnter(); } catch (e
    data, which are Portrait Style's). A shot goes where the page keeps its photo: the shared PHOTO slot
    (state.refs[0] — Retouch A / B and Retouch Pro alike) or the Path batch. */
 const HOT_DOORS = {};
+/* 6.219.0 — AUTO-RUN on the panel's doors: the same switch and the same words as the web; a shot fills the slot
+   and the page's own button is pressed (GENERATE · Start · the batch) once the page is free — every gate applies.
+   Shots that arrive during a run wait in the door's queue. Place into Photoshop stays the student's tap. */
+const HOT_AUTO_KEY = "hnk_cam_auto_v1"; let HOT_AUTO = {}; const HOT_T = {};
+try { HOT_AUTO = JSON.parse(localStorage.getItem(HOT_AUTO_KEY) || "{}") || {}; } catch (e) { HOT_AUTO = {}; }
+function hotAutoSave() { try { localStorage.setItem(HOT_AUTO_KEY, JSON.stringify(HOT_AUTO)); } catch (e) { } }
+const HOT_RUN = {
+  studio:  { busy: function () { return !!state.busy; }, ready: function () { return !!state.refs[0]; }, run: function () { const b = $("btnStGen"); if (b) b.click(); } },
+  retouch: { busy: function () { return !!state.busy; }, ready: function () { return !!state.refs[0]; }, run: function () { const b = $("btnV2Start"); if (b) b.click(); } },
+  path:    { busy: function () { return !!(PT.busy || state.busy); }, ready: function () { return ptPending().length > 0; }, run: function () { ptRunAll(); } }
+};
+function hotDoorShot(key, item) {
+  const d = HOT_DOORS[key] || (HOT_DOORS[key] = { hot: null, n: 0 });
+  if (!HOT_AUTO[key] || !HOT_RUN[key]) { hotDoorIntake(key, item); return; }
+  d.queue = d.queue || []; d.queue.push(item); hotDoorPaint(key); hotPump(key);
+}
+function hotPump(key) {
+  const cfg = HOT_RUN[key], d = HOT_DOORS[key]; if (!cfg || !d || HOT_T[key]) return;
+  HOT_T[key] = setInterval(function () {
+    let busy = false; try { busy = cfg.busy(); } catch (e) { busy = false; }
+    if (busy || (d.cool && Date.now() < d.cool)) return;
+    if (d.armed) {
+      let ok = false; try { ok = cfg.ready(); } catch (e) { ok = false; }
+      if (ok) { d.armed = false; d.cool = Date.now() + 1500; try { cfg.run(); } catch (e) { hwarn("hot auto run", e); } }
+      else if (Date.now() - d.armedAt > 30000) { d.armed = false; }
+      return;
+    }
+    if (!d.queue || !d.queue.length) { clearInterval(HOT_T[key]); HOT_T[key] = 0; hotDoorPaint(key); return; }
+    const it = d.queue.shift(); try { hotDoorIntake(key, it); } catch (e) { hwarn("hot door intake", e); } d.armed = true; d.armedAt = Date.now(); hotDoorPaint(key);
+  }, 350);
+}
+function hotDoorPaint(key) { const d = HOT_DOORS[key]; if (d && d.slot && d.slot.isConnected) panelCamDoor(d.slot, key); }
 function hotDoorWords() { const im = globalThis.HNK && globalThis.HNK.imagine; return (im && im.data && im.data.ui) || null; }
 function panelCamDoor(slot, key) {
   if (!slot) return;
   const U = hotDoorWords(); if (!U || !U.hot_folder) return;
   const d = HOT_DOORS[key] || (HOT_DOORS[key] = { hot: null, n: 0 });
+  d.slot = slot;
   slot.innerHTML = ""; slot.classList.add("cam-door");
   const row = document.createElement("div"); row.className = "chips cam-door-row";
   const hot = mkBtn("chip cam-hot" + (d.hot ? " on" : ""));
@@ -13153,12 +13186,21 @@ function panelCamDoor(slot, key) {
     if (d.hot) { try { if (d.hot.stop) d.hot.stop(); } catch (e) { } d.hot = null; panelCamDoor(slot, key); return; }
     uxpHotFolder().pick(function (ctl) { if (!ctl) return; d.hot = { name: ctl.name || "", stop: ctl.stop || null }; d.n = 0; panelCamDoor(slot, key); },
       function (item) {
-        d.n++; try { hotDoorIntake(key, item); } catch (e) { hwarn("hot door intake", e); }
+        d.n++; try { hotDoorShot(key, item); } catch (e) { hwarn("hot door shot", e); }
         const st = slot.querySelector(".cam-door-st"); if (st && d.hot) st.textContent = ff9(U.hot_watching).replace("{f}", d.hot.name).replace("{n}", String(d.n));
       });
   });
   row.appendChild(hot); slot.appendChild(row);
   if (d.hot) { const st = document.createElement("div"); st.className = "mut cam-door-st"; st.textContent = ff9(U.hot_watching).replace("{f}", d.hot.name).replace("{n}", String(d.n)); slot.appendChild(st); }
+  /* 6.219.0 — the switch: run each new shot with the page's current settings (the same words as the web) */
+  if (U.auto_run && HOT_RUN[key]) {
+    const al = document.createElement("label"); al.className = "cam-auto";
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.id = "camAuto_" + key; cb.checked = !!HOT_AUTO[key];
+    cb.addEventListener("change", function () { HOT_AUTO[key] = !!cb.checked; hotAutoSave(); if (HOT_AUTO[key] && d.queue && d.queue.length) hotPump(key); });
+    al.appendChild(cb); al.appendChild(document.createTextNode(ff9(U.auto_run))); slot.appendChild(al);
+    const hint = document.createElement("p"); hint.className = "mut cam-hint"; hint.textContent = ff9(U.auto_run_hint); slot.appendChild(hint);
+    if (d.queue && d.queue.length) { const q = document.createElement("div"); q.className = "mut cam-door-q"; q.textContent = ff9(U.queue_n).replace("{n}", String(d.queue.length)); slot.appendChild(q); }
+  }
 }
 function hotDoorIntake(key, item) {
   const m = /^data:([^;]+);base64,(.*)$/.exec(item.dataUrl || ""); if (!m) return;
